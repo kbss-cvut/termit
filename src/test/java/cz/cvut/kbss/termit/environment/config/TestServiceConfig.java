@@ -25,11 +25,13 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -66,5 +68,11 @@ public class TestServiceConfig {
     @Bean
     ChangeTrackingAspect changeTrackingAspect() {
         return Aspects.aspectOf(ChangeTrackingAspect.class);
+    }
+
+    @Bean
+    @Primary
+    public HttpSession httpSession() {
+        return new MockHttpSession();
     }
 }
