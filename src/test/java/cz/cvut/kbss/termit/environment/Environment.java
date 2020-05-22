@@ -188,6 +188,10 @@ public class Environment {
             conn.add(new URL("http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/model"), BASE_URI,
                     RDFFormat.TURTLE);
             conn.add(new File("ontology/termit-model.ttl"), BASE_URI, RDFFormat.TURTLE);
+            // TODO Update the URI once the ontology is publicly available at its correct location
+            conn.add(
+                    new URL("https://raw.githubusercontent.com/opendata-mvcr/ssp/master/d-sgov/d-sgov-pracovn%C3%AD-prostor-0.0.1-model.ttl"),
+                    BASE_URI, RDFFormat.TURTLE);
             conn.add(new URL("https://www.w3.org/TR/skos-reference/skos.rdf"), "", RDFFormat.RDFXML);
             conn.commit();
         } catch (IOException e) {
