@@ -25,12 +25,14 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
@@ -40,6 +42,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +52,8 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+
+import static cz.cvut.kbss.termit.service.repository.WorkspaceRepositoryService.WORKSPACE_SESSION_ATT;
 
 public class Environment {
 
@@ -197,5 +202,16 @@ public class Environment {
         } catch (IOException e) {
             throw new RuntimeException("Unable to load TermIt model for import.", e);
         }
+    }
+
+    /**
+     * Sets the currently loaded workspace.
+     *
+     * @param workspace Workspace to set
+     * @param ctx       Spring application context, used to retrieve relevant beans
+     */
+    public static void setCurrentWorkspace(Workspace workspace, ApplicationContext ctx) {
+        final HttpSession session = ctx.getBean(HttpSession.class);
+        session.setAttribute(WORKSPACE_SESSION_ATT, workspace);
     }
 }

@@ -16,14 +16,17 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.util.DescriptorFactory;
@@ -31,16 +34,22 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -53,6 +62,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private ApplicationContext context;
 
     @Autowired
     private VocabularyRepositoryService sut;
@@ -243,5 +255,43 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary)));
         final List<AbstractChangeRecord> changes = sut.getChanges(vocabulary);
         assertTrue(changes.isEmpty());
+    }
+
+    @Test
+    void findAllRetrievesVocabulariesFromCurrentWorkspace() {
+        enableRdfsInference(em);
+        final List<Vocabulary> vocabularies = IntStream.range(0, 10).mapToObj(i -> Generator.generateVocabularyWithId())
+                                                       .collect(Collectors.toList());
+        final Workspace workspace = new Workspace();
+        workspace.setLabel("test workspace");
+        workspace.setUri(Generator.generateUri());
+        transactional(() -> {
+            vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v)));
+            em.persist(workspace, new EntityDescriptor(workspace.getUri()));
+        });
+        final List<Vocabulary> inWorkspace = vocabularies.stream().filter(v -> Generator.randomBoolean())
+                                                         .collect(Collectors.toList());
+        addWorkspaceReference(inWorkspace, workspace);
+        Environment.setCurrentWorkspace(workspace, context);
+
+        final List<Vocabulary> result = sut.findAll();
+        inWorkspace.sort(Comparator.comparing(Vocabulary::getLabel));
+        assertEquals(inWorkspace, result);
+    }
+
+    private void addWorkspaceReference(Collection<Vocabulary> vocabularies, Workspace workspace) {
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection conn = repo.getConnection()) {
+                conn.begin();
+                conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
+                conn.commit();
+            }
+        });
+    }
+
+    @Test
+    void findAllThrowsWorkspaceNotSetExceptionWhenCurrentWorkspaceIsNotSet() {
+        assertThrows(WorkspaceNotSetException.class, () -> sut.findAll());
     }
 }

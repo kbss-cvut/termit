@@ -24,9 +24,6 @@ import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
@@ -364,22 +361,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                final ValueFactory vf = conn.getValueFactory();
                 conn.begin();
-                final IRI ws = vf.createIRI(workspace.getUri().toString());
-                conn.add(ws, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_metadatovy_kontext), ws);
-                final IRI hasContext = vf
-                        .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext);
-                final IRI vocContext = vf
-                        .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext);
-                final IRI hasVocabulary = vf
-                        .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_obsahuje_slovnik);
-                vocabularies.forEach(v -> {
-                    final IRI vocCtx = vf.createIRI(descriptorFactory.vocabularyDescriptor(v).getContext().toString());
-                    conn.add(ws, hasContext, vocCtx, ws);
-                    conn.add(vocCtx, RDF.TYPE, vocContext, ws);
-                    conn.add(vocCtx, hasVocabulary, vf.createIRI(v.getUri().toString()), ws);
-                });
+                conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
                 conn.commit();
             }
         });

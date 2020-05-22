@@ -28,14 +28,16 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -320,5 +322,27 @@ public class Generator {
                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
                     vf.createIRI(vocabularyIri.toString()));
         }
+    }
+
+    public static Collection<Statement> generateWorkspaceReferences(Collection<Vocabulary> vocabularies,
+                                                                    Workspace workspace) {
+        final List<Statement> statements = new ArrayList<>();
+        final ValueFactory vf = SimpleValueFactory.getInstance();
+        final IRI ws = vf.createIRI(workspace.getUri().toString());
+        statements.add(vf.createStatement(ws, RDF.TYPE,
+                vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_metadatovy_kontext), ws));
+        final IRI hasContext = vf
+                .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext);
+        final IRI vocContext = vf
+                .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext);
+        final IRI hasVocabulary = vf
+                .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_obsahuje_slovnik);
+        vocabularies.forEach(v -> {
+            final IRI vocCtx = vf.createIRI(v.getUri().toString());
+            statements.add(vf.createStatement(ws, hasContext, vocCtx, ws));
+            statements.add(vf.createStatement(vocCtx, RDF.TYPE, vocContext, ws));
+            statements.add(vf.createStatement(vocCtx, hasVocabulary, vf.createIRI(v.getUri().toString()), ws));
+        });
+        return statements;
     }
 }
