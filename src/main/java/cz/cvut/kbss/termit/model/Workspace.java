@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.model;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -17,8 +17,11 @@ public class Workspace implements Serializable, HasIdentifier {
     @Id
     private URI uri;
 
-    @OWLAnnotationProperty(iri = RDFS.LABEL)
+    @OWLAnnotationProperty(iri = DC.Terms.TITLE)
     private String label;
+
+    @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
+    private String description;
 
     @Override
     public URI getUri() {
@@ -36,6 +39,14 @@ public class Workspace implements Serializable, HasIdentifier {
 
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override
