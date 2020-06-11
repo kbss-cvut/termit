@@ -68,12 +68,12 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
      */
     public List<Vocabulary> findAll(Workspace workspace) {
         final List<Vocabulary> result = em.createNativeQuery("SELECT ?v WHERE { " +
-                "?mc a ?metadataCtx ; " +
-                "?referencesCtx [ " +
-                "a ?vocabularyCtx ;" +
-                "?containsVoc ?v " +
-                "] ." +
+                "?mc a ?metadataCtx ;" +
+                "?referencesCtx ?vc ." +
+                "?vc a ?vocabularyCtx ." +
+                "GRAPH ?vc {" +
                 "?v a ?type ." +
+                "}" +
                 "}", Vocabulary.class).setParameter("mc", workspace.getUri())
                                           .setParameter("metadataCtx",
                                                   URI.create(
@@ -82,8 +82,6 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
                                                   cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext))
                                           .setParameter("vocabularyCtx", URI.create(
                                                   cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext))
-                                          .setParameter("containsVoc",
-                                                  URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_obsahuje_slovnik))
                                           .setParameter("type", typeUri).getResultList();
         result.sort(Comparator.comparing(Vocabulary::getLabel));
         return result;

@@ -266,7 +266,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         workspace.setLabel("test workspace");
         workspace.setUri(Generator.generateUri());
         transactional(() -> {
-            vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v)));
+            vocabularies.forEach(v -> em.persist(v, new EntityDescriptor(v.getUri())));
             em.persist(workspace, new EntityDescriptor(workspace.getUri()));
         });
         final List<Vocabulary> inWorkspace = vocabularies.stream().filter(v -> Generator.randomBoolean())

@@ -335,13 +335,10 @@ public class Generator {
                 .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext);
         final IRI vocContext = vf
                 .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext);
-        final IRI hasVocabulary = vf
-                .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_obsahuje_slovnik);
         vocabularies.forEach(v -> {
             final IRI vocCtx = vf.createIRI(v.getUri().toString());
             statements.add(vf.createStatement(ws, hasContext, vocCtx, ws));
             statements.add(vf.createStatement(vocCtx, RDF.TYPE, vocContext, ws));
-            statements.add(vf.createStatement(vocCtx, hasVocabulary, vf.createIRI(v.getUri().toString()), ws));
         });
         return statements;
     }
