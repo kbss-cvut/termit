@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.service.repository.WorkspaceRepositoryService.WORKSPACE_SESSION_ATT;
+import static cz.cvut.kbss.termit.util.Constants.WORKSPACE_SESSION_ATT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.junit.jupiter.api.Assertions.*;

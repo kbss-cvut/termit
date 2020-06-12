@@ -55,7 +55,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
-import static cz.cvut.kbss.termit.service.repository.WorkspaceRepositoryService.WORKSPACE_SESSION_ATT;
+import static cz.cvut.kbss.termit.util.Constants.WORKSPACE_SESSION_ATT;
 
 public class Environment {
 

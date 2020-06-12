@@ -18,6 +18,10 @@
 package cz.cvut.kbss.termit.config;
 
 import cz.cvut.kbss.termit.aspect.Aspects;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
+import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.aop.target.ThreadLocalTargetSource;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
@@ -32,5 +36,26 @@ public class AppConfig {
     @Bean
     public cz.cvut.kbss.termit.util.Configuration configuration(Environment environment) {
         return new cz.cvut.kbss.termit.util.Configuration(environment);
+    }
+
+    @Bean(destroyMethod = "destroy")
+    public ThreadLocalTargetSource threadLocalTenantStore() {
+        ThreadLocalTargetSource result = new ThreadLocalTargetSource();
+        result.setTargetBeanName("workspaceStore");
+        return result;
+    }
+
+    @Primary
+    @Bean(name = "proxiedThreadLocalTargetSource")
+    public ProxyFactoryBean proxiedThreadLocalTargetSource(ThreadLocalTargetSource threadLocalTargetSource) {
+        ProxyFactoryBean result = new ProxyFactoryBean();
+        result.setTargetSource(threadLocalTargetSource);
+        return result;
+    }
+
+    @Bean(name = "workspaceStore")
+    @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public WorkspaceStore tenantStore() {
+        return new WorkspaceStore();
     }
 }
