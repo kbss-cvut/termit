@@ -342,4 +342,12 @@ public class Generator {
         });
         return statements;
     }
+
+    public static Workspace generateWorkspace() {
+        final Workspace ws = new Workspace();
+        ws.setUri(generateUri());
+        ws.setLabel("Workspace " + randomInt(0, 10000));
+        ws.setDescription("Description of workspace " + ws.getLabel());
+        return ws;
+    }
 }

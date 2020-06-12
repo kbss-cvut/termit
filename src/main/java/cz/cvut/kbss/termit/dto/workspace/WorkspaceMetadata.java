@@ -10,6 +10,9 @@ public class WorkspaceMetadata {
 
     private Workspace workspace;
 
+    /**
+     * Vocabulary identifier -> vocabulary info
+     */
     private Map<URI, VocabularyInfo> vocabularies;
 
     public WorkspaceMetadata() {

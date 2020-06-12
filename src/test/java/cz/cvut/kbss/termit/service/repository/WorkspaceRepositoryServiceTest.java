@@ -48,9 +48,7 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     private Workspace generateWorkspace() {
-        final Workspace workspace = new Workspace();
-        workspace.setUri(Generator.generateUri());
-        workspace.setLabel("Test workspace " + Generator.randomInt(0, 1000));
+        final Workspace workspace = Generator.generateWorkspace();
         transactional(() -> em.persist(workspace, new EntityDescriptor(workspace.getUri())));
         return workspace;
     }
@@ -94,7 +92,10 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
         final Workspace workspace = generateWorkspace();
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
                                                        .collect(Collectors.toList());
-        addWorkspaceReference(vocabularies, workspace);
+        transactional(() -> {
+            vocabularies.forEach(v -> em.persist(v, new EntityDescriptor(v.getUri())));
+            addWorkspaceReference(vocabularies, workspace);
+        });
 
 
         sut.loadWorkspace(workspace.getUri());
@@ -104,13 +105,11 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     private void addWorkspaceReference(Collection<Vocabulary> vocabularies, Workspace workspace) {
-        transactional(() -> {
-            final Repository repo = em.unwrap(Repository.class);
-            try (final RepositoryConnection conn = repo.getConnection()) {
-                conn.begin();
-                conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
-                conn.commit();
-            }
-        });
+        final Repository repo = em.unwrap(Repository.class);
+        try (final RepositoryConnection conn = repo.getConnection()) {
+            conn.begin();
+            conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
+            conn.commit();
+        }
     }
 }
