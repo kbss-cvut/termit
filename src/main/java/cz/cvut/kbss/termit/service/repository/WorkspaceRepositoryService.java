@@ -1,8 +1,10 @@
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException;
 import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.persistence.WorkspaceMetadataCache;
 import cz.cvut.kbss.termit.persistence.dao.WorkspaceDao;
 import cz.cvut.kbss.termit.service.business.WorkspaceService;
 import org.slf4j.Logger;
@@ -27,10 +29,14 @@ public class WorkspaceRepositoryService implements WorkspaceService {
 
     private final WorkspaceDao workspaceDao;
 
+    private final WorkspaceMetadataCache workspaceCache;
+
     @Autowired
-    public WorkspaceRepositoryService(HttpSession session, WorkspaceDao workspaceDao) {
+    public WorkspaceRepositoryService(HttpSession session, WorkspaceDao workspaceDao,
+                                      WorkspaceMetadataCache workspaceCache) {
         this.session = session;
         this.workspaceDao = workspaceDao;
+        this.workspaceCache = workspaceCache;
     }
 
     @Override
@@ -39,8 +45,14 @@ public class WorkspaceRepositoryService implements WorkspaceService {
         final Workspace ws = workspaceDao.find(id).orElseThrow(
                 () -> NotFoundException.create(Workspace.class.getSimpleName(), id));
         LOG.trace("Storing workspace in session.");
-        session.setAttribute(WORKSPACE_SESSION_ATT, ws);
+        session.setAttribute(WORKSPACE_SESSION_ATT, ws.getUri());
+        workspaceCache.putWorkspace(loadWorkspaceMetadata(ws));
         return ws;
+    }
+
+    private WorkspaceMetadata loadWorkspaceMetadata(Workspace ws) {
+        // TODO
+        return new WorkspaceMetadata(ws);
     }
 
     @Override
@@ -51,10 +63,12 @@ public class WorkspaceRepositoryService implements WorkspaceService {
 
     @Override
     public Workspace getCurrentWorkspace() {
-        final Object workspace = session.getAttribute(WORKSPACE_SESSION_ATT);
-        if (workspace == null) {
+        final Object workspaceId = session.getAttribute(WORKSPACE_SESSION_ATT);
+        if (workspaceId == null) {
             throw new WorkspaceNotSetException("No workspace is currently selected!");
         }
-        return (Workspace) workspace;
+        assert workspaceId instanceof URI;
+
+        return workspaceCache.getWorkspace((URI) workspaceId);
     }
 }
