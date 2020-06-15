@@ -1,9 +1,8 @@
-package cz.cvut.kbss.termit.persistence;
+package cz.cvut.kbss.termit.workspace;
 
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotLoadedException;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

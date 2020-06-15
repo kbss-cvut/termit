@@ -7,12 +7,14 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.persistence.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
@@ -37,6 +39,11 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private WorkspaceRepositoryService sut;
+
+    @BeforeEach
+    void setUp() {
+        Mockito.reset(workspaceStore, workspaceMetadataCache);
+    }
 
     @Test
     void loadWorkspaceByIdRetrievesWorkspaceFromRepository() {

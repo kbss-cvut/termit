@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.persistence.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Vocabulary;

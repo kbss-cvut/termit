@@ -17,12 +17,13 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
-import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -34,6 +35,7 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.hamcrest.collection.IsEmptyCollection;
@@ -54,6 +56,7 @@ import java.util.stream.IntStream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
 
 class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
@@ -65,6 +68,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private ApplicationContext context;
+
+    @Autowired
+    private WorkspaceMetadataCache workspaceMetadataCache;
 
     @Autowired
     private VocabularyRepositoryService sut;
@@ -272,7 +278,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final List<Vocabulary> inWorkspace = vocabularies.stream().filter(v -> Generator.randomBoolean())
                                                          .collect(Collectors.toList());
         addWorkspaceReference(inWorkspace, workspace);
-        Environment.setCurrentWorkspace(workspace, context);
+        setCurrentWorkspace(workspace, inWorkspace);
 
         final List<Vocabulary> result = sut.findAll();
         inWorkspace.sort(Comparator.comparing(Vocabulary::getLabel));
@@ -290,8 +296,11 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         });
     }
 
-    @Test
-    void findAllThrowsWorkspaceNotSetExceptionWhenCurrentWorkspaceIsNotSet() {
-        assertThrows(WorkspaceNotSetException.class, () -> sut.findAll());
+    private void setCurrentWorkspace(Workspace workspace, Collection<Vocabulary> vocabularies) {
+        final WorkspaceMetadata metadata = workspaceMetadataCache.getCurrentWorkspaceMetadata();
+        vocabularies.forEach(v -> doReturn(new VocabularyInfo(v.getUri(), v.getUri(), v.getUri())).when(metadata)
+                                                                                                  .getVocabularyInfo(
+                                                                                                          v.getUri()));
+        doReturn(workspace).when(workspaceMetadataCache).getCurrentWorkspace();
     }
 }

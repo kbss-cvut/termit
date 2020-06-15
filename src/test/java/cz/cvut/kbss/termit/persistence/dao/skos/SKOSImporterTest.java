@@ -1,6 +1,8 @@
 package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.UnsupportedImportMediaTypeException;
@@ -8,8 +10,11 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
+import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
 import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -22,6 +27,7 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -36,6 +42,7 @@ import java.util.stream.Collectors;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
 
 class SKOSImporterTest extends BaseDaoTestRunner {
 
@@ -48,6 +55,12 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     @Autowired
     private ApplicationContext context;
 
+    @Autowired
+    private WorkspaceMetadataCache workspaceMetadataCache;
+
+    @Autowired
+    private Configuration config;
+
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @BeforeEach
@@ -55,6 +68,10 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final User author = Generator.generateUserWithId();
         Environment.setCurrentUser(author);
         transactional(() -> em.persist(author));
+        final WorkspaceMetadata wsMetadata = workspaceMetadataCache.getCurrentWorkspaceMetadata();
+        final VocabularyInfo vocabularyInfo = new VocabularyInfo(URI.create(VOCABULARY_IRI), URI.create(VOCABULARY_IRI),
+                URI.create(VOCABULARY_IRI + Constants.DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION));
+        doReturn(vocabularyInfo).when(wsMetadata).getVocabularyInfo(ArgumentMatchers.any());
     }
 
     @Test
@@ -107,6 +124,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 final Optional<Resource> ctx = contexts.stream().filter(r -> r.stringValue().contains(GLOSSARY_IRI))
                                                        .findFirst();
                 assertTrue(ctx.isPresent());
+                assertThat(ctx.get().stringValue(),
+                        containsString(config.get(ConfigParam.WORKING_VOCABULARY_CONTEXT_EXTENSION)));
                 final List<Statement> inAll = Iterations.asList(conn.getStatements(null, null, null, false));
                 final List<Statement> inCtx = Iterations.asList(conn.getStatements(null, null, null, false, ctx.get()));
                 assertEquals(inAll.size() - existingStatementCount.get(), inCtx.size());

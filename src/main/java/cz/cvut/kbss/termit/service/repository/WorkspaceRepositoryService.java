@@ -4,7 +4,7 @@ import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.persistence.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
 import cz.cvut.kbss.termit.persistence.dao.WorkspaceDao;
 import cz.cvut.kbss.termit.service.business.WorkspaceService;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;

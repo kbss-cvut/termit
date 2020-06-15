@@ -1,16 +1,16 @@
 package cz.cvut.kbss.termit.persistence.dao.changetracking;
 
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.util.ConfigParam;
-import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Objects;
+
+import static cz.cvut.kbss.termit.util.Constants.DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION;
 
 /**
  * Determines repository context into which change tracking records are stored.
@@ -18,14 +18,11 @@ import java.util.Objects;
 @Component
 public class ChangeTrackingContextResolver {
 
-    private final EntityManager em;
-
-    private final String contextExtension;
+    private final WorkspaceMetadataCache workspaceMetadataCache;
 
     @Autowired
-    public ChangeTrackingContextResolver(EntityManager em, Configuration config) {
-        this.em = em;
-        this.contextExtension = config.get(ConfigParam.CHANGE_TRACKING_CONTEXT_EXTENSION);
+    public ChangeTrackingContextResolver(WorkspaceMetadataCache workspaceMetadataCache) {
+        this.workspaceMetadataCache = workspaceMetadataCache;
     }
 
     /**
@@ -40,16 +37,13 @@ public class ChangeTrackingContextResolver {
     public URI resolveChangeTrackingContext(Asset changedAsset) {
         Objects.requireNonNull(changedAsset);
         if (changedAsset instanceof Vocabulary) {
-            return URI.create(changedAsset.getUri().toString().concat(contextExtension));
+            return workspaceMetadataCache.getCurrentWorkspaceMetadata().getVocabularyInfo(changedAsset.getUri())
+                                         .getChangeTrackingContext();
         } else if (changedAsset instanceof Term) {
-            return URI.create(resolveTermVocabulary((Term) changedAsset).toString().concat(contextExtension));
+            final Term t = (Term) changedAsset;
+            return workspaceMetadataCache.getCurrentWorkspaceMetadata().getVocabularyInfo(t.getVocabulary())
+                                         .getChangeTrackingContext();
         }
-        return URI.create(changedAsset.getUri().toString().concat(contextExtension));
-    }
-
-    private URI resolveTermVocabulary(Term term) {
-        return em.createNativeQuery("SELECT ?v WHERE { ?v ?hasGlossary ?glossary . }", URI.class)
-                 .setParameter("hasGlossary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar))
-                 .setParameter("glossary", term.getGlossary()).getSingleResult();
+        return URI.create(changedAsset.getUri().toString().concat(DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION));
     }
 }

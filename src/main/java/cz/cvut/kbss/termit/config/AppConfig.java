@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.config;
 
 import cz.cvut.kbss.termit.aspect.Aspects;
+import cz.cvut.kbss.termit.workspace.WorkspaceComponents;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.aop.target.ThreadLocalTargetSource;
@@ -30,7 +31,7 @@ import javax.servlet.http.HttpSession;
 @Configuration
 @EnableMBeanExport
 @EnableAspectJAutoProxy(proxyTargetClass = true)
-@ComponentScan(basePackageClasses = Aspects.class)
+@ComponentScan(basePackageClasses = {Aspects.class, WorkspaceComponents.class})
 @Import({PersistenceConfig.class, ServiceConfig.class, WebAppConfig.class})
 @PropertySource("classpath:config.properties")
 public class AppConfig {
