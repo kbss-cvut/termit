@@ -3,10 +3,10 @@ package cz.cvut.kbss.termit.dto.workspace;
 import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
-import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Objects;
 
 /**
  * Data about vocabulary loaded in a workspace.
@@ -64,5 +64,33 @@ public class VocabularyInfo implements Serializable {
 
     public void setChangeTrackingContext(URI changeTrackingContext) {
         this.changeTrackingContext = changeTrackingContext;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof VocabularyInfo)) {
+            return false;
+        }
+        VocabularyInfo that = (VocabularyInfo) o;
+        return Objects.equals(uri, that.uri) &&
+                Objects.equals(context, that.context) &&
+                Objects.equals(changeTrackingContext, that.changeTrackingContext);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uri, context, changeTrackingContext);
+    }
+
+    @Override
+    public String toString() {
+        return "VocabularyInfo{" +
+                "<" + uri +
+                ">, context=<" + context +
+                ">, changeTrackingContext=<" + changeTrackingContext +
+                ">}";
     }
 }

@@ -1,13 +1,11 @@
 package cz.cvut.kbss.termit.exception.workspace;
 
-import cz.cvut.kbss.termit.exception.TermItException;
-
 import java.net.URI;
 
 /**
  * Indicates that no workspace with the specified identifier has been loaded by TermIt.
  */
-public class WorkspaceNotLoadedException extends TermItException {
+public class WorkspaceNotLoadedException extends WorkspaceException {
 
     private WorkspaceNotLoadedException(String message) {
         super(message);

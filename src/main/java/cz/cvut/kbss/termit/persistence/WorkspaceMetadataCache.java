@@ -3,6 +3,8 @@ package cz.cvut.kbss.termit.persistence;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotLoadedException;
 import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -17,10 +19,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class WorkspaceMetadataCache {
 
+    private final WorkspaceStore workspaceStore;
+
     /**
      * Workspace identifier -> workspace metadata
      */
     private final Map<URI, WorkspaceMetadata> workspaces = new ConcurrentHashMap<>();
+
+    @Autowired
+    public WorkspaceMetadataCache(WorkspaceStore workspaceStore) {
+        this.workspaceStore = workspaceStore;
+    }
 
     public void putWorkspace(WorkspaceMetadata metadata) {
         Objects.requireNonNull(metadata);
@@ -36,10 +45,18 @@ public class WorkspaceMetadataCache {
         return workspaces.get(workspaceUri).getWorkspace();
     }
 
+    public Workspace getCurrentWorkspace() {
+        return getWorkspace(workspaceStore.getCurrentWorkspace());
+    }
+
     public WorkspaceMetadata getWorkspaceMetadata(URI workspaceUri) {
         if (!workspaces.containsKey(workspaceUri)) {
             throw WorkspaceNotLoadedException.create(workspaceUri);
         }
         return workspaces.get(workspaceUri);
+    }
+
+    public WorkspaceMetadata getCurrentWorkspaceMetadata() {
+        return getWorkspaceMetadata(workspaceStore.getCurrentWorkspace());
     }
 }

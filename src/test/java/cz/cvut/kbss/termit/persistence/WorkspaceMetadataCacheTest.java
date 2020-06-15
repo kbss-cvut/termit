@@ -4,14 +4,29 @@ import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotLoadedException;
 import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 class WorkspaceMetadataCacheTest {
 
-    private final WorkspaceMetadataCache sut = new WorkspaceMetadataCache();
+    @Mock
+    private WorkspaceStore workspaceStore;
+
+    @InjectMocks
+    private WorkspaceMetadataCache sut;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.initMocks(this);
+    }
 
     @Test
     void getWorkspaceRetrievesWorkspaceMetadataFromCacheAndReturnsWorkspace() {
@@ -49,5 +64,25 @@ class WorkspaceMetadataCacheTest {
     @Test
     void getWorkspaceThrowsWorkspaceNotLoadedExceptionForUnknownWorkspaceIdentifier() {
         assertThrows(WorkspaceNotLoadedException.class, () -> sut.getWorkspace(Generator.generateUri()));
+    }
+
+    @Test
+    void getCurrentWorkspaceRetrievesWorkspaceFromCacheBasedOnCurrentWorkspaceIdentifier() {
+        final Workspace ws = generateWorkspace();
+        final WorkspaceMetadata metadata = new WorkspaceMetadata(ws);
+        when(workspaceStore.getCurrentWorkspace()).thenReturn(ws.getUri());
+        sut.putWorkspace(metadata);
+
+        assertEquals(ws, sut.getCurrentWorkspace());
+    }
+
+    @Test
+    void getCurrentWorkspaceMetadataRetrievesMetadataBasedOnCurrentWorkspaceIdentifier() {
+        final Workspace ws = generateWorkspace();
+        final WorkspaceMetadata metadata = new WorkspaceMetadata(ws);
+        when(workspaceStore.getCurrentWorkspace()).thenReturn(ws.getUri());
+        sut.putWorkspace(metadata);
+
+        assertEquals(metadata, sut.getCurrentWorkspaceMetadata());
     }
 }

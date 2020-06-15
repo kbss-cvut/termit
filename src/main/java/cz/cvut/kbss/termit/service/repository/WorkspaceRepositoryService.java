@@ -3,18 +3,16 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.WorkspaceMetadataCache;
 import cz.cvut.kbss.termit.persistence.dao.WorkspaceDao;
 import cz.cvut.kbss.termit.service.business.WorkspaceService;
-import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpSession;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,17 +22,17 @@ public class WorkspaceRepositoryService implements WorkspaceService {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkspaceRepositoryService.class);
 
-    private final HttpSession session;
-
     private final WorkspaceDao workspaceDao;
+
+    private final WorkspaceStore workspaceStore;
 
     private final WorkspaceMetadataCache workspaceCache;
 
     @Autowired
-    public WorkspaceRepositoryService(HttpSession session, WorkspaceDao workspaceDao,
+    public WorkspaceRepositoryService(WorkspaceDao workspaceDao, WorkspaceStore workspaceStore,
                                       WorkspaceMetadataCache workspaceCache) {
-        this.session = session;
         this.workspaceDao = workspaceDao;
+        this.workspaceStore = workspaceStore;
         this.workspaceCache = workspaceCache;
     }
 
@@ -44,7 +42,7 @@ public class WorkspaceRepositoryService implements WorkspaceService {
         final Workspace ws = workspaceDao.find(id).orElseThrow(
                 () -> NotFoundException.create(Workspace.class.getSimpleName(), id));
         LOG.trace("Storing workspace ID in session.");
-        session.setAttribute(Constants.WORKSPACE_SESSION_ATT, ws.getUri());
+        workspaceStore.setCurrentWorkspace(id);
         workspaceCache.putWorkspace(loadWorkspaceMetadata(ws));
         return ws;
     }
@@ -64,12 +62,6 @@ public class WorkspaceRepositoryService implements WorkspaceService {
 
     @Override
     public Workspace getCurrentWorkspace() {
-        final Object workspaceId = session.getAttribute(Constants.WORKSPACE_SESSION_ATT);
-        if (workspaceId == null) {
-            throw new WorkspaceNotSetException("No workspace is currently selected!");
-        }
-        assert workspaceId instanceof URI;
-
-        return workspaceCache.getWorkspace((URI) workspaceId);
+        return workspaceCache.getCurrentWorkspace();
     }
 }

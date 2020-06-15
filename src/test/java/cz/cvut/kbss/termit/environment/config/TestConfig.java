@@ -18,11 +18,12 @@
 package cz.cvut.kbss.termit.environment.config;
 
 import cz.cvut.kbss.termit.aspect.Aspects;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
+
+import javax.servlet.http.HttpSession;
 
 @Configuration
 @PropertySource("classpath:config.properties")
@@ -32,5 +33,10 @@ public class TestConfig {
     @Bean
     public cz.cvut.kbss.termit.util.Configuration configuration(Environment environment) {
         return new cz.cvut.kbss.termit.util.Configuration(environment);
+    }
+
+    @Bean(name = "workspaceStore")
+    public WorkspaceStore workspaceStore(HttpSession session) {
+        return new WorkspaceStore(session);
     }
 }

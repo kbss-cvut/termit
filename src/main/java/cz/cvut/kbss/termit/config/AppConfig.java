@@ -25,6 +25,8 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
+import javax.servlet.http.HttpSession;
+
 @Configuration
 @EnableMBeanExport
 @EnableAspectJAutoProxy(proxyTargetClass = true)
@@ -55,7 +57,7 @@ public class AppConfig {
 
     @Bean(name = "workspaceStore")
     @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public WorkspaceStore tenantStore() {
-        return new WorkspaceStore();
+    public WorkspaceStore workspaceStore(HttpSession session) {
+        return new WorkspaceStore(session);
     }
 }

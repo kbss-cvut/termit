@@ -5,23 +5,21 @@ import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.WorkspaceMetadataCache;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.servlet.http.HttpSession;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.util.Constants.WORKSPACE_SESSION_ATT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,7 +30,7 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
     private EntityManager em;
 
     @Autowired
-    private HttpSession session;
+    private WorkspaceStore workspaceStore;
 
     @Autowired
     private WorkspaceMetadataCache workspaceMetadataCache;
@@ -59,10 +57,10 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void loadWorkspaceByIdStoresLoadedWorkspaceIdInSession() {
+    void loadWorkspaceByIdStoresLoadedWorkspaceIdInWorkspaceStore() {
         final Workspace expected = generateWorkspace();
         sut.loadWorkspace(expected.getUri());
-        assertEquals(expected.getUri(), session.getAttribute(WORKSPACE_SESSION_ATT));
+        assertEquals(expected.getUri(), workspaceStore.getCurrentWorkspace());
     }
 
     @Test
@@ -71,20 +69,6 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
         sut.loadWorkspace(expected.getUri());
         final Workspace result = workspaceMetadataCache.getWorkspace(expected.getUri());
         assertEquals(expected, result);
-    }
-
-    @Test
-    void getCurrentWorkspaceRetrievesCurrentWorkspaceFromCacheBasedOnIdentifierStoredInSession() {
-        final Workspace expected = generateWorkspace();
-        session.setAttribute(WORKSPACE_SESSION_ATT, expected.getUri());
-        workspaceMetadataCache.putWorkspace(new WorkspaceMetadata(expected));
-        assertEquals(expected, sut.getCurrentWorkspace());
-    }
-
-    @Test
-    void getCurrentWorkspaceThrowsWorkspaceNotSetExceptionWhenNoWorkspaceIsSelected() {
-        assertNull(session.getAttribute(WORKSPACE_SESSION_ATT));
-        assertThrows(WorkspaceNotSetException.class, () -> sut.getCurrentWorkspace());
     }
 
     @Test
