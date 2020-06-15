@@ -23,6 +23,7 @@ import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.workspace.CurrentWorkspaceInterceptor;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -53,8 +54,11 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     private final cz.cvut.kbss.termit.util.Configuration config;
 
-    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config) {
+    private final WorkspaceStore workspaceStore;
+
+    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config, WorkspaceStore workspaceStore) {
         this.config = config;
+        this.workspaceStore = workspaceStore;
     }
 
     @Bean(name = "multipartResolver")
@@ -117,7 +121,7 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new CurrentWorkspaceInterceptor());
+        registry.addInterceptor(new CurrentWorkspaceInterceptor(workspaceStore));
     }
 
     @Override

@@ -60,10 +60,4 @@ class CurrentWorkspaceInterceptorTest {
         sut.preHandle(mockRequest, mockResponse, new Object());
         verify(workspaceStore, never()).setCurrentWorkspace(any());
     }
-
-    @Test
-    void afterCompletionClearsWorkspaceStore() {
-        sut.afterCompletion(mockRequest, mockResponse, new Object(), null);
-        verify(workspaceStore).clear();
-    }
 }
