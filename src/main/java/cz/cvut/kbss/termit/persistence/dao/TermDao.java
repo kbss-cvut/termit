@@ -31,7 +31,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -161,17 +164,16 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(vocabulary);
         try {
             return !em.createNativeQuery("ASK WHERE {" +
-                    "GRAPH ?g { " +
-                    "?term a ?type ;" +
-                    "}" +
-                    "?term ?inVocabulary ?vocabulary ." +
-                    " }", Boolean.class)
-                      .setParameter("type", typeUri)
-                      .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
-                      .setParameter("vocabulary", vocabulary.getUri())
-                      .setParameter("inVocabulary",
-                              URI.create(
-                                      cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
+                "GRAPH ?vocabulary { " +
+                "?term a ?type ;" +
+                "}" +
+                "?term ?inVocabulary ?vocabulary ." +
+                " }", Boolean.class)
+                .setParameter("type", typeUri)
+                .setParameter("vocabulary", vocabulary.getUri())
+                .setParameter("inVocabulary",
+                    URI.create(
+                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -249,19 +251,18 @@ public class TermDao extends AssetDao<Term> {
     /**
      * Loads a page of root terms (terms without a parent) contained in the specified vocabulary.
      *
-     * @param vocabulary   Vocabulary whose root terms should be returned
-     * @param pageSpec     Page specification
-     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @param vocabulary Vocabulary whose root terms should be returned
+     * @param pageSpec   Page specification
      * @return Matching terms, ordered by their label
-     * @see #findAllRootsIncludingImports(Vocabulary, Pageable, Collection)
+     * @see #findAllRootsIncludingImports(Vocabulary, Pageable)
      */
-    public List<Term> findAllRoots(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
+    public List<Term> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
-        return findAllRootsImpl(vocabulary.getUri(), pageSpec, includeTerms);
+        return findAllRootsImpl(vocabulary.getUri(), pageSpec);
     }
 
-    private List<Term> findAllRootsImpl(URI vocabularyIri, Pageable pageSpec, Collection<URI> includeTerms) {
+    private List<Term> findAllRootsImpl(URI vocabularyIri, Pageable pageSpec) {
         TypedQuery<Term> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                 "GRAPH ?g { " +
                 "?term a ?type ;" +
@@ -269,22 +270,15 @@ public class TermDao extends AssetDao<Term> {
                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
                 "}} ORDER BY ?label OFFSET ?offset LIMIT ?limit", Term.class);
-        query = setCommonFindAllRootsQueryParams(query);
-        query.setDescriptor(descriptorFactory.termDescriptor(vocabularyIri));
+        query = setCommonFindAllRootsQueryParams(query, false);
         try {
-            final List<Term> result = executeQueryAndLoadSubTerms(query.setParameter("vocabulary", vocabularyIri)
-                                                                       .setParameter("g",
-                                                                               persistenceUtils
-                                                                                       .resolveVocabularyContext(
-                                                                                               vocabularyIri))
-                                                                       .setParameter("labelLang",
-                                                                               config.get(ConfigParam.LANGUAGE))
-                                                                       .setUntypedParameter("offset",
-                                                                               pageSpec.getOffset())
-                                                                       .setUntypedParameter("limit",
-                                                                               pageSpec.getPageSize()));
-            result.addAll(loadIncludedTerms(includeTerms));
-            return result;
+            return executeQueryAndLoadSubTerms(query.setParameter("vocabulary", vocabularyIri)
+                                                    .setParameter("g",
+                                                            persistenceUtils
+                                                                    .resolveVocabularyContext(vocabularyIri))
+                                                    .setParameter("labelLang", config.get(ConfigParam.LANGUAGE))
+                                                    .setUntypedParameter("offset", pageSpec.getOffset())
+                                                    .setUntypedParameter("limit", pageSpec.getPageSize()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -299,9 +293,7 @@ public class TermDao extends AssetDao<Term> {
     }
 
     private List<Term> loadIncludedTerms(Collection<URI> includeTerms) {
-        return includeTerms.stream()
-                           .map(u -> em.find(Term.class, u, descriptorFactory.termDescriptor(resolveVocabularyIri(u))))
-                           .filter(Objects::nonNull)
+        return includeTerms.stream().map(u -> em.find(Term.class, u)).filter(Objects::nonNull)
                            .collect(Collectors.toList());
     }
 
@@ -311,20 +303,18 @@ public class TermDao extends AssetDao<Term> {
      * This method basically does a transitive closure of the vocabulary import relationship and retrieves a page of
      * root terms from this closure.
      *
-     * @param vocabulary   The last vocabulary in the vocabulary import chain
-     * @param pageSpec     Page specification
-     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @param vocabulary The last vocabulary in the vocabulary import chain
+     * @param pageSpec   Page specification
      * @return Matching terms, ordered by their label
-     * @see #findAllRoots(Vocabulary, Pageable, Collection)
+     * @see #findAllRoots(Vocabulary, Pageable)
      */
-    public List<Term> findAllRootsIncludingImports(Vocabulary vocabulary, Pageable pageSpec,
-                                                   Collection<URI> includeTerms) {
+    public List<Term> findAllRootsIncludingImports(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         final Collection<URI> vocabularies = vocabularyDao.getTransitivelyImportedVocabularies(vocabulary);
         vocabularies.add(vocabulary.getUri());
         final List<Term> result = new ArrayList<>();
-        vocabularies.forEach(v -> result.addAll(findAllRootsImpl(v, pageSpec, includeTerms)));
+        vocabularies.forEach(v -> result.addAll(findAllRootsImpl(v, pageSpec)));
         result.sort(Comparator.comparing(Asset::getLabel));
         return result.subList(0, Math.min(result.size(), pageSpec.getPageSize()));
     }

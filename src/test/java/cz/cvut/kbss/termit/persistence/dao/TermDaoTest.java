@@ -3,13 +3,13 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -74,7 +74,7 @@ class TermDaoTest extends BaseDaoTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 conn.begin();
-                conn.add(WorkspaceGenerator
+                conn.add(Generator
                         .generateWorkspaceReferences(Collections.singleton(vocabulary),
                                 wsMetadataCache.getCurrentWorkspace()));
                 conn.commit();
@@ -87,7 +87,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
     }
 
@@ -118,7 +118,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
         // Paging starts at 0
-        final List<Term> result = sut.findAllRoots(vocabulary, PageRequest.of(1, terms.size() / 2), Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, PageRequest.of(1, terms.size() / 2));
         final List<Term> subList = terms.subList(terms.size() / 2, terms.size());
         assertEquals(subList, result);
     }
@@ -132,7 +132,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         another.getGlossary().setRootTerms(generateTerms(4).stream().map(Asset::getUri).collect(Collectors.toSet()));
         transactional(() -> em.persist(another));
 
-        final List<Term> result = sut.findAllRoots(vocabulary, PageRequest.of(0, terms.size() / 2), Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, PageRequest.of(0, terms.size() / 2));
         assertEquals(terms.size() / 2, result.size());
         assertTrue(terms.containsAll(result));
     }
@@ -149,7 +149,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         }));
 
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(rootTerms, result);
     }
 
@@ -315,7 +315,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(allTerms, vocabulary);
         transactional(() -> insertForeignLabel(foreignLabelTerm));
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
     }
 
@@ -365,7 +365,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         allTerms.addAll(grandParentTerms);
         allTerms.sort(Comparator.comparing(Term::getLabel));
 
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(allTerms, result);
     }
 
@@ -374,7 +374,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
     }
 
@@ -579,7 +579,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllRootsLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(1, result.size());
         assertEquals(parent, result.get(0));
         assertEquals(parent.getSubTerms(), result.get(0).getSubTerms());
@@ -588,7 +588,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllRootsIncludingImportsLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(1, result.size());
         assertEquals(parent, result.get(0));
         assertEquals(parent.getSubTerms(), result.get(0).getSubTerms());
@@ -629,7 +629,7 @@ class TermDaoTest extends BaseDaoTestRunner {
                 Arrays.asList(Generator.generateUri().toString(), "mpp/navrh/c-3/h-0/p-36/o-2"));
         term.setSources(sources);
         term.setVocabulary(vocabulary.getUri());
-        transactional(() -> sut.persist(term, vocabulary));
+        transactional(() -> sut.persist(term));
 
         transactional(() -> verifyTermSourceStatements(term));
 
