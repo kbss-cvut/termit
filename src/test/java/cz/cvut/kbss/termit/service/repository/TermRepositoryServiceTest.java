@@ -330,8 +330,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             t.setVocabulary(vocabulary.getUri());
             vocabulary.getGlossary().addRootTerm(t);
-            em.persist(t, DescriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(t, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
         assertFalse(sut.isEmpty(vocabulary));
@@ -578,8 +578,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(term, DescriptorFactory.termDescriptor(term));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
         });
         sut.remove(term);
         final Term result = em.find(Term.class, term.getUri());
