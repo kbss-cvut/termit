@@ -21,7 +21,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.util.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -35,6 +35,9 @@ abstract class VocabularyExporterTestBase extends BaseServiceTestRunner {
     @Autowired
     EntityManager em;
 
+    @Autowired
+    DescriptorFactory descriptorFactory;
+
     Vocabulary vocabulary;
 
     void setUp() {
@@ -43,7 +46,7 @@ abstract class VocabularyExporterTestBase extends BaseServiceTestRunner {
         Environment.setCurrentUser(author);
         transactional(() -> {
             em.persist(author);
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(Generator.generatePersistChange(vocabulary));
         });
     }
@@ -60,8 +63,8 @@ abstract class VocabularyExporterTestBase extends BaseServiceTestRunner {
         }
         vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
         transactional(() -> {
-            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
-            terms.forEach(t -> em.persist(t, DescriptorFactory.termDescriptor(vocabulary)));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
             terms.forEach(t -> Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em));
         });
         return terms;

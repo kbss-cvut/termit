@@ -18,6 +18,15 @@ public class PersistenceUtils {
     }
 
     /**
+     * Gets the current workspace's identifier.
+     *
+     * @return Current workspace IRI
+     */
+    public URI getCurrentWorkspace() {
+        return workspaceMetadataCache.getCurrentWorkspace().getUri();
+    }
+
+    /**
      * Determines the identifier of the repository context (named graph) in which vocabulary with the specified
      * identifier is stored.
      *

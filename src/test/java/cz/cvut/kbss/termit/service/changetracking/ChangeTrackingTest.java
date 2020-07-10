@@ -12,7 +12,7 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.model.util.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
@@ -33,6 +33,9 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private ChangeRecordDao changeRecordDao;
@@ -72,7 +75,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     @Test
     void persistingTermCreatesCreationChangeRecord() {
         enableRdfsInference(em);
-        transactional(() -> em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary)));
+        transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
         final Term term = Generator.generateTermWithId();
         transactional(() -> termService.addRootTermToVocabulary(term, vocabulary));
 
@@ -85,7 +88,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     @Test
     void updatingVocabularyLiteralAttributeCreatesUpdateChangeRecord() {
         enableRdfsInference(em);
-        transactional(() -> em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary)));
+        transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
         vocabulary.setLabel("Updated vocabulary label");
         transactional(() -> vocabularyService.update(vocabulary));
 
@@ -101,8 +104,8 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         enableRdfsInference(em);
         final Vocabulary imported = Generator.generateVocabularyWithId();
         transactional(() -> {
-            em.persist(imported, DescriptorFactory.vocabularyDescriptor(imported));
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(imported, descriptorFactory.vocabularyDescriptor(imported));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
         vocabulary.setLabel("Updated vocabulary label");
         vocabulary.setImportedVocabularies(Collections.singleton(imported.getUri()));
@@ -123,9 +126,9 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setGlossary(vocabulary.getGlossary().getUri());
-            em.persist(term, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         term.setDefinition("Updated term definition.");
@@ -146,11 +149,11 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final Term parent = Generator.generateTermWithId();
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setGlossary(vocabulary.getGlossary().getUri());
             parent.setGlossary(vocabulary.getGlossary().getUri());
-            em.persist(parent, DescriptorFactory.termDescriptor(vocabulary));
-            em.persist(term, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
@@ -172,9 +175,9 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final Term term = Generator.generateTermWithId();
         final String originalDefinition = term.getDefinition();
         transactional(() -> {
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setGlossary(vocabulary.getGlossary().getUri());
-            em.persist(term, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         final String newDefinition = "Updated term definition.";
@@ -196,11 +199,11 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final Term parent = Generator.generateTermWithId();
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             parent.setGlossary(vocabulary.getGlossary().getUri());
             term.setGlossary(vocabulary.getGlossary().getUri());
-            em.persist(parent, DescriptorFactory.termDescriptor(vocabulary));
-            em.persist(term, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
