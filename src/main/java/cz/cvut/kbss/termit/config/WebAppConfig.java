@@ -22,8 +22,6 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
 import cz.cvut.kbss.termit.util.ConfigParam;
-import cz.cvut.kbss.termit.workspace.CurrentWorkspaceInterceptor;
-import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -35,7 +33,10 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
-import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.servlet.mvc.ServletWrappingController;
 
@@ -54,11 +55,8 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     private final cz.cvut.kbss.termit.util.Configuration config;
 
-    private final WorkspaceStore workspaceStore;
-
-    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config, WorkspaceStore workspaceStore) {
+    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config) {
         this.config = config;
-        this.workspaceStore = workspaceStore;
     }
 
     @Bean(name = "multipartResolver")
@@ -117,11 +115,6 @@ public class WebAppConfig implements WebMvcConfigurer {
         urlProperties.put("/query", "sparqlEndpointProxyServlet");
         mapping.setMappings(urlProperties);
         return mapping;
-    }
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new CurrentWorkspaceInterceptor(workspaceStore));
     }
 
     @Override

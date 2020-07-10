@@ -17,6 +17,8 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
@@ -24,10 +26,13 @@ import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
@@ -47,6 +52,12 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private DescriptorFactory descriptorFactory;
+
+    @Autowired
+    private WorkspaceStore workspaceStore;
+
+    @Autowired
+    private WorkspaceMetadataCache workspaceMetadataCache;
 
     @Autowired
     private VocabularyDao sut;
@@ -366,5 +377,28 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                 conn.commit();
             }
         });
+    }
+
+    @Test
+    void findLoadsVocabularyInWorkspace() {
+        Mockito.reset(workspaceStore, workspaceMetadataCache);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Workspace workspace = new Workspace();
+        workspace.setLabel("test workspace");
+        workspace.setUri(Generator.generateUri());
+        final URI vocabularyCtx = Generator.generateUri();
+        transactional(() -> {
+            em.persist(vocabulary, new EntityDescriptor(vocabularyCtx));
+            em.persist(workspace, new EntityDescriptor(workspace.getUri()));
+        });
+        final WorkspaceMetadata wsMetadata = new WorkspaceMetadata(workspace);
+        wsMetadata.setVocabularies(Collections.singletonMap(vocabulary.getUri(),
+                new VocabularyInfo(vocabulary.getUri(), vocabularyCtx, vocabularyCtx)));
+        workspaceMetadataCache.putWorkspace(wsMetadata);
+        workspaceStore.setCurrentWorkspace(workspace.getUri());
+
+        final Optional<Vocabulary> result = sut.find(vocabulary.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(vocabulary, result.get());
     }
 }

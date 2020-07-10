@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.workspace;
 
 import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpSession;
 import java.net.URI;
 import java.util.Objects;
@@ -16,6 +17,13 @@ public class WorkspaceStore {
 
     public WorkspaceStore(HttpSession session) {
         this.session = session;
+    }
+
+    @PostConstruct
+    private void loadWorkspace() {
+        if (session.getAttribute(WORKSPACE_SESSION_ATT) != null) {
+            this.currentWorkspace = (URI) session.getAttribute(WORKSPACE_SESSION_ATT);
+        }
     }
 
     public void setCurrentWorkspace(URI currentWorkspace) {

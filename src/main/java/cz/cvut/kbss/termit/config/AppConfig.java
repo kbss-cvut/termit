@@ -19,7 +19,7 @@ import cz.cvut.kbss.termit.workspace.WorkspaceComponents;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
-import org.springframework.web.context.annotation.RequestScope;
+import org.springframework.web.context.annotation.SessionScope;
 
 import javax.servlet.http.HttpSession;
 
@@ -37,7 +37,7 @@ public class AppConfig {
     }
 
     @Bean(name = "workspaceStore")
-    @RequestScope
+    @SessionScope
     public WorkspaceStore workspaceStore(HttpSession session) {
         return new WorkspaceStore(session);
     }

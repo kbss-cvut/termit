@@ -90,21 +90,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf()
-            .disable()
+        http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf().disable()
             .authorizeRequests().antMatchers("/**").permitAll()
             .and().exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
             .and().cors().and().csrf().disable()
             .addFilter(authenticationFilter())
             .addFilter(
-                    new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils,
-                            userDetailsService,
-                            objectMapper)).sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and();
+                    new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils, userDetailsService,
+                            objectMapper))
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER);
     }
 
-    private JwtAuthenticationFilter authenticationFilter() throws Exception {
+    @Bean
+    public JwtAuthenticationFilter authenticationFilter() throws Exception {
         final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager(),
                 jwtUtils);
         authenticationFilter.setFilterProcessesUrl(SecurityConstants.SECURITY_CHECK_URI);

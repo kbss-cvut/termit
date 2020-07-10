@@ -10,8 +10,6 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
-import cz.cvut.kbss.termit.util.ConfigParam;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
@@ -33,6 +31,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
+import java.util.Collections;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -57,9 +56,6 @@ class SKOSImporterTest extends BaseDaoTestRunner {
 
     @Autowired
     private WorkspaceMetadataCache workspaceMetadataCache;
-
-    @Autowired
-    private Configuration config;
 
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
@@ -104,7 +100,11 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void importInsertsImportedDataIntoContextBasedOnOntologyIdentifier() {
+    void importInsertsImportedDataIntoContextConfiguredInWorkspace() {
+        final URI vocUri = URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/glosář");
+        final WorkspaceMetadata metadata = new WorkspaceMetadata();
+        metadata.setVocabularies(Collections.singletonMap(vocUri, new VocabularyInfo(vocUri, vocUri, vocUri)));
+        doReturn(metadata).when(workspaceMetadataCache).getCurrentWorkspaceMetadata();
         final AtomicInteger existingStatementCount = new AtomicInteger(0);
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
@@ -124,8 +124,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 final Optional<Resource> ctx = contexts.stream().filter(r -> r.stringValue().contains(GLOSSARY_IRI))
                                                        .findFirst();
                 assertTrue(ctx.isPresent());
-                assertThat(ctx.get().stringValue(),
-                        containsString(config.get(ConfigParam.WORKING_VOCABULARY_CONTEXT_EXTENSION)));
+                assertEquals(ctx.get().toString(), vocUri.toString());
                 final List<Statement> inAll = Iterations.asList(conn.getStatements(null, null, null, false));
                 final List<Statement> inCtx = Iterations.asList(conn.getStatements(null, null, null, false, ctx.get()));
                 assertEquals(inAll.size() - existingStatementCount.get(), inCtx.size());
