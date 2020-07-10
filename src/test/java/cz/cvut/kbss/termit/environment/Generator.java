@@ -316,10 +316,52 @@ public class Generator {
 
     /**
      * Simulates inference of the "je-pojmem-ze-slovniku" relationship between a term and its vocabulary.
-     *
-     * @param term          Term in vocabulary
+     * @param term Term in vocabulary
      * @param vocabularyIri Vocabulary identifier
-     * @param em            Transactional entity manager to unwrap repository connection from
+     * @param em Transactional entity manager to unwrap repository connection from
+     */
+    public static void addTermInVocabularyRelationship(Term term, URI vocabularyIri, EntityManager em) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            final ValueFactory vf = conn.getValueFactory();
+            conn.add(vf.createIRI(term.getUri().toString()),
+                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                    vf.createIRI(vocabularyIri.toString()));
+        }
+    }
+
+    public static Collection<Statement> generateWorkspaceReferences(Collection<Vocabulary> vocabularies,
+                                                                    Workspace workspace) {
+        final List<Statement> statements = new ArrayList<>();
+        final ValueFactory vf = SimpleValueFactory.getInstance();
+        final IRI ws = vf.createIRI(workspace.getUri().toString());
+        statements.add(vf.createStatement(ws, RDF.TYPE,
+                vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_metadatovy_kontext), ws));
+        final IRI hasContext = vf
+                .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext);
+        final IRI vocContext = vf
+                .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext);
+        vocabularies.forEach(v -> {
+            final IRI vocCtx = vf.createIRI(v.getUri().toString());
+            statements.add(vf.createStatement(ws, hasContext, vocCtx, ws));
+            statements.add(vf.createStatement(vocCtx, RDF.TYPE, vocContext, ws));
+        });
+        return statements;
+    }
+
+    public static Workspace generateWorkspace() {
+        final Workspace ws = new Workspace();
+        ws.setUri(generateUri());
+        ws.setLabel("Workspace " + randomInt(0, 10000));
+        ws.setDescription("Description of workspace " + ws.getLabel());
+        return ws;
+    }
+
+    /**
+     * Simulates inference of the "je-pojmem-ze-slovniku" relationship between a term and its vocabulary.
+     * @param term Term in vocabulary
+     * @param vocabularyIri Vocabulary identifier
+     * @param em Transactional entity manager to unwrap repository connection from
      */
     public static void addTermInVocabularyRelationship(Term term, URI vocabularyIri, EntityManager em) {
         final Repository repo = em.unwrap(Repository.class);

@@ -6,7 +6,6 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
@@ -63,7 +62,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 conn.begin();
-                conn.add(WorkspaceGenerator
+                conn.add(Generator
                         .generateWorkspaceReferences(Collections.singleton(vocabulary), wsMetadata.getWorkspace()));
                 conn.commit();
             }
@@ -116,7 +115,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(1, result.size());
         assertEquals(term.getLabel(), result.get(0).getLabel());
     }
@@ -140,7 +139,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(1, result.size());
         final Term resultParent = result.get(0);
         assertEquals(1, resultParent.getSubTerms().size());
@@ -189,7 +188,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(child, vocabulary.getUri(), em);
         });
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(1, result.size());
         final Term resultParent = result.get(0);
         assertThat(resultParent.getSubTerms(), anyOf(nullValue(), empty()));
@@ -250,7 +249,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(2, result.size());
         assertThat(result, hasItem(term));
         assertThat(result, hasItem(importedTerm));
