@@ -1,0 +1,29 @@
+@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+termit:termitdiagram  <http://purl.org/dc/terms/identifier>
+                "9076b586-af0d-4c65-9c80-019a8fe2c645" ;
+        <http://purl.org/dc/terms/relation>
+                termit-pojem:je-selektorem-definice-termu , termit-pojem:zablokovaný-uživatel-termitu , termit-pojem:cíl-definičního-výskytu , termit-pojem:cíl-souborového-výskytu , termit-pojem:omezený-uživatel-termitu , termit-pojem:má-startovní-pozici , termit-pojem:uzamčený-uživatel-termitu , termit-pojem:zdroj-definice-termu , termit-pojem:je-přiřazením-termu , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term> , termit-pojem:má-cíl , termit-pojem:záznam-o-textové-analýze , termit-pojem:má-koncovou-pozici , termit-pojem:administrátor-termitu , termit-pojem:má-selektor , termit-pojem:přiřazení-termu , termit-pojem:cíl , termit-pojem:má-přesný-text-quote , termit-pojem:cíl-výskytu , termit-pojem:má-cíl-výskytu , termit-pojem:má-slovník-pro-analýzu , termit-pojem:má-prefix-text-quote , termit-pojem:selektor-text-quote , termit-pojem:selektor , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj> , termit-pojem:selektor-pozici-v-textu , termit-pojem:selektor-xpath , termit-pojem:navržené-přiřazení-termu , termit-pojem:uživatel-termitu , termit-pojem:má-cíl-souborového-výskytu , termit-pojem:selektor-css , termit-pojem:má-suffix-text-quote , termit-pojem:výskyt-termu , termit-pojem:selektor-fragmentem , termit-pojem:má-zdroj-definice-termu , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> , termit-pojem:souborový-výskyt-termu , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/uživatel> , termit-pojem:má-analyzovaný-zdroj , termit-pojem:navržený-výskyt-termu , termit-pojem:selektor-definice , termit-pojem:definiční-výskyt-termu , termit-pojem:má-cíl-definičního-výskytu ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "TermItDiagram"@cs .
+
+termit:diagram  a       <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/diagram> , owl:Ontology ;
+        <http://purl.org/dc/terms/created>
+                "2020-05-26" ;
+        <http://purl.org/dc/terms/creator>
+                "Michal Med" , " Martin Ledvinka" ;
+        <http://purl.org/dc/terms/title>
+                "Slovník systému TermIt - diagram"@cs , "Vocabulary of system TermIt - diagram"@en ;
+        <http://purl.org/ontology/bibo/status>
+                "Specifikace"@cs , "Specification"@en ;
+        <http://purl.org/vocab/vann/preferredNamespacePrefix>
+                "termit-pojem" ;
+        <http://purl.org/vocab/vann/preferredNamespaceUri>
+                "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/" ;
+        owl:imports     <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/diagram> , termit:glosář ;
+        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/diagram/verze/1.1.2> .

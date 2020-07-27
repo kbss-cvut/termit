@@ -1,0 +1,100 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sp: <http://spinrdf.org/sp#> .
+@prefix spin: <http://spinrdf.org/spin#> .
+@prefix pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
+@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+
+# InverseOf between popisuje-dokument and má-dokumetový-slovník
+pdp:dokument a rdfs:Class ;
+	spin:rule [
+		a sp:Construct ;
+	sp:text """PREFIX pdp: <<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+	           CONSTRUCT { ?this pdp:má-dokumentový-slovník ?vocabulary . }
+	           WHERE { ?vocabulary pdp:popisuje-dokument ?this . }"""
+] .
+
+skos:Concept a rdfs:Class ;
+# InverseOf between je-vyskytem-termu and ma-vyskyt-termu
+	spin:rule [
+		a sp:Construct ;
+	sp:text """PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+	           CONSTRUCT { ?this termit:má-výskyt-termu ?occurrence . }
+	           WHERE { ?occurrence termit:je-přiřazením-termu ?this ;
+	                                a termit:výskyt-termu . }"""
+    ];
+# InverseOf between je-pojmem-ze-slovníku and má-glosář + skos:inScheme
+	spin:rule [
+		a sp:Construct ;
+	sp:text """PREFIX pdp: <<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+	           PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+	           CONSTRUCT { ?this pdp:je-pojmem-ze-slovníku ?vocabulary . }
+	           WHERE {  ?this skos:inScheme ?glossary .
+	                    ?vocabulary pdp:má-glosář ?glossary . }"""
+    ];
+
+    # InverseOf between skos:broader and skos:narrower
+    spin:rule [
+    	a sp:Construct ;
+    sp:text """PREFIX pdp: <<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
+               PREFIX skos: <http://www.w3.org/2004/02/skos/core#> .
+               CONSTRUCT { ?parent skos:narrower ?this . }
+               WHERE { ?this a skos:Concept ;
+                        skos:broader ?parent . }"""
+    ];
+
+    # InverseOf between je-prirazenim-termu and ma-zdroj-definice-termu in case the occurrence is a zdroj-definice-termu
+	spin:rule [
+		a sp:Construct ;
+	sp:text """PREFIX pdp: <<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+	           PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+	           CONSTRUCT { ?this termit:má-zdroj-definice-termu ?source . }
+	           WHERE { ?source a termit:zdroj-definice-termu ;
+	                           termit:je-přiřazením-termu ?this . }"""
+.
+
+pdp:dokumentovy-slovnik a rdfs:Class ;
+# Infer slovnik for each dokumentový-slovník
+	spin:rule [
+		a sp:Construct ;
+	sp:text """PREFIX pdp: <<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+	           CONSTRUCT { ?this a pdp:slovník . }
+	           WHERE { ?this a pdp:dokumentový-slovník . }"""
+    ]
+.
+
+pdp:dokument a rdfs:Class;
+# InverseOf between je-casti-dokumentu and ma-soubor
+	spin:rule [
+		a sp:Construct ;
+	sp:text """PREFIX pdp: <<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+	           PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+	           CONSTRUCT { ?this pdp:je-částí-dokumentu ?doc .}
+	           WHERE { ?doc pdp:má-soubor ?this . }"""
+    ] .
+
+owl:DatatypeProperty a rdfs:Class ;
+#  owl:DatatypeProperty subclass of rdf:Property
+spin:rule [
+    a sp:Construct ;
+    sp:text """CONSTRUCT { ?this a rdf:Property . }
+               WHERE { ?this a owl:DatatypeProperty . }"""
+
+] .
+
+owl:ObjectProperty a rdfs:Class ;
+#  owl:ObjectProperty subclass of rdf:Property
+spin:rule [
+    a sp:Construct ;
+    sp:text """CONSTRUCT { ?this a rdf:Property . }
+               WHERE { ?this a owl:ObjectProperty . }"""
+
+] .
+
+owl:AnnotationProperty a rdfs:Class ;
+#  owl:AnnotationProperty subclass of rdf:Property
+spin:rule [
+    a sp:Construct ;
+    sp:text """CONSTRUCT { ?this a rdf:Property . }
+               WHERE { ?this a owl:AnnotationProperty . }"""
+
+] .

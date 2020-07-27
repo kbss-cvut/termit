@@ -1,0 +1,100 @@
+Prefices
+{
+    rdf  :  http://www.w3.org/1999/02/22-rdf-syntax-ns#
+    rdfs :  http://www.w3.org/2000/01/rdf-schema#
+    owl  :  http://www.w3.org/2002/07/owl#
+    xsd  :  http://www.w3.org/2001/XMLSchema#
+    skos :  http://www.w3.org/2004/02/skos/core#
+    pdp  :  http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/
+    psys :  http://proton.semanticweb.org/protonsys#
+    termit : http://onto.fel.cvut.cz/ontologies/application/termit/pojem/
+}
+
+Axioms
+{
+    <skos:narrower> <rdfs:subPropertyOf> <skos:narrowerTransitive>
+    <skos:narrowerTransitive> <psys:transitiveOver> <skos:narrower>
+}
+
+Rules
+{
+  Id: rdfs5
+     a  <rdfs:subPropertyOf>  b               [Constraint a != b, a != c, b != c]
+     b  <rdfs:subPropertyOf>  c
+    -------------------------------
+     a  <rdfs:subPropertyOf>  c
+
+  Id: rdfs7
+    x a y
+    a <rdfs:subPropertyOf> b        [Constraint a != b]
+    -------------------------------
+    x b y
+
+  Id: rdfs9
+    a  <rdf:type>  x                [Constraint x != y]
+    x  <rdfs:subClassOf>  y
+    -------------------------------
+    a  <rdf:type>  y
+
+  Id: rdfs11
+     x  <rdfs:subClassOf>  y                  [Constraint x != y, x != z, y != z]
+     y  <rdfs:subClassOf>  z
+    -------------------------------
+     x  <rdfs:subClassOf>  z
+
+
+  Id: psys_transitiveOver
+    p <psys:transitiveOver> q
+    x p y
+    y q z
+    ---------------
+    x p z
+
+  Id: pdp_dokument_1
+
+    vocabulary <pdp:popisuje-dokument> this
+    -------------------------------
+    this <pdp:má-dokumentový-slovník> vocabulary
+
+  Id: pdp_term_2_5
+    vocabulary <pdp:má-glosář> glossary
+    this <pdp:je-pojmem-ze-slovníku> vocabulary
+    -------------------------------
+    glossary <pdp:obsahuje-pojem> this
+    this <skos:inScheme> glossary
+
+  Id: pdp_term_4
+
+    this <rdf:type> <pdp:dokumentový-slovník>
+    -------------------------------
+    this <rdf:type> <pdp:slovník>
+
+  Id: pdp_term_5
+
+    doc <pdp:má-soubor> this
+    -------------------------------
+    this <pdp:je-částí-dokumentu> doc
+
+  Id: pdp_term_6
+
+    this <rdf:type> <skos:Concept>
+    this <skos:broader> parent
+    -------------------------------
+    parent <skos:narrower> this
+
+  Id: pdp_term_7
+
+      this <rdf:type> <skos:Concept>
+      this <skos:inScheme> glossary
+      vocabulary <pdp:má-glosář> glossary
+      -------------------------------
+      this <pdp:je-pojmem-ze-slovníku> vocabulary
+
+  Id: pdp_term_8
+
+    source <rdf:type> <termit:zdroj-definice-termu>
+    source <termit:je-přiřazením-termu> this
+    -------------------------------
+    this <termit:má-zdroj-definice-termu> source
+}
+

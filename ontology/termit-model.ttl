@@ -1,0 +1,222 @@
+@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+termit-pojem:cíl-definičního-výskytu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:cíl-výskytu .
+
+termit-pojem:má-prefix-text-quote
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         termit-pojem:selektor-text-quote ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:souborový-výskyt-termu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:výskyt-termu .
+
+termit-pojem:je-selektorem-definice-termu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:selektor-definice ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:zablokovaný-uživatel-termitu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:uživatel-termitu .
+
+<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník>
+        a       owl:Class .
+
+termit-pojem:administrátor-termitu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:uživatel-termitu .
+
+termit-pojem:má-koncovou-pozici
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         termit-pojem:selektor-pozici-v-textu ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:záznam-o-textové-analýze
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit-pojem:uživatel-termitu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/uživatel> .
+
+termit-pojem:má-zdroj-definice-termu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term> ;
+        rdfs:range          xsd:boolean ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:je-draft
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term> ;
+        rdfs:range          termit-pojem:zdroj-definice-termu ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term>
+        a       owl:Class .
+
+termit-pojem:selektor
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit-pojem:má-cíl-definičního-výskytu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:definiční-výskyt-termu ;
+        rdfs:range          termit-pojem:cíl-definičního-výskytu ;
+        rdfs:subPropertyOf  termit-pojem:má-cíl-výskytu .
+
+<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj>
+        a       owl:Class .
+
+termit-pojem:cíl-souborového-výskytu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:cíl-výskytu .
+
+termit-pojem:selektor-xpath
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:selektor .
+
+termit-pojem:má-přesný-text-quote
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         termit-pojem:selektor-text-quote ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:definiční-výskyt-termu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:výskyt-termu .
+
+termit-pojem:navržené-přiřazení-termu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:přiřazení-termu .
+
+termit-pojem:cíl-výskytu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:cíl .
+
+termit-pojem:cíl  a      <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit-pojem:je-přiřazením-termu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:přiřazení-termu ;
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:selektor-definice
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit-pojem:má-cíl-souborového-výskytu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:souborový-výskyt-termu ;
+        rdfs:range          termit-pojem:cíl-souborového-výskytu ;
+        rdfs:subPropertyOf  termit-pojem:má-cíl-výskytu .
+
+<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/uživatel>
+        a       owl:Class .
+
+termit-pojem:navržený-výskyt-termu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:výskyt-termu .
+
+termit-pojem:selektor-pozici-v-textu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:selektor .
+
+termit-pojem:zdroj-definice-termu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:souborový-výskyt-termu .
+
+termit-pojem:uzamčený-uživatel-termitu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:uživatel-termitu .
+
+termit-pojem:má-cíl  a      owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:přiřazení-termu ;
+        rdfs:range          termit-pojem:cíl ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:má-slovník-pro-analýzu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:záznam-o-textové-analýze ;
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:selektor-fragmentem
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:selektor .
+
+termit-pojem:má-startovní-pozici
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         termit-pojem:selektor-pozici-v-textu ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:má-cíl-výskytu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:range          termit-pojem:cíl-výskytu ;
+        rdfs:subPropertyOf  termit-pojem:má-cíl .
+
+termit:model  a         owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/model> ;
+        <http://purl.org/dc/terms/created>
+                "2020-05-26" ;
+        <http://purl.org/dc/terms/creator>
+                "Michal Med" , " Martin Ledvinka" ;
+        <http://purl.org/dc/terms/title>
+                "Vocabulary of system TermIt - model"@en , "Slovník systému TermIt - model"@cs ;
+        <http://purl.org/ontology/bibo/status>
+                "Specifikace"@cs , "Specification"@en ;
+        <http://purl.org/vocab/vann/preferredNamespacePrefix>
+                "termit-pojem" ;
+        <http://purl.org/vocab/vann/preferredNamespaceUri>
+                "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/" ;
+        owl:imports     <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/model> , termit:glosář ;
+        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/model/verze/1.1.2> .
+
+termit-pojem:selektor-css
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:selektor .
+
+termit-pojem:přiřazení-termu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit-pojem:selektor-text-quote
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:selektor .
+
+termit-pojem:omezený-uživatel-termitu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:uživatel-termitu .
+
+termit-pojem:má-suffix-text-quote
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         termit-pojem:selektor-text-quote ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:má-selektor
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:cíl-výskytu ;
+        rdfs:range          termit-pojem:selektor ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:má-analyzovaný-zdroj
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:záznam-o-textové-analýze ;
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:výskyt-termu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  termit-pojem:přiřazení-termu .

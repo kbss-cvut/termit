@@ -1,0 +1,2248 @@
+<http://data.iprpraha.cz/zdroj/slovnik/mpp-3> {
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/plocha-technicke-infrastruktury>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "plocha technické infrastruktury"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-1/h-II/cl-6/c-2/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha sloužící pro budoucí umístění objektu technické infrastruktury"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/parkove-prostranstvi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkové prostranství"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-74/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí veřejně přístupná struktura prostranství nestavebních bloků s převažujícím zastoupením nezpevněných, popřípadě vodních ploch, přičemž nezpevněné plochy jsou osety či osázeny vegetačními prvky zpravidla v uceleném kompozičním záměru. Parkové prostranství je vybaveno sítí cest a rekreačním mobiliářem, zpravidla též zařízeními nebo speciálními plochami pro možnost sportu a her pod otevřeným nebem"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajina-vyraznych-vrchu>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina výrazných vrchů"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-82/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí struktura krajiny zahrnující jednotlivé, v kontextu okolí výrazné terénní vyvýšeniny, tj. svědecké vrchy, tabulové hory, vypreparované strukturní hřbety a suky apod., včetně vyvýšenin vzniklých lidskou činností. Způsob využití není znakem ovlivňujícím vymezení krajiny výrazných vrchů"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/slovnik> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Slovník mpp-3"@cs ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-autora>
+                    <http://data.iprpraha.cz/zdroj/uzivatel/petr-kremen> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-glosar>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/glosar> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-model>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/model> ;
+            <http://purl.org/dc/terms/created>
+                    "2018-09-21T12:22:59.755Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/nezastavitelna-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelná lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-I/cl-60/c-3" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "nezastavitelné lokality tvoří nezastavitelné území. V nezastavitelném území se mohou vyskytovat stávající zastavěné plochy, označované jako samoty viz čl. 119. Vymezeny jsou obvykle hranicí zastavěného území, v případech rozvoje krajiny, který je specifikován v čl. 9 a 96, jsou vymezeny jako zastavěné stavební pozemky. V nezastavitelných lokalitách lze umísťovat nové stavby, zařízení a jiná opatření pouze na základě využití území v rozsahu stanoveném Metropolitním plánem v čl. 89 až 91"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/struktura-zahradniho-mesta>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura zahradního města"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-68/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura samostatných staveb umístěných ve vlastních zahradách"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/struktura-arealu-vybavenosti>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura areálů vybavenosti"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-71/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura zástavby veřejně přístupných areálů"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/parkovy-les>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkový les"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-75/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "rozumí lesní struktura v městské krajině, která je uzpůsobena pro rekreační účely z hlediska své prostorové struktury, druhové a věkové skladby, stupně zakmenění, přítomnosti ploch bez lesních dřevin, uspořádáním a hustotou cestní sítě a doplňkovou vybaveností"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/lesni-krajina-v-rovine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lesní krajina v rovině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-76/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí struktura zarovnaných povrchů plošin, které jsou z významné části tvořeny lesními komplexy. Lesní hospodaření nekolidující s rekreačním významem příměstských lesů je hlavním znakem využití lesní krajiny v rovině"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "modernistická struktura (zástavba)"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-1/h-II/cl-6/c-1/b-g" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/stavba> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "zástavba, která vznikla především na principech Athénské charty,  převážně v druhé polovině 20. století, jedná se o volné zastavění solitérních budov a zařízení s přísným oddělením jednotlivých funkcí"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/Index-stabilizovane-casti>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Index stabilizované části"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-1/h-III/cl-11/c-3" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/lokality> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "„is“ je podílem HPP stávajících stavebních bloků ve stabilizované části lokality a rozlohy této stabilizované části"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/stabilita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stabilita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-1/h-II/cl-5/b-j" , "mpp/3.2/ca-3/h-III/cl-93/c-3" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "stav území, ve kterém se nepředpokládají zásadní změny charakteru, pokud jsou změny předpokládány, je území označeno jako transformační nebo rozvojové"@cs , "se rozumí taková konstatovaná rovnováha v území, při níž se neuplatňují přímo specifikované požadavky na podstatnou změnu charakteru území"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> ;
+            <http://www.w3.org/2004/02/skos/core#topConceptOf>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/hybridni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "hybridní struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-65/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura kompaktních a rozvolněných bloků vyhovující současným i budoucím technickým inovacím a požadavkům na městskou výstavbu"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/leso-zemedelska-krajina-v-rovine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "leso-zemědělská krajina v rovině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-77/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "v rovině se rozumí struktura mírně zvlněných tvarů povrchu, které jsou z převážné části odlesněné. Zemědělské využití při současné přítomnosti přírodě blízkých ploch v podobě menších hájů, mezí, břehových porostů podél potoků, ploch sekundárních trávníků apod. je hlavním znakem využití leso-zemědělské krajiny"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/model>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/model> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Model mpp-3"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/rostla-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "rostlá struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-63/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí především urbánní struktura kompaktních bloků historického centra Prahy"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/index-navrhovy>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "index návrhový"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-1/h-III/cl-11/c-4" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/lokality> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "„in“ je podílem součtu HPP stávajících stavebních bloků ve stabilizované části lokality a předpokládaných HPP v rozvojové anebo transformační části lokality a rozlohy celé lokality. Návrhový index je teoretickou hodnotou, které by bylo dosaženo při úplném naplnění jednotlivých ploch potenciálu v dané lokalitě. Do návrhového indexu nejsou započítávány proluky"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/koridor-dopravni-a-technicke-infrastruktury>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "koridor dopravní a technické infrastruktury"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-1/h-II/cl-6/c-2/b-a" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha souvislého pásu území sloužící pro budoucí umístění trasy liniové stavby, je-li trasa vymezena pouze linií, má se za to, že koridor pro budoucí umístění trasy činí stanovený rozměr (m) na každou stranu od vymezené linie"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/nestavebni-blok>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nestavební blok"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-1/h-II/cl-6/c-1/b-j" , "mpp/3.2/ca-2/h-II/cl-37/c-2" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/blok> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "blok vymezený pro nestavební účely zejména krajiny ve městě, má obdobné vlastnosti, jako dílčí plochy otevřené krajiny"@cs , "zpravidla charakterizuje nezpevněný terén pokrytý vegetací s různou mírou kulturních zásahů a úprav. Stavby včetně staveb budov se nevyskytují či vyskytují ojediněle, umísťovat nové stavby včetně budov je přípustné pouze za podmínek stanovených v čl. 88 a 118. Urbánní vztahy jsou nahrazeny návazností cestní sítě v městských parcích na uliční prostranství"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> ;
+            <http://www.w3.org/2004/02/skos/core#topConceptOf>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/blokova-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "bloková struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-64/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura kompaktních bloků"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajina-uzkych-zariznutych-udoli-v-plosine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina úzkých zaříznutých údolí v plošině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-80/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí struktura kontrastní kombinace zarovnaného povrchu plošiny, z převážné části odlesněné, a relativně výrazně zaříznutých, avšak úzkých a v řádu maximálně několika desítek metrů zahloubených údolí, převážně lesnatých či s jinou trvalou vegetací. Zemědělsky využívané plošiny proříznuté převážně extenzivně využívanými potočními údolími jsou hlavními znaky využití krajiny úzkých zaříznutých údolí v plošině"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/parkovy-areal>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkový areál"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-73/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí struktura nestavebního charakteru s významným zastoupením nezpevněných ploch, které jsou osety či osázeny vegetačními prvky. Parkový areál je vůči svému okolí jednoznačně ohraničen, zpravidla formou oplocení. Obvyklým typem přístupnosti areálu je přístupnost omezená stanoveným režimem"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/linearni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lineární struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-72/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura utvářená stavbami infrastruktury"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajina-vyraznych-udoli>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina výrazných údolí"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-81/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí struktura výrazných údolí Vltavy a jejích přítoků, z významné části lesnatých, často s výskytem skalních výchozů ve svazích a na jejich horních hranách, přičemž bezlesé části svahů jsou udržované bez dřevinné vegetace cíleným managementem; místy je původní reliéf změněn v důsledku minulé i probíhající těžby nerostných surovin. Lesní hospodaření nekolidující s rekreačním významem příměstských lesů a ochrana území vysokých přírodních a krajinných hodnot, zahrnující i cílené zásahy člověka, jsou hlavními znaky využití krajiny výrazných údolí"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/zemedelska-krajina-v-rovine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zemědělská krajina v rovině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-79/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí struktura zarovnaných povrchů plošin a širokých říčních niv, které jsou téměř v celém svém rozsahu odlesněné. Intenzivní zemědělské využití je hlavním znakem využití zemědělské krajiny v rovině"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/zemedelsko-rybnicni-krajina>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zemědělsko-rybniční krajina"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-78/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí struktura ploché zemědělské krajiny se soustavou rybníků v malé vzdálenosti od sebe navzájem na jednom vodním toku nebo na více propojených vodních tocích. Člověkem vytvořená rybniční soustava v okolním převážně zemědělsky využívaném území je hlavním znakem využití zemědělsko-rybniční krajiny"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/heterogenni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "heterogenní struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-66/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura kombinující více typů zástavby"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/zastavitelna-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-I/cl-60/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "zastavitelné lokality tvoří zastavitelné území vymezené hranicí zastavitelného území. V zastavitelných lokalitách lze v souladu s podmínkami pro ně stanovenými umísťovat nové stavby a zařízení, jakož i obnovovat, rozšiřovat či upravovat stavby a zařízení stávající"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/vesnicka-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "vesnická struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-67/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura kombinující kompaktní zástavbu v jádru historické obce a navazující zástavbu samostatných staveb ve vlastních zahradách. Zástavba může být doplněna o jednotlivé uzavřené areály"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/modernisticka-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "modernistická struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-69/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura kombinující solitérní stavby a uzavřené areály společně umístěné v parku ve volné zástavbě"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/glosar>
+            a       <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/glosar> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Glosář mpp-3"@cs , "Textové části MPP 3.2"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/struktura-arealu-produkce>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura areálů produkce"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.2/ca-3/h-II/cl-70/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "se rozumí urbánní struktura flexibilní zástavby uzavřených areálů"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3> .
+}
+
+<http://data.iprpraha.cz/zdroj/slovnik/mpp-2> {
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/linearni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lineární struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-88/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktury s výrazně převažujícím podélným uspořádáním; jedná se o struktury tvořené převážně lineární silničními nebo železničními stavbami, která jsou bariérou mezi lokalitami. Vyznačují se absencí veřejného prostranství, minimální mírou prostupnosti, nulovou až nízkou mírou zastavění."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/struktura-arealu-vybavenosti>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura areálů vybavenosti"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-87/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "ucelené a relativně uzavřené urbánní struktury v krátkodobě i dlouhodobě stabilizovaném území, popřípadě v doposud nestabilizovaném území. Typ uspořádání může být klasické město, předměstí, periferie v závislosti na sousedství."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/nezastavitelna-rekreacni-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelná rekreační lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-III/cl-106/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "poskytuje prostor pro odpočinek člověka v otevřené krajině a podílejí se významnou měrou na kvalitě života obyvatel města, jsou vymezeny pro rozvoj a ochranu tohoto určení. V případě pochybností nebo kolizí s jinými způsoby využívání území se upřednostňuje rekreační rozvoj."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/modernisticka-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "modernistická struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-85/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "rozvolněná struktura v krátkodobě stabilizovaném území. Jedná se o uspořádání periferie."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/mira-stability>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "míra stability"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-III/cl-109/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "předpokládaná míra změn ve struktuře veřejných prostranství a typu struktury zástavby nebo typu krajiny. Míra stability se vždy vztahuje na konkrétní území v detailu jednotlivých ploch, odvozeně z tohoto detailu též na lokality."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/zastavitelnost>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelnost"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-75" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/charakter> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Zastavitelnost je jednou z podstatných skutečností pro stanovení charakteru lokality. Definuje základní rozdíl mezi lokalitami nezastavitelnými – otevřené krajiny a lokalitami zastavitelnými – města a krajiny ve městě."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/rozvojova-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "rozvojová plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-IV/cl-115/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "nově navržené zastavitelné území, v němž je navrhováno vytvoření zcela nového (cílového) charakteru."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/zemedelsko-rybnicni-krajina>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zemědělsko-rybniční krajina"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-94/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktury ploché zemědělské krajiny se soustavou rybníků v malé vzdálenosti od sebe navzájem na jednom vodním toku nebo na více propojených vodních tocích. Člověkem vytvořená rybniční soustava je určujícím znakem pro vymezení typu struktury."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lesni-krajina-v-rovine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lesní krajina v rovině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-92/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktury zarovnaných povrchů plošin s nízkou produkční schopností (bonity) půdy, tj. obvykle minerálně chudé půdy na štěrkopískových terasách či vysýchavé půdy na píscích; v méně častých případech výrazně zavlhčené až podmáčené půdy v mělkých depresích, nevhodné k zemědělství a tedy jsou dlouhodobě zalesněny."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/vesnicka-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "vesnická struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-83/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "převážně horizontálně uspořádané urbánní struktury v dlouhodobě stabilizovaném území. Centralizujícím charakterem váže na vlastnosti středu města."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/formalni-rozvoj-krajiny>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "formální rozvoj krajiny"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-IV/cl-116/o-2" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "změna ze zastavěného území na nezastavitelné, přičemž požadavky jsou kladeny na rozvoj stávajícího (přírodního) charakteru, na zlepšení krajinných, přírodních a rekreačních hodnot a ekologické stability území. Formální rozvoj krajiny znamená formální korekci nesouladů vznikajících povinnými postupy vymezení hranice zastavěného území zejména ve vztahu k intravilánu 66, jakož i další korekce dílčích nesouladů vyplývajících např. z hranice intravilánu 66 stanovené v měřítku základní mapy nezohledňujícím hranice pozemkových parcel či korekce odstraňující dílčí nesoulady mezi stávající parcelní kresbou, povinnými postupy vymezení hranice zastavěného území a detailem, který je mimo podrobnost grafického zpracování Metropolitního plánu. Prostřednictvím formálního rozvoje krajiny se do nezastavitelného území navracejí plochy ve skutečnosti krajinné (přírodní), dnes zařazené do zastavěného území; nejedná se o reálný rozvoj krajiny a neukládá se proto změna struktury krajiny."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/nezastavitelna-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelná lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-1/h-III/cl-12/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Nezastavitelné lokality tvoří nezastavitelné území. V nezastavitelných lokalitách lze umísťovat nové stavby, zařízení a jiná opatření pouze v rozsahu stanoveném Metropolitním plánem v čl. 106 až 108 tohoto opatření."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/formalni-rozvoj-mesta>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "formální rozvoj města"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-IV/cl-116/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "vyplnění plošně málo významných enkláv dílčích nezastavěných území uvnitř zastavěného a zastavitelného území nestavebními plochami (formou parkového prostranství, parkového lesa nebo uličního prostranství) a lineárními typy struktury (železnice a nadřazené komunikace). Specifickým případem jsou vinice a zahradnictví, které jsou formálně řazeny do zastavitelného území, ale zůstávají jako nestavební plochy."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/urcujici-charakter>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "určující charakter"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-I/cl-69/o-3" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/charakter> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Určujícím charakterem lokality se rozumí základní prostorová charakteristika každé lokality, která má být dále rozvíjena; je jedinečným souborem vlastností lokality"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/parkove-prostranstvi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkové prostranství"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-90/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "veřejně přístupné struktury prostranství nestavebního charakteru s převažujícím zastoupením nezpevněných, popřípadě vodních ploch, přičemž nezpevněné plochy jsou osety či osázeny vegetačními prvky zpravidla v uceleném kompozičním záměru. Parkové prostranství je vždy vybaveno sítí cest a rekreačním mobiliářem, zpravidla též zařízeními nebo speciálními plochami pro možnost sportu a her pod otevřeným nebem."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/rostla-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "rostlá struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-79/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "neplánovitě vzniklá a dlouhodobě se rozvíjející urbánní struktura v dlouhodobě vysoce stabilizovaném území. Převážně se jedná o typ uspořádání města."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/zastavitelna-rekreacni-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná rekreační lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-III/cl-105/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "poskytuje prostor pro aktivní i pasivní odpočinek a podílejí se významnou měrou na kvalitě života obyvatel města, jsou vymezeny pro rozvoj a ochranu této specifické role. V případě pochybností nebo kolizí s jinými způsoby využívání území se upřednostňuje rekreační rozvoj."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/struktura-arealu-produkce>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura areálů produkce"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-86/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "prostorově uzavřená urbánní struktura v krátkodobě stabilizovaném území. Převážně se jedná o typ uspořádání periferie."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/blokova-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "bloková struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-80/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plánovitě založená pravidelná urbánní struktura v dlouhodobě stabilizovaném území. Převážně se jedná o typ uspořádání města."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stabilita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stabilita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-III/cl-109/o-2" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "taková konstatovaná rovnováha v území, při níž se neuplatňují přímo specifikované požadavky na podstatnou změnu charakteru území."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/typ-struktury-zastavby>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "typ struktury zástavby"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/krajina-vyraznych-vrchu>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina výrazných vrchů"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-98/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktury krajiny zahrnující jednotlivé, v kontextu okolí výrazné terénní vyvýšeniny, tj. svědecké vrchy, tabulové hory, vypreparované strukturní hřbety a suky apod., včetně vyvýšenin vzniklých lidskou činností. Výrazný vyvýšený morfologický tvar je určujícím znakem pro vymezení typu struktury."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/nestavebni-charakter>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nestavební charakter"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-1/h-I/cl-2/b-l" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/charakter> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "charakter zastavitelného území (lokalit, ploch anebo bloků v zastavitelném území), v němž jsou výlučně nebo převážně zastoupeny přírodní složky životního prostředí, zejména voda, půda, vegetační prvky a kryt a živočichové. Území (lokality, plochy, bloky) s nestavebním charakterem (nestavebního charakteru) jsou určené převážně pro nestavební účely (např. lokality s nestavebním charakterem, kde převažující část lokality tvoří parky, plochy a koridory ÚSES, nestavební bloky parků v zastavitelných lokalitách),"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/parkovy-les>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkový les"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-91/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "lesní struktury, které v městském prostředí poskytují vhodné podmínky pro rekreaci, relaxaci, oddych a neorganizovaný sport a je pro tyto účely z hlediska své prostorové struktury, druhové a věkové skladby, stupně zakmenění, přítomnosti ploch bez lesních dřevin, uspořádáním a hustotou cestní sítě a doplňkovou vybaveností uzpůsoben."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/nezastavitelna-produkcni-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelná produkční lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-III/cl-108/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "území otevřené krajiny přeměněné člověkem za účelem hospodářského využití, zejména zemědělstvím a těžbou nerostných surovin; jsou vymezeny pro rozvoj tohoto určení, se zdůrazněním trvalé udržitelnosti exploatace obnovitelných přírodních zdrojů a rekultivace zdevastovaných území. V případě pochybností nebo kolizí s jinými způsoby využívání území se upřednostňuje produkční rozvoj."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/struktura-zahradniho-mesta>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura zahradního města"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-84/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktury převážně solitérních staveb samostatně umístěných na pozemcích (samostatných zahradách) ve stabilizovaném území. Jedná se o typ uspořádání předměstí."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/heterogenni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "heterogenní struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-82/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura ve stabilizovaných územích s významným transformačním potenciálem nebo urbánní struktura v doposud nestabilizovaném území."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/krajina-uzkych-zariznutych-udoli-v-plosine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina úzkých zaříznutých údolí v plošině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-96/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktury kombinace zarovnaného povrchu plošiny, dominantně zemědělsky využívané, a relativně výrazně zaříznutých, avšak úzkých a v řádu maximálně několika desítek metrů zahloubených údolí, pro něž jsou typické úzké lesní pásy, travnatá lada a ovocné sady, zpravidla opuštěné, břehové porosty podél potoků, aluviální louky a menší vodní nádrže. Zemědělsky využívané plošiny a úzká potoční údolí jsou určujícími znaky pro vymezení typu struktury."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/glosar>
+            a       <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/glosar> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Glosář mpp-2"@cs , "Textové části MPP 2.2"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/hybridni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "hybridní struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-81/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura v doposud nestabilizovaném území, případně ve stabilizovaných územích s významným transformačním potenciálem. Struktura je schopna pojmout zástavbu vyhovující současným i budoucím technickým i technologickým inovacím a požadavkům na městskou výstavbu. Převážně se jedná o typ uspořádání města."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/zastavitelna-produkcni-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná produkční lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-III/cl-103/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "poskytuje pracovní příležitosti a podílejí se na hospodářství města významnou měrou; jsou vymezeny pro rozvoj a ochranu této specifické role. V případě pochybností nebo při kolizí s jinými způsoby využívání území se upřednostňuje produkční a obchodní rozvoj lokality."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stabilizovana-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stabilizovaná plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-IV/cl-113/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "zastavitelné území s ucelenou a pouze omezeně narušenou nebo nedotvořenou strukturou veřejných prostranství a zástavby, která ovšem může a má doznávat dílčích změn v souladu s cílovým charakterem lokality, který doplňuje a rozvíjí její stabilitu."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/cilovy-charakter>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "cílový charakter"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-I/cl-69/o-4" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/charakter> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Cílovým charakterem se rozumí stav území navržený v Metropolitním plánu, odvozený zejména od stávajícího stavu (určujícího charakteru) v lokalitě stabilizované nebo od stavu navrženého (regulativů) v lokalitě transformační nebo rozvojové. Cílem je zlepšování stavu území a postupná stabilizace lokality."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/zemedelska-krajina-v-rovine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zemědělská krajina v rovině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-95/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktury zarovnaných povrchů plošin a širokých říčních niv, které jsou díky plochému reliéfu a zpravidla kvalitní půdě (černozemě, bonitní hnědozemě) v podstatném rozsahu zemědělsky využívány. Zemědělské využití a plochý reliéf jsou určujícími znaky pro vymezení typu struktury."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/zastavitelna-obytna-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná obytná lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-III/cl-104/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "lokalita nejčastěji se v území vyskytující, zahrnující většinou obydlené území v širokém slova smyslu; využití je obecně ohleduplně smíšené, do těchto lokalit směřuje veřejná vybavenost včetně staveb pro obchod, která se přizpůsobuje charakteristické struktuře zástavby – velikosti stavebního bloku. V případě pochybností nebo kolizí s jinými způsoby využívání území se upřednostňuje smíšený rozvoj lokality."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/struktura-zastavby>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura zástavby"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-76" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavba> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Struktura zástavby v zastavitelných lokalitách je definována především vazbami jednotlivých prvků zástavby a veřejných prostranství. Tyto vazby jsou závislé na převažující vazbě zástavbyk uličním a stavebním čarám, s určením dalších podstatných skutečností, které tvoří míra historické stabilizace, měřítko, povaha parteru, typ bloků, veřejných prostranství a reliéf terénu."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/krajina-vyraznych-udoli>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina výrazných údolí"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-97/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktury výrazných údolí Vltavy a jejích přítoků, zpravidla lesnatých, často s výskytem skalních výchozů ve svazích a na jejich horních hranách, přičemž bezlesé horní hrany svahů jsou zpravidla udržované bez dřevinné vegetace cíleným managementem. Místy je původní reliéf změněn v důsledku minulé i probíhající těžby nerostných surovin. Geomorfologický tvar reliéfu a výskyt lesních porostů jsou určujícími znaky pro vymezení typu struktury."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/transformacni-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "transformační plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-IV/cl-114/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "zastavitelné území s narušeným až velmi narušeným a neustáleným charakterem, předpokládající rozsáhlé, popřípadě celkové změny v utváření území nebo jeho využití za podmínek stanovených pro jednotlivé plochy v souladu s cílovým charakterem lokality."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/parkovy-areal>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkový areál"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-89/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "samostatná nestavební struktura s významným zastoupením nezpevněných ploch, které jsou osety či osázeny vegetačními prvky. Parkový areál je vůči svému okolí jednoznačně ohraničen, zpravidla formou oplocení."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/model>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/model> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Model mpp-2"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/slovnik> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Slovník mpp-2"@cs ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-autora>
+                    <http://data.iprpraha.cz/zdroj/uzivatel/petr-kremen> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-glosar>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/glosar> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-model>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/model> ;
+            <http://purl.org/dc/terms/created>
+                    "2018-09-21T12:22:59.788Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/zastavitelna-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-1/h-III/cl-11/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Zastavitelné lokality tvoří zastavitelné území. V zastavitelných lokalitách lze v souladu s podmínkami pro ně stanovenými umísťovat nové stavby a zařízení, jakož i obnovovat, rozšiřovat či  pravovat stavby a zařízení stávající."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/leso-zemedelska-krajina>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "leso-zemědělská krajina"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-II/cl-93/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/stavby> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktury mírně zvlněných tvarů povrchu, které jsou využívány převážně zemědělsky; v území se i díky pestřejšímu reliéfu zpravidla vyskytují ve větší míře přírodě blízká společenstva menších hájů, mezí, břehových porostů podél potoků, plochy sekundárních trávníků apod. Nevyhraněnost tvarů reliéfu i způsobu využívání území, při mírné dominanci zemědělství, jsou určujícími znaky pro vymezení typu struktury."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/nezastavitelna-prirodni-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelná přírodní lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/2.2/ca-3/h-III/cl-107/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-2/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "výlučně otevřená krajina v její přírodní a přírodě blízké podobě, která je relativně málo ovlivněna blízkostí urbanizovaného území (města), jsou vymezeny pro rozvoj a ochranu tohoto určení. V případě pochybností nebo kolizí s jinými způsoby využívání území se upřednostňuje přírodě blízký rozvoj."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-2> .
+}
+
+<http://data.iprpraha.cz/zdroj/slovnik/sb-z-2013-256> {
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2013-256/glosar>
+            a       <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/glosar> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Glosář sb-z-2013-256"@cs , "Katastrální zákon"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2013-256/stavebni-parcela>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stavební parcela"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "KZ/ca-1/p-2/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2013-256/parcela> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "pozemek evidovaný v druhu pozemku zastavěná plocha a nádvoří"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2013-256> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2013-256>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/slovnik> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Slovník sb-z-2013-256"@cs ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-autora>
+                    <http://data.iprpraha.cz/zdroj/uzivatel/petr-kremen> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-glosar>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2013-256/glosar> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-model>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2013-256/model> ;
+            <http://purl.org/dc/terms/created>
+                    "2018-09-21T12:22:59.725Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2013-256/model>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/model> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Model sb-z-2013-256"@cs .
+}
+
+<http://data.iprpraha.cz/zdroj/slovnik/psp-2016> {
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/nezastavitelna-prirodni-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelná přírodní plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-6/o-2/b-a" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha s nejvyšší mírou blízkosti přírodnímu stavu"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/cara-zastaveneho-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "čára zastavěného území"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-3/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/hranice> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "hranice mezi zastavěným a nezastavěným územím"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/vyznamna-ulice>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "významná ulice"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-II/p-13/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/typ-ulice> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "druh veřejného prostranství s vysokou mírou důležitosti a významu v systému veřejných prostranství města se zvláštním významem pro rozsáhlejší části města (městské čtvrti), popřípadě jednotlivé lokality"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/parkove-upravena-cast-dalsich-verejnych-prostranstvi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkově upravená část dalších veřejných prostranství"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/zastavitelna-obytna-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná obytná plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-6/o-1/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "zahrnující převážně smíšené plochy bydlení veřejné vybavenosti; jejich součástí mohou být i další stavby a zařízení, které jsou slučitelné s bydlením"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/model>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/model> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Model psp-2016"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/nelesni-prirode-blizka-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nelesní přírodě blízká plocha"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/zastavenost>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavěnost"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/blok>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "blok"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-1/p-2/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "ucelená část území, tvořená souborem pozemků, jedním pozemkem nebo jeho částí, zpravidla ohraničená uličním prostranstvím a vymezená uliční čarou;"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/transformacni-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "transformační území"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-4/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "určené k novému využití znehodnoceného území pro zástavbu nebo pro jiné využití území;"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/park-v-krajine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "park v krajině"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/rozvojove-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "rozvojové území"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-4/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "v nichž je navrhováno vytvoření zcela nového charakteru území (zastavitelné plochy podle § 2 odst. 1 písm. j) stavebního zákona); ve specifickém případě rozvojových ploch nezastavitelných v zastavěném území může být za rozvoj považováno výhradně zlepšení stavu krajinných, přírodních a rekreačních hodnot."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/mira-vyuziti-uzemi-k-zastaveni>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "míra využití území k zastavění"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-7" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "popis rozsahu a intenzity zastavěnosti území"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/stabilizovane-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stabilizované území"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-4/b-a" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "s plně vyvinutým stávajícím charakterem, kde nejsou navrhovány žádné zásadní změny stávajícího charakteru, významu ani způsobu využití území a území je jen doplňováno;"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/cara-zastavitelneho-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "čára zastavitelného území"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-3/o-2" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/hranice> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "hranice mezi zastavitelným a nezastavitelným územím"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/plocha-lesni>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "plocha lesní"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/zastavitelne-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelné území"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-3/o-3/b-a" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plochy zastavitelné v zastavěném území a plochy zastavitelné v dosud nezastavěném území"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/cast-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "část území"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/parkovy-areal>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkový areál"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/zastavitelna-produkcni-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná produkční plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-6/o-1/b-a" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "zahrnující převážně plochy pro výrobu a skladování, smíšené výrobní plochy, plochy dopravní a technické infrastruktury a areály pro obchod, služby a pracovní příležitosti"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/zastavene-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavěné území"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/zastavitelnost>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelnost"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-1/p-2/b-k" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha nebo soubor ploch, popřípadě část plochy, vymezená na základě převažujícího charakteru;"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/stavebni-blok>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stavební blok"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-II/p-12/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/blok> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "bloky určené převážně k zastavění budovami"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/nezastavitelne-produkcni-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelné produkční plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-6/o-2/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "využívaná zejména k intenzivní zemědělské činnosti a hospodářskému využití krajiny"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/ulicni-prostranstvi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "uliční prostranství"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-II/p-12/o-2" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "vymezují se jako základní síť polohově (osou), nebo plošně (uliční čarou). Při polohovém vymezení lze stanovit šířku uličního profilu. V rozvojových a transformačních územích lze při polohovém vymezení definovat uliční prostranství pouze jako spojnici dvou míst bez přesného určení trasy. Nad rámec vymezení uličních prostranství lze stanovit doplňkovou prostupnost územím pro pěší a cyklistickou dopravu napříč stavebními bloky."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/pristupove-ulice>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "přístupové ulice"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-II/p-13/b-d" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/typ-ulice> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "druh veřejného prostranství s nejnižší mírou významu v systému veřejných prostranství města, určené zejména pro místní obsluhu území"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/nezastavitelna-rekreacni-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelná rekreační plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-6/o-2/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha, v níž harmonické krajinné prostředí společně s rekreační, sportovní či naučně vzdělávací vybaveností poskytují vhodné podmínky pro oddych, sport, rekreaci a relaxaci člověka"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/mestska-trida>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "městská třída"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-II/p-13/b-a" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/typ-ulice> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "druh veřejného prostranství s nejvyšší mírou důležitosti a významu v systému veřejných prostranství celého města, s vyšší mírou zastoupení obchodních a společenských aktivit, s vyšší intenzitou dopravy a s vyšší vybaveností prostoru; spolu s významnými ulicemi tvoří základní osnovu uliční sítě, základní urbanistickou strukturu města a základní prvek pro orientaci v měřítku celého města"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/ulicni-cara>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "uliční čára"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-II/p-12/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/hranice> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "vymezuje v zastavitelném území hranici uličních prostranství a bloků"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/intenzivne-vyuzivana-zemedelska-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "intenzivně využívaná zemědělská plocha"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/plochy-s-rozdilnym-zpusobem-vyuziti>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "plochy s rozdílným způsobem využití"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/nezastavitelne-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelné území"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-3/o-3/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plochy nezastavitelné v nezastavěném území a plochy nezastavitelné v zastavěném území."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/charakter-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "charakter území"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-1/p-2/b-h" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "soubor podstatných přírodně krajinných, sociálně ekonomických, historických a kulturně civilizačních, zvláště urbanistických, architektonických a estetických prvků či vlastností specifických pro konkrétní území (především poloha v území, intenzita, struktura a typ zastavění, vymezení a uspořádání veřejných prostranství, infrastruktura, způsob využití území a míra jeho změn), včetně jejich vzájemných vztahů a vazeb;"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/nezastavene-uzemi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavěné území"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/extenzivne-vyuzivana-zemedelska-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "extenzivně využívaná zemědělská plocha"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/nestavebni-blok>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nestavební blok"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-II/p-12/o-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/blok> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "bloky určené převážně k nestavebním účelům"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/urbanisticky-typ-ulice>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "urbanistický typ ulice"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/park>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "park"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/lokalni-ulice>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lokální ulice"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-II/p-13/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/typ-ulice> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "druh veřejného prostranství bez zvláštní důležitosti a významu v systému veřejných prostranství města; zpravidla se jedná o ulice, které doplňují systém významných ulic a městských tříd"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "plocha"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/slovnik> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Slovník psp-2016"@cs ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-autora>
+                    <http://data.iprpraha.cz/zdroj/uzivatel/petr-kremen> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-glosar>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/glosar> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-model>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/model> ;
+            <http://purl.org/dc/terms/created>
+                    "2018-09-21T12:22:59.843Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/glosar>
+            a       <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/glosar> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Glosář psp-2016"@cs , "Pražské stavební předpisy 2016 s aktualizovaným odůvodněním"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "předpokládaná míra změn (stabilita)"@cs ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/zastavitelna-rekreacni-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná rekreační plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "PSP/c-2/h-I/p-6/o-1/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/psp-2016/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "zahrnující převážně plochy pro oddych, sport, rekreaci a relaxaci člověka"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/psp-2016> .
+}
+
+<http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3> {
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/glosar>
+            a       <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/glosar> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Glosář mpp-3.3"@cs , "Textové části MPP 3.3"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajina-vyraznych-udoli>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina výrazných údolí"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-81/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura výrazných údolí Vltavy a jejích přítoků, z významné části lesnatých, často s výskytem skalních výchozů ve svazích a na jejich horních hranách, přičemž bezlesé části svahů jsou udržované bez dřevinné vegetace cíleným managementem; místy je původní reliéf změněn v důsledku minulé i probíhající těžby nerostných surovin. Lesní hospodaření nekolidující s rekreačním významem příměstských lesů a ochrana území vysokých přírodních a krajinných hodnot, zahrnující i cílené zásahy člověka, jsou hlavními znaky využití krajiny výrazných údolí."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/otevrena-krajina>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "otevřená krajina"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajina> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "krajina nezastavitelného území, členěná na základě typů krajin; je definována nepřítomností zástavby, přičemž přítomnost budov není vyloučena, ale podmínky pro umísťování budov stanovuje příslušný regulativ či soubor regulativů"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/metropolitni-park>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "metropolitní park"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-4/h-I/cl-113/c-3" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/ho-parku> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "městský park, který z hlediska své plošné výměry, ale rovněž dostupnosti, vybavenosti, intenzity údržby a často i specificky laděného charakteru má význam pro rezidenty a návštěvníky celého města."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/index-navrhovy>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "index návrhový"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-IV/cl-11/c-4" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/lokality> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Index návrhový „in“ je podílem součtu HPP stávajících stavebních bloků ve stabilizované části lokality a předpokládaných HPP v rozvojové anebo transformační části lokality a rozlohy celé lokality. Návrhový index je teoretickou hodnotou, které by bylo dosaženo při úplném naplnění jednotlivých ploch potenciálu v dané lokalitě. Do návrhového indexu nejsou započítávány proluky"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/slovnik> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Slovník mpp-3.3"@cs ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-autora>
+                    <http://data.iprpraha.cz/zdroj/uzivatel/petr-kremen> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-glosar>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/glosar> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-model>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/model> ;
+            <http://purl.org/dc/terms/created>
+                    "2018-09-21T12:22:59.818Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/Index-stabilizovane-casti>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Index stabilizované části"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-IV/cl-11/c-3" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/lokality> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Index stabilizované části „is“ je podílem HPP stávajících stavebních bloků ve stabilizované části lokality a rozlohy této stabilizované části"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/linearni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lineární struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-72/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura utvářená stavbami infrastruktury."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/parkove-prostranstvi>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkové prostranství"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-74/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura nestavebního charakteru, jejíž hlavní část tvoří veřejně přístupná prostranství nestavebních bloků s převažujícím zastoupením nezpevněných, popřípadě vodních ploch, přičemž nezpevněné plochy jsou osety či osázeny vegetačními prvky zpravidla v uceleném kompozičním záměru. Parkové prostranství je vybaveno sítí cest a rekreačním mobiliářem, zpravidla též zařízeními nebo speciálními plochami pro možnost sportu a her pod otevřeným nebem."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/mesto>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "město"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-d" , "mpp/3.3/ca-2/h-II/cl-34/c-2/b-a" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/struktury> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "typ městské struktury"@cs , "je územím, které zahrnuje plochy historického jádra, jeho asanovaných a přestavěných částí a připojených původně samostatných měst, která se rozkládala za středověkými hradbami; tento typ se vyznačuje především strukturou uzavřených bloků s jednoznačně vymezeným uličním prostranstvím, podrobněji viz čl. 63 až 65 a 71"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> ;
+            <http://www.w3.org/2004/02/skos/core#topConceptOf>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/modernisticka-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "modernistická struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-69/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura kombinující solitérní stavby a uzavřené areály společně umístěné v parku ve volné zástavbě."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/koridor-dopravni-a-technicke-infrastruktury>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "koridor dopravní a technické infrastruktury"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-2/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha souvislého pásu území vyhrazená pro budoucí umístění liniové stavby infrastruktury, která se váže na konkrétní stavbu označenou v grafické části liniovou značkou a číselným kódem; v koordinaci s navrhovanou stavbou, případně po jejím vybudování, lze vymezenou plochu využívat i jiným způsobem"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajina-uzkych-zariznutych-udoli-v-plosine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina úzkých zaříznutých údolí v plošině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-80/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura kontrastní kombinace zarovnaného povrchu plošiny, z převážné části odlesněné, a relativně výrazně zaříznutých, avšak úzkých a v řádu maximálně několika desítek metrů zahloubených údolí, převážně lesnatých či s jinou trvalou vegetací. Zemědělsky využívané plošiny proříznuté převážně extenzivně využívanými potočními údolími jsou hlavními znaky využití krajiny úzkých zaříznutých údolí v plošině."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/leso-zemedelska-krajina-v-rovine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "leso-zemědělská krajina v rovině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-77/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura mírně zvlněných tvarů povrchu, které jsou z převážné části odlesněné. Zemědělské využití při současné přítomnosti přírodě blízkých ploch v podobě menších hájů, mezí, břehových porostů podél potoků, ploch sekundárních trávníků apod. je hlavním znakem využití leso-zemědělské krajiny"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/lesni-krajina-v-rovine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lesní krajina v rovině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-76/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura zarovnaných povrchů plošin, které jsou z významné části tvořeny lesními komplexy. Lesní hospodaření nekolidující s rekreačním významem příměstských lesů je hlavním znakem využití lesní krajiny v rovině."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/rostla-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "rostlá struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-63/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura kompaktních bloků historického centra Prahy."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/parkovy-areal>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkový areál"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-73/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura nestavebního charakteru s významným zastoupením nezpevněných ploch, které jsou osety či osázeny vegetačními prvky. Parkový areál je vůči svému okolí jednoznačně ohraničen, zpravidla formou oplocení. Obvyklým typem přístupnosti areálu je přístupnost omezená stanoveným režimem."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/struktura-arealu-vybavenosti>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura areálů vybavenosti"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-71/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura zástavby veřejně přístupných areálů"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/mestska-krajina>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "městská krajina"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajina> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "krajina zastavitelného území, obecně definice vychází z pojmu „historická městská krajina“ chápaná jako výsledek historického vrstvení kulturních a přírodních hodnot a vlastností, zahrnující širší městský kontext a jeho geografické prostředí, zahrnuje především plochy stavebních bloků a uličních prostranství a nestavební bloky – krajinu ve městě"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/struktura-arealu-produkce>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura areálů produkce"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-70/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura flexibilní zástavby uzavřených areálů."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/mistni-park>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "místní park"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-4/h-I/cl-113/c-6" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/ho-parku> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "městský park zpravidla malého plošného rozsahu, avšak s údržbou vegetačních ploch a obvykle i s dílčí vybaveností mobiliářem."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/parkovy-les>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "parkový les"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-75/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "lesní struktura v městské krajině, která je uzpůsobena pro rekreační účely z hlediska své prostorové struktury, druhové a věkové skladby, stupně zakmenění, přítomnosti ploch bez lesních dřevin, uspořádáním a hustotou cestní sítě a doplňkovou vybaveností."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/park-ve-volne-zastavbe>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "park ve volné zástavbě"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-4/h-II/cl-122/c-1" , "mpp/3.3/ca-1/h-II/cl-6/c-1/b-h" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/park> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "je vymezen jako část stavebního bloku v modernistických strukturách, určená převážně k nestavebním účelům, je podmínkou zachování charakteru modernistické struktury viz čl. 106. Park ve volné zástavbě nemusí tvořit plošně souvislý celek, v jedné lokalitě se však zpravidla nachází nejvýše jeden park ve volné zástavbě."@cs , "soubor nezpevněných i zpevněných veřejně přístupných ploch ve stavebním bloku modernistické zástavby"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> ;
+            <http://www.w3.org/2004/02/skos/core#topConceptOf>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/periferie>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "periferie"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-d" , "mpp/3.3/ca-2/h-II/cl-34/c-2/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/struktury> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "typ městské struktury"@cs , "je územím města tvořené převážně modernistickými strukturami, jejichž forma se liší na základě funkce a je možné definovat struktury obytného, produkčního i rekreačního charakteru, převážně se jedná o volnou zástavbu solitérními stavbami kombinovanou s areály, kde veřejná prostranství prostupují volnou zástavbou, podrobněji viz čl. 69 až 71; zvláštním případem periferie jsou lokality liniových prvků zejména dopravní infrastruktury, které obvykle vytváří v území bariéru, podrobněji viz čl. 72."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> ;
+            <http://www.w3.org/2004/02/skos/core#topConceptOf>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/struktura-zahradniho-mesta>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "struktura zahradního města"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-68/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura samostatných staveb umístěných ve vlastních zahradách."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajinne-zazemi-mesta>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajinné zázemí města"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-e" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajina> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "převážně venkovský ráz krajiny tvořený otevřenou krajinou a sídly, která jsou spojena významnými dostřednými vazbami s Prahou,"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/heterogenni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "heterogenní struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-66/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura kombinující více typů zástavby"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/ctvrtovy-park>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "čtvrťový park"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-4/h-I/cl-113/c-4" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/ho-parku> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "městský park, který plní úlohu významného místa pro rekreaci zejména pro rezidenty a návštěvníky dané části města a částí města bezprostředně sousedících."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/modernisticka-zastavba>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "modernistická zástavba"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-g" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/stavba> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "zástavba, která vznikla především na principech Athénské charty, převážně v druhé polovině 20. století, jedná se o volné zastavění solitérních budov a zařízení s přísným oddělením jednotlivých funkcí"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/zemedelska-krajina-v-rovine>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zemědělská krajina v rovině"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-79/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura zarovnaných povrchů plošin a širokých říčních niv, které jsou téměř v celém svém rozsahu odlesněné. Intenzivní zemědělské využití je hlavním znakem využití zemědělské krajiny v rovině."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/blokova-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "bloková struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-64/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura kompaktních bloků."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/plocha-dopravni-a-technicke-infrastruktury>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "plocha dopravní a technické infrastruktury"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-2/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha vyhrazená pro budoucí umístění zařízení infrastruktury, která se váže na konkrétní stavbu označenou v grafické části bodovou značkou a číselným kódem; v koordinaci s navrhovanou stavbou, případně po jejím vybudování, lze vymezenou plochu využívat i jiným způsobem"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/zastavitelna-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-I/cl-60/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Zastavitelné lokality tvoří zastavitelné území. V zastavitelných lokalitách lze v souladu s podmínkami pro ně stanovenými umísťovat nové stavby a zařízení, jakož i obnovovat, rozšiřovat či upravovat stavby a zařízení stávající."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/nestavebni-blok>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nestavební blok"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-2/h-II/cl-37/c-2" , "mpp/3.3/ca-1/h-II/cl-6/c-1/b-j" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/blok> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha vymezená pro nestavební účely zejména krajiny ve městě, má obdobné vlastnosti, jako dílčí plochy otevřené krajiny a za výjimečných podmínek je možné v nestavebních blocích umisťovat ojedinělé stavby v souladu s cílovým charakterem"@cs , "zpravidla charakterizuje nezpevněný terén pokrytý vegetací s různou mírou kulturních zásahů a úprav. Stavby včetně staveb budov se nevyskytují či vyskytují ojediněle, umísťovat nové stavby včetně budov je přípustné pouze za podmínek stanovených v čl. 118. Urbánní vztahy jsou nahrazeny návazností cestní sítě v městských parcích na uliční prostranství."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> ;
+            <http://www.w3.org/2004/02/skos/core#topConceptOf>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/stavebni-blok>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stavební blok"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-k" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/blok> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha vymezená převážně pro zástavbu budovami"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/vesnicka-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "vesnická struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-67/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura kombinující kompaktní zástavbu v jádru historické obce a navazující zástavbu samostatných staveb ve vlastních zahradách. Zástavba může být doplněna o jednotlivé uzavřené areály."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/nezastavitelna-lokalita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelná lokalita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-I/cl-60/c-3" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/lokalita> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "Nezastavitelné lokality tvoří nezastavitelné území. V nezastavitelném území se mohou vyskytovat stávající zastavěné plochy, označované jako samoty viz čl. 119. Vymezeny jsou obvykle hranicí zastavěného území, v případech rozvoje krajiny, který je specifikován, jsou vymezeny jako zastavěné stavební pozemky. V nezastavitelných lokalitách lze umísťovat nové stavby, zařízení a jiná opatření pouze na základě využití území v rozsahu stanoveném Metropolitním plánem v čl. 89 až 91."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/hybridni-struktura>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "hybridní struktura"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-65/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "urbánní struktura kompaktních a rozvolněných bloků vyhovující současným i budoucím technickým inovacím a požadavkům na městskou výstavbu."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/stabilita>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stabilita"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-5/b-j" , "mpp/3.3/ca-3/h-IV/cl-93/c-3" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "taková konstatovaná rovnováha v území, při níž se neuplatňují přímo specifikované požadavky na podstatnou změnu charakteru území."@cs , "stav území, ve kterém se nepředpokládají zásadní změny charakteru, pokud jsou změny předpokládány, je území označeno jako transformační nebo rozvojové"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> ;
+            <http://www.w3.org/2004/02/skos/core#topConceptOf>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/predmesti>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "předměstí"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-d" , "mpp/3.3/ca-2/h-II/cl-34/c-2/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/struktury> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "typ městské struktury"@cs , "je především územím zahradních měst, ale vyskytují se v něm i vesnice, které se postupem času staly součástí propojené městské struktury, a rozličná území heterogenního charakteru; tento typ se vyznačuje především strukturou otevřených bloků, stále však s jednoznačně vymezeným uličním prostranstvím"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> ;
+            <http://www.w3.org/2004/02/skos/core#topConceptOf>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/lokalitni-park>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "lokalitní park"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-4/h-I/cl-113/c-5" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/ho-parku> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "městský park tvořící významnou část lokality, využívaný k účelům rekreace, zejména rezidenty a návštěvníky území dané lokality a lokalit bezprostředně sousedících"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajina-za-mestem>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina za městem"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-1/h-II/cl-6/c-1/b-e" , "mpp/3.3/ca-1/h-II/cl-6/c-1/b-d" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/struktury> , <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajina> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "převážně venkovský ráz krajiny tvořený otevřenou krajinou a sídly, která jsou spojena významnými dostřednými vazbami s Prahou,"@cs , "typ městské struktury"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajina-vyraznych-vrchu>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "krajina výrazných vrchů"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-82/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura krajiny zahrnující jednotlivé, v kontextu okolí výrazné terénní vyvýšeniny, tj. svědecké vrchy, tabulové hory, vypreparované strukturní hřbety a suky apod., včetně vyvýšenin vzniklých lidskou činností. Způsob využití není znakem ovlivňujícím vymezení krajiny výrazných vrchů."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/zemedelsko-rybnicni-krajina>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zemědělsko-rybniční krajina"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "mpp/3.3/ca-3/h-II/cl-78/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/krajiny> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "struktura ploché zemědělské krajiny se soustavou rybníků v malé vzdálenosti od sebe navzájem na jednom vodním toku nebo na více propojených vodních tocích. Člověkem vytvořená rybniční soustava v okolním převážně zemědělsky využívaném území je hlavním znakem využití zemědělsko-rybniční krajiny."@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/mpp-3.3> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/mpp-3.3/model>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/model> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Model mpp-3.3"@cs .
+}
+
+<http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183> {
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/model>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/model> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Model sb-z-2006-183"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/zastavitelna-plocha>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavitelná plocha"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "SZ/ca-1/p-2/b-j" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha vymezená k zastavění v územním plánu nebo v zásadách územního rozvoje"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2006-183> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/popripade-republikoveho-vyznamu>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "plocha nadmístního, popřípadě republikového významu"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "SZ/ca-1/p-2/b-h" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha, která svým významem, rozsahem nebo využitím ovlivní území více obcí, popřípadě území více krajů; v případě hlavního města Prahy se za plochu nadmístního významu považuje plocha celoměstského významu"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2006-183> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/nezastavitelny-pozemek>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "nezastavitelný pozemek"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "SZ/ca-1/p-2/b-e" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/pozemek> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "pozemek, jenž nelze zastavět na území obce, která nemá vydaný územní plán, a to 1. pozemek veřejné zeleně a parku 1) sloužící obecnému užívání; 2. v intravilánu lesní pozemek nebo soubor sousedících lesních pozemků o výměře větší než 0,5 ha"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2006-183> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/koridor>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "koridor"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "SZ/ca-1/p-2/b-i" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plocha vymezená pro umístění vedení dopravní a technické infrastruktury nebo opatření nestavební povahy"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2006-183> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/zastaveny-stavebni-pozemek>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "zastavěný stavební pozemek"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "SZ/ca-1/p-2/b-c" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/pozemek> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "pozemkem pozemek evidovaný v katastru nemovitostí jako stavební parcela a další pozemkové parcely zpravidla pod společným oplocením, tvořící souvislý celek s obytnými a hospodářskými budovami"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2006-183> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/plocha-prestavby>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "plocha přestavby"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "SZ/ca-1/hl-3/d-3/odd-2/p-43/c-1" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "plochy vymezené ke změně stávající zástavby, k obnově nebo opětovnému využití znehodnoceného území"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2006-183> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/glosar>
+            a       <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/glosar> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Glosář sb-z-2006-183"@cs , "Stavební zákon"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/slovnik> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Slovník sb-z-2006-183"@cs ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-autora>
+                    <http://data.iprpraha.cz/zdroj/uzivatel/petr-kremen> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-glosar>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/glosar> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-model>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/model> ;
+            <http://purl.org/dc/terms/created>
+                    "2018-09-21T12:22:59.86Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/stavebni-pozemek>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "stavební pozemek"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "SZ/ca-1/p-2/b-b" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/pozemek> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "pozemek, jeho část nebo soubor pozemků, vymezený a určený k umístění stavby územním rozhodnutím anebo regulačním plánem,"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2006-183> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/verejne-prospesna-stavba>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "veřejně prospěšná stavba"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "SZ/ca-1/p-2/b-l" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-z-2006-183/stavba> ;
+            <http://www.w3.org/2004/02/skos/core#definition>
+                    "stavba pro veřejnou infrastrukturu určená k rozvoji nebo ochraně území obce, kraje nebo státu, vymezená ve vydané územně plánovací dokumentaci,"@cs ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-z-2006-183> .
+}
+
+<http://data.iprpraha.cz/zdroj/slovnik/sb-v-2016-501> {
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-v-2016-501/glosar>
+            a       <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/glosar> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Glosář sb-v-2016-501"@cs , "Vyhláška č. 501/2006 Sb."@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-v-2016-501/plochy-s-rozdilnym-zpusobem-vyuziti>
+            a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "plochy s rozdílným způsobem využití"@cs ;
+            <http://purl.org/dc/terms/source>
+                    "V501/h-1/p-3/c-1/b-a" ;
+            <http://www.w3.org/2004/02/skos/core#broader>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-v-2016-501/plocha> ;
+            <http://www.w3.org/2004/02/skos/core#inScheme>
+                    <http://data.iprpraha.cz/zdroj/slovnik/ipr/sb-v-2016-501> .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-v-2016-501/model>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/model> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Model sb-v-2016-501"@cs .
+    
+    <http://data.iprpraha.cz/zdroj/slovnik/sb-v-2016-501>
+            a       <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/slovnik> ;
+            <http://www.w3.org/2000/01/rdf-schema#label>
+                    "Slovník sb-v-2016-501"@cs ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-autora>
+                    <http://data.iprpraha.cz/zdroj/uzivatel/petr-kremen> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-glosar>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-v-2016-501/glosar> ;
+            <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/ma-model>
+                    <http://data.iprpraha.cz/zdroj/slovnik/sb-v-2016-501/model> ;
+            <http://purl.org/dc/terms/created>
+                    "2018-09-21T12:22:59.841Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}

@@ -1,0 +1,37 @@
+PREFIX ufo: <http://onto.fel.cvut.cz/ontologies/ufo/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX a-popis-dat: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+CONSTRUCT {
+    ?type a a-popis-dat:term .
+    ?type rdfs:label ?typeLabel .
+	?type rdfs:comment ?typeDefinition .
+    ?category a a-popis-dat:term .
+	?category rdfs:label ?categoryLabel .
+#	?category rdfs:comment ?categoryDefinition .
+	?category skos:narrower ?type .
+} WHERE {
+#    BIND("en" as ?lang)
+    ?ufolang    ufo:contains-type ?type ;
+	            rdfs:label ?ufolangLabel .
+    FILTER(lang(?ufolangLabel)=?lang) .
+    ?type rdfs:label ?typeLabel .
+    FILTER(lang(?typeLabel)=?lang) .
+    OPTIONAL {?type skos:definition ?typeDefinition. FILTER(lang(?typeDefinition)=?lang)}
+   {
+    ?type rdfs:subClassOf+ ufo:entity
+    FILTER NOT EXISTS { ?type rdfs:subClassOf+ ufo:type } BIND(ufo:individual as ?category)
+    ufo:individual rdfs:label ?categoryLabel .
+   }
+   UNION
+   {
+    ?type rdfs:subClassOf+ ufo:type. BIND(ufo:type AS ?category)
+    ufo:type rdfs:label ?categoryLabel .
+   }
+
+#   ?category rdfs:label ?categoryLabel .
+   FILTER(lang(?categoryLabel)=?lang)
+#   OPTIONAL {?category skos:definition ?categoryDefinition .FILTER(lang(?categoryDefinition)=?lang)}
+}
+#VALUES (?ufolang) {(ufo:language-ontouml)}
+VALUES (?ufolang) {(ufo:language-basic)}
