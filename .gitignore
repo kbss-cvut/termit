@@ -2,7 +2,6 @@
 *.iml
 target
 repositories
-node_modules
 catalog-v001.xml
 **/bundle.js
 **/generated-sources
