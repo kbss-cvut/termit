@@ -115,7 +115,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, result.size());
         assertEquals(term.getLabel(), result.get(0).getLabel());
     }
@@ -139,7 +139,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, result.size());
         final Term resultParent = result.get(0);
         assertEquals(1, resultParent.getSubTerms().size());
@@ -188,7 +188,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(child, vocabulary.getUri(), em);
         });
 
-        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<Term> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, result.size());
         final Term resultParent = result.get(0);
         assertThat(resultParent.getSubTerms(), anyOf(nullValue(), empty()));
@@ -249,7 +249,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(2, result.size());
         assertThat(result, hasItem(term));
         assertThat(result, hasItem(importedTerm));
