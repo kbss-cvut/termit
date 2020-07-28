@@ -464,8 +464,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        final List<Term> resultOne = sut.findAllRootsIncludingImported(vocabulary, PageRequest.of(0, 5));
-        final List<Term> resultTwo = sut.findAllRootsIncludingImported(vocabulary, PageRequest.of(1, 5));
+        final List<Term> resultOne = sut.findAllRootsIncludingImported(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
+        final List<Term> resultTwo = sut.findAllRootsIncludingImported(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
 
         assertEquals(5, resultOne.size());
         assertEquals(5, resultTwo.size());
@@ -541,7 +541,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setVocabulary(childVocabulary.getUri());
         sut.addChildTerm(childTerm, parentTerm);
 
-        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC).contains(childTerm));
+        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList()).contains(childTerm));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
@@ -568,7 +568,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         em.getEntityManagerFactory().getCache().evictAll();
         childTerm.setParentTerms(Collections.singleton(newParentTerm));
         sut.update(childTerm);
-        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC).contains(childTerm));
+        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList()).contains(childTerm));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
