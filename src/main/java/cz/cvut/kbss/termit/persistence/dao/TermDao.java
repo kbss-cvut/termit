@@ -31,10 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -226,18 +223,19 @@ public class TermDao extends AssetDao<Term> {
     /**
      * Loads a page of root terms (terms without a parent) contained in the specified vocabulary.
      *
-     * @param vocabulary Vocabulary whose root terms should be returned
-     * @param pageSpec   Page specification
+     * @param vocabulary   Vocabulary whose root terms should be returned
+     * @param pageSpec     Page specification
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms, ordered by their label
-     * @see #findAllRootsIncludingImports(Vocabulary, Pageable)
+     * @see #findAllRootsIncludingImports(Vocabulary, Pageable, Collection)
      */
-    public List<Term> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {
+    public List<Term> findAllRoots(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
-        return findAllRootsImpl(vocabulary.getUri(), pageSpec);
+        return findAllRootsImpl(vocabulary.getUri(), pageSpec, includeTerms);
     }
 
-    private List<Term> findAllRootsImpl(URI vocabularyIri, Pageable pageSpec) {
+    private List<Term> findAllRootsImpl(URI vocabularyIri, Pageable pageSpec, Collection<URI> includeTerms) {
         TypedQuery<Term> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                 "GRAPH ?g { " +
                 "?term a ?type ;" +
@@ -245,15 +243,22 @@ public class TermDao extends AssetDao<Term> {
                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
                 "}} ORDER BY ?label OFFSET ?offset LIMIT ?limit", Term.class);
-        query = setCommonFindAllRootsQueryParams(query, false);
+        query = setCommonFindAllRootsQueryParams(query);
+        query.setDescriptor(descriptorFactory.termDescriptor(vocabularyIri));
         try {
-            return executeQueryAndLoadSubTerms(query.setParameter("vocabulary", vocabularyIri)
-                                                    .setParameter("g",
-                                                            persistenceUtils
-                                                                    .resolveVocabularyContext(vocabularyIri))
-                                                    .setParameter("labelLang", config.get(ConfigParam.LANGUAGE))
-                                                    .setUntypedParameter("offset", pageSpec.getOffset())
-                                                    .setUntypedParameter("limit", pageSpec.getPageSize()));
+            final List<Term> result = executeQueryAndLoadSubTerms(query.setParameter("vocabulary", vocabularyIri)
+                                                                       .setParameter("g",
+                                                                               persistenceUtils
+                                                                                       .resolveVocabularyContext(
+                                                                                               vocabularyIri))
+                                                                       .setParameter("labelLang",
+                                                                               config.get(ConfigParam.LANGUAGE))
+                                                                       .setUntypedParameter("offset",
+                                                                               pageSpec.getOffset())
+                                                                       .setUntypedParameter("limit",
+                                                                               pageSpec.getPageSize()));
+            result.addAll(loadIncludedTerms(includeTerms));
+            return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -268,7 +273,9 @@ public class TermDao extends AssetDao<Term> {
     }
 
     private List<Term> loadIncludedTerms(Collection<URI> includeTerms) {
-        return includeTerms.stream().map(u -> em.find(Term.class, u)).filter(Objects::nonNull)
+        return includeTerms.stream()
+                           .map(u -> em.find(Term.class, u, descriptorFactory.termDescriptor(resolveVocabularyIri(u))))
+                           .filter(Objects::nonNull)
                            .collect(Collectors.toList());
     }
 
@@ -278,18 +285,20 @@ public class TermDao extends AssetDao<Term> {
      * This method basically does a transitive closure of the vocabulary import relationship and retrieves a page of
      * root terms from this closure.
      *
-     * @param vocabulary The last vocabulary in the vocabulary import chain
-     * @param pageSpec   Page specification
+     * @param vocabulary   The last vocabulary in the vocabulary import chain
+     * @param pageSpec     Page specification
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
      * @return Matching terms, ordered by their label
-     * @see #findAllRoots(Vocabulary, Pageable)
+     * @see #findAllRoots(Vocabulary, Pageable, Collection)
      */
-    public List<Term> findAllRootsIncludingImports(Vocabulary vocabulary, Pageable pageSpec) {
+    public List<Term> findAllRootsIncludingImports(Vocabulary vocabulary, Pageable pageSpec,
+                                                   Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         final Collection<URI> vocabularies = vocabularyDao.getTransitivelyImportedVocabularies(vocabulary);
         vocabularies.add(vocabulary.getUri());
         final List<Term> result = new ArrayList<>();
-        vocabularies.forEach(v -> result.addAll(findAllRootsImpl(v, pageSpec)));
+        vocabularies.forEach(v -> result.addAll(findAllRootsImpl(v, pageSpec, includeTerms)));
         result.sort(Comparator.comparing(Asset::getLabel));
         return result.subList(0, Math.min(result.size(), pageSpec.getPageSize()));
     }

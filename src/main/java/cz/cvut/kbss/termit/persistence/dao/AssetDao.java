@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -37,9 +38,12 @@ public abstract class AssetDao<T extends Asset> extends BaseDao<T> {
 
     protected final Configuration config;
 
-    AssetDao(Class<T> type, EntityManager em, Configuration config) {
+    protected final DescriptorFactory descriptorFactory;
+
+    AssetDao(Class<T> type, EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
         super(type, em);
         this.config = config;
+        this.descriptorFactory = descriptorFactory;
     }
 
     /**

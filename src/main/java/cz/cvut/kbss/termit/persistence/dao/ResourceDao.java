@@ -27,7 +27,8 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.model.util.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.PersistenceUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.context.event.EventListener;
@@ -46,8 +47,12 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
 
     private volatile long lastModified;
 
-    public ResourceDao(EntityManager em, Configuration config) {
-        super(Resource.class, em, config);
+    private final PersistenceUtils persistenceUtils;
+
+    public ResourceDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
+                       PersistenceUtils persistenceUtils) {
+        super(Resource.class, em, config, descriptorFactory);
+        this.persistenceUtils = persistenceUtils;
         refreshLastModified();
     }
 
@@ -87,9 +92,9 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
     private Descriptor createDescriptor(Resource resource, URI vocabularyUri) {
         final Descriptor descriptor;
         if (resource instanceof Document) {
-            descriptor = DescriptorFactory.documentDescriptor(vocabularyUri);
+            descriptor = descriptorFactory.documentDescriptor(vocabularyUri);
         } else if (resource instanceof File) {
-            descriptor = DescriptorFactory.fileDescriptor(vocabularyUri);
+            descriptor = descriptorFactory.fileDescriptor(vocabularyUri);
         } else {
             throw new IllegalArgumentException(
                     "Resource " + resource + " cannot be persisted into vocabulary context.");
@@ -104,7 +109,7 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
             final URI vocabularyId = resolveVocabularyId(entity);
             if (vocabularyId != null) {
                 // This evict is a bit overkill, but there are multiple relationships that would have to be evicted
-                em.getEntityManagerFactory().getCache().evict(vocabularyId);
+                em.getEntityManagerFactory().getCache().evict(persistenceUtils.resolveVocabularyContext(vocabularyId));
                 return em.merge(entity, createDescriptor(entity, vocabularyId));
             } else {
                 return em.merge(entity);
