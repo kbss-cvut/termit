@@ -4,28 +4,28 @@ TermIt tool is intended for creation of vocabularies and terms within them, edit
 
 ## About Pubby
 
-Pubby je nástroj, který slouží k zpřístupnění datových sad v RDF formou webových stránek. Předpokladem je, že RDF data jsou dostupná přes SPARQL přístupový bod. Svým způsobem zajišťuje dereferencovatelnost URI nad RDF daty. Nástroj byl vyvinut a je spravován Freie Universität Berlin jako open source. Zdrojový kód je dostupný na [GitHubu](https://github.com/cygri/pubby). Detailní informace o nástroji a kompletní návod je na [webové stránce nástroje Pubby](http://wifo5-03.informatik.uni-mannheim.de/pubby/) (v angličtině). Poslední úpravy ve zdrojovém kódu jsou z roku 2014, nástroj je ale plně funkční a široce používán.
+Pubby is a tool for making RDF datasets accessible in a form of browsable internet pages. It assumes source data in a form of RDF triples accessible via SPARQL endpoint. It may also be used to make RDF data URIs dereferencable. Tool was developed and managed at Freie Universität in Berlin as an open source project. Soure code is available at [GitHub](https://github.com/cygri/pubby). More information about Pubby is available at [web page of Pubby](http://wifo5-03.informatik.uni-mannheim.de/pubby/). Last release of Pubby is version v0.3.3 from 2014, tool is fully functional and widely used.
 
-## Stažení a instalace
-[Stáhněte si poslední verzi Pubby (v0.3.3)](http://wifo5-03.informatik.uni-mannheim.de/pubby/download/) a, pokud jste tak ještě neudělali,  nainstalujte **servlet container**. Podle stránek vývojáře bylo Pubby testováno s [Tomcat](http://tomcat.apache.org/) a [Jetty](http://www.mortbay.org/).
-Rozbalte ZIP archiv s Pubby a zkopírujte adresář **_webapp_** do do adresáře **_webapps_** použitého servlet containeru. Přejmenujte zkopírovaný adresář (ten z Pubby) na "pubby", nebo jakkoliv jinak chcete. Kořenový adresář pubby se tím změní na http://vášserver/pubby/.
+## Download and install
+[Download latest release of Pubby (v0.3.3)](http://wifo5-03.informatik.uni-mannheim.de/pubby/download/) and install a **servlet container**. Pubby was tested with [Tomcat](http://tomcat.apache.org/) and [Jetty](http://www.mortbay.org/).
+Extract ZIP archive with Pubby and copy **_webapp_** directory into **_webapps_** folder of the used servlet container. Rename directory (one from Pubby) to "root" to make Pubby root directory http://myserver/, or to "pubby", or any other name to change root directory of Pubby to http://myserver/pubby/.
 
-## Konfigurace
-Před použitím je potřeba aplikaci Pubby nakonfigurovat. Konfigurační soubor je v jazyce [Turtle](http://www.w3.org/TeamSubmission/turtle/) a najdete ho v adresáři **_webapp_** na umístění **./WEB-INF/config.ttl**.
+## Configuration
+Before usage it is important to change config file. It is located in ***webapp*** directory in ***./WEB-INF/config.ttl***. Configuration file is in [Turtle](http://www.w3.org/TeamSubmission/turtle/) syntax.
 
-Konfigurační soubor je rozdělen do dvou částí. V první části je nastavení serveru, druhá obsahuje nastavení datových sad, které jsou pomocí Pubby zpřístupněny.
+Configuration file is divided into two parts: server configuration and datasets.
 
-### Konfigurace serveru
-Konfigurace serveru je v Turtle souboru instancí `conf:Configuration`. Obsahuje tyto atributy:
+### Server configuration
+Server configuration is an instance of `conf:Configuration` with following properties:
 
-- *projectName* - název projektu zobrazený na stránce,
-- *projectHomepage* - zde vyplňtě URL domovské stránky projektu,
-- *webBase* - definuje základní URL, ze kterého jsou sestavovány URL jednotlivých zdrojů,
-- *usePrefixesFrom* - defnuje umístění, ze kterého načítá prefixy. Pro použití prefixů z tohoto konfiguračního souboru použijte <>,
-- *defaultLanguage* - vyplňte dvoupísmennou zkratku jazyka,
-- *webResourcePrefix*  - definuje prefix webových zdrojů.
+- *projectName* - name of the project displayed on the page title,
+- *projectHomepage* - here write URL of project homepage,
+- *webBase* - defines base URL used to build resource pages URLs,
+- *usePrefixesFrom* - defines location to upload prefixes. Use <> to upload prefixes from config file,
+- *defaultLanguage* - fill two letter language code in quotes,
+- *webResourcePrefix*  - defines prefix of web resources.
 
-Následuje příklad konfigurace serveru:
+Example of the server configuration:
 
 ```turtle
 @prefix conf: <http://richard.cyganiak.de/2007/pubby/config.rdf#> .
@@ -39,17 +39,16 @@ Následuje příklad konfigurace serveru:
   conf:defaultLanguage "en" ;
   conf:webResourcePrefix "" .
 ```
-V tomto příkladu je názvem projektu "KBSS Ontologies" a jeho domovskou stránkou je adresa http://onto.fel.cvut.cz/ontologies. URL adresy jednotlivých zdrojů jsou sestavovány ze základního URL http://onto.fel.cvut.cz/ontologies/, například [https://onto.fel.cvut.cz/ontologies/page/slovník/datový/mpp-3.5-np/pojem/typ-struktury](https://onto.fel.cvut.cz/ontologies/page/slovn%C3%ADk/datov%C3%BD/mpp-3.5-np/pojem/typ-struktury). |Jsou použity prefixy z tohoto konfiguračního dokumentu výchozím jazykem je angličtina.
+Project name used in this example is "KBSS Ontologies" and its homepage is located at the URL http://onto.fel.cvut.cz/ontologies. Resources are based on the URL http://onto.fel.cvut.cz/ontologies/, e.g. [https://onto.fel.cvut.cz/ontologies/page/slovník/datový/mpp-3.5-np/pojem/typ-struktury](https://onto.fel.cvut.cz/ontologies/page/slovn%C3%ADk/datov%C3%BD/mpp-3.5-np/pojem/typ-struktury). Default language is english and prefix base is this config file.
 
-### Konfigurace datových sad
+### Datasets configuration
 
-Datové sady jsou v turtle vlastností konfigurace serveru `conf:dataset` a obsahují následující vlastnosti:
+Datasets are defined using property `conf:dataset` containing following properties:
 
-- *sparqlEndpoint*  - URL přístupového bodu SPARQL, na kterém se nachází data datové sady,
-- *datasetBase* - základní prefix datové sady (ten, který je použit jako @prefix v RDF datech datové sady).
+- *sparqlEndpoint*  - URL of SPARQL endpoint containing dataset triples, i.e. SPARQL endpoint where TermIt saves data,
+- *datasetBase* - basic dataset prefix (same as @prefix in RDF data).
 
-Příkladem nastavení datové sady je:
-
+Example of dataset configuration:
 ```turtle
 <>
   a conf:Configuration ;
@@ -60,10 +59,11 @@ Příkladem nastavení datové sady je:
 	     conf:datasetBase <http://onto.fel.cvut.cz/ontologies/>
 	  ].
 ```
-Datová sada definovaná v tomto příkladu se nachází na SPARQL přístupovém bodu na URL adrese https://onto.fel.cvut.cz:7200/repositories/termit-dev a jako základní URL pro zdroje z této datové sady je použito http://onto.fel.cvut.cz/ontologies/.
+Dataset defined in this example has SPARQL endpoint at https://onto.fel.cvut.cz:7200/repositories/termit-dev and its base prefix is http://onto.fel.cvut.cz/ontologies/.
 
 
-### Příklad konfiiguračního souboru
+### Configuration file example
+
 ```turtle
 @prefix conf: <http://richard.cyganiak.de/2007/pubby/config.rdf#> .
 
@@ -89,8 +89,9 @@ Datová sada definovaná v tomto příkladu se nachází na SPARQL přístupové
 
   conf:metadataTemplate "metadata.ttl" .
 ```
-Tento konfigurační soubor sdružuje do jedné datové sady zdroje nacházející se na dvou SPARQL přístupových bodech. Vlastnost `conf:metadataTemplate` odkazuje na umístění soubory s šablonou pro metadata zdrojů.
 
-Kompletní seznam všech konfiguračních vlastností najdete na [stránce projektu Pubby](http://wifo5-03.informatik.uni-mannheim.de/pubby/).
+This config file puts data from two SPARQL endpoints into one dataset. Property `conf:metadataTemplate` points to the location with template for resource metadata.
 
-Komplexní příklad vzorového konfiguračního souboru s komentáři najdete v [současné verzi Pubby](http://wifo5-03.informatik.uni-mannheim.de/pubby/download/) vwé složce ***webapp/WEB-INF***.
+Complete list of configuration properties is on the [Pubby project web page](http://wifo5-03.informatik.uni-mannheim.de/pubby/).
+
+Complex commented example of configuration file is in [latest release of Pubby](http://wifo5-03.informatik.uni-mannheim.de/pubby/download/) in the ***webapp/WEB-INF*** directory.

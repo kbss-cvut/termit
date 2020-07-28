@@ -8,7 +8,7 @@ Pubby je nástroj, který slouží k zpřístupnění datových sad v RDF formou
 
 ## Stažení a instalace
 [Stáhněte si poslední verzi Pubby (v0.3.3)](http://wifo5-03.informatik.uni-mannheim.de/pubby/download/) a, pokud jste tak ještě neudělali,  nainstalujte **servlet container**. Podle stránek vývojáře bylo Pubby testováno s [Tomcat](http://tomcat.apache.org/) a [Jetty](http://www.mortbay.org/).
-Rozbalte ZIP archiv s Pubby a zkopírujte adresář **_webapp_** do do adresáře **_webapps_** použitého servlet containeru. Přejmenujte zkopírovaný adresář (ten z Pubby) na "pubby", nebo jakkoliv jinak chcete. Kořenový adresář pubby se tím změní na http://vášserver/pubby/.
+Rozbalte ZIP archiv s Pubby a zkopírujte adresář **_webapp_** do adresáře **_webapps_** použitého servlet containeru. Přejmenujte zkopírovaný adresář (ten z Pubby) na "pubby", nebo jakkoliv jinak chcete. Kořenový adresář pubby se tím změní na http://vášserver/pubby/.
 
 ## Konfigurace
 Před použitím je potřeba aplikaci Pubby nakonfigurovat. Konfigurační soubor je v jazyce [Turtle](http://www.w3.org/TeamSubmission/turtle/) a najdete ho v adresáři **_webapp_** na umístění **./WEB-INF/config.ttl**.
@@ -21,7 +21,7 @@ Konfigurace serveru je v Turtle souboru instancí `conf:Configuration`. Obsahuje
 - *projectName* - název projektu zobrazený na stránce,
 - *projectHomepage* - zde vyplňtě URL domovské stránky projektu,
 - *webBase* - definuje základní URL, ze kterého jsou sestavovány URL jednotlivých zdrojů,
-- *usePrefixesFrom* - defnuje umístění, ze kterého načítá prefixy. Pro použití prefixů z tohoto konfiguračního souboru použijte <>,
+- *usePrefixesFrom* - definuje umístění, ze kterého načítá prefixy. Pro použití prefixů z tohoto konfiguračního souboru použijte <>,
 - *defaultLanguage* - vyplňte dvoupísmennou zkratku jazyka,
 - *webResourcePrefix*  - definuje prefix webových zdrojů.
 
@@ -39,13 +39,13 @@ Následuje příklad konfigurace serveru:
   conf:defaultLanguage "en" ;
   conf:webResourcePrefix "" .
 ```
-V tomto příkladu je názvem projektu "KBSS Ontologies" a jeho domovskou stránkou je adresa http://onto.fel.cvut.cz/ontologies. URL adresy jednotlivých zdrojů jsou sestavovány ze základního URL http://onto.fel.cvut.cz/ontologies/, například [https://onto.fel.cvut.cz/ontologies/page/slovník/datový/mpp-3.5-np/pojem/typ-struktury](https://onto.fel.cvut.cz/ontologies/page/slovn%C3%ADk/datov%C3%BD/mpp-3.5-np/pojem/typ-struktury). |Jsou použity prefixy z tohoto konfiguračního dokumentu výchozím jazykem je angličtina.
+V tomto příkladu je názvem projektu "KBSS Ontologies" a jeho domovskou stránkou je adresa http://onto.fel.cvut.cz/ontologies. URL adresy jednotlivých zdrojů jsou sestavovány ze základního URL http://onto.fel.cvut.cz/ontologies/, například [https://onto.fel.cvut.cz/ontologies/page/slovník/datový/mpp-3.5-np/pojem/typ-struktury](https://onto.fel.cvut.cz/ontologies/page/slovn%C3%ADk/datov%C3%BD/mpp-3.5-np/pojem/typ-struktury). Jsou použity prefixy z tohoto konfiguračního dokumentu a výchozím jazykem je angličtina.
 
 ### Konfigurace datových sad
 
 Datové sady jsou v turtle vlastností konfigurace serveru `conf:dataset` a obsahují následující vlastnosti:
 
-- *sparqlEndpoint*  - URL přístupového bodu SPARQL, na kterém se nachází data datové sady, jedná se tedy o přístupový bod triple storu, do kterého TermIt ukládá data,
+- *sparqlEndpoint*  - URL přístupového bodu SPARQL, na kterém se nachází data datové sady, jedná se tedy o přístupový bod triple store, do kterého TermIt ukládá data,
 - *datasetBase* - základní prefix datové sady (ten, který je použit jako @prefix v RDF datech datové sady).
 
 Příkladem nastavení datové sady je:
@@ -90,8 +90,8 @@ Datová sada definovaná v tomto příkladu se nachází na SPARQL přístupové
 
   conf:metadataTemplate "metadata.ttl" .
 ```
-Tento konfigurační soubor sdružuje do jedné datové sady zdroje nacházející se na dvou SPARQL přístupových bodech. Vlastnost `conf:metadataTemplate` odkazuje na umístění soubory s šablonou pro metadata zdrojů.
+Tento konfigurační soubor sdružuje do jedné datové sady zdroje nacházející se na dvou SPARQL přístupových bodech. Vlastnost `conf:metadataTemplate` odkazuje na umístění souboru s šablonou pro metadata zdrojů.
 
 Kompletní seznam všech konfiguračních vlastností najdete na [stránce projektu Pubby](http://wifo5-03.informatik.uni-mannheim.de/pubby/).
 
-Komplexní příklad vzorového konfiguračního souboru s komentáři najdete v [současné verzi Pubby](http://wifo5-03.informatik.uni-mannheim.de/pubby/download/) vwé složce ***webapp/WEB-INF***.
+Komplexní příklad vzorového konfiguračního souboru s komentáři najdete v [současné verzi Pubby](http://wifo5-03.informatik.uni-mannheim.de/pubby/download/) ve složce ***webapp/WEB-INF***.
