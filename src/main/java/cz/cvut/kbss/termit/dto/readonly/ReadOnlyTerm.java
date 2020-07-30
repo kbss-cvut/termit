@@ -25,6 +25,12 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
     private String label;
 
+    @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
+    private Set<String> altLabels;
+
+    @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
+    private Set<String> hiddenLabels;
+
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private String description;
 
@@ -53,6 +59,12 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
         Objects.requireNonNull(term);
         this.uri = term.getUri();
         this.label = term.getLabel();
+        if (term.getAltLabels() != null) {
+            this.altLabels = new HashSet<>(term.getAltLabels());
+        }
+        if (term.getHiddenLabels() != null) {
+            this.hiddenLabels = new HashSet<>(term.getHiddenLabels());
+        }
         this.definition = term.getDefinition();
         this.description = term.getDescription();
         this.vocabulary = term.getVocabulary();
@@ -86,6 +98,22 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
 
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    public Set<String> getAltLabels() {
+        return altLabels;
+    }
+
+    public void setAltLabels(Set<String> altLabels) {
+        this.altLabels = altLabels;
+    }
+
+    public Set<String> getHiddenLabels() {
+        return hiddenLabels;
+    }
+
+    public void setHiddenLabels(Set<String> hiddenLabels) {
+        this.hiddenLabels = hiddenLabels;
     }
 
     public String getDescription() {

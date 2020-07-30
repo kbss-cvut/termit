@@ -12,6 +12,7 @@ import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import java.util.function.Function;
 import org.apache.poi.ss.usermodel.Row;
 
 import javax.validation.constraints.NotBlank;
@@ -30,13 +31,19 @@ public class Term extends Asset implements HasTypes, Serializable {
      * Names of columns used in term export.
      */
     public static final List<String> EXPORT_COLUMNS = Collections
-            .unmodifiableList(Arrays.asList("IRI", "Label", "Definition", "Description", "Types", "Sources", "Parent term",
+            .unmodifiableList(Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description", "Types", "Sources", "Parent term",
                     "SubTerms", "Draft"));
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
     private String label;
+
+    @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
+    private Set<String> altLabels;
+
+    @OWLAnnotationProperty(iri = SKOS.HIDDEN_LABEL)
+    private Set<String> hiddenLabels;
 
     @OWLAnnotationProperty(iri = SKOS.SCOPE_NOTE)
     private String description;
@@ -82,6 +89,22 @@ public class Term extends Asset implements HasTypes, Serializable {
     @Override
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    public Set<String> getAltLabels() {
+        return altLabels;
+    }
+
+    public void setAltLabels(Set<String> altLabels) {
+        this.altLabels = altLabels;
+    }
+
+    public Set<String> getHiddenLabels() {
+        return hiddenLabels;
+    }
+
+    public void setHiddenLabels(Set<String> hiddenLabels) {
+        this.hiddenLabels = hiddenLabels;
     }
 
     public String getDescription() {
@@ -181,6 +204,13 @@ public class Term extends Asset implements HasTypes, Serializable {
         this.properties = properties;
     }
 
+    private static <T> void exportMulti(final StringBuilder sb, final Set<T> collection, Function<T,String> toString) {
+        sb.append(',');
+        if (collection != null && !collection.isEmpty()) {
+            sb.append(exportCollection(collection.stream().map(toString).collect(Collectors.toSet())));
+        }
+    }
+
     /**
      * Generates a CSV line representing this term.
      * <p>
@@ -191,26 +221,14 @@ public class Term extends Asset implements HasTypes, Serializable {
     public String toCsv() {
         final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
         sb.append(',').append(CsvUtils.sanitizeString(getLabel()));
+        exportMulti(sb, altLabels, String::toString);
+        exportMulti(sb, hiddenLabels, String::toString);
         sb.append(',').append(CsvUtils.sanitizeString(definition));
         sb.append(',').append(CsvUtils.sanitizeString(description));
-        sb.append(',');
-        if (types != null && !types.isEmpty()) {
-            sb.append(exportCollection(types));
-        }
-        sb.append(',');
-        if (sources != null && !sources.isEmpty()) {
-            sb.append(exportCollection(sources));
-        }
-        sb.append(',');
-        if (parentTerms != null && !parentTerms.isEmpty()) {
-            sb.append(exportCollection(
-                    parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
-        }
-        sb.append(',');
-        if (subTerms != null && !subTerms.isEmpty()) {
-            sb.append(
-                exportCollection(subTerms.stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
-        }
+        exportMulti(sb, types, String::toString);
+        exportMulti(sb, sources, String::toString);
+        exportMulti(sb, parentTerms, pt -> pt.getUri().toString());
+        exportMulti(sb, subTerms, pt -> pt.getUri().toString());
         sb.append(',');
         sb.append(isDraft());
         return sb.toString();
@@ -231,29 +249,35 @@ public class Term extends Asset implements HasTypes, Serializable {
         Objects.requireNonNull(row);
         row.createCell(0).setCellValue(getUri().toString());
         row.createCell(1).setCellValue(getLabel());
+        if (altLabels != null) {
+            row.createCell(2).setCellValue(String.join(";", altLabels));
+        }
+        if (hiddenLabels != null) {
+            row.createCell(3).setCellValue(String.join(";", hiddenLabels));
+        }
         if (definition != null) {
-            row.createCell(2).setCellValue(definition);
+            row.createCell(4).setCellValue(definition);
         }
         if (description != null) {
-            row.createCell(3).setCellValue(description);
+            row.createCell(5).setCellValue(description);
         }
         if (types != null) {
-            row.createCell(4).setCellValue(String.join(";", types));
+            row.createCell(6).setCellValue(String.join(";", types));
         }
         if (sources != null) {
-            row.createCell(5).setCellValue(String.join(";", sources));
+            row.createCell(7).setCellValue(String.join(";", sources));
         }
         if (parentTerms != null) {
-            row.createCell(6)
+            row.createCell(8)
                .setCellValue(String.join(";",
                        parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
         }
         if (subTerms != null) {
-            row.createCell(7)
+            row.createCell(9)
                 .setCellValue(String.join(";",
                     subTerms.stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
         }
-        row.createCell(8).setCellValue(isDraft());
+        row.createCell(10).setCellValue(isDraft());
     }
 
     /**
