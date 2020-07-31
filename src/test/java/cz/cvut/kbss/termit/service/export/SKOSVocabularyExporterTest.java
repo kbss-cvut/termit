@@ -3,7 +3,6 @@ package cz.cvut.kbss.termit.service.export;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.util.DescriptorFactory;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -95,8 +94,8 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         vocabulary.setImportedVocabularies(Collections.singleton(anotherVocabulary.getUri()));
         transactional(() -> {
-            em.persist(anotherVocabulary, DescriptorFactory.vocabularyDescriptor(anotherVocabulary));
-            em.merge(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
@@ -198,7 +197,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         withParent.addParentTerm(terms.get(0));
         // This is normally inferred
         withParent.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(withParent, DescriptorFactory.termDescriptor(withParent)));
+        transactional(() -> em.merge(withParent, descriptorFactory.termDescriptor(vocabulary)));
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
@@ -225,7 +224,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
                 .singletonMap(SKOS.RELATED.stringValue(), Collections.singleton(related.getUri().toString())));
         // This is normally inferred
         withRelated.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(withRelated, DescriptorFactory.termDescriptor(withRelated)));
+        transactional(() -> em.merge(withRelated, descriptorFactory.termDescriptor(vocabulary)));
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
@@ -246,10 +245,10 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         // This is normally inferred
         affectedTerm.setVocabulary(vocabulary.getUri());
         transactional(() -> {
-            em.persist(anotherVocabulary, DescriptorFactory.vocabularyDescriptor(anotherVocabulary));
-            em.persist(parentFromAnother, DescriptorFactory.termDescriptor(parentFromAnother));
-            em.merge(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
-            em.merge(affectedTerm, DescriptorFactory.termDescriptor(affectedTerm));
+            em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary));
+            em.persist(parentFromAnother, descriptorFactory.termDescriptor(anotherVocabulary));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.merge(affectedTerm, descriptorFactory.termDescriptor(vocabulary));
         });
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
@@ -267,7 +266,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         typed.addType(type);
         // This is normally inferred
         typed.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(typed, DescriptorFactory.termDescriptor(typed)));
+        transactional(() -> em.merge(typed, descriptorFactory.termDescriptor(vocabulary)));
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
@@ -285,7 +284,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
                 Collections.singletonMap(RDFS.SUBCLASSOF.stringValue(), Collections.singleton(supertype)));
         // This is normally inferred
         rdfsSubclass.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(rdfsSubclass, DescriptorFactory.termDescriptor(rdfsSubclass)));
+        transactional(() -> em.merge(rdfsSubclass, descriptorFactory.termDescriptor(vocabulary)));
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
@@ -304,7 +303,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
                         Collections.singleton(partOf.getUri().toString())));
         // This is normally inferred
         hasPart.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(hasPart, DescriptorFactory.termDescriptor(hasPart)));
+        transactional(() -> em.merge(hasPart, descriptorFactory.termDescriptor(vocabulary)));
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
@@ -323,7 +322,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
                         Collections.singleton(participant.getUri().toString())));
         // This is normally inferred
         parent.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(parent, DescriptorFactory.termDescriptor(parent)));
+        transactional(() -> em.merge(parent, descriptorFactory.termDescriptor(vocabulary)));
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
@@ -339,7 +338,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         withOwl.addType(OWL.CLASS.stringValue());
         // This is normally inferred
         withOwl.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(withOwl, DescriptorFactory.termDescriptor(withOwl)));
+        transactional(() -> em.merge(withOwl, descriptorFactory.termDescriptor(vocabulary)));
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
@@ -355,7 +354,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
                 .singletonMap(RDFS.SUBCLASSOF.stringValue(), Collections.singleton(OWL.OBJECTPROPERTY.stringValue())));
         // This is normally inferred
         withOwl.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(withOwl, DescriptorFactory.termDescriptor(withOwl)));
+        transactional(() -> em.merge(withOwl, descriptorFactory.termDescriptor(vocabulary)));
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);

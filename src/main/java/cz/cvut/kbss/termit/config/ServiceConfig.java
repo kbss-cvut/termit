@@ -17,8 +17,6 @@ package cz.cvut.kbss.termit.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
 import cz.cvut.kbss.termit.service.Services;
-import cz.cvut.kbss.termit.service.SystemInitializer;
-import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
@@ -34,7 +32,6 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
 
@@ -78,13 +75,6 @@ public class ServiceConfig {
     @Bean
     public LocalValidatorFactoryBean validatorFactoryBean() {
         return new LocalValidatorFactoryBean();
-    }
-
-    @Bean
-    public SystemInitializer systemInitializer(cz.cvut.kbss.termit.util.Configuration config,
-                                               UserRepositoryService userService,
-                                               PlatformTransactionManager txManager) {
-        return new SystemInitializer(config, userService, txManager);
     }
 
     @Bean

@@ -8,7 +8,7 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
-import cz.cvut.kbss.termit.model.util.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +29,9 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
     private EntityManager em;
 
     @Autowired
+    private DescriptorFactory descriptorFactory;
+
+    @Autowired
     private ChangeRecordService sut;
 
     private User author;
@@ -42,7 +45,7 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
         Environment.setCurrentUser(author);
         transactional(() -> {
             em.persist(author);
-            em.persist(asset, DescriptorFactory.vocabularyDescriptor(asset));
+            em.persist(asset, descriptorFactory.vocabularyDescriptor(asset));
         });
     }
 

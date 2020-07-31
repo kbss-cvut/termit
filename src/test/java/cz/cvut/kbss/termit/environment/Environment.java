@@ -23,14 +23,18 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jsonld.ConfigParam;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
@@ -40,6 +44,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +54,8 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+
+import static cz.cvut.kbss.termit.util.Constants.WORKSPACE_SESSION_ATT;
 
 public class Environment {
 
@@ -188,10 +195,27 @@ public class Environment {
             conn.add(new URL("http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/model"), BASE_URI,
                     RDFFormat.TURTLE);
             conn.add(new File("ontology/termit-model.ttl"), BASE_URI, RDFFormat.TURTLE);
+            // TODO Update the URI once the ontology is publicly available at its correct location
+            conn.add(
+                    new URL("https://raw.githubusercontent.com/opendata-mvcr/ssp/master/d-sgov/d-sgov-pracovn%C3%AD-prostor-0.0.1/d-sgov-pracovn%C3%AD-prostor-0.0.1-model.ttl"),
+                    BASE_URI, RDFFormat.TURTLE);
             conn.add(new URL("https://www.w3.org/TR/skos-reference/skos.rdf"), "", RDFFormat.RDFXML);
             conn.commit();
         } catch (IOException e) {
             throw new RuntimeException("Unable to load TermIt model for import.", e);
         }
+    }
+
+    /**
+     * Sets the currently loaded workspace.
+     *
+     * @param workspace Workspace to set
+     * @param ctx       Spring application context, used to retrieve relevant beans
+     */
+    public static void setCurrentWorkspace(Workspace workspace, ApplicationContext ctx) {
+        final HttpSession session = ctx.getBean(HttpSession.class);
+        final WorkspaceMetadataCache wsCache = ctx.getBean(WorkspaceMetadataCache.class);
+        session.setAttribute(WORKSPACE_SESSION_ATT, workspace.getUri());
+        wsCache.putWorkspace(new WorkspaceMetadata(workspace));
     }
 }

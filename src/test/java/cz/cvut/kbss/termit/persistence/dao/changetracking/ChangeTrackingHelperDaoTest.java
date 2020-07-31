@@ -6,7 +6,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.util.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,9 @@ class ChangeTrackingHelperDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private ChangeTrackingHelperDao sut;
@@ -34,7 +37,7 @@ class ChangeTrackingHelperDaoTest extends BaseDaoTestRunner {
     @Test
     void findStoredRetrievesRepositoryInstanceOfSpecifiedAsset() {
         final Vocabulary voc = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(voc, DescriptorFactory.vocabularyDescriptor(voc)));
+        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
 
         final Vocabulary result = sut.findStored(voc);
         assertNotNull(result);
@@ -50,7 +53,7 @@ class ChangeTrackingHelperDaoTest extends BaseDaoTestRunner {
     @Test
     void findStoredDetachesRetrievedInstanceFromPersistenceContext() {
         final Vocabulary voc = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(voc, DescriptorFactory.vocabularyDescriptor(voc)));
+        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
 
         transactional(() -> {
             final Vocabulary result = sut.findStored(voc);

@@ -109,7 +109,19 @@ public enum ConfigParam {
      * Extension appended to asset identifier (presumably a vocabulary ID) to denote its change tracking context
      * identifier.
      */
-    CHANGE_TRACKING_CONTEXT_EXTENSION("changetracking.context.extension");
+    CHANGE_TRACKING_CONTEXT_EXTENSION("changetracking.context.extension"),
+
+    /**
+     * Extension appended to the identifier of a repository context in which working version of a vocabulary is stored.
+     */
+    WORKING_VOCABULARY_CONTEXT_EXTENSION("vocabulary.working.extension"),
+
+    /**
+     * Allowed origin for CORS configuration.
+     * <p>
+     * See for example <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS">https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS</a>
+     */
+    CORS_ALLOWED_ORIGIN("cors.allowedOrigin");
 
     private final String parameter;
 

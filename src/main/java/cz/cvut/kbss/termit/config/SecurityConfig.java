@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.security.*;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
+import cz.cvut.kbss.termit.util.ConfigParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -36,6 +37,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 @Configuration
@@ -60,6 +62,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final ObjectMapper objectMapper;
 
+    private final cz.cvut.kbss.termit.util.Configuration config;
+
     @Autowired
     public SecurityConfig(AuthenticationProvider authenticationProvider,
                           AuthenticationEntryPoint authenticationEntryPoint,
@@ -67,7 +71,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                           AuthenticationFailureHandler authenticationFailureHandler,
                           JwtUtils jwtUtils, SecurityUtils securityUtils,
                           TermItUserDetailsService userDetailsService,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper, cz.cvut.kbss.termit.util.Configuration config) {
         this.authenticationProvider = authenticationProvider;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
@@ -76,6 +80,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.securityUtils = securityUtils;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
+        this.config = config;
     }
 
     @Override
@@ -85,21 +90,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf()
-            .disable()
+        http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf().disable()
             .authorizeRequests().antMatchers("/**").permitAll()
             .and().exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
             .and().cors().and().csrf().disable()
             .addFilter(authenticationFilter())
             .addFilter(
-                    new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils,
-                            userDetailsService,
-                            objectMapper)).sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and();
+                    new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils, userDetailsService,
+                            objectMapper))
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER);
     }
 
-    private JwtAuthenticationFilter authenticationFilter() throws Exception {
+    @Bean
+    public JwtAuthenticationFilter authenticationFilter() throws Exception {
         final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager(),
                 jwtUtils);
         authenticationFilter.setFilterProcessesUrl(SecurityConstants.SECURITY_CHECK_URI);
@@ -115,10 +118,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // This behavior can be restricted later.
         final CorsConfiguration corsConfiguration = new CorsConfiguration().applyPermitDefaultValues();
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-        corsConfiguration.setAllowedOrigins(Collections.singletonList("*"));
+        corsConfiguration.setAllowedOrigins(Arrays.asList(config.get(ConfigParam.CORS_ALLOWED_ORIGIN).split(",")));
         corsConfiguration.addExposedHeader(HttpHeaders.AUTHORIZATION);
         corsConfiguration.addExposedHeader(HttpHeaders.LOCATION);
         corsConfiguration.addExposedHeader(HttpHeaders.CONTENT_DISPOSITION);
+        corsConfiguration.setAllowCredentials(true);
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;

@@ -16,6 +16,9 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
@@ -24,13 +27,17 @@ import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
-import cz.cvut.kbss.termit.model.util.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,11 +47,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
 
 class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
@@ -52,7 +63,13 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     private Configuration config;
 
     @Autowired
+    private DescriptorFactory descriptorFactory;
+
+    @Autowired
     private EntityManager em;
+
+    @Autowired
+    private WorkspaceMetadataCache workspaceMetadataCache;
 
     @Autowired
     private VocabularyRepositoryService sut;
@@ -61,7 +78,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         this.user = Generator.generateUserAccountWithPassword();
         transactional(() -> em.persist(user));
         Environment.setCurrentUser(user);
@@ -145,7 +161,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     private Descriptor descriptorFor(Vocabulary entity) {
-        return DescriptorFactory.vocabularyDescriptor(entity);
+        return descriptorFactory.vocabularyDescriptor(entity);
     }
 
     @Test
@@ -179,12 +195,12 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         subjectVocabulary.getGlossary().addRootTerm(child);
         targetVocabulary.getGlossary().addRootTerm(parentTerm);
         transactional(() -> {
-            em.persist(subjectVocabulary, DescriptorFactory.vocabularyDescriptor(subjectVocabulary));
-            em.persist(targetVocabulary, DescriptorFactory.vocabularyDescriptor(targetVocabulary));
+            em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
+            em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
             child.setGlossary(subjectVocabulary.getGlossary().getUri());
-            em.persist(child, DescriptorFactory.termDescriptor(subjectVocabulary));
+            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
             parentTerm.setGlossary(targetVocabulary.getGlossary().getUri());
-            em.persist(parentTerm, DescriptorFactory.termDescriptor(targetVocabulary));
+            em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
             Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
@@ -205,12 +221,12 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         targetVocabulary.getGlossary().addRootTerm(parentTerm);
         parentTerm.setVocabulary(targetVocabulary.getUri());
         transactional(() -> {
-            em.persist(subjectVocabulary, DescriptorFactory.vocabularyDescriptor(subjectVocabulary));
-            em.persist(targetVocabulary, DescriptorFactory.vocabularyDescriptor(targetVocabulary));
+            em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
+            em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
             child.setGlossary(subjectVocabulary.getGlossary().getUri());
-            em.persist(child, DescriptorFactory.termDescriptor(subjectVocabulary));
+            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
             parentTerm.setGlossary(targetVocabulary.getGlossary().getUri());
-            em.persist(parentTerm, DescriptorFactory.termDescriptor(targetVocabulary));
+            em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
             Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
@@ -224,7 +240,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void getTransitivelyImportedVocabulariesReturnsEmptyCollectionsWhenVocabularyHasNoImports() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(subjectVocabulary, DescriptorFactory.vocabularyDescriptor(subjectVocabulary)));
+        transactional(() -> em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary)));
         final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary);
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -240,8 +256,49 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void getChangesRetrievesChangesForVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary)));
+        transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
         final List<AbstractChangeRecord> changes = sut.getChanges(vocabulary);
         assertTrue(changes.isEmpty());
+    }
+
+    @Test
+    void findAllRetrievesVocabulariesFromCurrentWorkspace() {
+        enableRdfsInference(em);
+        final List<Vocabulary> vocabularies = IntStream.range(0, 10).mapToObj(i -> Generator.generateVocabularyWithId())
+                                                       .collect(Collectors.toList());
+        final Workspace workspace = new Workspace();
+        workspace.setLabel("test workspace");
+        workspace.setUri(Generator.generateUri());
+        transactional(() -> {
+            vocabularies.forEach(v -> em.persist(v, new EntityDescriptor(v.getUri())));
+            em.persist(workspace, new EntityDescriptor(workspace.getUri()));
+        });
+        final List<Vocabulary> inWorkspace = vocabularies.stream().filter(v -> Generator.randomBoolean())
+                                                         .collect(Collectors.toList());
+        addWorkspaceReference(inWorkspace, workspace);
+        setCurrentWorkspace(workspace, inWorkspace);
+
+        final List<Vocabulary> result = sut.findAll();
+        inWorkspace.sort(Comparator.comparing(Vocabulary::getLabel));
+        assertEquals(inWorkspace, result);
+    }
+
+    private void addWorkspaceReference(Collection<Vocabulary> vocabularies, Workspace workspace) {
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection conn = repo.getConnection()) {
+                conn.begin();
+                conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
+                conn.commit();
+            }
+        });
+    }
+
+    private void setCurrentWorkspace(Workspace workspace, Collection<Vocabulary> vocabularies) {
+        final WorkspaceMetadata metadata = workspaceMetadataCache.getCurrentWorkspaceMetadata();
+        vocabularies.forEach(v -> doReturn(new VocabularyInfo(v.getUri(), v.getUri(), v.getUri())).when(metadata)
+                                                                                                  .getVocabularyInfo(
+                                                                                                          v.getUri()));
+        doReturn(workspace).when(workspaceMetadataCache).getCurrentWorkspace();
     }
 }

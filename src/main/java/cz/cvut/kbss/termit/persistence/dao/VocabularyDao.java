@@ -23,7 +23,8 @@ import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.util.DescriptorFactory;
+import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -40,8 +41,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     private volatile long lastModified;
 
     @Autowired
-    public VocabularyDao(EntityManager em, Configuration config) {
-        super(Vocabulary.class, em, config);
+    public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
+        super(Vocabulary.class, em, config, descriptorFactory);
         refreshLastModified();
     }
 
@@ -57,11 +58,40 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         return result;
     }
 
+    /**
+     * Finds vocabularies contained in the specified workspace.
+     * <p>
+     * This method should be used in preference to {@link #findAll()} in most scenarios, as it is aware of workspaces.
+     *
+     * @param workspace Workspace to get vocabularies from.
+     * @return List of vocabularies sorted by label
+     */
+    public List<Vocabulary> findAll(Workspace workspace) {
+        final List<Vocabulary> result = em.createNativeQuery("SELECT ?v WHERE { " +
+                "?mc a ?metadataCtx ;" +
+                "?referencesCtx ?vc ." +
+                "?vc a ?vocabularyCtx ." +
+                "GRAPH ?vc {" +
+                "?v a ?type ." +
+                "}" +
+                "}", Vocabulary.class).setParameter("mc", workspace.getUri())
+                                          .setParameter("metadataCtx",
+                                                  URI.create(
+                                                          cz.cvut.kbss.termit.util.Vocabulary.s_c_metadatovy_kontext))
+                                          .setParameter("referencesCtx", URI.create(
+                                                  cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext))
+                                          .setParameter("vocabularyCtx", URI.create(
+                                                  cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext))
+                                          .setParameter("type", typeUri).getResultList();
+        result.sort(Comparator.comparing(Vocabulary::getLabel));
+        return result;
+    }
+
     @Override
     public Optional<Vocabulary> find(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.find(type, id, DescriptorFactory.vocabularyDescriptor(id)));
+            return Optional.ofNullable(em.find(type, id, descriptorFactory.vocabularyDescriptor(id)));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -71,7 +101,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public Optional<Vocabulary> getReference(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.getReference(type, id, DescriptorFactory.vocabularyDescriptor(id)));
+            return Optional.ofNullable(em.getReference(type, id, descriptorFactory.vocabularyDescriptor(id)));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -103,7 +133,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         try {
             // Evict possibly cached instance loaded from default context
             em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
-            return em.merge(entity, DescriptorFactory.vocabularyDescriptor(entity));
+            return em.merge(entity, descriptorFactory.vocabularyDescriptor(entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -114,7 +144,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public void persist(Vocabulary entity) {
         Objects.requireNonNull(entity);
         try {
-            em.persist(entity, DescriptorFactory.vocabularyDescriptor(entity));
+            em.persist(entity, descriptorFactory.vocabularyDescriptor(entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -131,7 +161,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
      */
     public Glossary updateGlossary(Vocabulary entity) {
         Objects.requireNonNull(entity);
-        return em.merge(entity.getGlossary(), DescriptorFactory.glossaryDescriptor(entity));
+        return em.merge(entity.getGlossary(), descriptorFactory.glossaryDescriptor(entity));
     }
 
     /**

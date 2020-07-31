@@ -11,7 +11,7 @@ import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.service.business.WorkspaceService;
 import cz.cvut.kbss.termit.service.importer.VocabularyImportService;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Utils;
@@ -36,24 +36,33 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final ChangeRecordService changeRecordService;
 
-    final VocabularyImportService importService;
+    private final VocabularyImportService importService;
+
+    private final WorkspaceService workspaceService;
 
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
                                        @Lazy TermService termService, VocabularyImportService importService,
-                                       SecurityUtils securityUtils) {
+                                       WorkspaceService workspaceService) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.termService = termService;
         this.changeRecordService = changeRecordService;
         this.importService = importService;
+        this.workspaceService = workspaceService;
     }
 
     @Override
     protected AssetDao<Vocabulary> getPrimaryDao() {
         return vocabularyDao;
+    }
+
+    @Override
+    public List<Vocabulary> findAll() {
+        final List<Vocabulary> loaded = vocabularyDao.findAll(workspaceService.getCurrentWorkspace());
+        return loaded.stream().map(this::postLoad).collect(Collectors.toList());
     }
 
     @Override

@@ -22,7 +22,6 @@ CONSTRUCT {
     ?term a skos:Concept ;
         skos:inScheme ?glossary ;
         skos:prefLabel ?prefLabel .
-    ?vocabulary pdp:má-glosář ?glossary .
     OPTIONAL {
         ?term skos:definition ?definition .
     }

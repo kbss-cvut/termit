@@ -114,6 +114,11 @@ public class Constants {
      */
     public static final String ZIP_MEDIA_TYPE = "application/zip";
 
+    /**
+     * Session attribute denoting the current user's workspace.
+     */
+    public static final String WORKSPACE_SESSION_ATT = "workspace";
+
     private Constants() {
         throw new AssertionError();
     }

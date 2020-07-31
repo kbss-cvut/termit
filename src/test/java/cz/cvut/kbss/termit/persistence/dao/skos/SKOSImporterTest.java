@@ -1,6 +1,8 @@
 package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.UnsupportedImportMediaTypeException;
@@ -10,6 +12,7 @@ import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
 import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -22,11 +25,13 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
+import java.util.Collections;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +41,7 @@ import java.util.stream.Collectors;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
 
 class SKOSImporterTest extends BaseDaoTestRunner {
 
@@ -48,6 +54,9 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     @Autowired
     private ApplicationContext context;
 
+    @Autowired
+    private WorkspaceMetadataCache workspaceMetadataCache;
+
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @BeforeEach
@@ -55,6 +64,10 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final User author = Generator.generateUserWithId();
         Environment.setCurrentUser(author);
         transactional(() -> em.persist(author));
+        final WorkspaceMetadata wsMetadata = workspaceMetadataCache.getCurrentWorkspaceMetadata();
+        final VocabularyInfo vocabularyInfo = new VocabularyInfo(URI.create(VOCABULARY_IRI), URI.create(VOCABULARY_IRI),
+                URI.create(VOCABULARY_IRI + Constants.DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION));
+        doReturn(vocabularyInfo).when(wsMetadata).getVocabularyInfo(ArgumentMatchers.any());
     }
 
     @Test
@@ -87,7 +100,11 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void importInsertsImportedDataIntoContextBasedOnOntologyIdentifier() {
+    void importInsertsImportedDataIntoContextConfiguredInWorkspace() {
+        final URI vocUri = URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/glosář");
+        final WorkspaceMetadata metadata = new WorkspaceMetadata();
+        metadata.setVocabularies(Collections.singletonMap(vocUri, new VocabularyInfo(vocUri, vocUri, vocUri)));
+        doReturn(metadata).when(workspaceMetadataCache).getCurrentWorkspaceMetadata();
         final AtomicInteger existingStatementCount = new AtomicInteger(0);
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
@@ -107,6 +124,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 final Optional<Resource> ctx = contexts.stream().filter(r -> r.stringValue().contains(GLOSSARY_IRI))
                                                        .findFirst();
                 assertTrue(ctx.isPresent());
+                assertEquals(ctx.get().toString(), vocUri.toString());
                 final List<Statement> inAll = Iterations.asList(conn.getStatements(null, null, null, false));
                 final List<Statement> inCtx = Iterations.asList(conn.getStatements(null, null, null, false, ctx.get()));
                 assertEquals(inAll.size() - existingStatementCount.get(), inCtx.size());
