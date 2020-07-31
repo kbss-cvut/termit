@@ -1,6 +1,10 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.exception.vocabularyremoval.DocumentVocabularyRemovalException;
+import cz.cvut.kbss.termit.exception.vocabularyremoval.ImportedVocabularyRemovalException;
+import cz.cvut.kbss.termit.exception.vocabularyremoval.NonemptyVocabularyRemovalException;
+import cz.cvut.kbss.termit.model.DocumentVocabulary;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
@@ -139,5 +143,23 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Override
     public long getLastModified() {
         return vocabularyDao.getLastModified();
+    }
+
+    @Override
+    public void remove(Vocabulary instance) {
+        if (instance instanceof DocumentVocabulary) {
+            throw new DocumentVocabularyRemovalException();
+        }
+
+        final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
+        if (!vocabularies.isEmpty()) {
+            throw new ImportedVocabularyRemovalException(vocabularies);
+        }
+
+        if (!termService.isEmpty(instance)) {
+            throw new NonemptyVocabularyRemovalException();
+        }
+
+        super.remove(instance);
     }
 }
