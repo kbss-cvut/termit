@@ -146,4 +146,14 @@ public class VocabularyController extends BaseController {
     public URI generateIdentifier(@RequestParam("name") String name) {
         return vocabularyService.generateIdentifier(name);
     }
+
+    @DeleteMapping(value = "/{normalizedName}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeVocabulary(@PathVariable String normalizedName,
+                               @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+        final URI identifier = resolveIdentifier(namespace, normalizedName, ConfigParam.NAMESPACE_VOCABULARY);
+        final Vocabulary toRemove = vocabularyService.getRequiredReference(identifier);
+        vocabularyService.remove(toRemove);
+        LOG.debug("Vocabulary {} removed.", toRemove);
+    }
 }

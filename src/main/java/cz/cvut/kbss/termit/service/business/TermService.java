@@ -118,6 +118,17 @@ public class TermService implements ChangeRecordProvider<Term> {
     }
 
     /**
+     * Finds out whether the given vocabulary contains any terms or not.
+     *
+     * @param vocabulary vocabulary under consideration
+     * @return true if the vocabulary contains no terms, false otherwise
+     */
+    public boolean isEmpty(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return repositoryService.isEmpty(vocabulary);
+    }
+
+    /**
      * Finds all terms which match the specified search string in the specified vocabulary.
      *
      * @param searchString Search string

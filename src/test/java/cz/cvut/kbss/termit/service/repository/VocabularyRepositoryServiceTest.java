@@ -178,6 +178,15 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void removeRemovesNondocumentEmptyNonImportedVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+        sut.remove(vocabulary);
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertNull(result);
+    }
+
+    @Test
     void generateIdentifierGeneratesIdentifierBasedOnSpecifiedLabel() {
         final String label = "Test vocabulary";
         assertEquals(config.get(ConfigParam.NAMESPACE_VOCABULARY) + IdentifierResolver.normalize(label),
