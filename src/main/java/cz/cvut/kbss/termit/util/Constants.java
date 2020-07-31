@@ -112,6 +112,11 @@ public class Constants {
     public static final String DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION = "/zmeny";
 
     /**
+     * Default value of the {@link ConfigParam#COMMENTS_CONTEXT} configuration.
+     */
+    public static final String DEFAULT_COMMENTS_CONTEXT = "http://onto.fel.cvut.cz/ontologies/application/termit/comments";
+
+    /**
      * Path to directory containing queries used by the system.
      * <p>
      * The path should be relative to the classpath, so that queries from it can be loaded using {@link

@@ -124,7 +124,12 @@ public enum ConfigParam {
      * Extension appended to asset identifier (presumably a vocabulary ID) to denote its change tracking context
      * identifier.
      */
-    CHANGE_TRACKING_CONTEXT_EXTENSION("changetracking.context.extension");
+    CHANGE_TRACKING_CONTEXT_EXTENSION("changetracking.context.extension"),
+
+    /**
+     * IRI of the repository context used to store comments (discussion to assets)
+     */
+    COMMENTS_CONTEXT("comments.context");
 
     private final String parameter;
 
