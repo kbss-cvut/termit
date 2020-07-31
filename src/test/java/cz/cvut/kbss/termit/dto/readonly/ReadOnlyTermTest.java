@@ -22,6 +22,8 @@ class ReadOnlyTermTest {
         final ReadOnlyTerm result = new ReadOnlyTerm(term);
         assertEquals(term.getUri(), result.getUri());
         assertEquals(term.getLabel(), result.getLabel());
+        assertEquals(term.getAltLabels(), result.getAltLabels());
+        assertEquals(term.getHiddenLabels(), result.getHiddenLabels());
         assertEquals(term.getDefinition(), result.getDefinition());
         assertEquals(term.getDescription(), result.getDescription());
         assertEquals(term.getSources(), result.getSources());

@@ -62,8 +62,8 @@ class TermTest {
         assertThat(items.length, greaterThanOrEqualTo(4));
         assertEquals(term.getUri().toString(), items[0]);
         assertEquals(term.getLabel(), items[1]);
-        assertEquals(term.getDefinition(), items[2]);
-        assertEquals(term.getDescription(), items[3]);
+        assertEquals(term.getDefinition(), items[4]);
+        assertEquals(term.getDescription(), items[5]);
     }
 
     @Test
@@ -75,13 +75,37 @@ class TermTest {
     }
 
     @Test
+    void toCsvExportsAltLabelsDelimitedBySemicolons() {
+        final Term term = Generator.generateTermWithId();
+        term.setAltLabels(new HashSet<>(Arrays.asList("Pivko","Pivečko")));
+        final String result = term.toCsv();
+        final String[] items = result.split(",");
+        assertEquals(items.length, 11);
+        final String list = items[2];
+        assertTrue(list.matches(".+;.+"));
+        term.getAltLabels().forEach(t -> assertTrue(list.contains(t)));
+    }
+
+    @Test
+    void toCsvExportsHiddenLabelsDelimitedBySemicolons() {
+        final Term term = Generator.generateTermWithId();
+        term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko","Pivečko")));
+        final String result = term.toCsv();
+        final String[] items = result.split(",");
+        assertEquals(items.length, 11);
+        final String list = items[3];
+        assertTrue(list.matches(".+;.+"));
+        term.getHiddenLabels().forEach(t -> assertTrue(list.contains(t)));
+    }
+
+    @Test
     void toCsvExportsTypesDelimitedBySemicolons() {
         final Term term = Generator.generateTermWithId();
         term.setTypes(new LinkedHashSet<>(Arrays.asList(Vocabulary.s_c_object, Vocabulary.s_c_entity)));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertThat(items.length, greaterThanOrEqualTo(5));
-        final String types = items[4];
+        final String types = items[6];
         assertTrue(types.matches(".+;.+"));
         term.getTypes().forEach(t -> assertTrue(types.contains(t)));
     }
@@ -94,7 +118,7 @@ class TermTest {
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertThat(items.length, greaterThanOrEqualTo(6));
-        final String sources = items[5];
+        final String sources = items[7];
         assertTrue(sources.matches(".+;.+"));
         term.getSources().forEach(t -> assertTrue(sources.contains(t)));
     }
@@ -106,7 +130,7 @@ class TermTest {
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertThat(items.length, greaterThanOrEqualTo(7));
-        final String parentTerms = items[6];
+        final String parentTerms = items[8];
         assertTrue(parentTerms.matches(".+;.+"));
         term.getParentTerms().forEach(t -> assertTrue(parentTerms.contains(t.getUri().toString())));
     }
@@ -118,7 +142,7 @@ class TermTest {
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertThat(items.length, greaterThanOrEqualTo(8));
-        final String subTerms = items[7];
+        final String subTerms = items[9];
         assertTrue(subTerms.matches(".+;.+"));
         term.getSubTerms().forEach(t -> assertTrue(subTerms.contains(t.getUri().toString())));
     }
@@ -134,6 +158,8 @@ class TermTest {
     void toExcelExportsTermToExcelRow() {
         final Term term = Generator.generateTermWithId();
         term.setTypes(Collections.singleton(Vocabulary.s_c_object));
+        term.setAltLabels(new HashSet<>(Arrays.asList("Pivko","Pivečko")));
+        term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko","Pivečko")));
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
@@ -144,17 +170,21 @@ class TermTest {
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         assertEquals(term.getLabel(), row.getCell(1).getStringCellValue());
-        assertEquals(term.getDefinition(), row.getCell(2).getStringCellValue());
-        assertEquals(term.getDescription(), row.getCell(3).getStringCellValue());
-        assertEquals(term.getTypes().iterator().next(), row.getCell(4).getStringCellValue());
-        assertTrue(row.getCell(5).getStringCellValue().matches(".+;.+"));
-        term.getSources().forEach(s -> assertTrue(row.getCell(5).getStringCellValue().contains(s)));
-        assertTrue(row.getCell(6).getStringCellValue().matches(".+;.+"));
-        term.getParentTerms()
-            .forEach(st -> assertTrue(row.getCell(6).getStringCellValue().contains(st.getUri().toString())));
+        assertTrue(row.getCell(2).getStringCellValue().matches(".+;.+"));
+        term.getAltLabels().forEach(s -> assertTrue(row.getCell(2).getStringCellValue().contains(s)));
+        assertTrue(row.getCell(3).getStringCellValue().matches(".+;.+"));
+        term.getHiddenLabels().forEach(s -> assertTrue(row.getCell(3).getStringCellValue().contains(s)));
+        assertEquals(term.getDefinition(), row.getCell(4).getStringCellValue());
+        assertEquals(term.getDescription(), row.getCell(5).getStringCellValue());
+        assertEquals(term.getTypes().iterator().next(), row.getCell(6).getStringCellValue());
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
+        term.getSources().forEach(s -> assertTrue(row.getCell(7).getStringCellValue().contains(s)));
+        assertTrue(row.getCell(8).getStringCellValue().matches(".+;.+"));
+        term.getParentTerms()
+            .forEach(st -> assertTrue(row.getCell(8).getStringCellValue().contains(st.getUri().toString())));
+        assertTrue(row.getCell(9).getStringCellValue().matches(".+;.+"));
         term.getSubTerms()
-            .forEach(st -> assertTrue(row.getCell(7).getStringCellValue().contains(st.getUri().toString())));
+            .forEach(st -> assertTrue(row.getCell(9).getStringCellValue().contains(st.getUri().toString())));
     }
 
     @Test
@@ -168,7 +198,7 @@ class TermTest {
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         assertEquals(term.getLabel(), row.getCell(1).getStringCellValue());
-        assertEquals(9, row.getLastCellNum());
+        assertEquals(11, row.getLastCellNum());
     }
 
     @Test
@@ -183,8 +213,8 @@ class TermTest {
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         assertEquals(term.getLabel(), row.getCell(1).getStringCellValue());
-        assertTrue(row.getCell(5).getStringCellValue().matches(".+;.+"));
-        term.getSources().forEach(s -> assertTrue(row.getCell(5).getStringCellValue().contains(s)));
+        assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
+        term.getSources().forEach(s -> assertTrue(row.getCell(7).getStringCellValue().contains(s)));
     }
 
     @Test
