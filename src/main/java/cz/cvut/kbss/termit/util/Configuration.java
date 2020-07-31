@@ -103,6 +103,7 @@ public class Configuration {
         map.put(ConfigParam.TERM_NAMESPACE_SEPARATOR, Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR);
         map.put(ConfigParam.FILE_NAMESPACE_SEPARATOR, Constants.DEFAULT_FILE_NAMESPACE_SEPARATOR);
         map.put(ConfigParam.CHANGE_TRACKING_CONTEXT_EXTENSION, Constants.DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION);
+        map.put(ConfigParam.COMMENTS_CONTEXT, Constants.DEFAULT_COMMENTS_CONTEXT);
         return map;
     }
 }
