@@ -64,4 +64,11 @@ public interface VocabularyService
      * @return List of change records, ordered by record timestamp in descending order
      */
     List<AbstractChangeRecord> getChangesOfContent(Vocabulary asset);
+
+    /**
+     * Removes a vocabulary
+     *
+     * @param asset Vocabulary to remove
+     */
+    void remove(Vocabulary asset);
 }

@@ -218,6 +218,18 @@ class TermDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void isEmptyReturnsTrueForEmptyVocabulary() {
+        assertTrue(sut.isEmpty(vocabulary));
+    }
+
+    @Test
+    void isEmptyReturnsFalseForNonemptyVocabulary() {
+        final List<Term> terms = generateTerms(1);
+        addTermsAndSave(terms, vocabulary);
+        assertFalse(sut.isEmpty(vocabulary));
+    }
+
+    @Test
     void findAllReturnsAllTermsFromVocabularyOrderedByLabel() {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(terms, vocabulary);

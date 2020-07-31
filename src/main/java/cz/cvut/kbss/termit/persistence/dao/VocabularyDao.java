@@ -96,6 +96,25 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         }
     }
 
+    /**
+     * Gets identifiers of vocabularies which directly import the supplied one.
+     *
+     * @param vocabulary vocabulary, importing vocabularies of which are fetched
+     * @return Collection of vocabularies which directly import #vocabulary
+     */
+    public List<Vocabulary> getImportingVocabularies(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
+                "?importing ?imports ?imported ." +
+                "}", Vocabulary.class)
+                .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                .setParameter("imported", vocabulary.getUri()).getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     @ModifiesData
     @Override
     public Vocabulary update(Vocabulary entity) {
