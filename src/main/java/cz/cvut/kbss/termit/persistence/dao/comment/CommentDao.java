@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Repository
 public class CommentDao {
@@ -42,9 +43,28 @@ public class CommentDao {
      */
     public List<Comment> findAll(Asset asset) {
         Objects.requireNonNull(asset);
-        return em.createQuery("SELECT c FROM Comment c WHERE c.asset = :asset ORDER BY c.created", Comment.class)
-                 .setParameter("asset", asset.getUri())
-                 .setDescriptor(commentDescriptor).getResultList();
+        try {
+            return em.createQuery("SELECT c FROM Comment c WHERE c.asset = :asset ORDER BY c.created", Comment.class)
+                     .setParameter("asset", asset.getUri())
+                     .setDescriptor(commentDescriptor).getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Finds comment with the specified identifier.
+     *
+     * @param id Comment identifier
+     * @return Matching comment
+     */
+    public Optional<Comment> find(URI id) {
+        Objects.requireNonNull(id);
+        try {
+            return Optional.ofNullable(em.find(Comment.class, id, commentDescriptor));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     /**
