@@ -1,6 +1,6 @@
 /**
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2020 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +17,14 @@
  */
 package cz.cvut.kbss.termit.exception.vocabularyremoval;
 
+import cz.cvut.kbss.termit.exception.TermItException;
+
 /**
  * Indicates that an error occurred in the vocabulary import relationship.
  */
-public class NonemptyVocabularyRemovalException extends VocabularyRemovalException {
+public class VocabularyRemovalException extends TermItException {
 
-    private final String messageId;
-
-    public NonemptyVocabularyRemovalException() {
-        super("Vocabulary cannot be removed. It contains terms.");
-        this.messageId = null;
-    }
-
-    public String getMessageId() {
-        return messageId;
+    public VocabularyRemovalException(String message) {
+        super(message);
     }
 }

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 /**
  * Indicates that an error occurred in the vocabulary import relationship.
  */
-public class ImportedVocabularyRemovalException extends TermItException {
+public class ImportedVocabularyRemovalException extends VocabularyRemovalException {
 
     private final String messageId;
 
