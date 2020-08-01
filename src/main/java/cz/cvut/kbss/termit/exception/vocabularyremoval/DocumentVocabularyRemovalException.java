@@ -22,7 +22,7 @@ import cz.cvut.kbss.termit.exception.TermItException;
 /**
  * Indicates that an error occurred in the vocabulary import relationship.
  */
-public class DocumentVocabularyRemovalException extends TermItException {
+public class DocumentVocabularyRemovalException extends VocabularyRemovalException {
 
     private final String messageId;
 
