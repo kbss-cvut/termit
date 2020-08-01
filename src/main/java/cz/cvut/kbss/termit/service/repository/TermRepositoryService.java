@@ -31,7 +31,6 @@ import javax.validation.Validator;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
@@ -81,8 +80,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     @Transactional
     public void addRootTermToVocabulary(Term instance, Vocabulary vocabulary) {
         validate(instance);
-        Objects.requireNonNull(instance);
-        Objects.requireNonNull(vocabulary);
 
         if (instance.getUri() == null) {
             instance.setUri(generateIdentifier(vocabulary.getUri(), instance.getLabel()));
@@ -101,8 +98,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return Generated term identifier
      */
     public URI generateIdentifier(URI vocabularyUri, String termLabel) {
-        Objects.requireNonNull(vocabularyUri);
-        Objects.requireNonNull(termLabel);
         return idResolver.generateIdentifier(
                 idResolver.buildNamespace(vocabularyUri.toString(), config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)),
                 termLabel);
@@ -118,8 +113,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     @Transactional
     public void addChildTerm(Term instance, Term parentTerm) {
         validate(instance);
-        Objects.requireNonNull(instance);
-        Objects.requireNonNull(parentTerm);
         final URI vocabularyIri =
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
         if (instance.getUri() == null) {
@@ -144,7 +137,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of terms ordered by label
      */
     public List<Term> findAll(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
         return termDao.findAll(vocabulary);
     }
 
@@ -155,7 +147,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return true if the vocabulary is empty
      */
     public boolean isEmpty(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
         return termDao.isEmpty(vocabulary);
     }
 
@@ -169,7 +160,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of terms ordered by label
      */
     public List<Term> findAllIncludingImported(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
         return termDao.findAllIncludingImported(vocabulary);
     }
 
@@ -183,8 +173,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
     public List<Term> findAllRoots(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
-        Objects.requireNonNull(vocabulary);
-        Objects.requireNonNull(pageSpec);
         return termDao.findAllRoots(vocabulary, pageSpec, includeTerms);
     }
 
