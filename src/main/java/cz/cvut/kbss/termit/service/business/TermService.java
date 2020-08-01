@@ -232,6 +232,7 @@ public class TermService implements ChangeRecordProvider<Term> {
      * @return List of term assignment describing instances
      */
     public List<TermAssignments> getAssignmentInfo(Term term) {
+        Objects.requireNonNull(term);
         return repositoryService.getAssignmentsInfo(term);
     }
 
@@ -334,12 +335,14 @@ public class TermService implements ChangeRecordProvider<Term> {
      *
      * @return List of terms
      */
-    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabularyIri) {
-        return repositoryService.getUnusedTermsInVocabulary(vocabularyIri);
+    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return repositoryService.getUnusedTermsInVocabulary(vocabulary);
     }
 
     @Override
     public List<AbstractChangeRecord> getChanges(Term term) {
+        Objects.requireNonNull(term);
         return changeRecordService.getChanges(term);
     }
 }
