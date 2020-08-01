@@ -57,6 +57,7 @@ public class TermService implements ChangeRecordProvider<Term> {
      * @return Exported resource wrapped in an {@code Optional}
      */
     public Optional<TypeAwareResource> exportGlossary(Vocabulary vocabulary, String mediaType) {
+        Objects.requireNonNull(vocabulary);
         return exporters.exportVocabularyGlossary(vocabulary, mediaType);
     }
 
@@ -78,6 +79,7 @@ public class TermService implements ChangeRecordProvider<Term> {
      * @return Matching terms
      */
     public List<Term> findAllIncludingImported(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
         return repositoryService.findAllIncludingImported(vocabulary);
     }
 
@@ -302,6 +304,8 @@ public class TermService implements ChangeRecordProvider<Term> {
      * @return Generated term identifier
      */
     public URI generateIdentifier(URI vocabularyUri, String termLabel) {
+        Objects.requireNonNull(vocabularyUri);
+        Objects.requireNonNull(termLabel);
         return repositoryService.generateIdentifier(vocabularyUri, termLabel);
     }
 
