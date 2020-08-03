@@ -24,9 +24,16 @@ public interface TermOccurrenceService {
     void approveOccurrence(URI identifier);
 
     /**
-     * Removes occurrence with the specified identifier.
+     * Removes the given occurrence.
      *
-     * @param identifier Identifier of the occurrence to remove
+     * @param occurrence The occurrence to remove
      */
-    void removeOccurrence(URI identifier);
+    void removeOccurrence(TermOccurrence occurrence);
+
+    /**
+     * Gets reference to a term occurrence given its URI.
+     *
+     * @param uri The URI of the occurrence to remove
+     */
+    TermOccurrence getRequiredReference(URI uri);
 }

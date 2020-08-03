@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.exception.TermDefinitionSourceExistsException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
@@ -326,12 +327,22 @@ public class TermService implements ChangeRecordProvider<Term> {
         termOccurrenceService.persistOccurrence(definitionSource);
     }
 
+    /**
+     * Gets a reference to a Term occurrence with the specified identifier.
+     *
+     * @param id Term occurrence identifier
+     * @return Matching Term occurrence reference
+     */
+    public TermOccurrence getRequiredOcurrenceReference(URI id) {
+        return termOccurrenceService.getRequiredReference(id);
+    }
+
     public void approveOccurrence(URI identifier) {
         termOccurrenceService.approveOccurrence(identifier);
     }
 
-    public void removeOccurrence(URI identifier) {
-        termOccurrenceService.removeOccurrence(identifier);
+    public void removeOccurrence(TermOccurrence occurrence) {
+        termOccurrenceService.removeOccurrence(occurrence);
     }
 
     /**

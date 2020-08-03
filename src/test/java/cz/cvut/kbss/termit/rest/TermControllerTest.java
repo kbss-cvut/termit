@@ -570,7 +570,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(idResolverMock.buildNamespace(VOCABULARY_URI,"/pojem")).thenReturn(NAMESPACE);
-        when(termServiceMock.getRequiredReference(termUri)).thenReturn(term);
+        when(termServiceMock.findRequired(termUri)).thenReturn(term);
         mockMvc.perform(delete("/vocabularies/" + VOCABULARY_NAME + "/terms/" + TERM_NAME)
             .param(QueryParams.NAMESPACE, Environment.BASE_URI))
             .andExpect(status().isNoContent());
@@ -586,7 +586,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(idResolverMock.buildNamespace(VOCABULARY_URI,"/pojem")).thenReturn(NAMESPACE);
-        when(termServiceMock.getRequiredReference(termUri)).thenThrow(NotFoundException.class);
+        when(termServiceMock.findRequired(termUri)).thenThrow(NotFoundException.class);
         mockMvc.perform(delete("/vocabularies/" + VOCABULARY_NAME + "/terms/" + TERM_NAME)
             .param(QueryParams.NAMESPACE, Environment.BASE_URI))
             .andExpect(status().isNotFound());
@@ -723,7 +723,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.buildNamespace(VOCABULARY_URI, Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR))
                 .thenReturn(NAMESPACE);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        when(termServiceMock.getRequiredReference(termUri)).thenReturn(toRemove);
+        when(termServiceMock.findRequired(termUri)).thenReturn(toRemove);
 
         mockMvc.perform(
                 delete(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME))
@@ -739,7 +739,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.buildNamespace(VOCABULARY_URI, Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR))
                 .thenReturn(NAMESPACE);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        when(termServiceMock.getRequiredReference(termUri)).thenThrow(NotFoundException.class);
+        when(termServiceMock.findRequired(termUri)).thenThrow(NotFoundException.class);
 
         mockMvc.perform(
                 delete(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME))
