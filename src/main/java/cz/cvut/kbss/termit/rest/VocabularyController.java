@@ -147,11 +147,18 @@ public class VocabularyController extends BaseController {
         return vocabularyService.generateIdentifier(name);
     }
 
-    @DeleteMapping(value = "/{normalizedName}")
+    /**
+     * Removes a vocabulary.
+     * @see VocabularyService#remove(Vocabulary)  for details.
+     *
+     * @param fragment vocabulary name
+     * @param namespace (optional) vocabulary nanespace
+     */
+    @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeVocabulary(@PathVariable String normalizedName,
+    public void removeVocabulary(@PathVariable String fragment,
                                @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
-        final URI identifier = resolveIdentifier(namespace, normalizedName, ConfigParam.NAMESPACE_VOCABULARY);
+        final URI identifier = resolveIdentifier(namespace, fragment, ConfigParam.NAMESPACE_VOCABULARY);
         final Vocabulary toRemove = vocabularyService.getRequiredReference(identifier);
         vocabularyService.remove(toRemove);
         LOG.debug("Vocabulary {} removed.", toRemove);

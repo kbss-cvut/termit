@@ -192,25 +192,6 @@ public class TermController extends BaseController {
         return termService.findRequired(termUri);
     }
 
-    @DeleteMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeById(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                           @PathVariable("termIdFragment") String termIdFragment,
-                           @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        termService.remove(termService.getRequiredReference(termUri));
-        LOG.debug("Term {} removed.", termUri);
-    }
-
-    @DeleteMapping(value = "/terms/{termIdFragment}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeById(@PathVariable("termIdFragment") String termIdFragment,
-                           @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        termService.remove(termService.getRequiredReference(termUri));
-        LOG.debug("Term {} removed.", termUri);
-    }
-
     private URI getTermUri(String vocabIdFragment, String termIdFragment, String namespace) {
         return idResolver.resolveIdentifier(idResolver
                 .buildNamespace(getVocabularyUri(namespace, vocabIdFragment).toString(),
@@ -255,6 +236,24 @@ public class TermController extends BaseController {
         verifyRequestAndEntityIdentifier(term, termUri);
         termService.update(term);
         LOG.debug("Term {} updated.", term);
+    }
+
+    /**
+     * Removes a term.
+     * @see TermService#remove(Term)  for details.
+     *
+     * @param vocabularyIdFragment vocabulary name
+     * @param termIdFragment term id fragment
+     * @param namespace (optional) vocabulary nanespace
+     */
+    @DeleteMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeTerm(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
+                           @PathVariable("termIdFragment") String termIdFragment,
+                           @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        termService.remove(termService.getRequiredReference(termUri));
+        LOG.debug("Term {} removed.", termUri);
     }
 
     /**
