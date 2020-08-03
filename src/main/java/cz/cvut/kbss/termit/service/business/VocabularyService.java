@@ -66,7 +66,10 @@ public interface VocabularyService
     List<AbstractChangeRecord> getChangesOfContent(Vocabulary asset);
 
     /**
-     * Removes a vocabulary
+     * Removes a vocabulary if:
+     * - it is not a document vocabulary, or
+     * - it is imported by another vocabulary, or
+     * - it contains terms.
      *
      * @param asset Vocabulary to remove
      */
