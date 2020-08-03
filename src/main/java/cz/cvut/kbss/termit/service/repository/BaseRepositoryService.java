@@ -257,16 +257,6 @@ public abstract class BaseRepositoryService<T extends HasIdentifier> {
     }
 
     /**
-     * Removes an instance with the specified identifier from the repository.
-     *
-     * @param id ID of the instance to remove
-     */
-    @Transactional
-    public void remove(URI id) {
-        getPrimaryDao().remove(id);
-    }
-
-    /**
      * Checks whether an instance with the specified identifier exists in the repository.
      *
      * @param id ID to check

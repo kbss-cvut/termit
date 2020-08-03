@@ -158,7 +158,7 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         transactional(() -> userAccountDao.persist(user));
 
-        sut.remove(user.getUri());
+        sut.remove(user);
         assertFalse(userAccountDao.exists(user.getUri()));
     }
 

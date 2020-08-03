@@ -237,9 +237,16 @@ public class TermAssignmentRepositoryService implements TermOccurrenceService {
 
     @Transactional
     @Override
-    public void removeOccurrence(URI identifier) {
-        Objects.requireNonNull(identifier);
-        LOG.trace("remove term occurrence with identifier {}", identifier);
-        termOccurrenceDao.remove(identifier);
+    public void removeOccurrence(TermOccurrence occurrence) {
+        Objects.requireNonNull(occurrence);
+        LOG.trace("remove term occurrence with identifier {}", occurrence);
+        termOccurrenceDao.remove(occurrence);
+    }
+
+    @Override
+    public TermOccurrence getRequiredReference(URI id) {
+        return termOccurrenceDao.getReference(id).orElseThrow(() ->
+            NotFoundException.create(TermOccurrence.class.getSimpleName(), id)
+        );
     }
 }

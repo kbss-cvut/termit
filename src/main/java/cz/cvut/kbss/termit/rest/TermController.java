@@ -250,7 +250,7 @@ public class TermController extends BaseController {
                            @PathVariable("termIdFragment") String termIdFragment,
                            @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        termService.remove(termService.getRequiredReference(termUri));
+        termService.remove(termService.findRequired(termUri));
         LOG.debug("Term {} removed.", termUri);
     }
 
@@ -373,7 +373,7 @@ public class TermController extends BaseController {
     public void removeOccurrence(@PathVariable String normalizedName,
                                  @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
-        termService.removeOccurrence(identifier);
+        termService.removeOccurrence(termService.getRequiredOcurrenceReference(identifier));
         LOG.debug("Occurrence with identifier {} removed.", identifier);
     }
 

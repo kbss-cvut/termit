@@ -90,13 +90,6 @@ public interface GenericDao<T extends HasIdentifier> {
     void remove(T entity);
 
     /**
-     * Removes an entity with the specified id.
-     *
-     * @param id Entity identifier
-     */
-    void remove(URI id);
-
-    /**
      * Checks whether an entity with the specified id exists (and has the type managed by this DAO).
      *
      * @param id Entity identifier
