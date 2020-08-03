@@ -574,4 +574,17 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
+
+    @Test
+    void removeRemovesNonReferencedNonOccurringTerm() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(term, DescriptorFactory.termDescriptor(term));
+        });
+        sut.remove(term);
+        final Term result = em.find(Term.class, term.getUri());
+        assertNull(result);
+    }
 }

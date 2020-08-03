@@ -14,7 +14,11 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
+import static java.util.stream.Collectors.joining;
+
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
+import cz.cvut.kbss.termit.exception.TermRemovalException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
@@ -23,6 +27,7 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -247,5 +252,36 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      */
     public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
         return termAssignmentDao.getUnusedTermsInVocabulary(vocabulary);
+    }
+
+    /**
+     * Removes a term if it:
+     * - does not have children,
+     * - is not related to any resource,
+     * - is not related to any term occurrences.
+     *
+     * @param instance the term to be deleted
+     */
+    public void remove(Term instance) {
+
+        final List<TermAssignments> ai = this.getAssignmentsInfo(instance);
+
+        if ( !ai.isEmpty() ) {
+            List<TermAssignments> assignmentsList = ai;
+            throw new TermRemovalException(
+                "Cannot delete the term. It is used for annotating resources : " + assignmentsList.stream().map(t -> t.getResourceLabel()).collect(
+                    joining(",")));
+        }
+
+        final Set<TermInfo> subTerms = instance.getSubTerms();
+        if ( (subTerms != null) && !subTerms.isEmpty() ) {
+            Collection<? extends TermInfo> terms = instance.getSubTerms();
+            throw new TermRemovalException(
+                "Cannot delete the term. It is linked to other terms : " + terms
+                    .stream().map(t -> t.getUri().toString())
+                    .collect(joining(",")));
+        }
+
+        super.remove(instance);
     }
 }

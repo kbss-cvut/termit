@@ -561,27 +561,35 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void removeByIdStandaloneRemovesTermByIdentifier() throws Exception {
-        final URI termUri = URI.create(NAMESPACE + TERM_NAME);
+    void removeRemovesTermByIdentifier() throws Exception {
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(URI.create(VOCABULARY_URI));
         final Term term = Generator.generateTerm();
+        final URI termUri = URI.create(NAMESPACE + TERM_NAME);
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolverMock.buildNamespace(VOCABULARY_URI,"/pojem")).thenReturn(NAMESPACE);
         when(termServiceMock.getRequiredReference(termUri)).thenReturn(term);
-        mockMvc.perform(delete("/terms/" + TERM_NAME).param(QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isNoContent());
-        verify(idResolverMock).resolveIdentifier(NAMESPACE, TERM_NAME);
-        verify(termServiceMock).remove(term);
+        mockMvc.perform(delete("/vocabularies/" + VOCABULARY_NAME + "/terms/" + TERM_NAME)
+            .param(QueryParams.NAMESPACE, Environment.BASE_URI))
+            .andExpect(status().isNoContent());
     }
 
     @Test
-    void removeByIdStandaloneThrowsNotFoundExceptionWhenTermDoesNotExist() throws Exception {
-        final URI termUri = URI.create(NAMESPACE + TERM_NAME);
+    void removeThrowsNotFoundExceptionWhenTermDoesNotExist() throws Exception {
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(URI.create(VOCABULARY_URI));
         final Term term = Generator.generateTerm();
+        final URI termUri = URI.create(NAMESPACE + TERM_NAME);
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
+        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolverMock.buildNamespace(VOCABULARY_URI,"/pojem")).thenReturn(NAMESPACE);
         when(termServiceMock.getRequiredReference(termUri)).thenThrow(NotFoundException.class);
-        mockMvc.perform(delete("/terms/" + TERM_NAME).param(QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/vocabularies/" + VOCABULARY_NAME + "/terms/" + TERM_NAME)
+            .param(QueryParams.NAMESPACE, Environment.BASE_URI))
+            .andExpect(status().isNotFound());
         verify(termServiceMock, never()).remove(term);
     }
 
