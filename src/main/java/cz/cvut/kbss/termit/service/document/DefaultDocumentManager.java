@@ -154,10 +154,14 @@ public class DefaultDocumentManager implements DocumentManager {
     @Override
     public void remove(Resource resource) {
         Objects.requireNonNull(resource);
-        if (resource instanceof File) {
-            removeFile((File) resource);
-        } else if (resource instanceof Document) {
-            removeDocumentFolderWithContent((Document) resource);
+        try {
+            if (resource instanceof File) {
+                removeFile((File) resource);
+            } else if (resource instanceof Document) {
+                removeDocumentFolderWithContent((Document) resource);
+            }
+        } catch (RuntimeException e) {
+            throw new TermItException("Unable to remove resource document.", e);
         }
         // Do nothing for Resources not supporting content storage
     }
