@@ -23,7 +23,6 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Term;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -160,11 +159,10 @@ class BaseDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    @Disabled
     void exceptionDuringUpdateIsWrappedInPersistenceException() {
         final Term term = Generator.generateTermWithId();
         transactional(() -> sut.persist(term));
-        term.setLabel(null);
+        term.setVocabulary(Generator.generateUri());
         final PersistenceException e = assertThrows(PersistenceException.class,
                 () -> transactional(() -> sut.update(term)));
         assertThat(e.getCause(), is(instanceOf(OWLPersistenceException.class)));
