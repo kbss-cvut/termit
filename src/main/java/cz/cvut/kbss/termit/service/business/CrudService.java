@@ -19,14 +19,13 @@ package cz.cvut.kbss.termit.service.business;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Declares Create, Retrieve, Update and Delete (CRUD) operations for business services.
  *
  * @param <T> Type of the concept managed by this service
  */
-public interface CrudService<T> {
+public interface CrudService<T> extends RudService<T> {
 
     /**
      * Gets all items of the type managed by this service from the repository.
@@ -34,40 +33,6 @@ public interface CrudService<T> {
      * @return List of items
      */
     List<T> findAll();
-
-    /**
-     * Gets an item with the specified identifier.
-     *
-     * @param id Item identifier
-     * @return Matching item wrapped in an {@code Optional}
-     */
-    Optional<T> find(URI id);
-
-    /**
-     * Gets an item with the specified identifier.
-     *
-     * @param id Item identifier
-     * @return Matching item
-     * @throws cz.cvut.kbss.termit.exception.NotFoundException When no matching item is found
-     */
-    T findRequired(URI id);
-
-    /**
-     * Gets a reference to an item with the specified identifier (with empty attribute values).
-     *
-     * @param id Item identifier
-     * @return Matching item reference wrapped in an {@code Optional}
-     */
-    Optional<T> getReference(URI id);
-
-    /**
-     * Gets a reference to an item with the specified identifier (with empty attribute values).
-     *
-     * @param id Item identifier
-     * @return Matching item reference
-     * @throws cz.cvut.kbss.termit.exception.NotFoundException When no matching item is found
-     */
-    T getRequiredReference(URI id);
 
     /**
      * Checks if an item with the specified identifier exists.
@@ -84,11 +49,4 @@ public interface CrudService<T> {
      */
     void persist(T instance);
 
-    /**
-     * Updates the specified item.
-     *
-     * @param instance Item update data
-     * @return The updated item
-     */
-    T update(T instance);
 }
