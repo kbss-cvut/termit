@@ -121,7 +121,7 @@ class ResourceServiceTest {
     void removeRemovesResourceViaRepositoryService() {
         final Resource resource = Generator.generateResourceWithId();
         when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
-        sut.remove(resource.getUri());
+        sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
     }
 
@@ -421,7 +421,7 @@ class ResourceServiceTest {
     void removeRemovesAssociatedDiskContent() {
         final Resource resource = Generator.generateResourceWithId();
         when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
-        sut.remove(resource.getUri());
+        sut.remove(resource);
         verify(documentManager).remove(resource);
     }
 

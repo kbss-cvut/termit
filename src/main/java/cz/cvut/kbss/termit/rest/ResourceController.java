@@ -253,7 +253,7 @@ public class ResourceController extends BaseController {
 
     /**
      * Removes a resource.
-     * @see ResourceService#remove(URI) for details.
+     * @see ResourceService#remove(Resource) for details.
      *
      * @param fragment  Normalized name used to identify the resource,
      * @param namespace Namespace used for resource identifier resolution. Optional, if not
@@ -265,7 +265,7 @@ public class ResourceController extends BaseController {
                                @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
         final URI identifier = resolveIdentifier(namespace, fragment, NAMESPACE_RESOURCE);
         final Resource toRemove = resourceService.getRequiredReference(identifier);
-        resourceService.remove(identifier);
+        resourceService.remove(toRemove);
         LOG.debug("Resource {} removed.", toRemove);
     }
 

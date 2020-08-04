@@ -270,7 +270,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(resourceServiceMock.getRequiredReference(resource.getUri())).thenReturn(resource);
         mockMvc.perform(delete(PATH + "/" + RESOURCE_NAME)).andExpect(status().isNoContent());
         verify(resourceServiceMock).getRequiredReference(resource.getUri());
-        verify(resourceServiceMock).remove(resource.getUri());
+        verify(resourceServiceMock).remove(resource);
     }
 
     @Test

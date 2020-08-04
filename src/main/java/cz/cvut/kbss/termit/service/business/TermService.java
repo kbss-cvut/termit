@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * Service for term-related business logic.
  */
 @Service
-public class TermService implements ChangeRecordProvider<Term> {
+public class TermService implements RudService<Term>,ChangeRecordProvider<Term> {
 
     private final VocabularyExporters exporters;
 
