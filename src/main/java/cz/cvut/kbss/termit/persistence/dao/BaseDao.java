@@ -112,19 +112,12 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     @Override
     public void remove(T entity) {
         Objects.requireNonNull(entity);
+        Objects.requireNonNull(entity.getUri());
         try {
-            em.remove(em.merge(entity));
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @ModifiesData
-    @Override
-    public void remove(URI id) {
-        Objects.requireNonNull(id);
-        try {
-            find(id).ifPresent(em::remove);
+            final Optional<T> reference = getReference(entity.getUri());
+            if (reference.isPresent()) {
+                em.remove(reference.get());
+            }
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

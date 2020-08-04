@@ -318,6 +318,24 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void isEmptyReturnsTrueForEmptyVocabulary() {
+        assertTrue(sut.isEmpty(vocabulary));
+    }
+
+    @Test
+    void isEmptyReturnsFalseForNonemptyVocabulary() {
+        final Term t = Generator.generateTermWithId();
+        transactional(() -> {
+            t.setVocabulary(vocabulary.getUri());
+            vocabulary.getGlossary().addRootTerm(t);
+            em.persist(t, DescriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
+        });
+
+        assertFalse(sut.isEmpty(vocabulary));
+    }
+
+    @Test
     void updateUpdatesTermWithParent() {
         final Term t = Generator.generateTermWithId();
         vocabulary.getGlossary().addRootTerm(t);
@@ -555,5 +573,18 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
                       .contains(childTerm));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
+    }
+
+    @Test
+    void removeRemovesNonReferencedNonOccurringTerm() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(term, DescriptorFactory.termDescriptor(term));
+        });
+        sut.remove(term);
+        final Term result = em.find(Term.class, term.getUri());
+        assertNull(result);
     }
 }

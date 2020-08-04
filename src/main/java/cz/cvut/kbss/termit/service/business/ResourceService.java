@@ -89,13 +89,11 @@ public class ResourceService
      * <p>
      * Resource removal also involves cleanup of annotations and term occurrences associated with it.
      * <p>
-     * TODO: Pull remove method up into AssetService once removal is supported by other types of assets as well
      *
-     * @param identifier Identifier of a resource to remove
+     * @param toRemove a resource to remove
      */
     @Transactional
-    public void remove(URI identifier) {
-        final Resource toRemove = getRequiredReference(identifier);
+    public void remove(Resource toRemove) {
         documentManager.remove(toRemove);
         repositoryService.remove(toRemove);
     }

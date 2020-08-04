@@ -21,7 +21,7 @@ import cz.cvut.kbss.jopa.exceptions.OWLPersistenceException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.PersistenceException;
-import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.Term;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class BaseDaoTest extends BaseDaoTestRunner {
     @Autowired
     private EntityManager em;
 
-    private BaseDao<User> sut;
+    private BaseDao<Term> sut;
 
     @BeforeEach
     void setUp() {
@@ -53,24 +53,24 @@ class BaseDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findAllRetrievesAllExistingInstances() {
-        final List<User> users =
+        final List<Term> terms =
                 IntStream.range(0, 5).mapToObj(i -> {
-                    final User u = Generator.generateUser();
+                    final Term u = Generator.generateTerm();
                     u.setUri(Generator.generateUri());
                     return u;
                 }).collect(Collectors.toList());
-        transactional(() -> sut.persist(users));
-        final List<User> result = sut.findAll();
-        assertEquals(users.size(), result.size());
-        assertTrue(users.containsAll(result));
+        transactional(() -> sut.persist(terms));
+        final List<Term> result = sut.findAll();
+        assertEquals(terms.size(), result.size());
+        assertTrue(terms.containsAll(result));
     }
 
     @Test
     void existsReturnsTrueForExistingEntity() {
-        final User user = Generator.generateUser();
-        user.setUri(Generator.generateUri());
-        transactional(() -> sut.persist(user));
-        assertTrue(sut.exists(user.getUri()));
+        final Term term = Generator.generateTerm();
+        term.setUri(Generator.generateUri());
+        transactional(() -> sut.persist(term));
+        assertTrue(sut.exists(term.getUri()));
     }
 
     @Test
@@ -80,106 +80,114 @@ class BaseDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findReturnsNonEmptyOptionalForExistingEntity() {
-        final User user = Generator.generateUserWithId();
-        transactional(() -> sut.persist(user));
-        final Optional<User> result = sut.find(user.getUri());
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.persist(term));
+        final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());
-        assertEquals(user, result.get());
+        assertEquals(term, result.get());
     }
 
     @Test
     void findReturnsEmptyOptionalForUnknownIdentifier() {
-        final Optional<User> result = sut.find(Generator.generateUri());
+        final Optional<Term> result = sut.find(Generator.generateUri());
         assertNotNull(result);
         assertFalse(result.isPresent());
     }
 
     @Test
     void updateReturnsManagedInstance() {
-        final User user = Generator.generateUserWithId();
-        transactional(() -> sut.persist(user));
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.persist(term));
         final String lastNameUpdate = "updatedLastName";
-        user.setLastName(lastNameUpdate);
+        term.setLabel(lastNameUpdate);
         transactional(() -> {
-            final User updated = sut.update(user);
+            final Term updated = sut.update(term);
             assertTrue(em.contains(updated));
-            assertEquals(lastNameUpdate, updated.getLastName());
+            assertEquals(lastNameUpdate, updated.getLabel());
         });
-        assertEquals(lastNameUpdate, em.find(User.class, user.getUri()).getLastName());
+        assertEquals(lastNameUpdate, em.find(Term.class, term.getUri()).getLabel());
     }
 
     @Test
     void removeRemovesEntity() {
-        final User user = Generator.generateUserWithId();
-        transactional(() -> sut.persist(user));
-        transactional(() -> sut.remove(user));
-        assertFalse(sut.exists(user.getUri()));
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.persist(term));
+        transactional(() -> sut.remove(term));
+        assertFalse(sut.exists(term.getUri()));
     }
 
     @Test
     void removeHandlesNonexistentEntity() {
-        final User user = Generator.generateUserWithId();
-        transactional(() -> sut.remove(user));
-        assertFalse(sut.exists(user.getUri()));
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.remove(term));
+        assertFalse(sut.exists(term.getUri()));
     }
 
     @Test
     void removeByIdRemovesEntityWithSpecifiedIdentifier() {
-        final User user = Generator.generateUserWithId();
-        transactional(() -> sut.persist(user));
-        transactional(() -> sut.remove(user.getUri()));
-        assertFalse(sut.find(user.getUri()).isPresent());
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.persist(term));
+        transactional(() -> sut.remove(term));
+        assertFalse(sut.find(term.getUri()).isPresent());
+    }
+
+    @Test
+    void removeRemovesEntityWithNonMergeableFields() {
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.persist(term));
+        transactional(() -> sut.remove(term));
+        assertFalse(sut.exists(term.getUri()));
     }
 
     @Test
     void exceptionDuringPersistIsWrappedInPersistenceException() {
         final PersistenceException e = assertThrows(PersistenceException.class, () -> {
-            final User user = Generator.generateUser();
-            transactional(() -> sut.persist(user));
+            final Term term = Generator.generateTerm();
+            transactional(() -> sut.persist(term));
         });
         assertThat(e.getCause(), is(instanceOf(OWLPersistenceException.class)));
     }
 
     @Test
     void exceptionDuringCollectionPersistIsWrappedInPersistenceException() {
-        final List<User> users = Collections.singletonList(Generator.generateUserWithId());
-        transactional(() -> sut.persist(users));
+        final List<Term> terms = Collections.singletonList(Generator.generateTermWithId());
+        transactional(() -> sut.persist(terms));
 
         final PersistenceException e = assertThrows(PersistenceException.class,
-                () -> transactional(() -> sut.persist(users)));
+                () -> transactional(() -> sut.persist(terms)));
         assertThat(e.getCause(), is(instanceOf(OWLPersistenceException.class)));
     }
 
     @Test
     void exceptionDuringUpdateIsWrappedInPersistenceException() {
-        final User user = Generator.generateUserWithId();
-        transactional(() -> sut.persist(user));
-        user.setUri(null);
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.persist(term));
+        term.setVocabulary(Generator.generateUri());
         final PersistenceException e = assertThrows(PersistenceException.class,
-                () -> transactional(() -> sut.update(user)));
+                () -> transactional(() -> sut.update(term)));
         assertThat(e.getCause(), is(instanceOf(OWLPersistenceException.class)));
     }
 
     @Test
     void getReferenceRetrievesReferenceToMatchingInstance() {
-        final User user = Generator.generateUserWithId();
-        transactional(() -> sut.persist(user));
-        final Optional<User> result = sut.getReference(user.getUri());
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.persist(term));
+        final Optional<Term> result = sut.getReference(term.getUri());
         assertTrue(result.isPresent());
-        assertEquals(user.getUri(), result.get().getUri());
+        assertEquals(term.getUri(), result.get().getUri());
     }
 
     @Test
     void getReferenceReturnsEmptyOptionalWhenNoMatchingInstanceExists() {
-        final Optional<User> result = sut.getReference(Generator.generateUri());
+        final Optional<Term> result = sut.getReference(Generator.generateUri());
         assertNotNull(result);
         assertFalse(result.isPresent());
     }
 
-    private static class BaseDaoImpl extends BaseDao<User> {
+    private static class BaseDaoImpl extends BaseDao<Term> {
 
         BaseDaoImpl(EntityManager em) {
-            super(User.class, em);
+            super(Term.class, em);
         }
     }
 }

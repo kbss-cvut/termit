@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.exception.TermDefinitionSourceExistsException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
  * Service for term-related business logic.
  */
 @Service
-public class TermService implements ChangeRecordProvider<Term> {
+public class TermService implements RudService<Term>,ChangeRecordProvider<Term> {
 
     private final VocabularyExporters exporters;
 
@@ -57,6 +58,7 @@ public class TermService implements ChangeRecordProvider<Term> {
      * @return Exported resource wrapped in an {@code Optional}
      */
     public Optional<TypeAwareResource> exportGlossary(Vocabulary vocabulary, String mediaType) {
+        Objects.requireNonNull(vocabulary);
         return exporters.exportVocabularyGlossary(vocabulary, mediaType);
     }
 
@@ -78,6 +80,7 @@ public class TermService implements ChangeRecordProvider<Term> {
      * @return Matching terms
      */
     public List<Term> findAllIncludingImported(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
         return repositoryService.findAllIncludingImported(vocabulary);
     }
 
@@ -115,6 +118,17 @@ public class TermService implements ChangeRecordProvider<Term> {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         return repositoryService.findAllRootsIncludingImported(vocabulary, pageSpec, includeTerms);
+    }
+
+    /**
+     * Finds out whether the given vocabulary contains any terms or not.
+     *
+     * @param vocabulary vocabulary under consideration
+     * @return true if the vocabulary contains no terms, false otherwise
+     */
+    public boolean isEmpty(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return repositoryService.isEmpty(vocabulary);
     }
 
     /**
@@ -221,6 +235,7 @@ public class TermService implements ChangeRecordProvider<Term> {
      * @return List of term assignment describing instances
      */
     public List<TermAssignments> getAssignmentInfo(Term term) {
+        Objects.requireNonNull(term);
         return repositoryService.getAssignmentsInfo(term);
     }
 
@@ -290,6 +305,8 @@ public class TermService implements ChangeRecordProvider<Term> {
      * @return Generated term identifier
      */
     public URI generateIdentifier(URI vocabularyUri, String termLabel) {
+        Objects.requireNonNull(vocabularyUri);
+        Objects.requireNonNull(termLabel);
         return repositoryService.generateIdentifier(vocabularyUri, termLabel);
     }
 
@@ -310,12 +327,22 @@ public class TermService implements ChangeRecordProvider<Term> {
         termOccurrenceService.persistOccurrence(definitionSource);
     }
 
+    /**
+     * Gets a reference to a Term occurrence with the specified identifier.
+     *
+     * @param id Term occurrence identifier
+     * @return Matching Term occurrence reference
+     */
+    public TermOccurrence getRequiredOcurrenceReference(URI id) {
+        return termOccurrenceService.getRequiredReference(id);
+    }
+
     public void approveOccurrence(URI identifier) {
         termOccurrenceService.approveOccurrence(identifier);
     }
 
-    public void removeOccurrence(URI identifier) {
-        termOccurrenceService.removeOccurrence(identifier);
+    public void removeOccurrence(TermOccurrence occurrence) {
+        termOccurrenceService.removeOccurrence(occurrence);
     }
 
     /**
@@ -323,12 +350,14 @@ public class TermService implements ChangeRecordProvider<Term> {
      *
      * @return List of terms
      */
-    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabularyIri) {
-        return repositoryService.getUnusedTermsInVocabulary(vocabularyIri);
+    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return repositoryService.getUnusedTermsInVocabulary(vocabulary);
     }
 
     @Override
     public List<AbstractChangeRecord> getChanges(Term term) {
+        Objects.requireNonNull(term);
         return changeRecordService.getChanges(term);
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -41,11 +43,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.web.servlet.MvcResult;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -201,6 +201,28 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                                            .andReturn();
         assertEquals(200, mvcResult.getResponse().getStatus());
         verify(idResolverMock).resolveIdentifier(namespace, fragment);
+    }
+
+    @Test
+    void removeVocabularyReturns2xxForEmptyVocabulary() throws Exception {
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(Generator.generateUri());
+        final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
+        mockMvc.perform(
+            delete(PATH+"/" + fragment))
+            .andExpect(status().is2xxSuccessful()).andReturn();
+    }
+
+    @Test
+    void removeVocabularyReturns4xxForNotRemovableVocabulary() throws Exception {
+        Mockito.doThrow( new VocabularyRemovalException("Vocabulary cannot be removed. It contains terms.")).when(serviceMock).remove(any());
+
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(Generator.generateUri());
+        final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
+        mockMvc.perform(
+            delete(PATH+"/" + fragment))
+            .andExpect(status().is4xxClientError()).andReturn();
     }
 
     @Test

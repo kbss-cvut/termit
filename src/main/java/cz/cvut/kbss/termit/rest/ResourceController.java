@@ -251,13 +251,21 @@ public class ResourceController extends BaseController {
         return resourceService.getChanges(resource);
     }
 
-    @DeleteMapping(value = "/{normalizedName}")
+    /**
+     * Removes a resource.
+     * @see ResourceService#remove(Resource) for details.
+     *
+     * @param fragment  Normalized name used to identify the resource,
+     * @param namespace Namespace used for resource identifier resolution. Optional, if not
+     *                  specified, the configured namespace is used.
+     */
+    @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeResource(@PathVariable String normalizedName,
+    public void removeResource(@PathVariable String fragment,
                                @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
-        final URI identifier = resolveIdentifier(namespace, normalizedName, NAMESPACE_RESOURCE);
+        final URI identifier = resolveIdentifier(namespace, fragment, NAMESPACE_RESOURCE);
         final Resource toRemove = resourceService.getRequiredReference(identifier);
-        resourceService.remove(identifier);
+        resourceService.remove(toRemove);
         LOG.debug("Resource {} removed.", toRemove);
     }
 

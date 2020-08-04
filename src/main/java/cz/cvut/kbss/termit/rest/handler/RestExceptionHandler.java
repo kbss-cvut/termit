@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.exceptions.OWLPersistenceException;
 import cz.cvut.kbss.jsonld.exception.JsonLdException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.*;
+import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -151,5 +152,19 @@ public class RestExceptionHandler {
                                                                          UnsupportedImportMediaTypeException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> vocabularyRemovalException(HttpServletRequest request,
+                                                                VocabularyRemovalException e) {
+        logException(e);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> termRemovalException(HttpServletRequest request,
+                                                                TermRemovalException e) {
+        logException(e);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 }
