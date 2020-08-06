@@ -332,6 +332,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             vocabulary.getGlossary().addRootTerm(t);
             em.persist(t, descriptorFactory.termDescriptor(vocabulary));
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
         });
 
         assertFalse(sut.isEmpty(vocabulary));
