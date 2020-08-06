@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,6 +35,18 @@ public class CommentService {
      */
     public List<Comment> findAll(Asset asset) {
         return dao.findAll(asset);
+    }
+
+    /**
+     * Finds a comment with the specified identifier.
+     *
+     * @param id Comment identifier
+     * @return Matching comment
+     * @throws NotFoundException If comment with the specified identifier does not exist
+     */
+    public Comment findRequired(URI id) {
+        Objects.requireNonNull(id);
+        return dao.find(id).orElseThrow(() -> NotFoundException.create(Comment.class.getSimpleName(), id));
     }
 
     /**
@@ -68,5 +81,16 @@ public class CommentService {
                     "Cannot modify commented asset, author or date of creation of a comment!");
         }
         dao.update(comment);
+    }
+
+    /**
+     * Removes the specified comment.
+     *
+     * @param comment Comment to remove
+     */
+    @Transactional
+    public void remove(Comment comment) {
+        Objects.requireNonNull(comment);
+        dao.remove(comment);
     }
 }
