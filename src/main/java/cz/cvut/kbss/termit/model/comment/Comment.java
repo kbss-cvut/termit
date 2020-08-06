@@ -14,7 +14,6 @@ import java.util.Objects;
 /**
  * Represents a single comment in the comment/discussion module.
  */
-@Namespace(prefix = "sioc", namespace = "http://rdfs.org/sioc/ns#")
 @OWLClass(iri = "http://rdfs.org/sioc/types#Comment")
 public class Comment extends AbstractEntity {
 
@@ -22,15 +21,15 @@ public class Comment extends AbstractEntity {
      * The asset to which this comment has been made.
      */
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = "sioc:has_container")
+    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#:has_container")
     private URI asset;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = "sioc:content")
+    @OWLDataProperty(iri = "http://rdfs.org/sioc/ns#:content")
     private String content;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = "sioc:has_creator", fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#:has_creator", fetch = FetchType.EAGER)
     private User author;
 
     @ParticipationConstraints(nonEmpty = true)
