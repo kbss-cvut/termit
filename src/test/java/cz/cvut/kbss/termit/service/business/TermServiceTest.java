@@ -9,7 +9,9 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
@@ -25,6 +27,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -52,6 +55,9 @@ class TermServiceTest extends BaseServiceTestRunner {
 
     @Mock
     private ChangeRecordService changeRecordService;
+
+    @Mock
+    private CommentService commentService;
 
     @InjectMocks
     private TermService sut;
@@ -290,5 +296,27 @@ class TermServiceTest extends BaseServiceTestRunner {
     void findAllIncludingImportedRetrievesAllTermsFromVocabularyImportsChain() {
         sut.findAllIncludingImported(vocabulary);
         verify(termRepositoryService).findAllIncludingImported(vocabulary);
+    }
+
+    @Test
+    void getCommentsRetrievesCommentsForSpecifiedTerm() {
+        final Term term = Generator.generateTermWithId();
+        final Comment comment = new Comment();
+        comment.setAsset(term.getUri());
+        comment.setCreated(new Date());
+        when(commentService.findAll(term)).thenReturn(Collections.singletonList(comment));
+
+        final List<Comment> result = sut.getComments(term);
+        assertEquals(Collections.singletonList(comment), result);
+        verify(commentService).findAll(term);
+    }
+
+    @Test
+    void addCommentAddsCommentToTermViaCommentService() {
+        final Term term = Generator.generateTermWithId();
+        final Comment comment = new Comment();
+        comment.setContent("test comment");
+        sut.addComment(comment, term);
+        verify(commentService).addToAsset(comment, term);
     }
 }

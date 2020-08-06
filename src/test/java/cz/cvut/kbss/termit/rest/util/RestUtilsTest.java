@@ -22,9 +22,11 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockServletContext;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -95,6 +97,18 @@ class RestUtilsTest {
         final String param = "namespace";
         final String paramValue = "http://onto.fel.cvut.cz/ontologies/termit/vocabularies/";
         final URI result = RestUtils.createLocationFromCurrentUriWithPathAndQuery("/{name}", param, paramValue, name);
+        assertThat(result.toString(), endsWith("/" + name + "?" + param + "=" + paramValue));
+    }
+
+    @Test
+    void createLocationHeaderFromCurrentContextWithPathAndQueryCreatesLocationHeader() {
+        final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
+                "/vocabularies");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
+        final String name = "metropolitan-plan";
+        final String param = "namespace";
+        final String paramValue = "http://onto.fel.cvut.cz/ontologies/termit/vocabularies/";
+        final URI result = RestUtils.createLocationFromCurrentContextWithPathAndQuery("/{name}", param, paramValue, name);
         assertThat(result.toString(), endsWith("/" + name + "?" + param + "=" + paramValue));
     }
 }

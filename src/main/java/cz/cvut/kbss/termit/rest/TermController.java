@@ -8,6 +8,8 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.ConfigParam;
@@ -413,6 +415,74 @@ public class TermController extends BaseController {
                                                  @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         return termService.getChanges(termService.getRequiredReference(termUri));
+    }
+
+    /**
+     * Gets comments for the specified term.
+     *
+     * @return List of comments
+     */
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
+                                     @PathVariable("termIdFragment") String termIdFragment,
+                                     @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        return termService.getComments(termService.getRequiredReference(termUri));
+    }
+
+    /**
+     * Gets comments for the specified term.
+     * <p>
+     * This is a convenience method to allow access without using the Term's parent Vocabulary.
+     *
+     * @see #getComments(String, String, String)
+     */
+    @GetMapping(value = "/terms/{termIdFragment}/comments",
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<Comment> getComments(@PathVariable("termIdFragment") String termIdFragment,
+                                     @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+        return termService.getComments(termService.getRequiredReference(termUri));
+    }
+
+    /**
+     * Adds the specified comment to the specified term.
+     */
+    @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments", consumes = {MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public ResponseEntity<Void> addComment(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
+                                           @PathVariable("termIdFragment") String termIdFragment,
+                                           @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
+                                           @RequestBody Comment comment) {
+        final Term term = termService.getRequiredReference(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
+        termService.addComment(comment, term);
+        LOG.debug("Comment added to term {}.", term);
+        return ResponseEntity.created(RestUtils
+                .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}", QueryParams.NAMESPACE,
+                        IdentifierResolver.extractIdentifierNamespace(comment.getUri()),
+                        IdentifierResolver.extractIdentifierFragment(comment.getUri()))).build();
+    }
+
+    /**
+     * Adds the specified comment to the specified term.
+     * <p>
+     * This is a convenience method to allow access without using the Term's parent Vocabulary.
+     *
+     * @see #addComment(String, String, String, Comment)
+     */
+    @PostMapping(value = "/terms/{termIdFragment}/comments", consumes = {MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public ResponseEntity<Void> addComment(@PathVariable("termIdFragment") String termIdFragment,
+                                           @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
+                                           @RequestBody Comment comment) {
+        final Term term = termService.getRequiredReference(idResolver.resolveIdentifier(namespace, termIdFragment));
+        termService.addComment(comment, term);
+        LOG.debug("Comment added to term {}.", term);
+        return ResponseEntity.created(RestUtils
+                .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}", QueryParams.NAMESPACE,
+                        IdentifierResolver.extractIdentifierNamespace(comment.getUri()),
+                        IdentifierResolver.extractIdentifierFragment(comment.getUri()))).build();
     }
 
     /**
