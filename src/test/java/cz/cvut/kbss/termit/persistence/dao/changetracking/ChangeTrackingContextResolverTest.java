@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.persistence.dao.changetracking;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
@@ -37,7 +38,7 @@ class ChangeTrackingContextResolverTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
-        final Workspace ws = Generator.generateWorkspace();
+        final Workspace ws = WorkspaceGenerator.generateWorkspace();
         this.metadata = new WorkspaceMetadata(ws);
         when(workspaceMetadataCache.getCurrentWorkspace()).thenReturn(ws);
         when(workspaceMetadataCache.getCurrentWorkspaceMetadata()).thenReturn(metadata);

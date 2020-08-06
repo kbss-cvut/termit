@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
@@ -53,7 +54,7 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     private Workspace generateWorkspace() {
-        final Workspace workspace = Generator.generateWorkspace();
+        final Workspace workspace = WorkspaceGenerator.generateWorkspace();
         transactional(() -> em.persist(workspace, new EntityDescriptor(workspace.getUri())));
         return workspace;
     }
@@ -99,7 +100,7 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
-            conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
+            conn.add(WorkspaceGenerator.generateWorkspaceReferences(vocabularies, workspace));
             conn.commit();
         }
     }

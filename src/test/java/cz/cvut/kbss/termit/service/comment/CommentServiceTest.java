@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
@@ -128,5 +129,27 @@ class CommentServiceTest extends BaseServiceTestRunner {
         comment.setCreated(new Date(System.currentTimeMillis() - 100000));
 
         assertThrows(UnsupportedOperationException.class, () -> sut.update(comment));
+    }
+
+    @Test
+    void findRequiredRetrievesCommentFromRepositoryService() {
+        final Comment comment = persistComment();
+
+        final Comment result = sut.findRequired(comment.getUri());
+        assertNotNull(result);
+        assertEquals(comment, result);
+    }
+
+    @Test
+    void findRequiredThrowsNotFoundExceptionWhenCommentCannotBeFound() {
+        assertThrows(NotFoundException.class, () -> sut.findRequired(Generator.generateUri()));
+    }
+
+    @Test
+    void removeRemovesSpecifiedComment() {
+        final Comment comment = persistComment();
+
+        sut.remove(comment);
+        assertNull(em.find(Comment.class, comment.getUri()));
     }
 }

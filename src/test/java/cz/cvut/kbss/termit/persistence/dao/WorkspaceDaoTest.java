@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
 import org.eclipse.rdf4j.model.IRI;
@@ -33,7 +34,7 @@ class WorkspaceDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findWorkspaceVocabularyMetadataRetrievesVocabularyInfoInstancesPointingToContextsInWhichVocabulariesAreStored() {
-        final Workspace ws = Generator.generateWorkspace();
+        final Workspace ws = WorkspaceGenerator.generateWorkspace();
         final Set<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
                                                       .collect(Collectors.toSet());
         transactional(() -> {
@@ -53,14 +54,14 @@ class WorkspaceDaoTest extends BaseDaoTestRunner {
     private void generateWorkspaceReferences(Collection<Vocabulary> vocabularies, Workspace workspace) {
         try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
             conn.begin();
-            conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
+            conn.add(WorkspaceGenerator.generateWorkspaceReferences(vocabularies, workspace));
             conn.commit();
         }
     }
 
     @Test
     void findWorkspaceVocabularyMetadataRetrievesVocabularyInfoInstancesPointingAlsoToChangeTrackingContext() {
-        final Workspace ws = Generator.generateWorkspace();
+        final Workspace ws = WorkspaceGenerator.generateWorkspace();
         final Set<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
                                                       .collect(Collectors.toSet());
         transactional(() -> {
