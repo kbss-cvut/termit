@@ -39,11 +39,11 @@ public class CommentService {
     /**
      * Adds the specified comment to the specified asset.
      *
-     * @param asset   Target of the comment
      * @param comment Comment to save
+     * @param asset   Target of the comment
      */
     @Transactional
-    public void addToAsset(Asset asset, Comment comment) {
+    public void addToAsset(Comment comment, Asset asset) {
         Objects.requireNonNull(asset);
         Objects.requireNonNull(comment);
         comment.setAuthor(securityUtils.getCurrentUser().toUser());

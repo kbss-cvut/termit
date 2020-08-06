@@ -48,7 +48,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
         final Term asset = Generator.generateTermWithId();
         final Comment comment = new Comment();
         comment.setContent("test");
-        sut.addToAsset(asset, comment);
+        sut.addToAsset(comment, asset);
 
         final Comment result = em.find(Comment.class, comment.getUri());
         assertNotNull(result);
