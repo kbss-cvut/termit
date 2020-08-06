@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest.util;
 
@@ -100,6 +97,28 @@ public class RestUtils {
         Objects.requireNonNull(param);
         return ServletUriComponentsBuilder.fromCurrentRequestUri().queryParam(param, paramValue)
                                           .path(path).buildAndExpand(pathValues).toUri();
+    }
+
+    /**
+     * Creates location URI with the specified path and query parameter appended to the current context URI.
+     * <p>
+     * The {@code paramValue} is specified for the query parameter and {@code pathValues} are used to replace path
+     * variables.
+     *
+     * @param queryParam Query parameter to add to current request URI
+     * @param path       Path string, may contain path variables
+     * @param queryValue Value of the query parameter
+     * @param pathValues Path variable values
+     * @return location {@code URI}
+     * @see #createLocationFromCurrentUriWithPath(String, Object...)
+     * @see #createLocationFromCurrentUriWithQueryParam(String, Object...)
+     */
+    public static URI createLocationFromCurrentContextWithPathAndQuery(String path, String queryParam,
+                                                                       String queryValue, Object... pathValues) {
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(queryParam);
+        return ServletUriComponentsBuilder.fromCurrentContextPath().queryParam(queryParam, queryValue).path(path)
+                                          .buildAndExpand(pathValues).toUri();
     }
 
     /**
