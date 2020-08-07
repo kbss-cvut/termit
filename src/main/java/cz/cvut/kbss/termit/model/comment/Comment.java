@@ -21,15 +21,15 @@ public class Comment extends AbstractEntity {
      * The asset to which this comment has been made.
      */
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#:has_container")
+    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#topic")
     private URI asset;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = "http://rdfs.org/sioc/ns#:content")
+    @OWLDataProperty(iri = "http://rdfs.org/sioc/ns#content")
     private String content;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#:has_creator", fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#has_creator", fetch = FetchType.EAGER)
     private User author;
 
     @ParticipationConstraints(nonEmpty = true)
