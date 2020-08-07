@@ -21,7 +21,7 @@ public class Comment extends AbstractEntity {
      * The asset to which this comment has been made.
      */
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#has_container")
+    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#topic")
     private URI asset;
 
     @ParticipationConstraints(nonEmpty = true)
