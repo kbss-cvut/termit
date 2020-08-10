@@ -125,6 +125,19 @@ class ResourceServiceTest {
         verify(resourceRepositoryService).remove(resource);
     }
 
+    // Bug #1356
+    @Test
+    void removeEnsuresAttributesForDocumentManagerArePresent() {
+        final Resource toRemove = new Resource();
+        toRemove.setUri(Generator.generateUri());
+        final Resource resource = Generator.generateResource();
+        resource.setUri(toRemove.getUri());
+        when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
+        sut.remove(resource);
+        verify(resourceRepositoryService).remove(resource);
+        verify(documentManager).remove(resource);
+    }
+
     @Test
     void findTagsLoadsResourceTagsFromRepositoryService() {
         final Resource resource = Generator.generateResourceWithId();
