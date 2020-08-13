@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/comments")
 public class CommentController extends BaseController {
@@ -50,5 +52,45 @@ public class CommentController extends BaseController {
         final Comment toRemove = getById(idFragment, namespace);
         commentService.remove(toRemove);
         LOG.debug("Comment {} successfully removed.", toRemove);
+    }
+
+    @PostMapping(value = "/{idFragment}/likes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void likeComment(@PathVariable String idFragment,
+                            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
+                            Principal principal) {
+        final Comment comment = getById(idFragment, namespace);
+        commentService.likeComment(comment);
+        LOG.trace("Comment {} liked by user {}.", comment, principal);
+    }
+
+    @DeleteMapping(value = "/{idFragment}/likes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeCommentLike(@PathVariable String idFragment,
+                                  @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
+                                  Principal principal) {
+        final Comment comment = getById(idFragment, namespace);
+        commentService.removeMyReactionTo(comment);
+        LOG.trace("Like on comment {} removed by user {}.", comment, principal);
+    }
+
+    @PostMapping(value = "/{idFragment}/dislikes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void dislikeComment(@PathVariable String idFragment,
+                            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
+                            Principal principal) {
+        final Comment comment = getById(idFragment, namespace);
+        commentService.dislikeComment(comment);
+        LOG.trace("Comment {} disliked by user {}.", comment, principal);
+    }
+
+    @DeleteMapping(value = "/{idFragment}/dislikes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeCommentDislike(@PathVariable String idFragment,
+                                  @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
+                                  Principal principal) {
+        final Comment comment = getById(idFragment, namespace);
+        commentService.removeMyReactionTo(comment);
+        LOG.trace("Dislike on to comment {} removed by user {}.", comment, principal);
     }
 }
