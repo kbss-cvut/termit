@@ -107,4 +107,44 @@ class CommentControllerTest extends BaseControllerTestRunner {
                .andExpect(status().isNoContent());
         verify(commentService).remove(comment);
     }
+
+    @Test
+    void likeCommentCreatesLikeForSpecifiedComment() throws Exception {
+        final Comment comment = generateComment();
+        when(commentService.findRequired(comment.getUri())).thenReturn(comment);
+        mockMvc.perform(
+                post(PATH + NAME + "/likes").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+               .andExpect(status().isNoContent());
+        verify(commentService).likeComment(comment);
+    }
+
+    @Test
+    void removeCommentLikeRemovesReactionToSpecifiedComment() throws Exception {
+        final Comment comment = generateComment();
+        when(commentService.findRequired(comment.getUri())).thenReturn(comment);
+        mockMvc.perform(
+                delete(PATH + NAME + "/likes").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+               .andExpect(status().isNoContent());
+        verify(commentService).removeMyReactionTo(comment);
+    }
+
+    @Test
+    void dislikeCommentCreatesDislikeForSpecifiedComment() throws Exception {
+        final Comment comment = generateComment();
+        when(commentService.findRequired(comment.getUri())).thenReturn(comment);
+        mockMvc.perform(
+                post(PATH + NAME + "/dislikes").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+               .andExpect(status().isNoContent());
+        verify(commentService).dislikeComment(comment);
+    }
+
+    @Test
+    void removeCommentDislikeRemovesReactionToSpecifiedComment() throws Exception {
+        final Comment comment = generateComment();
+        when(commentService.findRequired(comment.getUri())).thenReturn(comment);
+        mockMvc.perform(
+                delete(PATH + NAME + "/dislikes").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+               .andExpect(status().isNoContent());
+        verify(commentService).removeMyReactionTo(comment);
+    }
 }
