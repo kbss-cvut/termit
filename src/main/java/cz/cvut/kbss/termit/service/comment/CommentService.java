@@ -1,10 +1,15 @@
 package cz.cvut.kbss.termit.service.comment;
 
+import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.comment.Dislike;
+import cz.cvut.kbss.termit.model.comment.Like;
 import cz.cvut.kbss.termit.persistence.dao.comment.CommentDao;
+import cz.cvut.kbss.termit.persistence.dao.comment.CommentReactionDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,10 +26,13 @@ public class CommentService {
 
     private final CommentDao dao;
 
+    private final CommentReactionDao reactionDao;
+
     @Autowired
-    public CommentService(SecurityUtils securityUtils, CommentDao dao) {
+    public CommentService(SecurityUtils securityUtils, CommentDao dao, CommentReactionDao reactionDao) {
         this.securityUtils = securityUtils;
         this.dao = dao;
+        this.reactionDao = reactionDao;
     }
 
     /**
@@ -59,9 +67,13 @@ public class CommentService {
     public void addToAsset(Comment comment, Asset asset) {
         Objects.requireNonNull(asset);
         Objects.requireNonNull(comment);
-        comment.setAuthor(securityUtils.getCurrentUser().toUser());
+        comment.setAuthor(currentUser());
         comment.setAsset(asset.getUri());
         dao.persist(comment);
+    }
+
+    private User currentUser() {
+        return securityUtils.getCurrentUser().toUser();
     }
 
     /**
@@ -74,6 +86,9 @@ public class CommentService {
         Objects.requireNonNull(comment);
         final Comment existing = dao.find(comment.getUri()).orElseThrow(
                 () -> NotFoundException.create(Comment.class.getSimpleName(), comment.getUri()));
+        if (!Objects.equals(existing.getAuthor(), currentUser())) {
+            throw new AuthorizationException("Cannot update someone else's comment.");
+        }
         if (!Objects.equals(existing.getAsset(), comment.getAsset()) ||
                 !Objects.equals(existing.getAuthor(), comment.getAuthor()) ||
                 !Objects.equals(existing.getCreated(), comment.getCreated())) {
@@ -92,5 +107,50 @@ public class CommentService {
     public void remove(Comment comment) {
         Objects.requireNonNull(comment);
         dao.remove(comment);
+    }
+
+    /**
+     * Creates a "like" reaction by the current user to the specified comment.
+     * <p>
+     * Note that at most one reaction can exist by one user to a comment, so this method removes any preexisting
+     * reactions.
+     *
+     * @param comment Comment being liked
+     */
+    @Transactional
+    public void likeComment(Comment comment) {
+        Objects.requireNonNull(comment);
+        removeMyReactionTo(comment);
+        final Like like = new Like(currentUser(), comment);
+        reactionDao.persist(like);
+    }
+
+    /**
+     * Creates a "dislike" reaction by the current user to the specified comment.
+     * <p>
+     * Note that at most one reaction can exist by one user to a comment, so this method removes any preexisting
+     * reactions.
+     *
+     * @param comment Comment being disliked
+     */
+    @Transactional
+    public void dislikeComment(Comment comment) {
+        Objects.requireNonNull(comment);
+        removeMyReactionTo(comment);
+        final Dislike dislike = new Dislike(currentUser(), comment);
+        reactionDao.persist(dislike);
+    }
+
+    /**
+     * Removes the current user's reaction to the specified comment.
+     * <p>
+     * If no reaction by the current user to the specified comment exists, nothing happens.
+     *
+     * @param comment Comment to which reaction will be removed
+     */
+    @Transactional
+    public void removeMyReactionTo(Comment comment) {
+        Objects.requireNonNull(comment);
+        reactionDao.removeExisting(currentUser(), comment);
     }
 }
