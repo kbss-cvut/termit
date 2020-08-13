@@ -4,11 +4,15 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.comment.CommentReaction;
+import cz.cvut.kbss.termit.model.comment.Dislike;
+import cz.cvut.kbss.termit.model.comment.Like;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -132,6 +136,26 @@ class CommentServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void updateThrowsAuthorizationExceptionWhenAttemptingToUpdateCommentBySomeoneElse() {
+        final Comment comment = new Comment();
+        comment.setContent("test ");
+        comment.setAsset(Generator.generateUri());
+        final User differentUser = Generator.generateUserWithId();
+        comment.setAuthor(differentUser);
+        transactional(() -> {
+            em.persist(differentUser);
+            final EntityDescriptor descriptor = new EntityDescriptor(
+                    URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
+            descriptor.addAttributeDescriptor(Comment.getAuthorField(), new EntityDescriptor(null));
+            em.persist(comment, descriptor);
+        });
+
+        final String newContent = "new content";
+        comment.setContent(newContent);
+        assertThrows(AuthorizationException.class, () -> sut.update(comment));
+    }
+
+    @Test
     void findRequiredRetrievesCommentFromRepositoryService() {
         final Comment comment = persistComment();
 
@@ -151,5 +175,72 @@ class CommentServiceTest extends BaseServiceTestRunner {
 
         sut.remove(comment);
         assertNull(em.find(Comment.class, comment.getUri()));
+    }
+
+    @Test
+    void likeCommentCreatesLikeByCurrentUser() {
+        final Comment comment = persistComment();
+
+        sut.likeComment(comment);
+        assertTrue(doesReactionExist(comment, em.getMetamodel().entity(Like.class).getIRI().toURI()));
+    }
+
+    private boolean doesReactionExist(Comment comment, URI type) {
+        // TODO replace literal IRIs with constants once the comments model is settled
+        return em.createNativeQuery("ASK WHERE {" +
+                "?x a ?type ;" +
+                "?hasAuthor ?author ;" +
+                "?reactsTo ?comment .}", Boolean.class)
+                 .setParameter("type", type)
+                 .setParameter("hasAuthor", URI.create("https://www.w3.org/ns/activitystreams#actor"))
+                 .setParameter("author", author)
+                 .setParameter("reactsTo", URI.create("https://www.w3.org/ns/activitystreams#object"))
+                 .setParameter("comment", comment).getSingleResult();
+    }
+
+    @Test
+    void dislikeCommentCreatesDislikeByCurrentUser() {
+        final Comment comment = persistComment();
+
+        sut.dislikeComment(comment);
+        assertTrue(doesReactionExist(comment, em.getMetamodel().entity(Dislike.class).getIRI().toURI()));
+    }
+
+    @Test
+    void likeCommentRemovesPreexistingCommentReaction() {
+        final Comment comment = persistComment();
+        final CommentReaction existingReaction = persistReaction(comment);
+
+        sut.likeComment(comment);
+        assertNull(em.find(existingReaction.getClass(), existingReaction.getUri()));
+        assertTrue(doesReactionExist(comment, em.getMetamodel().entity(Like.class).getIRI().toURI()));
+    }
+
+    private CommentReaction persistReaction(Comment toComment) {
+        final CommentReaction reaction =
+                Generator.randomBoolean() ? new Like(author, toComment) : new Dislike(author, toComment);
+        transactional(
+                () -> em.persist(reaction, new EntityDescriptor(URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)))));
+        return reaction;
+    }
+
+    @Test
+    void dislikeCommentRemovesPreexistingCommentReaction() {
+        final Comment comment = persistComment();
+        final CommentReaction existingReaction = persistReaction(comment);
+
+        sut.dislikeComment(comment);
+        assertNull(em.find(existingReaction.getClass(), existingReaction.getUri()));
+        assertTrue(doesReactionExist(comment, em.getMetamodel().entity(Dislike.class).getIRI().toURI()));
+    }
+
+    @Test
+    void removeMyReactionToRemovesPreexistingReactionToComment() {
+        final Comment comment = persistComment();
+        final CommentReaction existingReaction = persistReaction(comment);
+
+        sut.removeMyReactionTo(comment);
+        assertNull(em.find(existingReaction.getClass(), existingReaction.getUri()));
+        assertFalse(doesReactionExist(comment, em.getMetamodel().entity(existingReaction.getClass()).getIRI().toURI()));
     }
 }
