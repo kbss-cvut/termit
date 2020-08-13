@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents a single comment in the comment/discussion module.
@@ -38,6 +39,14 @@ public class Comment extends AbstractEntity {
 
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace)
     private Date modified;
+
+    @Inferred
+    @OWLObjectProperty(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/je-oblíben")
+    private Set<Like> likes;
+
+    @Inferred
+    @OWLObjectProperty(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/je-neoblíben")
+    private Set<Dislike> dislikes;
 
     public URI getAsset() {
         return asset;
@@ -77,6 +86,22 @@ public class Comment extends AbstractEntity {
 
     public void setModified(Date modified) {
         this.modified = modified;
+    }
+
+    public Set<Like> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Set<Like> likes) {
+        this.likes = likes;
+    }
+
+    public Set<Dislike> getDislikes() {
+        return dislikes;
+    }
+
+    public void setDislikes(Set<Dislike> dislikes) {
+        this.dislikes = dislikes;
     }
 
     @PrePersist
@@ -125,6 +150,22 @@ public class Comment extends AbstractEntity {
             return Comment.class.getDeclaredField("author");
         } catch (NoSuchFieldException e) {
             throw new TermItException("Fatal error! Unable to retrieve \"author\" field.", e);
+        }
+    }
+
+    public static Field getLikesField() {
+        try {
+            return Comment.class.getDeclaredField("likes");
+        } catch (NoSuchFieldException e) {
+            throw new TermItException("Fatal error! Unable to retrieve \"likes\" field.", e);
+        }
+    }
+
+    public static Field getDislikesField() {
+        try {
+            return Comment.class.getDeclaredField("dislikes");
+        } catch (NoSuchFieldException e) {
+            throw new TermItException("Fatal error! Unable to retrieve \"dislikes\" field.", e);
         }
     }
 }

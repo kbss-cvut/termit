@@ -8,6 +8,7 @@ Prefices
     pdp  :  http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/
     psys :  http://proton.semanticweb.org/protonsys#
     termit : http://onto.fel.cvut.cz/ontologies/application/termit/pojem/
+    activity: https://www.w3.org/ns/activitystreams#
 }
 
 Axioms
@@ -96,5 +97,19 @@ Rules
     source <termit:je-přiřazením-termu> this
     -------------------------------
     this <termit:má-zdroj-definice-termu> source
+
+  Id: sioc_comment_1
+
+      source <rdf:type> <activity:Like>
+      source <activity:object> this
+      -------------------------------
+      this <termit:je-oblíben> source
+
+  Id: sioc_comment_2
+
+        source <rdf:type> <termit:palec-dolů>
+        source <activity:object> this
+        -------------------------------
+        this <termit:je-neoblíben> source
 }
 
