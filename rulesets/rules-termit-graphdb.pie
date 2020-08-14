@@ -93,16 +93,9 @@ Rules
 
   Id: sioc_comment_1
 
-      source <rdf:type> <activity:Like>
+      source <rdf:type> <termit:reakce>
       source <activity:object> this
       -------------------------------
-      this <termit:je-oblíben> source
-
-  Id: sioc_comment_2
-
-        source <rdf:type> <termit:palec-dolů>
-        source <activity:object> this
-        -------------------------------
-        this <termit:je-neoblíben> source
+      this <termit:má-reakci> source
 }
 
