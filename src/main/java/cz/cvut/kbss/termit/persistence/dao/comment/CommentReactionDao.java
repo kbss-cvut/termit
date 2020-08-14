@@ -60,6 +60,8 @@ public class CommentReactionDao {
               .setParameter("author", author)
               .setParameter("reactsTo", URI.create("https://www.w3.org/ns/activitystreams#object"))
               .setParameter("comment", comment).executeUpdate();
+            em.getEntityManagerFactory().getCache()
+              .evict(Comment.class, comment.getUri(), commentDescriptor.getContext());
             em.getEntityManagerFactory().getCache().evict(CommentReaction.class);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
