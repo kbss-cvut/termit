@@ -32,9 +32,8 @@ public class CommentDao {
     private Descriptor createDescriptor(String context) {
         final EntityDescriptor descriptor = new EntityDescriptor(URI.create(context));
         descriptor.addAttributeDescriptor(Comment.getAuthorField(), new EntityDescriptor(null));
-        // Likes and dislikes field is inferred, therefore possibly in the 'implicit' context (GraphDB)
-        descriptor.addAttributeDescriptor(Comment.getLikesField(), new EntityDescriptor(null));
-        descriptor.addAttributeDescriptor(Comment.getDislikesField(), new EntityDescriptor(null));
+        // Reaction are inferred, therefore possibly in the 'implicit' context (GraphDB)
+        descriptor.addAttributeDescriptor(Comment.getReactionsField(), new EntityDescriptor(null));
         return descriptor;
     }
 

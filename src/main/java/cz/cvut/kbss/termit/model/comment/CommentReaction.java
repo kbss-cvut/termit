@@ -1,15 +1,16 @@
 package cz.cvut.kbss.termit.model.comment;
 
-import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
-import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.termit.model.AbstractEntity;
+import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Set;
 
-@MappedSuperclass
-public abstract class CommentReaction extends AbstractEntity {
+@OWLClass(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/reakce")
+public class CommentReaction extends AbstractEntity implements HasTypes {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = "https://www.w3.org/ns/activitystreams#actor")
@@ -18,6 +19,18 @@ public abstract class CommentReaction extends AbstractEntity {
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = "https://www.w3.org/ns/activitystreams#object")
     private URI object;
+
+    @ParticipationConstraints(nonEmpty = true)
+    @Types
+    private Set<String> types;
+
+    public CommentReaction() {
+    }
+
+    public CommentReaction(User author, Comment comment) {
+        this.actor = Objects.requireNonNull(author).getUri();
+        this.object = Objects.requireNonNull(comment).getUri();
+    }
 
     public URI getActor() {
         return actor;
@@ -35,6 +48,14 @@ public abstract class CommentReaction extends AbstractEntity {
         this.object = object;
     }
 
+    public Set<String> getTypes() {
+        return types;
+    }
+
+    public void setTypes(Set<String> types) {
+        this.types = types;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -43,21 +64,23 @@ public abstract class CommentReaction extends AbstractEntity {
         if (!(o instanceof CommentReaction)) {
             return false;
         }
-        CommentReaction that = (CommentReaction) o;
-        return Objects.equals(actor, that.actor) &&
-                Objects.equals(object, that.object);
+        CommentReaction reaction = (CommentReaction) o;
+        return Objects.equals(actor, reaction.actor) &&
+                Objects.equals(object, reaction.object) &&
+                Objects.equals(types, reaction.types);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(actor, object);
+        return Objects.hash(actor, object, types);
     }
 
     @Override
     public String toString() {
-        return "{" +
+        return "CommentReaction{" +
                 "actor=" + actor +
                 ", object=" + object +
-                "} " + super.toString();
+                ", types=" + types +
+                "}";
     }
 }

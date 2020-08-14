@@ -6,8 +6,7 @@ import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
-import cz.cvut.kbss.termit.model.comment.Dislike;
-import cz.cvut.kbss.termit.model.comment.Like;
+import cz.cvut.kbss.termit.model.comment.CommentReaction;
 import cz.cvut.kbss.termit.persistence.dao.comment.CommentDao;
 import cz.cvut.kbss.termit.persistence.dao.comment.CommentReactionDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
@@ -110,35 +109,22 @@ public class CommentService {
     }
 
     /**
-     * Creates a "like" reaction by the current user to the specified comment.
+     * Creates a reaction by the current user to the specified comment.
      * <p>
      * Note that at most one reaction can exist by one user to a comment, so this method removes any preexisting
      * reactions.
      *
      * @param comment Comment being liked
+     * @param type    Type of the reaction
      */
     @Transactional
-    public void likeComment(Comment comment) {
+    public void addReactionTo(Comment comment, String type) {
         Objects.requireNonNull(comment);
+        Objects.requireNonNull(type);
         removeMyReactionTo(comment);
-        final Like like = new Like(currentUser(), comment);
-        reactionDao.persist(like);
-    }
-
-    /**
-     * Creates a "dislike" reaction by the current user to the specified comment.
-     * <p>
-     * Note that at most one reaction can exist by one user to a comment, so this method removes any preexisting
-     * reactions.
-     *
-     * @param comment Comment being disliked
-     */
-    @Transactional
-    public void dislikeComment(Comment comment) {
-        Objects.requireNonNull(comment);
-        removeMyReactionTo(comment);
-        final Dislike dislike = new Dislike(currentUser(), comment);
-        reactionDao.persist(dislike);
+        final CommentReaction reaction = new CommentReaction(currentUser(), comment);
+        reaction.addType(type);
+        reactionDao.persist(reaction);
     }
 
     /**

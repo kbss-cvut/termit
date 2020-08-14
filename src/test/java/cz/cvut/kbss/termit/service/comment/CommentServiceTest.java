@@ -11,8 +11,6 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
-import cz.cvut.kbss.termit.model.comment.Dislike;
-import cz.cvut.kbss.termit.model.comment.Like;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -178,11 +176,12 @@ class CommentServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void likeCommentCreatesLikeByCurrentUser() {
+    void addReactionToCreatesLikeByCurrentUser() {
         final Comment comment = persistComment();
+        final URI reaction = URI.create("https://www.w3.org/ns/activitystreams#Like");
 
-        sut.likeComment(comment);
-        assertTrue(doesReactionExist(comment, em.getMetamodel().entity(Like.class).getIRI().toURI()));
+        sut.addReactionTo(comment, reaction.toString());
+        assertTrue(doesReactionExist(comment, reaction));
     }
 
     private boolean doesReactionExist(Comment comment, URI type) {
@@ -199,39 +198,22 @@ class CommentServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void dislikeCommentCreatesDislikeByCurrentUser() {
-        final Comment comment = persistComment();
-
-        sut.dislikeComment(comment);
-        assertTrue(doesReactionExist(comment, em.getMetamodel().entity(Dislike.class).getIRI().toURI()));
-    }
-
-    @Test
-    void likeCommentRemovesPreexistingCommentReaction() {
+    void addReactionToRemovesPreexistingCommentReaction() {
         final Comment comment = persistComment();
         final CommentReaction existingReaction = persistReaction(comment);
+        final URI reaction = URI.create("https://www.w3.org/ns/activitystreams#Like");
 
-        sut.likeComment(comment);
-        assertNull(em.find(existingReaction.getClass(), existingReaction.getUri()));
-        assertTrue(doesReactionExist(comment, em.getMetamodel().entity(Like.class).getIRI().toURI()));
+        sut.addReactionTo(comment, reaction.toString());
+        assertNull(em.find(CommentReaction.class, existingReaction.getUri()));
+        assertTrue(doesReactionExist(comment, reaction));
     }
 
     private CommentReaction persistReaction(Comment toComment) {
-        final CommentReaction reaction =
-                Generator.randomBoolean() ? new Like(author, toComment) : new Dislike(author, toComment);
+        final CommentReaction reaction = new CommentReaction(author, toComment);
+        reaction.addType("https://www.w3.org/ns/activitystreams#Dislike");
         transactional(
                 () -> em.persist(reaction, new EntityDescriptor(URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)))));
         return reaction;
-    }
-
-    @Test
-    void dislikeCommentRemovesPreexistingCommentReaction() {
-        final Comment comment = persistComment();
-        final CommentReaction existingReaction = persistReaction(comment);
-
-        sut.dislikeComment(comment);
-        assertNull(em.find(existingReaction.getClass(), existingReaction.getUri()));
-        assertTrue(doesReactionExist(comment, em.getMetamodel().entity(Dislike.class).getIRI().toURI()));
     }
 
     @Test
@@ -240,7 +222,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
         final CommentReaction existingReaction = persistReaction(comment);
 
         sut.removeMyReactionTo(comment);
-        assertNull(em.find(existingReaction.getClass(), existingReaction.getUri()));
-        assertFalse(doesReactionExist(comment, em.getMetamodel().entity(existingReaction.getClass()).getIRI().toURI()));
+        assertNull(em.find(CommentReaction.class, existingReaction.getUri()));
+        assertFalse(doesReactionExist(comment, URI.create(existingReaction.getTypes().iterator().next())));
     }
 }
