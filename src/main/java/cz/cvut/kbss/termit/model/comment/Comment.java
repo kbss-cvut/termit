@@ -41,12 +41,8 @@ public class Comment extends AbstractEntity {
     private Date modified;
 
     @Inferred
-    @OWLObjectProperty(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/je-oblíben")
-    private Set<Like> likes;
-
-    @Inferred
-    @OWLObjectProperty(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/je-neoblíben")
-    private Set<Dislike> dislikes;
+    @OWLObjectProperty(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-reakce")
+    private Set<CommentReaction> reactions;
 
     public URI getAsset() {
         return asset;
@@ -88,20 +84,12 @@ public class Comment extends AbstractEntity {
         this.modified = modified;
     }
 
-    public Set<Like> getLikes() {
-        return likes;
+    public Set<CommentReaction> getReactions() {
+        return reactions;
     }
 
-    public void setLikes(Set<Like> likes) {
-        this.likes = likes;
-    }
-
-    public Set<Dislike> getDislikes() {
-        return dislikes;
-    }
-
-    public void setDislikes(Set<Dislike> dislikes) {
-        this.dislikes = dislikes;
+    public void setReactions(Set<CommentReaction> reactions) {
+        this.reactions = reactions;
     }
 
     @PrePersist
@@ -153,19 +141,11 @@ public class Comment extends AbstractEntity {
         }
     }
 
-    public static Field getLikesField() {
+    public static Field getReactionsField() {
         try {
-            return Comment.class.getDeclaredField("likes");
+            return Comment.class.getDeclaredField("reactions");
         } catch (NoSuchFieldException e) {
             throw new TermItException("Fatal error! Unable to retrieve \"likes\" field.", e);
-        }
-    }
-
-    public static Field getDislikesField() {
-        try {
-            return Comment.class.getDeclaredField("dislikes");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"dislikes\" field.", e);
         }
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.Date;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -109,42 +110,28 @@ class CommentControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void likeCommentCreatesLikeForSpecifiedComment() throws Exception {
+    void addReactionWithLikeTypeCreatesLikeForSpecifiedComment() throws Exception {
         final Comment comment = generateComment();
         when(commentService.findRequired(comment.getUri())).thenReturn(comment);
+        final Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn("testuser");
+        final String likeType = "https://www.w3.org/ns/activitystreams#Like";
         mockMvc.perform(
-                post(PATH + NAME + "/likes").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+                post(PATH + NAME + "/reactions").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
+                                                .queryParam("type", likeType).principal(principal))
                .andExpect(status().isNoContent());
-        verify(commentService).likeComment(comment);
+        verify(commentService).addReactionTo(comment, likeType);
     }
 
     @Test
-    void removeCommentLikeRemovesReactionToSpecifiedComment() throws Exception {
+    void removeReactionToRemovesReactionToSpecifiedComment() throws Exception {
         final Comment comment = generateComment();
         when(commentService.findRequired(comment.getUri())).thenReturn(comment);
+        final Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn("testuser");
         mockMvc.perform(
-                delete(PATH + NAME + "/likes").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isNoContent());
-        verify(commentService).removeMyReactionTo(comment);
-    }
-
-    @Test
-    void dislikeCommentCreatesDislikeForSpecifiedComment() throws Exception {
-        final Comment comment = generateComment();
-        when(commentService.findRequired(comment.getUri())).thenReturn(comment);
-        mockMvc.perform(
-                post(PATH + NAME + "/dislikes").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isNoContent());
-        verify(commentService).dislikeComment(comment);
-    }
-
-    @Test
-    void removeCommentDislikeRemovesReactionToSpecifiedComment() throws Exception {
-        final Comment comment = generateComment();
-        when(commentService.findRequired(comment.getUri())).thenReturn(comment);
-        mockMvc.perform(
-                delete(PATH + NAME + "/dislikes").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isNoContent());
+                delete(PATH + NAME + "/reactions").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
+                                                  .principal(principal)).andExpect(status().isNoContent());
         verify(commentService).removeMyReactionTo(comment);
     }
 }
