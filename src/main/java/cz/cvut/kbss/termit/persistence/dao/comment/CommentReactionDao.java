@@ -7,8 +7,6 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
-import cz.cvut.kbss.termit.model.comment.Dislike;
-import cz.cvut.kbss.termit.model.comment.Like;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,8 +60,7 @@ public class CommentReactionDao {
               .setParameter("author", author)
               .setParameter("reactsTo", URI.create("https://www.w3.org/ns/activitystreams#object"))
               .setParameter("comment", comment).executeUpdate();
-            em.getEntityManagerFactory().getCache().evict(Like.class);
-            em.getEntityManagerFactory().getCache().evict(Dislike.class);
+            em.getEntityManagerFactory().getCache().evict(CommentReaction.class);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
