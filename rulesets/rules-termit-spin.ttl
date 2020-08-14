@@ -102,17 +102,10 @@ spin:rule [
 
 
 <http://rdfs.org/sioc/types#Comment> a rdfs:Class ;
-# inverse between Like.object and Comment
+# inverse between CommentReaction.object and Comment
 spin:rule [
     a sp:Construct ;
-    sp:text """CONSTRUCT { ?this termit:je-oblíben ?like . }
-               WHERE { ?like a activity:Like ;
-                             activity:object ?this . }"""
-] ;
-
-spin:rule [
-    a sp:Construct ;
-    sp:text """CONSTRUCT { ?this termit:je-neoblíben ?like . }
-               WHERE { ?like a termit:palec-dolů ;
+    sp:text """CONSTRUCT { ?this termit:má-reakci ?reaction . }
+               WHERE { ?reaction a termit:reakce ;
                              activity:object ?this . }"""
 ] .
