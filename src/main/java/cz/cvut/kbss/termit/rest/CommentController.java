@@ -13,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-
 @RestController
 @RequestMapping("/comments")
 public class CommentController extends BaseController {
@@ -58,20 +56,18 @@ public class CommentController extends BaseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addReaction(@PathVariable String idFragment,
                             @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
-                            @RequestParam(name = "type") String type,
-                            Principal principal) {
+                            @RequestParam(name = "type") String type) {
         final Comment comment = getById(idFragment, namespace);
         commentService.addReactionTo(comment, type);
-        LOG.trace("User {} reacted with {} to comment {}.", principal.getName(), type, comment);
+        LOG.trace("User reacted with {} to comment {}.", type, comment);
     }
 
     @DeleteMapping(value = "/{idFragment}/reactions")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeReactionTo(@PathVariable String idFragment,
-                                 @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
-                                 Principal principal) {
+                                 @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
         final Comment comment = getById(idFragment, namespace);
         commentService.removeMyReactionTo(comment);
-        LOG.trace("Reaction on comment {} removed by user {}.", comment, principal.getName());
+        LOG.trace("Reaction on comment {} removed.", comment);
     }
 }
