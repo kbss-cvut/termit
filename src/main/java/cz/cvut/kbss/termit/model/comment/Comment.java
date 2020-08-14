@@ -41,7 +41,7 @@ public class Comment extends AbstractEntity {
     private Date modified;
 
     @Inferred
-    @OWLObjectProperty(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-reakce")
+    @OWLObjectProperty(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-reakci")
     private Set<CommentReaction> reactions;
 
     public URI getAsset() {
