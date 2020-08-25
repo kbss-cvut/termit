@@ -6,7 +6,7 @@ CONSTRUCT {
     ?type a a-popis-dat:term .
     ?type rdfs:label ?typeLabel .
     ?type rdfs:comment ?typeDefinition .
-    ?category a skos:Concept .
+    ?category a a-popis-dat:term  .
     ?category rdfs:label ?categoryLabel .
     ?category rdfs:comment ?type .
 } WHERE {
