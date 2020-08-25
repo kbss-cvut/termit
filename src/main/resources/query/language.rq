@@ -1,0 +1,26 @@
+PREFIX z-sgov-pojem: <https://slovník.gov.cz/základní/pojem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX a-popis-dat: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+CONSTRUCT {
+    ?type a skos:Concept .
+    ?type skos:prefLabel ?typeLabel .
+    ?type skos:definition ?typeDefinition .
+    ?category a skos:Concept .
+    ?category skos:prefLabel ?categoryLabel .
+    ?category skos:narrower ?type .
+} WHERE {
+VALUES (?type ?category) {
+(z-sgov-pojem:objekt z-sgov-pojem:proměnný-prvek)
+(z-sgov-pojem:vlastnost z-sgov-pojem:proměnný-prvek)
+(z-sgov-pojem:událost z-sgov-pojem:proměnný-prvek)
+(z-sgov-pojem:vztah z-sgov-pojem:proměnný-prvek)
+(z-sgov-pojem:typ-objektu z-sgov-pojem:typ)
+(z-sgov-pojem:typ-vlastnosti z-sgov-pojem:typ)
+(z-sgov-pojem:typ-události z-sgov-pojem:typ)
+(z-sgov-pojem:typ-vztahu z-sgov-pojem:typ)
+}
+  ?type skos:prefLabel ?typeLabel .
+  OPTIONAL { ?type skos:definition ?typeDefinition . }
+  ?category skos:prefLabel ?categoryLabel .
+}
