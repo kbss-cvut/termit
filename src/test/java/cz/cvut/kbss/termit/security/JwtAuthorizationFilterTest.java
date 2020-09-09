@@ -42,6 +42,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ContextConfiguration;
@@ -235,5 +236,16 @@ class JwtAuthorizationFilterTest {
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
+    }
+
+    @Test
+    void doFilterInternalInvalidatesSessionWhenItExistsAndNoAuthorizationIsProvided() throws Exception {
+        final MockHttpSession mockSession = new MockHttpSession();
+        mockRequest.setSession(mockSession);
+        assertFalse(mockSession.isInvalid());
+        sut.doFilterInternal(mockRequest, mockResponse, chainMock);
+        verify(chainMock).doFilter(mockRequest, mockResponse);
+        verify(securityUtilsMock, never()).setCurrentUser(any());
+        assertTrue(mockSession.isInvalid());
     }
 }
