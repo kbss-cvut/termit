@@ -7,5 +7,5 @@ COPY src/main/scripts/wait-for-it.sh $TERMIT_HOME/
 RUN sed -E -i "s@repository[.]url=(.*)@repository.url=$REPOSITORY_URL@g" src/main/resources/config.properties
 RUN mvn clean install -T 2C -DskipTests=true
 
-FROM tomcat:8.5.43-jdk8
+FROM tomcat:9-jdk8-corretto
 COPY --from=maven_builder /backend/target/termit.war /usr/local/tomcat/webapps
