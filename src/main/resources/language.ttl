@@ -2,46 +2,45 @@
 @prefix z-sgov-pojem: <https://slovník.gov.cz/základní/pojem/> .
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix ns2:   <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
 @prefix ns1:   <https://slovník.gov.cz/základní/pojem/> .
 @prefix a-popis-dat: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
 
-ns1:vztah  a          a-popis-dat:term ;
-        rdfs:comment  "A relator (in analogy with UFO relation) is any endurant, existence of which is directly dependent on the existence of two or more other endurants."@en , "Oproti objektu vztahem (analogicky s UFO Relation) rozumíme proměnný prvek, jehož existence je přímo závislá na existenci dvou a více jiných proměnných prvcích."@cs ;
-        rdfs:label    "Relation"@en , "Vztah"@cs .
+ns1:vztah  a             skos:Concept ;
+        skos:definition  "A relator (in analogy with UFO relation) is any endurant, existence of which is directly dependent on the existence of two or more other endurants."@en , "Oproti objektu vztahem (analogicky s UFO Relation) rozumíme proměnný prvek, jehož existence je přímo závislá na existenci dvou a více jiných proměnných prvcích."@cs ;
+        skos:prefLabel   "Relation"@en , "Vztah"@cs .
 
-ns1:objekt  a         a-popis-dat:term ;
-        rdfs:comment  "Objektem (analogicky s UFO Object) rozumíme proměnný prvek, jehož existence není přímo závislá na existenci jiných entit. Objekt může existovat i jako součást jiného objektu, ale může být vyjmut a existovat i nadále."@cs , "Object (in analogy to UFO Object) we understand an endurant, existence of which is not directly dependent on the existence of other endurants."@en ;
-        rdfs:label    "Objekt"@cs , "Object"@en .
+ns1:objekt  a            skos:Concept ;
+        skos:definition  "Objektem (analogicky s UFO Object) rozumíme proměnný prvek, jehož existence není přímo závislá na existenci jiných entit. Objekt může existovat i jako součást jiného objektu, ale může být vyjmut a existovat i nadále."@cs , "Object (in analogy to UFO Object) we understand an endurant, existence of which is not directly dependent on the existence of other endurants."@en ;
+        skos:prefLabel   "Objekt"@cs , "Object"@en .
 
-ns1:typ-vztahu  a     a-popis-dat:term ;
-        rdfs:comment  "Instance typu vztahu jsou vztahy mezi objekty, tedy např. Manželství Martina Nováka a Martiny Novákové je  vztah mezi objekty Martin Novák a Martina Nováková"@cs ;
-        rdfs:label    "Relator"@en , "Typ vztahu"@cs .
+ns1:typ-vztahu  a        skos:Concept ;
+        skos:definition  "Instance typu vztahu jsou vztahy mezi objekty, tedy např. Manželství Martina Nováka a Martiny Novákové je  vztah mezi objekty Martin Novák a Martina Nováková"@cs ;
+        skos:prefLabel   "Typ vztahu"@cs , "Relator"@en .
 
-ns1:typ-vlastnosti  a  a-popis-dat:term ;
-        rdfs:comment  "Typ vlastnosti popisuje kategorie proměnných prvků, které jsou závislé na existenci jiného proměnného prvku. Příklady instancí: konkrétní typ letadla (Airbus 380), objekt/subjekt RPP (např. malé plavidlo),"@cs ;
-        rdfs:label    "Typ vlastnosti"@cs , "Intrinsic Trope Type"@en .
+ns1:typ-vlastnosti  a    skos:Concept ;
+        skos:definition  "Typ vlastnosti popisuje kategorie proměnných prvků, které jsou závislé na existenci jiného proměnného prvku. Příklady instancí: konkrétní typ letadla (Airbus 380), objekt/subjekt RPP (např. malé plavidlo),"@cs ;
+        skos:prefLabel   "Intrinsic Trope Type"@en , "Typ vlastnosti"@cs .
 
-ns1:typ-objektu  a    a-popis-dat:term ;
-        rdfs:comment  "Typ objektu (typ[objekt]) popisuje kategorii která může být objektu přiřazena.  Příklady instancí: konkrétní typ letadla (Airbus 380), objekt/subjekt RPP (např. malé plavidlo),"@cs ;
-        rdfs:label    "Typ objektu"@cs , "Object type"@en .
+ns1:typ-objektu  a       skos:Concept ;
+        skos:definition  "Typ objektu (typ[objekt]) popisuje kategorii která může být objektu přiřazena.  Příklady instancí: konkrétní typ letadla (Airbus 380), objekt/subjekt RPP (např. malé plavidlo),"@cs ;
+        skos:prefLabel   "Object type"@en , "Typ objektu"@cs .
 
-ns1:vlastnost  a      a-popis-dat:term ;
-        rdfs:comment  "An intrinsic trope (in analogy to UFO Intrinsic Trope) we understand an endurant, existence of which directly depends on the existence of another endurant."@en , "Oproti objektu vlastností (analogicky s UFO Intrinsic Trope) rozumíme proměnný prvek, jehož existence je přímo závislá na existenci jednoho jiného proměnného prvku."@cs ;
-        rdfs:label    "Vlastnost"@cs , "Intrinsic Trope"@en .
+ns1:vlastnost  a         skos:Concept ;
+        skos:definition  "Oproti objektu vlastností (analogicky s UFO Intrinsic Trope) rozumíme proměnný prvek, jehož existence je přímo závislá na existenci jednoho jiného proměnného prvku."@cs , "An intrinsic trope (in analogy to UFO Intrinsic Trope) we understand an endurant, existence of which directly depends on the existence of another endurant."@en ;
+        skos:prefLabel   "Vlastnost"@cs , "Intrinsic Trope"@en .
 
-ns1:událost  a        a-popis-dat:term ;
-        rdfs:comment  "Event (in analogy to UFO Event) represents a perdurant, which occured and which changes some of the endurants (whenever an event changes a trope, it changes also endurants these trope inhere in)"@en , "Událost (v UFO Event) představuje v čase neměnnou entitu, která nastala a která mění některý z objektů (v případech, kdy událost mění jiný proměnný prvek - vlastnost, nebo vztah - mění tím i jeden nebo více objektů, neboť tyto proměnné prvky jsou na objektech závislé a jejich okamžité stavy určují okamžitý stav daného objektu)"@cs ;
-        rdfs:label    "Event"@en , "Událost"@cs .
+ns1:událost  a           skos:Concept ;
+        skos:definition  "Event (in analogy to UFO Event) represents a perdurant, which occured and which changes some of the endurants (whenever an event changes a trope, it changes also endurants these trope inhere in)"@en , "Událost (v UFO Event) představuje v čase neměnnou entitu, která nastala a která mění některý z objektů (v případech, kdy událost mění jiný proměnný prvek - vlastnost, nebo vztah - mění tím i jeden nebo více objektů, neboť tyto proměnné prvky jsou na objektech závislé a jejich okamžité stavy určují okamžitý stav daného objektu)"@cs ;
+        skos:prefLabel   "Event"@en , "Událost"@cs .
 
-ns1:typ-události  a   a-popis-dat:term ;
-        rdfs:comment  "Typ, do nějž lze Událost klasifikovat. Příkladem je typ události Narození."@cs ;
-        rdfs:label    "Typ události"@cs , "Event type"@en .
+ns1:typ-události  a      skos:Concept ;
+        skos:definition  "Typ, do nějž lze Událost klasifikovat. Příkladem je typ události Narození."@cs ;
+        skos:prefLabel   "Typ události"@cs , "Event type"@en .
 
-ns1:typ  a            a-popis-dat:term ;
-        rdfs:comment  ns1:typ-vztahu , ns1:typ-vlastnosti , ns1:typ-události , ns1:typ-objektu ;
-        rdfs:label    "Type"@en , "Typ"@cs .
+ns1:typ  a              skos:Concept ;
+        skos:narrower   ns1:typ-objektu , ns1:typ-události , ns1:typ-vztahu , ns1:typ-vlastnosti ;
+        skos:prefLabel  "Type"@en , "Typ"@cs .
 
-ns1:proměnný-prvek  a  a-popis-dat:term ;
-        rdfs:comment  ns1:objekt , ns1:vlastnost , ns1:vztah , ns1:událost ;
-        rdfs:label    "Proměnný prvek"@cs , "Endurant"@en .
+ns1:proměnný-prvek  a   skos:Concept ;
+        skos:narrower   ns1:objekt , ns1:vztah , ns1:událost , ns1:vlastnost ;
+        skos:prefLabel  "Endurant"@en , "Proměnný prvek"@cs .

@@ -19,13 +19,11 @@ package cz.cvut.kbss.termit.service.language;
 
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.SKOS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,17 +66,18 @@ public class LanguageServiceJena extends LanguageService {
             m.read(resource.getURL().toString(), "text/turtle");
 
             final List<Term> terms = new ArrayList<>();
-            m.listSubjectsWithProperty(RDF.type, ResourceFactory.createResource(Vocabulary.s_c_term))
+            m.listSubjectsWithProperty(RDF.type, ResourceFactory.createResource(
+                cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT))
              .forEachRemaining(c -> {
                  final Term t = new Term();
                  t.setUri(URI.create(c.getURI()));
-                 if (c.getProperty(RDFS.label, lang) != null) {
-                     t.setLabel(c.getProperty(RDFS.label, lang).getObject().asLiteral().getString());
+                 if (c.getProperty(SKOS.prefLabel, lang) != null) {
+                     t.setLabel(c.getProperty(SKOS.prefLabel, lang).getObject().asLiteral().getString());
                  } else {
                      t.setLabel(t.getUri().toString());
                  }
 
-                 final Statement st = c.getProperty(RDFS.comment, lang);
+                 final Statement st = c.getProperty(SKOS.definition, lang);
                  if (st != null) {
                      t.setDescription(st.getObject().asLiteral().getString());
                  }
