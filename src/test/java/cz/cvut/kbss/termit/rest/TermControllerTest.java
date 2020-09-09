@@ -15,6 +15,7 @@ import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -848,5 +849,126 @@ class TermControllerTest extends BaseControllerTestRunner {
                .andExpect(status().isOk());
 
         verify(termServiceMock).findAllRoots(eq(vocabulary), any(Pageable.class), eq(toInclude));
+    }
+
+    @Test
+    void getCommentsRetrievesCommentsForSpecifiedTerm() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        final List<Comment> comments = generateComments(term);
+        when(termServiceMock.getComments(term)).thenReturn(comments);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments"))
+                                           .andExpect(status().isOk()).andReturn();
+        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        });
+        assertEquals(comments, result);
+        verify(termServiceMock).getComments(term);
+    }
+
+    private static List<Comment> generateComments(Term term) {
+        return IntStream.range(0, 5).mapToObj(i -> generateComment(term)).collect(Collectors.toList());
+    }
+
+    private static Comment generateComment(Term term) {
+        final Comment c = new Comment();
+        c.setContent("Comment " + Generator.randomInt());
+        if (term != null) {
+            c.setAsset(term.getUri());
+            c.setCreated(new Date());
+        }
+        return c;
+    }
+
+    @Test
+    void getCommentsStandaloneRetrievesCommentsForSpecifiedTerm() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        final List<Comment> comments = generateComments(term);
+        when(termServiceMock.getComments(term)).thenReturn(comments);
+
+        final MvcResult mvcResult = mockMvc
+                .perform(get("/terms/" + TERM_NAME + "/comments").param(QueryParams.NAMESPACE, NAMESPACE))
+                .andExpect(status().isOk()).andReturn();
+        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        });
+        assertEquals(comments, result);
+        verify(termServiceMock).getComments(term);
+    }
+
+    @Test
+    void addCommentAddsSpecifiedCommentToSpecifiedTerm() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        final Comment comment = generateComment(null);
+        comment.setUri(Generator.generateUri());
+
+        mockMvc.perform(post("/vocabularies/" + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments")
+                .content(toJson(comment))
+                .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isCreated());
+        verify(termServiceMock).addComment(comment, term);
+    }
+
+    @Test
+    void addCommentReturnsLocationHeaderWithGeneratedIdentifier() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        final Comment comment = generateComment(null);
+        final String name = "comment-12345";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
+        comment.setUri(URI.create(namespace + name));
+
+        final MvcResult mvcResult = mockMvc
+                .perform(post("/vocabularies/" + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments")
+                        .content(toJson(comment))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated()).andReturn();
+        verifyLocationEquals("/comments/" + name, mvcResult);
+    }
+
+    @Test
+    void addCommentStandaloneAddsSpecifiedCommentToSpecifiedTerm() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        final Comment comment = generateComment(null);
+        comment.setUri(Generator.generateUri());
+
+        mockMvc.perform(post("/terms/" + TERM_NAME + "/comments")
+                .queryParam(QueryParams.NAMESPACE, NAMESPACE)
+                .content(toJson(comment))
+                .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isCreated());
+        verify(termServiceMock).addComment(comment, term);
+    }
+
+    @Test
+    void addCommentStandaloneReturnsLocationHeaderWithGeneratedIdentifier() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        final Comment comment = generateComment(null);
+        final String name = "comment-12345";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
+        comment.setUri(URI.create(namespace + name));
+
+        final MvcResult mvcResult = mockMvc
+                .perform(post("/terms/" + TERM_NAME + "/comments")
+                        .queryParam(QueryParams.NAMESPACE, NAMESPACE)
+                        .content(toJson(comment))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated()).andReturn();
+        verifyLocationEquals("/comments/" + name, mvcResult);
     }
 }

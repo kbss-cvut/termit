@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -373,7 +374,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
                 conn.begin();
-                conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
+                conn.add(WorkspaceGenerator.generateWorkspaceReferences(vocabularies, workspace));
                 conn.commit();
             }
         });

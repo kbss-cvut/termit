@@ -117,6 +117,11 @@ public enum ConfigParam {
     WORKING_VOCABULARY_CONTEXT_EXTENSION("vocabulary.working.extension"),
 
     /**
+     * IRI of the repository context used to store comments (discussion to assets)
+     */
+    COMMENTS_CONTEXT("comments.context"),
+
+    /**
      * Allowed origin for CORS configuration.
      * <p>
      * See for example <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS">https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS</a>

@@ -9,6 +9,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -73,7 +74,7 @@ class TermDaoTest extends BaseDaoTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
                 conn.begin();
-                conn.add(Generator
+                conn.add(WorkspaceGenerator
                         .generateWorkspaceReferences(Collections.singleton(vocabulary),
                                 wsMetadataCache.getCurrentWorkspace()));
                 conn.commit();

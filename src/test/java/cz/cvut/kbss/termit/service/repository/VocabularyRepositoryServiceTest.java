@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
@@ -41,7 +42,6 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
@@ -297,7 +297,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
                 conn.begin();
-                conn.add(Generator.generateWorkspaceReferences(vocabularies, workspace));
+                conn.add(WorkspaceGenerator.generateWorkspaceReferences(vocabularies, workspace));
                 conn.commit();
             }
         });

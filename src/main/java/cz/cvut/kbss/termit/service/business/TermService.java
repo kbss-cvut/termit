@@ -8,7 +8,9 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -37,15 +39,19 @@ public class TermService implements RudService<Term>,ChangeRecordProvider<Term> 
 
     private final ChangeRecordService changeRecordService;
 
+    private final CommentService commentService;
+
     @Autowired
     public TermService(VocabularyExporters exporters, VocabularyService vocabularyService,
                        TermRepositoryService repositoryService,
-                       TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService) {
+                       TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
+                       CommentService commentService) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.repositoryService = repositoryService;
         this.termOccurrenceService = termOccurrenceService;
         this.changeRecordService = changeRecordService;
+        this.commentService = commentService;
     }
 
     /**
@@ -359,5 +365,27 @@ public class TermService implements RudService<Term>,ChangeRecordProvider<Term> 
     public List<AbstractChangeRecord> getChanges(Term term) {
         Objects.requireNonNull(term);
         return changeRecordService.getChanges(term);
+    }
+
+    /**
+     * Gets comments related to the specified term.
+     *
+     * @param term Term to get comments for
+     * @return List of comments
+     */
+    public List<Comment> getComments(Term term) {
+        return commentService.findAll(term);
+    }
+
+    /**
+     * Adds the specified comment to the specified target term.
+     *
+     * @param comment Comment to add (create)
+     * @param target  Term to which the comment pertains
+     */
+    public void addComment(Comment comment, Term target) {
+        Objects.requireNonNull(comment);
+        Objects.requireNonNull(target);
+        commentService.addToAsset(comment, target);
     }
 }
