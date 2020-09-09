@@ -118,7 +118,7 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                  .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
                  .setParameter("lang", config.get(ConfigParam.LANGUAGE))
-                 .setParameter("termType", URI.create(Vocabulary.s_c_term))
+                 .setParameter("termType", URI.create(SKOS.CONCEPT))
                  .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
                  .setParameter("fileOcc", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
                  .setParameter("t", term.getUri()).getResultList();

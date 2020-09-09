@@ -131,7 +131,8 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, vf.createIRI(Vocabulary.s_c_term));
+                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, vf.createIRI(
+                    cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
                         vf.createLiteral(term.getLabel()));
                 connection.commit();
@@ -198,7 +199,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(vf.createIRI(Vocabulary.s_c_term), RDFS.LABEL, vf.createLiteral("Term"),
+                connection.add(vf.createIRI(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT), RDFS.LABEL, vf.createLiteral("Concept"),
                         vf.createIRI(context.toString()));
                 connection.commit();
             }
@@ -206,7 +207,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             final TypeAwareResource result = sut.exportDataAsTurtle(context);
             Model model = parseExportToModel(result);
-            assertTrue(model.contains(vf.createIRI(Vocabulary.s_c_term), RDFS.LABEL, vf.createLiteral("Term")));
+            assertTrue(model.contains(vf.createIRI(cz.cvut.kbss.jopa.vocabulary.SKOS.CONCEPT), RDFS.LABEL, vf.createLiteral("Concept")));
             assertFalse(model.contains(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), null, null));
         });
     }

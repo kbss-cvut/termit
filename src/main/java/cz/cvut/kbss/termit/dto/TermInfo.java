@@ -34,7 +34,7 @@ import java.util.Objects;
                 @VariableResult(name = "label"),
                 @VariableResult(name = "vocabulary", type = URI.class)
         })})
-@OWLClass(iri = Vocabulary.s_c_term)
+@OWLClass(iri = SKOS.CONCEPT)
 public class TermInfo implements Serializable {
 
     @Id

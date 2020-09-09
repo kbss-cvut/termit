@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.model.util.validation;
 
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -26,7 +26,7 @@ class WithoutQueryParametersValidatorTest {
 
     @Test
     void isValidReturnsTrueForNormalUris() {
-        final URI uri = URI.create(Vocabulary.s_c_term + Generator.randomInt(0, 1000000));
+        final URI uri = URI.create(SKOS.CONCEPT + Generator.randomInt(0, 1000000));
         assertTrue(sut.isValid(uri, ctx));
     }
 
