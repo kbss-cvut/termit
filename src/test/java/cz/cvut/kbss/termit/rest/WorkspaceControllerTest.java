@@ -1,6 +1,8 @@
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.WorkspaceService;
@@ -20,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -48,9 +51,8 @@ class WorkspaceControllerTest extends BaseControllerTestRunner {
     @Test
     void loadWorkspaceUsesServiceToGetWorkspaceByIdentifier() throws Exception {
         when(idResolver.resolveIdentifier(anyString(), anyString())).thenReturn(WORKSPACE_URI);
-        final Workspace workspace = new Workspace();
+        final Workspace workspace = WorkspaceGenerator.generateWorkspace();
         workspace.setUri(WORKSPACE_URI);
-        workspace.setLabel("test workspace");
         when(workspaceService.loadWorkspace(any())).thenReturn(workspace);
         mockMvc.perform(put(PATH + FRAGMENT).param(Constants.QueryParams.NAMESPACE, NAMESPACE))
                .andExpect(status().isOk());
@@ -61,9 +63,8 @@ class WorkspaceControllerTest extends BaseControllerTestRunner {
     @Test
     void loadWorkspaceReturnsLoadedWorkspace() throws Exception {
         when(idResolver.resolveIdentifier(anyString(), anyString())).thenReturn(WORKSPACE_URI);
-        final Workspace workspace = new Workspace();
+        final Workspace workspace = WorkspaceGenerator.generateWorkspace();
         workspace.setUri(WORKSPACE_URI);
-        workspace.setLabel("test workspace");
         when(workspaceService.loadWorkspace(any())).thenReturn(workspace);
         final MvcResult mvcResult = mockMvc
                 .perform(put(PATH + FRAGMENT).param(Constants.QueryParams.NAMESPACE, NAMESPACE)).andReturn();
@@ -77,5 +78,22 @@ class WorkspaceControllerTest extends BaseControllerTestRunner {
         when(workspaceService.loadWorkspace(any())).thenThrow(NotFoundException.class);
         mockMvc.perform(put(PATH + FRAGMENT).param(Constants.QueryParams.NAMESPACE, NAMESPACE))
                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getCurrentReturnsCurrentlyLoadedWorkspace() throws Exception {
+        final Workspace workspace = WorkspaceGenerator.generateWorkspace();
+        when(workspaceService.getCurrentWorkspace()).thenReturn(workspace);
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "current")).andExpect(status().isOk()).andReturn();
+        final Workspace result = readValue(mvcResult, Workspace.class);
+        assertEquals(workspace, result);
+        verify(workspaceService).getCurrentWorkspace();
+    }
+
+    @Test
+    void getCurrentReturnsConflictWhenNoWorkspaceIsSet() throws Exception {
+        when(workspaceService.getCurrentWorkspace()).thenThrow(WorkspaceNotSetException.class);
+        mockMvc.perform(get(PATH + "current")).andExpect(status().isConflict());
+        verify(workspaceService).getCurrentWorkspace();
     }
 }
