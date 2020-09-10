@@ -30,6 +30,11 @@ public class WorkspaceController {
         this.workspaceService = workspaceService;
     }
 
+    @GetMapping(value = "/current", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public Workspace getCurrent() {
+        return workspaceService.getCurrentWorkspace();
+    }
+
     @PutMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Workspace loadWorkspace(@PathVariable String fragment,
                                    @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {

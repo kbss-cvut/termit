@@ -22,6 +22,7 @@ public interface WorkspaceService {
      * Gets the current user's loaded workspace.
      *
      * @return Current user's workspace
+     * @throws cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException Indicates that no workspace is currently loaded
      */
     Workspace getCurrentWorkspace();
 }
