@@ -68,7 +68,7 @@ public class ErrorInfo {
 
     @Override
     public String toString() {
-        return "ErrorInfo{" + requestUri + ", messageId=" + messageId + ", message=\'" + message + "\'}";
+        return "ErrorInfo{" + requestUri + ", messageId=" + messageId + ", message='" + message + "'}";
     }
 
     /**

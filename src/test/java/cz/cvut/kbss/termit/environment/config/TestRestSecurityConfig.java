@@ -50,7 +50,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class TestRestSecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private AuthenticationEntryPoint authenticationEntryPoint = new HttpAuthenticationEntryPoint();
+    private final AuthenticationEntryPoint authenticationEntryPoint = new HttpAuthenticationEntryPoint();
 
     @Mock
     private AuthenticationFailureHandler authenticationFailureHandler;

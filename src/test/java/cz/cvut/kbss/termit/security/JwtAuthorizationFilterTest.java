@@ -54,7 +54,6 @@ import java.util.Date;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @Tag("security")
@@ -67,9 +66,9 @@ class JwtAuthorizationFilterTest {
 
     private UserAccount user;
 
-    private MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+    private final MockHttpServletRequest mockRequest = new MockHttpServletRequest();
 
-    private MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+    private final MockHttpServletResponse mockResponse = new MockHttpServletResponse();
 
     @Mock
     private FilterChain chainMock;
