@@ -12,8 +12,10 @@ SELECT DISTINCT ?entity ?label ?type ?vocabularyUri ?snippetField ?score WHERE {
             :score ?score;
             :snippet ?snippetField .
 
-    ?entity :matches ?search ;
-            a ?type .
+    ?entity :matches ?search .
+    GRAPH ?g {
+        ?entity a ?type .
+    }
     {
         ?entity rdfs:label ?label .
     } UNION {
@@ -25,6 +27,7 @@ SELECT DISTINCT ?entity ?label ?type ?vocabularyUri ?snippetField ?score WHERE {
     }
     FILTER (?type = ?term || ?type = ?vocabulary)
     FILTER (lang(?label) = ?langTag)
+    FILTER (?g IN (?contexts))
     BIND(?wildCardSearchString as ?temp)
 }
 ORDER BY desc(?score)
