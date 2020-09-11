@@ -161,31 +161,6 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(vocabulary);
         try {
             return !em.createNativeQuery("ASK WHERE {" +
-                "GRAPH ?g { " +
-                "?term a ?type ;" +
-                "}" +
-                "?term ?inVocabulary ?vocabulary ." +
-                " }", Boolean.class)
-                .setParameter("type", typeUri)
-                      .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
-                .setParameter("inVocabulary",
-                    URI.create(
-                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    /**
-     * Returns true if the vocabulary does not contain any terms.
-     *
-     * @param vocabulary Vocabulary to check for existence of terms
-     * @return true, if the vocabulary contains no terms, false otherwise
-     */
-    public boolean isEmpty(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        try {
-            return !em.createNativeQuery("ASK WHERE {" +
                     "GRAPH ?g { " +
                     "?term a ?type ;" +
                     "}" +
@@ -193,7 +168,6 @@ public class TermDao extends AssetDao<Term> {
                     " }", Boolean.class)
                       .setParameter("type", typeUri)
                       .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
-                      .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("inVocabulary",
                               URI.create(
                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
