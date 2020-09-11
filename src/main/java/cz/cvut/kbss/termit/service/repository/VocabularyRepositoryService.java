@@ -2,18 +2,13 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
-import cz.cvut.kbss.termit.model.DocumentVocabulary;
-import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
-import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.importer.VocabularyImportService;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Utils;
@@ -43,8 +38,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
-                                       @Lazy TermService termService, VocabularyImportService importService,
-                                       SecurityUtils securityUtils) {
+                                       @Lazy TermService termService, VocabularyImportService importService) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
@@ -138,21 +132,20 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public void remove(Vocabulary instance) {
         if (instance instanceof DocumentVocabulary) {
             throw new VocabularyRemovalException(
-                "Removal of document vocabularies is not supported yet.");
+                    "Removal of document vocabularies is not supported yet.");
         }
 
         final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
         if (!vocabularies.isEmpty()) {
-            List<Vocabulary> vocabularies1 = vocabularies;
             throw new VocabularyRemovalException(
-                "Vocabulary cannot be removed. It is referenced from other vocabularies: "
-                    + vocabularies1.stream().map(v -> v.getLabel()).collect(
-                    Collectors.joining(", ")));
+                    "Vocabulary cannot be removed. It is referenced from other vocabularies: "
+                            + vocabularies.stream().map(Vocabulary::getLabel).collect(
+                            Collectors.joining(", ")));
         }
 
         if (!termService.isEmpty(instance)) {
             throw new VocabularyRemovalException(
-                "Vocabulary cannot be removed. It contains terms.");
+                    "Vocabulary cannot be removed. It contains terms.");
         }
 
         super.remove(instance);

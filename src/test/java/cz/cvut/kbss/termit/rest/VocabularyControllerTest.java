@@ -40,8 +40,6 @@ import static cz.cvut.kbss.termit.environment.Generator.generateTerm;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import org.springframework.mock.web.MockMultipartFile;
@@ -94,8 +92,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     }
 
     private Vocabulary generateVocabulary() {
-        final Vocabulary vocab = Generator.generateVocabularyWithId();
-        return vocab;
+        return Generator.generateVocabularyWithId();
     }
 
     @Test
