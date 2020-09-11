@@ -274,10 +274,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         final List<TermAssignments> ai = this.getAssignmentsInfo(instance);
 
         if (!ai.isEmpty()) {
-            List<TermAssignments> assignmentsList = ai;
             throw new TermRemovalException(
                 "Cannot delete the term. It is used for annotating resources : " +
-                    assignmentsList.stream().map(t -> t.getResourceLabel()).collect(
+                    ai.stream().map(TermAssignments::getResourceLabel).collect(
                         joining(",")));
         }
 
@@ -302,7 +301,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
             if (!properties.isEmpty()) {
                 throw new TermRemovalException(
                     "Cannot delete the term. It is linked to another term through properties "
-                        + properties.stream().collect(joining(",")));
+                        + String.join(",", properties));
             }
         }
 

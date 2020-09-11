@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.event;
 
-import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 
 import java.util.Objects;

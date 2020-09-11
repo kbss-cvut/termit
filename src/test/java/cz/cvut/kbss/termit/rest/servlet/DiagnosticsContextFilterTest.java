@@ -48,7 +48,7 @@ class DiagnosticsContextFilterTest {
     @Mock
     private FilterChain chainMock;
 
-    private DiagnosticsContextFilter filter = new DiagnosticsContextFilter();
+    private final DiagnosticsContextFilter filter = new DiagnosticsContextFilter();
 
     @BeforeEach
     void setUp() {
