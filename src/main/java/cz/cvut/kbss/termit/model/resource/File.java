@@ -102,7 +102,7 @@ public class File extends Resource implements SupportsStorage {
             }
             final int dotIndex = getLabel().indexOf('.');
             final String labelPart = dotIndex > 0 ? getLabel().substring(0, getLabel().indexOf('.')) : getLabel();
-            return IdentifierResolver.normalize(labelPart) + '_' + getUri().hashCode();
+            return IdentifierResolver.normalizeToAscii(labelPart) + '_' + getUri().hashCode();
         }
     }
 
