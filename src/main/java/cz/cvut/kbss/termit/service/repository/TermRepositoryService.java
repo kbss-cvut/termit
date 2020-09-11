@@ -263,8 +263,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     /**
-     * Removes a term if it: - does not have children, - is not related to any resource, - is not related to any term
-     * occurrences.
+     * Removes a term if it:
+     * - does not have children,
+     * - is not related to any resource,
+     * - is not related to any term occurrences.
      *
      * @param instance the term to be deleted
      */
@@ -274,33 +276,33 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
         if (!ai.isEmpty()) {
             throw new TermRemovalException(
-                    "Cannot delete the term. It is used for annotating resources : " +
-                            ai.stream().map(TermAssignments::getResourceLabel).collect(
-                                    joining(",")));
+                "Cannot delete the term. It is used for annotating resources : " +
+                    ai.stream().map(TermAssignments::getResourceLabel).collect(
+                        joining(",")));
         }
 
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
             throw new TermRemovalException(
-                    "Cannot delete the term. It is a parent of other terms : " + subTerms
-                            .stream().map(t -> t.getUri().toString())
-                            .collect(joining(",")));
+                "Cannot delete the term. It is a parent of other terms : " + subTerms
+                    .stream().map(t -> t.getUri().toString())
+                    .collect(joining(",")));
         }
 
         if (instance.getProperties() != null) {
             Set<String> props = instance.getProperties().keySet();
             List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.getURI())) && !(
-                    s.equalsIgnoreCase(SKOS.changeNote.toString())
-                            || s.equalsIgnoreCase(SKOS.editorialNote.toString())
-                            || s.equalsIgnoreCase(SKOS.historyNote.toString())
-                            || s.equalsIgnoreCase(SKOS.example.toString())
-                            || s.equalsIgnoreCase(SKOS.note.toString())
-                            || s.equalsIgnoreCase(SKOS.scopeNote.toString())
-                            || s.equalsIgnoreCase(SKOS.notation.toString()))).collect(toList());
+                s.equalsIgnoreCase(SKOS.changeNote.toString())
+                    || s.equalsIgnoreCase(SKOS.editorialNote.toString())
+                    || s.equalsIgnoreCase(SKOS.historyNote.toString())
+                    || s.equalsIgnoreCase(SKOS.example.toString())
+                    || s.equalsIgnoreCase(SKOS.note.toString())
+                    || s.equalsIgnoreCase(SKOS.scopeNote.toString())
+                    || s.equalsIgnoreCase(SKOS.notation.toString()))).collect(toList());
             if (!properties.isEmpty()) {
                 throw new TermRemovalException(
-                        "Cannot delete the term. It is linked to another term through properties "
-                                + properties.stream().collect(joining(",")));
+                    "Cannot delete the term. It is linked to another term through properties "
+                        + String.join(",", properties));
             }
         }
 
