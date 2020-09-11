@@ -161,13 +161,13 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(vocabulary);
         try {
             return !em.createNativeQuery("ASK WHERE {" +
-                "GRAPH ?vocabulary { " +
+                "GRAPH ?g { " +
                 "?term a ?type ;" +
                 "}" +
                 "?term ?inVocabulary ?vocabulary ." +
                 " }", Boolean.class)
                 .setParameter("type", typeUri)
-                .setParameter("vocabulary", vocabulary.getUri())
+                      .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
                 .setParameter("inVocabulary",
                     URI.create(
                         cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
