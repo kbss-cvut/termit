@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service;
 
@@ -37,46 +34,46 @@ public class IdentifierResolver {
 
     private static final char REPLACEMENT_CHARACTER = '-';
     private static final int[] ILLEGAL_FILENAME_CHARS = {34,
-                                                         60,
-                                                         62,
-                                                         124,
-                                                         0,
-                                                         1,
-                                                         2,
-                                                         3,
-                                                         4,
-                                                         5,
-                                                         6,
-                                                         7,
-                                                         8,
-                                                         9,
-                                                         10,
-                                                         11,
-                                                         12,
-                                                         13,
-                                                         14,
-                                                         15,
-                                                         16,
-                                                         17,
-                                                         18,
-                                                         19,
-                                                         20,
-                                                         21,
-                                                         22,
-                                                         23,
-                                                         24,
-                                                         25,
-                                                         26,
-                                                         27,
-                                                         28,
-                                                         29,
-                                                         30,
-                                                         31,
-                                                         58,
-                                                         42,
-                                                         63,
-                                                         92,
-                                                         47};
+            60,
+            62,
+            124,
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            58,
+            42,
+            63,
+            92,
+            47};
 
     static {
         Arrays.sort(ILLEGAL_FILENAME_CHARS);
@@ -94,7 +91,6 @@ public class IdentifierResolver {
      * <ul>
      * <li>Transforming the value to lower case</li>
      * <li>Trimming the string</li>
-     * <li>Replacing non-ASCII characters with ASCII, e.g., 'č' with 'c'</li>
      * <li>Replacing white spaces and slashes with dashes</li>
      * <li>Removing parentheses</li>
      * </ul>
@@ -108,8 +104,18 @@ public class IdentifierResolver {
         Objects.requireNonNull(value);
         final String normalized = value.toLowerCase().trim()
                                        .replaceAll("[\\s/\\\\]", Character.toString(REPLACEMENT_CHARACTER));
-        return Normalizer.normalize(normalized, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "")
-                         .replaceAll("[(?&)]", "");
+        return normalized.replaceAll("[(?&)]", "");
+    }
+
+    /**
+     * Normalizes the specified value which includes operations performed by {@link #normalize(String)} + replacing
+     * non-ASCII characters with ASCII ones (e.g., 'č' with 'c').
+     *
+     * @param value The value to normalize
+     * @return Normalized string
+     */
+    public static String normalizeToAscii(String value) {
+        return Normalizer.normalize(normalize(value), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
     }
 
     /**

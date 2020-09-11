@@ -92,7 +92,7 @@ public class Document extends Resource implements SupportsStorage {
         if (getLabel() == null || getUri() == null) {
             throw new IllegalStateException("Missing document name or URI required for directory name resolution.");
         }
-        return IdentifierResolver.normalize(getLabel()) + "_" + getUri().hashCode();
+        return IdentifierResolver.normalizeToAscii(getLabel()) + "_" + getUri().hashCode();
     }
 
     @Override

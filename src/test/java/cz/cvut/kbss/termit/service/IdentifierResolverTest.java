@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service;
 
@@ -62,21 +59,21 @@ class IdentifierResolverTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void normalizeChangesCzechAccutesToAsciiCharacters() {
+    void normalizeToAsciiChangesCzechAccutesToAsciiCharacters() {
         final String value = "Strukturální Plán";
-        assertEquals("strukturalni-plan", IdentifierResolver.normalize(value));
+        assertEquals("strukturalni-plan", IdentifierResolver.normalizeToAscii(value));
     }
 
     @Test
-    void normalizeChangesCzechAdornmentsToAsciiCharacters() {
+    void normalizeToAsciiChangesCzechAdornmentsToAsciiCharacters() {
         final String value = "předzahrádka";
-        assertEquals("predzahradka", IdentifierResolver.normalize(value));
+        assertEquals("predzahradka", IdentifierResolver.normalizeToAscii(value));
     }
 
     @Test
     void normalizeReplacesForwardSlashesWithDashes() {
         final String value = "Slovník vyhlášky č. 500/2006 Sb.";
-        assertEquals("slovnik-vyhlasky-c.-500-2006-sb.", IdentifierResolver.normalize(value));
+        assertEquals("slovník-vyhlášky-č.-500-2006-sb.", IdentifierResolver.normalize(value));
     }
 
     @Test
@@ -88,7 +85,7 @@ class IdentifierResolverTest extends BaseServiceTestRunner {
     @Test
     void normalizeRemovesParentheses() {
         final String value = "Dokument pro Slovník zákona č. 183/2006 Sb. (Stavební zákon)";
-        assertEquals("dokument-pro-slovnik-zakona-c.-183-2006-sb.-stavebni-zakon", IdentifierResolver.normalize(value));
+        assertEquals("dokument-pro-slovník-zákona-č.-183-2006-sb.-stavební-zákon", IdentifierResolver.normalize(value));
     }
 
     @Test
@@ -265,6 +262,20 @@ class IdentifierResolverTest extends BaseServiceTestRunner {
     void generateIdentifierReturnsSpecifiedValueWithoutQueryParametersWhenItIsUri() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/resource/";
         final String label = "http://onto.fel.cvut.cz/ontologies/termit/resourceOne?test=one&test=two";
-        assertEquals(URI.create("http://onto.fel.cvut.cz/ontologies/termit/resourceOne"), sut.generateIdentifier(namespace, label));
+        assertEquals(URI.create("http://onto.fel.cvut.cz/ontologies/termit/resourceOne"),
+                sut.generateIdentifier(namespace, label));
+    }
+
+    @Test
+    void normalizePreservesCzechAccentsAndAdornmentsInString() {
+        final String value = "Slovník vyhlášky číslo 117";
+        assertEquals("slovník-vyhlášky-číslo-117", IdentifierResolver.normalize(value));
+    }
+
+    @Test
+    void generateIdentifierPreservesCzechAccentsAndAdornments() {
+        final String label = "Otevřená krajina";
+        final String namespace = "https://onto.fel.cvut.cz/ontologies/page/slovn%c3%adk/datov%c3%bd/mpp-3.5-np/";
+        assertEquals(URI.create(namespace + "otevřená-krajina"), sut.generateIdentifier(namespace, label));
     }
 }
