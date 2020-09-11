@@ -162,7 +162,7 @@ class BaseDaoTest extends BaseDaoTestRunner {
     void exceptionDuringUpdateIsWrappedInPersistenceException() {
         final Term term = Generator.generateTermWithId();
         transactional(() -> sut.persist(term));
-        term.setLabel(null);
+        term.setVocabulary(Generator.generateUri());
         final PersistenceException e = assertThrows(PersistenceException.class,
                 () -> transactional(() -> sut.update(term)));
         assertThat(e.getCause(), is(instanceOf(OWLPersistenceException.class)));
