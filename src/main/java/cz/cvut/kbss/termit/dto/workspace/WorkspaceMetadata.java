@@ -42,6 +42,15 @@ public class WorkspaceMetadata {
         this.vocabularies = vocabularies;
     }
 
+    /**
+     * Gets workspace-related data about vocabulary with the specified identifier.
+     * <p>
+     * This includes the contexts in which the vocabulary is stored in this context, its change tracking context etc.
+     *
+     * @param vocabularyId Vocabulary identifier
+     * @return VocabularyInfo instance
+     * @throws VocabularyNotInWorkspaceException When no such vocabulary is in this workspace
+     */
     public VocabularyInfo getVocabularyInfo(URI vocabularyId) {
         Objects.requireNonNull(vocabularyId);
         assert vocabularies != null;

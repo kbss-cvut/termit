@@ -84,6 +84,7 @@ public class SearchDao {
     }
 
     protected String contextsToQueryString(Collection<URI> contexts) {
+        // TODO Replace with query.setParameter once https://github.com/kbss-cvut/jopa/issues/74 is resolved
         assert !contexts.isEmpty();
         return contexts.stream().map(c -> "<" + c + ">").collect(Collectors.joining(","));
     }
