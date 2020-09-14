@@ -1,23 +1,21 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.util.Utils;
@@ -30,8 +28,10 @@ import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Repository
 @Profile("!lucene")
@@ -62,16 +62,29 @@ public class SearchDao {
      * looks for match in asset label, comment and SKOS definition.
      *
      * @param searchString The string to search by
+     * @param contexts     Repository contexts in which to search
      * @return List of matching results
      */
-    public List<FullTextSearchResult> fullTextSearch(String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(String searchString, Collection<URI> contexts) {
         Objects.requireNonNull(searchString);
-        LOG.trace("Running full text search for search string \"{}\".", searchString);
-        return (List<FullTextSearchResult>) em.createNativeQuery(ftsQuery, "FullTextSearchResult")
-                                              .setParameter("term", URI.create(SKOS.CONCEPT))
-                                              .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                                              .setParameter("inVocabulary",
-                                                      URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                              .setParameter("searchString", searchString, null).getResultList();
+        Objects.requireNonNull(contexts);
+        LOG.trace("Running full text search for search string \"{}\" in contexts {}.", searchString, contexts);
+        final Query query = em.createNativeQuery(ftsQuery, "FullTextSearchResult")
+                              .setParameter("term", URI.create(SKOS.CONCEPT))
+                              .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                              .setParameter("inVocabulary",
+                                      URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                              .setParameter("searchString", searchString, null);
+        if (contexts.isEmpty()) {
+            query.setUntypedParameter("contexts", "?g");
+        } else {
+            query.setUntypedParameter("contexts", contextsToQueryString(contexts));
+        }
+        return query.getResultList();
+    }
+
+    protected String contextsToQueryString(Collection<URI> contexts) {
+        assert !contexts.isEmpty();
+        return contexts.stream().map(c -> "<" + c + ">").collect(Collectors.joining(","));
     }
 }

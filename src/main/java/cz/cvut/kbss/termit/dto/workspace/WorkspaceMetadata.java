@@ -7,6 +7,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WorkspaceMetadata {
 
@@ -47,6 +49,17 @@ public class WorkspaceMetadata {
             throw VocabularyNotInWorkspaceException.create(vocabularyId, workspace);
         }
         return vocabularies.get(vocabularyId);
+    }
+
+    /**
+     * Gets the set of contexts in which the vocabularies in this workspace are stored.
+     * <p>
+     * Only the main vocabulary contexts are retrieved, auxiliary contexts like change tracking are not included.
+     *
+     * @return Set of vocabulary contexts
+     */
+    public Set<URI> getVocabularyContexts() {
+        return vocabularies.values().stream().map(VocabularyInfo::getContext).collect(Collectors.toSet());
     }
 
     @Override

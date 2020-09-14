@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.persistence.dao.lucene;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
@@ -27,6 +28,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -55,23 +57,29 @@ public class LuceneSearchDao extends SearchDao {
     }
 
     @Override
-    public List<FullTextSearchResult> fullTextSearch(String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(String searchString, Collection<URI> contexts) {
         Objects.requireNonNull(searchString);
+        Objects.requireNonNull(contexts);
         final String wildcardString = addWildcard(searchString);
         final String exactMatch = splitExactMatch(searchString);
-        LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\".", searchString,
-                wildcardString);
-        return (List<FullTextSearchResult>) em.createNativeQuery(ftsQuery, "FullTextSearchResult")
-                                              .setParameter("term", URI.create(getOwlClassForEntity(Term.class)))
-                                              .setParameter("vocabulary", URI.create(getOwlClassForEntity(
+        LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\" in contexts {}.",
+                searchString, wildcardString, contexts);
+        final Query query = em.createNativeQuery(ftsQuery, "FullTextSearchResult")
+                              .setParameter("term", URI.create(getOwlClassForEntity(Term.class)))
+                              .setParameter("vocabulary", URI.create(getOwlClassForEntity(
                                                       cz.cvut.kbss.termit.model.Vocabulary.class)))
-                                              .setParameter("inVocabulary",
+                              .setParameter("inVocabulary",
                                                       URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                              .setParameter("searchString", searchString, null)
-                                              .setParameter("wildCardSearchString", wildcardString, null)
-                                              .setParameter("splitExactMatch", exactMatch, null)
-                                              .setParameter("langTag", config.get(ConfigParam.LANGUAGE), null)
-                                              .getResultList();
+                              .setParameter("searchString", searchString, null)
+                              .setParameter("wildCardSearchString", wildcardString, null)
+                              .setParameter("splitExactMatch", exactMatch, null)
+                              .setParameter("langTag", config.get(ConfigParam.LANGUAGE), null);
+        if (contexts.isEmpty()) {
+            query.setUntypedParameter("contexts", "?g");
+        } else {
+            query.setUntypedParameter("contexts", contextsToQueryString(contexts));
+        }
+        return query.getResultList();
     }
 
     private static String addWildcard(String searchString) {

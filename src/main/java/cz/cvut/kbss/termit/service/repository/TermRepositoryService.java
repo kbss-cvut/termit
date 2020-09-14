@@ -28,6 +28,8 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+
+import java.util.Collection;
 import java.util.Set;
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
@@ -182,8 +184,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return Matching root terms
      * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
-    public List<Term> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
-                                   Collection<URI> includeTerms) {
+    public List<Term> findAllRoots(Vocabulary vocabulary, Pageable pageSpec, Collection<URI> includeTerms) {
         return termDao.findAllRoots(vocabulary, pageSpec, includeTerms);
     }
 
