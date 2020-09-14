@@ -25,14 +25,14 @@
     </repositories>
 
     <properties>
-        <org.springframework.version>5.2.6.RELEASE</org.springframework.version>
-        <org.springframework.security.version>5.3.2.RELEASE</org.springframework.security.version>
-        <org.springframework.data.version>2.3.0.RELEASE</org.springframework.data.version>
-        <com.fasterxml.jackson.version>2.11.0</com.fasterxml.jackson.version>
+        <org.springframework.version>5.2.8.RELEASE</org.springframework.version>
+        <org.springframework.security.version>5.4.0</org.springframework.security.version>
+        <org.springframework.data.version>2.3.3.RELEASE</org.springframework.data.version>
+        <com.fasterxml.jackson.version>2.11.2</com.fasterxml.jackson.version>
         <org.hibernate.validator.version>6.1.5.Final</org.hibernate.validator.version>
-        <cz.cvut.kbss.jopa.version>0.14.4</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.5.1</cz.cvut.kbss.jsonld.version>
-        <org.aspectj.version>1.9.5</org.aspectj.version>
+        <cz.cvut.kbss.jopa.version>0.15.0</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.8.0</cz.cvut.kbss.jsonld.version>
+        <org.aspectj.version>1.9.6</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
@@ -65,7 +65,7 @@
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-arq</artifactId>
-            <version>3.15.0</version>
+            <version>3.16.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.fasterxml.jackson.core</groupId>
@@ -260,7 +260,7 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>3.2.1</version>
+            <version>3.4.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -456,7 +456,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.1</version>
+                <version>0.8.5</version>
                 <executions>
                     <execution>
                         <goals>
