@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.persistence.dao.workspace;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.InvalidateCachesEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
@@ -132,5 +133,17 @@ class CachingWorkspaceMetadataProviderTest {
         final List<VocabularyInfo> info = Arrays.asList(viOne, viTwo);
         when(workspaceDao.findWorkspaceVocabularyMetadata(ws)).thenReturn(info);
         return info;
+    }
+
+    @Test
+    void invalidateCacheEvictsAllWorkspaceMetadataFromCache() {
+        final Workspace ws = generateWorkspace();
+        when(workspaceDao.find(ws.getUri())).thenReturn(Optional.of(ws));
+        final WorkspaceMetadata metadata = new WorkspaceMetadata(ws);
+        sut.initWorkspaceMetadata(metadata);
+
+        sut.invalidateCache(new InvalidateCachesEvent(this));
+        sut.getWorkspace(ws.getUri());
+        verify(workspaceDao).find(ws.getUri());
     }
 }
