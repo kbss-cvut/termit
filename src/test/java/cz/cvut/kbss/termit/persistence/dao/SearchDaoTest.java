@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
+import cz.cvut.kbss.termit.environment.config.WorkspaceTestConfig;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -166,7 +167,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
                 Collectors.toList());
 
         final List<FullTextSearchResult> result = sut
-                .fullTextSearch("matching", Collections.singleton(TestConfig.DEFAULT_VOCABULARY_CTX));
+                .fullTextSearch("matching", Collections.singleton(WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX));
         assertEquals(matchingTerms.size(), result.size());
         for (FullTextSearchResult item : result) {
             assertTrue(item.getTypes().contains(getOwlClassForEntity(Term.class)));

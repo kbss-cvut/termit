@@ -1,11 +1,9 @@
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
-import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceDao;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.service.business.WorkspaceService;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.slf4j.Logger;
@@ -14,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class WorkspaceRepositoryService implements WorkspaceService {
@@ -43,15 +39,8 @@ public class WorkspaceRepositoryService implements WorkspaceService {
                 () -> NotFoundException.create(Workspace.class.getSimpleName(), id));
         LOG.trace("Storing workspace ID in session.");
         workspaceStore.setCurrentWorkspace(id);
-        workspaceMetadataProvider.putWorkspace(loadWorkspaceMetadata(ws));
+        workspaceMetadataProvider.loadWorkspace(ws);
         return ws;
-    }
-
-    private WorkspaceMetadata loadWorkspaceMetadata(Workspace ws) {
-        final WorkspaceMetadata metadata = new WorkspaceMetadata(ws);
-        final List<VocabularyInfo> vocabularies = workspaceDao.findWorkspaceVocabularyMetadata(ws);
-        metadata.setVocabularies(vocabularies.stream().collect(Collectors.toMap(VocabularyInfo::getUri, vi -> vi)));
-        return metadata;
     }
 
     @Override

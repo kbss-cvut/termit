@@ -17,17 +17,15 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
-import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
-import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
+import cz.cvut.kbss.termit.environment.config.WorkspaceTestConfig;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -56,9 +54,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private WorkspaceStore workspaceStore;
-
-    @Autowired
-    private WorkspaceMetadataProvider workspaceMetadataProvider;
 
     @Autowired
     private VocabularyDao sut;
@@ -382,20 +377,16 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findLoadsVocabularyInWorkspace() {
-        Mockito.reset(workspaceStore, workspaceMetadataProvider);
+        Mockito.reset(workspaceStore);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Workspace workspace = new Workspace();
-        workspace.setLabel("test workspace");
-        workspace.setUri(Generator.generateUri());
-        final URI vocabularyCtx = Generator.generateUri();
+        final Workspace workspace = WorkspaceGenerator.generateWorkspace();
+        workspace.setUri(WorkspaceTestConfig.DEFAULT_WORKSPACE);
+        vocabulary.setUri(WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX);
         transactional(() -> {
-            em.persist(vocabulary, new EntityDescriptor(vocabularyCtx));
+            em.persist(vocabulary, new EntityDescriptor(WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX));
             em.persist(workspace, new EntityDescriptor(workspace.getUri()));
+            WorkspaceGenerator.generateWorkspaceReferences(Collections.singleton(vocabulary), workspace);
         });
-        final WorkspaceMetadata wsMetadata = new WorkspaceMetadata(workspace);
-        wsMetadata.setVocabularies(Collections.singletonMap(vocabulary.getUri(),
-                new VocabularyInfo(vocabulary.getUri(), vocabularyCtx, vocabularyCtx)));
-        workspaceMetadataProvider.putWorkspace(wsMetadata);
         workspaceStore.setCurrentWorkspace(workspace.getUri());
 
         final Optional<Vocabulary> result = sut.find(vocabulary.getUri());

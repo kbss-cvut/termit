@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,7 @@ class SearchServiceTest {
 
     @Test
     void fullTextSearchExtractsContextsForSearchingFromCurrentWorkspace() {
-        final WorkspaceMetadata current = new WorkspaceMetadata(Generator.generateWorkspace());
+        final WorkspaceMetadata current = new WorkspaceMetadata(WorkspaceGenerator.generateWorkspace());
         final VocabularyInfo vocInfo = new VocabularyInfo(Generator.generateUri(), Generator.generateUri(),
                 Generator.generateUri());
         current.getVocabularies().put(vocInfo.getUri(), vocInfo);
