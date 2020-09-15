@@ -21,12 +21,9 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 import org.springframework.mock.web.MockHttpSession;
 
@@ -57,8 +54,9 @@ public class TestConfig {
     }
 
     @Bean
-    public WorkspaceMetadataCache workspaceMetadataCache(WorkspaceStore workspaceStore) {
-        final WorkspaceMetadataCache cache = spy(new WorkspaceMetadataCache(workspaceStore));
+    @Primary
+    public WorkspaceMetadataProvider workspaceMetadataCache(WorkspaceStore workspaceStore) {
+        final WorkspaceMetadataProvider cache = spy(new WorkspaceMetadataProvider(workspaceStore));
         final Workspace ws = WorkspaceGenerator.generateWorkspace();
         ws.setUri(DEFAULT_WORKSPACE);
         final WorkspaceMetadata wsMetadata = spy(new WorkspaceMetadata(ws));

@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -214,7 +214,7 @@ public class Environment {
      */
     public static void setCurrentWorkspace(Workspace workspace, ApplicationContext ctx) {
         final HttpSession session = ctx.getBean(HttpSession.class);
-        final WorkspaceMetadataCache wsCache = ctx.getBean(WorkspaceMetadataCache.class);
+        final WorkspaceMetadataProvider wsCache = ctx.getBean(WorkspaceMetadataProvider.class);
         session.setAttribute(WORKSPACE_SESSION_ATT, workspace.getUri());
         wsCache.putWorkspace(new WorkspaceMetadata(workspace));
     }

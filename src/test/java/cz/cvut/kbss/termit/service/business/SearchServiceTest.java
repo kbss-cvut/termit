@@ -4,7 +4,7 @@ import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,7 +20,7 @@ class SearchServiceTest {
     private SearchDao searchDao;
 
     @Mock
-    private WorkspaceMetadataCache wsMetadataCache;
+    private WorkspaceMetadataProvider wsMetadataCache;
 
     @InjectMocks
     private SearchService sut;

@@ -16,7 +16,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,13 +27,13 @@ public class SearchService {
 
     private final SearchDao searchDao;
 
-    private final WorkspaceMetadataCache workspaceMetadataCache;
+    private final WorkspaceMetadataProvider workspaceMetadataProvider;
 
     @Autowired
     public SearchService(SearchDao searchDao,
-                         WorkspaceMetadataCache workspaceMetadataCache) {
+                         WorkspaceMetadataProvider workspaceMetadataProvider) {
         this.searchDao = searchDao;
-        this.workspaceMetadataCache = workspaceMetadataCache;
+        this.workspaceMetadataProvider = workspaceMetadataProvider;
     }
 
     /**
@@ -44,6 +44,6 @@ public class SearchService {
      */
     public List<FullTextSearchResult> fullTextSearch(String searchString) {
         return searchDao.fullTextSearch(searchString,
-                workspaceMetadataCache.getCurrentWorkspaceMetadata().getVocabularyContexts());
+                workspaceMetadataProvider.getCurrentWorkspaceMetadata().getVocabularyContexts());
     }
 }

@@ -3,7 +3,6 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
-import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.dto.TermInfo;
@@ -16,7 +15,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -49,7 +48,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     private DescriptorFactory descriptorFactory;
 
     @Autowired
-    private WorkspaceMetadataCache wsMetadataCache;
+    private WorkspaceMetadataProvider wsMetadataProvider;
 
     @Autowired
     private TermDao sut;
@@ -65,7 +64,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
         glossaryToVocabulary.put(vocabulary.getGlossary().getUri(), vocabulary.getUri());
 
-        final WorkspaceMetadata wsMetadata = wsMetadataCache.getCurrentWorkspaceMetadata();
+        final WorkspaceMetadata wsMetadata = wsMetadataProvider.getCurrentWorkspaceMetadata();
         doReturn(new VocabularyInfo(vocabulary.getUri(), vocabulary.getUri(), vocabulary.getUri())).when(wsMetadata)
                                                                                                    .getVocabularyInfo(
                                                                                                            vocabulary
@@ -76,7 +75,7 @@ class TermDaoTest extends BaseDaoTestRunner {
                 conn.begin();
                 conn.add(Generator
                         .generateWorkspaceReferences(Collections.singleton(vocabulary),
-                                wsMetadataCache.getCurrentWorkspace()));
+                                wsMetadataProvider.getCurrentWorkspace()));
                 conn.commit();
             }
         });

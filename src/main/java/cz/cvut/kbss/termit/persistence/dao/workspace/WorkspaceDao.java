@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.persistence.dao;
+package cz.cvut.kbss.termit.persistence.dao.workspace;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;

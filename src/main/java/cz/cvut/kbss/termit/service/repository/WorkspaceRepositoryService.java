@@ -4,8 +4,8 @@ import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
-import cz.cvut.kbss.termit.persistence.dao.WorkspaceDao;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceDao;
 import cz.cvut.kbss.termit.service.business.WorkspaceService;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.slf4j.Logger;
@@ -26,14 +26,14 @@ public class WorkspaceRepositoryService implements WorkspaceService {
 
     private final WorkspaceStore workspaceStore;
 
-    private final WorkspaceMetadataCache workspaceCache;
+    private final WorkspaceMetadataProvider workspaceMetadataProvider;
 
     @Autowired
     public WorkspaceRepositoryService(WorkspaceDao workspaceDao, WorkspaceStore workspaceStore,
-                                      WorkspaceMetadataCache workspaceCache) {
+                                      WorkspaceMetadataProvider workspaceMetadataProvider) {
         this.workspaceDao = workspaceDao;
         this.workspaceStore = workspaceStore;
-        this.workspaceCache = workspaceCache;
+        this.workspaceMetadataProvider = workspaceMetadataProvider;
     }
 
     @Override
@@ -43,7 +43,7 @@ public class WorkspaceRepositoryService implements WorkspaceService {
                 () -> NotFoundException.create(Workspace.class.getSimpleName(), id));
         LOG.trace("Storing workspace ID in session.");
         workspaceStore.setCurrentWorkspace(id);
-        workspaceCache.putWorkspace(loadWorkspaceMetadata(ws));
+        workspaceMetadataProvider.putWorkspace(loadWorkspaceMetadata(ws));
         return ws;
     }
 
@@ -62,6 +62,6 @@ public class WorkspaceRepositoryService implements WorkspaceService {
 
     @Override
     public Workspace getCurrentWorkspace() {
-        return workspaceCache.getCurrentWorkspace();
+        return workspaceMetadataProvider.getCurrentWorkspace();
     }
 }

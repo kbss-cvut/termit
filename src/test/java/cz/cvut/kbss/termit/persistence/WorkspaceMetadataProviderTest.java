@@ -4,7 +4,7 @@ import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotLoadedException;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,13 +16,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-class WorkspaceMetadataCacheTest {
+class WorkspaceMetadataProviderTest {
 
     @Mock
     private WorkspaceStore workspaceStore;
 
     @InjectMocks
-    private WorkspaceMetadataCache sut;
+    private WorkspaceMetadataProvider sut;
 
     @BeforeEach
     void setUp() {

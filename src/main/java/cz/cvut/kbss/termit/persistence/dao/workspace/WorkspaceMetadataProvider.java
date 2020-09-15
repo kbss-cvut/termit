@@ -1,8 +1,9 @@
-package cz.cvut.kbss.termit.workspace;
+package cz.cvut.kbss.termit.persistence.dao.workspace;
 
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotLoadedException;
 import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * vocabulary for every request.
  */
 @Component
-public class WorkspaceMetadataCache {
+public class WorkspaceMetadataProvider {
 
     private final WorkspaceStore workspaceStore;
 
@@ -26,7 +27,7 @@ public class WorkspaceMetadataCache {
     private final Map<URI, WorkspaceMetadata> workspaces = new ConcurrentHashMap<>();
 
     @Autowired
-    public WorkspaceMetadataCache(WorkspaceStore workspaceStore) {
+    public WorkspaceMetadataProvider(WorkspaceStore workspaceStore) {
         this.workspaceStore = workspaceStore;
     }
 

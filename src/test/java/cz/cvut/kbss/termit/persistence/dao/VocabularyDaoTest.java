@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -58,7 +58,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     private WorkspaceStore workspaceStore;
 
     @Autowired
-    private WorkspaceMetadataCache workspaceMetadataCache;
+    private WorkspaceMetadataProvider workspaceMetadataProvider;
 
     @Autowired
     private VocabularyDao sut;
@@ -382,7 +382,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Test
     void findLoadsVocabularyInWorkspace() {
-        Mockito.reset(workspaceStore, workspaceMetadataCache);
+        Mockito.reset(workspaceStore, workspaceMetadataProvider);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Workspace workspace = new Workspace();
         workspace.setLabel("test workspace");
@@ -395,7 +395,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final WorkspaceMetadata wsMetadata = new WorkspaceMetadata(workspace);
         wsMetadata.setVocabularies(Collections.singletonMap(vocabulary.getUri(),
                 new VocabularyInfo(vocabulary.getUri(), vocabularyCtx, vocabularyCtx)));
-        workspaceMetadataCache.putWorkspace(wsMetadata);
+        workspaceMetadataProvider.putWorkspace(wsMetadata);
         workspaceStore.setCurrentWorkspace(workspace.getUri());
 
         final Optional<Vocabulary> result = sut.find(vocabulary.getUri());
