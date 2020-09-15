@@ -18,16 +18,16 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -44,6 +44,9 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private SearchDao sut;
@@ -63,13 +66,13 @@ class SearchDaoTest extends BaseDaoTestRunner {
     void defaultFullTextSearchFindsTermsWithMatchingLabel() {
         final List<Term> terms = generateTerms();
         transactional(() -> {
-            em.persist(vocabulary);
-            terms.forEach(em::persist);
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
         });
         final Collection<Term> matching = terms.stream().filter(t -> t.getLabel().contains("Matching"))
                                                .collect(Collectors.toList());
 
-        final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> result = sut.fullTextSearch("matching", Collections.emptySet());
         assertEquals(matching.size(), result.size());
         for (FullTextSearchResult item : result) {
             assertTrue(item.getTypes().contains(getOwlClassForEntity(Term.class)));
@@ -94,10 +97,10 @@ class SearchDaoTest extends BaseDaoTestRunner {
     @Test
     void defaultFullTextSearchFindsVocabulariesWithMatchingLabel() {
         final List<Vocabulary> vocabularies = generateVocabularies();
-        transactional(() -> vocabularies.forEach(em::persist));
+        transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v))));
         final Collection<Vocabulary> matching = vocabularies.stream().filter(v -> v.getLabel().contains("Matching"))
                                                             .collect(Collectors.toList());
-        final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> result = sut.fullTextSearch("matching", Collections.emptySet());
         assertEquals(matching.size(), result.size());
         for (FullTextSearchResult item : result) {
             assertTrue(item.getTypes().contains(getOwlClassForEntity(Vocabulary.class)));
@@ -123,16 +126,16 @@ class SearchDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms();
         final List<Vocabulary> vocabularies = generateVocabularies();
         transactional(() -> {
-            em.persist(vocabulary);
-            terms.forEach(em::persist);
-            vocabularies.forEach(em::persist);
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
+            vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v)));
         });
         final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getLabel().contains("Matching")).collect(
                 Collectors.toList());
         final Collection<Vocabulary> matchingVocabularies = vocabularies.stream()
                                                                         .filter(v -> v.getLabel().contains("Matching"))
                                                                         .collect(Collectors.toList());
-        final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> result = sut.fullTextSearch("matching", Collections.emptySet());
         assertEquals(matchingTerms.size() + matchingVocabularies.size(), result.size());
         for (FullTextSearchResult item : result) {
             if (item.getTypes().contains(getOwlClassForEntity(Term.class))) {
@@ -140,6 +143,34 @@ class SearchDaoTest extends BaseDaoTestRunner {
             } else {
                 assertTrue(matchingVocabularies.stream().anyMatch(v -> v.getUri().equals(item.getUri())));
             }
+        }
+    }
+
+    @Test
+    void defaultFullTextSearchWorksOverSpecifiedContexts() {
+        final List<Term> terms = generateTerms();
+        final Vocabulary otherVocabulary = Generator.generateVocabularyWithId();
+        final List<Term> otherMatchingTerms = Arrays.asList(Generator.generateTermWithId(otherVocabulary.getUri()),
+                Generator.generateTermWithId(otherVocabulary.getUri()));
+        otherMatchingTerms.forEach(t -> t.setLabel("matching"));
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            terms.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(vocabulary));
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
+            });
+            otherMatchingTerms.forEach(em::persist);
+
+        });
+        final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getLabel().contains("Matching")).collect(
+                Collectors.toList());
+
+        final List<FullTextSearchResult> result = sut
+                .fullTextSearch("matching", Collections.singleton(TestConfig.DEFAULT_VOCABULARY_CTX));
+        assertEquals(matchingTerms.size(), result.size());
+        for (FullTextSearchResult item : result) {
+            assertTrue(item.getTypes().contains(getOwlClassForEntity(Term.class)));
+            assertTrue(matchingTerms.stream().anyMatch(t -> t.getUri().equals(item.getUri())));
         }
     }
 }

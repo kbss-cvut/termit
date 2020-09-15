@@ -167,6 +167,7 @@ public class TermDao extends AssetDao<Term> {
                     "?term ?inVocabulary ?vocabulary ." +
                     " }", Boolean.class)
                       .setParameter("type", typeUri)
+                      .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
                       .setParameter("inVocabulary",
                               URI.create(

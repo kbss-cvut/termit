@@ -6,10 +6,14 @@ import cz.cvut.kbss.termit.exception.workspace.VocabularyNotInWorkspaceException
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 class WorkspaceMetadataTest {
 
@@ -26,5 +30,25 @@ class WorkspaceMetadataTest {
     void getVocabularyInfoThrowsVocabularyNotInWorkspaceExceptionWhenVocabularyIsNotFoundInWorkspaceMetadata() {
         final WorkspaceMetadata sut = new WorkspaceMetadata(WorkspaceGenerator.generateWorkspace());
         assertThrows(VocabularyNotInWorkspaceException.class, () -> sut.getVocabularyInfo(Generator.generateUri()));
+    }
+
+    @Test
+    void getVocabularyContextsRetrievesContextsOfAllVocabulariesInWorkspace() {
+        final WorkspaceMetadata sut = new WorkspaceMetadata(WorkspaceGenerator.generateWorkspace());
+        final VocabularyInfo dataOne = new VocabularyInfo(Generator.generateVocabularyWithId().getUri(),
+                Generator.generateUri(), Generator.generateUri());
+        final VocabularyInfo dataTwo = new VocabularyInfo(Generator.generateVocabularyWithId().getUri(),
+                Generator.generateUri(), Generator.generateUri());
+        final VocabularyInfo dataThree = new VocabularyInfo(Generator.generateVocabularyWithId().getUri(),
+                Generator.generateUri(), Generator.generateUri());
+        sut.setVocabularies(new HashMap<>());
+        sut.getVocabularies().put(dataOne.getUri(), dataOne);
+        sut.getVocabularies().put(dataTwo.getUri(), dataTwo);
+        sut.getVocabularies().put(dataThree.getUri(), dataThree);
+
+        final Set<URI> result = sut.getVocabularyContexts();
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertThat(result, hasItems(dataOne.getContext(), dataTwo.getContext(), dataThree.getContext()));
     }
 }
