@@ -94,8 +94,11 @@ public class ResourceService
      */
     @Transactional
     public void remove(Resource toRemove) {
-        documentManager.remove(toRemove);
-        repositoryService.remove(toRemove);
+        Objects.requireNonNull(toRemove);
+        // We need the reference managed, so that its name is available to document manager
+        final Resource actualToRemove = getRequiredReference(toRemove.getUri());
+        documentManager.remove(actualToRemove);
+        repositoryService.remove(actualToRemove);
     }
 
     /**

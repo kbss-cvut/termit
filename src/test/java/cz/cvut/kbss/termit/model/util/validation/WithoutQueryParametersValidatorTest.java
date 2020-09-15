@@ -17,7 +17,7 @@ class WithoutQueryParametersValidatorTest {
     @Mock
     private ConstraintValidatorContext ctx;
 
-    private WithoutQueryParametersValidator sut = new WithoutQueryParametersValidator();
+    private final WithoutQueryParametersValidator sut = new WithoutQueryParametersValidator();
 
     @BeforeEach
     void setUp() {

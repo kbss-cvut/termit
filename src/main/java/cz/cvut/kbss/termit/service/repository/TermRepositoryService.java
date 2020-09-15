@@ -28,7 +28,10 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+
+import java.util.Collection;
 import java.util.Set;
+
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -72,13 +75,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     @Override
     public void persist(Term instance) {
         throw new UnsupportedOperationException(
-            "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
+                "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
     }
 
     @Override
     protected void postUpdate(Term instance) {
         final Vocabulary vocabulary =
-            vocabularyService.getRequiredReference(instance.getVocabulary());
+                vocabularyService.getRequiredReference(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.getGlossary().removeRootTerm(instance);
         } else {
@@ -108,9 +111,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      */
     public URI generateIdentifier(URI vocabularyUri, String termLabel) {
         return idResolver.generateIdentifier(
-            idResolver.buildNamespace(vocabularyUri.toString(),
-                config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)),
-            termLabel);
+                idResolver.buildNamespace(vocabularyUri.toString(),
+                        config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)),
+                termLabel);
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
@@ -124,7 +127,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public void addChildTerm(Term instance, Term parentTerm) {
         validate(instance);
         final URI vocabularyIri =
-            instance.getVocabulary() != null ? instance.getVocabulary() :
+                instance.getVocabulary() != null ? instance.getVocabulary() :
                 parentTerm.getVocabulary();
         if (instance.getUri() == null) {
             instance.setUri(generateIdentifier(vocabularyIri, instance.getLabel()));
@@ -274,10 +277,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         final List<TermAssignments> ai = this.getAssignmentsInfo(instance);
 
         if (!ai.isEmpty()) {
-            List<TermAssignments> assignmentsList = ai;
             throw new TermRemovalException(
                 "Cannot delete the term. It is used for annotating resources : " +
-                    assignmentsList.stream().map(t -> t.getResourceLabel()).collect(
+                    ai.stream().map(TermAssignments::getResourceLabel).collect(
                         joining(",")));
         }
 
@@ -302,7 +304,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
             if (!properties.isEmpty()) {
                 throw new TermRemovalException(
                     "Cannot delete the term. It is linked to another term through properties "
-                        + properties.stream().collect(joining(",")));
+                        + String.join(",", properties));
             }
         }
 

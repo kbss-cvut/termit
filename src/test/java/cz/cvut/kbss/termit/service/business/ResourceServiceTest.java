@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class ResourceServiceTest {
@@ -123,6 +122,19 @@ class ResourceServiceTest {
         when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
+    }
+
+    // Bug #1356
+    @Test
+    void removeEnsuresAttributesForDocumentManagerArePresent() {
+        final Resource toRemove = new Resource();
+        toRemove.setUri(Generator.generateUri());
+        final Resource resource = Generator.generateResource();
+        resource.setUri(toRemove.getUri());
+        when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
+        sut.remove(resource);
+        verify(resourceRepositoryService).remove(resource);
+        verify(documentManager).remove(resource);
     }
 
     @Test

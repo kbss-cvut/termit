@@ -168,7 +168,6 @@ public class TermDao extends AssetDao<Term> {
                     " }", Boolean.class)
                       .setParameter("type", typeUri)
                       .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
-                      .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("inVocabulary",
                               URI.create(
                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();

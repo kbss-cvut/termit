@@ -38,7 +38,7 @@ class DocumentTest {
         document.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/termit/vocabulary/metropolitan-plan"));
         final String result = document.getDirectoryName();
         assertNotNull(result);
-        assertThat(result, startsWith(IdentifierResolver.normalize(document.getLabel())));
+        assertThat(result, startsWith(IdentifierResolver.normalizeToAscii(document.getLabel())));
     }
 
     @Test

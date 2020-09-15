@@ -90,6 +90,6 @@ public class TermAssignments extends AbstractAssignmentsInfo {
     public String toString() {
         return "TermAssignments{" +
                 super.toString() +
-                "resourceLabel='" + resourceLabel + "\'}";
+                "resourceLabel='" + resourceLabel + "'}";
     }
 }
