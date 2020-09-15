@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.event.InvalidateCachesEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * vocabulary for every request.
  */
 @Component
-@Profile("!no-cache")
+@Profile("!" + Constants.NO_CACHE_PROFILE)
 public class CachingWorkspaceMetadataProvider extends WorkspaceMetadataProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(CachingWorkspaceMetadataProvider.class);
