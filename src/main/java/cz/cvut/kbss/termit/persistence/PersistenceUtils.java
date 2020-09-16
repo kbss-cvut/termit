@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.persistence;
 
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,11 +10,11 @@ import java.util.Objects;
 @Component
 public class PersistenceUtils {
 
-    private final WorkspaceMetadataCache workspaceMetadataCache;
+    private final WorkspaceMetadataProvider workspaceMetadataProvider;
 
     @Autowired
-    public PersistenceUtils(WorkspaceMetadataCache workspaceMetadataCache) {
-        this.workspaceMetadataCache = workspaceMetadataCache;
+    public PersistenceUtils(WorkspaceMetadataProvider workspaceMetadataProvider) {
+        this.workspaceMetadataProvider = workspaceMetadataProvider;
     }
 
     /**
@@ -23,7 +23,7 @@ public class PersistenceUtils {
      * @return Current workspace IRI
      */
     public URI getCurrentWorkspace() {
-        return workspaceMetadataCache.getCurrentWorkspace().getUri();
+        return workspaceMetadataProvider.getCurrentWorkspace().getUri();
     }
 
     /**
@@ -35,6 +35,6 @@ public class PersistenceUtils {
      */
     public URI resolveVocabularyContext(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
-        return workspaceMetadataCache.getCurrentWorkspaceMetadata().getVocabularyInfo(vocabularyUri).getContext();
+        return workspaceMetadataProvider.getCurrentWorkspaceMetadata().getVocabularyInfo(vocabularyUri).getContext();
     }
 }

@@ -36,7 +36,7 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.hamcrest.collection.IsEmptyCollection;
@@ -69,7 +69,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     private EntityManager em;
 
     @Autowired
-    private WorkspaceMetadataCache workspaceMetadataCache;
+    private WorkspaceMetadataProvider workspaceMetadataProvider;
 
     @Autowired
     private VocabularyRepositoryService sut;
@@ -304,10 +304,10 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     private void setCurrentWorkspace(Workspace workspace, Collection<Vocabulary> vocabularies) {
-        final WorkspaceMetadata metadata = workspaceMetadataCache.getCurrentWorkspaceMetadata();
+        final WorkspaceMetadata metadata = workspaceMetadataProvider.getCurrentWorkspaceMetadata();
         vocabularies.forEach(v -> doReturn(new VocabularyInfo(v.getUri(), v.getUri(), v.getUri())).when(metadata)
                                                                                                   .getVocabularyInfo(
                                                                                                           v.getUri()));
-        doReturn(workspace).when(workspaceMetadataCache).getCurrentWorkspace();
+        doReturn(workspace).when(workspaceMetadataProvider).getCurrentWorkspace();
     }
 }

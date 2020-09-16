@@ -8,7 +8,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -30,7 +30,7 @@ class ChangeTrackingContextResolverTest {
     private WorkspaceMetadata metadata;
 
     @Mock
-    private WorkspaceMetadataCache workspaceMetadataCache;
+    private WorkspaceMetadataProvider workspaceMetadataProvider;
 
     @InjectMocks
     private ChangeTrackingContextResolver sut;
@@ -40,8 +40,8 @@ class ChangeTrackingContextResolverTest {
         MockitoAnnotations.initMocks(this);
         final Workspace ws = WorkspaceGenerator.generateWorkspace();
         this.metadata = new WorkspaceMetadata(ws);
-        when(workspaceMetadataCache.getCurrentWorkspace()).thenReturn(ws);
-        when(workspaceMetadataCache.getCurrentWorkspaceMetadata()).thenReturn(metadata);
+        when(workspaceMetadataProvider.getCurrentWorkspace()).thenReturn(ws);
+        when(workspaceMetadataProvider.getCurrentWorkspaceMetadata()).thenReturn(metadata);
     }
 
     @Test

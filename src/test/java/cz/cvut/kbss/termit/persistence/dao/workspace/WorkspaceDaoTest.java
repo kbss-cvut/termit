@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.persistence.dao;
+package cz.cvut.kbss.termit.persistence.dao.workspace;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;

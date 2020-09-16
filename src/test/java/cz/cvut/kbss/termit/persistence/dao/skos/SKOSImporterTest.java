@@ -12,7 +12,7 @@ import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -55,7 +55,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     private ApplicationContext context;
 
     @Autowired
-    private WorkspaceMetadataCache workspaceMetadataCache;
+    private WorkspaceMetadataProvider workspaceMetadataProvider;
 
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
@@ -64,7 +64,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final User author = Generator.generateUserWithId();
         Environment.setCurrentUser(author);
         transactional(() -> em.persist(author));
-        final WorkspaceMetadata wsMetadata = workspaceMetadataCache.getCurrentWorkspaceMetadata();
+        final WorkspaceMetadata wsMetadata = workspaceMetadataProvider.getCurrentWorkspaceMetadata();
         final VocabularyInfo vocabularyInfo = new VocabularyInfo(URI.create(VOCABULARY_IRI), URI.create(VOCABULARY_IRI),
                 URI.create(VOCABULARY_IRI + Constants.DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION));
         doReturn(vocabularyInfo).when(wsMetadata).getVocabularyInfo(ArgumentMatchers.any());
@@ -104,7 +104,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final URI vocUri = URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/glosář");
         final WorkspaceMetadata metadata = new WorkspaceMetadata();
         metadata.setVocabularies(Collections.singletonMap(vocUri, new VocabularyInfo(vocUri, vocUri, vocUri)));
-        doReturn(metadata).when(workspaceMetadataCache).getCurrentWorkspaceMetadata();
+        doReturn(metadata).when(workspaceMetadataProvider).getCurrentWorkspaceMetadata();
         final AtomicInteger existingStatementCount = new AtomicInteger(0);
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);

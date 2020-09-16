@@ -8,7 +8,7 @@ import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
-import cz.cvut.kbss.termit.workspace.WorkspaceMetadataCache;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.eclipse.rdf4j.repository.Repository;
@@ -36,14 +36,14 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
     private WorkspaceStore workspaceStore;
 
     @Autowired
-    private WorkspaceMetadataCache workspaceMetadataCache;
+    private WorkspaceMetadataProvider workspaceMetadataProvider;
 
     @Autowired
     private WorkspaceRepositoryService sut;
 
     @BeforeEach
     void setUp() {
-        Mockito.reset(workspaceStore, workspaceMetadataCache);
+        Mockito.reset(workspaceStore, workspaceMetadataProvider);
     }
 
     @Test
@@ -75,7 +75,7 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
     void loadWorkspaceByIdStoresLoadedWorkspaceMetadataInCache() {
         final Workspace expected = generateWorkspace();
         sut.loadWorkspace(expected.getUri());
-        final Workspace result = workspaceMetadataCache.getWorkspace(expected.getUri());
+        final Workspace result = workspaceMetadataProvider.getWorkspace(expected.getUri());
         assertEquals(expected, result);
     }
 
@@ -91,7 +91,7 @@ class WorkspaceRepositoryServiceTest extends BaseServiceTestRunner {
 
 
         sut.loadWorkspace(workspace.getUri());
-        final WorkspaceMetadata result = workspaceMetadataCache.getWorkspaceMetadata(workspace.getUri());
+        final WorkspaceMetadata result = workspaceMetadataProvider.getWorkspaceMetadata(workspace.getUri());
         assertNotNull(result);
         vocabularies.forEach(v -> assertThat(result.getVocabularies(), hasKey(v.getUri())));
     }

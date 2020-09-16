@@ -126,7 +126,12 @@ public enum ConfigParam {
      * <p>
      * See for example <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS">https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS</a>
      */
-    CORS_ALLOWED_ORIGIN("cors.allowedOrigin");
+    CORS_ALLOWED_ORIGIN("cors.allowedOrigin"),
+
+    /**
+     * Active Spring profiles.
+     */
+    ACTIVE_PROFILES("spring.profiles.active");
 
     private final String parameter;
 

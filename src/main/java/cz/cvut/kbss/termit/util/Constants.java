@@ -124,6 +124,11 @@ public class Constants {
      */
     public static final String WORKSPACE_SESSION_ATT = "workspace";
 
+    /**
+     * Name of the Spring profile indicating that no caching should be used by the application.
+     */
+    public static final String NO_CACHE_PROFILE = "no-cache";
+
     private Constants() {
         throw new AssertionError();
     }
