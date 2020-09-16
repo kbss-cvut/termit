@@ -22,13 +22,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class DefaultWorkspaceMetadataProviderTest {
+class NonCachingWorkspaceMetadataProviderTest {
 
     @Mock
     private WorkspaceDao workspaceDao;
 
     @InjectMocks
-    private DefaultWorkspaceMetadataProvider sut;
+    private NonCachingWorkspaceMetadataProvider sut;
 
     @BeforeEach
     void setUp() {

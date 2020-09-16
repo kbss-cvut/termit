@@ -10,11 +10,16 @@ import org.springframework.stereotype.Component;
 
 import java.net.URI;
 
+/**
+ * Provides workspace metadata without caching.
+ *
+ * That is, data are retrieved from the repository on every request.
+ */
 @Component
 @Profile(Constants.NO_CACHE_PROFILE)
-public class DefaultWorkspaceMetadataProvider extends WorkspaceMetadataProvider {
+public class NonCachingWorkspaceMetadataProvider extends WorkspaceMetadataProvider {
 
-    protected DefaultWorkspaceMetadataProvider(WorkspaceStore workspaceStore, WorkspaceDao workspaceDao) {
+    protected NonCachingWorkspaceMetadataProvider(WorkspaceStore workspaceStore, WorkspaceDao workspaceDao) {
         super(workspaceStore, workspaceDao);
     }
 
