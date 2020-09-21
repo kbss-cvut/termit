@@ -11,10 +11,13 @@ import org.topbraid.shacl.vocabulary.SH;
 @OWLClass(iri = SH.BASE_URI + "ValidationResult")
 public class ValidationResult {
 
+    @Id(generated = true)
+    private URI id;
+
     /**
      * Identifier of the affected term.
      */
-    @Id
+    @OWLObjectProperty(iri = SH.BASE_URI + "focusNode")
     private URI termUri;
 
     /**
@@ -34,6 +37,14 @@ public class ValidationResult {
      */
     @OWLObjectProperty(iri = SH.BASE_URI + "sourceShape")
     private URI issueCauseUri;
+
+    public URI getId() {
+        return id;
+    }
+
+    public void setId(URI id) {
+        this.id = id;
+    }
 
     public URI getTermUri() {
         return termUri;
