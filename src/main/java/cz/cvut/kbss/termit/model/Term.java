@@ -1,5 +1,7 @@
 package cz.cvut.kbss.termit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.Properties;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
@@ -10,34 +12,45 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import java.util.function.Function;
 import org.apache.poi.ss.usermodel.Row;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Configurable
 @Audited
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
-public class Term extends Asset implements HasTypes, Serializable {
+public class Term extends Asset<MultilingualString> implements HasTypes, Serializable {
 
     /**
      * Names of columns used in term export.
      */
     public static final List<String> EXPORT_COLUMNS = Collections
-            .unmodifiableList(Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description", "Types", "Sources", "Parent term",
-                    "SubTerms", "Draft"));
+            .unmodifiableList(
+                    Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description",
+                            "Types", "Sources", "Parent term",
+                            "SubTerms", "Draft"));
 
-    @NotBlank
+    @Autowired
+    @Transient
+    private Configuration config;
+
+    // TODO Replace with custom annotation for validating non-empty label in configured language
+//    @NotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
-    private String label;
+    private MultilingualString label;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<String> altLabels;
@@ -76,19 +89,49 @@ public class Term extends Asset implements HasTypes, Serializable {
     private Map<String, Set<String>> properties;
 
     @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
-    private Boolean draft ;
+    private Boolean draft;
 
     @Types
     private Set<String> types;
 
     @Override
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
     @Override
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
+    }
+
+    /**
+     * Sets label in the application-configured language.
+     * <p>
+     * This is a convenience method allowing to skip working with {@link MultilingualString} instances.
+     *
+     * @param label Label value to set
+     * @see #setLabel(MultilingualString)
+     */
+    @JsonIgnore
+    public void setPrimaryLabel(String label) {
+        if (this.label == null) {
+            this.label = MultilingualString.create(label, config.get(ConfigParam.LANGUAGE));
+        } else {
+            this.label.set(config.get(ConfigParam.LANGUAGE), label);
+        }
+    }
+
+    /**
+     * Gets label in the application-configured language.
+     * <p>
+     * This is a convenience method allowing to skip working with {@link MultilingualString} instances.
+     *
+     * @return Label value
+     * @see #getLabel()
+     */
+    @JsonIgnore
+    public String getPrimaryLabel() {
+        return label != null ? label.get(config.get(ConfigParam.LANGUAGE)) : null;
     }
 
     public Set<String> getAltLabels() {
@@ -204,7 +247,7 @@ public class Term extends Asset implements HasTypes, Serializable {
         this.properties = properties;
     }
 
-    private static <T> void exportMulti(final StringBuilder sb, final Set<T> collection, Function<T,String> toString) {
+    private static <T> void exportMulti(final StringBuilder sb, final Set<T> collection, Function<T, String> toString) {
         sb.append(',');
         if (collection != null && !collection.isEmpty()) {
             sb.append(exportCollection(collection.stream().map(toString).collect(Collectors.toSet())));
@@ -220,7 +263,7 @@ public class Term extends Asset implements HasTypes, Serializable {
      */
     public String toCsv() {
         final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
-        sb.append(',').append(CsvUtils.sanitizeString(getLabel()));
+        sb.append(',').append(exportMultilingualString(getLabel()));
         exportMulti(sb, altLabels, String::toString);
         exportMulti(sb, hiddenLabels, String::toString);
         sb.append(',').append(CsvUtils.sanitizeString(definition));
@@ -232,6 +275,10 @@ public class Term extends Asset implements HasTypes, Serializable {
         sb.append(',');
         sb.append(isDraft());
         return sb.toString();
+    }
+
+    private static String exportMultilingualString(MultilingualString str) {
+        return exportCollection(str.getValue().values());
     }
 
     private static String exportCollection(Collection<String> col) {
@@ -248,7 +295,7 @@ public class Term extends Asset implements HasTypes, Serializable {
     public void toExcel(Row row) {
         Objects.requireNonNull(row);
         row.createCell(0).setCellValue(getUri().toString());
-        row.createCell(1).setCellValue(getLabel());
+        row.createCell(1).setCellValue(getLabel().toString());
         if (altLabels != null) {
             row.createCell(2).setCellValue(String.join(";", altLabels));
         }
@@ -274,8 +321,8 @@ public class Term extends Asset implements HasTypes, Serializable {
         }
         if (subTerms != null) {
             row.createCell(9)
-                .setCellValue(String.join(";",
-                    subTerms.stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
+               .setCellValue(String.join(";",
+                       subTerms.stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
         }
         row.createCell(10).setCellValue(isDraft());
     }

@@ -75,7 +75,8 @@ class TermDaoTest extends BaseDaoTestRunner {
 
     private List<Term> generateTerms(int count) {
         return IntStream.range(0, count).mapToObj(i -> Generator.generateTermWithId())
-                        .sorted(Comparator.comparing(Term::getLabel)).collect(Collectors.toList());
+                        .sorted(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)))
+                        .collect(Collectors.toList());
     }
 
     private void addTermInVocabularyRelationship(Term term, URI vocabularyIri) {
@@ -129,7 +130,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final List<Term> result = sut.findAll(terms.get(0).getLabel(), vocabulary);
+        final List<Term> result = sut.findAll(terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE), vocabulary);
         assertEquals(1, result.size());
         assertTrue(terms.contains(result.get(0)));
     }
@@ -140,11 +141,11 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(new HashSet<>(terms), vocabulary);
         final Term root = terms.get(Generator.randomIndex(terms));
         final Term child = Generator.generateTermWithId(vocabulary.getUri());
-        child.setLabel("test");
+        child.setPrimaryLabel("test");
         child.setParentTerms(Collections.singleton(root));
         child.setGlossary(vocabulary.getGlossary().getUri());
         final Term matchingDesc = Generator.generateTermWithId();
-        matchingDesc.setLabel("Metropolitan plan");
+        matchingDesc.setPrimaryLabel("Metropolitan plan");
         matchingDesc.setParentTerms(Collections.singleton(child));
         transactional(() -> {
             em.persist(child, DescriptorFactory.termDescriptor(vocabulary));
@@ -185,7 +186,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final String label = terms.get(0).getLabel();
+        final String label = terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE);
         assertTrue(sut.existsInVocabulary(label, vocabulary));
     }
 
@@ -202,7 +203,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(terms, vocabulary);
 
-        final String label = terms.get(0).getLabel().toLowerCase();
+        final String label = terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE).toLowerCase();
         assertTrue(sut.existsInVocabulary(label, vocabulary));
     }
 
@@ -234,7 +235,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(terms, vocabulary);
 
         final List<Term> result = sut.findAll(vocabulary);
-        terms.sort(Comparator.comparing(Term::getLabel));
+        terms.sort(Comparator.comparing(Term::getPrimaryLabel));
         assertEquals(terms, result);
     }
 
@@ -254,7 +255,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> result = sut.findAllIncludingImported(vocabulary);
         final List<Term> allExpected = new ArrayList<>(terms);
         allExpected.addAll(parentTerms);
-        allExpected.sort(Comparator.comparing(Asset::getLabel));
+        allExpected.sort(Comparator.comparing(Term::getPrimaryLabel));
         assertEquals(allExpected, result);
     }
 
@@ -280,13 +281,13 @@ class TermDaoTest extends BaseDaoTestRunner {
         });
 
         final String updatedLabel = "Updated label";
-        final String oldLabel = term.getLabel();
-        term.setLabel(updatedLabel);
+        final String oldLabel = term.getLabel().get(Constants.DEFAULT_LANGUAGE);
+        term.setPrimaryLabel(updatedLabel);
         em.getEntityManagerFactory().getCache().evictAll();
         transactional(() -> sut.update(term));
 
         final Term result = em.find(Term.class, term.getUri(), DescriptorFactory.termDescriptor(vocabulary));
-        assertEquals(updatedLabel, result.getLabel());
+        assertEquals(updatedLabel, result.getLabel().get(Constants.DEFAULT_LANGUAGE));
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?hasLabel ?label }", Boolean.class)
                       .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
                       .setParameter("label", oldLabel, Constants.DEFAULT_LANGUAGE).getSingleResult());
@@ -348,7 +349,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> allTerms = new ArrayList<>(directTerms);
         allTerms.addAll(parentTerms);
         allTerms.addAll(grandParentTerms);
-        allTerms.sort(Comparator.comparing(Term::getLabel));
+        allTerms.sort(Comparator.comparing(Term::getPrimaryLabel));
 
         final List<Term> result = sut
                 .findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
@@ -409,12 +410,12 @@ class TermDaoTest extends BaseDaoTestRunner {
             insertNarrowerStatements(directTerms.get(0), directTerms.get(1), parentTerms.get(0));
         });
 
-        final String searchString = directTerms.get(0).getLabel()
-                                               .substring(0, directTerms.get(0).getLabel().length() - 2);
+        final String searchString = directTerms.get(0).getPrimaryLabel()
+                                               .substring(0, directTerms.get(0).getPrimaryLabel().length() - 2);
         final List<Term> result = sut.findAllIncludingImported(searchString, vocabulary);
         assertFalse(result.isEmpty());
         assertThat(result.size(), lessThan(directTerms.size() + parentTerms.size() + grandParentTerms.size()));
-        final List<Term> matching = allTerms.stream().filter(t -> t.getLabel().toLowerCase()
+        final List<Term> matching = allTerms.stream().filter(t -> t.getPrimaryLabel().toLowerCase()
                                                                    .contains(searchString.toLowerCase())).collect(
                 Collectors.toList());
         assertTrue(result.containsAll(matching));
@@ -580,7 +581,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllBySearchStringLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
-        final String searchString = parent.getLabel();
+        final String searchString = parent.getPrimaryLabel();
         final List<Term> result = sut.findAll(searchString, vocabulary);
         assertEquals(1, result.size());
         assertEquals(parent, result.get(0));
@@ -590,7 +591,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllIncludingImportsBySearchStringLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
-        final String searchString = parent.getLabel();
+        final String searchString = parent.getPrimaryLabel();
         final List<Term> result = sut.findAllIncludingImported(searchString, vocabulary);
         assertEquals(1, result.size());
         assertEquals(parent, result.get(0));

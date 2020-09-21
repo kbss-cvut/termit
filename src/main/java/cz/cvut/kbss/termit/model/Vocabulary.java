@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Audited
 @OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)
 @JsonLdAttributeOrder({"uri", "label", "description"})
-public class Vocabulary extends Asset implements Serializable {
+public class Vocabulary extends Asset<String> implements Serializable {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)

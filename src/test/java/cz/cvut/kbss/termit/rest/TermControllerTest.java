@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.jsonldjava.utils.JsonUtils;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
@@ -279,7 +280,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term parent = Generator.generateTermWithId();
         when(idResolverMock.buildNamespace(VOCABULARY_URI, Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR))
                 .thenReturn(VOCABULARY_URI);
-        when(idResolverMock.resolveIdentifier(VOCABULARY_URI, parent.getLabel())).thenReturn(parent.getUri());
+        when(idResolverMock.resolveIdentifier(VOCABULARY_URI, parent.getLabel().get())).thenReturn(parent.getUri());
         when(termServiceMock.findRequired(parent.getUri())).thenReturn(parent);
         final List<Term> children = Generator.generateTermsWithIds(5);
         when(termServiceMock.findSubTerms(parent)).thenReturn(children);
@@ -298,7 +299,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     @Test
     void getAssignmentInfoGetsTermAssignmentInfoFromService() throws Exception {
         final Term term = Generator.generateTermWithId();
-        term.setLabel(TERM_NAME);
+        term.setLabel(MultilingualString.create(TERM_NAME, Constants.DEFAULT_LANGUAGE));
         when(idResolverMock.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME))
                 .thenReturn(URI.create(VOCABULARY_URI));
         when(idResolverMock.buildNamespace(VOCABULARY_URI, Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR))
@@ -448,7 +449,7 @@ class TermControllerTest extends BaseControllerTestRunner {
 
         final Term newTerm = Generator.generateTerm();
         newTerm.setUri(URI.create(NAMESPACE + TERM_NAME));
-        newTerm.setLabel(TERM_NAME);
+        newTerm.setLabel(MultilingualString.create(TERM_NAME, Constants.DEFAULT_LANGUAGE));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final MvcResult mvcResult = mockMvc
                 .perform(post(PATH + VOCABULARY_NAME + "/terms").content(toJson(newTerm))

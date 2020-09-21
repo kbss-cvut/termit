@@ -30,11 +30,12 @@ public class ChangeRecordDao {
      * @param record       Record to save
      * @param changedAsset The changed asset
      */
-    public void persist(AbstractChangeRecord record, Asset changedAsset) {
+    public void persist(AbstractChangeRecord record, Asset<?> changedAsset) {
         Objects.requireNonNull(record);
         final EntityDescriptor descriptor = new EntityDescriptor(
                 contextResolver.resolveChangeTrackingContext(changedAsset));
         descriptor.addAttributeDescriptor(AbstractChangeRecord.getAuthorField(), new EntityDescriptor());
+        descriptor.setLanguage(null);
         try {
             em.persist(record, descriptor);
         } catch (RuntimeException e) {
