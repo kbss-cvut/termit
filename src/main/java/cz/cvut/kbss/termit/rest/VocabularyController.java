@@ -178,8 +178,6 @@ public class VocabularyController extends BaseController {
                                                      @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
         final URI identifier = resolveIdentifier(namespace, fragment, ConfigParam.NAMESPACE_VOCABULARY);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
-        final List<ValidationResult> result = vocabularyService.validateContents(vocabulary);
-        LOG.debug("Validation result {}.", result);
-        return result;
+        return vocabularyService.validateContents(vocabulary);
     }
 }

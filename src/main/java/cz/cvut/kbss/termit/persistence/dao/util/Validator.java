@@ -70,15 +70,20 @@ public class Validator {
         final Set<URL> rules = new HashSet<>();
         rules.addAll(
             validator.getGlossaryRules());
-        rules.addAll(validator.getModelRules());
-        LOG.info("Validation model created");
+        rules.addAll(validator.getModelRules().stream().filter( r ->
+            // currently only using content rules, not OntoUml, as TermIt does not support adding
+            // OntoUml rules
+            r.toString().contains("m1.ttl")
+            || r.toString().contains("m2.ttl")
+        ).collect(Collectors.toList()));
 
+        LOG.debug("Constructing RDF4J model ...");
         final Model model = getModelFromRdf4jRepository(vocabularyIris);
 
-        LOG.info("Data model created");
+        LOG.debug("Validating ...");
         org.topbraid.shacl.validation.ValidationReport report = validator.validate(model, rules);
-        LOG.info("Validation finished");
 
+        LOG.info("Processing validation results ...");
         return report.results().stream()
             .sorted(new ValidationResultSeverityComparator()).map(result -> {
                 final URI termUri = URI.create(result.getFocusNode().toString());
@@ -89,8 +94,8 @@ public class Validator {
                     .map(m -> m.asLiteral())
                     .collect(Collectors.toMap(Literal::getLanguage, Literal::getLexicalForm)));
 
-                LOG.info("'{}' for {} with severity {} and rule {}",
-                    severity, termUri, result.getMessage(), errorUri);
+                LOG.debug("'{}' for {} with severity {} and rule {}",
+                    result.getMessage(),termUri, severity, errorUri);
                 return new ValidationResult()
                     .setTermUri(termUri)
                     .setIssueCauseUri(errorUri)
