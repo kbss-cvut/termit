@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.ConfigParam;
@@ -162,5 +163,23 @@ public class VocabularyController extends BaseController {
         final Vocabulary toRemove = vocabularyService.getRequiredReference(identifier);
         vocabularyService.remove(toRemove);
         LOG.debug("Vocabulary {} removed.", toRemove);
+    }
+
+    /**
+     * Validates a vocabulary.
+     *
+     * @param fragment vocabulary name
+     * @param namespace (optional) vocabulary nanespace
+     * @return list of validation outcomes
+     */
+    @GetMapping(value = "/{fragment}/validate", produces = {MediaType.APPLICATION_JSON_VALUE,
+        JsonLd.MEDIA_TYPE})
+    public List<ValidationResult> validateVocabulary(@PathVariable String fragment,
+                                                     @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+        final URI identifier = resolveIdentifier(namespace, fragment, ConfigParam.NAMESPACE_VOCABULARY);
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final List<ValidationResult> result = vocabularyService.validateContents(vocabulary);
+        LOG.debug("Validation result {}.", result);
+        return result;
     }
 }

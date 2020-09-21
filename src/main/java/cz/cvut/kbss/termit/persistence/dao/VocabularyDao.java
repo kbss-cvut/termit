@@ -1,17 +1,18 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If
+ * not, see <https://www.gnu.org/licenses/>.
  */
+
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
@@ -24,13 +25,18 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.DescriptorFactory;
+import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.persistence.dao.util.Validator;
 import cz.cvut.kbss.termit.util.Configuration;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.util.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastModification {
@@ -39,10 +45,13 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
 
     private volatile long lastModified;
 
+    private final ApplicationContext context;
+
     @Autowired
-    public VocabularyDao(EntityManager em, Configuration config) {
+    public VocabularyDao(EntityManager em, Configuration config, ApplicationContext context) {
         super(Vocabulary.class, em, config);
         refreshLastModified();
+        this.context = context;
     }
 
     @Override
@@ -61,7 +70,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public Optional<Vocabulary> find(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.find(type, id, DescriptorFactory.vocabularyDescriptor(id)));
+            return Optional
+                .ofNullable(em.find(type, id, DescriptorFactory.vocabularyDescriptor(id)));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -71,14 +81,16 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public Optional<Vocabulary> getReference(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.getReference(type, id, DescriptorFactory.vocabularyDescriptor(id)));
+            return Optional
+                .ofNullable(em.getReference(type, id, DescriptorFactory.vocabularyDescriptor(id)));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
     }
 
     /**
-     * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
+     * Gets identifiers of all vocabularies imported by the specified vocabulary, including
+     * transitively imported ones.
      *
      * @param entity Base vocabulary, whose imports should be retrieved
      * @return Collection of (transitively) imported vocabularies
@@ -87,10 +99,11 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(entity);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
-                    "?x ?imports+ ?imported ." +
-                    "}", URI.class)
-                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                     .setParameter("x", entity.getUri()).getResultList();
+                "?x ?imports+ ?imported ." +
+                "}", URI.class)
+                .setParameter("imports",
+                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                .setParameter("x", entity.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -108,7 +121,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
             return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
                 "?importing ?imports ?imported ." +
                 "}", Vocabulary.class)
-                .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                .setParameter("imports",
+                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                 .setParameter("imported", vocabulary.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -120,7 +134,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public Vocabulary update(Vocabulary entity) {
         Objects.requireNonNull(entity);
         try {
-            // Evict possibly cached instance loaded from default context
+            // Evict possibly cached voc loaded from default context
             em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
             return em.merge(entity, DescriptorFactory.vocabularyDescriptor(entity));
         } catch (RuntimeException e) {
@@ -142,7 +156,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     /**
      * Updates glossary contained in the specified vocabulary.
      * <p>
-     * The vocabulary is passed for correct context resolution, as glossary existentially depends on its owning
+     * The vocabulary is passed for correct context resolution, as glossary existentially depends
+     * on its owning
      * vocabulary.
      *
      * @param entity Owner of the updated glossary
@@ -154,32 +169,34 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     }
 
     /**
-     * Checks whether terms from the {@code subjectVocabulary} reference (as parent terms) any terms from the {@code
+     * Checks whether terms from the {@code subjectVocabulary} reference (as parent terms) any
+     * terms from the {@code
      * targetVocabulary}.
      *
      * @param subjectVocabulary Subject vocabulary identifier
      * @param targetVocabulary  Target vocabulary identifier
      * @return Whether subject vocabulary terms reference target vocabulary terms
      */
-    public boolean hasInterVocabularyTermRelationships(URI subjectVocabulary, URI targetVocabulary) {
+    public boolean hasInterVocabularyTermRelationships(URI subjectVocabulary,
+                                                       URI targetVocabulary) {
         Objects.requireNonNull(subjectVocabulary);
         Objects.requireNonNull(targetVocabulary);
         return em.createNativeQuery("ASK WHERE {" +
-                "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
-                "       ?hasParentTerm ?parent . " +
-                "    ?parent ?isTermFromVocabulary ?import . " +
-                "    {" +
-                "        SELECT ?import WHERE {" +
-                "           ?targetVocabulary ?importsVocabulary* ?import . " +
-                "} } }", Boolean.class)
-                 .setParameter("isTermFromVocabulary",
-                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                 .setParameter("subjectVocabulary", subjectVocabulary)
-                 .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
-                 .setParameter("targetVocabulary", targetVocabulary)
-                 .setParameter("importsVocabulary",
-                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                 .getSingleResult();
+            "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
+            "       ?hasParentTerm ?parent . " +
+            "    ?parent ?isTermFromVocabulary ?import . " +
+            "    {" +
+            "        SELECT ?import WHERE {" +
+            "           ?targetVocabulary ?importsVocabulary* ?import . " +
+            "} } }", Boolean.class)
+            .setParameter("isTermFromVocabulary",
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+            .setParameter("subjectVocabulary", subjectVocabulary)
+            .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
+            .setParameter("targetVocabulary", targetVocabulary)
+            .setParameter("importsVocabulary",
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+            .getSingleResult();
     }
 
     @Override
@@ -195,5 +212,37 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     @EventListener
     public void refreshLastModified(RefreshLastModifiedEvent event) {
         refreshLastModified();
+    }
+
+    private void constructTransitiveClosure(final Vocabulary vocabulary,
+                                            final List<String> vocabularyIris) {
+        final String uri = vocabulary.getUri().toString();
+        if (vocabularyIris.contains(uri)) {
+            return;
+        }
+        vocabularyIris.add(uri);
+        if (vocabulary.getImportedVocabularies() != null) {
+            for (final URI vocUri : vocabulary.getImportedVocabularies()) {
+                final Vocabulary voc = find(vocUri).orElseThrow(
+                    () -> new PersistenceException("Cannot find vocabulary")
+                );
+                if ( voc != null ) {
+                    constructTransitiveClosure(voc, vocabularyIris);
+                }
+            }
+        }
+    }
+
+    @Transactional
+    public List<ValidationResult> validateContents(Vocabulary voc) {
+        final Validator validator = context.getBean(
+            cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
+        try {
+            final List<String> importClosure = new ArrayList<>();
+            constructTransitiveClosure(voc, importClosure);
+            return validator.validate(importClosure);
+        } catch (IOException e) {
+            throw new PersistenceException(e);
+        }
     }
 }
