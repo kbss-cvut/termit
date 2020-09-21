@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 class UserTest {
 
-    private User sut = new User();
+    private final User sut = new User();
 
     @Test
     void removeTypeHandlesNullTypesAttribute() {

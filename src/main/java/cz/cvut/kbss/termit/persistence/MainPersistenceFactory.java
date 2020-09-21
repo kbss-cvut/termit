@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.*;
-import static cz.cvut.kbss.jopa.model.PersistenceProperties.JPA_PERSISTENCE_PROVIDER;
 import static cz.cvut.kbss.termit.util.ConfigParam.*;
 
 /**

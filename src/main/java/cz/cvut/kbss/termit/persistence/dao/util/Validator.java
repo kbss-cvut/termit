@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,13 +46,13 @@ public class Validator {
         vf = repository.getValueFactory();
     }
 
-    private Model getModelFromRdf4jRepository(final List<String> vocabularyIris)
+    private Model getModelFromRdf4jRepository(final Collection<URI> vocabularyIris)
         throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final OutputStreamWriter writer = new OutputStreamWriter(baos);
         final RepositoryConnection c = repository.getConnection();
         final List<IRI> iris = new ArrayList<>();
-        vocabularyIris.forEach(i -> iris.add(vf.createIRI(i)));
+        vocabularyIris.forEach(i -> iris.add(vf.createIRI(i.toString())));
         c.export(new TurtleWriter(writer), iris.toArray(new IRI[] {}));
         writer.close();
         final byte[] savedData = baos.toByteArray();
@@ -62,7 +63,7 @@ public class Validator {
     }
 
     @Transactional
-    public List<ValidationResult> validate(final List<String> vocabularyIris)
+    public List<ValidationResult> validate(final Collection<URI> vocabularyIris)
         throws IOException {
         LOG.info("Validating");
         final com.github.sgov.server.Validator validator = new com.github.sgov.server.Validator();

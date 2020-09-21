@@ -51,7 +51,7 @@ class ConfigurationTest {
     @Test
     void getThrowsIllegalStateExceptionWhenPropertyIsNotConfiguredAndHasNoDefault() {
         final IllegalStateException ex = assertThrows(IllegalStateException.class, () -> sut.get(ConfigParam.DRIVER));
-        assertEquals("Value of key \'" + ConfigParam.DRIVER + "\' not configured.", ex.getMessage());
+        assertEquals("Value of key '" + ConfigParam.DRIVER + "' not configured.", ex.getMessage());
     }
 
     @Test
