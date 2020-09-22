@@ -35,7 +35,7 @@ public class ChangeTracker {
      * @param added The added asset
      */
     @Transactional
-    public void recordAddEvent(Asset added) {
+    public void recordAddEvent(Asset<?> added) {
         Objects.requireNonNull(added);
         final AbstractChangeRecord changeRecord = new PersistChangeRecord(added);
         changeRecord.setAuthor(SecurityUtils.currentUser().toUser());

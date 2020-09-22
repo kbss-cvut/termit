@@ -23,7 +23,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
-import cz.cvut.kbss.termit.util.ValidationResult;
+import cz.cvut.kbss.termit.validation.ValidationResult;
 import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 

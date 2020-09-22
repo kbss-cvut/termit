@@ -17,7 +17,7 @@
  */
 package cz.cvut.kbss.termit.exception;
 
-import cz.cvut.kbss.termit.util.ValidationResult;
+import cz.cvut.kbss.termit.validation.ValidationResult;
 
 import java.util.stream.Collectors;
 
