@@ -16,6 +16,7 @@ import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
@@ -46,8 +47,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     @Transient
     private Configuration config;
 
-    // TODO Replace with custom annotation for validating non-empty label in configured language
-//    @NotBlank
+    @PrimaryNotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
     private MultilingualString label;
