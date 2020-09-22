@@ -286,7 +286,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findSubTerms(parent)).thenReturn(children);
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms/" + parent.getLabel() + "/subterms"))
+                .perform(get(PATH + VOCABULARY_NAME + "/terms/" + parent.getLabel().get(Constants.DEFAULT_LANGUAGE) + "/subterms"))
                 .andExpect(status().isOk()).andReturn();
         final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
         });
