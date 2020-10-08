@@ -149,6 +149,27 @@ class DataDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void getLabelReturnsEmptyOptionalForIdentifierWithMultipleLabels() {
+        enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            final ValueFactory vf = repo.getValueFactory();
+            try (final RepositoryConnection connection = repo.getConnection()) {
+                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, vf.createIRI(Vocabulary.s_c_term));
+                connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
+                        vf.createLiteral(term.getPrimaryLabel()));
+                connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
+                        vf.createLiteral("Another label"));
+                connection.commit();
+            }
+        });
+
+        final Optional<String> result = sut.getLabel(term.getUri());
+        assertFalse(result.isPresent());
+    }
+
+    @Test
     void persistSavesSpecifiedResource() {
         final RdfsResource resource =
                 new RdfsResource(URI.create(RDFS.LABEL.toString()), "Label", "Label specification",
