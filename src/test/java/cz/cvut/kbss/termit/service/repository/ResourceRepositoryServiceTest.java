@@ -364,7 +364,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         final List<ResourceTermAssignments> result = sut.getAssignmentInfo(resource);
         assertEquals(1, result.size());
         assertEquals(term.getUri(), result.get(0).getTerm());
-        assertEquals(term.getLabel(), result.get(0).getTermLabel());
+        assertEquals(term.getPrimaryLabel(), result.get(0).getTermLabel());
         assertEquals(resource.getUri(), result.get(0).getResource());
     }
 

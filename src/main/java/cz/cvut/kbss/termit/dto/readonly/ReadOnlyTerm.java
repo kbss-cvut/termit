@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.dto.readonly;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -23,7 +24,7 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
     private URI uri;
 
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
-    private String label;
+    private MultilingualString label;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<String> altLabels;
@@ -92,11 +93,11 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
         this.uri = uri;
     }
 
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
     }
 

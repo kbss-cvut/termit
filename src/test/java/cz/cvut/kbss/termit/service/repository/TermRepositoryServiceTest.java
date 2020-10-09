@@ -114,7 +114,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     void addTermToVocabularyThrowsValidationExceptionWhenTermNameIsBlank() {
         final Term term = Generator.generateTerm();
         term.setUri(Generator.generateUri());
-        term.setLabel("");
+        term.getLabel().remove(Constants.DEFAULT_LANGUAGE);
 
         final ValidationException exception =
                 assertThrows(
@@ -290,7 +290,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final List<Term> terms = Generator.generateTermsWithIds(10);
         terms.forEach(t -> t.setVocabulary(vocabulary.getUri()));
         final List<Term> matching = terms.subList(0, 5);
-        matching.forEach(t -> t.setLabel("Result + " + t.getLabel()));
+        matching.forEach(t -> t.getLabel().set(Constants.DEFAULT_LANGUAGE, "Result + " + t.getLabel()));
 
         vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
         final Descriptor termDescriptor = DescriptorFactory.termDescriptor(vocabulary);
@@ -314,7 +314,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        assertTrue(sut.existsInVocabulary(t.getLabel(), vocabulary));
+        assertTrue(sut.existsInVocabulary(t.getLabel().get(Constants.DEFAULT_LANGUAGE), vocabulary));
     }
 
     @Test
@@ -356,12 +356,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         childOne.setParentTerms(Collections.singleton(termTwo));
         final String newLabel = "new term label";
-        childOne.setLabel(newLabel);
+        childOne.getLabel().set(Constants.DEFAULT_LANGUAGE, newLabel);
         // This is normally inferred
         childOne.setVocabulary(vocabulary.getUri());
         transactional(() -> sut.update(childOne));
         final Term result = em.find(Term.class, childOne.getUri());
-        assertEquals(newLabel, result.getLabel());
+        assertEquals(newLabel, result.getLabel().get(Constants.DEFAULT_LANGUAGE));
         assertEquals(Collections.singleton(termTwo), result.getParentTerms());
     }
 
@@ -375,7 +375,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary);
         });
 
-        t.setLabel("");
+        t.getLabel().remove(Constants.DEFAULT_LANGUAGE);
         assertThrows(ValidationException.class, () -> sut.update(t));
     }
 
@@ -482,7 +482,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final List<Term> terms = Generator.generateTermsWithIds(10);
         final String searchString = "Result";
         final List<Term> matching = terms.subList(0, 5);
-        matching.forEach(t -> t.setLabel(searchString + " " + t.getLabel()));
+        matching.forEach(t -> t.getLabel().set(Constants.DEFAULT_LANGUAGE, searchString + " " + t.getLabel()));
 
         vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
         terms.forEach(t -> t.setVocabulary(vocabulary.getUri()));

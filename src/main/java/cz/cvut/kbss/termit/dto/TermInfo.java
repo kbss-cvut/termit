@@ -31,7 +31,7 @@ import java.util.Objects;
 @SparqlResultSetMapping(name = "TermInfo", classes = {@ConstructorResult(targetClass = TermInfo.class,
         variables = {
                 @VariableResult(name = "entity", type = URI.class),
-                @VariableResult(name = "label"),
+                @VariableResult(name = "label", type = String.class),
                 @VariableResult(name = "vocabulary", type = URI.class)
         })})
 @OWLClass(iri = Vocabulary.s_c_term)
@@ -64,7 +64,7 @@ public class TermInfo implements Serializable {
     public TermInfo(Term term) {
         Objects.requireNonNull(term);
         this.uri = term.getUri();
-        this.label = term.getLabel();
+        this.label = term.getLabel().get();
         this.vocabulary = term.getVocabulary();
     }
 

@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
+import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
@@ -127,15 +128,16 @@ public class DataDao {
     public Optional<String> getLabel(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.of(em.createNativeQuery("SELECT ?label WHERE {" +
+            return Optional.of(em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
                     "{?x ?has-label ?label .}" +
                     "UNION" +
                     "{?x ?has-title ?label .}" +
+                    "BIND (str(?label) as ?strippedLabel )." +
                     "FILTER (LANGMATCHES(LANG(?label), ?tag) || lang(?label) = \"\") }", String.class)
                                  .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
                                  .setParameter("has-title", URI.create(DC.Terms.TITLE))
                                  .setParameter("tag", config.get(ConfigParam.LANGUAGE), null).getSingleResult());
-        } catch (NoResultException e) {
+        } catch (NoResultException | NoUniqueResultException e) {
             return Optional.empty();
         }
     }

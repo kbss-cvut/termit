@@ -85,7 +85,7 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
     @Test
     void exportVocabularyGlossaryOutputsGlossaryTermsOrderedByLabel() throws Exception {
         final List<Term> terms = generateTerms();
-        terms.sort(Comparator.comparing(Term::getLabel));
+        terms.sort(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)));
         final Resource result = sut.exportVocabularyGlossary(vocabulary);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);

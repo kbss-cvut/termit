@@ -31,7 +31,7 @@ import java.util.Objects;
 @Audited
 @OWLClass(iri = Vocabulary.s_c_zdroj)
 @JsonLdAttributeOrder({"uri", "label", "description"})
-public class Resource extends Asset implements Serializable {
+public class Resource extends Asset<String> implements Serializable {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)

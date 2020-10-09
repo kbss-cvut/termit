@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.environment;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.assignment.Target;
@@ -25,6 +26,7 @@ import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -198,8 +200,8 @@ public class Generator {
 
     public static Term generateTerm() {
         final Term term = new Term();
-        term.setLabel("Term" + randomInt());
-        term.setDefinition("Normative definition of term " + term.getLabel());
+        term.setLabel(MultilingualString.create("Term" + randomInt(), Constants.DEFAULT_LANGUAGE));
+        term.setDefinition("Normative definition of term " + term.getLabel().get());
         term.setDescription("Comment" + randomInt());
         return term;
     }
@@ -260,7 +262,7 @@ public class Generator {
         return file;
     }
 
-    public static PersistChangeRecord generatePersistChange(Asset asset) {
+    public static PersistChangeRecord generatePersistChange(Asset<?> asset) {
         final PersistChangeRecord record = new PersistChangeRecord(asset);
         record.setTimestamp(Instant.now());
         if (Environment.getCurrentUser() != null) {
@@ -275,7 +277,7 @@ public class Generator {
      * @param asset Changed asset
      * @return Change record
      */
-    public static UpdateChangeRecord generateUpdateChange(Asset asset) {
+    public static UpdateChangeRecord generateUpdateChange(Asset<?> asset) {
         final UpdateChangeRecord record = new UpdateChangeRecord(asset);
         record.setTimestamp(Instant.now());
         if (Environment.getCurrentUser() != null) {
@@ -294,7 +296,7 @@ public class Generator {
         return record;
     }
 
-    public static List<AbstractChangeRecord> generateChangeRecords(Asset asset, User user) {
+    public static List<AbstractChangeRecord> generateChangeRecords(Asset<?> asset, User user) {
         final PersistChangeRecord persistRecord = generatePersistChange(asset);
         final List<AbstractChangeRecord> result = IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset))
                                                            .collect(
@@ -308,9 +310,10 @@ public class Generator {
 
     /**
      * Simulates inference of the "je-pojmem-ze-slovniku" relationship between a term and its vocabulary.
-     * @param term Term in vocabulary
+     *
+     * @param term          Term in vocabulary
      * @param vocabularyIri Vocabulary identifier
-     * @param em Transactional entity manager to unwrap repository connection from
+     * @param em            Transactional entity manager to unwrap repository connection from
      */
     public static void addTermInVocabularyRelationship(Term term, URI vocabularyIri, EntityManager em) {
         final Repository repo = em.unwrap(Repository.class);
