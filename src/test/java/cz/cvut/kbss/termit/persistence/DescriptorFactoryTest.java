@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,7 +40,7 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
 
     private Term term;
 
-    private FieldSpecification parentFieldSpec;
+    private FieldSpecification<?, ?> parentFieldSpec;
 
     @Autowired
     private DescriptorFactory sut;
@@ -58,8 +59,8 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
     @Test
     void termDescriptorCreatesSimpleTermDescriptorWhenNoParentsAreProvided() {
         final Descriptor result = sut.termDescriptor(term);
-        assertEquals(persistenceUtils.resolveVocabularyContext(vocabulary.getUri()), result.getContext());
-        assertEquals(persistenceUtils.resolveVocabularyContext(vocabulary.getUri()), result.getAttributeContext(parentFieldSpec));
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getContexts());
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getAttributeContexts(parentFieldSpec));
     }
 
     @Test
@@ -68,20 +69,20 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         parent.setVocabulary(vocabulary.getUri());
         term.addParentTerm(parent);
         final Descriptor result = sut.termDescriptor(term);
-        assertEquals(persistenceUtils.resolveVocabularyContext(vocabulary.getUri()), result.getContext());
-        assertEquals(persistenceUtils.resolveVocabularyContext(vocabulary.getUri()),
-                result.getAttributeContext(parentFieldSpec));
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getContexts());
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getAttributeContexts(parentFieldSpec));
     }
 
+    // TODO
     @Test
-    void termDescriptorCreatesDescriptorWithParentTermContextCorrespondingToParentTermVocabulary() {
+    void termDescriptorCreatesDescriptorWithParentTermContextCorrespondingToDefaultContext() {
         final Term parent = Generator.generateTermWithId();
         final URI parentVocabulary = Generator.generateUri();
         parent.setVocabulary(parentVocabulary);
         term.addParentTerm(parent);
         final Descriptor result = sut.termDescriptor(term);
-        assertEquals(persistenceUtils.resolveVocabularyContext(vocabulary.getUri()), result.getContext());
-        assertEquals(null, result.getAttributeDescriptor(parentFieldSpec).getContext());
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getContexts());
+        assertEquals(Collections.emptySet(), result.getAttributeDescriptor(parentFieldSpec).getContexts());
     }
 
     @Test
@@ -92,7 +93,7 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         file.setDocument(doc);
         doc.setVocabulary(Generator.generateUri());
         final Descriptor result = sut.fileDescriptor(doc.getVocabulary());
-        final FieldSpecification docFieldSpec = mock(FieldSpecification.class);
+        final FieldSpecification<?, ?> docFieldSpec = mock(FieldSpecification.class);
         when(docFieldSpec.getJavaField()).thenReturn(File.getDocumentField());
         final Descriptor docDescriptor = result.getAttributeDescriptor(docFieldSpec);
         assertNotNull(docDescriptor);

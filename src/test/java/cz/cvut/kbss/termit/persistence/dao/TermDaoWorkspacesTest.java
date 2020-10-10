@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
@@ -9,8 +10,8 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
+import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -96,8 +97,9 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             em.persist(anotherWorkspaceVocabulary, new EntityDescriptor(anotherWorkspaceCtx));
             copy.setGlossary(term.getGlossary());
             final EntityDescriptor termDescriptor = new EntityDescriptor(anotherWorkspaceCtx);
-            termDescriptor.addAttributeDescriptor(Term.getParentTermsField(), new EntityDescriptor(null));
-            termDescriptor.addAttributeContext(Term.getVocabularyField(), null);
+            termDescriptor.addAttributeContext(descriptorFactory.fieldSpec(Term.class, "parentTerms"), null);
+            termDescriptor.addAttributeDescriptor(descriptorFactory.fieldSpec(Term.class, "vocabulary"),
+                    new FieldDescriptor((URI) null, descriptorFactory.fieldSpec(Term.class, "vocabulary")));
             em.persist(copy, termDescriptor);
         });
         return anotherWorkspaceCtx;
@@ -181,8 +183,9 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         final URI ctx = addTermToVocabularyInAnotherWorkspace(term);
         transactional(() -> {
             final EntityDescriptor termDescriptor = new EntityDescriptor(ctx);
-            termDescriptor.addAttributeDescriptor(Term.getParentTermsField(), new EntityDescriptor(null));
-            termDescriptor.addAttributeContext(Term.getVocabularyField(), null);
+            termDescriptor.addAttributeContext(descriptorFactory.fieldSpec(Term.class, "parentTerms"), null);
+            termDescriptor.addAttributeDescriptor(descriptorFactory.fieldSpec(Term.class, "vocabulary"),
+                    new FieldDescriptor((URI) null, descriptorFactory.fieldSpec(Term.class, "vocabulary")));
             em.persist(child, termDescriptor);
             insertNarrowerStatements(child, ctx);
             Generator.addTermInVocabularyRelationship(child, vocabulary.getUri(), em);
@@ -249,7 +252,8 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result =
+                sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(2, result.size());
         assertThat(result, hasItem(term));
         assertThat(result, hasItem(importedTerm));

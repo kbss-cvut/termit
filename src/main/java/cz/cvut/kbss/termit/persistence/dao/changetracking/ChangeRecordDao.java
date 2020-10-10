@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao.changetracking;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
@@ -32,14 +33,19 @@ public class ChangeRecordDao {
      */
     public void persist(AbstractChangeRecord record, Asset changedAsset) {
         Objects.requireNonNull(record);
-        final EntityDescriptor descriptor = new EntityDescriptor(
-                contextResolver.resolveChangeTrackingContext(changedAsset));
-        descriptor.addAttributeDescriptor(AbstractChangeRecord.getAuthorField(), new EntityDescriptor());
         try {
-            em.persist(record, descriptor);
+            em.persist(record, createDescriptor(record, changedAsset));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    private Descriptor createDescriptor(AbstractChangeRecord record, Asset changedAsset) {
+        final Descriptor descriptor = new EntityDescriptor(
+                contextResolver.resolveChangeTrackingContext(changedAsset));
+        descriptor
+                .addAttributeContext(em.getMetamodel().entity(record.getClass()).getFieldSpecification("author"), null);
+        return descriptor;
     }
 
     /**

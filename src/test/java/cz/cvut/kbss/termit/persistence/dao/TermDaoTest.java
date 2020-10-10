@@ -14,14 +14,14 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
+import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
@@ -117,7 +117,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
         // Paging starts at 0
-        final List<Term> result = sut.findAllRoots(vocabulary, PageRequest.of(1, terms.size() / 2), Collections.emptyList());
+        final List<Term> result =
+                sut.findAllRoots(vocabulary, PageRequest.of(1, terms.size() / 2), Collections.emptyList());
         final List<Term> subList = terms.subList(terms.size() / 2, terms.size());
         assertEquals(subList, result);
     }
@@ -131,7 +132,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         another.getGlossary().setRootTerms(generateTerms(4).stream().map(Asset::getUri).collect(Collectors.toSet()));
         transactional(() -> em.persist(another));
 
-        final List<Term> result = sut.findAllRoots(vocabulary, PageRequest.of(0, terms.size() / 2), Collections.emptyList());
+        final List<Term> result =
+                sut.findAllRoots(vocabulary, PageRequest.of(0, terms.size() / 2), Collections.emptyList());
         assertEquals(terms.size() / 2, result.size());
         assertTrue(terms.containsAll(result));
     }
@@ -205,7 +207,7 @@ class TermDaoTest extends BaseDaoTestRunner {
                             vf.createIRI(t.getUri().toString()),
                             vf.createIRI(
                                     descriptorFactory.termDescriptor(glossaryToVocabulary.get(parent.getGlossary()))
-                                                     .getContext().toString())));
+                                                     .getSingleContext().get().toString())));
                 }
             }
             conn.commit();
@@ -364,7 +366,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         allTerms.addAll(grandParentTerms);
         allTerms.sort(Comparator.comparing(Term::getLabel));
 
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result =
+                sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(allTerms, result);
     }
 
@@ -373,7 +376,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result =
+                sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(terms, result);
     }
 
@@ -407,13 +411,19 @@ class TermDaoTest extends BaseDaoTestRunner {
             directTerms.get(1).setParentTerms(Collections.singleton(parentTerms.get(1)));
             // Parents are in different contexts, so we have to deal with that
             em.merge(directTerms.get(0), descriptorFactory.termDescriptor(vocabulary)
-                                                          .addAttributeDescriptor(Term.getParentTermsField(),
+                                                          .addAttributeDescriptor(
+                                                                  descriptorFactory
+                                                                          .fieldSpec(Term.class, "parentTerms"),
                                                                   descriptorFactory.vocabularyDescriptor(parent)));
             em.merge(directTerms.get(1), descriptorFactory.termDescriptor(vocabulary)
-                                                          .addAttributeDescriptor(Term.getParentTermsField(),
+                                                          .addAttributeDescriptor(
+                                                                  descriptorFactory
+                                                                          .fieldSpec(Term.class, "parentTerms"),
                                                                   descriptorFactory.vocabularyDescriptor(parent)));
             em.merge(parentTerms.get(0), descriptorFactory.termDescriptor(parent)
-                                                          .addAttributeDescriptor(Term.getParentTermsField(),
+                                                          .addAttributeDescriptor(
+                                                                  descriptorFactory
+                                                                          .fieldSpec(Term.class, "parentTerms"),
                                                                   descriptorFactory.vocabularyDescriptor(grandParent)));
             vocabulary.getGlossary().removeRootTerm(directTerms.get(0));
             vocabulary.getGlossary().removeRootTerm(directTerms.get(1));
@@ -474,7 +484,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         assertEquals(Collections.singleton(parent), result.getParentTerms());
         final TypedQuery<Boolean> query = em.createNativeQuery("ASK {GRAPH ?g {?t ?hasParent ?p .}}", Boolean.class)
                                             .setParameter("g",
-                                                    descriptorFactory.vocabularyDescriptor(vocabulary).getContext())
+                                                    descriptorFactory.vocabularyDescriptor(vocabulary)
+                                                                     .getSingleContext().get())
                                             .setParameter("t", term.getUri())
                                             .setParameter("hasParent", URI.create(SKOS.BROADER))
                                             .setParameter("p", parent.getUri());
@@ -587,7 +598,8 @@ class TermDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllRootsIncludingImportsLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result =
+                sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, result.size());
         assertEquals(parent, result.get(0));
         assertEquals(parent.getSubTerms(), result.get(0).getSubTerms());
@@ -652,7 +664,7 @@ class TermDaoTest extends BaseDaoTestRunner {
                 if (ss.getObject() instanceof Literal) {
                     final Literal litSource = (Literal) ss.getObject();
                     assertFalse(litSource.getLanguage().isPresent());
-                    assertEquals(XMLSchema.STRING, litSource.getDatatype());
+                    assertEquals(XSD.STRING, litSource.getDatatype());
                 } else {
                     assertTrue(ss.getObject() instanceof IRI);
                 }

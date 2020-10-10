@@ -16,7 +16,12 @@ package cz.cvut.kbss.termit.persistence;
 
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
-import cz.cvut.kbss.termit.model.*;
+import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
+import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
+import cz.cvut.kbss.termit.model.DocumentVocabulary;
+import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,10 +56,7 @@ public class DescriptorFactory {
      */
     public Descriptor vocabularyDescriptor(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        final EntityDescriptor descriptor = assetDescriptor(vocabulary.getUri());
-        descriptor.addAttributeDescriptor(Vocabulary.getGlossaryField(), glossaryDescriptor(vocabulary));
-        descriptor.addAttributeDescriptor(DocumentVocabulary.getDocumentField(), documentDescriptor(vocabulary));
-        return descriptor;
+        return vocabularyDescriptor(vocabulary.getUri());
     }
 
     private EntityDescriptor assetDescriptor(URI vocabularyUri) {
@@ -76,8 +78,9 @@ public class DescriptorFactory {
     public Descriptor vocabularyDescriptor(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(Vocabulary.getGlossaryField(), glossaryDescriptor(vocabularyUri));
-        descriptor.addAttributeDescriptor(DocumentVocabulary.getDocumentField(), documentDescriptor(vocabularyUri));
+        descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "glossary"), glossaryDescriptor(vocabularyUri));
+        descriptor.addAttributeDescriptor(fieldSpec(DocumentVocabulary.class, "document"),
+                documentDescriptor(vocabularyUri));
         return descriptor;
     }
 
@@ -112,9 +115,10 @@ public class DescriptorFactory {
     public Descriptor documentDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         final Descriptor fileDescriptor = fileDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(Document.getFilesField(), fileDescriptor);
+        descriptor.addAttributeDescriptor(fieldSpec(Document.class, "files"), fileDescriptor);
         // Vocabulary field is inferred, so it cannot be in any specific context
-        descriptor.addAttributeContext(Document.getVocabularyField(), null);
+        descriptor.addAttributeDescriptor(fieldSpec(Document.class, "vocabulary"),
+                new FieldDescriptor((URI) null, fieldSpec(Document.class, "vocabulary")));
         return descriptor;
     }
 
@@ -149,8 +153,8 @@ public class DescriptorFactory {
     public Descriptor fileDescriptor(URI vocabularyUri) {
         final Descriptor descriptor = assetDescriptor(vocabularyUri);
         final Descriptor docDescriptor = assetDescriptor(vocabularyUri);
-        docDescriptor.addAttributeDescriptor(Document.getFilesField(), assetDescriptor(vocabularyUri));
-        descriptor.addAttributeDescriptor(File.getDocumentField(), docDescriptor);
+        docDescriptor.addAttributeDescriptor(fieldSpec(Document.class, "files"), assetDescriptor(vocabularyUri));
+        descriptor.addAttributeDescriptor(fieldSpec(File.class, "document"), docDescriptor);
         return descriptor;
     }
 
@@ -183,8 +187,19 @@ public class DescriptorFactory {
      */
     public Descriptor glossaryDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(Glossary.getTermsField(), termDescriptor(vocabularyUri));
+        descriptor.addAttributeDescriptor(fieldSpec(Glossary.class, "rootTerms"), termDescriptor(vocabularyUri));
         return descriptor;
+    }
+
+    /**
+     * Gets field specification for the specified attribute from persistence unit metamodel.
+     *
+     * @param entityCls Entity class
+     * @param attName   Name of attribute in the entity class
+     * @return Metamodel field specification
+     */
+    public FieldSpecification<?, ?> fieldSpec(Class<?> entityCls, String attName) {
+        return persistenceUtils.getMetamodel().entity(entityCls).getFieldSpecification(attName);
     }
 
     /**
@@ -217,9 +232,11 @@ public class DescriptorFactory {
      */
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(Term.getParentTermsField(), new EntityDescriptor(null));
+        // TODO List vocabularies in workspace
+        descriptor.addAttributeContext(fieldSpec(Term.class, "parentTerms"), null);
         // Vocabulary field is inferred, so it cannot be in any specific context
-        descriptor.addAttributeContext(Term.getVocabularyField(), null);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
+                new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         return descriptor;
     }
 
@@ -236,12 +253,14 @@ public class DescriptorFactory {
         Objects.requireNonNull(term);
         assert term.getVocabulary() != null;
         final EntityDescriptor descriptor = assetDescriptor(term.getVocabulary());
-        descriptor.addAttributeDescriptor(Term.getParentTermsField(), new EntityDescriptor(null));
+        // TODO List vocabularies in workspace
+        descriptor.addAttributeContext(fieldSpec(Term.class, "parentTerms"), null);
         // Definition source is inferred. That means it is in a special context in GraphDB. Therefore, we need to use
         // the default context to prevent JOPA from thinking the value has changed on merge
-        descriptor.addAttributeContext(Term.getDefinitionSourceField(), null);
+        descriptor.addAttributeContext(fieldSpec(Term.class, "definitionSource"), null);
         // Vocabulary field is inferred, so it cannot be in any specific context
-        descriptor.addAttributeContext(Term.getVocabularyField(), null);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
+                new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         return descriptor;
     }
 }

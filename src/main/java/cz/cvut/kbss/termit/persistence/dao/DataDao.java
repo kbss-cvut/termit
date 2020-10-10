@@ -127,10 +127,11 @@ public class DataDao {
     public Optional<String> getLabel(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.of(em.createNativeQuery("SELECT ?label WHERE {" +
+            return Optional.of(em.createNativeQuery("SELECT ?strippedLabel WHERE {" +
                     "{?x ?has-label ?label .}" +
                     "UNION" +
                     "{?x ?has-title ?label .}" +
+                    "BIND (str(?label) as ?strippedLabel)" +
                     "FILTER (LANGMATCHES(LANG(?label), ?tag) || lang(?label) = \"\") }", String.class)
                                  .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
                                  .setParameter("has-title", URI.create(DC.Terms.TITLE))

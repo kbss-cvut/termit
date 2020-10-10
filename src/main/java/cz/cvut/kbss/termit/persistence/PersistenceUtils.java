@@ -1,5 +1,7 @@
 package cz.cvut.kbss.termit.persistence;
 
+import cz.cvut.kbss.jopa.model.EntityManagerFactory;
+import cz.cvut.kbss.jopa.model.metamodel.Metamodel;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,9 +14,12 @@ public class PersistenceUtils {
 
     private final WorkspaceMetadataProvider workspaceMetadataProvider;
 
+    private final EntityManagerFactory emf;
+
     @Autowired
-    public PersistenceUtils(WorkspaceMetadataProvider workspaceMetadataProvider) {
+    public PersistenceUtils(WorkspaceMetadataProvider workspaceMetadataProvider, EntityManagerFactory emf) {
         this.workspaceMetadataProvider = workspaceMetadataProvider;
+        this.emf = emf;
     }
 
     /**
@@ -36,5 +41,14 @@ public class PersistenceUtils {
     public URI resolveVocabularyContext(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         return workspaceMetadataProvider.getCurrentWorkspaceMetadata().getVocabularyInfo(vocabularyUri).getContext();
+    }
+
+    /**
+     * Gets JOPA metamodel.
+     *
+     * @return Metamodel of the persistence unit
+     */
+    public Metamodel getMetamodel() {
+        return emf.getMetamodel();
     }
 }
