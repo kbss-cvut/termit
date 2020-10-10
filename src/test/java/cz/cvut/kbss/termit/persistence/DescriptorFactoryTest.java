@@ -16,23 +16,27 @@ package cz.cvut.kbss.termit.persistence;
 
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class DescriptorFactoryTest extends BaseDaoTestRunner {
 
@@ -48,6 +52,9 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
     @Autowired
     private PersistenceUtils persistenceUtils;
 
+    @Autowired
+    private WorkspaceMetadataProvider workspaceMetadataProvider;
+
     @BeforeEach
     void setUp() {
         this.term = Generator.generateTermWithId();
@@ -59,8 +66,10 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
     @Test
     void termDescriptorCreatesSimpleTermDescriptorWhenNoParentsAreProvided() {
         final Descriptor result = sut.termDescriptor(term);
-        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getContexts());
-        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getAttributeContexts(parentFieldSpec));
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())),
+                result.getContexts());
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())),
+                result.getAttributeContexts(parentFieldSpec));
     }
 
     @Test
@@ -69,20 +78,22 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         parent.setVocabulary(vocabulary.getUri());
         term.addParentTerm(parent);
         final Descriptor result = sut.termDescriptor(term);
-        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getContexts());
-        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getAttributeContexts(parentFieldSpec));
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())),
+                result.getContexts());
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())),
+                result.getAttributeContexts(parentFieldSpec));
     }
 
-    // TODO
     @Test
-    void termDescriptorCreatesDescriptorWithParentTermContextCorrespondingToDefaultContext() {
-        final Term parent = Generator.generateTermWithId();
-        final URI parentVocabulary = Generator.generateUri();
-        parent.setVocabulary(parentVocabulary);
-        term.addParentTerm(parent);
+    void termDescriptorCreatesDescriptorWithParentTermContextsCorrespondingToContextsOfVocabulariesInWorkspace() {
+        final Set<URI> vocabUris =
+                IntStream.range(0, 5).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
+        final WorkspaceMetadata wsMetadata = workspaceMetadataProvider.getCurrentWorkspaceMetadata();
+        doReturn(vocabUris).when(wsMetadata).getVocabularyContexts();
         final Descriptor result = sut.termDescriptor(term);
-        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())), result.getContexts());
-        assertEquals(Collections.emptySet(), result.getAttributeDescriptor(parentFieldSpec).getContexts());
+        assertEquals(Collections.singleton(persistenceUtils.resolveVocabularyContext(vocabulary.getUri())),
+                result.getContexts());
+        assertEquals(vocabUris, result.getAttributeDescriptor(parentFieldSpec).getContexts());
     }
 
     @Test

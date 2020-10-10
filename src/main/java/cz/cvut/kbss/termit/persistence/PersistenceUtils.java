@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Set;
 
 @Component
 public class PersistenceUtils {
@@ -41,6 +42,15 @@ public class PersistenceUtils {
     public URI resolveVocabularyContext(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         return workspaceMetadataProvider.getCurrentWorkspaceMetadata().getVocabularyInfo(vocabularyUri).getContext();
+    }
+
+    /**
+     * Gets identifiers of contexts in which vocabularies available in the current workspace are stored.
+     *
+     * @return Set of context identifiers
+     */
+    public Set<URI> getCurrentWorkspaceVocabularyContexts() {
+        return workspaceMetadataProvider.getCurrentWorkspaceMetadata().getVocabularyContexts();
     }
 
     /**

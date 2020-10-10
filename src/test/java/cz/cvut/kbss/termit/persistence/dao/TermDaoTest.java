@@ -468,12 +468,15 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         final Term parent = Generator.generateTermWithId();
         final Vocabulary parentVoc = Generator.generateVocabularyWithId();
+        initVocabularyWorkspaceMetadata(parentVoc);
         transactional(() -> {
             parentVoc.getGlossary().addRootTerm(parent);
             em.persist(parentVoc, descriptorFactory.vocabularyDescriptor(parentVoc));
             parent.setGlossary(parentVoc.getGlossary().getUri());
             em.persist(parent, descriptorFactory.termDescriptor(parentVoc));
+            Generator.addTermInVocabularyRelationship(parent, parentVoc.getUri(), em);
         });
+
         term.setGlossary(vocabulary.getGlossary().getUri());
         term.addParentTerm(parent);
 
@@ -492,6 +495,13 @@ class TermDaoTest extends BaseDaoTestRunner {
         assertTrue(query.getSingleResult());
     }
 
+    private void initVocabularyWorkspaceMetadata(Vocabulary... vocabularies) {
+        final WorkspaceMetadata wsMetadata = wsMetadataProvider.getCurrentWorkspaceMetadata();
+        final Set<URI> uris = Arrays.stream(vocabularies).map(Vocabulary::getUri).collect(Collectors.toSet());
+        doReturn(uris).when(wsMetadata).getVocabularyContexts();
+        uris.forEach(u -> doReturn(new VocabularyInfo(u, u, u)).when(wsMetadata).getVocabularyInfo(u));
+    }
+
     @Test
     void updateSupportsReferencingParentTermInDifferentVocabulary() {
         final Term term = Generator.generateTermWithId();
@@ -499,6 +509,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Vocabulary parentVoc = Generator.generateVocabularyWithId();
         term.setGlossary(vocabulary.getGlossary().getUri());
         term.addParentTerm(parent);
+        initVocabularyWorkspaceMetadata(parentVoc);
         transactional(() -> {
             parentVoc.getGlossary().addRootTerm(parent);
             em.persist(parentVoc, descriptorFactory.vocabularyDescriptor(parentVoc));
@@ -530,6 +541,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Term parentTwo = Generator.generateTermWithId();
         final Vocabulary parentTwoVoc = Generator.generateVocabularyWithId();
         term.addParentTerm(parentOne);
+        initVocabularyWorkspaceMetadata(parentOneVoc, parentTwoVoc);
         transactional(() -> {
             parentOneVoc.getGlossary().addRootTerm(parentOne);
             em.persist(parentOneVoc, descriptorFactory.vocabularyDescriptor(parentOneVoc));

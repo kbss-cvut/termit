@@ -291,4 +291,27 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         assertEquals(term.getLabel(), result.get(result.indexOf(term)).getLabel());
         assertEquals(importedTerm.getLabel(), result.get(result.indexOf(importedTerm)).getLabel());
     }
+
+    @Test
+    void findTermHandlesParentTermWhichExistsInTwoWorkspacesWithDifferentLabels() {
+        final Term term = Generator.generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        final Term parent = Generator.generateTermWithId();
+        parent.setGlossary(vocabulary.getGlossary().getUri());
+        term.addParentTerm(parent);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            vocabulary.getGlossary().addRootTerm(parent);
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
+        });
+        addTermToVocabularyInAnotherWorkspace(parent);
+
+        em.getEntityManagerFactory().getCache().evictAll();
+        final Optional<Term> result = sut.find(term.getUri());
+        assertTrue(result.isPresent());
+        assertThat(result.get().getParentTerms(), hasItem(parent));
+        assertEquals(parent.getLabel(), result.get().getParentTerms().iterator().next().getLabel());
+    }
 }

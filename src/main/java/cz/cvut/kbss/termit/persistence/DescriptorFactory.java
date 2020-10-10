@@ -198,7 +198,7 @@ public class DescriptorFactory {
      * @param attName   Name of attribute in the entity class
      * @return Metamodel field specification
      */
-    public FieldSpecification<?, ?> fieldSpec(Class<?> entityCls, String attName) {
+    public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attName) {
         return persistenceUtils.getMetamodel().entity(entityCls).getFieldSpecification(attName);
     }
 
@@ -232,8 +232,12 @@ public class DescriptorFactory {
      */
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        // TODO List vocabularies in workspace
-        descriptor.addAttributeContext(fieldSpec(Term.class, "parentTerms"), null);
+        final FieldSpecification<? super Term, ?> fieldSpec = fieldSpec(Term.class, "parentTerms");
+        persistenceUtils.getCurrentWorkspaceVocabularyContexts()
+                        .forEach(ctx -> descriptor.addAttributeContext(fieldSpec, ctx));
+        // Definition source is inferred. That means it is in a special context in GraphDB. Therefore, we need to use
+        // the default context to prevent JOPA from thinking the value has changed on merge
+        descriptor.addAttributeContext(fieldSpec(Term.class, "definitionSource"), null);
         // Vocabulary field is inferred, so it cannot be in any specific context
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
@@ -243,8 +247,7 @@ public class DescriptorFactory {
     /**
      * Creates a JOPA descriptor for the specified term.
      * <p>
-     * This takes the context from the term's vocabulary. Note that if parent terms are provided for the term, their
-     * vocabularies are used as their contexts.
+     * This takes the context from the term's vocabulary.
      *
      * @param term Term to create descriptor for
      * @return Term descriptor
@@ -252,15 +255,6 @@ public class DescriptorFactory {
     public Descriptor termDescriptor(Term term) {
         Objects.requireNonNull(term);
         assert term.getVocabulary() != null;
-        final EntityDescriptor descriptor = assetDescriptor(term.getVocabulary());
-        // TODO List vocabularies in workspace
-        descriptor.addAttributeContext(fieldSpec(Term.class, "parentTerms"), null);
-        // Definition source is inferred. That means it is in a special context in GraphDB. Therefore, we need to use
-        // the default context to prevent JOPA from thinking the value has changed on merge
-        descriptor.addAttributeContext(fieldSpec(Term.class, "definitionSource"), null);
-        // Vocabulary field is inferred, so it cannot be in any specific context
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
-                new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
-        return descriptor;
+        return termDescriptor(term.getVocabulary());
     }
 }
