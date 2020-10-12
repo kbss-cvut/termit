@@ -30,7 +30,7 @@
         <org.springframework.data.version>2.3.0.RELEASE</org.springframework.data.version>
         <com.fasterxml.jackson.version>2.11.2</com.fasterxml.jackson.version>
         <org.hibernate.validator.version>6.1.5.Final</org.hibernate.validator.version>
-        <cz.cvut.kbss.jopa.version>0.16.0-SNAPSHOT</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>0.16.0</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.8.0</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.6</org.aspectj.version>
 
@@ -260,7 +260,7 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>3.4.2</version>
+            <version>3.4.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
