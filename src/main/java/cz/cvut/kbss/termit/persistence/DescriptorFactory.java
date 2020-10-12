@@ -60,7 +60,9 @@ public class DescriptorFactory {
     }
 
     private EntityDescriptor assetDescriptor(URI vocabularyUri) {
-        Objects.requireNonNull(vocabularyUri);
+        if (vocabularyUri == null) {
+            return new EntityDescriptor();
+        }
         return new EntityDescriptor(persistenceUtils.resolveVocabularyContext(vocabularyUri));
     }
 
@@ -113,6 +115,9 @@ public class DescriptorFactory {
      * @return Document descriptor
      */
     public Descriptor documentDescriptor(URI vocabularyUri) {
+        if (vocabularyUri == null) {
+            return new EntityDescriptor();
+        }
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         final Descriptor fileDescriptor = fileDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(fieldSpec(Document.class, "files"), fileDescriptor);
@@ -151,6 +156,9 @@ public class DescriptorFactory {
      * @return File descriptor
      */
     public Descriptor fileDescriptor(URI vocabularyUri) {
+        if (vocabularyUri == null) {
+            return new EntityDescriptor();
+        }
         final Descriptor descriptor = assetDescriptor(vocabularyUri);
         final Descriptor docDescriptor = assetDescriptor(vocabularyUri);
         docDescriptor.addAttributeDescriptor(fieldSpec(Document.class, "files"), assetDescriptor(vocabularyUri));

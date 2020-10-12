@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.annotations.Properties;
 import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
@@ -10,9 +11,9 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import java.util.function.Function;
 import org.apache.poi.ss.usermodel.Row;
 
 import javax.validation.constraints.NotBlank;
@@ -20,6 +21,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Audited
@@ -31,8 +33,10 @@ public class Term extends Asset implements HasTypes, Serializable {
      * Names of columns used in term export.
      */
     public static final List<String> EXPORT_COLUMNS = Collections
-            .unmodifiableList(Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description", "Types", "Sources", "Parent term",
-                    "SubTerms", "Draft"));
+            .unmodifiableList(
+                    Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description",
+                            "Types", "Sources", "Parent term",
+                            "SubTerms", "Draft"));
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
@@ -76,7 +80,7 @@ public class Term extends Asset implements HasTypes, Serializable {
     private Map<String, Set<String>> properties;
 
     @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
-    private Boolean draft ;
+    private Boolean draft;
 
     @Types
     private Set<String> types;
@@ -89,6 +93,11 @@ public class Term extends Asset implements HasTypes, Serializable {
     @Override
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    @Override
+    public Descriptor createDescriptor(DescriptorFactory descriptorFactory) {
+        return descriptorFactory.termDescriptor(this);
     }
 
     public Set<String> getAltLabels() {
@@ -204,7 +213,7 @@ public class Term extends Asset implements HasTypes, Serializable {
         this.properties = properties;
     }
 
-    private static <T> void exportMulti(final StringBuilder sb, final Set<T> collection, Function<T,String> toString) {
+    private static <T> void exportMulti(final StringBuilder sb, final Set<T> collection, Function<T, String> toString) {
         sb.append(',');
         if (collection != null && !collection.isEmpty()) {
             sb.append(exportCollection(collection.stream().map(toString).collect(Collectors.toSet())));
@@ -274,8 +283,8 @@ public class Term extends Asset implements HasTypes, Serializable {
         }
         if (subTerms != null) {
             row.createCell(9)
-                .setCellValue(String.join(";",
-                    subTerms.stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
+               .setCellValue(String.join(";",
+                       subTerms.stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
         }
         row.createCell(10).setCellValue(isDraft());
     }

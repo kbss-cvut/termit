@@ -15,10 +15,12 @@
 package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
@@ -66,6 +68,11 @@ public class Vocabulary extends Asset implements Serializable {
     @Override
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    @Override
+    public Descriptor createDescriptor(DescriptorFactory descriptorFactory) {
+        return descriptorFactory.vocabularyDescriptor(this);
     }
 
     public String getDescription() {
