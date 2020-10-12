@@ -413,15 +413,18 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(label);
         Objects.requireNonNull(vocabulary);
         try {
-            return em.createNativeQuery("ASK { ?term a ?type ; " +
-                    "?hasLabel ?label ;" +
-                    "?inVocabulary ?vocabulary ." +
+            return em.createNativeQuery("ASK { GRAPH ?g {" +
+                    "?term a ?type ; " +
+                    "?hasLabel ?label ." +
+                    "}" +
+                    "?term ?inVocabulary ?vocabulary ." +
                     "FILTER (LCASE(?label) = LCASE(?searchString)) . }", Boolean.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("inVocabulary",
                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                     .setParameter("vocabulary", vocabulary.getUri())
+                     .setParameter("vocabulary", vocabulary)
+                     .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
                      .setParameter("searchString", label, config.get(ConfigParam.LANGUAGE)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

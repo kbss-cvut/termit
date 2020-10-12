@@ -27,11 +27,12 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
 public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
+
+    private static final String LABEL_IN_DIFFERENT_WORKSPACE = "Different label";
 
     @Autowired
     private EntityManager em;
@@ -91,7 +92,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         final URI anotherWorkspaceCtx = Generator.generateUri();
         final Term copy = new Term();
         copy.setUri(term.getUri());
-        copy.setLabel("Different label");
+        copy.setLabel(LABEL_IN_DIFFERENT_WORKSPACE);
 
         transactional(() -> {
             em.persist(anotherWorkspaceVocabulary, new EntityDescriptor(anotherWorkspaceCtx));
@@ -313,5 +314,20 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         assertTrue(result.isPresent());
         assertThat(result.get().getParentTerms(), hasItem(parent));
         assertEquals(parent.getLabel(), result.get().getParentTerms().iterator().next().getLabel());
+    }
+
+    @Test
+    void existsInVocabularyReturnsFalseWhenLabelExistsInDifferentWorkspace() {
+        final Term term = Generator.generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+        addTermToVocabularyInAnotherWorkspace(term);
+
+        assertFalse(sut.existsInVocabulary(LABEL_IN_DIFFERENT_WORKSPACE, vocabulary));
     }
 }
