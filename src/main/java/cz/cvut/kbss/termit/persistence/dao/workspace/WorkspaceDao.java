@@ -45,7 +45,7 @@ public class WorkspaceDao {
      */
     @SuppressWarnings("unchecked")
     public List<VocabularyInfo> findWorkspaceVocabularyMetadata(Workspace workspace) {
-        return em.createNativeQuery("SELECT ?entity ?context ?changeTrackingContext WHERE {" +
+        return em.createNativeQuery("SELECT DISTINCT ?entity ?context ?changeTrackingContext WHERE {" +
                 "?mc a ?metadataCtx ;" +
                 "?references ?context ." +
                 "?context a ?vocabularyCtx ." +

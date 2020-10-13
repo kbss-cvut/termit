@@ -15,6 +15,8 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
@@ -25,6 +27,7 @@ import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.PersistenceUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -38,11 +41,15 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
 
     private static final URI LABEL_PROPERTY = URI.create(DC.Terms.TITLE);
 
+    private final PersistenceUtils persistenceUtils;
+
     private volatile long lastModified;
 
     @Autowired
-    public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
+    public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
+                         PersistenceUtils persistenceUtils) {
         super(Vocabulary.class, em, config, descriptorFactory);
+        this.persistenceUtils = persistenceUtils;
         refreshLastModified();
     }
 
@@ -67,7 +74,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
      * @return List of vocabularies sorted by label
      */
     public List<Vocabulary> findAll(Workspace workspace) {
-        final List<Vocabulary> result = em.createNativeQuery("SELECT ?v WHERE { " +
+        final List<Vocabulary> result = em.createNativeQuery("SELECT DISTINCT ?v WHERE { " +
                 "?mc a ?metadataCtx ;" +
                 "?referencesCtx ?vc ." +
                 "?vc a ?vocabularyCtx ." +
@@ -82,9 +89,17 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
                                                   cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext))
                                           .setParameter("vocabularyCtx", URI.create(
                                                   cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext))
-                                          .setParameter("type", typeUri).getResultList();
+                                          .setParameter("type", typeUri)
+                                          .setDescriptor(createVocabulariesLoadingDescriptor(workspace))
+                                          .getResultList();
         result.sort(Comparator.comparing(Vocabulary::getLabel));
         return result;
+    }
+
+    private Descriptor createVocabulariesLoadingDescriptor(Workspace workspace) {
+        final Descriptor descriptor = new EntityDescriptor();
+        persistenceUtils.getWorkspaceVocabularyContexts(workspace).forEach(descriptor::addContext);
+        return descriptor;
     }
 
     @Override
@@ -136,10 +151,10 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
-                "?importing ?imports ?imported ." +
-                "}", Vocabulary.class)
-                .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                .setParameter("imported", vocabulary.getUri()).getResultList();
+                    "?importing ?imports ?imported ." +
+                    "}", Vocabulary.class)
+                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                     .setParameter("imported", vocabulary.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

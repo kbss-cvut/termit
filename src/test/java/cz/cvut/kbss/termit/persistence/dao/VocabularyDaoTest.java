@@ -393,4 +393,31 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertTrue(result.isPresent());
         assertEquals(vocabulary, result.get());
     }
+
+    @Test
+    void findAllInWorkspaceHandlesDuplicateTitleInDifferentWorkspace() {
+        enableRdfsInference(em);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Workspace workspace = WorkspaceGenerator.generateWorkspace();
+        transactional(() -> {
+            em.persist(vocabulary, new EntityDescriptor(vocabulary.getUri()));
+            em.persist(workspace, new EntityDescriptor(workspace.getUri()));
+        });
+        addWorkspaceReference(Collections.singleton(vocabulary), workspace);
+        saveVocabularyIntoDifferentWorkspace(vocabulary);
+
+        final List<Vocabulary> result = sut.findAll(workspace);
+        assertEquals(Collections.singletonList(vocabulary), result);
+    }
+
+    private void saveVocabularyIntoDifferentWorkspace(Vocabulary vocabulary) {
+        final Vocabulary copy = Generator.generateVocabulary();
+        copy.setUri(vocabulary.getUri());
+        final Workspace otherWorkspace = WorkspaceGenerator.generateWorkspace();
+        transactional(() -> {
+            em.persist(copy, new EntityDescriptor(URI.create(copy.getUri().toString() + "-copy")));
+            em.persist(otherWorkspace, new EntityDescriptor(otherWorkspace.getUri()));
+        });
+        addWorkspaceReference(Collections.singleton(copy), otherWorkspace);
+    }
 }

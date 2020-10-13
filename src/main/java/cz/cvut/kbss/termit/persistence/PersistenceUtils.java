@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence;
 
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.metamodel.Metamodel;
+import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,16 @@ public class PersistenceUtils {
      */
     public Set<URI> getCurrentWorkspaceVocabularyContexts() {
         return workspaceMetadataProvider.getCurrentWorkspaceMetadata().getVocabularyContexts();
+    }
+
+    /**
+     * Gets identifiers of contexts in which vocabularies available in the specified workspace are stored.
+     *
+     * @param workspace Workspace to get contexts for
+     * @return Set of context identifiers
+     */
+    public Set<URI> getWorkspaceVocabularyContexts(Workspace workspace) {
+        return workspaceMetadataProvider.getWorkspaceMetadata(workspace.getUri()).getVocabularyContexts();
     }
 
     /**
