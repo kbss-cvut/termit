@@ -21,17 +21,27 @@ import java.util.Optional;
 @Repository
 public class CommentDao {
 
-    private final Descriptor descriptor;
+    private final Descriptor loadingDescriptor;
+    private final Descriptor savingDescriptor;
 
     private final EntityManager em;
 
     @Autowired
     public CommentDao(EntityManager em, DescriptorFactory descriptorFactory, Configuration config) {
         this.em = em;
-        this.descriptor = createLoadingDescriptor(config.get(ConfigParam.COMMENTS_CONTEXT), descriptorFactory);
+        this.loadingDescriptor = createLoadingDescriptor(config.get(ConfigParam.COMMENTS_CONTEXT), descriptorFactory);
+        this.savingDescriptor = createSavingDescriptor(config.get(ConfigParam.COMMENTS_CONTEXT), descriptorFactory);
     }
 
     private Descriptor createLoadingDescriptor(String context, DescriptorFactory descriptorFactory) {
+        final EntityDescriptor descriptor = new EntityDescriptor(URI.create(context), false);
+        descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
+        // Reaction are inferred, therefore possibly in the 'implicit' context (GraphDB)
+        descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "reactions"), null);
+        return descriptor;
+    }
+
+    private Descriptor createSavingDescriptor(String context, DescriptorFactory descriptorFactory) {
         final EntityDescriptor descriptor = new EntityDescriptor(URI.create(context));
         descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
         // Reaction are inferred, therefore possibly in the 'implicit' context (GraphDB)
@@ -51,7 +61,7 @@ public class CommentDao {
         try {
             return em.createQuery("SELECT c FROM Comment c WHERE c.asset = :asset ORDER BY c.created", Comment.class)
                      .setParameter("asset", asset.getUri())
-                     .setDescriptor(descriptor).getResultList();
+                     .setDescriptor(loadingDescriptor).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -66,7 +76,7 @@ public class CommentDao {
     public Optional<Comment> find(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.find(Comment.class, id, descriptor));
+            return Optional.ofNullable(em.find(Comment.class, id, loadingDescriptor));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -80,7 +90,7 @@ public class CommentDao {
     public void persist(Comment comment) {
         Objects.requireNonNull(comment);
         try {
-            em.persist(comment, descriptor);
+            em.persist(comment, savingDescriptor);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -94,7 +104,7 @@ public class CommentDao {
     public void update(Comment comment) {
         Objects.requireNonNull(comment);
         try {
-            em.merge(comment, descriptor);
+            em.merge(comment, savingDescriptor);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
