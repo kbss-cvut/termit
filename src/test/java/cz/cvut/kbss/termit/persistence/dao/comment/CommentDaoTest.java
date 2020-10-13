@@ -70,7 +70,8 @@ class CommentDaoTest extends BaseDaoTestRunner {
     private EntityDescriptor createDescriptor() {
         final EntityDescriptor descriptor = new EntityDescriptor(
                 URI.create(configuration.get(ConfigParam.COMMENTS_CONTEXT)));
-        descriptor.addAttributeDescriptor(Comment.getAuthorField(), new EntityDescriptor(null));
+        descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("author"),
+                new EntityDescriptor((URI) null));
         return descriptor;
     }
 

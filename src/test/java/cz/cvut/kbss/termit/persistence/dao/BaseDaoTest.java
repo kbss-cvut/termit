@@ -22,6 +22,8 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,9 @@ class BaseDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     private BaseDao<Term> sut;
 
@@ -97,15 +102,21 @@ class BaseDaoTest extends BaseDaoTestRunner {
     @Test
     void updateReturnsManagedInstance() {
         final Term term = Generator.generateTermWithId();
-        transactional(() -> sut.persist(term));
-        final String lastNameUpdate = "updatedLastName";
-        term.setLabel(lastNameUpdate);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary.getUri()));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+        final String labelUpdate = "updatedLabel";
+        term.setLabel(labelUpdate);
         transactional(() -> {
             final Term updated = sut.update(term);
             assertTrue(em.contains(updated));
-            assertEquals(lastNameUpdate, updated.getLabel());
+            assertEquals(labelUpdate, updated.getLabel());
         });
-        assertEquals(lastNameUpdate, em.find(Term.class, term.getUri()).getLabel());
+        assertEquals(labelUpdate, em.find(Term.class, term.getUri()).getLabel());
     }
 
     @Test
@@ -161,7 +172,13 @@ class BaseDaoTest extends BaseDaoTestRunner {
     @Test
     void exceptionDuringUpdateIsWrappedInPersistenceException() {
         final Term term = Generator.generateTermWithId();
-        transactional(() -> sut.persist(term));
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary.getUri()));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
         term.setVocabulary(Generator.generateUri());
         final PersistenceException e = assertThrows(PersistenceException.class,
                 () -> transactional(() -> sut.update(term)));

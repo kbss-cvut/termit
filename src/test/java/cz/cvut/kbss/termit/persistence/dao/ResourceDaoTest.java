@@ -227,13 +227,13 @@ class ResourceDaoTest extends BaseDaoTestRunner {
                 conn.add(vf.createIRI(document.getUri().toString()),
                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_dokumentovy_slovnik),
                         vf.createIRI(vocabulary.getUri().toString()),
-                        vf.createIRI(descriptorFactory.vocabularyDescriptor(vocabulary).getContext().toString()));
+                        vf.createIRI(descriptorFactory.vocabularyDescriptor(vocabulary).getSingleContext().get().toString()));
                 if (document.getFiles() != null) {
                     document.getFiles().forEach(f -> conn.add(
                             vf.createIRI(f.getUri().toString()),
                             vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_casti_dokumentu),
                             vf.createIRI(document.getUri().toString()),
-                            vf.createIRI(descriptorFactory.vocabularyDescriptor(vocabulary).getContext().toString())
+                            vf.createIRI(descriptorFactory.vocabularyDescriptor(vocabulary).getSingleContext().get().toString())
                     ));
                 }
             }

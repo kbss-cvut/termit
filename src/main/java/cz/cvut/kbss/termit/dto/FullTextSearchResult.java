@@ -26,7 +26,7 @@ import java.util.Set;
 @SparqlResultSetMapping(name = "FullTextSearchResult", classes = {@ConstructorResult(targetClass = FullTextSearchResult.class,
         variables = {
                 @VariableResult(name = "entity", type = URI.class),
-                @VariableResult(name = "label"),
+                @VariableResult(name = "label", type = String.class),
                 @VariableResult(name = "vocabularyUri", type = URI.class),
                 @VariableResult(name = "type", type = String.class),
                 @VariableResult(name = "snippetField", type = String.class),

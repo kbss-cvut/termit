@@ -16,8 +16,10 @@ package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.validation.WithoutQueryParameters;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 
 import java.net.URI;
 
@@ -42,4 +44,14 @@ public abstract class Asset implements HasIdentifier {
     public abstract String getLabel();
 
     public abstract void setLabel(String label);
+
+    /**
+     * Visitor-style method for creating descriptors.
+     * <p>
+     * Asset subclasses invoke specific {@link DescriptorFactory} methods providing descriptors for JOPA.
+     *
+     * @param descriptorFactory DescriptorFactory aka Visitor
+     * @return Descriptor for this instance
+     */
+    public abstract Descriptor createDescriptor(DescriptorFactory descriptorFactory);
 }

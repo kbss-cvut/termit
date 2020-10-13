@@ -31,7 +31,7 @@ import java.util.Objects;
 @SparqlResultSetMapping(name = "TermInfo", classes = {@ConstructorResult(targetClass = TermInfo.class,
         variables = {
                 @VariableResult(name = "entity", type = URI.class),
-                @VariableResult(name = "label"),
+                @VariableResult(name = "label", type = String.class),
                 @VariableResult(name = "vocabulary", type = URI.class)
         })})
 @OWLClass(iri = SKOS.CONCEPT)

@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
 import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
@@ -9,8 +10,8 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
+import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -26,11 +27,12 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
 public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
+
+    private static final String LABEL_IN_DIFFERENT_WORKSPACE = "Different label";
 
     @Autowired
     private EntityManager em;
@@ -90,14 +92,15 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         final URI anotherWorkspaceCtx = Generator.generateUri();
         final Term copy = new Term();
         copy.setUri(term.getUri());
-        copy.setLabel("Different label");
+        copy.setLabel(LABEL_IN_DIFFERENT_WORKSPACE);
 
         transactional(() -> {
             em.persist(anotherWorkspaceVocabulary, new EntityDescriptor(anotherWorkspaceCtx));
             copy.setGlossary(term.getGlossary());
             final EntityDescriptor termDescriptor = new EntityDescriptor(anotherWorkspaceCtx);
-            termDescriptor.addAttributeDescriptor(Term.getParentTermsField(), new EntityDescriptor(null));
-            termDescriptor.addAttributeContext(Term.getVocabularyField(), null);
+            termDescriptor.addAttributeContext(descriptorFactory.fieldSpec(Term.class, "parentTerms"), null);
+            termDescriptor.addAttributeDescriptor(descriptorFactory.fieldSpec(Term.class, "vocabulary"),
+                    new FieldDescriptor((URI) null, descriptorFactory.fieldSpec(Term.class, "vocabulary")));
             em.persist(copy, termDescriptor);
         });
         return anotherWorkspaceCtx;
@@ -181,8 +184,9 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         final URI ctx = addTermToVocabularyInAnotherWorkspace(term);
         transactional(() -> {
             final EntityDescriptor termDescriptor = new EntityDescriptor(ctx);
-            termDescriptor.addAttributeDescriptor(Term.getParentTermsField(), new EntityDescriptor(null));
-            termDescriptor.addAttributeContext(Term.getVocabularyField(), null);
+            termDescriptor.addAttributeContext(descriptorFactory.fieldSpec(Term.class, "parentTerms"), null);
+            termDescriptor.addAttributeDescriptor(descriptorFactory.fieldSpec(Term.class, "vocabulary"),
+                    new FieldDescriptor((URI) null, descriptorFactory.fieldSpec(Term.class, "vocabulary")));
             em.persist(child, termDescriptor);
             insertNarrowerStatements(child, ctx);
             Generator.addTermInVocabularyRelationship(child, vocabulary.getUri(), em);
@@ -249,7 +253,8 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        final List<Term> result = sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<Term> result =
+                sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(2, result.size());
         assertThat(result, hasItem(term));
         assertThat(result, hasItem(importedTerm));
@@ -286,5 +291,43 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         assertThat(result, hasItem(importedTerm));
         assertEquals(term.getLabel(), result.get(result.indexOf(term)).getLabel());
         assertEquals(importedTerm.getLabel(), result.get(result.indexOf(importedTerm)).getLabel());
+    }
+
+    @Test
+    void findTermHandlesParentTermWhichExistsInTwoWorkspacesWithDifferentLabels() {
+        final Term term = Generator.generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        final Term parent = Generator.generateTermWithId();
+        parent.setGlossary(vocabulary.getGlossary().getUri());
+        term.addParentTerm(parent);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            vocabulary.getGlossary().addRootTerm(parent);
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
+        });
+        addTermToVocabularyInAnotherWorkspace(parent);
+
+        em.getEntityManagerFactory().getCache().evictAll();
+        final Optional<Term> result = sut.find(term.getUri());
+        assertTrue(result.isPresent());
+        assertThat(result.get().getParentTerms(), hasItem(parent));
+        assertEquals(parent.getLabel(), result.get().getParentTerms().iterator().next().getLabel());
+    }
+
+    @Test
+    void existsInVocabularyReturnsFalseWhenLabelExistsInDifferentWorkspace() {
+        final Term term = Generator.generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+        addTermToVocabularyInAnotherWorkspace(term);
+
+        assertFalse(sut.existsInVocabulary(LABEL_IN_DIFFERENT_WORKSPACE, vocabulary));
     }
 }

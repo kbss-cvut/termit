@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private ChangeRecordDao sut;
@@ -87,7 +91,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000),
                         asset.getUri())).collect(Collectors.toList());
         final EntityDescriptor descriptor = new EntityDescriptor(vocabulary.getUri());
-        descriptor.addAttributeDescriptor(AbstractChangeRecord.getAuthorField(), new EntityDescriptor());
+        descriptor.addAttributeContext(descriptorFactory.fieldSpec(AbstractChangeRecord.class, "author"), null);
         transactional(() -> records.forEach(r -> em.persist(r, descriptor)));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
@@ -103,7 +107,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() + i * 10000),
                         asset.getUri())).collect(Collectors.toList());
         final EntityDescriptor descriptor = new EntityDescriptor(vocabulary.getUri());
-        descriptor.addAttributeDescriptor(AbstractChangeRecord.getAuthorField(), new EntityDescriptor());
+        descriptor.addAttributeContext(descriptorFactory.fieldSpec(AbstractChangeRecord.class, "author"), null);
         transactional(() -> records.forEach(r -> em.persist(r, descriptor)));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
@@ -121,7 +125,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final UpdateChangeRecord rTwo = generateUpdateRecord(now, asset.getUri());
         rTwo.setChangedAttribute(URI.create(SKOS.DEFINITION));
         final EntityDescriptor descriptor = new EntityDescriptor(vocabulary.getUri());
-        descriptor.addAttributeDescriptor(AbstractChangeRecord.getAuthorField(), new EntityDescriptor());
+        descriptor.addAttributeContext(descriptorFactory.fieldSpec(AbstractChangeRecord.class, "author"), null);
         transactional(() -> {
             em.persist(rOne, descriptor);
             em.persist(rTwo, descriptor);
