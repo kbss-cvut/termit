@@ -201,7 +201,8 @@ public class Generator {
     public static Term generateTerm() {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Constants.DEFAULT_LANGUAGE));
-        term.setDefinition("Normative definition of term " + term.getLabel().get());
+        term.setDefinition(MultilingualString
+                .create("Normative definition of term " + term.getLabel().get(), Constants.DEFAULT_LANGUAGE));
         term.setDescription("Comment" + randomInt());
         return term;
     }

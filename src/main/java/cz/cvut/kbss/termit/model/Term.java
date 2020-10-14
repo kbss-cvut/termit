@@ -62,7 +62,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     private String description;
 
     @OWLAnnotationProperty(iri = SKOS.DEFINITION)
-    private String definition;
+    private MultilingualString definition;
 
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
     private Set<String> sources;
@@ -158,11 +158,11 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         this.description = description;
     }
 
-    public String getDefinition() {
+    public MultilingualString getDefinition() {
         return definition;
     }
 
-    public void setDefinition(String definition) {
+    public void setDefinition(MultilingualString definition) {
         this.definition = definition;
     }
 
@@ -266,7 +266,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         sb.append(',').append(exportMultilingualString(getLabel()));
         exportMulti(sb, altLabels, String::toString);
         exportMulti(sb, hiddenLabels, String::toString);
-        sb.append(',').append(CsvUtils.sanitizeString(definition));
+        sb.append(',').append(exportMultilingualString(definition));
         sb.append(',').append(CsvUtils.sanitizeString(description));
         exportMulti(sb, types, String::toString);
         exportMulti(sb, sources, String::toString);
@@ -303,7 +303,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
             row.createCell(3).setCellValue(String.join(";", hiddenLabels));
         }
         if (definition != null) {
-            row.createCell(4).setCellValue(definition);
+            row.createCell(4).setCellValue(definition.toString());
         }
         if (description != null) {
             row.createCell(5).setCellValue(description);

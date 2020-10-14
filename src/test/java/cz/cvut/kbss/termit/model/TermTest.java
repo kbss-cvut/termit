@@ -59,7 +59,7 @@ class TermTest {
         assertThat(items.length, greaterThanOrEqualTo(4));
         assertEquals(term.getUri().toString(), items[0]);
         term.getLabel().getValue().values().forEach(v -> assertThat(items[1], containsString(v)));
-        assertEquals(term.getDefinition(), items[4]);
+        term.getDefinition().getValue().values().forEach(v -> assertThat(items[4], containsString(v)));
         assertEquals(term.getDescription(), items[5]);
     }
 
@@ -172,7 +172,8 @@ class TermTest {
         term.getAltLabels().forEach(s -> assertTrue(row.getCell(2).getStringCellValue().contains(s)));
         assertTrue(row.getCell(3).getStringCellValue().matches(".+;.+"));
         term.getHiddenLabels().forEach(s -> assertTrue(row.getCell(3).getStringCellValue().contains(s)));
-        assertEquals(term.getDefinition(), row.getCell(4).getStringCellValue());
+        term.getDefinition().getValue().values()
+            .forEach(v -> assertThat(row.getCell(4).getStringCellValue(), containsString(v)));
         assertEquals(term.getDescription(), row.getCell(5).getStringCellValue());
         assertEquals(term.getTypes().iterator().next(), row.getCell(6).getStringCellValue());
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));

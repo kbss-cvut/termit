@@ -177,9 +177,9 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
                                 vf.createLiteral(src)))));
 
             }
-            assertThat(model,
+            t.getDefinition().getValue().forEach((lang, val) -> assertThat(model,
                     hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.DEFINITION,
-                            vf.createLiteral(t.getDefinition(), lang()))));
+                            vf.createLiteral(val, lang)))));
             if (t.getSources() != null && !t.getSources().isEmpty()) {
                 t.getSources().forEach(src -> assertThat(model,
                         hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), DCTERMS.SOURCE,
