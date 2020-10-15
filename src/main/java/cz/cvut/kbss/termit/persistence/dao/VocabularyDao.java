@@ -24,13 +24,18 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.persistence.dao.util.Validator;
 import cz.cvut.kbss.termit.util.Configuration;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.util.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastModification {
@@ -39,10 +44,13 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
 
     private volatile long lastModified;
 
+    private final ApplicationContext context;
+
     @Autowired
-    public VocabularyDao(EntityManager em, Configuration config) {
+    public VocabularyDao(EntityManager em, Configuration config, ApplicationContext context) {
         super(Vocabulary.class, em, config);
         refreshLastModified();
+        this.context = context;
     }
 
     @Override
@@ -195,5 +203,17 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     @EventListener
     public void refreshLastModified(RefreshLastModifiedEvent event) {
         refreshLastModified();
+    }
+
+    @Transactional
+    public List<ValidationResult> validateContents(Vocabulary voc) {
+        final Validator validator = context.getBean(
+            cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
+        try {
+            final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
+            return validator.validate(importClosure);
+        } catch (IOException e) {
+            throw new PersistenceException(e);
+        }
     }
 }

@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -149,5 +150,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
 
         super.remove(instance);
+    }
+
+    @Override
+    public List<ValidationResult> validateContents(Vocabulary instance) {
+        return vocabularyDao.validateContents(instance);
     }
 }
