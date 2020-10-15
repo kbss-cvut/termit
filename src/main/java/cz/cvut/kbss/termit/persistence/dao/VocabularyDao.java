@@ -211,6 +211,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
             cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
         try {
             final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
+            importClosure.add(voc.getUri());
             return validator.validate(importClosure);
         } catch (IOException e) {
             throw new PersistenceException(e);
