@@ -172,9 +172,9 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
             }
             if (t.getHiddenLabels() != null && !t.getHiddenLabels().isEmpty()) {
-                t.getHiddenLabels().forEach(src -> assertThat(model,
+                t.getHiddenLabels().forEach(src -> src.getValue().forEach((lang, val) -> assertThat(model,
                         hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.HIDDEN_LABEL,
-                                vf.createLiteral(src)))));
+                                vf.createLiteral(val, lang))))));
 
             }
             t.getDefinition().getValue().forEach((lang, val) -> assertThat(model,

@@ -56,7 +56,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     private Set<MultilingualString> altLabels;
 
     @OWLAnnotationProperty(iri = SKOS.HIDDEN_LABEL)
-    private Set<String> hiddenLabels;
+    private Set<MultilingualString> hiddenLabels;
 
     @OWLAnnotationProperty(iri = SKOS.SCOPE_NOTE)
     private String description;
@@ -142,11 +142,11 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         this.altLabels = altLabels;
     }
 
-    public Set<String> getHiddenLabels() {
+    public Set<MultilingualString> getHiddenLabels() {
         return hiddenLabels;
     }
 
-    public void setHiddenLabels(Set<String> hiddenLabels) {
+    public void setHiddenLabels(Set<MultilingualString> hiddenLabels) {
         this.hiddenLabels = hiddenLabels;
     }
 
@@ -265,7 +265,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
         sb.append(',').append(exportMultilingualString(getLabel()));
         exportMulti(sb, altLabels, Term::exportMultilingualString);
-        exportMulti(sb, hiddenLabels, String::toString);
+        exportMulti(sb, hiddenLabels, Term::exportMultilingualString);
         sb.append(',').append(exportMultilingualString(definition));
         sb.append(',').append(CsvUtils.sanitizeString(description));
         exportMulti(sb, types, String::toString);
@@ -297,12 +297,12 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         row.createCell(0).setCellValue(getUri().toString());
         row.createCell(1).setCellValue(getLabel().toString());
         if (altLabels != null) {
-            row.createCell(2).setCellValue(
-                    String.join(";",
-                            altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
+            row.createCell(2).setCellValue(String.join(";",
+                    altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
         }
         if (hiddenLabels != null) {
-            row.createCell(3).setCellValue(String.join(";", hiddenLabels));
+            row.createCell(3).setCellValue(String.join(";",
+                    altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
         }
         if (definition != null) {
             row.createCell(4).setCellValue(definition.toString());

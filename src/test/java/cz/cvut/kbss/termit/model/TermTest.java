@@ -89,13 +89,15 @@ class TermTest {
     @Test
     void toCsvExportsHiddenLabelsDelimitedBySemicolons() {
         final Term term = Generator.generateTermWithId();
-        term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
+        term.setHiddenLabels(
+                new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
+                        MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertEquals(items.length, 11);
         final String list = items[3];
         assertTrue(list.matches(".+;.+"));
-        term.getHiddenLabels().forEach(t -> assertTrue(list.contains(t)));
+        term.getHiddenLabels().forEach(t -> assertTrue(list.contains(t.get())));
     }
 
     @Test
@@ -160,7 +162,9 @@ class TermTest {
         term.setTypes(Collections.singleton(Vocabulary.s_c_object));
         term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
                 MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
-        term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
+        term.setHiddenLabels(
+                new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
+                        MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
@@ -175,7 +179,7 @@ class TermTest {
         assertTrue(row.getCell(2).getStringCellValue().matches(".+;.+"));
         term.getAltLabels().forEach(s -> assertTrue(row.getCell(2).getStringCellValue().contains(s.get())));
         assertTrue(row.getCell(3).getStringCellValue().matches(".+;.+"));
-        term.getHiddenLabels().forEach(s -> assertTrue(row.getCell(3).getStringCellValue().contains(s)));
+        term.getHiddenLabels().forEach(s -> assertTrue(row.getCell(3).getStringCellValue().contains(s.get())));
         term.getDefinition().getValue().values()
             .forEach(v -> assertThat(row.getCell(4).getStringCellValue(), containsString(v)));
         assertEquals(term.getDescription(), row.getCell(5).getStringCellValue());
