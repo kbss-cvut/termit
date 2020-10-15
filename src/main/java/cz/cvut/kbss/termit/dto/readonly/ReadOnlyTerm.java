@@ -27,7 +27,7 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
     private MultilingualString label;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
-    private Set<String> altLabels;
+    private Set<MultilingualString> altLabels;
 
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
     private Set<String> hiddenLabels;
@@ -103,11 +103,11 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
         this.label = label;
     }
 
-    public Set<String> getAltLabels() {
+    public Set<MultilingualString> getAltLabels() {
         return altLabels;
     }
 
-    public void setAltLabels(Set<String> altLabels) {
+    public void setAltLabels(Set<MultilingualString> altLabels) {
         this.altLabels = altLabels;
     }
 

@@ -736,4 +736,34 @@ class TermDaoTest extends BaseDaoTestRunner {
         assertEquals(term.getUri(), result.get(0).getUri());
         assertEquals(term.getVocabulary(), result.get(0).getVocabulary());
     }
+
+    @Test
+    void updateSupportsUpdatingPluralMultilingualAltLabels() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final MultilingualString altOne = MultilingualString.create("Budova", "cs");
+        term.setAltLabels(new HashSet<>(Collections.singleton(altOne)));
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> em.persist(term, DescriptorFactory.termDescriptor(vocabulary)));
+
+        altOne.set("en", "Building");
+        final MultilingualString altTwo = MultilingualString.create("Construction", "en");
+        altTwo.set("cs", "Stavba");
+        term.getAltLabels().add(altTwo);
+        transactional(() -> sut.update(term));
+
+        final Term result = em.find(Term.class, term.getUri(), DescriptorFactory.termDescriptor(vocabulary));
+        assertNotNull(result);
+        // We have to check it this way because the loaded multilingual labels might be a different combination of the
+        // translations
+        final Map<String, Set<String>> allLabels = new HashMap<>();
+        result.getAltLabels().forEach(alt -> alt.getValue().forEach((lang, val) -> {
+            allLabels.putIfAbsent(lang, new HashSet<>());
+            allLabels.get(lang).add(val);
+        }));
+        term.getAltLabels().forEach(alt -> alt.getValue().forEach((lang, val) -> {
+            assertThat(allLabels, hasKey(lang));
+            assertThat(allLabels.get(lang), hasItem(val));
+        }));
+    }
 }

@@ -14,8 +14,10 @@
  */
 package cz.cvut.kbss.termit.model;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -74,13 +76,14 @@ class TermTest {
     @Test
     void toCsvExportsAltLabelsDelimitedBySemicolons() {
         final Term term = Generator.generateTermWithId();
-        term.setAltLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
+        term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
+                MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertEquals(items.length, 11);
         final String list = items[2];
         assertTrue(list.matches(".+;.+"));
-        term.getAltLabels().forEach(t -> assertTrue(list.contains(t)));
+        term.getAltLabels().forEach(t -> assertTrue(list.contains(t.get())));
     }
 
     @Test
@@ -155,7 +158,8 @@ class TermTest {
     void toExcelExportsTermToExcelRow() {
         final Term term = Generator.generateTermWithId();
         term.setTypes(Collections.singleton(Vocabulary.s_c_object));
-        term.setAltLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
+        term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
+                MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
         term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
@@ -169,7 +173,7 @@ class TermTest {
         term.getLabel().getValue().values()
             .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertTrue(row.getCell(2).getStringCellValue().matches(".+;.+"));
-        term.getAltLabels().forEach(s -> assertTrue(row.getCell(2).getStringCellValue().contains(s)));
+        term.getAltLabels().forEach(s -> assertTrue(row.getCell(2).getStringCellValue().contains(s.get())));
         assertTrue(row.getCell(3).getStringCellValue().matches(".+;.+"));
         term.getHiddenLabels().forEach(s -> assertTrue(row.getCell(3).getStringCellValue().contains(s)));
         term.getDefinition().getValue().values()
@@ -254,5 +258,20 @@ class TermTest {
         sut.addParentTerm(parent);
 
         assertFalse(sut.hasParentInSameVocabulary());
+    }
+
+    @Test
+    void toCsvExportsAltLabelsInDifferentLanguages() {
+        final Term sut = Generator.generateTermWithId();
+        final MultilingualString altOne = MultilingualString.create("Building", "en");
+        altOne.set("cs", "Budova");
+        final MultilingualString altTwo = MultilingualString.create("Construction", "en");
+        altTwo.set("en", "Construction");
+        sut.setAltLabels(new HashSet<>(Arrays.asList(altOne, altTwo)));
+        final String result = sut.toCsv();
+        final String[] items = result.split(",");
+        final String list = items[2];
+        assertTrue(list.matches(".+;.+"));
+        sut.getAltLabels().forEach(t -> t.getValue().values().forEach(v -> assertTrue(list.contains(v))));
     }
 }

@@ -166,9 +166,9 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
                     hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.PREF_LABEL,
                             vf.createLiteral(val, lang)))));
             if (t.getAltLabels() != null && !t.getAltLabels().isEmpty()) {
-                t.getAltLabels().forEach(src -> assertThat(model,
+                t.getAltLabels().forEach(src -> src.getValue().forEach((lang, val) -> assertThat(model,
                         hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.ALT_LABEL,
-                                vf.createLiteral(src)))));
+                                vf.createLiteral(val, lang))))));
 
             }
             if (t.getHiddenLabels() != null && !t.getHiddenLabels().isEmpty()) {

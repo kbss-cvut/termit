@@ -53,7 +53,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     private MultilingualString label;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
-    private Set<String> altLabels;
+    private Set<MultilingualString> altLabels;
 
     @OWLAnnotationProperty(iri = SKOS.HIDDEN_LABEL)
     private Set<String> hiddenLabels;
@@ -134,11 +134,11 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         return label != null ? label.get(config.get(ConfigParam.LANGUAGE)) : null;
     }
 
-    public Set<String> getAltLabels() {
+    public Set<MultilingualString> getAltLabels() {
         return altLabels;
     }
 
-    public void setAltLabels(Set<String> altLabels) {
+    public void setAltLabels(Set<MultilingualString> altLabels) {
         this.altLabels = altLabels;
     }
 
@@ -264,7 +264,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     public String toCsv() {
         final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
         sb.append(',').append(exportMultilingualString(getLabel()));
-        exportMulti(sb, altLabels, String::toString);
+        exportMulti(sb, altLabels, Term::exportMultilingualString);
         exportMulti(sb, hiddenLabels, String::toString);
         sb.append(',').append(exportMultilingualString(definition));
         sb.append(',').append(CsvUtils.sanitizeString(description));
@@ -297,7 +297,9 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         row.createCell(0).setCellValue(getUri().toString());
         row.createCell(1).setCellValue(getLabel().toString());
         if (altLabels != null) {
-            row.createCell(2).setCellValue(String.join(";", altLabels));
+            row.createCell(2).setCellValue(
+                    String.join(";",
+                            altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
         }
         if (hiddenLabels != null) {
             row.createCell(3).setCellValue(String.join(";", hiddenLabels));
