@@ -27,16 +27,16 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
     private MultilingualString label;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
-    private Set<String> altLabels;
+    private Set<MultilingualString> altLabels;
 
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
-    private Set<String> hiddenLabels;
+    private Set<MultilingualString> hiddenLabels;
 
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private String description;
 
     @OWLAnnotationProperty(iri = SKOS.DEFINITION)
-    private String definition;
+    private MultilingualString definition;
 
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
     private Set<String> sources;
@@ -66,7 +66,9 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
         if (term.getHiddenLabels() != null) {
             this.hiddenLabels = new HashSet<>(term.getHiddenLabels());
         }
-        this.definition = term.getDefinition();
+        if (term.getDefinition() != null) {
+            this.definition = new MultilingualString(term.getDefinition().getValue());
+        }
         this.description = term.getDescription();
         this.vocabulary = term.getVocabulary();
         if (term.getSources() != null) {
@@ -101,19 +103,19 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
         this.label = label;
     }
 
-    public Set<String> getAltLabels() {
+    public Set<MultilingualString> getAltLabels() {
         return altLabels;
     }
 
-    public void setAltLabels(Set<String> altLabels) {
+    public void setAltLabels(Set<MultilingualString> altLabels) {
         this.altLabels = altLabels;
     }
 
-    public Set<String> getHiddenLabels() {
+    public Set<MultilingualString> getHiddenLabels() {
         return hiddenLabels;
     }
 
-    public void setHiddenLabels(Set<String> hiddenLabels) {
+    public void setHiddenLabels(Set<MultilingualString> hiddenLabels) {
         this.hiddenLabels = hiddenLabels;
     }
 
@@ -125,11 +127,11 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
         this.description = description;
     }
 
-    public String getDefinition() {
+    public MultilingualString getDefinition() {
         return definition;
     }
 
-    public void setDefinition(String definition) {
+    public void setDefinition(MultilingualString definition) {
         this.definition = definition;
     }
 

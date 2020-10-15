@@ -53,16 +53,16 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     private MultilingualString label;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
-    private Set<String> altLabels;
+    private Set<MultilingualString> altLabels;
 
     @OWLAnnotationProperty(iri = SKOS.HIDDEN_LABEL)
-    private Set<String> hiddenLabels;
+    private Set<MultilingualString> hiddenLabels;
 
     @OWLAnnotationProperty(iri = SKOS.SCOPE_NOTE)
     private String description;
 
     @OWLAnnotationProperty(iri = SKOS.DEFINITION)
-    private String definition;
+    private MultilingualString definition;
 
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
     private Set<String> sources;
@@ -134,19 +134,19 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         return label != null ? label.get(config.get(ConfigParam.LANGUAGE)) : null;
     }
 
-    public Set<String> getAltLabels() {
+    public Set<MultilingualString> getAltLabels() {
         return altLabels;
     }
 
-    public void setAltLabels(Set<String> altLabels) {
+    public void setAltLabels(Set<MultilingualString> altLabels) {
         this.altLabels = altLabels;
     }
 
-    public Set<String> getHiddenLabels() {
+    public Set<MultilingualString> getHiddenLabels() {
         return hiddenLabels;
     }
 
-    public void setHiddenLabels(Set<String> hiddenLabels) {
+    public void setHiddenLabels(Set<MultilingualString> hiddenLabels) {
         this.hiddenLabels = hiddenLabels;
     }
 
@@ -158,11 +158,11 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         this.description = description;
     }
 
-    public String getDefinition() {
+    public MultilingualString getDefinition() {
         return definition;
     }
 
-    public void setDefinition(String definition) {
+    public void setDefinition(MultilingualString definition) {
         this.definition = definition;
     }
 
@@ -264,9 +264,9 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     public String toCsv() {
         final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
         sb.append(',').append(exportMultilingualString(getLabel()));
-        exportMulti(sb, altLabels, String::toString);
-        exportMulti(sb, hiddenLabels, String::toString);
-        sb.append(',').append(CsvUtils.sanitizeString(definition));
+        exportMulti(sb, altLabels, Term::exportMultilingualString);
+        exportMulti(sb, hiddenLabels, Term::exportMultilingualString);
+        sb.append(',').append(exportMultilingualString(definition));
         sb.append(',').append(CsvUtils.sanitizeString(description));
         exportMulti(sb, types, String::toString);
         exportMulti(sb, sources, String::toString);
@@ -297,13 +297,15 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         row.createCell(0).setCellValue(getUri().toString());
         row.createCell(1).setCellValue(getLabel().toString());
         if (altLabels != null) {
-            row.createCell(2).setCellValue(String.join(";", altLabels));
+            row.createCell(2).setCellValue(String.join(";",
+                    altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
         }
         if (hiddenLabels != null) {
-            row.createCell(3).setCellValue(String.join(";", hiddenLabels));
+            row.createCell(3).setCellValue(String.join(";",
+                    altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
         }
         if (definition != null) {
-            row.createCell(4).setCellValue(definition);
+            row.createCell(4).setCellValue(definition.toString());
         }
         if (description != null) {
             row.createCell(5).setCellValue(description);
