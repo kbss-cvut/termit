@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -19,6 +20,7 @@ import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
@@ -485,14 +487,16 @@ class TermDaoTest extends BaseDaoTestRunner {
 
         final Term toUpdate = sut.find(term.getUri()).get();
         assertEquals(Collections.singleton(parent), toUpdate.getParentTerms());
-        final String newDefinition = "Updated definition";
+        final MultilingualString newDefinition = MultilingualString
+                .create("Updated definition", Constants.DEFAULT_LANGUAGE);
         toUpdate.setDefinition(newDefinition);
         transactional(() -> sut.update(toUpdate));
 
         final Term result = em.find(Term.class, term.getUri());
         assertNotNull(result);
         assertEquals(Collections.singleton(parent), result.getParentTerms());
-        assertEquals(newDefinition, result.getDefinition());
+        // TODO Workaround for JOPA issue, remove after fix
+        assertEquals(newDefinition.getValue(), result.getDefinition().getValue());
     }
 
     @Test
@@ -636,7 +640,7 @@ class TermDaoTest extends BaseDaoTestRunner {
                 if (ss.getObject() instanceof Literal) {
                     final Literal litSource = (Literal) ss.getObject();
                     assertFalse(litSource.getLanguage().isPresent());
-                    assertEquals(XMLSchema.STRING, litSource.getDatatype());
+                    assertEquals(XSD.STRING, litSource.getDatatype());
                 } else {
                     assertTrue(ss.getObject() instanceof IRI);
                 }
@@ -731,5 +735,35 @@ class TermDaoTest extends BaseDaoTestRunner {
         assertFalse(result.isEmpty());
         assertEquals(term.getUri(), result.get(0).getUri());
         assertEquals(term.getVocabulary(), result.get(0).getVocabulary());
+    }
+
+    @Test
+    void updateSupportsUpdatingPluralMultilingualAltLabels() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final MultilingualString altOne = MultilingualString.create("Budova", "cs");
+        term.setAltLabels(new HashSet<>(Collections.singleton(altOne)));
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> em.persist(term, DescriptorFactory.termDescriptor(vocabulary)));
+
+        altOne.set("en", "Building");
+        final MultilingualString altTwo = MultilingualString.create("Construction", "en");
+        altTwo.set("cs", "Stavba");
+        term.getAltLabels().add(altTwo);
+        transactional(() -> sut.update(term));
+
+        final Term result = em.find(Term.class, term.getUri(), DescriptorFactory.termDescriptor(vocabulary));
+        assertNotNull(result);
+        // We have to check it this way because the loaded multilingual labels might be a different combination of the
+        // translations
+        final Map<String, Set<String>> allLabels = new HashMap<>();
+        result.getAltLabels().forEach(alt -> alt.getValue().forEach((lang, val) -> {
+            allLabels.putIfAbsent(lang, new HashSet<>());
+            allLabels.get(lang).add(val);
+        }));
+        term.getAltLabels().forEach(alt -> alt.getValue().forEach((lang, val) -> {
+            assertThat(allLabels, hasKey(lang));
+            assertThat(allLabels.get(lang), hasItem(val));
+        }));
     }
 }

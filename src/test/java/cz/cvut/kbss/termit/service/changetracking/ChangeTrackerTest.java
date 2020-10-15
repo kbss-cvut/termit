@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -13,6 +14,7 @@ import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +96,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(original, DescriptorFactory.termDescriptor(vocabulary)));
 
         final Term update = cloneOf(original);
-        update.setDefinition("Updated definition of this term.");
+        update.setDefinition(MultilingualString.create("Updated definition of this term.", Constants.DEFAULT_LANGUAGE));
         transactional(() -> sut.recordUpdateEvent(update, original));
 
         final List<AbstractChangeRecord> result = findRecords();
@@ -113,7 +115,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(original, DescriptorFactory.termDescriptor(vocabulary)));
 
         final Term update = cloneOf(original);
-        update.setDefinition("Updated definition of this term.");
+        update.setDefinition(MultilingualString.create("Updated definition of this term.", Constants.DEFAULT_LANGUAGE));
         update.setSources(Collections.singleton(Generator.generateUri().toString()));
         transactional(() -> sut.recordUpdateEvent(update, original));
 
