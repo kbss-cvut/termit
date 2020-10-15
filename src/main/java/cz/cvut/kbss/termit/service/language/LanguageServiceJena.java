@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.language;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -73,9 +74,9 @@ public class LanguageServiceJena extends LanguageService {
                  final Term t = new Term();
                  t.setUri(URI.create(c.getURI()));
                  if (c.getProperty(RDFS.label, lang) != null) {
-                     t.setLabel(c.getProperty(RDFS.label, lang).getObject().asLiteral().getString());
+                     t.setLabel(MultilingualString.create(c.getProperty(RDFS.label, lang).getObject().asLiteral().getString(), lang));
                  } else {
-                     t.setLabel(t.getUri().toString());
+                     t.setLabel(MultilingualString.create(t.getUri().toString(), null));
                  }
 
                  final Statement st = c.getProperty(RDFS.comment, lang);

@@ -27,7 +27,7 @@ public class UpdateChangeRecord extends AbstractChangeRecord {
     public UpdateChangeRecord() {
     }
 
-    public UpdateChangeRecord(Asset changedAsset) {
+    public UpdateChangeRecord(Asset<?> changedAsset) {
         super(changedAsset);
     }
 

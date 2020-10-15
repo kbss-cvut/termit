@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.model;
 
@@ -61,7 +58,7 @@ class TermTest {
         final String[] items = result.split(",");
         assertThat(items.length, greaterThanOrEqualTo(4));
         assertEquals(term.getUri().toString(), items[0]);
-        assertEquals(term.getLabel(), items[1]);
+        term.getLabel().getValue().values().forEach(v -> assertThat(items[1], containsString(v)));
         assertEquals(term.getDefinition(), items[4]);
         assertEquals(term.getDescription(), items[5]);
     }
@@ -77,7 +74,7 @@ class TermTest {
     @Test
     void toCsvExportsAltLabelsDelimitedBySemicolons() {
         final Term term = Generator.generateTermWithId();
-        term.setAltLabels(new HashSet<>(Arrays.asList("Pivko","Pivečko")));
+        term.setAltLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertEquals(items.length, 11);
@@ -89,7 +86,7 @@ class TermTest {
     @Test
     void toCsvExportsHiddenLabelsDelimitedBySemicolons() {
         final Term term = Generator.generateTermWithId();
-        term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko","Pivečko")));
+        term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertEquals(items.length, 11);
@@ -158,8 +155,8 @@ class TermTest {
     void toExcelExportsTermToExcelRow() {
         final Term term = Generator.generateTermWithId();
         term.setTypes(Collections.singleton(Vocabulary.s_c_object));
-        term.setAltLabels(new HashSet<>(Arrays.asList("Pivko","Pivečko")));
-        term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko","Pivečko")));
+        term.setAltLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
+        term.setHiddenLabels(new HashSet<>(Arrays.asList("Pivko", "Pivečko")));
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
@@ -169,7 +166,8 @@ class TermTest {
         final XSSFRow row = sheet.createRow(0);
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
-        assertEquals(term.getLabel(), row.getCell(1).getStringCellValue());
+        term.getLabel().getValue().values()
+            .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertTrue(row.getCell(2).getStringCellValue().matches(".+;.+"));
         term.getAltLabels().forEach(s -> assertTrue(row.getCell(2).getStringCellValue().contains(s)));
         assertTrue(row.getCell(3).getStringCellValue().matches(".+;.+"));
@@ -197,7 +195,8 @@ class TermTest {
         final XSSFRow row = sheet.createRow(0);
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
-        assertEquals(term.getLabel(), row.getCell(1).getStringCellValue());
+        term.getLabel().getValue().values()
+            .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertEquals(11, row.getLastCellNum());
     }
 
@@ -212,7 +211,8 @@ class TermTest {
         final XSSFRow row = sheet.createRow(0);
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
-        assertEquals(term.getLabel(), row.getCell(1).getStringCellValue());
+        term.getLabel().getValue().values()
+            .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
         term.getSources().forEach(s -> assertTrue(row.getCell(7).getStringCellValue().contains(s)));
     }

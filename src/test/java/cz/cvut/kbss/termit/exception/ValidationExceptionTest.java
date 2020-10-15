@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.exception;
 
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.util.ValidationResult;
+import cz.cvut.kbss.termit.validation.ValidationResult;
 import org.junit.jupiter.api.Test;
 
 import javax.validation.Validation;

@@ -82,10 +82,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         }
         final Term tOne = new Term();
         tOne.setUri(Generator.generateUri());
-        tOne.setLabel("Term one");
+        tOne.setPrimaryLabel("Term one");
         final Term tTwo = new Term();
         tTwo.setUri(Generator.generateUri());
-        tTwo.setLabel("Term two");
+        tTwo.setPrimaryLabel("Term two");
         final Map<Term, List<TermOccurrence>> map = new HashMap<>();
         map.put(tOne, new ArrayList<>());
         map.put(tTwo, new ArrayList<>());
