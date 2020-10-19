@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -34,6 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.config.WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,6 +71,7 @@ class TermDaoTest extends BaseDaoTestRunner {
                                                                                                    .getVocabularyInfo(
                                                                                                            vocabulary
                                                                                                                    .getUri());
+        doReturn(Collections.singleton(vocabulary.getUri())).when(wsMetadata).getChangeTrackingContexts();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
@@ -694,7 +697,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             em.persist(persistRecord.getAuthor());
-            em.persist(persistRecord);
+            em.persist(persistRecord, new EntityDescriptor(vocabulary.getUri()).addAttributeContext(
+                    descriptorFactory.fieldSpec(PersistChangeRecord.class, "author"), null));
         });
 
         final List<RecentlyModifiedAsset> result = sut.findLastEdited(1);

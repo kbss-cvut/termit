@@ -65,6 +65,15 @@ public class PersistenceUtils {
     }
 
     /**
+     * Gets identifiers of change tracking contexts in the currently loaded workspace.
+     *
+     * @return Set of context identifiers
+     */
+    public Set<URI> getCurrentWorkspaceChangeTrackingContexts() {
+        return workspaceMetadataProvider.getCurrentWorkspaceMetadata().getChangeTrackingContexts();
+    }
+
+    /**
      * Gets JOPA metamodel.
      *
      * @return Metamodel of the persistence unit

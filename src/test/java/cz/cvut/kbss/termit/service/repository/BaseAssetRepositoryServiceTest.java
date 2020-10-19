@@ -15,7 +15,9 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
+import cz.cvut.kbss.termit.dto.workspace.WorkspaceMetadata;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -23,7 +25,9 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,18 +40,27 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import javax.validation.Validator;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.config.WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
 
 class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
+
+    @Autowired
+    private WorkspaceMetadataProvider wsMetadataProvider;
 
     @Autowired
     private BaseAssetRepositoryServiceImpl sut;
@@ -70,6 +83,8 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
 
     @BeforeEach
     void setUp() {
+        final WorkspaceMetadata wsMetadata = wsMetadataProvider.getCurrentWorkspaceMetadata();
+        doReturn(Collections.singleton(DEFAULT_VOCABULARY_CTX)).when(wsMetadata).getChangeTrackingContexts();
         final User author = Generator.generateUserWithId();
         transactional(() -> em.persist(author));
         Environment.setCurrentUser(author);
@@ -85,7 +100,9 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
                                                                      .collect(
                                                                              Collectors.toList());
         setCreated(persistRecords);
-        transactional(() -> persistRecords.forEach(em::persist));
+        transactional(() -> persistRecords
+                .forEach(r -> em.persist(r, new EntityDescriptor(DEFAULT_VOCABULARY_CTX).addAttributeContext(
+                        descriptorFactory.fieldSpec(PersistChangeRecord.class, "author"), null))));
 
         em.getEntityManagerFactory().getCache().evictAll();
 
@@ -114,7 +131,9 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
                                                                      .collect(
                                                                              Collectors.toList());
         setCreated(persistRecords);
-        transactional(() -> persistRecords.forEach(em::persist));
+        transactional(() -> persistRecords
+                .forEach(r -> em.persist(r, new EntityDescriptor(DEFAULT_VOCABULARY_CTX).addAttributeContext(
+                        descriptorFactory.fieldSpec(PersistChangeRecord.class, "author"), null))));
         em.getEntityManagerFactory().getCache().evictAll();
 
         final int count = 2;
