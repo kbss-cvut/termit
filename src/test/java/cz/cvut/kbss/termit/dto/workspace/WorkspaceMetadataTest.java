@@ -51,4 +51,25 @@ class WorkspaceMetadataTest {
         assertEquals(3, result.size());
         assertThat(result, hasItems(dataOne.getContext(), dataTwo.getContext(), dataThree.getContext()));
     }
+
+    @Test
+    void getChangeTrackingContextsRetrievesChangeTrackingContextsOfAllVocabulariesInWorkspace() {
+        final WorkspaceMetadata sut = new WorkspaceMetadata(WorkspaceGenerator.generateWorkspace());
+        final VocabularyInfo dataOne = new VocabularyInfo(Generator.generateVocabularyWithId().getUri(),
+                Generator.generateUri(), Generator.generateUri());
+        final VocabularyInfo dataTwo = new VocabularyInfo(Generator.generateVocabularyWithId().getUri(),
+                Generator.generateUri(), Generator.generateUri());
+        final VocabularyInfo dataThree = new VocabularyInfo(Generator.generateVocabularyWithId().getUri(),
+                Generator.generateUri(), Generator.generateUri());
+        sut.setVocabularies(new HashMap<>());
+        sut.getVocabularies().put(dataOne.getUri(), dataOne);
+        sut.getVocabularies().put(dataTwo.getUri(), dataTwo);
+        sut.getVocabularies().put(dataThree.getUri(), dataThree);
+
+        final Set<URI> result = sut.getChangeTrackingContexts();
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertThat(result, hasItems(dataOne.getChangeTrackingContext(), dataTwo.getChangeTrackingContext(),
+                dataThree.getChangeTrackingContext()));
+    }
 }

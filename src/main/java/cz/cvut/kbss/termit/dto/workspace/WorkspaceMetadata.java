@@ -71,6 +71,15 @@ public class WorkspaceMetadata {
         return vocabularies.values().stream().map(VocabularyInfo::getContext).collect(Collectors.toSet());
     }
 
+    /**
+     * Gets the set of contexts in which changes of vocabularies in this workspace are stored.
+     *
+     * @return set of change tracking contexts
+     */
+    public Set<URI> getChangeTrackingContexts() {
+        return vocabularies.values().stream().map(VocabularyInfo::getChangeTrackingContext).collect(Collectors.toSet());
+    }
+
     @Override
     public String toString() {
         return "WorkspaceMetadata{" +
