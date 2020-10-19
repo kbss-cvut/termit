@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.PersistenceUtils;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceBasedAssetDao;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -37,19 +38,16 @@ import java.net.URI;
 import java.util.*;
 
 @Repository
-public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastModification {
+public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements SupportsLastModification {
 
     private static final URI LABEL_PROPERTY = URI.create(DC.Terms.TITLE);
-
-    private final PersistenceUtils persistenceUtils;
 
     private volatile long lastModified;
 
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
                          PersistenceUtils persistenceUtils) {
-        super(Vocabulary.class, em, config, descriptorFactory);
-        this.persistenceUtils = persistenceUtils;
+        super(Vocabulary.class, em, config, descriptorFactory, persistenceUtils);
         refreshLastModified();
     }
 

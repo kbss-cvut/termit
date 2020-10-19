@@ -40,7 +40,7 @@ public abstract class AssetDao<T extends Asset> extends BaseDao<T> {
 
     protected final DescriptorFactory descriptorFactory;
 
-    AssetDao(Class<T> type, EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
+    protected AssetDao(Class<T> type, EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
         super(type, em);
         this.config = config;
         this.descriptorFactory = descriptorFactory;
@@ -104,7 +104,7 @@ public abstract class AssetDao<T extends Asset> extends BaseDao<T> {
                  .setParameter("type", typeUri).setMaxResults(limit).getResultList();
     }
 
-    private void loadLastEditors(List<RecentlyModifiedAsset> modified) {
+    protected void loadLastEditors(List<RecentlyModifiedAsset> modified) {
         modified.forEach(m -> m.setEditor(em.find(User.class, m.getModifiedBy())));
     }
 

@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.PersistenceUtils;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceBasedAssetDao;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,20 +37,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Repository
-public class TermDao extends AssetDao<Term> {
+public class TermDao extends WorkspaceBasedAssetDao<Term> {
 
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
 
     private final VocabularyDao vocabularyDao;
 
-    private final PersistenceUtils persistenceUtils;
-
     @Autowired
     public TermDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
                    VocabularyDao vocabularyDao, PersistenceUtils persistenceUtils) {
-        super(Term.class, em, config, descriptorFactory);
+        super(Term.class, em, config, descriptorFactory, persistenceUtils);
         this.vocabularyDao = vocabularyDao;
-        this.persistenceUtils = persistenceUtils;
     }
 
     @Override
