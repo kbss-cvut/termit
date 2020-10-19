@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
@@ -186,25 +187,9 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
     }
 
     @Override
-    List<URI> findUniqueLastModifiedEntities(int limit) {
-        // Must ensure vocabularies (which are technically also resources) are not included
-        return em.createNativeQuery("SELECT DISTINCT ?entity WHERE {" +
-                "?x a ?change ;" +
-                "?hasModificationDate ?modified ;" +
-                "?hasModifiedEntity ?entity ." +
-                "?entity a ?type ." +
-                "FILTER NOT EXISTS { ?entity a ?vocabulary . }" +
-                "} ORDER BY DESC(?modified)", URI.class).setParameter("change", URI.create(Vocabulary.s_c_zmena))
-                 .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                 .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                 .setParameter("type", typeUri)
-                 .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                 .setMaxResults(limit).getResultList();
-    }
-
-    @Override
     List<URI> findUniqueLastModifiedEntitiesBy(User author, int limit) {
-        return em.createNativeQuery("SELECT DISTINCT ?entity WHERE {" +
+        // Must ensure vocabularies (which are technically also resources) are not included
+        final TypedQuery<URI> q = em.createNativeQuery("SELECT DISTINCT ?entity WHERE {" +
                 "?x a ?change ;" +
                 "?hasModificationDate ?modified ;" +
                 "?hasEditor ?author ;" +
@@ -212,13 +197,17 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
                 "?entity a ?type ." +
                 "FILTER NOT EXISTS { ?entity a ?vocabulary . }" +
                 "} ORDER BY DESC(?modified)", URI.class).setParameter("change", URI.create(Vocabulary.s_c_zmena))
-                 .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                 .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
-                 .setParameter("author", author)
-                 .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                 .setParameter("type", typeUri)
-                 .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                 .setMaxResults(limit).getResultList();
+                                    .setParameter("hasModificationDate",
+                                            URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
+                                    .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
+                                    .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
+                                    .setParameter("type", typeUri)
+                                    .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                                    .setMaxResults(limit);
+        if (author != null) {
+            q.setParameter("author", author);
+        }
+        return q.getResultList();
     }
 
     @Override
