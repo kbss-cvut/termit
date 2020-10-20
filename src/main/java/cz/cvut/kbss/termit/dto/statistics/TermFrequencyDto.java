@@ -6,15 +6,13 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import java.io.Serializable;
 import java.net.URI;
 
-@SparqlResultSetMapping(name = "TermFrequencyDto", classes = {@ConstructorResult(targetClass = TermFrequencyDto.class,
-                                                                                 variables = {
-                                                                                         @VariableResult(name = "id",
-                                                                                                         type = URI.class),
-                                                                                         @VariableResult(name = "count",
-                                                                                                         type = Integer.class),
-                                                                                         @VariableResult(name = "label",
-                                                                                                         type = String.class)
-                                                                                 })})
+@SparqlResultSetMapping(name = "TermFrequencyDto", classes = {
+        @ConstructorResult(targetClass = TermFrequencyDto.class,
+                variables = {
+                        @VariableResult(name = "vocabulary", type = URI.class),
+                        @VariableResult(name = "count", type = Integer.class),
+                        @VariableResult(name = "label", type = String.class)
+                })})
 public class TermFrequencyDto implements Serializable {
 
     @Id
@@ -26,8 +24,8 @@ public class TermFrequencyDto implements Serializable {
     @OWLDataProperty(iri = RDFS.LABEL)
     private String label;
 
-    public TermFrequencyDto(URI id, Integer count, String label) {
-        this.id = id;
+    public TermFrequencyDto(URI vocabulary, Integer count, String label) {
+        this.id = vocabulary;
         this.count = count;
         this.label = label;
     }
