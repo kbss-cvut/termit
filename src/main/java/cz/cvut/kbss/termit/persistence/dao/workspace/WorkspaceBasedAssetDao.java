@@ -42,9 +42,9 @@ public abstract class WorkspaceBasedAssetDao<T extends Asset> extends AssetDao<T
                 final Query q = em
                         .createNativeQuery(
                                 "SELECT DISTINCT ?entity ?label ?modified ?modifiedBy ?vocabulary ?type ?changeType WHERE {" +
+                                        "?x a ?change ." +  // This is inferred, so potentially in the inference context
                                         "GRAPH ?g {" +
-                                        "?x a ?change ;" +
-                                        "   a ?chType ;" +
+                                        "?x a ?chType ;" +
                                         "?hasModifiedEntity ?ent ;" +
                                         "?hasEditor ?author ;" +
                                         "?hasModificationDate ?modified . " +
@@ -86,9 +86,9 @@ public abstract class WorkspaceBasedAssetDao<T extends Asset> extends AssetDao<T
 
     List<URI> findUniqueLastModifiedEntitiesBy(User author, int limit) {
         final TypedQuery<URI> q = em.createNativeQuery("SELECT DISTINCT ?entity WHERE {" +
+                "?x a ?change ." +  // This is inferred, so potentially in the inference context
                 "GRAPH ?g {" +
-                "?x a ?change ;" +
-                "?hasModificationDate ?modified ;" +
+                "?x ?hasModificationDate ?modified ;" +
                 "?hasEditor ?author ;" +
                 "?hasModifiedEntity ?entity . }" +
                 "?entity a ?type ." +
