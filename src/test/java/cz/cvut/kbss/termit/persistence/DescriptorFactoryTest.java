@@ -34,8 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class DescriptorFactoryTest extends BaseDaoTestRunner {
@@ -108,5 +107,19 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         when(docFieldSpec.getJavaField()).thenReturn(File.getDocumentField());
         final Descriptor docDescriptor = result.getAttributeDescriptor(docFieldSpec);
         assertNotNull(docDescriptor);
+    }
+
+    @Test
+    void termDescriptorCreatesDescriptorWithVocabularyAndParentTermsVocabularyFieldInDefaultContext() throws Exception {
+        final Set<URI> vocabUris =
+                IntStream.range(0, 5).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
+        final WorkspaceMetadata wsMetadata = workspaceMetadataProvider.getCurrentWorkspaceMetadata();
+        doReturn(vocabUris).when(wsMetadata).getVocabularyContexts();
+        final Descriptor result = sut.termDescriptor(term);
+        final FieldSpecification<?, ?> vocSpec = mock(FieldSpecification.class);
+        when(vocSpec.getJavaField()).thenReturn(Term.class.getDeclaredField("vocabulary"));
+        assertTrue(result.getAttributeContexts(vocSpec).isEmpty());
+        final Descriptor parentDescriptor = result.getAttributeDescriptor(parentFieldSpec);
+        assertTrue(parentDescriptor.getAttributeContexts(vocSpec).isEmpty());
     }
 }

@@ -60,6 +60,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
                                                                                                    .getVocabularyInfo(
                                                                                                            vocabulary
                                                                                                                    .getUri());
+        doReturn(Collections.singleton(vocabulary.getUri())).when(wsMetadata).getVocabularyContexts();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
