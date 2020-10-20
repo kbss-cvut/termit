@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Objects;
 
 @SparqlResultSetMapping(name = "TermFrequencyDto", classes = {
         @ConstructorResult(targetClass = TermFrequencyDto.class,
@@ -23,6 +24,10 @@ public class TermFrequencyDto implements Serializable {
 
     @OWLDataProperty(iri = RDFS.LABEL)
     private String label;
+
+    public TermFrequencyDto() {
+        // Default constructor for Jackson
+    }
 
     public TermFrequencyDto(URI vocabulary, Integer count, String label) {
         this.id = vocabulary;
@@ -52,5 +57,22 @@ public class TermFrequencyDto implements Serializable {
 
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof TermFrequencyDto)) {
+            return false;
+        }
+        TermFrequencyDto that = (TermFrequencyDto) o;
+        return Objects.equals(id, that.id) && Objects.equals(count, that.count) && Objects.equals(label, that.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, count, label);
     }
 }
