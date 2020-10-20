@@ -25,7 +25,7 @@ public class StatisticsController {
         this.statisticsService = statisticsService;
     }
 
-    @GetMapping(value = "/term-frequency", produces = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/term-frequency", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermFrequencyDto> getTermFrequencyStatistics() {
         return statisticsService.getTermFrequencyStatistics();
     }
