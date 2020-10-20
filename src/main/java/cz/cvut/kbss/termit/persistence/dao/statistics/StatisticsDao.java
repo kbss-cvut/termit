@@ -31,7 +31,7 @@ public class StatisticsDao {
      * @return List of term frequency information instances
      */
     public List<TermFrequencyDto> getTermFrequencyStatistics(Workspace workspace) {
-        String query = Utils.loadQuery("statistics " + File.separator + "termFrequency.rq");
+        String query = Utils.loadQuery("statistics" + File.separator + "termFrequency.rq");
         return em.createNativeQuery(query, "TermFrequencyDto")
                  .setParameter("contexts", persistenceUtils.getWorkspaceVocabularyContexts(workspace)).getResultList();
     }
