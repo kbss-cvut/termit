@@ -9,7 +9,11 @@ SELECT ?vocabulary ?label ( COUNT(DISTINCT ?term) AS ?count ) {
     ?term a-popis-dat-pojem:je-pojmem-ze-slovníku ?vocabulary .
     OPTIONAL {
         ?vocabulary dc:title ?labelS .
+        FILTER langMatches(lang(?labelS), ?lang)
     }
+    OPTIONAL {
+            ?vocabulary dc:title ?labelS .
+        }
     FILTER (?g in (?contexts))
     BIND(COALESCE(?labelS,str(?vocabulary)) as ?label)
 } GROUP BY ?vocabulary ?label ORDER BY ?count

@@ -14,6 +14,7 @@ import java.util.Objects;
                         @VariableResult(name = "count", type = Integer.class),
                         @VariableResult(name = "label", type = String.class)
                 })})
+@OWLClass(iri = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/term-frequency")
 public class TermFrequencyDto implements Serializable {
 
     @Id
