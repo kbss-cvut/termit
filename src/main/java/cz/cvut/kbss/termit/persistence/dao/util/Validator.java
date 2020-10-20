@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -49,7 +50,7 @@ public class Validator {
     private Model getModelFromRdf4jRepository(final Collection<URI> vocabularyIris)
         throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final OutputStreamWriter writer = new OutputStreamWriter(baos);
+        final OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
         final RepositoryConnection c = repository.getConnection();
         final List<IRI> iris = new ArrayList<>();
         vocabularyIris.forEach(i -> iris.add(vf.createIRI(i.toString())));
