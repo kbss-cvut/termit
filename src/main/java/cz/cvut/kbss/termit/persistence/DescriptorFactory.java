@@ -240,9 +240,11 @@ public class DescriptorFactory {
      */
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        final FieldSpecification<? super Term, ?> fieldSpec = fieldSpec(Term.class, "parentTerms");
-        persistenceUtils.getCurrentWorkspaceVocabularyContexts()
-                        .forEach(ctx -> descriptor.addAttributeContext(fieldSpec, ctx));
+        final EntityDescriptor parentDescriptor = new EntityDescriptor();
+        parentDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
+                new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
+        persistenceUtils.getCurrentWorkspaceVocabularyContexts().forEach(parentDescriptor::addContext);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), parentDescriptor);
         // Definition source is inferred. That means it is in a special context in GraphDB. Therefore, we need to use
         // the default context to prevent JOPA from thinking the value has changed on merge
         descriptor.addAttributeContext(fieldSpec(Term.class, "definitionSource"), null);
