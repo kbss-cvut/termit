@@ -124,7 +124,7 @@ public class TermController extends BaseController {
      * @return List of root terms of the specific vocabulary
      */
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/roots",
-            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+            produces = "application/json;charset=UTF-8")
     public List<Term> getAllRoots(@PathVariable String vocabularyIdFragment,
                                   @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                                   @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
