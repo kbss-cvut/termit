@@ -172,6 +172,7 @@ public class VocabularyController extends BaseController {
      * @param namespace (optional) vocabulary nanespace
      * @return list of validation outcomes
      */
+    @PreAuthorize("permitAll()")
     @GetMapping(value = "/{fragment}/validate", produces = {MediaType.APPLICATION_JSON_VALUE,
         JsonLd.MEDIA_TYPE})
     public List<ValidationResult> validateVocabulary(@PathVariable String fragment,

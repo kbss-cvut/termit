@@ -5,7 +5,9 @@ import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.termit.model.Term;
 import java.net.URI;
+import java.util.Objects;
 import org.topbraid.shacl.vocabulary.SH;
 
 @OWLClass(iri = SH.BASE_URI + "ValidationResult")
@@ -80,5 +82,22 @@ public class ValidationResult {
     public ValidationResult setIssueCauseUri(URI issueCauseUri) {
         this.issueCauseUri = issueCauseUri;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Term)) {
+            return false;
+        }
+        Term term = (Term) o;
+        return Objects.equals(getId(), term.getUri());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
     }
 }
