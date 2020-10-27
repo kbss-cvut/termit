@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,11 +16,16 @@ public class StatisticsService {
 
     private final WorkspaceMetadataProvider wsMetadataProvider;
 
+    private final VocabularyService vocabularyService;
+
     private final StatisticsDao statisticsDao;
 
     @Autowired
-    public StatisticsService(WorkspaceMetadataProvider wsMetadataProvider, StatisticsDao statisticsDao) {
+    public StatisticsService(WorkspaceMetadataProvider wsMetadataProvider,
+                             VocabularyService vocabularyService,
+                             StatisticsDao statisticsDao) {
         this.wsMetadataProvider = wsMetadataProvider;
+        this.vocabularyService = vocabularyService;
         this.statisticsDao = statisticsDao;
     }
 
@@ -41,5 +47,15 @@ public class StatisticsService {
     public List<TermFrequencyDto> getTermTypeFrequencyStatistics(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return statisticsDao.getTermTypeFrequencyStatistics(wsMetadataProvider.getCurrentWorkspace(), vocabulary);
+    }
+
+    /**
+     * Gets a reference to a vocabulary with the specified identifier.
+     *
+     * @param vocabularyId Vocabulary identifier
+     * @return Vocabulary instance reference
+     */
+    public Vocabulary getRequiredVocabulary(URI vocabularyId) {
+        return vocabularyService.getRequiredReference(vocabularyId);
     }
 }
