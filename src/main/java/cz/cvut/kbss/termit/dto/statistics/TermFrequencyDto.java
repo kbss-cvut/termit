@@ -10,7 +10,7 @@ import java.util.Objects;
 @SparqlResultSetMapping(name = "TermFrequencyDto", classes = {
         @ConstructorResult(targetClass = TermFrequencyDto.class,
                 variables = {
-                        @VariableResult(name = "vocabulary", type = URI.class),
+                        @VariableResult(name = "item", type = URI.class),
                         @VariableResult(name = "count", type = Integer.class),
                         @VariableResult(name = "label", type = String.class)
                 })})
@@ -75,5 +75,10 @@ public class TermFrequencyDto implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(id, count, label);
+    }
+
+    @Override
+    public String toString() {
+        return "TermFrequencyDto{<" + id + ">(" + label + "), count=" + count + '}';
     }
 }

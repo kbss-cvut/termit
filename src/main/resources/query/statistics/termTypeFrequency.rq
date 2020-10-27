@@ -1,0 +1,25 @@
+PREFIX a-popis-dat-pojem: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+PREFIX z-sgov-pojem: <https://slovník.gov.cz/základní/pojem/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX dc: <http://purl.org/dc/terms/>
+
+SELECT (?type as ?item) ?label (COUNT(DISTINCT ?term) AS ?count) WHERE {
+    GRAPH ?g { ?term a skos:Concept . }
+    ?term a-popis-dat-pojem:je-pojmem-ze-slovníku ?vocabulary .
+
+  	OPTIONAL {
+        GRAPH ?g { ?term a ?t .}
+        FILTER(?t in (z-sgov-pojem:typ-objektu,
+                      z-sgov-pojem:typ-vlastnosti,
+                      z-sgov-pojem:typ-vztahu,
+                      z-sgov-pojem:typ-události ))
+        OPTIONAL {
+            ?t rdfs:label ?lT .
+            FILTER langMatches(lang(?lT), ?lang)
+        }
+    }
+    BIND(COALESCE(?t,a-popis-dat-pojem:not-filled) as ?type)
+    BIND(COALESCE(?lT,str(?t)) as ?label)
+} GROUP BY ?type ?label ORDER BY DESC(?count)

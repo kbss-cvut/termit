@@ -25,7 +25,7 @@ public class PersistenceUtils {
     }
 
     /**
-     * Gets the current workspace's identifier.
+     * Gets the current workspace identifier.
      *
      * @return Current workspace IRI
      */
@@ -43,6 +43,21 @@ public class PersistenceUtils {
     public URI resolveVocabularyContext(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         return workspaceMetadataProvider.getCurrentWorkspaceMetadata().getVocabularyInfo(vocabularyUri).getContext();
+    }
+
+    /**
+     * Determines the identifier of the repository context (named graph) in which vocabulary with the specified
+     * identifier is stored in the specified workspace.
+     *
+     * @param workspace     Workspace containing the vocabulary
+     * @param vocabularyUri Vocabulary identifier
+     * @return Repository context identifier
+     */
+    public URI resolveVocabularyContext(Workspace workspace, URI vocabularyUri) {
+        Objects.requireNonNull(workspace);
+        Objects.requireNonNull(vocabularyUri);
+        return workspaceMetadataProvider.getWorkspaceMetadata(workspace.getUri()).getVocabularyInfo(vocabularyUri)
+                                        .getContext();
     }
 
     /**
