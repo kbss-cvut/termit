@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.util.Constants;
+import java.util.Arrays;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -204,6 +205,22 @@ public class Generator {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
         return vocabulary;
+    }
+
+    public static Term generateMultiLingualTerm(String... languages) {
+        final Term term = new Term();
+        final MultilingualString label = new MultilingualString();
+        final MultilingualString definition = new MultilingualString();
+        int id = randomInt();
+        Arrays.stream(languages).forEach( language -> {
+            label.set(language, "Term-" + language + "-" + id);
+            definition.set(language, "Normative definition of term " + language + "-" + id);
+            definition.set(language, "Normative definition of term " + language + "-" + id);
+        });
+        term.setLabel(label);
+        term.setDefinition(definition);
+        term.setDescription("Comment " + id);
+        return term;
     }
 
     public static Term generateTerm() {

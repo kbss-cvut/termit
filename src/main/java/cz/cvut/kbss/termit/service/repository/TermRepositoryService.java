@@ -238,10 +238,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      *
      * @param label      Label to check
      * @param vocabulary Vocabulary in which terms will be searched
+     * @param language   Language to check the existence in
      * @return Whether term with {@code label} already exists in vocabulary
      */
-    public boolean existsInVocabulary(String label, Vocabulary vocabulary) {
-        return termDao.existsInVocabulary(label, vocabulary);
+    public boolean existsInVocabulary(String label, Vocabulary vocabulary, String language) {
+        return termDao.existsInVocabulary(label, vocabulary, language);
     }
 
     /**

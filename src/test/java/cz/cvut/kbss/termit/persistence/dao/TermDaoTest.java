@@ -189,7 +189,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
         final String label = terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE);
-        assertTrue(sut.existsInVocabulary(label, vocabulary));
+        assertTrue(sut.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE));
     }
 
     @Test
@@ -197,7 +197,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        assertFalse(sut.existsInVocabulary("unknown label", vocabulary));
+        assertFalse(sut.existsInVocabulary("unknown label", vocabulary, Constants.DEFAULT_LANGUAGE));
     }
 
     @Test
@@ -206,8 +206,20 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(terms, vocabulary);
 
         final String label = terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE).toLowerCase();
-        assertTrue(sut.existsInVocabulary(label, vocabulary));
+        assertTrue(sut.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE));
     }
+
+    @Test
+    void existsInVocabularyReturnsFalseForLabelExistingInAnotherLanguageInTheVocabulary() {
+        final Term term = Generator.generateMultiLingualTerm("en","cs");
+        final List<Term> terms = Collections.singletonList(term);
+        addTermsAndSave(new HashSet<>(terms), vocabulary);
+
+        final String label = terms.get(0).getLabel().get("en");
+        assertTrue(sut.existsInVocabulary(label, vocabulary, "en"));
+        assertFalse(sut.existsInVocabulary(label, vocabulary, "cs"));
+    }
+
 
     @Test
     void findAllGetsAllTermsInVocabulary() {

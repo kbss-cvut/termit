@@ -314,7 +314,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        assertTrue(sut.existsInVocabulary(t.getLabel().get(Constants.DEFAULT_LANGUAGE), vocabulary));
+        assertTrue(sut.existsInVocabulary(t.getLabel().get(Constants.DEFAULT_LANGUAGE), vocabulary, Constants.DEFAULT_LANGUAGE));
     }
 
     @Test

@@ -389,20 +389,21 @@ public class TermDao extends AssetDao<Term> {
      * @param vocabulary Vocabulary in which terms will be searched
      * @return Whether term with {@code label} already exists in vocabulary
      */
-    public boolean existsInVocabulary(String label, Vocabulary vocabulary) {
+    public boolean existsInVocabulary(String label, Vocabulary vocabulary, String languageTag) {
         Objects.requireNonNull(label);
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("ASK { ?term a ?type ; " +
                     "?hasLabel ?label ;" +
                     "?inVocabulary ?vocabulary ." +
-                    "FILTER (LCASE(?label) = LCASE(?searchString)) . }", Boolean.class)
+                    "FILTER (LCASE(?label) = LCASE(?searchString)) . "
+                + "}", Boolean.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("inVocabulary",
                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                      .setParameter("vocabulary", vocabulary.getUri())
-                     .setParameter("searchString", label, config.get(ConfigParam.LANGUAGE)).getSingleResult();
+                     .setParameter("searchString", label, languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

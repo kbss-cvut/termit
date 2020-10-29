@@ -178,9 +178,9 @@ class TermServiceTest extends BaseServiceTestRunner {
     @Test
     void existsInVocabularyChecksForLabelExistenceInVocabularyViaRepositoryService() {
         final String label = "test";
-        when(termRepositoryService.existsInVocabulary(label, vocabulary)).thenReturn(true);
-        assertTrue(sut.existsInVocabulary(label, vocabulary));
-        verify(termRepositoryService).existsInVocabulary(label, vocabulary);
+        when(termRepositoryService.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE)).thenReturn(true);
+        assertTrue(sut.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE));
+        verify(termRepositoryService).existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE);
     }
 
     @Test

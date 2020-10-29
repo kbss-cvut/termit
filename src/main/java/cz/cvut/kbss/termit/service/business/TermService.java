@@ -244,12 +244,13 @@ public class TermService implements RudService<Term>,ChangeRecordProvider<Term> 
      *
      * @param termLabel  Label to search for
      * @param vocabulary Vocabulary in which to search
+     * @param language   Language to check existence in.
      * @return Whether a matching label was found
      */
-    public boolean existsInVocabulary(String termLabel, Vocabulary vocabulary) {
+    public boolean existsInVocabulary(String termLabel, Vocabulary vocabulary, String language) {
         Objects.requireNonNull(termLabel);
         Objects.requireNonNull(vocabulary);
-        return repositoryService.existsInVocabulary(termLabel, vocabulary);
+        return repositoryService.existsInVocabulary(termLabel, vocabulary, language);
     }
 
     /**
