@@ -432,12 +432,21 @@ public class TermController extends BaseController {
         return termService.generateIdentifier(vocabularyUri, name);
     }
 
+    /**
+     * Checks whether a term with the given pref label exists in the given vocabulary for the given language.
+     *
+     * @param vocabularyIdFragment vocabulary id fragment
+     * @param namespace vocabulary namespace
+     * @param name the label to check.
+     * @return
+     */
     @PreAuthorize("permitAll()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/name")
     public Boolean doesNameExist(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                  @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
-                                 @RequestParam(name = "value") String name) {
+                                 @RequestParam(name = "value") String name,
+                                 @RequestParam(name = "language") String language) {
         final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
-        return termService.existsInVocabulary(name, getVocabulary(vocabularyUri));
+        return termService.existsInVocabulary(name, getVocabulary(vocabularyUri), language);
     }
 }
