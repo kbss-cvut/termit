@@ -194,7 +194,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.generateIdentifier(URI.create(VOCABULARY_URI), TERM_NAME)).thenReturn(termUri);
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms/identifier").param("name", TERM_NAME))
+                .perform(get(PATH + VOCABULARY_NAME + "/generate-identifier").param("name", TERM_NAME))
                 .andExpect(status().isOk()).andReturn();
         final String result = readValue(mvcResult, String.class);
         assertEquals(termUri.toString(), result);

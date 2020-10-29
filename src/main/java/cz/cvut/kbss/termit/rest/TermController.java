@@ -424,7 +424,7 @@ public class TermController extends BaseController {
      * @return Generated term identifier for specific vocabulary
      */
     @PreAuthorize("permitAll()")
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/identifier")
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/generate-identifier")
     public URI generateIdentifier(@PathVariable String vocabularyIdFragment,
                                   @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                                   @RequestParam("name") String name) {
@@ -441,7 +441,7 @@ public class TermController extends BaseController {
      * @return
      */
     @PreAuthorize("permitAll()")
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/name")
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/check-unique-name")
     public Boolean doesNameExist(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                  @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                                  @RequestParam(name = "value") String name,
