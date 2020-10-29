@@ -29,8 +29,6 @@ import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -218,13 +216,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(resource.getUri());
         final Resource result = em.find(Resource.class, resource.getUri());
         assertEquals(resource, result);
-    }
-
-    @Test
-    void generateIdentifierGeneratesIdentifierBasedOnSpecifiedLabel() {
-        final String label = "Test resource";
-        assertEquals(config.get(ConfigParam.NAMESPACE_RESOURCE) + IdentifierResolver.normalize(label),
-                sut.generateIdentifier(label).toString());
     }
 
     @Test

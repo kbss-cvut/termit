@@ -363,17 +363,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void generateIdentifierLetsServiceGenerateIdentifierUsingSpecifiedLabel() throws Exception {
-        final String label = "Metropolitan plan";
-        final URI uri = Generator.generateUri();
-        when(resourceServiceMock.generateIdentifier(label)).thenReturn(uri);
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/identifier").param("name", label))
-                                           .andExpect(status().isOk()).andReturn();
-        assertEquals(uri.toString(), readValue(mvcResult, String.class));
-        verify(resourceServiceMock).generateIdentifier(label);
-    }
-
-    @Test
     void getResourceSupportsUriWithFileExtension() throws Exception {
         final String normLabel = "CZ-00025712-CUZK_RUIAN-CSV-ADR-OB_554782.xml";
         final String namespace = "http://atom.cuzk.cz/RUIAN-CSV-ADR-OB/datasetFeeds/";

@@ -204,22 +204,6 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void generateIdentifierGeneratesTermIdentifierDerivedFromVocabularyId() throws Exception {
-        final URI termUri = URI.create(Environment.BASE_URI + "/" + VOCABULARY_NAME +
-                Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR + "/" + TERM_NAME);
-        when(idResolverMock.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        when(termServiceMock.generateIdentifier(URI.create(VOCABULARY_URI), TERM_NAME)).thenReturn(termUri);
-
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/generate-identifier").param("name", TERM_NAME))
-                .andExpect(status().isOk()).andReturn();
-        final String result = readValue(mvcResult, String.class);
-        assertEquals(termUri.toString(), result);
-        verify(termServiceMock).generateIdentifier(URI.create(VOCABULARY_URI), TERM_NAME);
-    }
-
-    @Test
     void getTermReturnsTermWithUnmappedProperties() throws Exception {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();

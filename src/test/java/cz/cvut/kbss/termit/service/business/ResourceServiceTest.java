@@ -453,13 +453,4 @@ class ResourceServiceTest {
         assertEquals(records, sut.getChanges(resource));
         verify(changeRecordService).getChanges(resource);
     }
-
-    @Test
-    void generateIdentifierUsesRepositoryServiceToGenerateIdentifierFromSpecifiedLabel() {
-        final String label = "test-resource";
-        final URI uri = Generator.generateUri();
-        when(resourceRepositoryService.generateIdentifier(label)).thenReturn(uri);
-        assertEquals(uri, sut.generateIdentifier(label));
-        verify(resourceRepositoryService).generateIdentifier(label);
-    }
 }

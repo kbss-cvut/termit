@@ -171,13 +171,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void generateIdentifierGeneratesIdentifierBasedOnSpecifiedLabel() {
-        final String label = "Test vocabulary";
-        assertEquals(config.get(ConfigParam.NAMESPACE_VOCABULARY) + IdentifierResolver.normalize(label),
-                sut.generateIdentifier(label).toString());
-    }
-
-    @Test
     void updateThrowsVocabularyImportExceptionWhenTryingToDeleteVocabularyImportRelationshipAndTermsAreStillRelated() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();

@@ -327,16 +327,6 @@ public class ResourceService
         return repositoryService.update(instance);
     }
 
-    /**
-     * Generates a resource identifier based on the specified label.
-     *
-     * @param label Resource label
-     * @return Resource identifier
-     */
-    public URI generateIdentifier(String label) {
-        return repositoryService.generateIdentifier(label);
-    }
-
     @Override
     public long getLastModified() {
         return repositoryService.getLastModified();

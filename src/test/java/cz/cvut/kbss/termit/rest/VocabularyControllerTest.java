@@ -247,17 +247,6 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void generateIdentifierReturnsIdentifierGeneratedForSpecifiedName() throws Exception {
-        final String name = "Metropolitní plán";
-        final URI uri = URI.create(Environment.BASE_URI + "/" + IdentifierResolver.normalize(name));
-        when(serviceMock.generateIdentifier(name)).thenReturn(uri);
-        final MvcResult mvcResult =
-            mockMvc.perform(get(PATH + "/identifier").param("name", name)).andReturn();
-        assertEquals(uri.toString(), readValue(mvcResult, String.class));
-        verify(serviceMock).generateIdentifier(name);
-    }
-
-    @Test
     void createVocabularyReturnsResponseWithLocationSpecifyingNamespaceWhenItIsDifferentFromConfiguredOne()
         throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();

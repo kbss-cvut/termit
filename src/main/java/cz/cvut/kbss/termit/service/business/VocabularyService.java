@@ -32,14 +32,6 @@ public interface VocabularyService
         extends CrudService<Vocabulary>, ChangeRecordProvider<Vocabulary>, SupportsLastModification {
 
     /**
-     * Generates a vocabulary identifier based on the specified label.
-     *
-     * @param label Vocabulary label
-     * @return Vocabulary identifier
-     */
-    URI generateIdentifier(String label);
-
-    /**
      * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
      *
      * @param entity Base vocabulary, whose imports should be retrieved

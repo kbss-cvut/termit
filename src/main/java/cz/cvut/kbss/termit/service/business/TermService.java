@@ -299,19 +299,6 @@ public class TermService implements RudService<Term>,ChangeRecordProvider<Term> 
     }
 
     /**
-     * Generates identifier for a term with the specified label and in a vocabulary with the specified identifier.
-     *
-     * @param vocabularyUri Vocabulary identifier
-     * @param termLabel     Term label
-     * @return Generated term identifier
-     */
-    public URI generateIdentifier(URI vocabularyUri, String termLabel) {
-        Objects.requireNonNull(vocabularyUri);
-        Objects.requireNonNull(termLabel);
-        return repositoryService.generateIdentifier(vocabularyUri, termLabel);
-    }
-
-    /**
      * Sets the definition source of the specified term.
      *
      * @param term             Term whose definition source is being specified
