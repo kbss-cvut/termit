@@ -85,6 +85,28 @@ public class TermController extends BaseController {
                     termService.findAll(vocabulary)));
     }
 
+    /**
+     * Checks whether a term with the given pref label exists in the given vocabulary for the given language.
+     *
+     * @param vocabularyIdFragment vocabulary id fragment
+     * @param namespace vocabulary namespace
+     * @param prefLabel the label to check
+     * @param language language to check existence in
+     * @return
+     */
+    @PreAuthorize("permitAll()")
+    @RequestMapping(method = RequestMethod.HEAD,
+        value = "/vocabularies/{vocabularyIdFragment}/terms")
+    public ResponseEntity<?> checkTermExists(
+        @PathVariable String vocabularyIdFragment,
+        @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
+        @RequestParam(name = "prefLabel") String prefLabel,
+        @RequestParam(name = "language") String language) {
+        final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
+        final boolean exists = termService.existsInVocabulary(prefLabel, getVocabulary(vocabularyUri), language);
+        return new ResponseEntity<>(exists ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+    }
+
     private Optional<ResponseEntity<?>> exportTerms(Vocabulary vocabulary, String fileName,
                                                     String mediaType) {
         final Optional<TypeAwareResource> content = termService.exportGlossary(vocabulary, mediaType);
@@ -430,23 +452,5 @@ public class TermController extends BaseController {
                                   @RequestParam("name") String name) {
         final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
         return termService.generateIdentifier(vocabularyUri, name);
-    }
-
-    /**
-     * Checks whether a term with the given pref label exists in the given vocabulary for the given language.
-     *
-     * @param vocabularyIdFragment vocabulary id fragment
-     * @param namespace vocabulary namespace
-     * @param name the label to check.
-     * @return
-     */
-    @PreAuthorize("permitAll()")
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/check-unique-name")
-    public Boolean doesNameExist(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
-                                 @RequestParam(name = "value") String name,
-                                 @RequestParam(name = "language") String language) {
-        final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
-        return termService.existsInVocabulary(name, getVocabulary(vocabularyUri), language);
     }
 }
