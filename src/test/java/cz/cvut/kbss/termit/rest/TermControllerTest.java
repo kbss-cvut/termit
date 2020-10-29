@@ -101,7 +101,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(true);
         final MvcResult mvcResult = mockMvc.perform(
                 get(PATH + VOCABULARY_NAME + "/terms/name").param(QueryParams.NAMESPACE, namespace)
-                                                           .param("value", name))
+                                                            .param("value", name)
+                                                            .param("language", language))
                                            .andExpect(status().isOk()).andReturn();
         assertTrue(readValue(mvcResult, Boolean.class));
         verify(termServiceMock).existsInVocabulary(name, vocabulary, language);

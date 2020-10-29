@@ -209,6 +209,7 @@ public class Generator {
 
     public static Term generateMultiLingualTerm(String... languages) {
         final Term term = new Term();
+        term.setUri(Generator.generateUri());
         final MultilingualString label = new MultilingualString();
         final MultilingualString definition = new MultilingualString();
         int id = randomInt();
