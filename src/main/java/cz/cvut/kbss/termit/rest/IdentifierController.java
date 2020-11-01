@@ -51,7 +51,7 @@ public class IdentifierController extends BaseController {
     @PostMapping
     public URI generateIdentifier(@RequestParam("name") String name,
                                   @RequestParam(value = "vocabularyIri", required = false) String vocabularyIri,
-                                  @RequestParam(value = "assetType") AssetType assetType) {
+                                  @RequestParam("assetType") AssetType assetType) {
         if (assetType == null) {
             throw new UnsupportedOperationException("No asset type supplied.");
         }
