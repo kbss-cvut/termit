@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.service.repository;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
@@ -93,8 +94,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         validate(instance);
 
         if (instance.getUri() == null) {
-            instance.setUri(
-                    generateIdentifier(vocabulary.getUri(), instance.getLabel().get(config.get(ConfigParam.LANGUAGE))));
+            instance.setUri(generateIdentifier(vocabulary.getUri(), instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
         instance.setGlossary(vocabulary.getGlossary().getUri());
@@ -102,18 +102,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         termDao.persist(instance, vocabulary);
     }
 
-    /**
-     * Generates term identifier based on the specified parent vocabulary identifier and a term label.
-     *
-     * @param vocabularyUri Vocabulary identifier
-     * @param termLabel     Term label
-     * @return Generated term identifier
-     */
-    public URI generateIdentifier(URI vocabularyUri, String termLabel) {
-        return idResolver.generateIdentifier(
-                idResolver.buildNamespace(vocabularyUri.toString(),
-                        config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)),
-                termLabel);
+    private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
+        return idResolver.generateDerivedIdentifier(vocabularyUri,
+                        ConfigParam.TERM_NAMESPACE_SEPARATOR,
+            multilingualString.get(config.get(ConfigParam.LANGUAGE)));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
@@ -130,8 +122,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
                 instance.getVocabulary() != null ? instance.getVocabulary() :
                 parentTerm.getVocabulary();
         if (instance.getUri() == null) {
-            instance.setUri(
-                    generateIdentifier(vocabularyIri, instance.getLabel().get(config.get(ConfigParam.LANGUAGE))));
+            instance.setUri(generateIdentifier(vocabularyIri, instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
 

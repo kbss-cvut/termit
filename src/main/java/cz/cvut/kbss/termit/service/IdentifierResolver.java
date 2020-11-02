@@ -173,6 +173,35 @@ public class IdentifierResolver {
     }
 
     /**
+     * Generates identifier, appending a normalized string consisting of the specified component
+     * to namespace configured by the specified configuration parameter.
+     *
+     * @param namespaceConfig Configuration parameter for namespace
+     * @param component      Component to normalize and add to the identifier
+     * @return Generated identifier
+     */
+    public URI generateIdentifier(ConfigParam namespaceConfig, String component) {
+        Objects.requireNonNull(component);
+        return generateIdentifier(config.get(namespaceConfig), new String[]{ component });
+    }
+
+    /**
+     * Generates term identifier of a dependent asset, appending a normalized string consisting
+     * of the specified components to a namespace which is derived from baseUri by appending
+     * namespace separator defined by namespaceSeparatorConfig.
+     *
+     * @param baseUri Configuration parameter for namespace
+     * @param label      Components to normalize and add to the identifier
+     * @return Generated identifier
+     */
+    public URI generateDerivedIdentifier(URI baseUri, ConfigParam namespaceSeparatorConfig, String label) {
+        return generateIdentifier(buildNamespace(baseUri.toString(),
+            config.get(namespaceSeparatorConfig)),
+            label
+        );
+    }
+
+    /**
      * Builds an identifier from the specified namespace and fragment.
      * <p>
      * This method assumes that the fragment is a normalized string uniquely identifying a resource in the specified

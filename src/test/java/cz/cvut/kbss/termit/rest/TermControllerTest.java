@@ -91,7 +91,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void doesNameExistChecksForTermLabelExistenceInVocabulary() throws Exception {
+    void termsExistCheckReturnOkIfTermLabelExistsInVocabulary() throws Exception {
         final String name = "test term";
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabularies/";
         final String language = "en";
@@ -99,12 +99,30 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(namespace, VOCABULARY_NAME)).thenReturn(vocabularyUri);
         when(termServiceMock.findVocabularyRequired(vocabularyUri)).thenReturn(vocabulary);
         when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(true);
-        final MvcResult mvcResult = mockMvc.perform(
-                get(PATH + VOCABULARY_NAME + "/terms/name").param(QueryParams.NAMESPACE, namespace)
-                                                            .param("value", name)
-                                                            .param("language", language))
-                                           .andExpect(status().isOk()).andReturn();
-        assertTrue(readValue(mvcResult, Boolean.class));
+        mockMvc.perform(
+            head(PATH + VOCABULARY_NAME + "/terms")
+                .param(QueryParams.NAMESPACE, namespace)
+                .param("prefLabel", name)
+                .param("language", language))
+            .andExpect(status().isOk()).andReturn();
+        verify(termServiceMock).existsInVocabulary(name, vocabulary, language);
+    }
+
+    @Test
+    void termsExistCheckReturn404IfTermLabelDoesNotExistInVocabulary() throws Exception {
+        final String name = "test term";
+        final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabularies/";
+        final String language = "en";
+        final URI vocabularyUri = URI.create(namespace + VOCABULARY_NAME);
+        when(idResolverMock.resolveIdentifier(namespace, VOCABULARY_NAME)).thenReturn(vocabularyUri);
+        when(termServiceMock.findVocabularyRequired(vocabularyUri)).thenReturn(vocabulary);
+        when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(false);
+        mockMvc.perform(
+            head(PATH + VOCABULARY_NAME + "/terms")
+                .param(QueryParams.NAMESPACE, namespace)
+                .param("prefLabel", name)
+                .param("language", language))
+            .andExpect(status().is4xxClientError()).andReturn();
         verify(termServiceMock).existsInVocabulary(name, vocabulary, language);
     }
 
@@ -183,22 +201,6 @@ class TermControllerTest extends BaseControllerTestRunner {
         });
         assertNotNull(result);
         assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void generateIdentifierGeneratesTermIdentifierDerivedFromVocabularyId() throws Exception {
-        final URI termUri = URI.create(Environment.BASE_URI + "/" + VOCABULARY_NAME +
-                Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR + "/" + TERM_NAME);
-        when(idResolverMock.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        when(termServiceMock.generateIdentifier(URI.create(VOCABULARY_URI), TERM_NAME)).thenReturn(termUri);
-
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms/identifier").param("name", TERM_NAME))
-                .andExpect(status().isOk()).andReturn();
-        final String result = readValue(mvcResult, String.class);
-        assertEquals(termUri.toString(), result);
-        verify(termServiceMock).generateIdentifier(URI.create(VOCABULARY_URI), TERM_NAME);
     }
 
     @Test

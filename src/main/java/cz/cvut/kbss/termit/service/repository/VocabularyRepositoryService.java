@@ -57,7 +57,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     protected void prePersist(Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(generateIdentifier(instance.getLabel()));
+            instance.setUri(idResolver.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY,
+                instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
         if (instance.getGlossary() == null) {
@@ -91,12 +92,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     ", there are still relationships between terms.",
                     "error.vocabulary.update.imports.danglingTermReferences");
         }
-    }
-
-    @Override
-    public URI generateIdentifier(String label) {
-        Objects.requireNonNull(label);
-        return idResolver.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY, label);
     }
 
     @Override

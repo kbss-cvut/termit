@@ -27,7 +27,6 @@ import cz.cvut.kbss.termit.model.assignment.TermAssignment;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -157,16 +156,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             assertTrue(result.getRootTerms().contains(existing.getUri()));
             assertTrue(result.getRootTerms().contains(newOne.getUri()));
         });
-    }
-
-    @Test
-    void generateIdentifierGeneratesTermIdentifierBasedOnVocabularyUriAndTermLabel() {
-        final URI vocabularyUri = vocabulary.getUri();
-        final String termLabel = "Test term";
-        assertEquals(
-                vocabularyUri.toString() + Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR + "/" +
-                        IdentifierResolver.normalize(termLabel),
-                sut.generateIdentifier(vocabularyUri, termLabel).toString());
     }
 
     @Test
