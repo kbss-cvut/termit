@@ -108,7 +108,8 @@ class StatisticsDaoTest extends BaseDaoTestRunner {
             final TermFrequencyDto typeFreq = new TermFrequencyDto(URI.create(t), 0, t);
             typeFreq.setCount(Math.toIntExact(terms.stream().filter(term -> term.hasType(t)).count()));
             return typeFreq;
-        }).filter(tfd -> tfd.getCount() > 0).sorted(Comparator.comparing(TermFrequencyDto::getCount).reversed())
+        }).filter(tfd -> tfd.getCount() > 0).sorted(Comparator.comparing(TermFrequencyDto::getCount).reversed()
+                                                              .thenComparing(TermFrequencyDto::getLabel))
                                                            .collect(Collectors.toList());
 
         final List<TermFrequencyDto> result = sut.getTermTypeFrequencyStatistics(ws, vocabulary);
