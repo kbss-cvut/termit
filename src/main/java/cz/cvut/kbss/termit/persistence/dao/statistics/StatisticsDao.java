@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao.statistics;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.statistics.TermFrequencyDto;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.PersistenceUtils;
 import cz.cvut.kbss.termit.util.ConfigParam;
@@ -39,6 +40,22 @@ public class StatisticsDao {
         String query = Utils.loadQuery("statistics" + File.separator + "termFrequency.rq");
         return em.createNativeQuery(query, "TermFrequencyDto")
                  .setParameter("contexts", persistenceUtils.getWorkspaceVocabularyContexts(workspace))
+                 .setParameter("lang", config.get(ConfigParam.LANGUAGE))
+                 .getResultList();
+    }
+
+    /**
+     * Gets the distribution of types among terms in the specified vocabulary.
+     *
+     * @param workspace  Workspace from which the statistics should be calculated
+     * @param vocabulary Vocabulary in which the term type distribution should be calculated
+     * @return List of term type frequency information instance. Each instance represent one type
+     */
+    public List<TermFrequencyDto> getTermTypeFrequencyStatistics(Workspace workspace, Vocabulary vocabulary) {
+        String query = Utils.loadQuery("statistics" + File.separator + "termTypeFrequency.rq");
+        return em.createNativeQuery(query, "TermFrequencyDto")
+                 .setParameter("g", persistenceUtils.resolveVocabularyContext(workspace, vocabulary.getUri()))
+                 .setParameter("vocabulary", vocabulary)
                  .setParameter("lang", config.get(ConfigParam.LANGUAGE))
                  .getResultList();
     }
