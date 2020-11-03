@@ -19,7 +19,6 @@ import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.PersistenceException;
-import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
@@ -323,7 +322,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
         vocabularies.add(vocabulary.getUri());
         final List<Term> result = new ArrayList<>();
         vocabularies.forEach(v -> result.addAll(findAllRootsImpl(v, pageSpec, includeTerms)));
-        result.sort(Comparator.comparing(Asset::getLabel));
+        result.sort(Comparator.comparing(Term::getPrimaryLabel));
         return result.subList(0, Math.min(result.size(), pageSpec.getPageSize()));
     }
 
@@ -393,7 +392,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
         vocabularies.add(vocabulary.getUri());
         final List<Term> result = new ArrayList<>();
         vocabularies.forEach(v -> result.addAll(findAllImpl(searchString, v)));
-        result.sort(Comparator.comparing(Asset::getLabel));
+        result.sort(Comparator.comparing(Term::getPrimaryLabel));
         return result;
     }
 
@@ -407,7 +406,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
      * @param vocabulary Vocabulary in which terms will be searched
      * @return Whether term with {@code label} already exists in vocabulary
      */
-    public boolean existsInVocabulary(String label, Vocabulary vocabulary) {
+    public boolean existsInVocabulary(String label, Vocabulary vocabulary, String languageTag) {
         Objects.requireNonNull(label);
         Objects.requireNonNull(vocabulary);
         try {
@@ -423,7 +422,8 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                      .setParameter("vocabulary", vocabulary)
                      .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
-                     .setParameter("searchString", label, config.get(ConfigParam.LANGUAGE)).getSingleResult();
+                     .setParameter("searchString", label,
+                             languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

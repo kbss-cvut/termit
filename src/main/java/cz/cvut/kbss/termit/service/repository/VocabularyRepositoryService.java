@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -20,6 +21,7 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Validator;
@@ -71,7 +73,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     protected void prePersist(Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(generateIdentifier(instance.getLabel()));
+            instance.setUri(idResolver.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY,
+                instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
         if (instance.getGlossary() == null) {
@@ -108,12 +111,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    public URI generateIdentifier(String label) {
-        Objects.requireNonNull(label);
-        return idResolver.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY, label);
-    }
-
-    @Override
     public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
         return vocabularyDao.getTransitivelyImportedVocabularies(entity);
     }
@@ -147,23 +144,28 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public void remove(Vocabulary instance) {
         if (instance instanceof DocumentVocabulary) {
             throw new VocabularyRemovalException(
-                "Removal of document vocabularies is not supported yet.");
+                    "Removal of document vocabularies is not supported yet.");
         }
 
         final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
         if (!vocabularies.isEmpty()) {
-            List<Vocabulary> vocabularies1 = vocabularies;
             throw new VocabularyRemovalException(
-                "Vocabulary cannot be removed. It is referenced from other vocabularies: "
-                    + vocabularies1.stream().map(v -> v.getLabel()).collect(
-                    Collectors.joining(", ")));
+                    "Vocabulary cannot be removed. It is referenced from other vocabularies: "
+                            + vocabularies.stream().map(Vocabulary::getLabel).collect(
+                            Collectors.joining(", ")));
         }
 
         if (!termService.isEmpty(instance)) {
             throw new VocabularyRemovalException(
-                "Vocabulary cannot be removed. It contains terms.");
+                    "Vocabulary cannot be removed. It contains terms.");
         }
 
         super.remove(instance);
+    }
+
+    @Transactional
+    @Override
+    public List<ValidationResult> validateContents(Vocabulary instance) {
+        return vocabularyDao.validateContents(instance);
     }
 }

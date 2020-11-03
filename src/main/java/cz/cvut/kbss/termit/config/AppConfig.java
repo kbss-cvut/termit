@@ -18,6 +18,7 @@ import cz.cvut.kbss.termit.aspect.Aspects;
 import cz.cvut.kbss.termit.workspace.WorkspaceComponents;
 import cz.cvut.kbss.termit.workspace.WorkspaceStore;
 import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
 import org.springframework.core.env.Environment;
 import org.springframework.web.context.annotation.SessionScope;
 
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpSession;
 
 @Configuration
 @EnableMBeanExport
+@EnableSpringConfigured
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @ComponentScan(basePackageClasses = {Aspects.class, WorkspaceComponents.class})
 @Import({PersistenceConfig.class, ServiceConfig.class, WebAppConfig.class})

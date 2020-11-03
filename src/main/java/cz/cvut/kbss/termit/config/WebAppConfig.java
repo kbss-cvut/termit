@@ -17,11 +17,15 @@ package cz.cvut.kbss.termit.config;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
 import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
+import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -66,9 +70,24 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Bean(name = "objectMapper")
     public ObjectMapper objectMapper() {
+        return createJsonObjectMapper();
+    }
+
+    /**
+     * Creates an {@link ObjectMapper} for processing regular JSON.
+     * <p>
+     * This method is public static so that it can be used by the test environment as well.
+     *
+     * @return {@code ObjectMapper} instance
+     */
+    public static ObjectMapper createJsonObjectMapper() {
         final ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        final SimpleModule multilingualStringModule = new SimpleModule();
+        multilingualStringModule.addSerializer(MultilingualString.class, new MultilingualStringSerializer());
+        multilingualStringModule.addDeserializer(MultilingualString.class, new MultilingualStringDeserializer());
+        objectMapper.registerModule(multilingualStringModule);
         // JSR 310 (Java 8 DateTime API)
         objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
@@ -76,6 +95,17 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Bean(name = "jsonLdMapper")
     public ObjectMapper jsonLdObjectMapper() {
+        return createJsonLdObjectMapper();
+    }
+
+    /**
+     * Creates an {@link ObjectMapper} for processing JSON-LD using the JB4JSON-LD library.
+     * <p>
+     * This method is public static so that it can be used by the test environment as well.
+     *
+     * @return {@code ObjectMapper} instance
+     */
+    public static ObjectMapper createJsonLdObjectMapper() {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

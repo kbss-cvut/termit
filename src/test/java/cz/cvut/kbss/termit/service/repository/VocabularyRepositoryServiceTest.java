@@ -32,11 +32,9 @@ import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
-import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.hamcrest.collection.IsEmptyCollection;
@@ -58,9 +56,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
 class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
-
-    @Autowired
-    private Configuration config;
 
     @Autowired
     private DescriptorFactory descriptorFactory;
@@ -184,13 +179,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         sut.remove(vocabulary);
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNull(result);
-    }
-
-    @Test
-    void generateIdentifierGeneratesIdentifierBasedOnSpecifiedLabel() {
-        final String label = "Test vocabulary";
-        assertEquals(config.get(ConfigParam.NAMESPACE_VOCABULARY) + IdentifierResolver.normalize(label),
-                sut.generateIdentifier(label).toString());
     }
 
     @Test

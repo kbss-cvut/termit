@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.changetracking;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -10,6 +11,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -85,10 +87,10 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     static Term cloneOf(Term original) {
         final Term clone = new Term();
         clone.setUri(original.getUri());
-        clone.setLabel(original.getLabel());
+        clone.setLabel(new MultilingualString(original.getLabel().getValue()));
         clone.setAltLabels(original.getAltLabels());
         clone.setHiddenLabels(original.getHiddenLabels());
-        clone.setDefinition(original.getDefinition());
+        clone.setDefinition(new MultilingualString(original.getDefinition().getValue()));
         clone.setDescription(original.getDescription());
         clone.setVocabulary(original.getVocabulary());
         clone.setGlossary(original.getGlossary());
@@ -236,7 +238,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Term changed = cloneOf(original);
         original.setParentTerms(Collections.singleton(Generator.generateTermWithId()));
         changed.setTypes(Collections.singleton(Generator.generateUri().toString()));
-        changed.setLabel("Updated label");
+        changed.getLabel().set(Constants.DEFAULT_LANGUAGE, "Updated label");
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(3, result.size());

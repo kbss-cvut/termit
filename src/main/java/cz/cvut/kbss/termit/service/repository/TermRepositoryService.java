@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.service.repository;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
@@ -102,18 +103,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         termDao.persist(instance, vocabulary);
     }
 
-    /**
-     * Generates term identifier based on the specified parent vocabulary identifier and a term label.
-     *
-     * @param vocabularyUri Vocabulary identifier
-     * @param termLabel     Term label
-     * @return Generated term identifier
-     */
-    public URI generateIdentifier(URI vocabularyUri, String termLabel) {
-        return idResolver.generateIdentifier(
-                idResolver.buildNamespace(vocabularyUri.toString(),
-                        config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)),
-                termLabel);
+    private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
+        return idResolver.generateDerivedIdentifier(vocabularyUri,
+                        ConfigParam.TERM_NAMESPACE_SEPARATOR,
+            multilingualString.get(config.get(ConfigParam.LANGUAGE)));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
@@ -236,10 +229,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      *
      * @param label      Label to check
      * @param vocabulary Vocabulary in which terms will be searched
+     * @param language   Language to check the existence in
      * @return Whether term with {@code label} already exists in vocabulary
      */
-    public boolean existsInVocabulary(String label, Vocabulary vocabulary) {
-        return termDao.existsInVocabulary(label, vocabulary);
+    public boolean existsInVocabulary(String label, Vocabulary vocabulary, String language) {
+        return termDao.existsInVocabulary(label, vocabulary, language);
     }
 
     /**
@@ -264,10 +258,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     /**
-     * Removes a term if it:
-     * - does not have children,
-     * - is not related to any resource,
-     * - is not related to any term occurrences.
+     * Removes a term if it: - does not have children, - is not related to any resource, - is not related to any term
+     * occurrences.
      *
      * @param instance the term to be deleted
      */
@@ -277,33 +269,33 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
         if (!ai.isEmpty()) {
             throw new TermRemovalException(
-                "Cannot delete the term. It is used for annotating resources : " +
-                    ai.stream().map(TermAssignments::getResourceLabel).collect(
-                        joining(",")));
+                    "Cannot delete the term. It is used for annotating resources : " +
+                            ai.stream().map(TermAssignments::getResourceLabel).collect(
+                                    joining(",")));
         }
 
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
             throw new TermRemovalException(
-                "Cannot delete the term. It is a parent of other terms : " + subTerms
-                    .stream().map(t -> t.getUri().toString())
-                    .collect(joining(",")));
+                    "Cannot delete the term. It is a parent of other terms : " + subTerms
+                            .stream().map(t -> t.getUri().toString())
+                            .collect(joining(",")));
         }
 
         if (instance.getProperties() != null) {
             Set<String> props = instance.getProperties().keySet();
             List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.getURI())) && !(
-                s.equalsIgnoreCase(SKOS.changeNote.toString())
-                    || s.equalsIgnoreCase(SKOS.editorialNote.toString())
-                    || s.equalsIgnoreCase(SKOS.historyNote.toString())
-                    || s.equalsIgnoreCase(SKOS.example.toString())
-                    || s.equalsIgnoreCase(SKOS.note.toString())
-                    || s.equalsIgnoreCase(SKOS.scopeNote.toString())
-                    || s.equalsIgnoreCase(SKOS.notation.toString()))).collect(toList());
+                    s.equalsIgnoreCase(SKOS.changeNote.toString())
+                            || s.equalsIgnoreCase(SKOS.editorialNote.toString())
+                            || s.equalsIgnoreCase(SKOS.historyNote.toString())
+                            || s.equalsIgnoreCase(SKOS.example.toString())
+                            || s.equalsIgnoreCase(SKOS.note.toString())
+                            || s.equalsIgnoreCase(SKOS.scopeNote.toString())
+                            || s.equalsIgnoreCase(SKOS.notation.toString()))).collect(toList());
             if (!properties.isEmpty()) {
                 throw new TermRemovalException(
-                    "Cannot delete the term. It is linked to another term through properties "
-                        + String.join(",", properties));
+                        "Cannot delete the term. It is linked to another term through properties "
+                                + String.join(",", properties));
             }
         }
 

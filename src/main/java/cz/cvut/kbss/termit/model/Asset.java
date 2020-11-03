@@ -25,9 +25,11 @@ import java.net.URI;
 
 /**
  * Represents basic info about an asset managed by the application.
+ *
+ * @param <T> Type of the label
  */
 @MappedSuperclass
-public abstract class Asset implements HasIdentifier {
+public abstract class Asset<T> implements HasIdentifier {
 
     @WithoutQueryParameters
     @Id
@@ -41,9 +43,9 @@ public abstract class Asset implements HasIdentifier {
         this.uri = uri;
     }
 
-    public abstract String getLabel();
+    public abstract T getLabel();
 
-    public abstract void setLabel(String label);
+    public abstract void setLabel(T label);
 
     /**
      * Visitor-style method for creating descriptors.

@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -93,7 +94,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         final URI anotherWorkspaceCtx = Generator.generateUri();
         final Term copy = new Term();
         copy.setUri(term.getUri());
-        copy.setLabel(LABEL_IN_DIFFERENT_WORKSPACE);
+        copy.setLabel(MultilingualString.create(LABEL_IN_DIFFERENT_WORKSPACE, Constants.DEFAULT_LANGUAGE));
 
         transactional(() -> {
             em.persist(anotherWorkspaceVocabulary, new EntityDescriptor(anotherWorkspaceCtx));
@@ -217,7 +218,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
     @Test
     void findAllBySearchStringRetrievesTermsInCurrentVocabulary() {
         final Term term = Generator.generateTermWithId();
-        term.setLabel("searched label");
+        term.getLabel().set(Constants.DEFAULT_LANGUAGE, "searched label");
         term.setGlossary(vocabulary.getGlossary().getUri());
         transactional(() -> {
             vocabulary.getGlossary().addRootTerm(term);
@@ -266,12 +267,12 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
     void findAllIncludingImportsBySearchStringRetrievesTermsFromVocabulariesInCurrentWorkspace() {
         final Term term = Generator.generateTermWithId();
         term.setGlossary(vocabulary.getGlossary().getUri());
-        term.setLabel("searched string one");
+        term.getLabel().set(Constants.DEFAULT_LANGUAGE, "searched string one");
         final Vocabulary importedVocabulary = Generator.generateVocabularyWithId();
         saveVocabulary(importedVocabulary);
         final Term importedTerm = Generator.generateTermWithId();
         importedTerm.setGlossary(importedVocabulary.getGlossary().getUri());
-        importedTerm.setLabel("searched string two");
+        importedTerm.getLabel().set(Constants.DEFAULT_LANGUAGE, "searched string two");
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             vocabulary.getGlossary().addRootTerm(term);
@@ -329,6 +330,6 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
-        assertFalse(sut.existsInVocabulary(LABEL_IN_DIFFERENT_WORKSPACE, vocabulary));
+        assertFalse(sut.existsInVocabulary(LABEL_IN_DIFFERENT_WORKSPACE, vocabulary, Constants.DEFAULT_LANGUAGE));
     }
 }

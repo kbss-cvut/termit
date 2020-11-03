@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,14 +30,6 @@ import java.util.List;
  */
 public interface VocabularyService
         extends CrudService<Vocabulary>, ChangeRecordProvider<Vocabulary>, SupportsLastModification {
-
-    /**
-     * Generates a vocabulary identifier based on the specified label.
-     *
-     * @param label Vocabulary label
-     * @return Vocabulary identifier
-     */
-    URI generateIdentifier(String label);
 
     /**
      * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
@@ -74,4 +67,13 @@ public interface VocabularyService
      * @param asset Vocabulary to remove
      */
     void remove(Vocabulary asset);
+
+    /**
+     * Validates a vocabulary:
+     * - it checks glossary rules,
+     * - it checks OntoUml constraints.
+     *
+     * @param validate Vocabulary to validate
+     */
+    List<ValidationResult> validateContents(Vocabulary validate);
 }

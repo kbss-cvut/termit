@@ -17,13 +17,15 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,24 +83,26 @@ class AssetServiceTest {
         final List<RecentlyModifiedAsset> vocabularies = new ArrayList<>();
         final User author = Generator.generateUserWithId();
         for (int i = 0; i < count; i++) {
-            Asset asset;
             RecentlyModifiedAsset rma = null;
             switch (i % 3) {
                 case 0:
-                    asset = Generator.generateResourceWithId();
-                    rma = new RecentlyModifiedAsset(asset.getUri(), asset.getLabel(), new Date(), author.getUri(), null,
+                    final Resource resource = Generator.generateResourceWithId();
+                    rma = new RecentlyModifiedAsset(resource.getUri(), resource.getLabel(), new Date(), author.getUri(),
+                            null,
                             cz.cvut.kbss.termit.util.Vocabulary.s_c_resource, Vocabulary.s_c_vytvoreni_entity);
                     resources.add(rma);
                     break;
                 case 1:
-                    asset = Generator.generateTermWithId();
-                    rma = new RecentlyModifiedAsset(asset.getUri(), asset.getLabel(), new Date(), author.getUri(), null,
+                    final Term term = Generator.generateTermWithId();
+                    rma = new RecentlyModifiedAsset(term.getUri(), term.getLabel().get(Constants.DEFAULT_LANGUAGE),
+                            new Date(), author.getUri(), null,
                             SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity);
                     terms.add(rma);
                     break;
                 case 2:
-                    asset = Generator.generateVocabularyWithId();
-                    rma = new RecentlyModifiedAsset(asset.getUri(), asset.getLabel(), new Date(), author.getUri(), null,
+                    final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
+                    rma = new RecentlyModifiedAsset(vocabulary.getUri(), vocabulary.getLabel(), new Date(),
+                            author.getUri(), null,
                             Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
                     vocabularies.add(rma);
                     break;

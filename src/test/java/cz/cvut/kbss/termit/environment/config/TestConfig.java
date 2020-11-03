@@ -19,9 +19,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
 import org.springframework.core.env.Environment;
 
 @Configuration
+@EnableSpringConfigured
 @PropertySource("classpath:config.properties")
 @ComponentScan(basePackageClasses = {Aspects.class})
 public class TestConfig {

@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
@@ -37,7 +38,7 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.config.WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
@@ -107,7 +108,8 @@ class TermDaoTest extends BaseDaoTestRunner {
 
     private List<Term> generateTerms(int count) {
         return IntStream.range(0, count).mapToObj(i -> Generator.generateTermWithId())
-                        .sorted(Comparator.comparing(Term::getLabel)).collect(Collectors.toList());
+                        .sorted(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)))
+                        .collect(Collectors.toList());
     }
 
     private void addTermInVocabularyRelationship(Term term, URI vocabularyIri) {
@@ -162,7 +164,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final List<Term> result = sut.findAll(terms.get(0).getLabel(), vocabulary);
+        final List<Term> result = sut.findAll(terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE), vocabulary);
         assertEquals(1, result.size());
         assertTrue(terms.contains(result.get(0)));
     }
@@ -173,11 +175,11 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(new HashSet<>(terms), vocabulary);
         final Term root = terms.get(Generator.randomIndex(terms));
         final Term child = Generator.generateTermWithId();
-        child.setLabel("test");
+        child.setPrimaryLabel("test");
         child.setParentTerms(Collections.singleton(root));
         child.setGlossary(vocabulary.getGlossary().getUri());
         final Term matchingDesc = Generator.generateTermWithId();
-        matchingDesc.setLabel("Metropolitan plan");
+        matchingDesc.setPrimaryLabel("Metropolitan plan");
         matchingDesc.setParentTerms(Collections.singleton(child));
         matchingDesc.setVocabulary(vocabulary.getUri());
         transactional(() -> {
@@ -222,8 +224,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final String label = terms.get(0).getLabel();
-        assertTrue(sut.existsInVocabulary(label, vocabulary));
+        final String label = terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE);
+        assertTrue(sut.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE));
     }
 
     @Test
@@ -231,7 +233,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        assertFalse(sut.existsInVocabulary("unknown label", vocabulary));
+        assertFalse(sut.existsInVocabulary("unknown label", vocabulary, Constants.DEFAULT_LANGUAGE));
     }
 
     @Test
@@ -239,9 +241,21 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(terms, vocabulary);
 
-        final String label = terms.get(0).getLabel().toLowerCase();
-        assertTrue(sut.existsInVocabulary(label, vocabulary));
+        final String label = terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE).toLowerCase();
+        assertTrue(sut.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE));
     }
+
+    @Test
+    void existsInVocabularyReturnsFalseForLabelExistingInAnotherLanguageInTheVocabulary() {
+        final Term term = Generator.generateMultiLingualTerm("en","cs");
+        final List<Term> terms = Collections.singletonList(term);
+        addTermsAndSave(new HashSet<>(terms), vocabulary);
+
+        final String label = terms.get(0).getLabel().get("en");
+        assertTrue(sut.existsInVocabulary(label, vocabulary, "en"));
+        assertFalse(sut.existsInVocabulary(label, vocabulary, "cs"));
+    }
+
 
     @Test
     void findAllGetsAllTermsInVocabulary() {
@@ -271,7 +285,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(terms, vocabulary);
 
         final List<Term> result = sut.findAll(vocabulary);
-        terms.sort(Comparator.comparing(Term::getLabel));
+        terms.sort(Comparator.comparing(Term::getPrimaryLabel));
         assertEquals(terms, result);
     }
 
@@ -298,13 +312,13 @@ class TermDaoTest extends BaseDaoTestRunner {
 
         term.setVocabulary(vocabulary.getUri());
         final String updatedLabel = "Updated label";
-        final String oldLabel = term.getLabel();
-        term.setLabel(updatedLabel);
+        final String oldLabel = term.getLabel().get(Constants.DEFAULT_LANGUAGE);
+        term.setPrimaryLabel(updatedLabel);
         em.getEntityManagerFactory().getCache().evictAll();
         transactional(() -> sut.update(term));
 
         final Term result = em.find(Term.class, term.getUri(), descriptorFactory.termDescriptor(vocabulary));
-        assertEquals(updatedLabel, result.getLabel());
+        assertEquals(updatedLabel, result.getLabel().get(Constants.DEFAULT_LANGUAGE));
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?hasLabel ?label }", Boolean.class)
                       .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
                       .setParameter("label", oldLabel, Constants.DEFAULT_LANGUAGE).getSingleResult());
@@ -367,7 +381,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> allTerms = new ArrayList<>(directTerms);
         allTerms.addAll(parentTerms);
         allTerms.addAll(grandParentTerms);
-        allTerms.sort(Comparator.comparing(Term::getLabel));
+        allTerms.sort(Comparator.comparing(Term::getPrimaryLabel));
 
         final List<Term> result =
                 sut.findAllRootsIncludingImports(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
@@ -436,12 +450,12 @@ class TermDaoTest extends BaseDaoTestRunner {
             insertNarrowerStatements(directTerms.get(0), directTerms.get(1), parentTerms.get(0));
         });
 
-        final String searchString = directTerms.get(0).getLabel()
-                                               .substring(0, directTerms.get(0).getLabel().length() - 2);
+        final String searchString = directTerms.get(0).getPrimaryLabel()
+                                               .substring(0, directTerms.get(0).getPrimaryLabel().length() - 2);
         final List<Term> result = sut.findAllIncludingImported(searchString, vocabulary);
         assertFalse(result.isEmpty());
         assertThat(result.size(), lessThan(directTerms.size() + parentTerms.size() + grandParentTerms.size()));
-        final List<Term> matching = allTerms.stream().filter(t -> t.getLabel().toLowerCase()
+        final List<Term> matching = allTerms.stream().filter(t -> t.getPrimaryLabel().toLowerCase()
                                                                    .contains(searchString.toLowerCase())).collect(
                 Collectors.toList());
         assertTrue(result.containsAll(matching));
@@ -526,14 +540,16 @@ class TermDaoTest extends BaseDaoTestRunner {
 
         final Term toUpdate = sut.find(term.getUri()).get();
         assertEquals(Collections.singleton(parent), toUpdate.getParentTerms());
-        final String newDefinition = "Updated definition";
+        final MultilingualString newDefinition = MultilingualString
+                .create("Updated definition", Constants.DEFAULT_LANGUAGE);
         toUpdate.setDefinition(newDefinition);
         transactional(() -> sut.update(toUpdate));
 
         final Term result = em.find(Term.class, term.getUri());
         assertNotNull(result);
         assertEquals(Collections.singleton(parent), result.getParentTerms());
-        assertEquals(newDefinition, result.getDefinition());
+        // TODO Workaround for JOPA issue, remove after fix
+        assertEquals(newDefinition.getValue(), result.getDefinition().getValue());
     }
 
     @Test
@@ -623,7 +639,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllBySearchStringLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
-        final String searchString = parent.getLabel();
+        final String searchString = parent.getPrimaryLabel();
         final List<Term> result = sut.findAll(searchString, vocabulary);
         assertEquals(1, result.size());
         assertEquals(parent, result.get(0));
@@ -633,7 +649,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllIncludingImportsBySearchStringLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
-        final String searchString = parent.getLabel();
+        final String searchString = parent.getPrimaryLabel();
         final List<Term> result = sut.findAllIncludingImported(searchString, vocabulary);
         assertEquals(1, result.size());
         assertEquals(parent, result.get(0));
@@ -705,5 +721,35 @@ class TermDaoTest extends BaseDaoTestRunner {
         assertFalse(result.isEmpty());
         assertEquals(term.getUri(), result.get(0).getUri());
         assertEquals(term.getVocabulary(), result.get(0).getVocabulary());
+    }
+
+    @Test
+    void updateSupportsUpdatingPluralMultilingualAltLabels() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final MultilingualString altOne = MultilingualString.create("Budova", "cs");
+        term.setAltLabels(new HashSet<>(Collections.singleton(altOne)));
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(vocabulary)));
+
+        altOne.set("en", "Building");
+        final MultilingualString altTwo = MultilingualString.create("Construction", "en");
+        altTwo.set("cs", "Stavba");
+        term.getAltLabels().add(altTwo);
+        transactional(() -> sut.update(term));
+
+        final Term result = em.find(Term.class, term.getUri(), descriptorFactory.termDescriptor(vocabulary));
+        assertNotNull(result);
+        // We have to check it this way because the loaded multilingual labels might be a different combination of the
+        // translations
+        final Map<String, Set<String>> allLabels = new HashMap<>();
+        result.getAltLabels().forEach(alt -> alt.getValue().forEach((lang, val) -> {
+            allLabels.putIfAbsent(lang, new HashSet<>());
+            allLabels.get(lang).add(val);
+        }));
+        term.getAltLabels().forEach(alt -> alt.getValue().forEach((lang, val) -> {
+            assertThat(allLabels, hasKey(lang));
+            assertThat(allLabels.get(lang), hasItem(val));
+        }));
     }
 }

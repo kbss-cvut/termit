@@ -18,12 +18,12 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.environment.config.WorkspaceTestConfig;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +70,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
         });
-        final Collection<Term> matching = terms.stream().filter(t -> t.getLabel().contains("Matching"))
+        final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
                                                .collect(Collectors.toList());
 
         final List<FullTextSearchResult> result = sut.fullTextSearch("matching", Collections.emptySet());
@@ -87,7 +87,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = new Term();
             term.setUri(Generator.generateUri());
-            term.setLabel(Generator.randomBoolean() ? "Matching label " + i : "Unknown label " + i);
+            term.setPrimaryLabel(Generator.randomBoolean() ? "Matching label " + i : "Unknown label " + i);
             vocabulary.getGlossary().addRootTerm(term);
             term.setVocabulary(vocabulary.getUri());
             terms.add(term);
@@ -131,8 +131,8 @@ class SearchDaoTest extends BaseDaoTestRunner {
             terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
             vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v)));
         });
-        final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getLabel().contains("Matching")).collect(
-                Collectors.toList());
+        final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
+                                                    .collect(Collectors.toList());
         final Collection<Vocabulary> matchingVocabularies = vocabularies.stream()
                                                                         .filter(v -> v.getLabel().contains("Matching"))
                                                                         .collect(Collectors.toList());
@@ -153,7 +153,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
         final Vocabulary otherVocabulary = Generator.generateVocabularyWithId();
         final List<Term> otherMatchingTerms = Arrays.asList(Generator.generateTermWithId(otherVocabulary.getUri()),
                 Generator.generateTermWithId(otherVocabulary.getUri()));
-        otherMatchingTerms.forEach(t -> t.setLabel("matching"));
+        otherMatchingTerms.forEach(t -> t.getLabel().set(Constants.DEFAULT_LANGUAGE, "matching"));
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> {
@@ -163,8 +163,9 @@ class SearchDaoTest extends BaseDaoTestRunner {
             otherMatchingTerms.forEach(em::persist);
 
         });
-        final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getLabel().contains("Matching")).collect(
-                Collectors.toList());
+        final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)
+                                                                           .contains("Matching"))
+                                                    .collect(Collectors.toList());
 
         final List<FullTextSearchResult> result = sut
                 .fullTextSearch("matching", Collections.singleton(WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX));

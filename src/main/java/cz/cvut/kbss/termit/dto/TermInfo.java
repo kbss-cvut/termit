@@ -64,7 +64,7 @@ public class TermInfo implements Serializable {
     public TermInfo(Term term) {
         Objects.requireNonNull(term);
         this.uri = term.getUri();
-        this.label = term.getLabel();
+        this.label = term.getLabel().get();
         this.vocabulary = term.getVocabulary();
     }
 

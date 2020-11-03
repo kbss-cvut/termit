@@ -35,7 +35,7 @@ public class AbstractChangeRecord extends AbstractEntity {
     public AbstractChangeRecord() {
     }
 
-    protected AbstractChangeRecord(Asset changedEntity) {
+    protected AbstractChangeRecord(Asset<?> changedEntity) {
         this.changedEntity = Objects.requireNonNull(changedEntity).getUri();
     }
 

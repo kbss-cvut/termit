@@ -17,7 +17,9 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.XPathSelector;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
+
 import java.net.URI;
+
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.repository.Repository;
@@ -203,7 +205,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         assertEquals(assignments.size() + occurrences.size(), result.size());
     }
 
-    private List<TermOccurrence> generateTermOccurrences(Term term, Asset target, boolean suggested) {
+    private List<TermOccurrence> generateTermOccurrences(Term term, Asset<?> target, boolean suggested) {
         final List<TermOccurrence> occurrences = IntStream.range(0, Generator.randomInt(5, 10))
                                                           .mapToObj(i -> createOccurrence(term, target, suggested))
                                                           .collect(Collectors.toList());
@@ -214,7 +216,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         return occurrences;
     }
 
-    private TermOccurrence createOccurrence(Term term, Asset target, boolean suggested) {
+    private TermOccurrence createOccurrence(Term term, Asset<?> target, boolean suggested) {
         final TermOccurrence occurrence;
         if (target instanceof File) {
             occurrence = new TermFileOccurrence(term.getUri(), new FileOccurrenceTarget((File) target));
@@ -249,7 +251,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         result.forEach(rta -> {
             assertEquals(file.getUri(), rta.getResource());
             assertEquals(term.getUri(), rta.getTerm());
-            assertEquals(term.getLabel(), rta.getTermLabel());
+            assertEquals(term.getPrimaryLabel(), rta.getTermLabel());
         });
         final Optional<ResourceTermAssignments> occ = result.stream()
                                                             .filter(rta -> rta instanceof ResourceTermOccurrences)
@@ -277,7 +279,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         result.forEach(rta -> {
             assertEquals(file.getUri(), rta.getResource());
             assertEquals(term.getUri(), rta.getTerm());
-            assertEquals(term.getLabel(), rta.getTermLabel());
+            assertEquals(term.getPrimaryLabel(), rta.getTermLabel());
             assertThat(rta.getTypes(), anyOf(hasItem(Vocabulary.s_c_navrzene_prirazeni_termu),
                     hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
         });
@@ -303,7 +305,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         assertEquals(1, result.size());
         assertEquals(resource.getUri(), result.get(0).getResource());
         assertEquals(term.getUri(), result.get(0).getTerm());
-        assertEquals(term.getLabel(), result.get(0).getTermLabel());
+        assertEquals(term.getPrimaryLabel(), result.get(0).getTermLabel());
     }
 
     @Test
@@ -328,7 +330,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
                 assertEquals(asserted.size(), ((ResourceTermOccurrences) rta).getCount().intValue());
             }
             assertEquals(term.getUri(), rta.getTerm());
-            assertEquals(term.getLabel(), rta.getTermLabel());
+            assertEquals(term.getPrimaryLabel(), rta.getTermLabel());
             assertEquals(file.getUri(), rta.getResource());
             assertEquals(term.getVocabulary(), rta.getVocabulary());
         }
@@ -351,10 +353,10 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         final List<ResourceTermAssignments> result = sut.getAssignmentInfo(file);
         // One assignment and one occurrence
         assertEquals(2, result.size());
-        result.forEach(rta -> assertEquals(term.getLabel(), rta.getTermLabel()));
+        result.forEach(rta -> assertEquals(term.getPrimaryLabel(), rta.getTermLabel()));
     }
 
-    private void saveAssetLabelInOtherLanguage(Asset asset) {
+    private void saveAssetLabelInOtherLanguage(Asset<?> asset) {
         assertEquals(Constants.DEFAULT_LANGUAGE,
                 em.getEntityManagerFactory().getProperties().get(JOPAPersistenceProperties.LANG));
         final Repository repo = em.unwrap(Repository.class);
