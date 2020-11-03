@@ -38,7 +38,7 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.config.WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 

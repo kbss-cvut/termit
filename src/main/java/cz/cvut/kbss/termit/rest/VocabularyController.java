@@ -140,7 +140,7 @@ public class VocabularyController extends BaseController {
      * @see VocabularyService#remove(Vocabulary)  for details.
      *
      * @param fragment vocabulary name
-     * @param namespace (optional) vocabulary nanespace
+     * @param namespace (optional) vocabulary namespace
      */
     @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -156,7 +156,7 @@ public class VocabularyController extends BaseController {
      * Validates a vocabulary.
      *
      * @param fragment vocabulary name
-     * @param namespace (optional) vocabulary nanespace
+     * @param namespace (optional) vocabulary namespace
      * @return list of validation outcomes
      */
     @PreAuthorize("permitAll()")
@@ -167,22 +167,5 @@ public class VocabularyController extends BaseController {
         final URI identifier = resolveIdentifier(namespace, fragment, ConfigParam.NAMESPACE_VOCABULARY);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         return vocabularyService.validateContents(vocabulary);
-    }
-
-    /**
-     * Removes a vocabulary.
-     * @see VocabularyService#remove(Vocabulary)  for details.
-     *
-     * @param fragment vocabulary name
-     * @param namespace (optional) vocabulary nanespace
-     */
-    @DeleteMapping(value = "/{fragment}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeVocabulary(@PathVariable String fragment,
-                               @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
-        final URI identifier = resolveIdentifier(namespace, fragment, ConfigParam.NAMESPACE_VOCABULARY);
-        final Vocabulary toRemove = vocabularyService.getRequiredReference(identifier);
-        vocabularyService.remove(toRemove);
-        LOG.debug("Vocabulary {} removed.", toRemove);
     }
 }

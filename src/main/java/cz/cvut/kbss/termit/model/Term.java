@@ -141,7 +141,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         return descriptorFactory.termDescriptor(this);
     }
 
-    public Set<String> getAltLabels() {
+    public Set<MultilingualString> getAltLabels() {
         return altLabels;
     }
 

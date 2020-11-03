@@ -19,7 +19,6 @@ import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.PersistenceException;
-import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
@@ -175,31 +174,6 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
         }
     }
 
-    /**
-     * Returns true if the vocabulary does not contain any terms.
-     *
-     * @param vocabulary Vocabulary to check for existence of terms
-     * @return true, if the vocabulary contains no terms, false otherwise
-     */
-    public boolean isEmpty(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        try {
-            return !em.createNativeQuery("ASK WHERE {" +
-                "GRAPH ?vocabulary { " +
-                "?term a ?type ;" +
-                "}" +
-                "?term ?inVocabulary ?vocabulary ." +
-                " }", Boolean.class)
-                .setParameter("type", typeUri)
-                .setParameter("vocabulary", vocabulary.getUri())
-                .setParameter("inVocabulary",
-                    URI.create(
-                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
     private List<Term> executeQueryAndLoadSubTerms(TypedQuery<Term> query) {
         final List<Term> terms = query.getResultList();
         terms.forEach(this::loadSubTerms);
@@ -348,7 +322,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
         vocabularies.add(vocabulary.getUri());
         final List<Term> result = new ArrayList<>();
         vocabularies.forEach(v -> result.addAll(findAllRootsImpl(v, pageSpec, includeTerms)));
-        result.sort(Comparator.comparing(Asset::getLabel));
+        result.sort(Comparator.comparing(Term::getPrimaryLabel));
         return result.subList(0, Math.min(result.size(), pageSpec.getPageSize()));
     }
 
@@ -418,7 +392,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
         vocabularies.add(vocabulary.getUri());
         final List<Term> result = new ArrayList<>();
         vocabularies.forEach(v -> result.addAll(findAllImpl(searchString, v)));
-        result.sort(Comparator.comparing(Asset::getLabel));
+        result.sort(Comparator.comparing(Term::getPrimaryLabel));
         return result;
     }
 
@@ -448,7 +422,8 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                      .setParameter("vocabulary", vocabulary)
                      .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
-                     .setParameter("searchString", label, languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
+                     .setParameter("searchString", label,
+                             languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

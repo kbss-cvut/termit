@@ -319,24 +319,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             t.setVocabulary(vocabulary.getUri());
             vocabulary.getGlossary().addRootTerm(t);
-            em.persist(t, DescriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
-        });
-
-        assertFalse(sut.isEmpty(vocabulary));
-    }
-
-    @Test
-    void isEmptyReturnsTrueForEmptyVocabulary() {
-        assertTrue(sut.isEmpty(vocabulary));
-    }
-
-    @Test
-    void isEmptyReturnsFalseForNonemptyVocabulary() {
-        final Term t = Generator.generateTermWithId();
-        transactional(() -> {
-            t.setVocabulary(vocabulary.getUri());
-            vocabulary.getGlossary().addRootTerm(t);
             em.persist(t, descriptorFactory.termDescriptor(vocabulary));
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });

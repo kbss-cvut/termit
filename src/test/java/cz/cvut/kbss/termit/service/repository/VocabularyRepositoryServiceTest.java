@@ -32,11 +32,9 @@ import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
-import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.hamcrest.collection.IsEmptyCollection;
@@ -58,9 +56,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
 class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
-
-    @Autowired
-    private Configuration config;
 
     @Autowired
     private DescriptorFactory descriptorFactory;
@@ -175,15 +170,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
         assertEquals(newName, result.getLabel());
-    }
-
-    @Test
-    void removeRemovesNondocumentEmptyNonImportedVocabulary() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
-        sut.remove(vocabulary);
-        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
-        assertNull(result);
     }
 
     @Test
