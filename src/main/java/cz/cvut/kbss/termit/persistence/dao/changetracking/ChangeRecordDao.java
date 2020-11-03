@@ -31,7 +31,7 @@ public class ChangeRecordDao {
      * @param record       Record to save
      * @param changedAsset The changed asset
      */
-    public void persist(AbstractChangeRecord record, Asset changedAsset) {
+    public void persist(AbstractChangeRecord record, Asset<?> changedAsset) {
         Objects.requireNonNull(record);
         try {
             em.persist(record, createDescriptor(record, changedAsset));
@@ -45,6 +45,7 @@ public class ChangeRecordDao {
                 contextResolver.resolveChangeTrackingContext(changedAsset));
         descriptor
                 .addAttributeContext(em.getMetamodel().entity(record.getClass()).getFieldSpecification("author"), null);
+        descriptor.setLanguage(null);
         return descriptor;
     }
 

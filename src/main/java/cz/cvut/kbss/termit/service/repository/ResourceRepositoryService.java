@@ -73,7 +73,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     protected void prePersist(Resource instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(generateIdentifier(instance.getLabel()));
+            instance.setUri(idResolver.generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
     }
@@ -163,17 +163,6 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
             parent.removeFile(file);
             resourceDao.update(parent);
         }
-    }
-
-    /**
-     * Generates a resource identifier based on the specified label.
-     *
-     * @param label Resource label
-     * @return Resource identifier
-     */
-    public URI generateIdentifier(String label) {
-        Objects.requireNonNull(label);
-        return idResolver.generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, label);
     }
 
     @Override

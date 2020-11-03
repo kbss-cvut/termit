@@ -162,24 +162,24 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
         for (Term t : terms) {
-            assertThat(model,
-                hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.PREF_LABEL,
-                    vf.createLiteral(t.getLabel(), lang()))));
+            t.getLabel().getValue().forEach((lang, val) -> assertThat(model,
+                    hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.PREF_LABEL,
+                            vf.createLiteral(val, lang)))));
             if (t.getAltLabels() != null && !t.getAltLabels().isEmpty()) {
-                t.getAltLabels().forEach(src -> assertThat(model,
-                    hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.ALT_LABEL,
-                        vf.createLiteral(src)))));
+                t.getAltLabels().forEach(src -> src.getValue().forEach((lang, val) -> assertThat(model,
+                        hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.ALT_LABEL,
+                                vf.createLiteral(val, lang))))));
 
             }
             if (t.getHiddenLabels() != null && !t.getHiddenLabels().isEmpty()) {
-                t.getHiddenLabels().forEach(src -> assertThat(model,
-                    hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.HIDDEN_LABEL,
-                        vf.createLiteral(src)))));
+                t.getHiddenLabels().forEach(src -> src.getValue().forEach((lang, val) -> assertThat(model,
+                        hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.HIDDEN_LABEL,
+                                vf.createLiteral(val, lang))))));
 
             }
-            assertThat(model,
+            t.getDefinition().getValue().forEach((lang, val) -> assertThat(model,
                     hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), SKOS.DEFINITION,
-                            vf.createLiteral(t.getDefinition(), lang()))));
+                            vf.createLiteral(val, lang)))));
             if (t.getSources() != null && !t.getSources().isEmpty()) {
                 t.getSources().forEach(src -> assertThat(model,
                         hasItem(vf.createStatement(vf.createIRI(t.getUri().toString()), DCTERMS.SOURCE,

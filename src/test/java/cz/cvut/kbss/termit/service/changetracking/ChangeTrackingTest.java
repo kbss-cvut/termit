@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -18,6 +19,7 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,7 +133,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
-        term.setDefinition("Updated term definition.");
+        term.setDefinition(MultilingualString.create("Updated term definition.", Constants.DEFAULT_LANGUAGE));
         // This is normally inferred
         term.setVocabulary(vocabulary.getUri());
         transactional(() -> termService.update(term));
@@ -173,14 +175,15 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     void updatingTermLiteralAttributesCreatesChangeRecordWithOriginalAndNewValue() {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId();
-        final String originalDefinition = term.getDefinition();
+        final MultilingualString originalDefinition = term.getDefinition();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setGlossary(vocabulary.getGlossary().getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
-        final String newDefinition = "Updated term definition.";
+        final MultilingualString newDefinition = MultilingualString
+                .create("Updated term definition.", Constants.DEFAULT_LANGUAGE);
         term.setDefinition(newDefinition);
         // This is normally inferred
         term.setVocabulary(vocabulary.getUri());
@@ -188,9 +191,9 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
-        assertEquals(Collections.singleton(originalDefinition),
+        assertEquals(Collections.singleton(originalDefinition.get()),
                 ((UpdateChangeRecord) result.get(0)).getOriginalValue());
-        assertEquals(Collections.singleton(newDefinition), ((UpdateChangeRecord) result.get(0)).getNewValue());
+        assertEquals(Collections.singleton(newDefinition.get()), ((UpdateChangeRecord) result.get(0)).getNewValue());
     }
 
     @Test

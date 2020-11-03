@@ -175,6 +175,31 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
         }
     }
 
+    /**
+     * Returns true if the vocabulary does not contain any terms.
+     *
+     * @param vocabulary Vocabulary to check for existence of terms
+     * @return true, if the vocabulary contains no terms, false otherwise
+     */
+    public boolean isEmpty(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            return !em.createNativeQuery("ASK WHERE {" +
+                "GRAPH ?vocabulary { " +
+                "?term a ?type ;" +
+                "}" +
+                "?term ?inVocabulary ?vocabulary ." +
+                " }", Boolean.class)
+                .setParameter("type", typeUri)
+                .setParameter("vocabulary", vocabulary.getUri())
+                .setParameter("inVocabulary",
+                    URI.create(
+                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     private List<Term> executeQueryAndLoadSubTerms(TypedQuery<Term> query) {
         final List<Term> terms = query.getResultList();
         terms.forEach(this::loadSubTerms);
@@ -407,7 +432,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
      * @param vocabulary Vocabulary in which terms will be searched
      * @return Whether term with {@code label} already exists in vocabulary
      */
-    public boolean existsInVocabulary(String label, Vocabulary vocabulary) {
+    public boolean existsInVocabulary(String label, Vocabulary vocabulary, String languageTag) {
         Objects.requireNonNull(label);
         Objects.requireNonNull(vocabulary);
         try {
@@ -423,7 +448,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                      .setParameter("vocabulary", vocabulary)
                      .setParameter("g", persistenceUtils.resolveVocabularyContext(vocabulary.getUri()))
-                     .setParameter("searchString", label, config.get(ConfigParam.LANGUAGE)).getSingleResult();
+                     .setParameter("searchString", label, languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

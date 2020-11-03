@@ -43,7 +43,7 @@ public class ChangeTrackingAspect {
     }
 
     @After(value = "persistOperation() && args(asset)")
-    public void recordAssetPersist(Asset asset) {
+    public void recordAssetPersist(Asset<?> asset) {
         LOG.trace("Recording creation of asset {}.", asset);
         changeTracker.recordAddEvent(asset);
     }
@@ -55,7 +55,7 @@ public class ChangeTrackingAspect {
     }
 
     @Before(value = "updateOperation() && args(asset)")
-    public void recordAssetUpdate(Asset asset) {
+    public void recordAssetUpdate(Asset<?> asset) {
         LOG.trace("Recording update of asset {}.", asset);
         changeTracker.recordUpdateEvent(asset, helperDao.findStored(asset));
     }

@@ -28,7 +28,7 @@ public class ChangeTrackingHelperDao {
      * @param update Current state of the asset to find
      * @return Stored state of the searched asset
      */
-    public <T extends Asset> T findStored(T update) {
+    public <T extends Asset<?>> T findStored(T update) {
         Objects.requireNonNull(update);
         final T result = (T) em.find(update.getClass(), update.getUri(), update.createDescriptor(descriptorFactory));
         if (result == null) {

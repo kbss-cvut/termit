@@ -1,5 +1,7 @@
 package cz.cvut.kbss.termit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.Properties;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
@@ -12,11 +14,15 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 import org.apache.poi.ss.usermodel.Row;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -24,10 +30,11 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Configurable
 @Audited
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
-public class Term extends Asset implements HasTypes, Serializable {
+public class Term extends Asset<MultilingualString> implements HasTypes, Serializable {
 
     /**
      * Names of columns used in term export.
@@ -38,22 +45,26 @@ public class Term extends Asset implements HasTypes, Serializable {
                             "Types", "Sources", "Parent term",
                             "SubTerms", "Draft"));
 
-    @NotBlank
+    @Autowired
+    @Transient
+    private Configuration config;
+
+    @PrimaryNotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
-    private String label;
+    private MultilingualString label;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
-    private Set<String> altLabels;
+    private Set<MultilingualString> altLabels;
 
     @OWLAnnotationProperty(iri = SKOS.HIDDEN_LABEL)
-    private Set<String> hiddenLabels;
+    private Set<MultilingualString> hiddenLabels;
 
     @OWLAnnotationProperty(iri = SKOS.SCOPE_NOTE)
     private String description;
 
     @OWLAnnotationProperty(iri = SKOS.DEFINITION)
-    private String definition;
+    private MultilingualString definition;
 
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
     private Set<String> sources;
@@ -86,13 +97,43 @@ public class Term extends Asset implements HasTypes, Serializable {
     private Set<String> types;
 
     @Override
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
     @Override
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
+    }
+
+    /**
+     * Sets label in the application-configured language.
+     * <p>
+     * This is a convenience method allowing to skip working with {@link MultilingualString} instances.
+     *
+     * @param label Label value to set
+     * @see #setLabel(MultilingualString)
+     */
+    @JsonIgnore
+    public void setPrimaryLabel(String label) {
+        if (this.label == null) {
+            this.label = MultilingualString.create(label, config.get(ConfigParam.LANGUAGE));
+        } else {
+            this.label.set(config.get(ConfigParam.LANGUAGE), label);
+        }
+    }
+
+    /**
+     * Gets label in the application-configured language.
+     * <p>
+     * This is a convenience method allowing to skip working with {@link MultilingualString} instances.
+     *
+     * @return Label value
+     * @see #getLabel()
+     */
+    @JsonIgnore
+    public String getPrimaryLabel() {
+        return label != null ? label.get(config.get(ConfigParam.LANGUAGE)) : null;
     }
 
     @Override
@@ -104,15 +145,15 @@ public class Term extends Asset implements HasTypes, Serializable {
         return altLabels;
     }
 
-    public void setAltLabels(Set<String> altLabels) {
+    public void setAltLabels(Set<MultilingualString> altLabels) {
         this.altLabels = altLabels;
     }
 
-    public Set<String> getHiddenLabels() {
+    public Set<MultilingualString> getHiddenLabels() {
         return hiddenLabels;
     }
 
-    public void setHiddenLabels(Set<String> hiddenLabels) {
+    public void setHiddenLabels(Set<MultilingualString> hiddenLabels) {
         this.hiddenLabels = hiddenLabels;
     }
 
@@ -124,11 +165,11 @@ public class Term extends Asset implements HasTypes, Serializable {
         this.description = description;
     }
 
-    public String getDefinition() {
+    public MultilingualString getDefinition() {
         return definition;
     }
 
-    public void setDefinition(String definition) {
+    public void setDefinition(MultilingualString definition) {
         this.definition = definition;
     }
 
@@ -229,10 +270,10 @@ public class Term extends Asset implements HasTypes, Serializable {
      */
     public String toCsv() {
         final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
-        sb.append(',').append(CsvUtils.sanitizeString(getLabel()));
-        exportMulti(sb, altLabels, String::toString);
-        exportMulti(sb, hiddenLabels, String::toString);
-        sb.append(',').append(CsvUtils.sanitizeString(definition));
+        sb.append(',').append(exportMultilingualString(getLabel()));
+        exportMulti(sb, altLabels, Term::exportMultilingualString);
+        exportMulti(sb, hiddenLabels, Term::exportMultilingualString);
+        sb.append(',').append(exportMultilingualString(definition));
         sb.append(',').append(CsvUtils.sanitizeString(description));
         exportMulti(sb, types, String::toString);
         exportMulti(sb, sources, String::toString);
@@ -241,6 +282,10 @@ public class Term extends Asset implements HasTypes, Serializable {
         sb.append(',');
         sb.append(isDraft());
         return sb.toString();
+    }
+
+    private static String exportMultilingualString(MultilingualString str) {
+        return exportCollection(str.getValue().values());
     }
 
     private static String exportCollection(Collection<String> col) {
@@ -257,15 +302,17 @@ public class Term extends Asset implements HasTypes, Serializable {
     public void toExcel(Row row) {
         Objects.requireNonNull(row);
         row.createCell(0).setCellValue(getUri().toString());
-        row.createCell(1).setCellValue(getLabel());
+        row.createCell(1).setCellValue(getLabel().toString());
         if (altLabels != null) {
-            row.createCell(2).setCellValue(String.join(";", altLabels));
+            row.createCell(2).setCellValue(String.join(";",
+                    altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
         }
         if (hiddenLabels != null) {
-            row.createCell(3).setCellValue(String.join(";", hiddenLabels));
+            row.createCell(3).setCellValue(String.join(";",
+                    altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
         }
         if (definition != null) {
-            row.createCell(4).setCellValue(definition);
+            row.createCell(4).setCellValue(definition.toString());
         }
         if (description != null) {
             row.createCell(5).setCellValue(description);

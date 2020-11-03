@@ -110,13 +110,13 @@ class BaseDaoTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         final String labelUpdate = "updatedLabel";
-        term.setLabel(labelUpdate);
+        term.getLabel().set(Constants.DEFAULT_LANGUAGE, labelUpdate);
         transactional(() -> {
             final Term updated = sut.update(term);
             assertTrue(em.contains(updated));
-            assertEquals(labelUpdate, updated.getLabel());
+            assertEquals(labelUpdate, updated.getLabel().get(Constants.DEFAULT_LANGUAGE));
         });
-        assertEquals(labelUpdate, em.find(Term.class, term.getUri()).getLabel());
+        assertEquals(labelUpdate, em.find(Term.class, term.getUri()).getLabel().get(Constants.DEFAULT_LANGUAGE));
     }
 
     @Test

@@ -29,8 +29,12 @@ import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.PersistenceUtils;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceBasedAssetDao;
+import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.persistence.dao.util.Validator;
 import cz.cvut.kbss.termit.util.Configuration;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Repository;
 
@@ -44,11 +48,14 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
 
     private volatile long lastModified;
 
+    private final ApplicationContext context;
+
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
-                         PersistenceUtils persistenceUtils) {
+                         PersistenceUtils persistenceUtils, ApplicationContext context) {
         super(Vocabulary.class, em, config, descriptorFactory, persistenceUtils);
         refreshLastModified();
+        this.context = context;
     }
 
     @Override
@@ -238,5 +245,17 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
     @EventListener
     public void refreshLastModified(RefreshLastModifiedEvent event) {
         refreshLastModified();
+    }
+
+    public List<ValidationResult> validateContents(Vocabulary voc) {
+        final Validator validator = context.getBean(
+            cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
+        try {
+            final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
+            importClosure.add(voc.getUri());
+            return validator.validate(importClosure);
+        } catch (IOException e) {
+            throw new PersistenceException(e);
+        }
     }
 }

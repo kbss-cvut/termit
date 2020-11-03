@@ -70,7 +70,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
         });
-        final Collection<Term> matching = terms.stream().filter(t -> t.getLabel().contains("Matching"))
+        final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
                                                .collect(Collectors.toList());
 
         final List<FullTextSearchResult> result = sut.fullTextSearch("matching", Collections.emptySet());
@@ -87,7 +87,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = new Term();
             term.setUri(Generator.generateUri());
-            term.setLabel(Generator.randomBoolean() ? "Matching label " + i : "Unknown label " + i);
+            term.setPrimaryLabel(Generator.randomBoolean() ? "Matching label " + i : "Unknown label " + i);
             vocabulary.getGlossary().addRootTerm(term);
             term.setVocabulary(vocabulary.getUri());
             terms.add(term);
@@ -131,8 +131,8 @@ class SearchDaoTest extends BaseDaoTestRunner {
             terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
             vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v)));
         });
-        final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getLabel().contains("Matching")).collect(
-                Collectors.toList());
+        final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
+                                                    .collect(Collectors.toList());
         final Collection<Vocabulary> matchingVocabularies = vocabularies.stream()
                                                                         .filter(v -> v.getLabel().contains("Matching"))
                                                                         .collect(Collectors.toList());

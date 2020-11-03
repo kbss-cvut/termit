@@ -29,8 +29,6 @@ import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -224,13 +222,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void generateIdentifierGeneratesIdentifierBasedOnSpecifiedLabel() {
-        final String label = "Test resource";
-        assertEquals(config.get(ConfigParam.NAMESPACE_RESOURCE) + IdentifierResolver.normalize(label),
-                sut.generateIdentifier(label).toString());
-    }
-
-    @Test
     void persistThrowsResourceExistsExceptionWhenResourceIdentifierAlreadyExists() {
         final Resource existing = Generator.generateResourceWithId();
         transactional(() -> em.persist(existing));
@@ -367,7 +358,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         final List<ResourceTermAssignments> result = sut.getAssignmentInfo(resource);
         assertEquals(1, result.size());
         assertEquals(term.getUri(), result.get(0).getTerm());
-        assertEquals(term.getLabel(), result.get(0).getTermLabel());
+        assertEquals(term.getPrimaryLabel(), result.get(0).getTermLabel());
         assertEquals(resource.getUri(), result.get(0).getResource());
     }
 
