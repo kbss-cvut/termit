@@ -166,6 +166,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Transactional
     @Override
     public List<ValidationResult> validateContents(Vocabulary instance) {
-        return vocabularyDao.validateContents(instance);
+        return vocabularyDao.validateContents(instance, workspaceService.getCurrentWorkspace());
     }
 }

@@ -33,6 +33,7 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.util.Validator;
 import cz.cvut.kbss.termit.util.Configuration;
 import java.io.IOException;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
@@ -247,13 +248,47 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
         refreshLastModified();
     }
 
-    public List<ValidationResult> validateContents(Vocabulary voc) {
+    private Collection<URI> getVocabularyContexts(Collection<URI> vocabularyURI, Workspace workspace) {
+        final String values = " VALUES ?v { " + String.join(" ", vocabularyURI
+            .stream().map( v -> "<"+v.toString()+">" ).collect(Collectors.toList())) + " } ";
+
+        final List<URI> result = em.createNativeQuery("SELECT DISTINCT ?vc WHERE { " + values +
+            "?mc a ?metadataCtx ;" +
+            "?referencesCtx ?vc ." +
+            "?vc a ?vocabularyCtx ." +
+            "GRAPH ?vc {" +
+            "?v a ?type ." +
+            "}" +
+            "}", URI.class).setParameter("mc", workspace.getUri())
+            .setParameter("metadataCtx",
+                URI.create(
+                    cz.cvut.kbss.termit.util.Vocabulary.s_c_metadatovy_kontext))
+            .setParameter("referencesCtx", URI.create(
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext))
+            .setParameter("vocabularyCtx", URI.create(
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext))
+            .setParameter("type", typeUri)
+            .setDescriptor(createVocabulariesLoadingDescriptor(workspace))
+            .getResultList();
+        return result;
+    }
+
+    /**
+     * Validates a vocabulary within the given workspace. It runs validation on all vocabulary contexts
+     * refering to the vocabulary and its imports in the given workspace.
+     *
+     * @param voc vocabulary to validate
+     * @param workspace workspace to limit the imports of the vocabulary to validate
+     * @return validation results
+     */
+    public List<ValidationResult> validateContents(Vocabulary voc, Workspace workspace) {
         final Validator validator = context.getBean(
             cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
         try {
             final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
             importClosure.add(voc.getUri());
-            return validator.validate(importClosure);
+            final Collection<URI> closure = getVocabularyContexts(importClosure, workspace);
+            return validator.validate(closure);
         } catch (IOException e) {
             throw new PersistenceException(e);
         }
