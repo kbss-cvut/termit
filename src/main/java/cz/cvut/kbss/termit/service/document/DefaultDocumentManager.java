@@ -1,22 +1,20 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.document;
 
+import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -30,6 +28,7 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -42,6 +41,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Default document manager uses files on filesystem to store content.
@@ -179,12 +179,15 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private void removeBackups(File file, java.io.File physicalFile) {
         LOG.trace("Removing backups of file {}.", physicalFile);
+        processBackups(file, physicalFile.getParentFile(), java.io.File::delete);
+    }
+
+    private void processBackups(File file, java.io.File directory, Consumer<java.io.File> consumer) {
         final String backupStartPattern = IdentifierResolver.sanitizeFileName(file.getLabel()) + "~";
-        final java.io.File[] backups = physicalFile.getParentFile()
-                                                   .listFiles((f, fn) -> fn.startsWith(backupStartPattern));
+        final java.io.File[] backups = directory.listFiles((f, fn) -> fn.startsWith(backupStartPattern));
         if (backups != null) {
             for (java.io.File backup : backups) {
-                backup.delete();
+                consumer.accept(backup);
             }
         }
     }
@@ -210,5 +213,50 @@ public class DefaultDocumentManager implements DocumentManager {
             }
             result.delete();
         }
+    }
+
+    @EventListener
+    public void onFileRename(FileRenameEvent event) {
+        final File tempOriginal = new File();
+        tempOriginal.setUri(event.getSource().getUri());
+        tempOriginal.setDocument(event.getSource().getDocument());
+        tempOriginal.setLabel(event.getOriginalName());
+        final java.io.File original = resolveFile(tempOriginal, false);
+        if (!original.exists()) {
+            return;
+        }
+        moveFile(tempOriginal, original, event);
+    }
+
+    private void moveFile(File original, java.io.File physicalOriginal, FileRenameEvent event) {
+        final File tempNewFile = new File();
+        tempNewFile.setUri(event.getSource().getUri());
+        tempNewFile.setDocument(event.getSource().getDocument());
+        tempNewFile.setLabel(event.getNewName());
+        final java.io.File newFile = resolveFile(tempNewFile, false);
+        try {
+            LOG.debug("Moving content from '{}' to '{}' due to file rename.", event.getOriginalName(),
+                    event.getNewName());
+            Files.move(physicalOriginal.toPath(), newFile.toPath(), StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING);
+            moveBackupFiles(original, physicalOriginal.getParentFile(), event);
+        } catch (IOException e) {
+            throw new TermItException("Unable to move file content.", e);
+        }
+    }
+
+    private void moveBackupFiles(File originalFile, java.io.File directory, FileRenameEvent event) {
+        LOG.debug("Moving backups.");
+        processBackups(originalFile, directory, f -> {
+            final String newName = f.getName().replace(event.getOriginalName(), event.getNewName());
+            LOG.trace("Moving backup file from '{}' to '{}'", f.getName(), newName);
+            try {
+                Files.move(f.toPath(), new java.io.File(f.getParent() + java.io.File.separator + newName).toPath(),
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new TermItException("Unable to move backup file.", e);
+            }
+        });
     }
 }
