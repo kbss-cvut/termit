@@ -221,11 +221,38 @@ public class DefaultDocumentManager implements DocumentManager {
         tempOriginal.setUri(event.getSource().getUri());
         tempOriginal.setDocument(event.getSource().getDocument());
         tempOriginal.setLabel(event.getOriginalName());
-        final java.io.File original = resolveFile(tempOriginal, false);
-        if (!original.exists()) {
+        java.io.File physicalOriginal = resolveFile(tempOriginal, false);
+        if (!physicalOriginal.exists()) {
             return;
         }
-        moveFile(tempOriginal, original, event);
+        if (tempOriginal.getDocument() == null) {
+            physicalOriginal = moveFolder(event.getSource(), physicalOriginal, event);
+        }
+        moveFile(tempOriginal, physicalOriginal, event);
+    }
+
+    /**
+     * If a file does not belong to any document, its content is stored in a folder whose name is derived from the file
+     * name.
+     * <p>
+     * Therefore, if the file is renamed, this folder has to be renamed as well.
+     */
+    private java.io.File moveFolder(File changedFile, java.io.File physicalOriginal, FileRenameEvent event) {
+        final java.io.File originalDirectory = physicalOriginal.getParentFile();
+        final File tmpNewFile = new File();
+        tmpNewFile.setUri(changedFile.getUri());
+        tmpNewFile.setLabel(event.getNewName());
+        final java.io.File newDirectory = new java.io.File(originalDirectory.getParentFile().getAbsolutePath() +
+                java.io.File.separator + tmpNewFile.getDirectoryName());
+        try {
+            LOG.trace("Moving file parent directory from '{}' to '{}' due to file rename.",
+                    originalDirectory.getAbsolutePath(), newDirectory.getAbsolutePath());
+            Files.move(originalDirectory.toPath(), newDirectory.toPath());
+            return new java.io.File(
+                    newDirectory.getAbsolutePath() + java.io.File.separator + physicalOriginal.getName());
+        } catch (IOException e) {
+            throw new TermItException("Unable to move file parent directory.", e);
+        }
     }
 
     private void moveFile(File original, java.io.File physicalOriginal, FileRenameEvent event) {
@@ -237,8 +264,7 @@ public class DefaultDocumentManager implements DocumentManager {
         try {
             LOG.debug("Moving content from '{}' to '{}' due to file rename.", event.getOriginalName(),
                     event.getNewName());
-            Files.move(physicalOriginal.toPath(), newFile.toPath(), StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING);
+            Files.move(physicalOriginal.toPath(), newFile.toPath());
             moveBackupFiles(original, physicalOriginal.getParentFile(), event);
         } catch (IOException e) {
             throw new TermItException("Unable to move file content.", e);
@@ -246,14 +272,12 @@ public class DefaultDocumentManager implements DocumentManager {
     }
 
     private void moveBackupFiles(File originalFile, java.io.File directory, FileRenameEvent event) {
-        LOG.debug("Moving backups.");
+        LOG.debug("Moving backup files.");
         processBackups(originalFile, directory, f -> {
             final String newName = f.getName().replace(event.getOriginalName(), event.getNewName());
             LOG.trace("Moving backup file from '{}' to '{}'", f.getName(), newName);
             try {
-                Files.move(f.toPath(), new java.io.File(f.getParent() + java.io.File.separator + newName).toPath(),
-                        StandardCopyOption.ATOMIC_MOVE,
-                        StandardCopyOption.REPLACE_EXISTING);
+                Files.move(f.toPath(), new java.io.File(f.getParent() + java.io.File.separator + newName).toPath());
             } catch (IOException e) {
                 throw new TermItException("Unable to move backup file.", e);
             }
