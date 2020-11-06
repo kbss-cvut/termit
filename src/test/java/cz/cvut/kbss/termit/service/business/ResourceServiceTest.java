@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -31,6 +32,7 @@ import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -58,12 +60,16 @@ class ResourceServiceTest {
     @Mock
     private ChangeRecordService changeRecordService;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private ResourceService sut;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
+        sut.setApplicationEventPublisher(eventPublisher);
     }
 
     @Test
@@ -452,5 +458,21 @@ class ResourceServiceTest {
         when(changeRecordService.getChanges(resource)).thenReturn(records);
         assertEquals(records, sut.getChanges(resource));
         verify(changeRecordService).getChanges(resource);
+    }
+
+    @Test
+    void updatePublishesEventOnFileLabelChange() {
+        final File file = Generator.generateFileWithId("newTest.html");
+        final File originalFile = new File();
+        originalFile.setUri(file.getUri());
+        originalFile.setLabel("originalTest.html");
+        when(resourceRepositoryService.getRequiredReference(file.getUri())).thenReturn(originalFile);
+        sut.update(file);
+        final ArgumentCaptor<FileRenameEvent> captor = ArgumentCaptor.forClass(FileRenameEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        final FileRenameEvent event = captor.getValue();
+        assertEquals(file, event.getSource());
+        assertEquals(originalFile.getLabel(), event.getOriginalName());
+        assertEquals(file.getLabel(), event.getNewName());
     }
 }

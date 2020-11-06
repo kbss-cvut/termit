@@ -207,8 +207,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
 
     @Transactional
     public List<ValidationResult> validateContents(Vocabulary voc) {
-        final Validator validator = context.getBean(
-            cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
+        final Validator validator = context.getBean(Validator.class);
         try {
             final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
             importClosure.add(voc.getUri());

@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> Type of the asset
  */
-public abstract class AssetDao<T extends Asset> extends BaseDao<T> {
+public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
 
     protected final Configuration config;
 
