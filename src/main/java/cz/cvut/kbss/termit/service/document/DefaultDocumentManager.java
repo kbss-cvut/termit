@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.event.FileRenameEvent;
+import cz.cvut.kbss.termit.exception.DocumentManagerException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -81,7 +82,7 @@ public class DefaultDocumentManager implements DocumentManager {
             final List<String> lines = Files.readAllLines(content.toPath());
             return String.join("\n", lines);
         } catch (IOException e) {
-            throw new TermItException("Unable to read file.", e);
+            throw new DocumentManagerException("Unable to read file.", e);
         }
     }
 
@@ -95,7 +96,7 @@ public class DefaultDocumentManager implements DocumentManager {
         try {
             return Files.probeContentType(content.toPath());
         } catch (IOException e) {
-            throw new TermItException("Unable to determine file content type.", e);
+            throw new DocumentManagerException("Unable to determine file content type.", e);
         }
     }
 
@@ -107,7 +108,7 @@ public class DefaultDocumentManager implements DocumentManager {
             Files.createDirectories(target.getParentFile().toPath());
             Files.copy(content, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new TermItException("Unable to write out file content.", e);
+            throw new DocumentManagerException("Unable to write out file content.", e);
         }
     }
 
@@ -120,7 +121,7 @@ public class DefaultDocumentManager implements DocumentManager {
             LOG.debug("Backing up file {} to {}.", toBackup, backupFile);
             Files.copy(toBackup.toPath(), backupFile.toPath());
         } catch (IOException e) {
-            throw new TermItException("Unable to backup file.", e);
+            throw new DocumentManagerException("Unable to backup file.", e);
         }
     }
 
@@ -225,10 +226,14 @@ public class DefaultDocumentManager implements DocumentManager {
         if (!physicalOriginal.exists()) {
             return;
         }
-        if (tempOriginal.getDocument() == null) {
-            physicalOriginal = moveFolder(event.getSource(), physicalOriginal, event);
+        try {
+            if (tempOriginal.getDocument() == null) {
+                physicalOriginal = moveFolder(event.getSource(), physicalOriginal, event);
+            }
+            moveFile(tempOriginal, physicalOriginal, event);
+        } catch (IOException e) {
+            throw new DocumentManagerException("Unable to sync file content after file renaming.", e);
         }
-        moveFile(tempOriginal, physicalOriginal, event);
     }
 
     /**
@@ -237,38 +242,31 @@ public class DefaultDocumentManager implements DocumentManager {
      * <p>
      * Therefore, if the file is renamed, this folder has to be renamed as well.
      */
-    private java.io.File moveFolder(File changedFile, java.io.File physicalOriginal, FileRenameEvent event) {
+    private java.io.File moveFolder(File changedFile, java.io.File physicalOriginal, FileRenameEvent event)
+            throws IOException {
         final java.io.File originalDirectory = physicalOriginal.getParentFile();
         final File tmpNewFile = new File();
         tmpNewFile.setUri(changedFile.getUri());
         tmpNewFile.setLabel(event.getNewName());
         final java.io.File newDirectory = new java.io.File(originalDirectory.getParentFile().getAbsolutePath() +
                 java.io.File.separator + tmpNewFile.getDirectoryName());
-        try {
-            LOG.trace("Moving file parent directory from '{}' to '{}' due to file rename.",
-                    originalDirectory.getAbsolutePath(), newDirectory.getAbsolutePath());
-            Files.move(originalDirectory.toPath(), newDirectory.toPath());
-            return new java.io.File(
-                    newDirectory.getAbsolutePath() + java.io.File.separator + physicalOriginal.getName());
-        } catch (IOException e) {
-            throw new TermItException("Unable to move file parent directory.", e);
-        }
+        LOG.trace("Moving file parent directory from '{}' to '{}' due to file rename.",
+                originalDirectory.getAbsolutePath(), newDirectory.getAbsolutePath());
+        Files.move(originalDirectory.toPath(), newDirectory.toPath());
+        return new java.io.File(
+                newDirectory.getAbsolutePath() + java.io.File.separator + physicalOriginal.getName());
     }
 
-    private void moveFile(File original, java.io.File physicalOriginal, FileRenameEvent event) {
+    private void moveFile(File original, java.io.File physicalOriginal, FileRenameEvent event) throws IOException {
         final File tempNewFile = new File();
         tempNewFile.setUri(event.getSource().getUri());
         tempNewFile.setDocument(event.getSource().getDocument());
         tempNewFile.setLabel(event.getNewName());
         final java.io.File newFile = resolveFile(tempNewFile, false);
-        try {
-            LOG.debug("Moving content from '{}' to '{}' due to file rename.", event.getOriginalName(),
-                    event.getNewName());
-            Files.move(physicalOriginal.toPath(), newFile.toPath());
-            moveBackupFiles(original, physicalOriginal.getParentFile(), event);
-        } catch (IOException e) {
-            throw new TermItException("Unable to move file content.", e);
-        }
+        LOG.debug("Moving content from '{}' to '{}' due to file rename.", event.getOriginalName(),
+                event.getNewName());
+        Files.move(physicalOriginal.toPath(), newFile.toPath());
+        moveBackupFiles(original, physicalOriginal.getParentFile(), event);
     }
 
     private void moveBackupFiles(File originalFile, java.io.File directory, FileRenameEvent event) {
@@ -279,7 +277,7 @@ public class DefaultDocumentManager implements DocumentManager {
             try {
                 Files.move(f.toPath(), new java.io.File(f.getParent() + java.io.File.separator + newName).toPath());
             } catch (IOException e) {
-                throw new TermItException("Unable to move backup file.", e);
+                throw new DocumentManagerException("Unable to sync backup file.", e);
             }
         });
     }
