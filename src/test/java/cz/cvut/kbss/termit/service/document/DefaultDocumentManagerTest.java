@@ -496,9 +496,10 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         final List<java.io.File> backups = createTestBackups(physicalFile);
 
         sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
-        for (java.io.File backup: backups) {
+        for (java.io.File backup : backups) {
             final java.io.File newBackup = new java.io.File(
-                    environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName() +
+                    environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator +
+                            file.getDirectoryName() +
                             java.io.File.separator + backup.getName().replace(physicalFile.getName(), newName));
             assertTrue(newBackup.exists());
             newBackup.deleteOnExit();
@@ -509,5 +510,28 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
                         java.io.File.separator + file.getLabel());
         assertTrue(newFile.exists());
         newFile.deleteOnExit();
+    }
+
+    @Test
+    void onFileRenameMovesWholeDirectoryWhenFileHasNoDocument() throws Exception {
+        final File file = new File();
+        file.setUri(Generator.generateUri());
+        file.setLabel("test.html");
+        final java.io.File physicalOriginal = generateFileWithoutParentDocument(file);
+        final String newName = "newFileName.html";
+        file.setLabel(newName);
+
+        sut.onFileRename(new FileRenameEvent(file, physicalOriginal.getName(), newName));
+        final java.io.File newDirectory = new java.io.File(
+                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName());
+        assertTrue(newDirectory.exists());
+        newDirectory.deleteOnExit();
+        final java.io.File newFile = new java.io.File(
+                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName() +
+                        java.io.File.separator + file.getLabel());
+        assertTrue(newFile.exists());
+        newFile.deleteOnExit();
+        assertFalse(physicalOriginal.getParentFile().exists());
+        assertFalse(physicalOriginal.exists());
     }
 }
