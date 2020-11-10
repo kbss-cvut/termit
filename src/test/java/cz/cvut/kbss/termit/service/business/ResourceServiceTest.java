@@ -33,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.TransactionSystemException;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -474,5 +475,17 @@ class ResourceServiceTest {
         assertEquals(file, event.getSource());
         assertEquals(originalFile.getLabel(), event.getOriginalName());
         assertEquals(file.getLabel(), event.getNewName());
+    }
+
+    @Test
+    void updateDoesNotPublishFileRenameEventWhenRepositoryServiceThrowsException() {
+        final File file = Generator.generateFileWithId("newTest.html");
+        final File originalFile = new File();
+        originalFile.setUri(file.getUri());
+        originalFile.setLabel("originalTest.html");
+        when(resourceRepositoryService.getRequiredReference(file.getUri())).thenReturn(originalFile);
+        when(resourceRepositoryService.update(any())).thenThrow(TransactionSystemException.class);
+        assertThrows(TransactionSystemException.class, () -> sut.update(file));
+        verify(eventPublisher, never()).publishEvent(any(FileRenameEvent.class));
     }
 }
