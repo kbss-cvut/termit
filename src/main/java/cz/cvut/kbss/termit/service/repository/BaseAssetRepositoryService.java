@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @param <T> Asset type
  */
-public abstract class BaseAssetRepositoryService<T extends Asset> extends BaseRepositoryService<T> {
+public abstract class BaseAssetRepositoryService<T extends Asset<?>> extends BaseRepositoryService<T> {
 
     protected BaseAssetRepositoryService(Validator validator) {
         super(validator);

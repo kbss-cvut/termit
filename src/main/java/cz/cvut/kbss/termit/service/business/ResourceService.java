@@ -36,6 +36,7 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Service;
@@ -326,22 +327,27 @@ public class ResourceService
         repositoryService.persist(instance);
     }
 
-    @Transactional
     @Override
     public Resource update(Resource instance) {
-        notifyOnFileLabelUpdate(instance);
-        // TODO Undo file name update notification if update fails
-        return repositoryService.update(instance);
+        final Optional<ApplicationEvent> evt = notifyOnFileLabelUpdate(instance);
+        final Resource result = repositoryService.update(instance);
+        // Notify only after update in repository to ensure that the change has succeeded
+        // Note that this is not ideal either, because if the file rename event does not succeed, there is no way
+        // to roll back the update in the repository
+        // A better strategy would be to have an independent document manager which would not be based on file names
+        evt.ifPresent(eventPublisher::publishEvent);
+        return result;
     }
 
-    private void notifyOnFileLabelUpdate(Resource instance) {
+    private Optional<ApplicationEvent> notifyOnFileLabelUpdate(Resource instance) {
         if (!(instance instanceof File)) {
-            return;
+            return Optional.empty();
         }
         final Resource original = getRequiredReference(instance.getUri());
         if (!Objects.equals(original.getLabel(), instance.getLabel())) {
-            eventPublisher.publishEvent(new FileRenameEvent((File) instance, original.getLabel(), instance.getLabel()));
+            return Optional.of(new FileRenameEvent((File) instance, original.getLabel(), instance.getLabel()));
         }
+        return Optional.empty();
     }
 
     @Override
