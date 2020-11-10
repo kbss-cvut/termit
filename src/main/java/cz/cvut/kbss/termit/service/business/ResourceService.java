@@ -327,19 +327,20 @@ public class ResourceService
         repositoryService.persist(instance);
     }
 
+    @Transactional
     @Override
     public Resource update(Resource instance) {
-        final Optional<ApplicationEvent> evt = notifyOnFileLabelUpdate(instance);
+        final Optional<ApplicationEvent> evt = createFileLabelUpdateNotification(instance);
         final Resource result = repositoryService.update(instance);
         // Notify only after update in repository to ensure that the change has succeeded
-        // Note that this is not ideal either, because if the file rename event does not succeed, there is no way
-        // to roll back the update in the repository
-        // A better strategy would be to have an independent document manager which would not be based on file names
+        // Note that since this is happening in the same transaction, we are relying on the hypothetical exception
+        // being thrown on merge, not on commit
+        // If an exception is thrown on commit, the event cannot be reverted
         evt.ifPresent(eventPublisher::publishEvent);
         return result;
     }
 
-    private Optional<ApplicationEvent> notifyOnFileLabelUpdate(Resource instance) {
+    private Optional<ApplicationEvent> createFileLabelUpdateNotification(Resource instance) {
         if (!(instance instanceof File)) {
             return Optional.empty();
         }
