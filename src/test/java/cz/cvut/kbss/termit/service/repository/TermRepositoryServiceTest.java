@@ -305,7 +305,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        assertTrue(sut.existsInVocabulary(t.getLabel().get(Constants.DEFAULT_LANGUAGE), vocabulary, Constants.DEFAULT_LANGUAGE));
+        assertTrue(sut.existsInVocabulary(t.getLabel().get(Constants.DEFAULT_LANGUAGE), vocabulary,
+                Constants.DEFAULT_LANGUAGE));
     }
 
     @Test
@@ -359,7 +360,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void updateThrowsValidationExceptionForEmptyTermLabel() {
         final Term t = Generator.generateTermWithId();
-        vocabulary.getGlossary().addRootTerm(t);
         vocabulary.getGlossary().addRootTerm(t);
         transactional(() -> {
             em.persist(t);
@@ -453,8 +453,10 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        final List<Term> resultOne = sut.findAllRootsIncludingImported(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
-        final List<Term> resultTwo = sut.findAllRootsIncludingImported(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
+        final List<Term> resultOne = sut
+                .findAllRootsIncludingImported(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
+        final List<Term> resultTwo = sut
+                .findAllRootsIncludingImported(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
 
         assertEquals(5, resultOne.size());
         assertEquals(5, resultTwo.size());
@@ -530,7 +532,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setVocabulary(childVocabulary.getUri());
         sut.addChildTerm(childTerm, parentTerm);
 
-        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList()).contains(childTerm));
+        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList())
+                      .contains(childTerm));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
@@ -557,7 +560,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         em.getEntityManagerFactory().getCache().evictAll();
         childTerm.setParentTerms(Collections.singleton(newParentTerm));
         sut.update(childTerm);
-        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList()).contains(childTerm));
+        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList())
+                      .contains(childTerm));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
@@ -573,5 +577,20 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.remove(term);
         final Term result = em.find(Term.class, term.getUri());
         assertNull(result);
+    }
+
+    @Test
+    void updateThrowsValidationExceptionWhenTermStatusIsConfirmedAndLabelChanges() {
+        final Term term = Generator.generateTermWithId();
+        term.setDraft(false);
+        vocabulary.getGlossary().addRootTerm(term);
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.merge(vocabulary);
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+        term.getLabel().set(Constants.DEFAULT_LANGUAGE, "updated label");
+        assertThrows(ValidationException.class, () -> transactional(() -> sut.update(term)));
     }
 }
