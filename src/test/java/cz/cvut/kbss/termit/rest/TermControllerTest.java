@@ -987,7 +987,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
 
         mockMvc.perform(put("/vocabularies/" + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/status")
-                .content(toJson(TermStatus.CONFIRMED)).contentType(MediaType.APPLICATION_JSON))
+                .content(TermStatus.CONFIRMED.toString()).contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
         verify(termServiceMock).getRequiredReference(termUri);
         verify(termServiceMock).setStatus(term, TermStatus.CONFIRMED);
@@ -1001,8 +1001,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
 
         mockMvc.perform(put("/terms/" + TERM_NAME + "/status").queryParam(QueryParams.NAMESPACE, NAMESPACE)
-                                                              .content(toJson(TermStatus.DRAFT))
-                                                              .contentType(MediaType.APPLICATION_JSON))
+                                                              .content(TermStatus.DRAFT.toString())
+                                                              .contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
         verify(termServiceMock).getRequiredReference(termUri);
         verify(termServiceMock).setStatus(term, TermStatus.DRAFT);

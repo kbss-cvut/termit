@@ -276,25 +276,24 @@ public class TermController extends BaseController {
     public void updateStatus(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                              @PathVariable("termIdFragment") String termIdFragment,
                              @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
-                             @RequestBody TermStatus status) {
+                             @RequestBody String status) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
         final Term t = termService.getRequiredReference(termUri);
-        termService.setStatus(t, status);
+        termService.setStatus(t, TermStatus.valueOf(status));
         LOG.debug("Status of term {} set to '{}'.", t, status);
     }
 
     /**
      * @see #updateStatus(String, String, String, TermStatus)
      */
-    @PutMapping(value = "terms/{termIdFragment}/status",
-            consumes = MediaType.ALL_VALUE)
+    @PutMapping(value = "terms/{termIdFragment}/status", consumes = MediaType.ALL_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateStatus(@PathVariable("termIdFragment") String termIdFragment,
                              @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-                             @RequestBody TermStatus status) {
+                             @RequestBody String status) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         final Term t = termService.getRequiredReference(termUri);
-        termService.setStatus(t, status);
+        termService.setStatus(t, TermStatus.valueOf(status));
         LOG.debug("Status of term {} set to '{}'.", t, status);
     }
 
