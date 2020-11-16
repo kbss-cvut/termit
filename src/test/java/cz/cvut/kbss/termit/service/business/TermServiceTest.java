@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.util.TermStatus;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
@@ -317,5 +318,23 @@ class TermServiceTest extends BaseServiceTestRunner {
         comment.setContent("test comment");
         sut.addComment(comment, term);
         verify(commentService).addToAsset(comment, term);
+    }
+
+    @Test
+    void setStatusToDraftSetsTermDraftFlagToTrueAndUpdatesIt() {
+        final Term term = Generator.generateTermWithId();
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+        sut.setStatus(term, TermStatus.DRAFT);
+        assertTrue(term.isDraft());
+        verify(termRepositoryService).update(term);
+    }
+
+    @Test
+    void setStatusToConfirmedSetsTermDraftFlagToFalseAndUpdatesIt() {
+        final Term term = Generator.generateTermWithId();
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+        sut.setStatus(term, TermStatus.CONFIRMED);
+        assertFalse(term.isDraft());
+        verify(termRepositoryService).update(term);
     }
 }

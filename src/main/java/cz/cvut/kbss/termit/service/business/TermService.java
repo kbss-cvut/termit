@@ -9,6 +9,7 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.util.TermStatus;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
@@ -18,6 +19,7 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.*;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
  * Service for term-related business logic.
  */
 @Service
-public class TermService implements RudService<Term>,ChangeRecordProvider<Term> {
+public class TermService implements RudService<Term>, ChangeRecordProvider<Term> {
 
     private final VocabularyExporters exporters;
 
@@ -322,12 +324,27 @@ public class TermService implements RudService<Term>,ChangeRecordProvider<Term> 
     }
 
     /**
+     * Updates the specified term's status to the specified value.
+     *
+     * @param term   Term whose status to update
+     * @param status The new status
+     */
+    @Transactional
+    public void setStatus(Term term, TermStatus status) {
+        Objects.requireNonNull(term);
+        Objects.requireNonNull(status);
+        final Term toUpdate = repositoryService.findRequired(term.getUri());
+        toUpdate.setDraft(status == TermStatus.DRAFT);
+        repositoryService.update(toUpdate);
+    }
+
+    /**
      * Gets a reference to a Term occurrence with the specified identifier.
      *
      * @param id Term occurrence identifier
      * @return Matching Term occurrence reference
      */
-    public TermOccurrence getRequiredOcurrenceReference(URI id) {
+    public TermOccurrence getRequiredOccurrenceReference(URI id) {
         return termOccurrenceService.getRequiredReference(id);
     }
 
@@ -340,7 +357,7 @@ public class TermService implements RudService<Term>,ChangeRecordProvider<Term> 
     }
 
     /**
-     * Gets unused terms (in annotations/occurences).
+     * Gets unused terms (in annotations/occurrences).
      *
      * @return List of terms
      */
