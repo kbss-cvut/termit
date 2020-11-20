@@ -8,7 +8,6 @@ ARG TEXT_ANALYSIS_URL=http://localhost/annotace/annotate
 
 ENV TERMIT_HOME=/backend
 ENV FILE_STORAGE=$TERMIT_HOME/storage
-VOLUME [ "$TERMIT_HOME" ]
 WORKDIR $TERMIT_HOME
 ADD . $TERMIT_HOME
 COPY src/main/scripts/wait-for-it.sh $TERMIT_HOME/
