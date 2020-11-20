@@ -284,7 +284,7 @@ public class TermController extends BaseController {
     }
 
     /**
-     * @see #updateStatus(String, String, String, TermStatus)
+     * @see #updateStatus(String, String, String, String)
      */
     @PutMapping(value = "terms/{termIdFragment}/status", consumes = MediaType.ALL_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
