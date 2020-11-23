@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
@@ -30,6 +31,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.jena.vocabulary.SKOS;
@@ -254,7 +256,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of definitionally related terms of the specified term
      */
     public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
-        return termAssignmentDao.getUnusedTermsInVocabulary(vocabulary);
+        throw new UnsupportedOperationException("This method is disabled, not working correctly.");
     }
 
     /**
