@@ -14,13 +14,11 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
@@ -29,12 +27,9 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-
-import java.util.Collection;
-import java.util.Set;
-
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +37,11 @@ import javax.validation.Validator;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
@@ -74,9 +74,18 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     @Override
-    public void persist(Term instance) {
+    public void persist(@NonNull Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
+    }
+
+    @Override
+    protected void preUpdate(@NonNull Term instance) {
+        super.preUpdate(instance);
+        final Term existing = getRequiredReference(instance.getUri());
+        if (!existing.isDraft() && !Objects.equals(existing.getLabel(), instance.getLabel())) {
+            throw new ValidationException("Cannot update label of confirmed term.");
+        }
     }
 
     @Override
