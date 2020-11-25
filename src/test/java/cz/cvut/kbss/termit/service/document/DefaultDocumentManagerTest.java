@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
+import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -36,6 +37,7 @@ import org.springframework.util.MimeTypeUtils;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -57,7 +59,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     private Environment environment;
 
     @Autowired
-    private DocumentManager sut;
+    private DefaultDocumentManager sut;
 
     private Document document;
 
@@ -375,12 +377,16 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         assertEquals(0, docDir.list().length);
     }
 
-    private void createTestBackups(java.io.File file) throws Exception {
+    private List<java.io.File> createTestBackups(java.io.File file) throws Exception {
+        final List<java.io.File> backupFiles = new ArrayList<>(3);
         for (int i = 0; i < 3; i++) {
             final String path = file.getAbsolutePath();
             final String newPath = path + "~" + System.currentTimeMillis() + "-" + i;
-            Files.copy(file.toPath(), new java.io.File(newPath).toPath());
+            final java.io.File target = new java.io.File(newPath);
+            Files.copy(file.toPath(), target.toPath());
+            backupFiles.add(target);
         }
+        return backupFiles;
     }
 
     @Test
@@ -448,5 +454,84 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         file.setUri(Generator.generateUri());
 
         sut.remove(file);
+    }
+
+    @Test
+    void onFileRenameMovesPhysicalFileInDocumentAccordingToNewName() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        final String newName = "newFileName.html";
+        file.setDocument(document);
+        file.setLabel(newName);
+
+        sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
+        final java.io.File newFile = new java.io.File(
+                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName() +
+                        java.io.File.separator + file.getLabel());
+        assertTrue(newFile.exists());
+        newFile.deleteOnExit();
+        assertFalse(physicalFile.exists());
+    }
+
+    @Test
+    void onFileRenameDoesNothingWhenPhysicalFileDoesNotExist() {
+        final File file = new File();
+        file.setDocument(document);
+        final String oldName = "oldFileName";
+        file.setLabel("newFileName");
+
+        sut.onFileRename(new FileRenameEvent(file, oldName, file.getLabel()));
+        final java.io.File docDir = new java.io.File(
+                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName());
+        assertFalse(docDir.exists());
+    }
+
+    @Test
+    void onFileRenameMovesBackupsOfPhysicalFileAsWell() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        final String newName = "newFileName.html";
+        file.setDocument(document);
+        file.setLabel(newName);
+        final List<java.io.File> backups = createTestBackups(physicalFile);
+
+        sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
+        for (java.io.File backup : backups) {
+            final java.io.File newBackup = new java.io.File(
+                    environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator +
+                            file.getDirectoryName() +
+                            java.io.File.separator + backup.getName().replace(physicalFile.getName(), newName));
+            assertTrue(newBackup.exists());
+            newBackup.deleteOnExit();
+            assertFalse(backup.exists());
+        }
+        final java.io.File newFile = new java.io.File(
+                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName() +
+                        java.io.File.separator + file.getLabel());
+        assertTrue(newFile.exists());
+        newFile.deleteOnExit();
+    }
+
+    @Test
+    void onFileRenameMovesWholeDirectoryWhenFileHasNoDocument() throws Exception {
+        final File file = new File();
+        file.setUri(Generator.generateUri());
+        file.setLabel("test.html");
+        final java.io.File physicalOriginal = generateFileWithoutParentDocument(file);
+        final String newName = "newFileName.html";
+        file.setLabel(newName);
+
+        sut.onFileRename(new FileRenameEvent(file, physicalOriginal.getName(), newName));
+        final java.io.File newDirectory = new java.io.File(
+                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName());
+        assertTrue(newDirectory.exists());
+        newDirectory.deleteOnExit();
+        final java.io.File newFile = new java.io.File(
+                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName() +
+                        java.io.File.separator + file.getLabel());
+        assertTrue(newFile.exists());
+        newFile.deleteOnExit();
+        assertFalse(physicalOriginal.getParentFile().exists());
+        assertFalse(physicalOriginal.exists());
     }
 }

@@ -71,12 +71,9 @@ public class Validator {
         final Set<URL> rules = new HashSet<>();
         rules.addAll(
             validator.getGlossaryRules());
-        rules.addAll(validator.getModelRules().stream().filter( r ->
-            // currently only using content rules, not OntoUml, as TermIt does not support adding
-            // OntoUml rules
-            r.toString().contains("m1.ttl")
-            || r.toString().contains("m2.ttl")
-        ).collect(Collectors.toList()));
+        rules.addAll(
+            validator.getModelRules().stream().collect(Collectors.toList())
+        );
 
         LOG.debug("Constructing RDF4J model ...");
         final Model model = getModelFromRdf4jRepository(vocabularyIris);

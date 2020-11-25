@@ -249,10 +249,10 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
     }
 
     private Collection<URI> getVocabularyContexts(Collection<URI> vocabularyURI, Workspace workspace) {
-        final String values = " VALUES ?v { " + String.join(" ", vocabularyURI
-            .stream().map( v -> "<"+v.toString()+">" ).collect(Collectors.toList())) + " } ";
+        final String values = " VALUES ?v { " + vocabularyURI
+            .stream().map( v -> "<"+v.toString()+">" ).collect(Collectors.joining(" ")) + " } ";
 
-        final List<URI> result = em.createNativeQuery("SELECT DISTINCT ?vc WHERE { " + values +
+        return em.createNativeQuery("SELECT DISTINCT ?vc WHERE { " + values +
             "?mc a ?metadataCtx ;" +
             "?referencesCtx ?vc ." +
             "?vc a ?vocabularyCtx ." +
@@ -260,17 +260,16 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
             "?v a ?type ." +
             "}" +
             "}", URI.class).setParameter("mc", workspace.getUri())
-            .setParameter("metadataCtx",
+                 .setParameter("metadataCtx",
                 URI.create(
                     cz.cvut.kbss.termit.util.Vocabulary.s_c_metadatovy_kontext))
-            .setParameter("referencesCtx", URI.create(
+                 .setParameter("referencesCtx", URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext))
-            .setParameter("vocabularyCtx", URI.create(
+                 .setParameter("vocabularyCtx", URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext))
-            .setParameter("type", typeUri)
-            .setDescriptor(createVocabulariesLoadingDescriptor(workspace))
-            .getResultList();
-        return result;
+                 .setParameter("type", typeUri)
+                 .setDescriptor(createVocabulariesLoadingDescriptor(workspace))
+                 .getResultList();
     }
 
     /**
