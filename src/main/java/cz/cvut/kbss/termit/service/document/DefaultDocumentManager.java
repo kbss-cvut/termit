@@ -1,22 +1,21 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.document;
 
+import cz.cvut.kbss.termit.event.FileRenameEvent;
+import cz.cvut.kbss.termit.exception.DocumentManagerException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -30,6 +29,7 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Default document manager uses files on filesystem to store content.
@@ -81,7 +82,7 @@ public class DefaultDocumentManager implements DocumentManager {
             final List<String> lines = Files.readAllLines(content.toPath());
             return String.join("\n", lines);
         } catch (IOException e) {
-            throw new TermItException("Unable to read file.", e);
+            throw new DocumentManagerException("Unable to read file.", e);
         }
     }
 
@@ -95,7 +96,7 @@ public class DefaultDocumentManager implements DocumentManager {
         try {
             return Files.probeContentType(content.toPath());
         } catch (IOException e) {
-            throw new TermItException("Unable to determine file content type.", e);
+            throw new DocumentManagerException("Unable to determine file content type.", e);
         }
     }
 
@@ -107,7 +108,7 @@ public class DefaultDocumentManager implements DocumentManager {
             Files.createDirectories(target.getParentFile().toPath());
             Files.copy(content, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new TermItException("Unable to write out file content.", e);
+            throw new DocumentManagerException("Unable to write out file content.", e);
         }
     }
 
@@ -120,7 +121,7 @@ public class DefaultDocumentManager implements DocumentManager {
             LOG.debug("Backing up file {} to {}.", toBackup, backupFile);
             Files.copy(toBackup.toPath(), backupFile.toPath());
         } catch (IOException e) {
-            throw new TermItException("Unable to backup file.", e);
+            throw new DocumentManagerException("Unable to backup file.", e);
         }
     }
 
@@ -179,12 +180,15 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private void removeBackups(File file, java.io.File physicalFile) {
         LOG.trace("Removing backups of file {}.", physicalFile);
+        processBackups(file, physicalFile.getParentFile(), java.io.File::delete);
+    }
+
+    private void processBackups(File file, java.io.File directory, Consumer<java.io.File> consumer) {
         final String backupStartPattern = IdentifierResolver.sanitizeFileName(file.getLabel()) + "~";
-        final java.io.File[] backups = physicalFile.getParentFile()
-                                                   .listFiles((f, fn) -> fn.startsWith(backupStartPattern));
+        final java.io.File[] backups = directory.listFiles((f, fn) -> fn.startsWith(backupStartPattern));
         if (backups != null) {
             for (java.io.File backup : backups) {
-                backup.delete();
+                consumer.accept(backup);
             }
         }
     }
@@ -210,5 +214,71 @@ public class DefaultDocumentManager implements DocumentManager {
             }
             result.delete();
         }
+    }
+
+    @EventListener
+    public void onFileRename(FileRenameEvent event) {
+        final File tempOriginal = new File();
+        tempOriginal.setUri(event.getSource().getUri());
+        tempOriginal.setDocument(event.getSource().getDocument());
+        tempOriginal.setLabel(event.getOriginalName());
+        java.io.File physicalOriginal = resolveFile(tempOriginal, false);
+        if (!physicalOriginal.exists()) {
+            return;
+        }
+        try {
+            if (tempOriginal.getDocument() == null) {
+                physicalOriginal = moveFolder(event.getSource(), physicalOriginal, event);
+            }
+            moveFile(tempOriginal, physicalOriginal, event);
+        } catch (IOException e) {
+            throw new DocumentManagerException("Unable to sync file content after file renaming.", e);
+        }
+    }
+
+    /**
+     * If a file does not belong to any document, its content is stored in a folder whose name is derived from the file
+     * name.
+     * <p>
+     * Therefore, if the file is renamed, this folder has to be renamed as well.
+     */
+    private java.io.File moveFolder(File changedFile, java.io.File physicalOriginal, FileRenameEvent event)
+            throws IOException {
+        final java.io.File originalDirectory = physicalOriginal.getParentFile();
+        final File tmpNewFile = new File();
+        tmpNewFile.setUri(changedFile.getUri());
+        tmpNewFile.setLabel(event.getNewName());
+        final java.io.File newDirectory = new java.io.File(originalDirectory.getParentFile().getAbsolutePath() +
+                java.io.File.separator + tmpNewFile.getDirectoryName());
+        LOG.trace("Moving file parent directory from '{}' to '{}' due to file rename.",
+                originalDirectory.getAbsolutePath(), newDirectory.getAbsolutePath());
+        Files.move(originalDirectory.toPath(), newDirectory.toPath());
+        return new java.io.File(
+                newDirectory.getAbsolutePath() + java.io.File.separator + physicalOriginal.getName());
+    }
+
+    private void moveFile(File original, java.io.File physicalOriginal, FileRenameEvent event) throws IOException {
+        final File tempNewFile = new File();
+        tempNewFile.setUri(event.getSource().getUri());
+        tempNewFile.setDocument(event.getSource().getDocument());
+        tempNewFile.setLabel(event.getNewName());
+        final java.io.File newFile = resolveFile(tempNewFile, false);
+        LOG.debug("Moving content from '{}' to '{}' due to file rename.", event.getOriginalName(),
+                event.getNewName());
+        Files.move(physicalOriginal.toPath(), newFile.toPath());
+        moveBackupFiles(original, physicalOriginal.getParentFile(), event);
+    }
+
+    private void moveBackupFiles(File originalFile, java.io.File directory, FileRenameEvent event) {
+        LOG.debug("Moving backup files.");
+        processBackups(originalFile, directory, f -> {
+            final String newName = f.getName().replace(event.getOriginalName(), event.getNewName());
+            LOG.trace("Moving backup file from '{}' to '{}'", f.getName(), newName);
+            try {
+                Files.move(f.toPath(), new java.io.File(f.getParent() + java.io.File.separator + newName).toPath());
+            } catch (IOException e) {
+                throw new DocumentManagerException("Unable to sync backup file.", e);
+            }
+        });
     }
 }

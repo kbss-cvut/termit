@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
+import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.model.Term;
@@ -35,6 +36,9 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +51,7 @@ import java.util.*;
  */
 @Service
 public class ResourceService
-        implements CrudService<Resource>, SupportsLastModification, ChangeRecordProvider<Resource> {
+        implements CrudService<Resource>, SupportsLastModification, ChangeRecordProvider<Resource>, ApplicationEventPublisherAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResourceService.class);
 
@@ -61,6 +65,8 @@ public class ResourceService
     private final VocabularyService vocabularyService;
 
     private final ChangeRecordService changeRecordService;
+
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public ResourceService(ResourceRepositoryService repositoryService, DocumentManager documentManager,
@@ -324,7 +330,25 @@ public class ResourceService
     @Transactional
     @Override
     public Resource update(Resource instance) {
-        return repositoryService.update(instance);
+        final Optional<ApplicationEvent> evt = createFileLabelUpdateNotification(instance);
+        final Resource result = repositoryService.update(instance);
+        // Notify only after update in repository to ensure that the change has succeeded
+        // Note that since this is happening in the same transaction, we are relying on the hypothetical exception
+        // being thrown on merge, not on commit
+        // If an exception is thrown on commit, the event cannot be reverted
+        evt.ifPresent(eventPublisher::publishEvent);
+        return result;
+    }
+
+    private Optional<ApplicationEvent> createFileLabelUpdateNotification(Resource instance) {
+        if (!(instance instanceof File)) {
+            return Optional.empty();
+        }
+        final Resource original = getRequiredReference(instance.getUri());
+        if (!Objects.equals(original.getLabel(), instance.getLabel())) {
+            return Optional.of(new FileRenameEvent((File) instance, original.getLabel(), instance.getLabel()));
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -335,5 +359,10 @@ public class ResourceService
     @Override
     public List<AbstractChangeRecord> getChanges(Resource asset) {
         return changeRecordService.getChanges(asset);
+    }
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 }

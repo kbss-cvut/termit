@@ -263,7 +263,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of definitionally related terms of the specified term
      */
     public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
-        return termAssignmentDao.getUnusedTermsInVocabulary(vocabulary);
+        throw new UnsupportedOperationException("This method is disabled, not working correctly.");
     }
 
     /**
