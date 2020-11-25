@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class WorkspaceBasedAssetDao<T extends Asset> extends AssetDao<T> {
+public abstract class WorkspaceBasedAssetDao<T extends Asset<?>> extends AssetDao<T> {
 
     protected final PersistenceUtils persistenceUtils;
 
