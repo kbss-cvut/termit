@@ -93,7 +93,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      * @param target Asset to filter by
      * @return List of matching term occurrences
      */
-    public List<TermOccurrence> findAllTargeting(Asset target) {
+    public List<TermOccurrence> findAllTargeting(Asset<?> target) {
         Objects.requireNonNull(target);
         final Query query = em.createNativeQuery(FIND_ALL_TARGETING_QUERY)
                               .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
@@ -135,12 +135,12 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      *
      * @param target Asset for which suggested term occurrences will be removed
      */
-    public void removeSuggested(Asset target) {
+    public void removeSuggested(Asset<?> target) {
         Objects.requireNonNull(target);
         removeAll(target, URI.create(Vocabulary.s_c_navrzeny_vyskyt_termu));
     }
 
-    private void removeAll(Asset asset, URI toType) {
+    private void removeAll(Asset<?> asset, URI toType) {
         Objects.requireNonNull(asset);
         em.createNativeQuery("DELETE WHERE {" +
                 "?x a ?toType ;" +
@@ -163,7 +163,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      *
      * @param target Asset for which term occurrences will be removed
      */
-    public void removeAll(Asset target) {
+    public void removeAll(Asset<?> target) {
         Objects.requireNonNull(target);
         removeAll(target, URI.create(Vocabulary.s_c_vyskyt_termu));
     }

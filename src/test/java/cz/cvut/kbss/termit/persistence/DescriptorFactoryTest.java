@@ -21,22 +21,28 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class DescriptorFactoryTest {
+class DescriptorFactoryTest extends BaseDaoTestRunner {
 
     private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
     private Term term;
 
-    private FieldSpecification parentFieldSpec;
+    private FieldSpecification<?, ?> parentFieldSpec;
+
+    @Autowired
+    private DescriptorFactory sut;
 
     @BeforeEach
     void setUp() {
@@ -48,9 +54,9 @@ class DescriptorFactoryTest {
 
     @Test
     void termDescriptorCreatesSimpleTermDescriptorWhenNoParentsAreProvided() {
-        final Descriptor result = DescriptorFactory.termDescriptor(term);
-        assertEquals(vocabulary.getUri(), result.getContext());
-        assertEquals(vocabulary.getUri(), result.getAttributeContext(parentFieldSpec));
+        final Descriptor result = sut.termDescriptor(term);
+        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
+        assertEquals(Collections.singleton(vocabulary.getUri()), result.getAttributeContexts(parentFieldSpec));
     }
 
     @Test
@@ -58,9 +64,9 @@ class DescriptorFactoryTest {
         final Term parent = Generator.generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         term.addParentTerm(parent);
-        final Descriptor result = DescriptorFactory.termDescriptor(term);
-        assertEquals(vocabulary.getUri(), result.getContext());
-        assertEquals(vocabulary.getUri(), result.getAttributeContext(parentFieldSpec));
+        final Descriptor result = sut.termDescriptor(term);
+        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
+        assertEquals(Collections.singleton(vocabulary.getUri()), result.getAttributeContexts(parentFieldSpec));
     }
 
     @Test
@@ -69,9 +75,9 @@ class DescriptorFactoryTest {
         final URI parentVocabulary = Generator.generateUri();
         parent.setVocabulary(parentVocabulary);
         term.addParentTerm(parent);
-        final Descriptor result = DescriptorFactory.termDescriptor(term);
-        assertEquals(vocabulary.getUri(), result.getContext());
-        assertNull(result.getAttributeDescriptor(parentFieldSpec).getContext());
+        final Descriptor result = sut.termDescriptor(term);
+        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
+        assertFalse(result.getAttributeDescriptor(parentFieldSpec).getSingleContext().isPresent());
     }
 
     @Test
@@ -81,8 +87,8 @@ class DescriptorFactoryTest {
         doc.addFile(file);
         file.setDocument(doc);
         doc.setVocabulary(Generator.generateUri());
-        final Descriptor result = DescriptorFactory.fileDescriptor(doc.getVocabulary());
-        final FieldSpecification docFieldSpec = mock(FieldSpecification.class);
+        final Descriptor result = sut.fileDescriptor(doc.getVocabulary());
+        final FieldSpecification<?, ?> docFieldSpec = mock(FieldSpecification.class);
         when(docFieldSpec.getJavaField()).thenReturn(File.getDocumentField());
         final Descriptor docDescriptor = result.getAttributeDescriptor(docFieldSpec);
         assertNotNull(docDescriptor);

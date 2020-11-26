@@ -42,8 +42,8 @@ public class TermDao extends AssetDao<Term> {
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
 
     @Autowired
-    public TermDao(EntityManager em, Configuration config) {
-        super(Term.class, em, config);
+    public TermDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
+        super(Term.class, em, config, descriptorFactory);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class TermDao extends AssetDao<Term> {
 
         try {
             entity.setGlossary(vocabulary.getGlossary().getUri());
-            em.persist(entity, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -90,7 +90,7 @@ public class TermDao extends AssetDao<Term> {
         try {
             // Evict possibly cached instance loaded from default context
             em.getEntityManagerFactory().getCache().evict(Term.class, entity.getUri(), null);
-            return em.merge(entity, DescriptorFactory.termDescriptor(entity));
+            return em.merge(entity, descriptorFactory.termDescriptor(entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -137,16 +137,16 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(vocabulary);
         try {
             return !em.createNativeQuery("ASK WHERE {" +
-                "GRAPH ?vocabulary { " +
-                "?term a ?type ;" +
-                "}" +
-                "?term ?inVocabulary ?vocabulary ." +
-                " }", Boolean.class)
-                .setParameter("type", typeUri)
-                .setParameter("vocabulary", vocabulary.getUri())
-                .setParameter("inVocabulary",
-                    URI.create(
-                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
+                    "GRAPH ?vocabulary { " +
+                    "?term a ?type ;" +
+                    "}" +
+                    "?term ?inVocabulary ?vocabulary ." +
+                    " }", Boolean.class)
+                      .setParameter("type", typeUri)
+                      .setParameter("vocabulary", vocabulary.getUri())
+                      .setParameter("inVocabulary",
+                              URI.create(
+                                      cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -397,13 +397,14 @@ public class TermDao extends AssetDao<Term> {
                     "?hasLabel ?label ;" +
                     "?inVocabulary ?vocabulary ." +
                     "FILTER (LCASE(?label) = LCASE(?searchString)) . "
-                + "}", Boolean.class)
+                    + "}", Boolean.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("inVocabulary",
                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                      .setParameter("vocabulary", vocabulary.getUri())
-                     .setParameter("searchString", label, languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
+                     .setParameter("searchString", label,
+                             languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

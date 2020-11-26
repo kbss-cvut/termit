@@ -29,6 +29,9 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
     private EntityManager em;
 
     @Autowired
+    private DescriptorFactory descriptorFactory;
+
+    @Autowired
     private ChangeRecordService sut;
 
     private User author;
@@ -42,7 +45,7 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
         Environment.setCurrentUser(author);
         transactional(() -> {
             em.persist(author);
-            em.persist(asset, DescriptorFactory.vocabularyDescriptor(asset));
+            em.persist(asset, descriptorFactory.vocabularyDescriptor(asset));
         });
     }
 

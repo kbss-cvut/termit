@@ -33,6 +33,9 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     private EntityManager em;
 
     @Autowired
+    private DescriptorFactory descriptorFactory;
+
+    @Autowired
     private ChangeTracker sut;
 
     private User author;
@@ -46,7 +49,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         this.vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> {
             em.persist(author);
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
     }
 
@@ -56,7 +59,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         final Term newTerm = Generator.generateTermWithId();
         newTerm.setGlossary(vocabulary.getGlossary().getUri());
         transactional(() -> {
-            em.persist(newTerm, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(newTerm, descriptorFactory.termDescriptor(vocabulary));
             sut.recordAddEvent(newTerm);
         });
 
@@ -80,7 +83,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
         original.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.persist(original, DescriptorFactory.termDescriptor(original)));
+        transactional(() -> em.persist(original, descriptorFactory.termDescriptor(original)));
 
         final Term update = cloneOf(original);
         transactional(() -> sut.recordUpdateEvent(update, original));
@@ -93,7 +96,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
         original.setGlossary(vocabulary.getGlossary().getUri());
-        transactional(() -> em.persist(original, DescriptorFactory.termDescriptor(vocabulary)));
+        transactional(() -> em.persist(original, descriptorFactory.termDescriptor(vocabulary)));
 
         final Term update = cloneOf(original);
         update.setDefinition(MultilingualString.create("Updated definition of this term.", Constants.DEFAULT_LANGUAGE));
@@ -112,7 +115,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
         original.setGlossary(vocabulary.getGlossary().getUri());
-        transactional(() -> em.persist(original, DescriptorFactory.termDescriptor(vocabulary)));
+        transactional(() -> em.persist(original, descriptorFactory.termDescriptor(vocabulary)));
 
         final Term update = cloneOf(original);
         update.setDefinition(MultilingualString.create("Updated definition of this term.", Constants.DEFAULT_LANGUAGE));

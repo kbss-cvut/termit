@@ -29,7 +29,6 @@ import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -51,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
-    private Configuration config;
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private EntityManager em;
@@ -277,7 +276,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         sut.persist(document, vocabulary);
 
         final Document result = em
-                .find(Document.class, document.getUri(), DescriptorFactory.documentDescriptor(vocabulary));
+                .find(Document.class, document.getUri(), descriptorFactory.documentDescriptor(vocabulary));
         assertNotNull(result);
         assertEquals(document, result);
     }
@@ -288,7 +287,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         final Document document = Generator.generateDocumentWithId();
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
         document.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.persist(document, DescriptorFactory.documentDescriptor(vocabulary)));
+        transactional(() -> em.persist(document, descriptorFactory.documentDescriptor(vocabulary)));
 
         final String newLabel = "Updated document";
         document.setLabel(newLabel);
@@ -296,7 +295,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         sut.update(document);
 
         final Document result = em
-                .find(Document.class, document.getUri(), DescriptorFactory.documentDescriptor(vocabulary));
+                .find(Document.class, document.getUri(), descriptorFactory.documentDescriptor(vocabulary));
         assertNotNull(result);
         assertEquals(newLabel, result.getLabel());
     }
@@ -321,10 +320,10 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         fileTwo.setDocument(document);
         document.addFile(fileTwo);
         transactional(() -> {
-            em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(document, DescriptorFactory.documentDescriptor(vocabulary));
-            em.persist(file, DescriptorFactory.fileDescriptor(vocabulary));
-            em.persist(fileTwo, DescriptorFactory.fileDescriptor(vocabulary));
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(document, descriptorFactory.documentDescriptor(vocabulary));
+            em.persist(file, descriptorFactory.fileDescriptor(vocabulary));
+            em.persist(fileTwo, descriptorFactory.fileDescriptor(vocabulary));
         });
 
         transactional(() -> {
@@ -333,7 +332,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         });
 
         final DocumentVocabulary result = em.find(DocumentVocabulary.class, vocabulary.getUri(),
-                DescriptorFactory.vocabularyDescriptor(vocabulary));
+                descriptorFactory.vocabularyDescriptor(vocabulary));
         assertEquals(1, result.getDocument().getFiles().size());
         assertTrue(result.getDocument().getFiles().contains(fileTwo));
     }

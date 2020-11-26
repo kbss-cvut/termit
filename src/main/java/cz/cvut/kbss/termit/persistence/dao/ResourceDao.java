@@ -46,8 +46,8 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
 
     private volatile long lastModified;
 
-    public ResourceDao(EntityManager em, Configuration config) {
-        super(Resource.class, em, config);
+    public ResourceDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
+        super(Resource.class, em, config, descriptorFactory);
         refreshLastModified();
     }
 
@@ -87,9 +87,9 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
     private Descriptor createDescriptor(Resource resource, URI vocabularyUri) {
         final Descriptor descriptor;
         if (resource instanceof Document) {
-            descriptor = DescriptorFactory.documentDescriptor(vocabularyUri);
+            descriptor = descriptorFactory.documentDescriptor(vocabularyUri);
         } else if (resource instanceof File) {
-            descriptor = DescriptorFactory.fileDescriptor(vocabularyUri);
+            descriptor = descriptorFactory.fileDescriptor(vocabularyUri);
         } else {
             throw new IllegalArgumentException(
                     "Resource " + resource + " cannot be persisted into vocabulary context.");
