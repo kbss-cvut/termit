@@ -19,9 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -186,6 +184,26 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
         final UpdateChangeRecord updateRecord = (UpdateChangeRecord) result.get(0);
         assertEquals(Collections.singleton(original), updateRecord.getOriginalValue());
-        assertEquals(Collections.singleton(newValue), updateRecord.getNewValue());
+        assertEquals(Collections.singleton(newValue), consolidateMultilingualStrings(updateRecord.getNewValue()));
+    }
+
+    private Set<Object> consolidateMultilingualStrings(Set<Object> source) {
+        final List<MultilingualString> target = new ArrayList<>();
+        for (Object src : source) {
+            assert src instanceof MultilingualString;
+            final MultilingualString ms = (MultilingualString) src;
+            if (target.isEmpty() || ms.getLanguages().size() > 1) {
+                target.add(ms);
+                continue;
+            }
+            final String lang = ms.getLanguages().iterator().next();
+            final Optional<MultilingualString> existing = target.stream().filter(e -> !e.contains(lang)).findFirst();
+            if (existing.isPresent()) {
+                existing.get().set(lang, ms.get(lang));
+            } else {
+                target.add(ms);
+            }
+        }
+        return new HashSet<>(target);
     }
 }
