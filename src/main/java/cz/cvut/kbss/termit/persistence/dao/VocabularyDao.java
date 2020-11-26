@@ -47,8 +47,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     private final ApplicationContext context;
 
     @Autowired
-    public VocabularyDao(EntityManager em, Configuration config, ApplicationContext context) {
-        super(Vocabulary.class, em, config);
+    public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory, ApplicationContext context) {
+        super(Vocabulary.class, em, config, descriptorFactory);
         refreshLastModified();
         this.context = context;
     }
@@ -69,7 +69,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public Optional<Vocabulary> find(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.find(type, id, DescriptorFactory.vocabularyDescriptor(id)));
+            return Optional.ofNullable(em.find(type, id, descriptorFactory.vocabularyDescriptor(id)));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -79,7 +79,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public Optional<Vocabulary> getReference(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.getReference(type, id, DescriptorFactory.vocabularyDescriptor(id)));
+            return Optional.ofNullable(em.getReference(type, id, descriptorFactory.vocabularyDescriptor(id)));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -130,7 +130,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         try {
             // Evict possibly cached instance loaded from default context
             em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
-            return em.merge(entity, DescriptorFactory.vocabularyDescriptor(entity));
+            return em.merge(entity, descriptorFactory.vocabularyDescriptor(entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -141,7 +141,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public void persist(Vocabulary entity) {
         Objects.requireNonNull(entity);
         try {
-            em.persist(entity, DescriptorFactory.vocabularyDescriptor(entity));
+            em.persist(entity, descriptorFactory.vocabularyDescriptor(entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -158,7 +158,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
      */
     public Glossary updateGlossary(Vocabulary entity) {
         Objects.requireNonNull(entity);
-        return em.merge(entity.getGlossary(), DescriptorFactory.glossaryDescriptor(entity));
+        return em.merge(entity.getGlossary(), descriptorFactory.glossaryDescriptor(entity));
     }
 
     /**

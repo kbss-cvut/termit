@@ -20,5 +20,5 @@ interface ChangeCalculator {
      * @param original The original asset against which changes are calculated
      * @return A collection of changes made to the asset
      */
-    Collection<UpdateChangeRecord> calculateChanges(Asset changed, Asset original);
+    Collection<UpdateChangeRecord> calculateChanges(Asset<?> changed, Asset<?> original);
 }

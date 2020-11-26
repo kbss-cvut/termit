@@ -25,13 +25,13 @@
     </repositories>
 
     <properties>
-        <org.springframework.version>5.2.8.RELEASE</org.springframework.version>
+        <org.springframework.version>5.3.1</org.springframework.version>
         <org.springframework.security.version>5.4.0</org.springframework.security.version>
-        <org.springframework.data.version>2.3.3.RELEASE</org.springframework.data.version>
+        <org.springframework.data.version>2.4.1</org.springframework.data.version>
         <com.fasterxml.jackson.version>2.11.2</com.fasterxml.jackson.version>
         <org.hibernate.validator.version>6.1.5.Final</org.hibernate.validator.version>
-        <cz.cvut.kbss.jopa.version>0.15.2</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.8.1</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jopa.version>0.16.2</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.8.2</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.6</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
@@ -108,7 +108,7 @@
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.0.8</version>
+            <version>0.0.10</version>
         </dependency>
 
         <!-- Spring -->
@@ -290,7 +290,7 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>3.4.0</version>
+            <version>3.4.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

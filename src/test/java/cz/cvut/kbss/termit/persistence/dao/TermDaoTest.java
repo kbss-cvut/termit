@@ -43,6 +43,9 @@ class TermDaoTest extends BaseDaoTestRunner {
     private EntityManager em;
 
     @Autowired
+    private DescriptorFactory descriptorFactory;
+
+    @Autowired
     private TermDao sut;
 
     private Vocabulary vocabulary;
@@ -51,7 +54,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     void setUp() {
         this.vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
-        transactional(() -> em.persist(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary)));
+        transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
     }
 
     @Test
@@ -66,10 +69,10 @@ class TermDaoTest extends BaseDaoTestRunner {
     private void addTermsAndSave(Collection<Term> terms, Vocabulary vocabulary) {
         vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
         transactional(() -> {
-            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             terms.forEach(t -> {
                 t.setGlossary(vocabulary.getGlossary().getUri());
-                em.persist(t, DescriptorFactory.termDescriptor(vocabulary));
+                em.persist(t, descriptorFactory.termDescriptor(vocabulary));
                 addTermInVocabularyRelationship(t, vocabulary.getUri());
             });
         });
@@ -119,7 +122,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         transactional(() -> rootTerms.forEach(t -> {
             final Term child = Generator.generateTermWithId(vocabulary.getUri());
             child.setParentTerms(Collections.singleton(t));
-            em.persist(child, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(child, descriptorFactory.termDescriptor(vocabulary));
         }));
 
 
@@ -150,8 +153,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         matchingDesc.setPrimaryLabel("Metropolitan plan");
         matchingDesc.setParentTerms(Collections.singleton(child));
         transactional(() -> {
-            em.persist(child, DescriptorFactory.termDescriptor(vocabulary));
-            em.persist(matchingDesc, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(child, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(matchingDesc, descriptorFactory.termDescriptor(vocabulary));
             addTermInVocabularyRelationship(child, vocabulary.getUri());
             addTermInVocabularyRelationship(matchingDesc, vocabulary.getUri());
             insertNarrowerStatements(matchingDesc, child);
@@ -211,7 +214,7 @@ class TermDaoTest extends BaseDaoTestRunner {
 
     @Test
     void existsInVocabularyReturnsFalseForLabelExistingInAnotherLanguageInTheVocabulary() {
-        final Term term = Generator.generateMultiLingualTerm("en","cs");
+        final Term term = Generator.generateMultiLingualTerm("en", "cs");
         final List<Term> terms = Collections.singletonList(term);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
@@ -260,8 +263,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Vocabulary parent = Generator.generateVocabularyWithId();
         vocabulary.setImportedVocabularies(Collections.singleton(parent.getUri()));
         transactional(() -> {
-            em.merge(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(parent, DescriptorFactory.vocabularyDescriptor(parent));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.vocabularyDescriptor(parent));
         });
         final List<Term> parentTerms = generateTerms(3);
         addTermsAndSave(parentTerms, parent);
@@ -278,7 +281,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> sut.persist(term, vocabulary));
 
-        final Term result = em.find(Term.class, term.getUri(), DescriptorFactory.termDescriptor(vocabulary));
+        final Term result = em.find(Term.class, term.getUri(), descriptorFactory.termDescriptor(vocabulary));
         assertNotNull(result);
         assertEquals(term, result);
     }
@@ -289,8 +292,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             vocabulary.getGlossary().addRootTerm(term);
             term.setGlossary(vocabulary.getGlossary().getUri());
-            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
-            em.persist(term, DescriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             addTermInVocabularyRelationship(term, vocabulary.getUri());
         });
 
@@ -300,7 +303,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         em.getEntityManagerFactory().getCache().evictAll();
         transactional(() -> sut.update(term));
 
-        final Term result = em.find(Term.class, term.getUri(), DescriptorFactory.termDescriptor(vocabulary));
+        final Term result = em.find(Term.class, term.getUri(), descriptorFactory.termDescriptor(vocabulary));
         assertEquals(updatedLabel, result.getLabel().get(Constants.DEFAULT_LANGUAGE));
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?hasLabel ?label }", Boolean.class)
                       .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
@@ -352,9 +355,9 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Vocabulary grandParent = Generator.generateVocabularyWithId();
         parent.setImportedVocabularies(Collections.singleton(grandParent.getUri()));
         transactional(() -> {
-            em.merge(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(parent, DescriptorFactory.vocabularyDescriptor(parent));
-            em.persist(grandParent, DescriptorFactory.vocabularyDescriptor(grandParent));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.vocabularyDescriptor(parent));
+            em.persist(grandParent, descriptorFactory.vocabularyDescriptor(grandParent));
         });
         final List<Term> parentTerms = generateTerms(3);
         addTermsAndSave(parentTerms, parent);
@@ -387,9 +390,9 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Vocabulary grandParent = Generator.generateVocabularyWithId();
         parent.setImportedVocabularies(Collections.singleton(grandParent.getUri()));
         transactional(() -> {
-            em.merge(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(parent, DescriptorFactory.vocabularyDescriptor(parent));
-            em.persist(grandParent, DescriptorFactory.vocabularyDescriptor(grandParent));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.vocabularyDescriptor(parent));
+            em.persist(grandParent, descriptorFactory.vocabularyDescriptor(grandParent));
         });
         final List<Term> directTerms = generateTerms(4);
         addTermsAndSave(directTerms, vocabulary);
@@ -407,20 +410,23 @@ class TermDaoTest extends BaseDaoTestRunner {
             parentTerms.get(0).setParentTerms(Collections.singleton(grandParentTerms.get(0)));
             directTerms.get(1).setParentTerms(Collections.singleton(parentTerms.get(1)));
             // Parents are in different contexts, so we have to deal with that
-            em.merge(directTerms.get(0), DescriptorFactory.termDescriptor(vocabulary)
-                                                          .addAttributeDescriptor(Term.getParentTermsField(),
-                                                                  DescriptorFactory.vocabularyDescriptor(parent)));
-            em.merge(directTerms.get(1), DescriptorFactory.termDescriptor(vocabulary)
-                                                          .addAttributeDescriptor(Term.getParentTermsField(),
-                                                                  DescriptorFactory.vocabularyDescriptor(parent)));
-            em.merge(parentTerms.get(0), DescriptorFactory.termDescriptor(parent)
-                                                          .addAttributeDescriptor(Term.getParentTermsField(),
-                                                                  DescriptorFactory.vocabularyDescriptor(grandParent)));
+            em.merge(directTerms.get(0), descriptorFactory.termDescriptor(vocabulary)
+                                                          .addAttributeDescriptor(descriptorFactory
+                                                                          .fieldSpec(Term.class, "parentTerms"),
+                                                                  descriptorFactory.vocabularyDescriptor(parent)));
+            em.merge(directTerms.get(1), descriptorFactory.termDescriptor(vocabulary)
+                                                          .addAttributeDescriptor(descriptorFactory
+                                                                          .fieldSpec(Term.class, "parentTerms"),
+                                                                  descriptorFactory.vocabularyDescriptor(parent)));
+            em.merge(parentTerms.get(0), descriptorFactory.termDescriptor(parent)
+                                                          .addAttributeDescriptor(descriptorFactory
+                                                                          .fieldSpec(Term.class, "parentTerms"),
+                                                                  descriptorFactory.vocabularyDescriptor(grandParent)));
             vocabulary.getGlossary().removeRootTerm(directTerms.get(0));
             vocabulary.getGlossary().removeRootTerm(directTerms.get(1));
-            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             parent.getGlossary().removeRootTerm(parentTerms.get(0));
-            em.merge(parent.getGlossary(), DescriptorFactory.glossaryDescriptor(parent));
+            em.merge(parent.getGlossary(), descriptorFactory.glossaryDescriptor(parent));
             insertNarrowerStatements(directTerms.get(0), directTerms.get(1), parentTerms.get(0));
         });
 
@@ -442,8 +448,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             parent.setGlossary(vocabulary.getGlossary().getUri());
             vocabulary.getGlossary().addRootTerm(parent);
-            em.persist(parent, DescriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
         term.addParentTerm(parent);
 
@@ -461,9 +467,9 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Term parent = Generator.generateTermWithId(parentVoc.getUri());
         transactional(() -> {
             parentVoc.getGlossary().addRootTerm(parent);
-            em.persist(parentVoc, DescriptorFactory.vocabularyDescriptor(parentVoc));
+            em.persist(parentVoc, descriptorFactory.vocabularyDescriptor(parentVoc));
             parent.setGlossary(parentVoc.getGlossary().getUri());
-            em.persist(parent, DescriptorFactory.termDescriptor(parentVoc));
+            em.persist(parent, descriptorFactory.termDescriptor(parentVoc));
         });
         term.setGlossary(vocabulary.getGlossary().getUri());
         term.addParentTerm(parent);
@@ -489,10 +495,10 @@ class TermDaoTest extends BaseDaoTestRunner {
         term.addParentTerm(parent);
         transactional(() -> {
             parentVoc.getGlossary().addRootTerm(parent);
-            em.persist(parentVoc, DescriptorFactory.vocabularyDescriptor(parentVoc));
+            em.persist(parentVoc, descriptorFactory.vocabularyDescriptor(parentVoc));
             parent.setGlossary(parentVoc.getGlossary().getUri());
-            em.persist(parent, DescriptorFactory.termDescriptor(parentVoc));
-            em.persist(term, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(parentVoc));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             addTermInVocabularyRelationship(term, vocabulary.getUri());
             addTermInVocabularyRelationship(parent, parentVoc.getUri());
         });
@@ -507,8 +513,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Term result = em.find(Term.class, term.getUri());
         assertNotNull(result);
         assertEquals(Collections.singleton(parent), result.getParentTerms());
-        // TODO Workaround for JOPA issue, remove after fix
-        assertEquals(newDefinition.getValue(), result.getDefinition().getValue());
+        assertEquals(newDefinition, result.getDefinition());
     }
 
     @Test
@@ -521,13 +526,13 @@ class TermDaoTest extends BaseDaoTestRunner {
         term.addParentTerm(parentOne);
         transactional(() -> {
             parentOneVoc.getGlossary().addRootTerm(parentOne);
-            em.persist(parentOneVoc, DescriptorFactory.vocabularyDescriptor(parentOneVoc));
+            em.persist(parentOneVoc, descriptorFactory.vocabularyDescriptor(parentOneVoc));
             parentOne.setGlossary(parentOneVoc.getGlossary().getUri());
-            em.persist(parentOne, DescriptorFactory.termDescriptor(parentOneVoc));
-            em.persist(term, DescriptorFactory.termDescriptor(vocabulary));
-            em.persist(parentTwoVoc, DescriptorFactory.vocabularyDescriptor(parentTwoVoc));
+            em.persist(parentOne, descriptorFactory.termDescriptor(parentOneVoc));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(parentTwoVoc, descriptorFactory.vocabularyDescriptor(parentTwoVoc));
             parentTwo.setGlossary(parentTwoVoc.getGlossary().getUri());
-            em.persist(parentTwo, DescriptorFactory.termDescriptor(parentTwoVoc));
+            em.persist(parentTwo, descriptorFactory.termDescriptor(parentTwoVoc));
             addTermInVocabularyRelationship(term, vocabulary.getUri());
             addTermInVocabularyRelationship(parentOne, parentOneVoc.getUri());
             addTermInVocabularyRelationship(parentTwo, parentTwoVoc.getUri());
@@ -565,9 +570,9 @@ class TermDaoTest extends BaseDaoTestRunner {
         parent.setSubTerms(Collections.singleton(new TermInfo(child)));
         transactional(() -> {
             vocabulary.getGlossary().addRootTerm(parent);
-            em.merge(vocabulary.getGlossary(), DescriptorFactory.glossaryDescriptor(vocabulary));
-            em.persist(parent, DescriptorFactory.termDescriptor(vocabulary));
-            em.persist(child, DescriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(child, descriptorFactory.termDescriptor(vocabulary));
             insertNarrowerStatements(child);
             addTermInVocabularyRelationship(parent, vocabulary.getUri());
             addTermInVocabularyRelationship(child, vocabulary.getUri());
@@ -667,10 +672,10 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Vocabulary vocabularyTwo = Generator.generateVocabularyWithId();
         final Term parentTwo = Generator.generateTermWithId(vocabularyTwo.getUri());
         transactional(() -> {
-            em.persist(vocabularyTwo, DescriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(parentTwo, DescriptorFactory.termDescriptor(parentTwo));
-            em.persist(parentOne, DescriptorFactory.termDescriptor(parentOne));
-            em.persist(term, DescriptorFactory.termDescriptor(term));
+            em.persist(vocabularyTwo, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(parentTwo, descriptorFactory.termDescriptor(parentTwo));
+            em.persist(parentOne, descriptorFactory.termDescriptor(parentOne));
+            em.persist(term, descriptorFactory.termDescriptor(term));
         });
 
         term.addParentTerm(parentOne);
@@ -699,7 +704,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(new HashSet<>(terms), vocabulary);
         final Term childToReturn = Generator.generateTermWithId(vocabulary.getUri());
         childToReturn.addParentTerm(terms.get(0));
-        transactional(() -> em.persist(childToReturn, DescriptorFactory.termDescriptor(childToReturn)));
+        transactional(() -> em.persist(childToReturn, descriptorFactory.termDescriptor(childToReturn)));
 
         final List<Term> results = sut
                 .findAllRoots(vocabulary, PageRequest.of(0, 5), Collections.singleton(childToReturn.getUri()));
@@ -717,10 +722,10 @@ class TermDaoTest extends BaseDaoTestRunner {
         childTermInParentVoc.addParentTerm(parentTermInParentVoc);
         vocabulary.setImportedVocabularies(Collections.singleton(parentVoc.getUri()));
         transactional(() -> {
-            em.merge(vocabulary, DescriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(parentVoc, DescriptorFactory.vocabularyDescriptor(parentVoc));
-            em.persist(parentTermInParentVoc, DescriptorFactory.termDescriptor(parentTermInParentVoc));
-            em.persist(childTermInParentVoc, DescriptorFactory.termDescriptor(childTermInParentVoc));
+            em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(parentVoc, descriptorFactory.vocabularyDescriptor(parentVoc));
+            em.persist(parentTermInParentVoc, descriptorFactory.termDescriptor(parentTermInParentVoc));
+            em.persist(childTermInParentVoc, descriptorFactory.termDescriptor(childTermInParentVoc));
         });
 
         final List<Term> results = sut
@@ -738,7 +743,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final PersistChangeRecord persistRecord = Generator.generatePersistChange(term);
         persistRecord.setAuthor(Generator.generateUserWithId());
         transactional(() -> {
-            em.persist(term, DescriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             em.persist(persistRecord.getAuthor());
             em.persist(persistRecord);
         });
@@ -756,7 +761,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         term.setAltLabels(new HashSet<>(Collections.singleton(altOne)));
         term.setGlossary(vocabulary.getGlossary().getUri());
         term.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.persist(term, DescriptorFactory.termDescriptor(vocabulary)));
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(vocabulary)));
 
         altOne.set("en", "Building");
         final MultilingualString altTwo = MultilingualString.create("Construction", "en");
@@ -764,7 +769,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         term.getAltLabels().add(altTwo);
         transactional(() -> sut.update(term));
 
-        final Term result = em.find(Term.class, term.getUri(), DescriptorFactory.termDescriptor(vocabulary));
+        final Term result = em.find(Term.class, term.getUri(), descriptorFactory.termDescriptor(vocabulary));
         assertNotNull(result);
         // We have to check it this way because the loaded multilingual labels might be a different combination of the
         // translations

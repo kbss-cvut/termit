@@ -37,7 +37,7 @@ public class ChangeTrackingContextResolver {
      * @param changedAsset Asset for which change records will be generated
      * @return Identifier of the change tracking context of the specified asset
      */
-    public URI resolveChangeTrackingContext(Asset changedAsset) {
+    public URI resolveChangeTrackingContext(Asset<?> changedAsset) {
         Objects.requireNonNull(changedAsset);
         if (changedAsset instanceof Vocabulary) {
             return URI.create(changedAsset.getUri().toString().concat(contextExtension));

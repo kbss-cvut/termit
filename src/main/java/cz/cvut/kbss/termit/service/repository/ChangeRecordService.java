@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-public class ChangeRecordService implements ChangeRecordProvider<Asset> {
+public class ChangeRecordService implements ChangeRecordProvider<Asset<?>> {
 
     private final ChangeRecordDao changeRecordDao;
 
@@ -21,7 +21,7 @@ public class ChangeRecordService implements ChangeRecordProvider<Asset> {
     }
 
     @Override
-    public List<AbstractChangeRecord> getChanges(Asset asset) {
+    public List<AbstractChangeRecord> getChanges(Asset<?> asset) {
         Objects.requireNonNull(asset);
         return changeRecordDao.findAll(asset);
     }

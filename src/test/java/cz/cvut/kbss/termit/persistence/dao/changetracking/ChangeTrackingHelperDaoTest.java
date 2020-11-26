@@ -20,6 +20,9 @@ class ChangeTrackingHelperDaoTest extends BaseDaoTestRunner {
     private EntityManager em;
 
     @Autowired
+    private DescriptorFactory descriptorFactory;
+
+    @Autowired
     private ChangeTrackingHelperDao sut;
 
     private User author;
@@ -34,7 +37,7 @@ class ChangeTrackingHelperDaoTest extends BaseDaoTestRunner {
     @Test
     void findStoredRetrievesRepositoryInstanceOfSpecifiedAsset() {
         final Vocabulary voc = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(voc, DescriptorFactory.vocabularyDescriptor(voc)));
+        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
 
         final Vocabulary result = sut.findStored(voc);
         assertNotNull(result);
@@ -50,7 +53,7 @@ class ChangeTrackingHelperDaoTest extends BaseDaoTestRunner {
     @Test
     void findStoredDetachesRetrievedInstanceFromPersistenceContext() {
         final Vocabulary voc = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(voc, DescriptorFactory.vocabularyDescriptor(voc)));
+        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
 
         transactional(() -> {
             final Vocabulary result = sut.findStored(voc);

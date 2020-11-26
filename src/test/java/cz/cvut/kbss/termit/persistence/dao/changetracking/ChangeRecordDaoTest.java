@@ -1,6 +1,8 @@
 package cz.cvut.kbss.termit.persistence.dao.changetracking;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -86,13 +88,18 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000),
                         asset.getUri())).collect(Collectors.toList());
-        final EntityDescriptor descriptor = new EntityDescriptor(vocabulary.getUri());
-        descriptor.addAttributeDescriptor(AbstractChangeRecord.getAuthorField(), new EntityDescriptor());
-        transactional(() -> records.forEach(r -> em.persist(r, descriptor)));
+        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
         assertEquals(records.size(), result.size());
         assertTrue(records.containsAll(result));
+    }
+
+    private Descriptor persistDescriptor(URI context) {
+        final EntityDescriptor descriptor = new EntityDescriptor(context);
+        descriptor.addAttributeDescriptor(em.getMetamodel().entity(AbstractChangeRecord.class).getAttribute("author"),
+                new EntityDescriptor());
+        return descriptor;
     }
 
     @Test
@@ -102,9 +109,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() + i * 10000),
                         asset.getUri())).collect(Collectors.toList());
-        final EntityDescriptor descriptor = new EntityDescriptor(vocabulary.getUri());
-        descriptor.addAttributeDescriptor(AbstractChangeRecord.getAuthorField(), new EntityDescriptor());
-        transactional(() -> records.forEach(r -> em.persist(r, descriptor)));
+        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
         records.sort(Comparator.comparing(AbstractChangeRecord::getTimestamp).reversed());
@@ -120,11 +125,9 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         rOne.setChangedAttribute(URI.create(SKOS.PREF_LABEL));
         final UpdateChangeRecord rTwo = generateUpdateRecord(now, asset.getUri());
         rTwo.setChangedAttribute(URI.create(SKOS.DEFINITION));
-        final EntityDescriptor descriptor = new EntityDescriptor(vocabulary.getUri());
-        descriptor.addAttributeDescriptor(AbstractChangeRecord.getAuthorField(), new EntityDescriptor());
         transactional(() -> {
-            em.persist(rOne, descriptor);
-            em.persist(rTwo, descriptor);
+            em.persist(rOne, persistDescriptor(vocabulary.getUri()));
+            em.persist(rTwo, persistDescriptor(vocabulary.getUri()));
         });
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
@@ -165,5 +168,24 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         assertNotNull(result);
         assertNull(result.getOriginalValue());
         assertEquals(record.getNewValue(), result.getNewValue());
+    }
+
+    @Test
+    void supportsWorkingWithMultilingualAttributes() {
+        enableRdfsInference(em);
+        final UpdateChangeRecord record = generateUpdateRecord(Instant.now(), vocabulary.getUri());
+        final MultilingualString original = MultilingualString.create("Test term", "en");
+        final MultilingualString newValue = new MultilingualString(original.getValue());
+        newValue.set("cs", "Testovací pojem");
+        record.setOriginalValue(Collections.singleton(original));
+        record.setNewValue(Collections.singleton(newValue));
+        transactional(() -> sut.persist(record, vocabulary));
+
+        final List<AbstractChangeRecord> result = sut.findAll(vocabulary);
+        assertEquals(1, result.size());
+        assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
+        final UpdateChangeRecord updateRecord = (UpdateChangeRecord) result.get(0);
+        assertEquals(Collections.singleton(original), updateRecord.getOriginalValue());
+        assertEquals(Collections.singleton(newValue), updateRecord.getNewValue());
     }
 }
