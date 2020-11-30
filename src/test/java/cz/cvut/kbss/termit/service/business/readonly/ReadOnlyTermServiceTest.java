@@ -52,7 +52,7 @@ class ReadOnlyTermServiceTest {
     void findAllRetrievesAllTermsFromServiceAndTransformsThemToReadOnlyVersion() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = Generator.generateTermsWithIds(5);
-        when(termService.findAll(any())).thenReturn(terms);
+        when(termService.findAll(any(Vocabulary.class))).thenReturn(terms);
 
         final List<ReadOnlyTerm> result = sut.findAll(vocabulary);
         assertEquals(terms.stream().map(ReadOnlyTerm::new).collect(Collectors.toList()), result);

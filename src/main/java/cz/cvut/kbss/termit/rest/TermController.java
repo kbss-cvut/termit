@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -51,6 +52,28 @@ public class TermController extends BaseController {
 
     private URI getVocabularyUri(String namespace, String fragment) {
         return resolveIdentifier(namespace, fragment, ConfigParam.NAMESPACE_VOCABULARY);
+    }
+
+    /**
+     * Used to retrieve terms from the current workspace, regardless of vocabularies.
+     *
+     * @param rootsOnly    Whether only root (parent-less) terms should be returned - optional, defaults to {@code
+     *                     false}
+     * @param searchString Search string used to filter terms by (using label) - optional
+     * @param pageSize     Size of the page to return (applies only if no search string is provided) - optional
+     * @param pageNo       Number of the page to return (applies only if no search string is provided) - optional
+     * @return List of terms matching the specified parameters
+     */
+    @GetMapping(value = "/terms", produces = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
+    public List<Term> getAll(@RequestParam(required = false, defaultValue = "false") boolean rootsOnly,
+                             @RequestParam(required = false) String searchString,
+                             @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+                             @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo) {
+        if (searchString != null && !searchString.trim().isEmpty()) {
+            return termService.findAll(searchString);
+        }
+        final Pageable pageSpec = createPageRequest(pageSize, pageNo);
+        return rootsOnly ? termService.findAllRoots(pageSpec) : termService.findAll(pageSpec);
     }
 
     /**

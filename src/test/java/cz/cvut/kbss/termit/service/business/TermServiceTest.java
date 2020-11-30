@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
 import java.util.Collections;
@@ -322,7 +324,7 @@ class TermServiceTest extends BaseServiceTestRunner {
 
     @Test
     void setStatusToDraftSetsTermDraftFlagToTrueAndUpdatesIt() {
-        final Term term = Generator.generateTermWithId();
+        final Term term = generateTermWithId();
         when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
         sut.setStatus(term, TermStatus.DRAFT);
         assertTrue(term.isDraft());
@@ -331,10 +333,40 @@ class TermServiceTest extends BaseServiceTestRunner {
 
     @Test
     void setStatusToConfirmedSetsTermDraftFlagToFalseAndUpdatesIt() {
-        final Term term = Generator.generateTermWithId();
+        final Term term = generateTermWithId();
         when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
         sut.setStatus(term, TermStatus.CONFIRMED);
         assertFalse(term.isDraft());
         verify(termRepositoryService).update(term);
+    }
+
+    @Test
+    void findAllRootsInWorkspaceRetrievesRootTermsFromRepositoryService() {
+        final List<Term> terms = Collections.singletonList(generateTermWithId());
+        when(termRepositoryService.findAllRoots(any(Pageable.class))).thenReturn(terms);
+        final Pageable pageSpec = PageRequest.of(2, 117);
+        final List<Term> result = sut.findAllRoots(pageSpec);
+        assertEquals(terms, result);
+        verify(termRepositoryService).findAllRoots(pageSpec);
+    }
+
+    @Test
+    void findAllWithPageSpecInWorkspaceRetrievesTermsFromRepositoryService() {
+        final List<Term> terms = Collections.singletonList(generateTermWithId());
+        when(termRepositoryService.findAll(any(Pageable.class))).thenReturn(terms);
+        final Pageable pageSpec = PageRequest.of(1, 117);
+        final List<Term> result = sut.findAll(pageSpec);
+        assertEquals(terms, result);
+        verify(termRepositoryService).findAll(pageSpec);
+    }
+
+    @Test
+    void findAllWithSearchStringInWorkspaceRetrievesTermsFromRepositoryService() {
+        final List<Term> terms = Collections.singletonList(generateTermWithId());
+        when(termRepositoryService.findAll(anyString())).thenReturn(terms);
+        final String searchString = "search";
+        final List<Term> result = sut.findAll(searchString);
+        assertEquals(terms, result);
+        verify(termRepositoryService).findAll(searchString);
     }
 }

@@ -1007,4 +1007,45 @@ class TermControllerTest extends BaseControllerTestRunner {
         verify(termServiceMock).getRequiredReference(termUri);
         verify(termServiceMock).setStatus(term, TermStatus.DRAFT);
     }
+
+    @Test
+    void getAllStandaloneWithOnlyRootsRetrievesPageOfRootTermsFromService() throws Exception {
+        final List<Term> terms = Generator.generateTermsWithIds(5);
+        when(termServiceMock.findAllRoots(any(Pageable.class))).thenReturn(terms);
+        final int pageSize = 300;
+        final MvcResult mvcResult = mockMvc.perform(get("/terms")
+                .queryParam("rootsOnly", Boolean.TRUE.toString())
+                .queryParam(PAGE_SIZE, Integer.toString(pageSize))
+                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        });
+        assertEquals(terms, result);
+        verify(termServiceMock).findAllRoots(PageRequest.of(0, pageSize));
+    }
+
+    @Test
+    void getAllStandaloneRetrievesPageOfTermsFromService() throws Exception {
+        final List<Term> terms = Generator.generateTermsWithIds(5);
+        when(termServiceMock.findAll(any(Pageable.class))).thenReturn(terms);
+        final MvcResult mvcResult = mockMvc.perform(get("/terms")
+                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        });
+        assertEquals(terms, result);
+        verify(termServiceMock).findAll(DEFAULT_PAGE_SPEC);
+    }
+
+    @Test
+    void getAllStandaloneWithSearchStringRetrievesMatchingTermsFromService() throws Exception {
+        final List<Term> terms = Generator.generateTermsWithIds(5);
+        when(termServiceMock.findAll(anyString())).thenReturn(terms);
+        final String searchString = "search string";
+        final MvcResult mvcResult = mockMvc.perform(get("/terms")
+                .queryParam("searchString", searchString)
+                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        });
+        assertEquals(terms, result);
+        verify(termServiceMock).findAll(searchString);
+    }
 }
