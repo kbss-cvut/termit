@@ -104,5 +104,15 @@ Rules
       source <activity:object> this
       -------------------------------
       this <termit:má-reakci> source
+
+  Id: pdp_slovnik_1
+
+      term <rdf:type> <skos:Concept>
+      term <pdp:je-pojmem-ze-slovníku> this
+      term <skos:broader> parent
+      parent <rdf:type> <skos:Concept>
+      parent <pdp:je-pojmem-ze-slovníku> target     [Constraint target != this] [Cut]
+      -------------------------------
+      this <termit:používá-pojmy-ze-slovníku> target
 }
 
