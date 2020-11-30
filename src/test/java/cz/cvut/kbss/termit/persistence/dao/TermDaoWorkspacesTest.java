@@ -335,6 +335,25 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void getReferenceUsesWorkspace() {
+        final Term term = Generator.generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+        addTermToVocabularyInAnotherWorkspace(term);
+
+        transactional(() -> {
+            final Optional<Term> t = sut.getReference(term.getUri());
+            assertTrue(t.isPresent());
+            assertEquals(term.getLabel(), t.get().getLabel());
+        });
+    }
+
+    @Test
     void findAllRootsInWorkspaceRetrievesRootTermsInCurrentWorkspace() {
         final Term term = Generator.generateTermWithId();
         term.setGlossary(vocabulary.getGlossary().getUri());

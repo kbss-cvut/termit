@@ -82,7 +82,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     @Override
     protected void preUpdate(@NonNull Term instance) {
         super.preUpdate(instance);
-        final Term existing = getRequiredReference(instance.getUri());
+        final Term existing = findRequired(instance.getUri());
         if (!existing.isDraft() && !Objects.equals(existing.getLabel(), instance.getLabel())) {
             throw new ValidationException("Cannot update label of confirmed term.");
         }
