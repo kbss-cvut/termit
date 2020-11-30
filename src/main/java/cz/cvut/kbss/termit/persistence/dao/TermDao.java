@@ -73,6 +73,16 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
                          cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
     }
 
+    @Override
+    public Optional<Term> getReference(URI id) {
+        try {
+            return Optional.ofNullable(
+                    em.getReference(Term.class, id, descriptorFactory.termDescriptor(resolveVocabularyIri(id))));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     /**
      * Unsupported, use {@link #persist(Term, Vocabulary)}.
      */
