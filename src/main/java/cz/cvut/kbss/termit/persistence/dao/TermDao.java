@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
@@ -26,6 +27,7 @@ import cz.cvut.kbss.termit.persistence.PersistenceUtils;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceBasedAssetDao;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -114,6 +116,77 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
         }
     }
 
+    @Override
+    public List<Term> findAll() {
+        return findAll(Constants.DEFAULT_PAGE_SPEC);
+    }
+
+    /**
+     * Gets a page of all root terms in the current workspace.
+     *
+     * @param pageSpec Page specification
+     * @return Content of the matching page of root terms
+     */
+    public List<Term> findAllRoots(Pageable pageSpec) {
+        Objects.requireNonNull(pageSpec);
+        final Set<URI> vocContexts = persistenceUtils.getCurrentWorkspaceVocabularyContexts();
+        try {
+            TypedQuery<Term> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                    "GRAPH ?g {" +
+                    "?term a ?type ;" +
+                    "?hasLabel ?label ." +
+                    "?vocabulary ?hasGlossary/?hasTerm ?term ." +
+                    "FILTER (lang(?label) = ?labelLang)" +
+                    "}" +
+                    "FILTER (?g IN (?graphs))" +
+                    "} ORDER BY ?label", Term.class)
+                                       .setParameter("graphs", vocContexts)
+                                       .setParameter("labelLang", config.get(ConfigParam.LANGUAGE));
+            query = setCommonFindAllRootsQueryParams(query);
+            query.setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset());
+            final Descriptor descriptor = descriptorFactory.termDescriptor((URI) null);
+            vocContexts.forEach(descriptor::addContext);
+            query.setDescriptor(descriptor);
+            return executeQueryAndLoadSubTerms(query);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Gets all terms in the current workspace.
+     * <p>
+     * No differences are made between root terms and terms with parents.
+     *
+     * @param pageSpec Page specification
+     * @return Matching terms, ordered by label
+     */
+    public List<Term> findAll(Pageable pageSpec) {
+        Objects.requireNonNull(pageSpec);
+        final Set<URI> vocContexts = persistenceUtils.getCurrentWorkspaceVocabularyContexts();
+        try {
+            TypedQuery<Term> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                    "GRAPH ?g {" +
+                    "?term a ?type ;" +
+                    "?hasLabel ?label ." +
+                    "FILTER (lang(?label) = ?labelLang)" +
+                    "}" +
+                    "FILTER (?g IN (?graphs))" +
+                    "} ORDER BY ?label", Term.class)
+                                       .setParameter("type", typeUri)
+                                       .setParameter("hasLabel", LABEL_PROP)
+                                       .setParameter("graphs", vocContexts)
+                                       .setParameter("labelLang", config.get(ConfigParam.LANGUAGE));
+            query.setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset());
+            final Descriptor descriptor = descriptorFactory.termDescriptor((URI) null);
+            vocContexts.forEach(descriptor::addContext);
+            query.setDescriptor(descriptor);
+            return executeQueryAndLoadSubTerms(query);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     /**
      * Gets all terms on the specified vocabulary.
      * <p>
@@ -142,6 +215,39 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
                                                              cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                                              .setParameter("labelLang", config.get(ConfigParam.LANGUAGE));
             query.setDescriptor(descriptorFactory.termDescriptor(vocabulary));
+            return executeQueryAndLoadSubTerms(query);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Finds terms whose label contains the specified search string.
+     * <p>
+     * This method searches in the current workspace.
+     *
+     * @param searchString String the search term labels by
+     * @return List of matching terms
+     */
+    public List<Term> findAll(String searchString) {
+        Objects.requireNonNull(searchString);
+        final Set<URI> vocContexts = persistenceUtils.getCurrentWorkspaceVocabularyContexts();
+        try {
+            TypedQuery<Term> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                    "GRAPH ?g {" +
+                    "?term a ?type ;" +
+                    "?hasLabel ?label ." +
+                    "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+                    "}" +
+                    "FILTER (?g IN (?graphs))" +
+                    "} ORDER BY ?label", Term.class)
+                                       .setParameter("type", typeUri)
+                                       .setParameter("hasLabel", LABEL_PROP)
+                                       .setParameter("graphs", vocContexts)
+                                       .setParameter("searchString", searchString, config.get(ConfigParam.LANGUAGE));
+            final Descriptor descriptor = descriptorFactory.termDescriptor((URI) null);
+            vocContexts.forEach(descriptor::addContext);
+            query.setDescriptor(descriptor);
             return executeQueryAndLoadSubTerms(query);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

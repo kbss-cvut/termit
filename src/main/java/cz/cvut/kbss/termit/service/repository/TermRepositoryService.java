@@ -114,8 +114,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
         return idResolver.generateDerivedIdentifier(vocabularyUri,
-                        ConfigParam.TERM_NAMESPACE_SEPARATOR,
-            multilingualString.get(config.get(ConfigParam.LANGUAGE)));
+                ConfigParam.TERM_NAMESPACE_SEPARATOR,
+                multilingualString.get(config.get(ConfigParam.LANGUAGE)));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
@@ -153,8 +153,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return Content of matching page of root terms
      */
     public List<Term> findAllRoots(Pageable pageSpec) {
-        // TODO
-        return null;
+        return termDao.findAllRoots(pageSpec);
     }
 
     /**
@@ -164,8 +163,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return Content of matching page of terms
      */
     public List<Term> findAll(Pageable pageSpec) {
-        // TODO
-        return null;
+        return termDao.findAll(pageSpec);
     }
 
     /**
@@ -175,8 +173,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return Matching terms
      */
     public List<Term> findAll(String searchString) {
-        // TODO
-        return null;
+        return termDao.findAll(searchString);
     }
 
     /**
