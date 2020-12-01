@@ -145,6 +145,38 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     /**
+     * Gets a page of all root terms available in the current workspace.
+     * <p>
+     * That is, terms without parent term
+     *
+     * @param pageSpec Page specification
+     * @return Content of matching page of root terms
+     */
+    public List<Term> findAllRoots(Pageable pageSpec) {
+        return termDao.findAllRoots(pageSpec);
+    }
+
+    /**
+     * Gets a page of all terms available in the current workspace, regardless of their position in the SKOS hierarchy.
+     *
+     * @param pageSpec Page specification
+     * @return Content of matching page of terms
+     */
+    public List<Term> findAll(Pageable pageSpec) {
+        return termDao.findAll(pageSpec);
+    }
+
+    /**
+     * Finds all terms which match the specified search string in the current workspace.
+     *
+     * @param searchString Search string
+     * @return Matching terms
+     */
+    public List<Term> findAll(String searchString) {
+        return termDao.findAll(searchString);
+    }
+
+    /**
      * Gets all terms from a vocabulary, regardless of their position in the term hierarchy.
      * <p>
      * This returns all terms contained in a vocabulary's glossary.

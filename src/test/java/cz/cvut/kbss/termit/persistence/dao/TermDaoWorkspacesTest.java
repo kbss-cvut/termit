@@ -306,6 +306,7 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
             vocabulary.getGlossary().addRootTerm(parent);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
         });
@@ -350,5 +351,71 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             assertTrue(t.isPresent());
             assertEquals(term.getLabel(), t.get().getLabel());
         });
+    }
+
+    @Test
+    void findAllRootsInWorkspaceRetrievesRootTermsInCurrentWorkspace() {
+        final Term term = Generator.generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        final Term parent = Generator.generateTermWithId();
+        parent.setGlossary(vocabulary.getGlossary().getUri());
+        term.addParentTerm(parent);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            vocabulary.getGlossary().addRootTerm(parent);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
+        });
+        addTermToVocabularyInAnotherWorkspace(parent);
+
+        final List<Term> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(Collections.singletonList(parent), result);
+    }
+
+    @Test
+    void findAllInWorkspaceRetrievesAllTermsInCurrentWorkspace() {
+        final Term term = Generator.generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        final Term parent = Generator.generateTermWithId();
+        parent.setGlossary(vocabulary.getGlossary().getUri());
+        term.addParentTerm(parent);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            vocabulary.getGlossary().addRootTerm(parent);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
+        });
+        addTermToVocabularyInAnotherWorkspace(parent);
+
+        final List<Term> result = sut.findAll(Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(2, result.size());
+        assertThat(result, hasItems(parent, term));
+    }
+
+    @Test
+    void findAllBySearchStringInWorkspaceRetrievesMatchingTermsInCurrentWorkspace() {
+        final String searchString = "match";
+        final Term term = Generator.generateTermWithId();
+        term.getLabel().set(Constants.DEFAULT_LANGUAGE, "matching label");
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        final Term parent = Generator.generateTermWithId();
+        parent.setGlossary(vocabulary.getGlossary().getUri());
+        term.addParentTerm(parent);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            vocabulary.getGlossary().addRootTerm(parent);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
+        });
+        addTermToVocabularyInAnotherWorkspace(term);
+
+        final List<Term> result = sut.findAll(searchString);
+        assertEquals(Collections.singletonList(term), result);
     }
 }
