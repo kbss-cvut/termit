@@ -103,6 +103,7 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
         try {
             final URI vocabularyId = resolveVocabularyId(entity);
             if (vocabularyId != null) {
+                setDocumentOnFileIfNecessary(entity, vocabularyId);
                 // This evict is a bit overkill, but there are multiple relationships that would have to be evicted
                 em.getEntityManagerFactory().getCache().evict(vocabularyId);
                 return em.merge(entity, createDescriptor(entity, vocabularyId));
@@ -120,14 +121,19 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
         } else if (resource instanceof File) {
             final File f = (File) resource;
             if (f.getDocument() != null) {
-                // This is a workaround for the issue that GraphDB stores inferred statement (like File.document) in a separate
-                // context, so that it is not loaded during merge and JOPA acts as though File.document has changed (which it cannot, as it is inferred)
-                f.setDocument(em.find(Document.class, f.getDocument().getUri()));
                 return f.getDocument().getVocabulary();
             }
             return null;
         }
         return null;
+    }
+
+    private void setDocumentOnFileIfNecessary(Resource file, URI vocabularyId) {
+        if (!(file instanceof File)) {
+            return;
+        }
+        final File original = em.find(File.class, file.getUri(), descriptorFactory.fileDescriptor(vocabularyId));
+        ((File) file).setDocument(original.getDocument());
     }
 
     @Override

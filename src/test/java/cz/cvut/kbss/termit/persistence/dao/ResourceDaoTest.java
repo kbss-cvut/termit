@@ -226,17 +226,12 @@ class ResourceDaoTest extends BaseDaoTestRunner {
                 final ValueFactory vf = conn.getValueFactory();
                 conn.add(vf.createIRI(document.getUri().toString()),
                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_dokumentovy_slovnik),
-                        vf.createIRI(vocabulary.getUri().toString()),
-                        vf.createIRI(descriptorFactory.vocabularyDescriptor(vocabulary).getSingleContext().get()
-                                                      .toString()));
+                        vf.createIRI(vocabulary.getUri().toString()));
                 if (document.getFiles() != null) {
                     document.getFiles().forEach(f -> conn.add(
                             vf.createIRI(f.getUri().toString()),
                             vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_casti_dokumentu),
-                            vf.createIRI(document.getUri().toString()),
-                            vf.createIRI(descriptorFactory.vocabularyDescriptor(vocabulary).getSingleContext().get()
-                                                          .toString())
-                    ));
+                            vf.createIRI(document.getUri().toString())));
                 }
             }
         });
@@ -403,5 +398,32 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         assertEquals(newLabel, result.get().getLabel());
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
+    }
+
+    @Test
+    void updateHandlesInferredVocabularyInVocabularyContext() {
+        final File file = Generator.generateFileWithId("test.html");
+        final Document document = Generator.generateDocumentWithId();
+        final DocumentVocabulary voc = new DocumentVocabulary();
+        voc.setDocument(document);
+        voc.setLabel("Test");
+        voc.setUri(Generator.generateUri());
+        voc.setGlossary(new Glossary());
+        voc.setModel(new Model());
+        transactional(() -> {
+            em.persist(voc, descriptorFactory.vocabularyDescriptor(voc));
+            em.persist(document, descriptorFactory.documentDescriptor(voc));
+        });
+        transactional(() -> insertInferredDocumentVocabularyPropertyAssertions(document, voc));
+        // This is normally inferred
+        document.setVocabulary(voc.getUri());
+        transactional(() -> {
+            document.addFile(file);
+            sut.persist(file, voc);
+            sut.update(document);
+        });
+
+        final Document result = em.find(Document.class, document.getUri());
+        assertThat(result.getFiles(), hasItem(file));
     }
 }

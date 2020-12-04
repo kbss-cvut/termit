@@ -103,8 +103,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
-        return idResolver.generateDerivedIdentifier(vocabularyUri,
-                        ConfigParam.TERM_NAMESPACE_SEPARATOR,
+        return idResolver.generateDerivedIdentifier(vocabularyUri, ConfigParam.TERM_NAMESPACE_SEPARATOR,
             multilingualString.get(config.get(ConfigParam.LANGUAGE)));
     }
 
