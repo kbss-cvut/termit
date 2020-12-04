@@ -467,7 +467,7 @@ class ResourceServiceTest {
         final File originalFile = new File();
         originalFile.setUri(file.getUri());
         originalFile.setLabel("originalTest.html");
-        when(resourceRepositoryService.getRequiredReference(file.getUri())).thenReturn(originalFile);
+        when(resourceRepositoryService.findRequired(file.getUri())).thenReturn(originalFile);
         sut.update(file);
         final ArgumentCaptor<FileRenameEvent> captor = ArgumentCaptor.forClass(FileRenameEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
@@ -483,7 +483,7 @@ class ResourceServiceTest {
         final File originalFile = new File();
         originalFile.setUri(file.getUri());
         originalFile.setLabel("originalTest.html");
-        when(resourceRepositoryService.getRequiredReference(file.getUri())).thenReturn(originalFile);
+        when(resourceRepositoryService.findRequired(file.getUri())).thenReturn(originalFile);
         when(resourceRepositoryService.update(any())).thenThrow(TransactionSystemException.class);
         assertThrows(TransactionSystemException.class, () -> sut.update(file));
         verify(eventPublisher, never()).publishEvent(any(FileRenameEvent.class));

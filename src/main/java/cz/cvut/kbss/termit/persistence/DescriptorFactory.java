@@ -124,7 +124,8 @@ public class DescriptorFactory {
         final Descriptor fileDescriptor = fileDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(fieldSpec(Document.class, "files"), fileDescriptor);
         // Vocabulary field is inferred, so it cannot be in any specific context
-        descriptor.addAttributeContext(fieldSpec(Document.class, "vocabulary"), null);
+        descriptor.addAttributeDescriptor(fieldSpec(Document.class, "vocabulary"),
+                new FieldDescriptor((URI) null, fieldSpec(Document.class, "vocabulary")));
         return descriptor;
     }
 
