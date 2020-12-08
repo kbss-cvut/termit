@@ -274,7 +274,7 @@ public class ResourceService
         final Set<URI> result = new HashSet<>(providedVocabularies);
         providedVocabularies.forEach(uri -> {
             final Vocabulary ref = vocabularyService.getRequiredReference(uri);
-            result.addAll(vocabularyService.getTransitivelyImportedVocabularies(ref));
+            result.addAll(vocabularyService.getTransitiveDependencies(ref));
         });
         return result;
     }

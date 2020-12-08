@@ -65,15 +65,16 @@ class ReadOnlyVocabularyServiceTest {
     }
 
     @Test
-    void getTransitivelyImportedVocabulariesRetrievesImportedVocabulariesFromVocabularyService() {
+    void getTransitiveDependenciesRetrievesDependenciesFromVocabularyService() {
         final ReadOnlyVocabulary voc = new ReadOnlyVocabulary(Generator.generateVocabularyWithId());
-        final Set<URI> imports = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
-        when(vocabularyService.getTransitivelyImportedVocabularies(any())).thenReturn(imports);
+        final Set<URI> imports = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri())
+                                          .collect(Collectors.toSet());
+        when(vocabularyService.getTransitiveDependencies(any())).thenReturn(imports);
 
-        final Collection<URI> result = sut.getTransitivelyImportedVocabularies(voc);
+        final Collection<URI> result = sut.getTransitiveDependencies(voc);
         assertEquals(imports, result);
         final ArgumentCaptor<Vocabulary> captor = ArgumentCaptor.forClass(Vocabulary.class);
-        verify(vocabularyService).getTransitivelyImportedVocabularies(captor.capture());
+        verify(vocabularyService).getTransitiveDependencies(captor.capture());
         assertEquals(voc.getUri(), captor.getValue().getUri());
     }
 }

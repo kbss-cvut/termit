@@ -129,18 +129,20 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
     }
 
     /**
-     * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
+     * Gets identifiers of all vocabularies used by the specified vocabulary, including transitively used ones.
      *
-     * @param entity Base vocabulary, whose imports should be retrieved
-     * @return Collection of (transitively) imported vocabularies
+     * That is, vocabularies, whose terms are referenced by terms from the specified vocabulary.
+     *
+     * @param entity Base vocabulary, whose dependencies should be retrieved
+     * @return Collection of (transitively) used vocabularies
      */
-    public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
+    public Collection<URI> getTransitiveDependencies(Vocabulary entity) {
         Objects.requireNonNull(entity);
         try {
-            return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
-                    "?x ?imports+ ?imported ." +
+            return em.createNativeQuery("SELECT DISTINCT ?used WHERE {" +
+                    "?x ?uses+ ?used ." +
                     "}", URI.class)
-                     .setParameter("imports",
+                     .setParameter("uses",
                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku))
                      .setParameter("x", entity.getUri()).getResultList();
         } catch (RuntimeException e) {
@@ -149,20 +151,22 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
     }
 
     /**
-     * Gets identifiers of vocabularies which directly import the supplied one.
+     * Gets identifiers of vocabularies which directly depend on the supplied one.
+     *
+     * That is, vocabularies, whose terms use terms from the specified one.
      *
      * @param vocabulary vocabulary, importing vocabularies of which are fetched
      * @return Collection of vocabularies which directly import #vocabulary
      */
-    public List<Vocabulary> getImportingVocabularies(Vocabulary vocabulary) {
+    public List<Vocabulary> getDependentVocabularies(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
-                    "?importing ?imports ?imported ." +
+                    "?importing ?uses ?target ." +
                     "}", Vocabulary.class)
-                     .setParameter("imports",
+                     .setParameter("uses",
                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku))
-                     .setParameter("imported", vocabulary.getUri()).getResultList();
+                     .setParameter("target", vocabulary.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -281,7 +285,7 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
         final Validator validator = context.getBean(
                 cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
         try {
-            final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
+            final Collection<URI> importClosure = getTransitiveDependencies(voc);
             importClosure.add(voc.getUri());
             final Collection<URI> closure = getVocabularyContexts(importClosure, workspace);
             return validator.validate(closure);

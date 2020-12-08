@@ -56,7 +56,7 @@ public class Vocabulary extends Asset<String> implements Serializable {
 
     @Inferred
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku, fetch = FetchType.EAGER)
-    private Set<URI> importedVocabularies;
+    private Set<URI> dependencies;
 
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<String>> properties;
@@ -100,12 +100,17 @@ public class Vocabulary extends Asset<String> implements Serializable {
         this.model = model;
     }
 
-    public Set<URI> getImportedVocabularies() {
-        return importedVocabularies;
+    /**
+     * Gets identifiers of vocabularies on which this vocabulary depends.
+     *
+     * @return Set of vocabulary identifiers
+     */
+    public Set<URI> getDependencies() {
+        return dependencies;
     }
 
-    public void setImportedVocabularies(Set<URI> importedVocabularies) {
-        this.importedVocabularies = importedVocabularies;
+    public void setDependencies(Set<URI> dependencies) {
+        this.dependencies = dependencies;
     }
 
     public Map<String, Set<String>> getProperties() {
@@ -139,8 +144,8 @@ public class Vocabulary extends Asset<String> implements Serializable {
                 getLabel() +
                 " <" + getUri() + '>' +
                 ", glossary=" + glossary +
-                (importedVocabularies != null ?
-                 ", importedVocabularies = [" + importedVocabularies.stream().map(p -> "<" + p + ">").collect(
+                (dependencies != null ?
+                 ", dependencies = [" + dependencies.stream().map(p -> "<" + p + ">").collect(
                          Collectors.joining(", ")) + "]" : "") +
                 '}';
     }

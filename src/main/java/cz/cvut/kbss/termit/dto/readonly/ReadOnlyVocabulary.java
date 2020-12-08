@@ -23,8 +23,8 @@ public class ReadOnlyVocabulary implements HasIdentifier, Serializable {
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private String description;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
-    private Set<URI> importedVocabularies;
+    @OWLObjectProperty(iri = Vocabulary.s_p_pouziva_pojmy_ze_slovniku, fetch = FetchType.EAGER)
+    private Set<URI> dependencies;
 
     public ReadOnlyVocabulary() {
     }
@@ -34,8 +34,8 @@ public class ReadOnlyVocabulary implements HasIdentifier, Serializable {
         this.uri = vocabulary.getUri();
         this.label = vocabulary.getLabel();
         this.description = vocabulary.getDescription();
-        if (vocabulary.getImportedVocabularies() != null) {
-            this.importedVocabularies = new HashSet<>(vocabulary.getImportedVocabularies());
+        if (vocabulary.getDependencies() != null) {
+            this.dependencies = new HashSet<>(vocabulary.getDependencies());
         }
     }
 
@@ -65,12 +65,12 @@ public class ReadOnlyVocabulary implements HasIdentifier, Serializable {
         this.description = description;
     }
 
-    public Set<URI> getImportedVocabularies() {
-        return importedVocabularies;
+    public Set<URI> getDependencies() {
+        return dependencies;
     }
 
-    public void setImportedVocabularies(Set<URI> importedVocabularies) {
-        this.importedVocabularies = importedVocabularies;
+    public void setDependencies(Set<URI> dependencies) {
+        this.dependencies = dependencies;
     }
 
     @Override
@@ -94,7 +94,7 @@ public class ReadOnlyVocabulary implements HasIdentifier, Serializable {
     public String toString() {
         return "ReadOnlyVocabulary{" + label +
                 " <" + uri +
-                ">, importedVocabularies=" + importedVocabularies +
+                ">, dependencies=" + dependencies +
                 '}';
     }
 }

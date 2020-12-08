@@ -37,7 +37,7 @@ public interface VocabularyService
      * @param entity Base vocabulary, whose imports should be retrieved
      * @return Collection of (transitively) imported vocabularies
      */
-    Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity);
+    Collection<URI> getTransitiveDependencies(Vocabulary entity);
 
     /**
      * Imports vocabulary from the specified file.

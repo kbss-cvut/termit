@@ -223,7 +223,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     void hasInterVocabularyTermRelationshipsReturnsTrueForSKOSRelatedTermsInSpecifiedVocabularies() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
-        subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
+        subjectVocabulary.setDependencies(Collections.singleton(targetVocabulary.getUri()));
         final Term child = Generator.generateTermWithId();
         final Term parentTerm = Generator.generateTermWithId();
         child.addParentTerm(parentTerm);
@@ -244,7 +244,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void getTransitivelyImportedVocabulariesReturnsAllImportedVocabulariesForVocabulary() {
+    void getTransitiveDependenciesReturnsAllDependenciesForVocabulary() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary importedVocabularyOne = Generator.generateVocabularyWithId();
         final Vocabulary importedVocabularyTwo = Generator.generateVocabularyWithId();
@@ -259,7 +259,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Generator.addVocabularyImportsRelationship(importedVocabularyOne, transitiveVocabulary, em);
         });
 
-        final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary);
+        final Collection<URI> result = sut.getTransitiveDependencies(subjectVocabulary);
         assertEquals(3, result.size());
         assertTrue(result.contains(importedVocabularyOne.getUri()));
         assertTrue(result.contains(importedVocabularyTwo.getUri()));
@@ -395,7 +395,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void getImportingVocabulariesRetrievesVocabulariesWhichUseTermsFromSpecifiedOne() {
+    void getDependentVocabulariesRetrievesVocabulariesWhichUseTermsFromSpecifiedOne() {
         enableRdfsInference(em);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Vocabulary importingVocabulary = Generator.generateVocabularyWithId();
@@ -405,7 +405,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Generator.addVocabularyImportsRelationship(importingVocabulary, vocabulary, em);
         });
 
-        final List<Vocabulary> result = sut.getImportingVocabularies(vocabulary);
+        final List<Vocabulary> result = sut.getDependentVocabularies(vocabulary);
         assertEquals(Collections.singletonList(importingVocabulary), result);
     }
 }
