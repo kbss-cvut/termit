@@ -6,9 +6,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
@@ -104,13 +102,13 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     @Test
     void updatingVocabularyReferenceAndLiteralAttributesCreatesTwoUpdateRecords() {
         enableRdfsInference(em);
-        final Vocabulary imported = Generator.generateVocabularyWithId();
+        final Glossary differentGlossary = new Glossary();
         transactional(() -> {
-            em.persist(imported, descriptorFactory.vocabularyDescriptor(imported));
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(differentGlossary, descriptorFactory.glossaryDescriptor(vocabulary));
         });
         vocabulary.setLabel("Updated vocabulary label");
-        vocabulary.setImportedVocabularies(Collections.singleton(imported.getUri()));
+        vocabulary.setGlossary(differentGlossary);
         transactional(() -> vocabularyService.update(vocabulary));
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(vocabulary);
@@ -119,7 +117,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             assertEquals(vocabulary.getUri(), chr.getChangedEntity());
             assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
             assertThat(((UpdateChangeRecord) chr).getChangedAttribute().toString(), anyOf(equalTo(DC.Terms.TITLE),
-                    equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)));
+                    equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar)));
         });
     }
 

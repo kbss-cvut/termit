@@ -93,10 +93,10 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
     @Test
     void exportVocabularyGlossaryExportsImportsOfOtherGlossariesAsOWLImports() throws IOException {
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
-        vocabulary.setImportedVocabularies(Collections.singleton(anotherVocabulary.getUri()));
         transactional(() -> {
             em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            Generator.addVocabularyImportsRelationship(vocabulary, anotherVocabulary, em);
         });
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
@@ -254,7 +254,6 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         parentFromAnother.setVocabulary(anotherVocabulary.getUri());
         anotherVocabulary.getGlossary().addRootTerm(parentFromAnother);
         affectedTerm.addParentTerm(parentFromAnother);
-        vocabulary.setImportedVocabularies(Collections.singleton(anotherVocabulary.getUri()));
         // This is normally inferred
         affectedTerm.setVocabulary(vocabulary.getUri());
         transactional(() -> {
@@ -262,6 +261,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
             em.persist(parentFromAnother, descriptorFactory.termDescriptor(anotherVocabulary));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.merge(affectedTerm, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addVocabularyImportsRelationship(vocabulary, anotherVocabulary, em);
         });
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);

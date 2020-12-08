@@ -40,7 +40,7 @@ public class ChangeRecordDao {
         }
     }
 
-    private Descriptor createDescriptor(AbstractChangeRecord record, Asset changedAsset) {
+    private Descriptor createDescriptor(AbstractChangeRecord record, Asset<?> changedAsset) {
         final Descriptor descriptor = new EntityDescriptor(
                 contextResolver.resolveChangeTrackingContext(changedAsset));
         descriptor
@@ -55,7 +55,7 @@ public class ChangeRecordDao {
      * @param asset The changed asset
      * @return List of change records ordered by timestamp (descending)
      */
-    public List<AbstractChangeRecord> findAll(Asset asset) {
+    public List<AbstractChangeRecord> findAll(Asset<?> asset) {
         Objects.requireNonNull(asset);
         try {
             return em.createNativeQuery("SELECT ?r WHERE {" +

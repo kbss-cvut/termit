@@ -1,15 +1,20 @@
 package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
@@ -19,6 +24,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -126,18 +132,19 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
 
     @Test
     void calculateChangesDiscoversChangesInPluralIdentifierBasedReferenceAttribute() {
-        final Vocabulary original = Generator.generateVocabularyWithId();
-        final Vocabulary changed = cloneOf(original);
-        original.setImportedVocabularies(
-                IntStream.range(0, 5).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet()));
-        changed.setImportedVocabularies(new HashSet<>(original.getImportedVocabularies()));
-        changed.getImportedVocabularies().add(Generator.generateUri());
+        final EntityWithPluralIdentifierAttribute original = new EntityWithPluralIdentifierAttribute();
+        original.setUri(Generator.generateUri());
+        final EntityWithPluralIdentifierAttribute changed = new EntityWithPluralIdentifierAttribute();
+        changed.setUri(original.getUri());
+        original.imports = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
+        changed.imports = new HashSet<>(original.imports);
+        changed.imports.add(Generator.generateUri());
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
         assertEquals(original.getUri(), record.getChangedEntity());
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik),
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku),
                 record.getChangedAttribute());
     }
 
@@ -324,18 +331,39 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
 
     @Test
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfPluralIdentifierBasedReferenceAttribute() {
-        final Vocabulary original = Generator.generateVocabularyWithId();
-        final Vocabulary changed = cloneOf(original);
-        original.setImportedVocabularies(
-                IntStream.range(0, 5).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet()));
-        changed.setImportedVocabularies(new HashSet<>(original.getImportedVocabularies()));
-        changed.getImportedVocabularies().add(Generator.generateUri());
+        final EntityWithPluralIdentifierAttribute original = new EntityWithPluralIdentifierAttribute();
+        original.setUri(Generator.generateUri());
+        final EntityWithPluralIdentifierAttribute changed = new EntityWithPluralIdentifierAttribute();
+        changed.setUri(original.getUri());
+        original.imports = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
+        changed.imports = new HashSet<>(original.imports);
+        changed.imports.add(Generator.generateUri());
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
-        assertEquals(original.getImportedVocabularies(), record.getOriginalValue());
-        assertEquals(changed.getImportedVocabularies(), record.getNewValue());
+        assertEquals(original.imports, record.getOriginalValue());
+        assertEquals(changed.imports, record.getNewValue());
+    }
+
+    @OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_termit + "/EntityWithPluralIdentifierAttribute")
+    public static class EntityWithPluralIdentifierAttribute extends Asset<String> {
+        @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku)
+        private Set<URI> imports;
+
+        @Override
+        public String getLabel() {
+            return "";
+        }
+
+        @Override
+        public void setLabel(String label) {
+        }
+
+        @Override
+        public Descriptor createDescriptor(DescriptorFactory descriptorFactory) {
+            return descriptorFactory.vocabularyDescriptor(getUri());
+        }
     }
 
     @Test

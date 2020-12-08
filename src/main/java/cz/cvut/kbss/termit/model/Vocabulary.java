@@ -54,7 +54,8 @@ public class Vocabulary extends Asset<String> implements Serializable {
             fetch = FetchType.EAGER)
     private Model model;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
+    @Inferred
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku, fetch = FetchType.EAGER)
     private Set<URI> importedVocabularies;
 
     @Properties(fetchType = FetchType.EAGER)

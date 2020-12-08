@@ -29,12 +29,12 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
     }
 
     @Override
-    public Collection<UpdateChangeRecord> calculateChanges(Asset changed, Asset original) {
+    public Collection<UpdateChangeRecord> calculateChanges(Asset<?> changed, Asset<?> original) {
         Objects.requireNonNull(changed);
         Objects.requireNonNull(original);
 
         final Collection<UpdateChangeRecord> records = new ArrayList<>();
-        final EntityType<? extends Asset> et = metamodel.entity(changed.getClass());
+        final EntityType<? extends Asset<?>> et = (EntityType<? extends Asset<?>>) metamodel.entity(changed.getClass());
         for (Attribute<?, ?> att : et.getAttributes()) {
             if (att.isInferred() || shouldIgnoreChanges(att)) {
                 continue;
@@ -125,8 +125,8 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         return record;
     }
 
-    private Optional<UpdateChangeRecord> resolveTypesChange(Asset original, Asset update,
-                                                            EntityType<? extends Asset> et,
+    private Optional<UpdateChangeRecord> resolveTypesChange(Asset<?> original, Asset<?> update,
+                                                            EntityType<? extends Asset<?>> et,
                                                             URI assetId) {
         final TypesSpecification<?, ?> typesSpec = et.getTypes();
         if (typesSpec == null) {
@@ -157,8 +157,8 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         return original == null && update.size() == 0 || original != null && original.size() == 0 && update == null;
     }
 
-    private Collection<UpdateChangeRecord> resolveUnmappedPropertiesChanges(Asset original, Asset update,
-                                                                            EntityType<? extends Asset> et,
+    private Collection<UpdateChangeRecord> resolveUnmappedPropertiesChanges(Asset<?> original, Asset<?> update,
+                                                                            EntityType<? extends Asset<?>> et,
                                                                             URI assetId) {
         final PropertiesSpecification<?, ?, ?, ?> propsSpec = et.getProperties();
         if (propsSpec == null) {

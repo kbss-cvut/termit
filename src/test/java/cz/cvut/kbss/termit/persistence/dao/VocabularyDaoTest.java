@@ -244,46 +244,19 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void hasInterVocabularyTermRelationshipsReturnsTrueForSKOSRelatedTermsInTransitivelyImportedVocabularies() {
-        final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
-        final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
-        final Vocabulary transitiveVocabulary = Generator.generateVocabularyWithId();
-        subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
-        targetVocabulary.setImportedVocabularies(Collections.singleton(transitiveVocabulary.getUri()));
-        final Term child = Generator.generateTermWithId();
-        final Term parentTerm = Generator.generateTermWithId();
-        child.addParentTerm(parentTerm);
-        subjectVocabulary.getGlossary().addRootTerm(child);
-        transitiveVocabulary.getGlossary().addRootTerm(parentTerm);
-        transactional(() -> {
-            em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
-            em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            em.persist(transitiveVocabulary, descriptorFactory.vocabularyDescriptor(transitiveVocabulary));
-            child.setGlossary(subjectVocabulary.getGlossary().getUri());
-            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(transitiveVocabulary.getGlossary().getUri());
-            em.persist(parentTerm, descriptorFactory.termDescriptor(transitiveVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, transitiveVocabulary.getUri(), em);
-        });
-
-        assertTrue(sut.hasInterVocabularyTermRelationships(subjectVocabulary.getUri(), targetVocabulary.getUri()));
-    }
-
-    @Test
     void getTransitivelyImportedVocabulariesReturnsAllImportedVocabulariesForVocabulary() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary importedVocabularyOne = Generator.generateVocabularyWithId();
         final Vocabulary importedVocabularyTwo = Generator.generateVocabularyWithId();
         final Vocabulary transitiveVocabulary = Generator.generateVocabularyWithId();
-        subjectVocabulary.setImportedVocabularies(
-                new HashSet<>(Arrays.asList(importedVocabularyOne.getUri(), importedVocabularyTwo.getUri())));
-        importedVocabularyOne.setImportedVocabularies(Collections.singleton(transitiveVocabulary.getUri()));
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
             em.persist(importedVocabularyOne, descriptorFactory.vocabularyDescriptor(importedVocabularyOne));
             em.persist(importedVocabularyTwo, descriptorFactory.vocabularyDescriptor(importedVocabularyTwo));
             em.persist(transitiveVocabulary, descriptorFactory.vocabularyDescriptor(transitiveVocabulary));
+            Generator.addVocabularyImportsRelationship(subjectVocabulary, importedVocabularyOne, em);
+            Generator.addVocabularyImportsRelationship(subjectVocabulary, importedVocabularyTwo, em);
+            Generator.addVocabularyImportsRelationship(importedVocabularyOne, transitiveVocabulary, em);
         });
 
         final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary);
@@ -419,5 +392,20 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(otherWorkspace, new EntityDescriptor(otherWorkspace.getUri()));
         });
         addWorkspaceReference(Collections.singleton(copy), otherWorkspace);
+    }
+
+    @Test
+    void getImportingVocabulariesRetrievesVocabulariesWhichUseTermsFromSpecifiedOne() {
+        enableRdfsInference(em);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary importingVocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(importingVocabulary, descriptorFactory.vocabularyDescriptor(importingVocabulary));
+            Generator.addVocabularyImportsRelationship(importingVocabulary, vocabulary, em);
+        });
+
+        final List<Vocabulary> result = sut.getImportingVocabularies(vocabulary);
+        assertEquals(Collections.singletonList(importingVocabulary), result);
     }
 }
