@@ -18,9 +18,7 @@
 package cz.cvut.kbss.termit.exception;
 
 /**
- * Application-specific exception.
- * <p>
- * All exceptions related to the application should be subclasses of this one.
+ * Exception thrown whenever the types cannot be fetched.
  */
 public class CannotFetchTypesException extends TermItException {
 
