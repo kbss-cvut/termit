@@ -38,10 +38,9 @@ public abstract class LanguageService {
     }
 
     /**
-     * Gets all types for the given lang.
+     * Gets all types.
      *
-     * @param lang
-     * @return
+     * @return all types
      */
-    public abstract List<Term> getTypesForLang(String lang);
+    public abstract List<Term> getTypes();
 }

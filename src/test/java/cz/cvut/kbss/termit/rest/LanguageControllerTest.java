@@ -63,10 +63,9 @@ class LanguageControllerTest extends BaseControllerTestRunner {
         final List<Term> types = new ArrayList<>();
         types.add(new Term());
         types.add(new Term());
-        when(serviceMock.getTypesForLang("en")).thenReturn(types);
-        final MvcResult mvcResult = mockMvc.perform(
-                get(PATH + "/types").param("language", "en"))
-                                           .andExpect(status().isOk()).andReturn();
+        when(serviceMock.getTypes()).thenReturn(types);
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/types"))
+            .andExpect(status().isOk()).andReturn();
         assertEquals(types,readValue(mvcResult, new TypeReference<List<Term>>(){}));
     }
 }
