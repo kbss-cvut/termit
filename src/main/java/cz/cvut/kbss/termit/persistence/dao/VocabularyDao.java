@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.exception.workspace.WorkspaceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
@@ -113,6 +114,8 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
         Objects.requireNonNull(id);
         try {
             return Optional.ofNullable(em.find(type, id, descriptorFactory.vocabularyDescriptor(id)));
+        } catch (WorkspaceException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -130,7 +133,7 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
 
     /**
      * Gets identifiers of all vocabularies used by the specified vocabulary, including transitively used ones.
-     *
+     * <p>
      * That is, vocabularies, whose terms are referenced by terms from the specified vocabulary.
      *
      * @param entity Base vocabulary, whose dependencies should be retrieved
@@ -152,7 +155,7 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
 
     /**
      * Gets identifiers of vocabularies which directly depend on the supplied one.
-     *
+     * <p>
      * That is, vocabularies, whose terms use terms from the specified one.
      *
      * @param vocabulary vocabulary, importing vocabularies of which are fetched

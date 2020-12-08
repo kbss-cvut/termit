@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.exceptions.OWLPersistenceException;
 import cz.cvut.kbss.jsonld.exception.JsonLdException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.*;
+import cz.cvut.kbss.termit.exception.workspace.VocabularyNotInWorkspaceException;
 import cz.cvut.kbss.termit.exception.workspace.WorkspaceNotSetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,5 +173,12 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorInfo> workspaceNotSetException(HttpServletRequest request, WorkspaceNotSetException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> vocabularyNotInWorkspace(HttpServletRequest request,
+                                                              VocabularyNotInWorkspaceException e) {
+        logException(e);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.NOT_FOUND);
     }
 }
