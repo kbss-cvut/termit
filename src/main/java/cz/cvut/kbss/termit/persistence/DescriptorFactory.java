@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.persistence;
 
+import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
@@ -64,6 +65,12 @@ public class DescriptorFactory {
             return new EntityDescriptor();
         }
         return new EntityDescriptor(persistenceUtils.resolveVocabularyContext(vocabularyUri));
+    }
+
+    public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attribute) {
+        Objects.requireNonNull(entityCls);
+        Objects.requireNonNull(attribute);
+        return emf.getMetamodel().entity(entityCls).getFieldSpecification(attribute);
     }
 
     /**

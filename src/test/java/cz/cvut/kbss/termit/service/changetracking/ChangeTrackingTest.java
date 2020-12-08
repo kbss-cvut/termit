@@ -191,9 +191,9 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
-        assertEquals(Collections.singleton(originalDefinition.get()),
+        assertEquals(Collections.singleton(originalDefinition),
                 ((UpdateChangeRecord) result.get(0)).getOriginalValue());
-        assertEquals(Collections.singleton(newDefinition.get()), ((UpdateChangeRecord) result.get(0)).getNewValue());
+        assertEquals(Collections.singleton(newDefinition), ((UpdateChangeRecord) result.get(0)).getNewValue());
     }
 
     @Test

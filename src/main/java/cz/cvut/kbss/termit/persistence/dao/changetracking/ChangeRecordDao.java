@@ -55,9 +55,11 @@ public class ChangeRecordDao {
      * @param asset The changed asset
      * @return List of change records ordered by timestamp (descending)
      */
-    public List<AbstractChangeRecord> findAll(Asset asset) {
+    public List<AbstractChangeRecord> findAll(Asset<?> asset) {
         Objects.requireNonNull(asset);
         try {
+            final Descriptor descriptor = new EntityDescriptor();
+            descriptor.setLanguage(null);
             return em.createNativeQuery("SELECT ?r WHERE {" +
                     "?r a ?changeRecord ;" +
                     "?relatesTo ?asset ;" +
@@ -68,7 +70,7 @@ public class ChangeRecordDao {
                      .setParameter("relatesTo", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                      .setParameter("hasChangedAttribute", URI.create(Vocabulary.s_p_ma_zmeneny_atribut))
                      .setParameter("hasTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                     .setParameter("asset", asset.getUri()).getResultList();
+                     .setParameter("asset", asset.getUri()).setDescriptor(descriptor).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

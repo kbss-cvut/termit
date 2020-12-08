@@ -404,4 +404,16 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void calculateChangesRegistersAddedTranslationInMultilingualTermLabel() {
+        final Term original = Generator.generateTermWithId();
+        final Term changed = cloneOf(original);
+        changed.getLabel().set("cs", "Testovací pojem");
+        final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
+        assertEquals(1, result.size());
+        final UpdateChangeRecord record = result.iterator().next();
+        assertEquals(original.getLabel(), record.getOriginalValue().iterator().next());
+        assertEquals(changed.getLabel(), record.getNewValue().iterator().next());
+    }
 }

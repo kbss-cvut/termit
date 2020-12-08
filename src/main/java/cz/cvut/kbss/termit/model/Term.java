@@ -61,7 +61,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     private Set<MultilingualString> hiddenLabels;
 
     @OWLAnnotationProperty(iri = SKOS.SCOPE_NOTE)
-    private String description;
+    private MultilingualString description;
 
     @OWLAnnotationProperty(iri = SKOS.DEFINITION)
     private MultilingualString definition;
@@ -157,11 +157,11 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         this.hiddenLabels = hiddenLabels;
     }
 
-    public String getDescription() {
+    public MultilingualString getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(MultilingualString description) {
         this.description = description;
     }
 
@@ -274,7 +274,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         exportMulti(sb, altLabels, Term::exportMultilingualString);
         exportMulti(sb, hiddenLabels, Term::exportMultilingualString);
         sb.append(',').append(exportMultilingualString(definition));
-        sb.append(',').append(CsvUtils.sanitizeString(description));
+        sb.append(',').append(exportMultilingualString(description));
         exportMulti(sb, types, String::toString);
         exportMulti(sb, sources, String::toString);
         exportMulti(sb, parentTerms, pt -> pt.getUri().toString());
@@ -285,6 +285,9 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
     }
 
     private static String exportMultilingualString(MultilingualString str) {
+        if (str == null) {
+            return "";
+        }
         return exportCollection(str.getValue().values());
     }
 
@@ -315,7 +318,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
             row.createCell(4).setCellValue(definition.toString());
         }
         if (description != null) {
-            row.createCell(5).setCellValue(description);
+            row.createCell(5).setCellValue(description.toString());
         }
         if (types != null) {
             row.createCell(6).setCellValue(String.join(";", types));

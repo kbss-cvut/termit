@@ -50,7 +50,7 @@ public class LanguageController extends BaseController {
     @PreAuthorize("permitAll()")    // No need to secure this
     @RequestMapping(value = "/types", method = RequestMethod.GET,
             produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getAll(@RequestParam String language) {
-        return service.getTypesForLang(language);
+    public List<Term> getAll() {
+        return service.getTypes();
     }
 }

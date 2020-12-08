@@ -14,7 +14,11 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
+import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.util.Constants;
@@ -548,8 +552,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Term result = em.find(Term.class, term.getUri());
         assertNotNull(result);
         assertEquals(Collections.singleton(parent), result.getParentTerms());
-        // TODO Workaround for JOPA issue, remove after fix
-        assertEquals(newDefinition.getValue(), result.getDefinition().getValue());
+        assertEquals(newDefinition, result.getDefinition());
     }
 
     @Test
@@ -751,5 +754,46 @@ class TermDaoTest extends BaseDaoTestRunner {
             assertThat(allLabels, hasKey(lang));
             assertThat(allLabels.get(lang), hasItem(val));
         }));
+    }
+
+    // Bug #1459
+    @Test
+    void updateHandlesChangesToTermsWithInferredDefinitionSource() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final File file = Generator.generateFileWithId("test.html");
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(file);
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+        });
+        transactional(() -> {
+            final TermDefinitionSource source = saveDefinitionSource(term, file);
+            // This is normally inferred
+            term.setDefinitionSource(source);
+        });
+        final String newDefinition = "new definition";
+        term.getDefinition().set(Constants.DEFAULT_LANGUAGE, newDefinition);
+        transactional(() -> sut.update(term));
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertEquals(newDefinition, result.getDefinition().get(Constants.DEFAULT_LANGUAGE));
+        assertNotNull(result.getDefinitionSource());
+    }
+
+    private TermDefinitionSource saveDefinitionSource(Term term, File file) {
+        final TermDefinitionSource source = new TermDefinitionSource(term.getUri(), new FileOccurrenceTarget(file));
+        source.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+        final Repository repo = em.unwrap(Repository.class);
+        em.persist(source);
+        em.persist(source.getTarget());
+        try (final RepositoryConnection connection = repo.getConnection()) {
+            // Simulates inference
+            final ValueFactory vf = connection.getValueFactory();
+            connection.add(vf.createIRI(term.getUri().toString()),
+                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zdroj_definice_termu),
+                    vf.createIRI(source.getUri().toString()));
+        }
+        return source;
     }
 }

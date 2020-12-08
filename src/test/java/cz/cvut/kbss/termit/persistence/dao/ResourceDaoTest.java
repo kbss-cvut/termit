@@ -402,4 +402,31 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
     }
+
+    @Test
+    void updateHandlesInferredVocabularyInVocabularyContext() {
+        final File file = Generator.generateFileWithId("test.html");
+        final Document document = Generator.generateDocumentWithId();
+        final DocumentVocabulary voc = new DocumentVocabulary();
+        voc.setDocument(document);
+        voc.setLabel("Test");
+        voc.setUri(Generator.generateUri());
+        voc.setGlossary(new Glossary());
+        voc.setModel(new Model());
+        transactional(() -> {
+            em.persist(voc, descriptorFactory.vocabularyDescriptor(voc));
+            em.persist(document, descriptorFactory.documentDescriptor(voc));
+        });
+        transactional(() -> insertInferredDocumentVocabularyPropertyAssertions(document, voc));
+        // This is normally inferred
+        document.setVocabulary(voc.getUri());
+        transactional(() -> {
+            document.addFile(file);
+            sut.persist(file, voc);
+            sut.update(document);
+        });
+
+        final Document result = em.find(Document.class, document.getUri());
+        assertThat(result.getFiles(), hasItem(file));
+    }
 }

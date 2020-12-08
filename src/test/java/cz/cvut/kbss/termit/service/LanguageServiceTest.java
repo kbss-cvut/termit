@@ -17,23 +17,50 @@
  */
 package cz.cvut.kbss.termit.service;
 
+import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.service.language.LanguageService;
+import cz.cvut.kbss.termit.service.language.LanguageServiceJena;
+import java.io.IOException;
+import java.net.URL;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.util.List;
+import org.springframework.core.io.ClassPathResource;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
+
 
 class LanguageServiceTest extends BaseServiceTestRunner {
 
-    @Autowired
-    private LanguageService sut;
+    @Mock
+    private ClassPathResource languageTtlUrl;
+
+    @InjectMocks
+    private LanguageServiceJena sut;
+
+    @BeforeEach
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+    }
 
     @Test
-    void getTypesForBasicLanguage() {
-        List<Term> result = sut.getTypesForLang("en");
+    void getTypesForBasicLanguage() throws IOException {
+        final URL url = ClassLoader.getSystemResource("languages/language.ttl");
+        when(languageTtlUrl.getURL()).thenReturn(url);
+        List<Term> result = sut.getTypes();
         assertEquals(10, result.size());
+    }
+
+    @Test
+    void getTypesThrowsCannotFetchTypesException() {
+        assertThrows(CannotFetchTypesException.class,
+            () -> sut.getTypes());
     }
 }

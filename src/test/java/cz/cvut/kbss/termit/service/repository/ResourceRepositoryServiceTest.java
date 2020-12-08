@@ -29,7 +29,6 @@ import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -51,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
-    private Configuration config;
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private DescriptorFactory descriptorFactory;
