@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import java.util.stream.Collectors;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -59,7 +60,7 @@ public class LanguageServiceJena extends LanguageService {
     }
 
     /**
-     * Gets all types with labels in the given language.
+     * Gets all types.
      *
      * @return List of types as {@code Term}s
      */
@@ -97,7 +98,7 @@ public class LanguageServiceJena extends LanguageService {
         final MultilingualString s = new MultilingualString();
         resource.listProperties(property).forEachRemaining( st -> {
             if (st.getLanguage() != null) {
-                s.set(st.getLanguage(), st.getObject().asLiteral().toString());
+                s.set(st.getLanguage(), st.getObject().asLiteral().getLexicalForm());
             } else {
                 LOG.debug("Ignoring statement {}, no language tag found.", st);
             }
