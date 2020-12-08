@@ -385,3 +385,12 @@ termit-pojem:výskyt-termu
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Term occurrence"@en , "Výskyt termu"@cs .
+
+termit-pojem:používá-pojmy-ze-slovníku
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Uses terms from vocabulary"@en , "Používá pojmy ze slovníku"@cs .
