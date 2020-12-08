@@ -5,6 +5,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
+import cz.cvut.kbss.termit.exception.workspace.VocabularyNotInWorkspaceException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -416,5 +417,13 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertEquals(records.stream().map(ValidationResult::getId).collect(Collectors.toList()),
                 result.stream().map(ValidationResult::getId).collect(Collectors.toList()));
         verify(serviceMock).validateContents(vocabulary);
+    }
+
+    @Test
+    void getByIdReturnsNotFoundWhenVocabularyDoesNotExistInCurrentWorkspaceExceptionIsThrown() throws Exception {
+        when(idResolverMock.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, FRAGMENT))
+                .thenReturn(VOCABULARY_URI);
+        when(serviceMock.findRequired(VOCABULARY_URI)).thenThrow(VocabularyNotInWorkspaceException.class);
+        mockMvc.perform(get(PATH + "/" + FRAGMENT)).andExpect(status().isNotFound());
     }
 }
