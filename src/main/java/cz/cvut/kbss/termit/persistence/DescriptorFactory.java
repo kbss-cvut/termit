@@ -14,7 +14,6 @@
  */
 package cz.cvut.kbss.termit.persistence;
 
-import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
@@ -67,10 +66,15 @@ public class DescriptorFactory {
         return new EntityDescriptor(persistenceUtils.resolveVocabularyContext(vocabularyUri));
     }
 
-    public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attribute) {
-        Objects.requireNonNull(entityCls);
-        Objects.requireNonNull(attribute);
-        return emf.getMetamodel().entity(entityCls).getFieldSpecification(attribute);
+    /**
+     * Gets field specification for the specified attribute from persistence unit metamodel.
+     *
+     * @param entityCls Entity class
+     * @param attName   Name of attribute in the entity class
+     * @return Metamodel field specification
+     */
+    public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attName) {
+        return persistenceUtils.getMetamodel().entity(entityCls).getFieldSpecification(attName);
     }
 
     /**
@@ -204,17 +208,6 @@ public class DescriptorFactory {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(fieldSpec(Glossary.class, "rootTerms"), termDescriptor(vocabularyUri));
         return descriptor;
-    }
-
-    /**
-     * Gets field specification for the specified attribute from persistence unit metamodel.
-     *
-     * @param entityCls Entity class
-     * @param attName   Name of attribute in the entity class
-     * @return Metamodel field specification
-     */
-    public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attName) {
-        return persistenceUtils.getMetamodel().entity(entityCls).getFieldSpecification(attName);
     }
 
     /**

@@ -120,6 +120,8 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
         try {
             // Evict possibly cached instance loaded from default context
             em.getEntityManagerFactory().getCache().evict(Term.class, entity.getUri(), null);
+            final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
+            entity.setDefinitionSource(original.getDefinitionSource());
             return em.merge(entity, descriptorFactory.termDescriptor(entity.getVocabulary()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

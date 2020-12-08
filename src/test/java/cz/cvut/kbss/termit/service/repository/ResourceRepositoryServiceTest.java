@@ -53,9 +53,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     private DescriptorFactory descriptorFactory;
 
     @Autowired
-    private DescriptorFactory descriptorFactory;
-
-    @Autowired
     private EntityManager em;
 
     @Autowired
