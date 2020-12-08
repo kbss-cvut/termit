@@ -62,15 +62,15 @@ class TermTest {
         assertEquals(term.getUri().toString(), items[0]);
         term.getLabel().getValue().values().forEach(v -> assertThat(items[1], containsString(v)));
         term.getDefinition().getValue().values().forEach(v -> assertThat(items[4], containsString(v)));
-        assertEquals(term.getDescription(), items[5]);
+        term.getDescription().getValue().values().forEach(v -> assertThat(items[5], containsString(v)));
     }
 
     @Test
     void toCsvPutsCommentInQuotesToEscapeCommas() {
         final Term term = Generator.generateTermWithId();
-        term.setDescription("Comment, with a comma");
+        term.setDescription( MultilingualString.create("Comment, with a comma", Constants.DEFAULT_LANGUAGE));
         final String result = term.toCsv();
-        assertThat(result, containsString("\"" + term.getDescription() + "\""));
+        assertThat(result, containsString("\"" + term.getDescription().get(Constants.DEFAULT_LANGUAGE) + "\""));
     }
 
     @Test
@@ -182,7 +182,8 @@ class TermTest {
         term.getHiddenLabels().forEach(s -> assertTrue(row.getCell(3).getStringCellValue().contains(s.get())));
         term.getDefinition().getValue().values()
             .forEach(v -> assertThat(row.getCell(4).getStringCellValue(), containsString(v)));
-        assertEquals(term.getDescription(), row.getCell(5).getStringCellValue());
+        term.getDescription().getValue().values()
+            .forEach(v -> assertThat(row.getCell(5).getStringCellValue(), containsString(v)));
         assertEquals(term.getTypes().iterator().next(), row.getCell(6).getStringCellValue());
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
         term.getSources().forEach(s -> assertTrue(row.getCell(7).getStringCellValue().contains(s)));

@@ -212,15 +212,16 @@ public class Generator {
         term.setUri(Generator.generateUri());
         final MultilingualString label = new MultilingualString();
         final MultilingualString definition = new MultilingualString();
+        final MultilingualString description = new MultilingualString();
         int id = randomInt();
         Arrays.stream(languages).forEach( language -> {
             label.set(language, "Term-" + language + "-" + id);
             definition.set(language, "Normative definition of term " + language + "-" + id);
-            definition.set(language, "Normative definition of term " + language + "-" + id);
+            description.set(language, "Normative description of term " + language + "-" + id);
         });
         term.setLabel(label);
         term.setDefinition(definition);
-        term.setDescription("Comment " + id);
+        term.setDescription(description);
         return term;
     }
 
@@ -230,7 +231,7 @@ public class Generator {
         term.setDefinition(MultilingualString
             .create("Normative definition of term " + term.getLabel().get(),
                 Constants.DEFAULT_LANGUAGE));
-        term.setDescription("Comment" + randomInt());
+        term.setDescription(MultilingualString.create("Comment" + randomInt(), Constants.DEFAULT_LANGUAGE));
         return term;
     }
 
