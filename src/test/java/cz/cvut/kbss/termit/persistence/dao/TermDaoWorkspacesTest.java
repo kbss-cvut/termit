@@ -13,6 +13,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
 import cz.cvut.kbss.termit.util.Constants;
+import org.apache.jena.atlas.test.Gen;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -20,6 +21,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import sun.security.x509.GeneralName;
 
 import java.net.URI;
 import java.util.Collections;
@@ -247,11 +249,11 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             em.persist(importedTerm, descriptorFactory.termDescriptor(importedVocabulary));
             Generator.addTermInVocabularyRelationship(importedTerm, importedVocabulary.getUri(), em);
-            vocabulary.setImportedVocabularies(Collections.singleton(importedVocabulary.getUri()));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             importedVocabulary.getGlossary().addRootTerm(importedTerm);
             em.merge(importedVocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(importedVocabulary));
+            Generator.addVocabularyImportsRelationship(vocabulary, importedVocabulary, em);
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
@@ -279,11 +281,11 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             em.persist(importedTerm, descriptorFactory.termDescriptor(importedVocabulary));
             Generator.addTermInVocabularyRelationship(importedTerm, importedVocabulary.getUri(), em);
-            vocabulary.setImportedVocabularies(Collections.singleton(importedVocabulary.getUri()));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             importedVocabulary.getGlossary().addRootTerm(importedTerm);
             em.merge(importedVocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(importedVocabulary));
+            Generator.addVocabularyImportsRelationship(vocabulary, importedVocabulary, em);
         });
         addTermToVocabularyInAnotherWorkspace(term);
 

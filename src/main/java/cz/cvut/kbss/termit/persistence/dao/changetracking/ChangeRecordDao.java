@@ -40,7 +40,7 @@ public class ChangeRecordDao {
         }
     }
 
-    private Descriptor createDescriptor(AbstractChangeRecord record, Asset changedAsset) {
+    private Descriptor createDescriptor(AbstractChangeRecord record, Asset<?> changedAsset) {
         final Descriptor descriptor = new EntityDescriptor(
                 contextResolver.resolveChangeTrackingContext(changedAsset));
         descriptor

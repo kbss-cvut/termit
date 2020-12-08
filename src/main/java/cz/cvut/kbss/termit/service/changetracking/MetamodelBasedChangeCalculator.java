@@ -34,7 +34,7 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         Objects.requireNonNull(original);
 
         final Collection<UpdateChangeRecord> records = new ArrayList<>();
-        final EntityType<? extends Asset> et = metamodel.entity(changed.getClass());
+        final EntityType<? extends Asset<?>> et = (EntityType<? extends Asset<?>>) metamodel.entity(changed.getClass());
         for (Attribute<?, ?> att : et.getAttributes()) {
             if (att.isInferred() || shouldIgnoreChanges(att)) {
                 continue;
@@ -126,7 +126,7 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
     }
 
     private Optional<UpdateChangeRecord> resolveTypesChange(Asset<?> original, Asset<?> update,
-                                                            EntityType<? extends Asset> et,
+                                                            EntityType<? extends Asset<?>> et,
                                                             URI assetId) {
         final TypesSpecification<?, ?> typesSpec = et.getTypes();
         if (typesSpec == null) {
@@ -158,7 +158,7 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
     }
 
     private Collection<UpdateChangeRecord> resolveUnmappedPropertiesChanges(Asset<?> original, Asset<?> update,
-                                                                            EntityType<? extends Asset> et,
+                                                                            EntityType<? extends Asset<?>> et,
                                                                             URI assetId) {
         final PropertiesSpecification<?, ?, ?, ?> propsSpec = et.getProperties();
         if (propsSpec == null) {
