@@ -178,10 +178,10 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void getTransitivelyImportedVocabulariesReturnsEmptyCollectionsWhenVocabularyHasNoImports() {
+    void getTransitiveDependenciesReturnsEmptyCollectionsWhenVocabularyHasNoDependencies() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary)));
-        final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary);
+        final Collection<URI> result = sut.getTransitiveDependencies(subjectVocabulary);
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }

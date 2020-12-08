@@ -43,10 +43,10 @@ public class ReadOnlyVocabularyController extends BaseController {
     /**
      * Gets imports (including transitive) of vocabulary with the specified identification
      */
-    @GetMapping(value = "/{fragment}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Collection<URI> getTransitiveImports(@PathVariable String fragment,
-                                                @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) String namespace) {
+    @GetMapping(value = "/{fragment}/dependencies", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public Collection<URI> getTransitiveDependencies(@PathVariable String fragment,
+                                                     @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) String namespace) {
         final ReadOnlyVocabulary vocabulary = getById(fragment, namespace);
-        return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
+        return vocabularyService.getTransitiveDependencies(vocabulary);
     }
 }

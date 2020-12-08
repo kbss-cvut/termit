@@ -84,8 +84,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
-        return vocabularyDao.getTransitivelyImportedVocabularies(entity);
+    public Collection<URI> getTransitiveDependencies(Vocabulary entity) {
+        return vocabularyDao.getTransitiveDependencies(entity);
     }
 
     @Override
@@ -120,7 +120,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     "Removal of document vocabularies is not supported yet.");
         }
 
-        final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
+        final List<Vocabulary> vocabularies = vocabularyDao.getDependentVocabularies(instance);
         if (!vocabularies.isEmpty()) {
             throw new VocabularyRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "

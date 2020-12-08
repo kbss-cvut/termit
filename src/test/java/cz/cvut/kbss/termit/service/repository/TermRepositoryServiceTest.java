@@ -66,7 +66,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         this.vocabulary = Generator.generateVocabularyWithId();
         this.childVocabulary = Generator.generateVocabularyWithId();
-        childVocabulary.setImportedVocabularies(Collections.singleton(vocabulary.getUri()));
+        childVocabulary.setDependencies(Collections.singleton(vocabulary.getUri()));
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(childVocabulary, descriptorFactory.vocabularyDescriptor(childVocabulary));

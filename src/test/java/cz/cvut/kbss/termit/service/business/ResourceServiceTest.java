@@ -252,13 +252,13 @@ class ResourceServiceTest {
         file.getDocument().setVocabulary(vocabulary.getUri());
         final Set<URI> imported = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
         when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
-        when(vocabularyService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(imported);
+        when(vocabularyService.getTransitiveDependencies(vocabulary)).thenReturn(imported);
 
         sut.runTextAnalysis(file, Collections.emptySet());
         final Set<URI> expected = new HashSet<>(imported);
         expected.add(vocabulary.getUri());
         verify(textAnalysisService).analyzeFile(file, expected);
-        verify(vocabularyService).getTransitivelyImportedVocabularies(vocabulary);
+        verify(vocabularyService).getTransitiveDependencies(vocabulary);
     }
 
     @Test
@@ -269,9 +269,9 @@ class ResourceServiceTest {
         final Vocabulary vTwo = Generator.generateVocabularyWithId();
         final Set<URI> vTwoImports = Collections.singleton(Generator.generateUri());
         when(vocabularyService.getRequiredReference(vOne.getUri())).thenReturn(vOne);
-        when(vocabularyService.getTransitivelyImportedVocabularies(vOne)).thenReturn(vOneImports);
+        when(vocabularyService.getTransitiveDependencies(vOne)).thenReturn(vOneImports);
         when(vocabularyService.getRequiredReference(vTwo.getUri())).thenReturn(vTwo);
-        when(vocabularyService.getTransitivelyImportedVocabularies(vTwo)).thenReturn(vTwoImports);
+        when(vocabularyService.getTransitiveDependencies(vTwo)).thenReturn(vTwoImports);
 
         sut.runTextAnalysis(file, new HashSet<>(Arrays.asList(vOne.getUri(), vTwo.getUri())));
         final Set<URI> expected = new HashSet<>(vOneImports);
@@ -279,8 +279,8 @@ class ResourceServiceTest {
         expected.add(vOne.getUri());
         expected.add(vTwo.getUri());
         verify(textAnalysisService).analyzeFile(file, expected);
-        verify(vocabularyService).getTransitivelyImportedVocabularies(vOne);
-        verify(vocabularyService).getTransitivelyImportedVocabularies(vTwo);
+        verify(vocabularyService).getTransitiveDependencies(vOne);
+        verify(vocabularyService).getTransitiveDependencies(vTwo);
     }
 
     @Test

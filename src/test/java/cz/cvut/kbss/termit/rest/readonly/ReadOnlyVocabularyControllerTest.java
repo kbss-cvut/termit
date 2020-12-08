@@ -91,7 +91,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getTransitiveImportsRetrievesImportsFromService() throws Exception {
+    void getTransitiveDependenciesRetrievesDependenciesFromService() throws Exception {
         final String fragment = "test-vocabulary";
         final String namespace = Vocabulary.s_c_slovnik + "/";
         final URI uri = URI.create(namespace + fragment);
@@ -101,13 +101,13 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
         when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, fragment)).thenReturn(uri);
         final Set<URI> imports = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri())
                                           .collect(Collectors.toSet());
-        when(vocabularyService.getTransitivelyImportedVocabularies(any())).thenReturn(imports);
+        when(vocabularyService.getTransitiveDependencies(any())).thenReturn(imports);
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + fragment + "/imports")).andExpect(status().isOk())
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + fragment + "/dependencies")).andExpect(status().isOk())
                                            .andReturn();
         final Set<URI> result = readValue(mvcResult, new TypeReference<Set<URI>>() {
         });
         assertEquals(imports, result);
-        verify(vocabularyService).getTransitivelyImportedVocabularies(vocabulary);
+        verify(vocabularyService).getTransitiveDependencies(vocabulary);
     }
 }

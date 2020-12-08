@@ -30,10 +30,10 @@ public class ReadOnlyVocabularyService {
         return new ReadOnlyVocabulary(vocabularyService.findRequired(uri));
     }
 
-    public Collection<URI> getTransitivelyImportedVocabularies(ReadOnlyVocabulary vocabulary) {
+    public Collection<URI> getTransitiveDependencies(ReadOnlyVocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final Vocabulary voc = new Vocabulary();
         voc.setUri(vocabulary.getUri());
-        return vocabularyService.getTransitivelyImportedVocabularies(voc);
+        return vocabularyService.getTransitiveDependencies(voc);
     }
 }

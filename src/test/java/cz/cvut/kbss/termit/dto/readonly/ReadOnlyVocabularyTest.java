@@ -24,10 +24,10 @@ class ReadOnlyVocabularyTest {
     @Test
     void constructorCopiesImportedVocabulariesFromSpecifiedVocabularyWhenTheyAreAvailable() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.setImportedVocabularies(
+        vocabulary.setDependencies(
                 IntStream.range(0, 3).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet()));
 
         final ReadOnlyVocabulary result = new ReadOnlyVocabulary(vocabulary);
-        assertEquals(vocabulary.getImportedVocabularies(), result.getImportedVocabularies());
+        assertEquals(vocabulary.getDependencies(), result.getDependencies());
     }
 }
