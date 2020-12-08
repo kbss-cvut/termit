@@ -83,6 +83,9 @@ public class DescriptorFactory {
         descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "glossary"), glossaryDescriptor(vocabularyUri));
         descriptor.addAttributeDescriptor(fieldSpec(DocumentVocabulary.class, "document"),
                 documentDescriptor(vocabularyUri));
+        // importedVocabularies are imported, so they cannot be in a specific context
+        descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "importedVocabularies"),
+                new FieldDescriptor((URI) null, fieldSpec(Vocabulary.class, "importedVocabularies")));
         return descriptor;
     }
 
