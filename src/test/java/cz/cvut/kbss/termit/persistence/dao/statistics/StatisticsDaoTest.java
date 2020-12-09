@@ -104,6 +104,11 @@ class StatisticsDaoTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(ws, new EntityDescriptor(ws.getUri())));
         final Vocabulary vocabulary = saveVocabulary(ws);
         final List<Term> terms = generateTerms(vocabulary);
+        final List<Term> types = KNOWN_TYPES.stream().map(t -> {
+            final Term type = new Term();
+            type.setUri(URI.create(t));
+            return type;
+        }).collect(Collectors.toList());
         final List<TermFrequencyDto> expected = KNOWN_TYPES.stream().map(t -> {
             final TermFrequencyDto typeFreq = new TermFrequencyDto(URI.create(t), 0, t);
             typeFreq.setCount(Math.toIntExact(terms.stream().filter(term -> term.hasType(t)).count()));
@@ -112,7 +117,7 @@ class StatisticsDaoTest extends BaseDaoTestRunner {
                                                               .thenComparing(TermFrequencyDto::getLabel))
                                                            .collect(Collectors.toList());
 
-        final List<TermFrequencyDto> result = sut.getTermTypeFrequencyStatistics(ws, vocabulary);
+        final List<TermFrequencyDto> result = sut.getTermTypeFrequencyStatistics(ws, vocabulary, types);
         assertEquals(expected, result);
     }
 }

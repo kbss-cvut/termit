@@ -43,4 +43,11 @@ public abstract class LanguageService {
      * @return all types
      */
     public abstract List<Term> getTypes();
+
+    /**
+     * Gets all leaf types.
+     *
+     * @return all leaf types
+     */
+    public abstract List<Term> getLeafTypes();
 }

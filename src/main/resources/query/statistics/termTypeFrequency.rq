@@ -11,10 +11,6 @@ SELECT (?type as ?item) ?label (COUNT(DISTINCT ?term) AS ?count) WHERE {
 
   	OPTIONAL {
         GRAPH ?g { ?term a ?t .}
-        FILTER(?t in (z-sgov-pojem:typ-objektu,
-                      z-sgov-pojem:typ-vlastnosti,
-                      z-sgov-pojem:typ-vztahu,
-                      z-sgov-pojem:typ-události ))
         OPTIONAL {
             ?t rdfs:label ?lT .
             FILTER langMatches(lang(?lT), ?lang)

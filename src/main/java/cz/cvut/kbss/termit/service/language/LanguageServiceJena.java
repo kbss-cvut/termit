@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import java.util.stream.Collectors;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -83,6 +84,15 @@ public class LanguageServiceJena extends LanguageService {
             LOG.error("Unable to retrieve types.", e);
             throw new CannotFetchTypesException(e);
         }
+    }
+
+    /**
+     * Gets all types.
+     *
+     * @return List of types as {@code Term}s
+     */
+    public List<Term> getLeafTypes() {
+        return getTypes().stream().filter( t -> t.getSubTerms().isEmpty() ).collect(Collectors.toList());
     }
 
     /**

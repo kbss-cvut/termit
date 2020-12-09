@@ -2,12 +2,15 @@ package cz.cvut.kbss.termit.persistence.dao.statistics;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.statistics.TermFrequencyDto;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.PersistenceUtils;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -51,8 +54,10 @@ public class StatisticsDao {
      * @param vocabulary Vocabulary in which the term type distribution should be calculated
      * @return List of term type frequency information instance. Each instance represent one type
      */
-    public List<TermFrequencyDto> getTermTypeFrequencyStatistics(Workspace workspace, Vocabulary vocabulary) {
+    public List<TermFrequencyDto> getTermTypeFrequencyStatistics(Workspace workspace, Vocabulary vocabulary, List<Term> leafTypes) {
         String query = Utils.loadQuery("statistics" + File.separator + "termTypeFrequency.rq");
+        query = query + " VALUES ?t { " + leafTypes.stream().map(t -> "<"+t.getUri().toString()+">").collect(
+            Collectors.joining(" "))+ " }";
         return em.createNativeQuery(query, "TermFrequencyDto")
                  .setParameter("g", persistenceUtils.resolveVocabularyContext(workspace, vocabulary.getUri()))
                  .setParameter("vocabulary", vocabulary)

@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.dto.statistics.TermFrequencyDto;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.statistics.StatisticsDao;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
+import cz.cvut.kbss.termit.service.language.LanguageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,14 +19,18 @@ public class StatisticsService {
 
     private final VocabularyService vocabularyService;
 
+    private final LanguageService languageService;
+
     private final StatisticsDao statisticsDao;
 
     @Autowired
     public StatisticsService(WorkspaceMetadataProvider wsMetadataProvider,
                              VocabularyService vocabularyService,
+                             LanguageService languageService,
                              StatisticsDao statisticsDao) {
         this.wsMetadataProvider = wsMetadataProvider;
         this.vocabularyService = vocabularyService;
+        this.languageService = languageService;
         this.statisticsDao = statisticsDao;
     }
 
@@ -46,7 +51,7 @@ public class StatisticsService {
      */
     public List<TermFrequencyDto> getTermTypeFrequencyStatistics(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        return statisticsDao.getTermTypeFrequencyStatistics(wsMetadataProvider.getCurrentWorkspace(), vocabulary);
+        return statisticsDao.getTermTypeFrequencyStatistics(wsMetadataProvider.getCurrentWorkspace(), vocabulary, languageService.getLeafTypes());
     }
 
     /**
