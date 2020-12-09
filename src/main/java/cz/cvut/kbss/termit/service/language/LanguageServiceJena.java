@@ -18,12 +18,14 @@
 package cz.cvut.kbss.termit.service.language;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.SKOS;
 import org.slf4j.Logger;
@@ -35,7 +37,6 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,12 +57,11 @@ public class LanguageServiceJena extends LanguageService {
     }
 
     /**
-     * Gets all types with labels in the given language.
+     * Gets all types.
      *
-     * @param lang label language
      * @return List of types as {@code Term}s
      */
-    public List<Term> getTypesForLang(String lang) {
+    public List<Term> getTypes() {
         try {
             final Model m = ModelFactory.createOntologyModel();
             m.read(resource.getURL().toString(), "text/turtle");
@@ -72,24 +72,35 @@ public class LanguageServiceJena extends LanguageService {
              .forEachRemaining(c -> {
                  final Term t = new Term();
                  t.setUri(URI.create(c.getURI()));
-                 if (c.getProperty(SKOS.prefLabel, lang) != null) {
-                     t.setLabel(MultilingualString.create(c.getProperty(SKOS.prefLabel, lang).getObject().asLiteral().getString(), lang));
-                 } else {
-                     t.setLabel(MultilingualString.create(t.getUri().toString(), null));
-                 }
-
-                 final Statement st = c.getProperty(SKOS.definition, lang);
-                 if (st != null) {
-                     t.setDescription(st.getObject().asLiteral().getString());
-                 }
+                 t.setLabel(create(c,SKOS.prefLabel));
+                 t.setDescription(create(c,SKOS.definition));
                  t.setSubTerms(c.listProperties(SKOS.narrower)
                                 .mapWith(s -> new TermInfo(URI.create(s.getObject().asResource().getURI()))).toSet());
                  terms.add(t);
              });
             return terms;
         } catch (Exception e) {
-            LOG.error("Unable to retrieve types for language {}.", lang, e);
-            return Collections.emptyList();
+            LOG.error("Unable to retrieve types.", e);
+            throw new CannotFetchTypesException(e);
         }
+    }
+
+    /**
+     * Creates a multilingual string from language variants of property values of a resource.
+     *
+     * @param resource source resource of the property
+     * @param property property, value of which are used to construct the multilingual string
+     * @return
+     */
+    private MultilingualString create(final Resource resource, final Property property) {
+        final MultilingualString s = new MultilingualString();
+        resource.listProperties(property).forEachRemaining( st -> {
+            if (st.getLanguage() != null) {
+                s.set(st.getLanguage(), st.getObject().asLiteral().getLexicalForm());
+            } else {
+                LOG.debug("Ignoring statement {}, no language tag found.", st);
+            }
+        });
+        return s;
     }
 }

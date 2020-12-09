@@ -344,7 +344,7 @@ public class ResourceService
         if (!(instance instanceof File)) {
             return Optional.empty();
         }
-        final Resource original = getRequiredReference(instance.getUri());
+        final Resource original = findRequired(instance.getUri());
         if (!Objects.equals(original.getLabel(), instance.getLabel())) {
             return Optional.of(new FileRenameEvent((File) instance, original.getLabel(), instance.getLabel()));
         }

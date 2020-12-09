@@ -36,7 +36,7 @@ abstract class VocabularyExporterTestBase extends BaseServiceTestRunner {
     EntityManager em;
 
     @Autowired
-    DescriptorFactory descriptorFactory;
+    private DescriptorFactory descriptorFactory;
 
     Vocabulary vocabulary;
 

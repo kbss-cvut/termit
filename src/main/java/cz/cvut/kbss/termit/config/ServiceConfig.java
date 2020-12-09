@@ -79,7 +79,7 @@ public class ServiceConfig {
 
     @Bean
     public ClassPathResource languageSpecification() {
-        return new ClassPathResource("language.ttl");
+        return new ClassPathResource("languages/language.ttl");
     }
 
     @Bean

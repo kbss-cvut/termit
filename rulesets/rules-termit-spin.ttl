@@ -18,7 +18,7 @@ skos:Concept a rdfs:Class ;
 # InverseOf between je-vyskytem-termu and ma-vyskyt-termu
 	spin:rule [
 		a sp:Construct ;
-	sp:text """PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+	sp:text """PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
 	           CONSTRUCT { ?this termit:má-výskyt-termu ?occurrence . }
 	           WHERE { ?occurrence termit:je-přiřazením-termu ?this ;
 	                                a termit:výskyt-termu . }"""
@@ -36,8 +36,8 @@ skos:Concept a rdfs:Class ;
     # InverseOf between skos:broader and skos:narrower
     spin:rule [
     	a sp:Construct ;
-    sp:text """PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
-               PREFIX skos: <http://www.w3.org/2004/02/skos/core#> .
+    sp:text """PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+               PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                CONSTRUCT { ?parent skos:narrower ?this . }
                WHERE { ?this a skos:Concept ;
                         skos:broader ?parent . }"""
@@ -48,6 +48,7 @@ skos:Concept a rdfs:Class ;
 		a sp:Construct ;
 	sp:text """PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
 	           PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+	           PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
 	           CONSTRUCT { ?this termit:má-zdroj-definice-termu ?source . }
 	           WHERE { ?source a termit:zdroj-definice-termu ;
 	                           termit:je-přiřazením-termu ?this . }"""

@@ -67,6 +67,17 @@ public class DescriptorFactory {
     }
 
     /**
+     * Gets field specification for the specified attribute from persistence unit metamodel.
+     *
+     * @param entityCls Entity class
+     * @param attName   Name of attribute in the entity class
+     * @return Metamodel field specification
+     */
+    public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attName) {
+        return persistenceUtils.getMetamodel().entity(entityCls).getFieldSpecification(attName);
+    }
+
+    /**
      * Creates a JOPA descriptor for a vocabulary with the specified identifier.
      * <p>
      * The descriptor specifies that the instance context will correspond to the given IRI. It also initializes other
@@ -197,17 +208,6 @@ public class DescriptorFactory {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(fieldSpec(Glossary.class, "rootTerms"), termDescriptor(vocabularyUri));
         return descriptor;
-    }
-
-    /**
-     * Gets field specification for the specified attribute from persistence unit metamodel.
-     *
-     * @param entityCls Entity class
-     * @param attName   Name of attribute in the entity class
-     * @return Metamodel field specification
-     */
-    public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attName) {
-        return persistenceUtils.getMetamodel().entity(entityCls).getFieldSpecification(attName);
     }
 
     /**

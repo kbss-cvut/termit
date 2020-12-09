@@ -63,6 +63,7 @@ public class MainPersistenceFactory {
         properties.put(ONTOLOGY_PHYSICAL_URI_KEY, config.get(REPOSITORY_URL));
         properties.put(DATA_SOURCE_CLASS, config.get(DRIVER));
         properties.put(LANG, config.get(LANGUAGE));
+        properties.put(PREFER_MULTILINGUAL_STRING, Boolean.TRUE.toString());
         if (config.contains(REPO_USERNAME)) {
             properties.put(OntoDriverProperties.DATA_SOURCE_USERNAME, config.get(REPO_USERNAME));
             properties.put(OntoDriverProperties.DATA_SOURCE_PASSWORD, config.get(REPO_PASSWORD));

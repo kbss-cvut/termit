@@ -83,7 +83,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
         original.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.persist(original, descriptorFactory.termDescriptor(vocabulary)));
+        transactional(() -> em.persist(original, descriptorFactory.termDescriptor(original)));
 
         final Term update = cloneOf(original);
         transactional(() -> sut.recordUpdateEvent(update, original));
@@ -114,8 +114,8 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     void recordUpdateRecordsMultipleChangesToAttributes() {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
-        original.setGlossary(vocabulary.getUri());
-        transactional(() -> em.persist(original, descriptorFactory.termDescriptor(vocabulary.getUri())));
+        original.setGlossary(vocabulary.getGlossary().getUri());
+        transactional(() -> em.persist(original, descriptorFactory.termDescriptor(vocabulary)));
 
         final Term update = cloneOf(original);
         update.setDefinition(MultilingualString.create("Updated definition of this term.", Constants.DEFAULT_LANGUAGE));
