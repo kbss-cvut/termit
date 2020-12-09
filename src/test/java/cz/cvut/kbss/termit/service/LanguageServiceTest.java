@@ -59,6 +59,14 @@ class LanguageServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void getLeafTypesForBasicLanguage() throws IOException {
+        final URL url = ClassLoader.getSystemResource("languages/language.ttl");
+        when(languageTtlUrl.getURL()).thenReturn(url);
+        List<Term> result = sut.getLeafTypes();
+        assertEquals(8, result.size());
+    }
+
+    @Test
     void getTypesThrowsCannotFetchTypesException() {
         assertThrows(CannotFetchTypesException.class,
             () -> sut.getTypes());
