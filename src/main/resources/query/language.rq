@@ -7,13 +7,14 @@ CONSTRUCT {
     ?type skos:definition ?typeDefinition .
     ?category a skos:Concept  .
     ?category skos:prefLabel ?categoryLabel .
-    ?category skos:definition ?type .
+    ?category skos:definition ?categoryDefinition .
+    ?category skos:narrower ?type .
 } WHERE {
 VALUES (?type ?category) {
-(z-sgov-pojem:objekt z-sgov-pojem:proměnný-prvek)
-(z-sgov-pojem:vlastnost z-sgov-pojem:proměnný-prvek)
-(z-sgov-pojem:událost z-sgov-pojem:proměnný-prvek)
-(z-sgov-pojem:vztah z-sgov-pojem:proměnný-prvek)
+(z-sgov-pojem:objekt z-sgov-pojem:prvek)
+(z-sgov-pojem:vlastnost z-sgov-pojem:prvek)
+(z-sgov-pojem:událost z-sgov-pojem:prvek)
+(z-sgov-pojem:vztah z-sgov-pojem:prvek)
 (z-sgov-pojem:typ-objektu z-sgov-pojem:typ)
 (z-sgov-pojem:typ-vlastnosti z-sgov-pojem:typ)
 (z-sgov-pojem:typ-události z-sgov-pojem:typ)
@@ -22,4 +23,5 @@ VALUES (?type ?category) {
   ?type skos:prefLabel ?typeLabel .
   OPTIONAL { ?type skos:definition ?typeDefinition . }
   ?category skos:prefLabel ?categoryLabel .
+  OPTIONAL { ?category skos:definition ?categoryDefinition . }
 }
