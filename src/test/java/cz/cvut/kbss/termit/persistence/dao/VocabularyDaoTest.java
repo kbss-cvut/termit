@@ -254,9 +254,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(importedVocabularyOne, descriptorFactory.vocabularyDescriptor(importedVocabularyOne));
             em.persist(importedVocabularyTwo, descriptorFactory.vocabularyDescriptor(importedVocabularyTwo));
             em.persist(transitiveVocabulary, descriptorFactory.vocabularyDescriptor(transitiveVocabulary));
-            Generator.addVocabularyImportsRelationship(subjectVocabulary, importedVocabularyOne, em);
-            Generator.addVocabularyImportsRelationship(subjectVocabulary, importedVocabularyTwo, em);
-            Generator.addVocabularyImportsRelationship(importedVocabularyOne, transitiveVocabulary, em);
+            Generator.addVocabularyDependencyRelationship(subjectVocabulary, importedVocabularyOne, em);
+            Generator.addVocabularyDependencyRelationship(subjectVocabulary, importedVocabularyTwo, em);
+            Generator.addVocabularyDependencyRelationship(importedVocabularyOne, transitiveVocabulary, em);
         });
 
         final Collection<URI> result = sut.getTransitiveDependencies(subjectVocabulary);
@@ -402,7 +402,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(importingVocabulary, descriptorFactory.vocabularyDescriptor(importingVocabulary));
-            Generator.addVocabularyImportsRelationship(importingVocabulary, vocabulary, em);
+            Generator.addVocabularyDependencyRelationship(importingVocabulary, vocabulary, em);
         });
 
         final List<Vocabulary> result = sut.getDependentVocabularies(vocabulary);

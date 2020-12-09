@@ -392,7 +392,7 @@ public class Generator {
      * @param target  Target vocabulary whose terms are referenced by terms in the subject vocabulary
      * @param em      EntityManager
      */
-    public static void addVocabularyImportsRelationship(Vocabulary subject, Vocabulary target, EntityManager em) {
+    public static void addVocabularyDependencyRelationship(Vocabulary subject, Vocabulary target, EntityManager em) {
         final Repository repo = em.unwrap(Repository.class);
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();

@@ -99,7 +99,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         transactional(() -> {
             em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            Generator.addVocabularyImportsRelationship(vocabulary, anotherVocabulary, em);
+            Generator.addVocabularyDependencyRelationship(vocabulary, anotherVocabulary, em);
         });
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
@@ -264,7 +264,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
             em.persist(parentFromAnother, descriptorFactory.termDescriptor(anotherVocabulary));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.merge(affectedTerm, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addVocabularyImportsRelationship(vocabulary, anotherVocabulary, em);
+            Generator.addVocabularyDependencyRelationship(vocabulary, anotherVocabulary, em);
         });
 
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);

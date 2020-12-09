@@ -40,7 +40,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.environment.config.WorkspaceTestConfig.DEFAULT_VOCABULARY_CTX;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -375,8 +374,8 @@ class TermDaoTest extends BaseDaoTestRunner {
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(parent, descriptorFactory.vocabularyDescriptor(parent));
             em.persist(grandParent, descriptorFactory.vocabularyDescriptor(grandParent));
-            Generator.addVocabularyImportsRelationship(vocabulary, parent, em);
-            Generator.addVocabularyImportsRelationship(vocabulary, grandParent, em);
+            Generator.addVocabularyDependencyRelationship(vocabulary, parent, em);
+            Generator.addVocabularyDependencyRelationship(vocabulary, grandParent, em);
         });
         final List<Term> parentTerms = generateTerms(3);
         addTermsAndSave(parentTerms, parent);
@@ -412,8 +411,8 @@ class TermDaoTest extends BaseDaoTestRunner {
             em.persist(grandParent, descriptorFactory.vocabularyDescriptor(grandParent));
             glossaryToVocabulary.put(parent.getGlossary().getUri(), parent.getUri());
             glossaryToVocabulary.put(grandParent.getGlossary().getUri(), parent.getUri());
-            Generator.addVocabularyImportsRelationship(vocabulary, parent, em);
-            Generator.addVocabularyImportsRelationship(vocabulary, grandParent, em);
+            Generator.addVocabularyDependencyRelationship(vocabulary, parent, em);
+            Generator.addVocabularyDependencyRelationship(vocabulary, grandParent, em);
         });
         final List<Term> directTerms = generateTerms(4);
         addTermsAndSave(directTerms, vocabulary);
