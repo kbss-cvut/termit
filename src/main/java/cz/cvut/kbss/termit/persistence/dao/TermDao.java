@@ -436,7 +436,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
                                                    Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
-        final Collection<URI> vocabularies = vocabularyDao.getTransitivelyImportedVocabularies(vocabulary);
+        final Collection<URI> vocabularies = vocabularyDao.getTransitiveDependencies(vocabulary);
         vocabularies.add(vocabulary.getUri());
         final List<Term> result = new ArrayList<>();
         vocabularies.forEach(v -> result.addAll(findAllRootsImpl(v, pageSpec, includeTerms)));
@@ -506,7 +506,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
     public List<Term> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
-        final Collection<URI> vocabularies = vocabularyDao.getTransitivelyImportedVocabularies(vocabulary);
+        final Collection<URI> vocabularies = vocabularyDao.getTransitiveDependencies(vocabulary);
         vocabularies.add(vocabulary.getUri());
         final List<Term> result = new ArrayList<>();
         vocabularies.forEach(v -> result.addAll(findAllImpl(searchString, v)));

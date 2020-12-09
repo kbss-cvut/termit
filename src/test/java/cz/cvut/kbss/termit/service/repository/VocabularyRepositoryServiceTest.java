@@ -24,8 +24,6 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.WorkspaceGenerator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.ValidationException;
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
@@ -37,14 +35,12 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -182,63 +178,10 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void updateThrowsVocabularyImportExceptionWhenTryingToDeleteVocabularyImportRelationshipAndTermsAreStillRelated() {
-        final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
-        final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
-        subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
-        final Term child = Generator.generateTermWithId();
-        final Term parentTerm = Generator.generateTermWithId();
-        child.addParentTerm(parentTerm);
-        subjectVocabulary.getGlossary().addRootTerm(child);
-        targetVocabulary.getGlossary().addRootTerm(parentTerm);
-        transactional(() -> {
-            em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
-            em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setGlossary(subjectVocabulary.getGlossary().getUri());
-            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(targetVocabulary.getGlossary().getUri());
-            em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
-        });
-
-        subjectVocabulary.setImportedVocabularies(Collections.emptySet());
-        assertThrows(VocabularyImportException.class, () -> sut.update(subjectVocabulary));
-    }
-
-    @Test
-    void updateUpdatesVocabularyWithImportRemovalWhenNoRelationshipsBetweenTermsExist() {
-        final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
-        final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
-        subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
-        final Term child = Generator.generateTermWithId();
-        final Term parentTerm = Generator.generateTermWithId();
-        subjectVocabulary.getGlossary().addRootTerm(child);
-        child.setVocabulary(subjectVocabulary.getUri());
-        targetVocabulary.getGlossary().addRootTerm(parentTerm);
-        parentTerm.setVocabulary(targetVocabulary.getUri());
-        transactional(() -> {
-            em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
-            em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
-            child.setGlossary(subjectVocabulary.getGlossary().getUri());
-            em.persist(child, descriptorFactory.termDescriptor(subjectVocabulary));
-            parentTerm.setGlossary(targetVocabulary.getGlossary().getUri());
-            em.persist(parentTerm, descriptorFactory.termDescriptor(targetVocabulary));
-            Generator.addTermInVocabularyRelationship(child, subjectVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
-        });
-
-        subjectVocabulary.setImportedVocabularies(Collections.emptySet());
-        sut.update(subjectVocabulary);
-        assertThat(em.find(Vocabulary.class, subjectVocabulary.getUri()).getImportedVocabularies(),
-                anyOf(nullValue(), IsEmptyCollection.empty()));
-    }
-
-    @Test
-    void getTransitivelyImportedVocabulariesReturnsEmptyCollectionsWhenVocabularyHasNoImports() {
+    void getTransitiveDependenciesReturnsEmptyCollectionsWhenVocabularyHasNoDependencies() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary)));
-        final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary);
+        final Collection<URI> result = sut.getTransitiveDependencies(subjectVocabulary);
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }

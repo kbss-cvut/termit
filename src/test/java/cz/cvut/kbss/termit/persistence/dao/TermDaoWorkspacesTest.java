@@ -247,11 +247,11 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             em.persist(importedTerm, descriptorFactory.termDescriptor(importedVocabulary));
             Generator.addTermInVocabularyRelationship(importedTerm, importedVocabulary.getUri(), em);
-            vocabulary.setImportedVocabularies(Collections.singleton(importedVocabulary.getUri()));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             importedVocabulary.getGlossary().addRootTerm(importedTerm);
             em.merge(importedVocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(importedVocabulary));
+            Generator.addVocabularyDependencyRelationship(vocabulary, importedVocabulary, em);
         });
         addTermToVocabularyInAnotherWorkspace(term);
 
@@ -279,11 +279,11 @@ public class TermDaoWorkspacesTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             em.persist(importedTerm, descriptorFactory.termDescriptor(importedVocabulary));
             Generator.addTermInVocabularyRelationship(importedTerm, importedVocabulary.getUri(), em);
-            vocabulary.setImportedVocabularies(Collections.singleton(importedVocabulary.getUri()));
             em.merge(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             importedVocabulary.getGlossary().addRootTerm(importedTerm);
             em.merge(importedVocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(importedVocabulary));
+            Generator.addVocabularyDependencyRelationship(vocabulary, importedVocabulary, em);
         });
         addTermToVocabularyInAnotherWorkspace(term);
 

@@ -8,7 +8,7 @@ import java.net.URI;
 /**
  * Indicates that an attempt was made to access a vocabulary that has not been imported to a workspace.
  */
-public class VocabularyNotInWorkspaceException extends TermItException {
+public class VocabularyNotInWorkspaceException extends WorkspaceException {
 
     public VocabularyNotInWorkspaceException(String message) {
         super(message);

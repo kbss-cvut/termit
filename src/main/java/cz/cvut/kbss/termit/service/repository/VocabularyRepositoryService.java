@@ -1,12 +1,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
-import cz.cvut.kbss.termit.model.DocumentVocabulary;
-import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
-import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
@@ -17,16 +12,19 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.business.WorkspaceService;
 import cz.cvut.kbss.termit.service.importer.VocabularyImportService;
 import cz.cvut.kbss.termit.util.ConfigParam;
-import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Validator;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,7 +68,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    protected void prePersist(Vocabulary instance) {
+    protected void prePersist(@NonNull Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY,
@@ -86,33 +84,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    protected void preUpdate(Vocabulary instance) {
-        super.preUpdate(instance);
-        verifyVocabularyImports(instance);
-    }
-
-    /**
-     * Ensures that possible vocabulary import removals are not prevented by existing inter-vocabulary term
-     * relationships (terms from the updated vocabulary having parents from vocabularies whose import has been
-     * removed).
-     */
-    private void verifyVocabularyImports(Vocabulary update) {
-        final Vocabulary original = findRequired(update.getUri());
-        final Set<URI> removedImports = new HashSet<>(Utils.emptyIfNull(original.getImportedVocabularies()));
-        removedImports.removeAll(Utils.emptyIfNull(update.getImportedVocabularies()));
-        final Set<URI> invalid = removedImports.stream().filter(ri -> vocabularyDao
-                .hasInterVocabularyTermRelationships(update.getUri(), ri)).collect(
-                Collectors.toSet());
-        if (!invalid.isEmpty()) {
-            throw new VocabularyImportException("Cannot remove imports of vocabularies " + invalid +
-                    ", there are still relationships between terms.",
-                    "error.vocabulary.update.imports.danglingTermReferences");
-        }
-    }
-
-    @Override
-    public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
-        return vocabularyDao.getTransitivelyImportedVocabularies(entity);
+    public Collection<URI> getTransitiveDependencies(Vocabulary entity) {
+        return vocabularyDao.getTransitiveDependencies(entity);
     }
 
     @Override
@@ -147,7 +120,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     "Removal of document vocabularies is not supported yet.");
         }
 
-        final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
+        final List<Vocabulary> vocabularies = vocabularyDao.getDependentVocabularies(instance);
         if (!vocabularies.isEmpty()) {
             throw new VocabularyRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "

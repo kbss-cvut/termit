@@ -23,24 +23,25 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.exception.workspace.WorkspaceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
+import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.PersistenceUtils;
-import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceBasedAssetDao;
-import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.util.Validator;
+import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceBasedAssetDao;
 import cz.cvut.kbss.termit.util.Configuration;
-import java.io.IOException;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Repository;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements SupportsLastModification {
@@ -113,6 +114,8 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
         Objects.requireNonNull(id);
         try {
             return Optional.ofNullable(em.find(type, id, descriptorFactory.vocabularyDescriptor(id)));
+        } catch (WorkspaceException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -129,18 +132,21 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
     }
 
     /**
-     * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
+     * Gets identifiers of all vocabularies used by the specified vocabulary, including transitively used ones.
+     * <p>
+     * That is, vocabularies, whose terms are referenced by terms from the specified vocabulary.
      *
-     * @param entity Base vocabulary, whose imports should be retrieved
-     * @return Collection of (transitively) imported vocabularies
+     * @param entity Base vocabulary, whose dependencies should be retrieved
+     * @return Collection of (transitively) used vocabularies
      */
-    public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
+    public Collection<URI> getTransitiveDependencies(Vocabulary entity) {
         Objects.requireNonNull(entity);
         try {
-            return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
-                    "?x ?imports+ ?imported ." +
+            return em.createNativeQuery("SELECT DISTINCT ?used WHERE {" +
+                    "?x ?uses+ ?used ." +
                     "}", URI.class)
-                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                     .setParameter("uses",
+                             URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku))
                      .setParameter("x", entity.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -148,19 +154,22 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
     }
 
     /**
-     * Gets identifiers of vocabularies which directly import the supplied one.
+     * Gets identifiers of vocabularies which directly depend on the supplied one.
+     * <p>
+     * That is, vocabularies, whose terms use terms from the specified one.
      *
      * @param vocabulary vocabulary, importing vocabularies of which are fetched
      * @return Collection of vocabularies which directly import #vocabulary
      */
-    public List<Vocabulary> getImportingVocabularies(Vocabulary vocabulary) {
+    public List<Vocabulary> getDependentVocabularies(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
-                    "?importing ?imports ?imported ." +
+                    "?importing ?uses ?target ." +
                     "}", Vocabulary.class)
-                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                     .setParameter("imported", vocabulary.getUri()).getResultList();
+                     .setParameter("uses",
+                             URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku))
+                     .setParameter("target", vocabulary.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -218,18 +227,13 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
         return em.createNativeQuery("ASK WHERE {" +
                 "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
                 "       ?hasParentTerm ?parent . " +
-                "    ?parent ?isTermFromVocabulary ?import . " +
-                "    {" +
-                "        SELECT ?import WHERE {" +
-                "           ?targetVocabulary ?importsVocabulary* ?import . " +
-                "} } }", Boolean.class)
+                "    ?parent ?isTermFromVocabulary ?targetVocabulary . " +
+                "}", Boolean.class)
                  .setParameter("isTermFromVocabulary",
                          URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                  .setParameter("subjectVocabulary", subjectVocabulary)
                  .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
                  .setParameter("targetVocabulary", targetVocabulary)
-                 .setParameter("importsVocabulary",
-                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                  .getSingleResult();
     }
 
@@ -250,41 +254,41 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
 
     private Collection<URI> getVocabularyContexts(Collection<URI> vocabularyURI, Workspace workspace) {
         final String values = " VALUES ?v { " + vocabularyURI
-            .stream().map( v -> "<"+v.toString()+">" ).collect(Collectors.joining(" ")) + " } ";
+                .stream().map(v -> "<" + v.toString() + ">").collect(Collectors.joining(" ")) + " } ";
 
         return em.createNativeQuery("SELECT DISTINCT ?vc WHERE { " + values +
-            "?mc a ?metadataCtx ;" +
-            "?referencesCtx ?vc ." +
-            "?vc a ?vocabularyCtx ." +
-            "GRAPH ?vc {" +
-            "?v a ?type ." +
-            "}" +
-            "}", URI.class).setParameter("mc", workspace.getUri())
+                "?mc a ?metadataCtx ;" +
+                "?referencesCtx ?vc ." +
+                "?vc a ?vocabularyCtx ." +
+                "GRAPH ?vc {" +
+                "?v a ?type ." +
+                "}" +
+                "}", URI.class).setParameter("mc", workspace.getUri())
                  .setParameter("metadataCtx",
-                URI.create(
-                    cz.cvut.kbss.termit.util.Vocabulary.s_c_metadatovy_kontext))
+                         URI.create(
+                                 cz.cvut.kbss.termit.util.Vocabulary.s_c_metadatovy_kontext))
                  .setParameter("referencesCtx", URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext))
+                         cz.cvut.kbss.termit.util.Vocabulary.s_p_odkazuje_na_kontext))
                  .setParameter("vocabularyCtx", URI.create(
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext))
+                         cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnikovy_kontext))
                  .setParameter("type", typeUri)
                  .setDescriptor(createVocabulariesLoadingDescriptor(workspace))
                  .getResultList();
     }
 
     /**
-     * Validates a vocabulary within the given workspace. It runs validation on all vocabulary contexts
-     * refering to the vocabulary and its imports in the given workspace.
+     * Validates a vocabulary within the given workspace. It runs validation on all vocabulary contexts refering to the
+     * vocabulary and its imports in the given workspace.
      *
-     * @param voc vocabulary to validate
+     * @param voc       vocabulary to validate
      * @param workspace workspace to limit the imports of the vocabulary to validate
      * @return validation results
      */
     public List<ValidationResult> validateContents(Vocabulary voc, Workspace workspace) {
         final Validator validator = context.getBean(
-            cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
+                cz.cvut.kbss.termit.persistence.dao.util.Validator.class);
         try {
-            final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
+            final Collection<URI> importClosure = getTransitiveDependencies(voc);
             importClosure.add(voc.getUri());
             final Collection<URI> closure = getVocabularyContexts(importClosure, workspace);
             return validator.validate(closure);

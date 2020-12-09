@@ -1,16 +1,16 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If
- * not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 package cz.cvut.kbss.termit.environment;
@@ -27,15 +27,15 @@ import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
-import cz.cvut.kbss.termit.util.Constants;
-import java.util.Arrays;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.topbraid.shacl.vocabulary.SH;
 
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -43,7 +43,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.topbraid.shacl.vocabulary.SH;
 
 public class Generator {
 
@@ -80,8 +79,7 @@ public class Generator {
     /**
      * Generates a (pseudo) random integer.
      * <p>
-     * This version has no bounds (aside from the integer range), so the returned number may be
-     * negative or zero.
+     * This version has no bounds (aside from the integer range), so the returned number may be negative or zero.
      *
      * @return Randomly generated integer
      * @see #randomInt(int, int)
@@ -146,8 +144,7 @@ public class Generator {
     /**
      * Creates a random instance of {@link User} with a generated identifier.
      * <p>
-     * The presence of identifier is the only difference between this method and
-     * {@link #generateUser()}.
+     * The presence of identifier is the only difference between this method and {@link #generateUser()}.
      *
      * @return New {@code User} instance
      */
@@ -158,8 +155,7 @@ public class Generator {
     }
 
     /**
-     * Generates a random {@link UserAccount} instance, initialized with first name, last name,
-     * username and
+     * Generates a random {@link UserAccount} instance, initialized with first name, last name, username and
      * identifier.
      *
      * @return A new {@code UserAccount} instance
@@ -174,8 +170,7 @@ public class Generator {
     }
 
     /**
-     * Generates a random {@link UserAccount} instance, initialized with first name, last name,
-     * username, password and
+     * Generates a random {@link UserAccount} instance, initialized with first name, last name, username, password and
      * identifier.
      *
      * @return A new {@code UserAccount} instance
@@ -188,14 +183,13 @@ public class Generator {
     }
 
     /**
-     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty
-     * glossary and a model.
+     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary and a model.
      *
      * @return New {@code Vocabulary} instance
      */
     public static cz.cvut.kbss.termit.model.Vocabulary generateVocabulary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary =
-            new cz.cvut.kbss.termit.model.Vocabulary();
+                new cz.cvut.kbss.termit.model.Vocabulary();
         vocabulary.setGlossary(new Glossary());
         vocabulary.setModel(new Model());
         vocabulary.setLabel("Vocabulary" + randomInt());
@@ -215,7 +209,7 @@ public class Generator {
         final MultilingualString definition = new MultilingualString();
         final MultilingualString description = new MultilingualString();
         int id = randomInt();
-        Arrays.stream(languages).forEach( language -> {
+        Arrays.stream(languages).forEach(language -> {
             label.set(language, "Term-" + language + "-" + id);
             definition.set(language, "Normative definition of term " + language + "-" + id);
             description.set(language, "Normative description of term " + language + "-" + id);
@@ -250,7 +244,7 @@ public class Generator {
 
     public static List<Term> generateTermsWithIds(int count) {
         return IntStream.range(0, count).mapToObj(i -> generateTermWithId())
-            .collect(Collectors.toList());
+                        .collect(Collectors.toList());
     }
 
     public static Resource generateResource() {
@@ -303,8 +297,7 @@ public class Generator {
     }
 
     /**
-     * Generates a change record indicating change of the specified asset's label from nothing to
-     * the current value.
+     * Generates a change record indicating change of the specified asset's label from nothing to the current value.
      *
      * @param asset Changed asset
      * @return Change record
@@ -320,7 +313,7 @@ public class Generator {
             final Field labelField = cls.getDeclaredField("label");
             if (labelField.getAnnotation(OWLAnnotationProperty.class) != null) {
                 record.setChangedAttribute(
-                    URI.create(labelField.getAnnotation(OWLAnnotationProperty.class).iri()));
+                        URI.create(labelField.getAnnotation(OWLAnnotationProperty.class).iri()));
             }
         } catch (NoSuchFieldException e) {
             throw new RuntimeException("Unable to generate update record.");
@@ -332,9 +325,9 @@ public class Generator {
     public static List<AbstractChangeRecord> generateChangeRecords(Asset<?> asset, User user) {
         final PersistChangeRecord persistRecord = generatePersistChange(asset);
         final List<AbstractChangeRecord> result =
-            IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset))
-                .collect(
-                    Collectors.toList());
+                IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset))
+                         .collect(
+                                 Collectors.toList());
         result.add(0, persistRecord);
         if (user != null) {
             result.forEach(r -> r.setAuthor(user));
@@ -344,15 +337,15 @@ public class Generator {
 
     public static List<cz.cvut.kbss.termit.model.validation.ValidationResult> generateValidationRecords() {
         final List<cz.cvut.kbss.termit.model.validation.ValidationResult> result =
-            IntStream.range(0, 1)
-                .mapToObj(i ->
-                    new cz.cvut.kbss.termit.model.validation.ValidationResult()
-                        .setTermUri(URI.create("https://example.org/term-" + i))
-                        .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
-                        .setSeverity(URI.create(SH.Violation.toString()))
-            )
-            .collect(
-            Collectors.toList());
+                IntStream.range(0, 1)
+                         .mapToObj(i ->
+                                 new cz.cvut.kbss.termit.model.validation.ValidationResult()
+                                         .setTermUri(URI.create("https://example.org/term-" + i))
+                                         .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
+                                         .setSeverity(URI.create(SH.Violation.toString()))
+                         )
+                         .collect(
+                                 Collectors.toList());
         return result;
     }
 
@@ -390,5 +383,22 @@ public class Generator {
             statements.add(vf.createStatement(vocCtx, RDF.TYPE, vocContext, ws));
         });
         return statements;
+    }
+
+    /**
+     * Simulates inference of the "pouziva-pojmy-ze-slovniku" relationship between two vocabularies.
+     *
+     * @param subject Subject vocabulary
+     * @param target  Target vocabulary whose terms are referenced by terms in the subject vocabulary
+     * @param em      EntityManager
+     */
+    public static void addVocabularyDependencyRelationship(Vocabulary subject, Vocabulary target, EntityManager em) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            final ValueFactory vf = conn.getValueFactory();
+            conn.add(vf.createIRI(subject.getUri().toString()),
+                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_pouziva_pojmy_ze_slovniku),
+                    vf.createIRI(target.getUri().toString()));
+        }
     }
 }
