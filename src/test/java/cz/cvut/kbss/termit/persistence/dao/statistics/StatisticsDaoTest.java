@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao.statistics;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.dto.statistics.TermFrequencyDto;
 import cz.cvut.kbss.termit.dto.workspace.VocabularyInfo;
@@ -12,6 +13,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.Workspace;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.persistence.dao.workspace.WorkspaceMetadataProvider;
+import cz.cvut.kbss.termit.util.ConfigParam;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.Test;
@@ -107,6 +109,11 @@ class StatisticsDaoTest extends BaseDaoTestRunner {
         final List<Term> types = KNOWN_TYPES.stream().map(t -> {
             final Term type = new Term();
             type.setUri(URI.create(t));
+            type.setLabel(MultilingualString.create("random", "en"));
+            transactional(() -> {
+                em.persist(type, new EntityDescriptor(vocabulary.getUri()));
+                Generator.addTermInVocabularyRelationship(type, vocabulary.getUri(), em);
+            });
             return type;
         }).collect(Collectors.toList());
         final List<TermFrequencyDto> expected = KNOWN_TYPES.stream().map(t -> {
@@ -118,6 +125,8 @@ class StatisticsDaoTest extends BaseDaoTestRunner {
                                                            .collect(Collectors.toList());
 
         final List<TermFrequencyDto> result = sut.getTermTypeFrequencyStatistics(ws, vocabulary, types);
-        assertEquals(expected, result);
+        expected.stream().forEach(e -> e.setLabel(null));
+        result.stream().forEach(e -> e.setLabel(null));
+        assertEquals(expected,result);
     }
 }
