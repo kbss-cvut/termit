@@ -56,8 +56,8 @@ public class StatisticsDao {
      */
     public List<TermFrequencyDto> getTermTypeFrequencyStatistics(Workspace workspace, Vocabulary vocabulary, List<Term> leafTypes) {
         String query = Utils.loadQuery("statistics" + File.separator + "termTypeFrequency.rq");
-        query = query + " VALUES ?t { " + leafTypes.stream().map(t -> "<"+t.getUri().toString()+">").collect(
-            Collectors.joining(" "))+ " }";
+        query += " VALUES ?t { " + leafTypes.stream().map(t -> "<" + t.getUri().toString() + ">")
+            .collect(Collectors.joining(" "))+ " }";
         return em.createNativeQuery(query, "TermFrequencyDto")
                  .setParameter("g", persistenceUtils.resolveVocabularyContext(workspace, vocabulary.getUri()))
                  .setParameter("vocabulary", vocabulary)
