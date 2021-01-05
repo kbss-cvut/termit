@@ -263,7 +263,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
 
     @Test
     void updateEvictsCachedVocabularyToPreventIssuesWithStaleReferencesBetweenContexts() {
-        final DocumentVocabulary vocabulary = new DocumentVocabulary();
+        final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(Generator.generateUri());
         vocabulary.setLabel("vocabulary");
         vocabulary.setGlossary(new Glossary());
@@ -290,7 +290,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         });
 
         transactional(() -> {
-            final DocumentVocabulary result = em.find(DocumentVocabulary.class, vocabulary.getUri(),
+            final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(),
                     descriptorFactory.vocabularyDescriptor(vocabulary));
             assertThat(result.getDocument().getFiles(), anyOf(nullValue(), empty()));
         });
@@ -326,7 +326,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
     @Test
     void updateVocabularyDocumentWorksCorrectlyWithContexts() {
         final Document doc = Generator.generateDocumentWithId();
-        final DocumentVocabulary voc = new DocumentVocabulary();
+        final Vocabulary voc = new Vocabulary();
         voc.setUri(Generator.generateUri());
         voc.setLabel("Test vocabulary");
         voc.setDocument(doc);
@@ -404,7 +404,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
     void updateHandlesInferredVocabularyInVocabularyContext() {
         final File file = Generator.generateFileWithId("test.html");
         final Document document = Generator.generateDocumentWithId();
-        final DocumentVocabulary voc = new DocumentVocabulary();
+        final Vocabulary voc = new Vocabulary();
         voc.setDocument(document);
         voc.setLabel("Test");
         voc.setUri(Generator.generateUri());
