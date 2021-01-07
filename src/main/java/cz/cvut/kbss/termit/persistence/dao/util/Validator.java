@@ -93,6 +93,8 @@ public class Validator {
                 final URI severity = URI.create(result.getSeverity().getURI());
                 final URI errorUri = result.getSourceShape().isURIResource() ?
                     URI.create(result.getSourceShape().getURI()) : null;
+                final URI resultPath = result.getPath() != null && result.getPath().isURIResource() ?
+                    URI.create(result.getPath().getURI()) : null;
                 final MultilingualString messages = new MultilingualString(result.getMessages().stream()
                     .map(m -> m.asLiteral())
                     .collect(Collectors.toMap(Literal::getLanguage, Literal::getLexicalForm)));
@@ -103,7 +105,8 @@ public class Validator {
                     .setTermUri(termUri)
                     .setIssueCauseUri(errorUri)
                     .setMessage(messages)
-                    .setSeverity(severity);
+                    .setSeverity(severity)
+                    .setResultPath(resultPath);
             }).collect(Collectors.toList());
     }
 }
