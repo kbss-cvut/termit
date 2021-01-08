@@ -40,6 +40,13 @@ public class ValidationResult {
     @OWLObjectProperty(iri = SH.BASE_URI + "sourceShape")
     private URI issueCauseUri;
 
+    /**
+     * Identifier of the cause of the issue.
+     */
+    @OWLObjectProperty(iri = SH.BASE_URI + "resultPath")
+    private URI resultPath;
+
+
     public URI getId() {
         return id;
     }
@@ -81,6 +88,15 @@ public class ValidationResult {
 
     public ValidationResult setIssueCauseUri(URI issueCauseUri) {
         this.issueCauseUri = issueCauseUri;
+        return this;
+    }
+
+    public URI getResultPath() {
+        return resultPath;
+    }
+
+    public ValidationResult setResultPath(URI resultPath) {
+        this.resultPath = resultPath;
         return this;
     }
 
