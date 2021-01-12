@@ -51,6 +51,7 @@ public class SKOSImporter {
 
     private final Configuration config;
     private final ChangeRecordDao changeRecordDao;
+    private final SecurityUtils securityUtils;
 
     private final Repository repository;
     private final ValueFactory vf;
@@ -60,10 +61,11 @@ public class SKOSImporter {
     private String vocabularyIri;
 
     @Autowired
-    public SKOSImporter(Configuration config,
-                        ChangeRecordDao changeRecordDao, EntityManager em) {
+    public SKOSImporter(Configuration config, ChangeRecordDao changeRecordDao, SecurityUtils securityUtils,
+                        EntityManager em) {
         this.config = config;
         this.changeRecordDao = changeRecordDao;
+        this.securityUtils = securityUtils;
         this.repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         vf = repository.getValueFactory();
     }
@@ -185,7 +187,7 @@ public class SKOSImporter {
         try {
             final Instant timestamp = CREATED_FORMAT.parse(created.get(0).stringValue()).toInstant();
             final AbstractChangeRecord changeRecord = new PersistChangeRecord(asset);
-            changeRecord.setAuthor(SecurityUtils.currentUser().toUser());
+            changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
             changeRecord.setTimestamp(timestamp);
             LOG.debug("Saving persist record for imported vocabulary. {}", changeRecord);
             changeRecordDao.persist(changeRecord, asset);

@@ -38,9 +38,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class SecurityUtilsTest extends BaseServiceTestRunner {
 
     @Autowired
-    private UserAccountDao userAccountDao;
-
-    @Autowired
     private SecurityUtils sut;
 
     private UserAccount user;
@@ -60,22 +57,6 @@ class SecurityUtilsTest extends BaseServiceTestRunner {
         Environment.setCurrentUser(user);
         final UserAccount result = sut.getCurrentUser();
         assertEquals(user, result);
-    }
-
-    @Test
-    void updateCurrentUserReplacesUserInCurrentSecurityContext() {
-        Environment.setCurrentUser(user);
-        final UserAccount update = new UserAccount();
-        update.setUri(Generator.generateUri());
-        update.setFirstName("updatedFirstName");
-        update.setLastName("updatedLastName");
-        update.setPassword(user.getPassword());
-        update.setUsername(user.getUsername());
-        transactional(() -> userAccountDao.update(update));
-        sut.updateCurrentUser();
-
-        final UserAccount currentUser = sut.getCurrentUser();
-        assertEquals(update, currentUser);
     }
 
     @Test

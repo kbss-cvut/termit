@@ -1,0 +1,29 @@
+{
+  "realm" : "kodi",
+  "resource" : "termit",
+  "realm-public-key" : "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArr54p7YsfjCKwPnKDXhIhOGJYds6rp3O02lc8fJyzguaXkhy3Mq1ywZT3gjYvPrfMz+wqck8A6F2I2VEGxsUJ+SC9cgX1TTEMPUQh3BWDf45DCZfvvShGZ+t1nxsVfEw7J7xndRSy0LFJo5G/lU3impSvyxV/ZX9PgdrbKeVnuKfL3DesqCc1bBsbBf4xRHKL2pIK3BFyRnsWQcGkZcl7p0wpn9uF4dzk1zZ+CTGCNp34CYo1dN3Az2n/pJfOF2gH1rYjjdAeiFZmzf83KJgcjBRZXfORrf6zO3pkMHR0JrexhbS/PJDr3HvlpLC+/ss/HCCCkFLyefykNadUZ+XOwIDAQAB",
+  "auth-server-url" : "http://localhost:8080/auth",
+  "ssl-required" : "none",
+  "use-resource-role-mappings" : true,
+  "enable-cors" : true,
+  "cors-max-age" : 1000,
+  "cors-allowed-methods" : "POST, PUT, DELETE, GET, HEAD",
+  "cors-exposed-headers" : "WWW-Authenticate",
+  "bearer-only" : false,
+  "enable-basic-auth" : false,
+  "expose-token" : true,
+  "verify-token-audience" : true,
+  "credentials" : {
+    "secret" : "5c6ffe21-54dd-44dc-8d8b-f20f92891e79"
+  },
+
+  "connection-pool-size" : 20,
+  "disable-trust-manager": false,
+  "allow-any-hostname" : false,
+  "token-minimum-time-to-live" : 0,
+  "min-time-between-jwks-requests" : 10,
+  "public-key-cache-ttl": 86400,
+  "redirect-rewrite-rules" : {
+    "^/wsmaster/api/(.*)$" : "/api/$1"
+  }
+}

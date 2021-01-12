@@ -19,14 +19,18 @@ import java.util.Objects;
 @Service
 public class ChangeTracker {
 
-    private final ChangeCalculator changeCalculator;
 
+    private final ChangeCalculator changeCalculator;
     private final ChangeRecordDao changeRecordDao;
 
+    private final SecurityUtils securityUtils;
+
     @Autowired
-    public ChangeTracker(ChangeCalculator changeCalculator, ChangeRecordDao changeRecordDao) {
+    public ChangeTracker(ChangeCalculator changeCalculator, ChangeRecordDao changeRecordDao,
+                         SecurityUtils securityUtils) {
         this.changeCalculator = changeCalculator;
         this.changeRecordDao = changeRecordDao;
+        this.securityUtils = securityUtils;
     }
 
     /**
@@ -38,7 +42,7 @@ public class ChangeTracker {
     public void recordAddEvent(Asset<?> added) {
         Objects.requireNonNull(added);
         final AbstractChangeRecord changeRecord = new PersistChangeRecord(added);
-        changeRecord.setAuthor(SecurityUtils.currentUser().toUser());
+        changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
         changeRecord.setTimestamp(Instant.now());
         changeRecordDao.persist(changeRecord, added);
     }
@@ -56,7 +60,7 @@ public class ChangeTracker {
         Objects.requireNonNull(update);
         Objects.requireNonNull(original);
         final Instant now = Instant.now();
-        final User user = SecurityUtils.currentUser().toUser();
+        final User user = securityUtils.getCurrentUser().toUser();
         changeCalculator.calculateChanges(update, original).forEach(ch -> {
             ch.setAuthor(user);
             ch.setTimestamp(now);

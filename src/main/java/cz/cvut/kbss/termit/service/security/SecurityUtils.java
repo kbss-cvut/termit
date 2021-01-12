@@ -18,13 +18,16 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.ConfigParam;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -36,30 +39,15 @@ import java.util.Objects;
 @Service
 public class SecurityUtils {
 
-    private final UserDetailsService userDetailsService;
-
     private final PasswordEncoder passwordEncoder;
+    private final IdentifierResolver idResolver;
 
     @Autowired
-    public SecurityUtils(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-        this.userDetailsService = userDetailsService;
+    public SecurityUtils(PasswordEncoder passwordEncoder, IdentifierResolver idResolver) {
         this.passwordEncoder = passwordEncoder;
+        this.idResolver = idResolver;
         // Ensures security context is propagated to additionally spun threads, e.g., used by @Async methods
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-    }
-
-    /**
-     * This is a statically accessible variant of the {@link #getCurrentUser()} method.
-     * <p>
-     * It allows to access the currently logged in user without injecting {@code SecurityUtils} as a bean.
-     *
-     * @return Currently logged in user
-     */
-    public static UserAccount currentUser() {
-        final SecurityContext context = SecurityContextHolder.getContext();
-        assert context != null;
-        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
-        return userDetails.getUser();
     }
 
     /**
@@ -68,7 +56,17 @@ public class SecurityUtils {
      * @return Current user
      */
     public UserAccount getCurrentUser() {
-        return currentUser();
+        final SecurityContext context = SecurityContextHolder.getContext();
+        assert context != null && context.getAuthentication().isAuthenticated();
+        final KeycloakPrincipal<?> principal = (KeycloakPrincipal<?>) context.getAuthentication().getPrincipal();
+        final AccessToken keycloakToken = principal.getKeycloakSecurityContext().getToken();
+        final UserAccount account = new UserAccount();
+        account.setFirstName(keycloakToken.getGivenName());
+        account.setLastName(keycloakToken.getFamilyName());
+        account.setUsername(keycloakToken.getPreferredUsername());
+        account.setUri(idResolver
+                .generateIdentifier(ConfigParam.NAMESPACE_USER, account.getFirstName(), account.getLastName()));
+        return account;
     }
 
     /**
@@ -79,8 +77,7 @@ public class SecurityUtils {
      */
     public static boolean authenticated() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        return context.getAuthentication() != null &&
-                context.getAuthentication().getDetails() instanceof TermItUserDetails;
+        return context.getAuthentication().isAuthenticated();
     }
 
     /**
@@ -105,15 +102,6 @@ public class SecurityUtils {
         context.setAuthentication(token);
         SecurityContextHolder.setContext(context);
         return token;
-    }
-
-    /**
-     * Reloads the current user's data from the database.
-     */
-    public void updateCurrentUser() {
-        final TermItUserDetails updateDetails =
-                (TermItUserDetails) userDetailsService.loadUserByUsername(getCurrentUser().getUsername());
-        setCurrentUser(updateDetails);
     }
 
     /**
