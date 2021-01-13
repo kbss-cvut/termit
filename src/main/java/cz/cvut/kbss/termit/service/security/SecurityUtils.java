@@ -18,6 +18,7 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import org.keycloak.KeycloakPrincipal;
@@ -64,6 +65,8 @@ public class SecurityUtils {
         account.setFirstName(keycloakToken.getGivenName());
         account.setLastName(keycloakToken.getFamilyName());
         account.setUsername(keycloakToken.getPreferredUsername());
+        context.getAuthentication().getAuthorities().stream().map(ga -> UserRole.fromRoleName(ga.getAuthority()))
+               .filter(r -> !r.getType().isEmpty()).forEach(r -> account.addType(r.getType()));
         account.setUri(idResolver
                 .generateIdentifier(ConfigParam.NAMESPACE_USER, account.getFirstName(), account.getLastName()));
         return account;
