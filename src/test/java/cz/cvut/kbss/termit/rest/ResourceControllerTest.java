@@ -493,19 +493,13 @@ class ResourceControllerTest extends BaseControllerTestRunner {
 
     @Test
     void removeFileFromDocumentReturnsOkForAValidFile() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setUri(RESOURCE_URI);
-        resource.setLabel(RESOURCE_NAME);
-        final File fOne = generateFile();
-        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(resource);
-        doThrow(UnsupportedAssetOperationException.class).when(resourceServiceMock).addFileToDocument(resource, fOne);
-        mockMvc.perform(post(PATH + "/" + RESOURCE_NAME + "/files").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
-            .content(toJson(fOne))
-            .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isConflict());
-
-        when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(resource);
+        final Document document = new Document();
+        document.setLabel(RESOURCE_NAME);
+        document.setUri(RESOURCE_URI);
+        final File file = generateFile();
+        document.addFile(file);
+        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, FILE_NAME)).thenReturn(file.getUri());
+        when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
         mockMvc
             .perform(delete(PATH + "/" + RESOURCE_NAME + "/files/" + FILE_NAME, RESOURCE_NAMESPACE))
             .andExpect(status().isNoContent());
