@@ -101,6 +101,7 @@ public class Configuration {
         map.put(ConfigParam.ADMIN_CREDENTIALS_LOCATION, System.getProperty("user.home"));
         map.put(ConfigParam.ADMIN_CREDENTIALS_FILE, Constants.ADMIN_CREDENTIALS_FILE);
         map.put(ConfigParam.TERM_NAMESPACE_SEPARATOR, Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR);
+        map.put(ConfigParam.FILE_NAMESPACE_SEPARATOR, Constants.DEFAULT_FILE_NAMESPACE_SEPARATOR);
         map.put(ConfigParam.CHANGE_TRACKING_CONTEXT_EXTENSION, Constants.DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION);
         return map;
     }

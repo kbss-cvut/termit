@@ -303,7 +303,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void removeFileUpdatesParentDocumentInVocabularyContext() {
         final Document document = Generator.generateDocumentWithId();
-        final DocumentVocabulary vocabulary = new DocumentVocabulary();
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = new cz.cvut.kbss.termit.model.Vocabulary();
         vocabulary.setUri(Generator.generateUri());
         vocabulary.setLabel("Vocabulary");
         vocabulary.setGlossary(new Glossary());
@@ -331,7 +331,8 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
             sut.remove(toRemove);
         });
 
-        final DocumentVocabulary result = em.find(DocumentVocabulary.class, vocabulary.getUri(),
+        final cz.cvut.kbss.termit.model.Vocabulary
+            result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class, vocabulary.getUri(),
                 descriptorFactory.vocabularyDescriptor(vocabulary));
         assertEquals(1, result.getDocument().getFiles().size());
         assertTrue(result.getDocument().getFiles().contains(fileTwo));

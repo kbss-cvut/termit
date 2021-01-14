@@ -126,7 +126,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Override
     public void remove(Vocabulary instance) {
-        if (instance instanceof DocumentVocabulary) {
+        if (instance.getDocument() != null) {
             throw new VocabularyRemovalException(
                     "Removal of document vocabularies is not supported yet.");
         }

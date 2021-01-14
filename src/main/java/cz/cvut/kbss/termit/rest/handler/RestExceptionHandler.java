@@ -166,4 +166,11 @@ public class RestExceptionHandler {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> invalidParameter(HttpServletRequest request,
+                                                          InvalidParameterException e) {
+        logException(e);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNPROCESSABLE_ENTITY);
+    }
 }

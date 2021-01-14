@@ -80,6 +80,21 @@ public enum ConfigParam {
     TERM_NAMESPACE_SEPARATOR("namespace.term.separator"),
 
     /**
+     * Separator of File namespace from the parent Document identifier.
+     * <p>
+     * Since File identifier is given by the identifier of the Document it belongs to and its own normalized label,
+     * this separator is used to (optionally) configure the File identifier namespace.
+     * <p>
+     * For example, if we have a Document with IRI {@code http://www.example.org/ontologies/resources/metropolitan-plan}
+     * and a File with normalized label {@code main-file}, the resulting IRI will be {@code
+     * http://www.example.org/ontologies/resources/metropolitan-plan/SEPARATOR/main-file}, where 'SEPARATOR' is
+     * the value of this configuration parameter.
+     * <p>
+     * Defaults to {@link Constants#DEFAULT_FILE_NAMESPACE_SEPARATOR}.
+     */
+    FILE_NAMESPACE_SEPARATOR("namespace.file.separator"),
+
+    /**
      * URL of the text analysis service.
      */
     TEXT_ANALYSIS_SERVICE_URL("textAnalysis.url"),
