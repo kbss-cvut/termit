@@ -20,5 +20,6 @@ package cz.cvut.kbss.termit.rest.dto;
 public enum AssetType {
     RESOURCE,
     VOCABULARY,
+    FILE,
     TERM
 }

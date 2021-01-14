@@ -19,6 +19,8 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -31,6 +33,7 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
+import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -44,6 +47,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
@@ -56,6 +60,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
 
 import static cz.cvut.kbss.termit.util.ConfigParam.NAMESPACE_RESOURCE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -480,6 +489,34 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                                                                    .content(toJson(fOne))
                                                                    .contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void removeFileFromDocumentReturnsOkForAValidFile() throws Exception {
+        final Resource resource = Generator.generateResource();
+        resource.setUri(RESOURCE_URI);
+        resource.setLabel(RESOURCE_NAME);
+        final File fOne = generateFile();
+        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
+        when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(resource);
+        doThrow(UnsupportedAssetOperationException.class).when(resourceServiceMock).addFileToDocument(resource, fOne);
+        mockMvc.perform(post(PATH + "/" + RESOURCE_NAME + "/files").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
+            .content(toJson(fOne))
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isConflict());
+
+        when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(resource);
+        mockMvc
+            .perform(delete(PATH + "/" + RESOURCE_NAME + "/files/" + FILE_NAME, RESOURCE_NAMESPACE))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void removeFileFromDocumentReturnsConflictWhenRequestedResourceDoesNotExist() throws Exception {
+        doThrow(NotFoundException.class).when(resourceServiceMock).removeFile(any());
+        mockMvc
+            .perform(delete(PATH + "/" + RESOURCE_NAME + "/files/" + FILE_NAME, RESOURCE_NAMESPACE))
+            .andExpect(status().isNotFound());
     }
 
     @Test

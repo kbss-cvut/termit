@@ -17,7 +17,9 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -238,6 +240,26 @@ public class ResourceService
             persist(file);
         }
         update(doc);
+    }
+
+    /**
+     * Removes the file. The file is detached from the document and removed, together with its content.
+     *
+     * @param file     The file to add and save
+     * @throws UnsupportedAssetOperationException If the specified resource is not a Document
+     */
+    @Transactional
+    public void removeFile(File file) {
+        Objects.requireNonNull(file);
+        final Document doc = file.getDocument();
+        if (doc == null) {
+            throw new InvalidParameterException("File was not attached to a document.");
+        } else {
+            doc.removeFile(file);
+            update(doc);
+        }
+        documentManager.remove(file);
+        repositoryService.remove(file);
     }
 
     /**
