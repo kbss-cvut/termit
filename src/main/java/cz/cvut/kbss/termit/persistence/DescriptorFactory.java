@@ -228,6 +228,7 @@ public class DescriptorFactory {
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         final EntityDescriptor parentDescriptor = new EntityDescriptor();
+        // Vocabulary field is inferred, so it cannot be in any specific context
         parentDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), parentDescriptor);
