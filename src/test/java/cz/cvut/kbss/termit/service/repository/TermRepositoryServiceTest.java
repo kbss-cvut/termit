@@ -214,6 +214,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         // This is normally inferred
         parent.setVocabulary(vocabulary.getUri());
         sut.addChildTerm(child, parent);
+        em.getEntityManagerFactory().getCache().evictAll();
         final Glossary result = em.find(Glossary.class, vocabulary.getGlossary().getUri());
         assertEquals(1, result.getRootTerms().size());
         assertTrue(result.getRootTerms().contains(parent.getUri()));
