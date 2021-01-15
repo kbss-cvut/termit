@@ -140,7 +140,7 @@ public class VocabularyController extends BaseController {
      * @see VocabularyService#remove(Vocabulary)  for details.
      *
      * @param fragment vocabulary name
-     * @param namespace (optional) vocabulary nanespace
+     * @param namespace (optional) vocabulary namespace
      */
     @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -156,7 +156,7 @@ public class VocabularyController extends BaseController {
      * Validates a vocabulary.
      *
      * @param fragment vocabulary name
-     * @param namespace (optional) vocabulary nanespace
+     * @param namespace (optional) vocabulary namespace
      * @return list of validation outcomes
      */
     @PreAuthorize("permitAll()")
