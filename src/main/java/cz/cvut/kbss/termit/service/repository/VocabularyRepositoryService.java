@@ -4,10 +4,12 @@ import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.importer.VocabularyImportService;
@@ -16,6 +18,7 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Validator;
@@ -36,16 +39,20 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     final VocabularyImportService importService;
 
+    final ResourceService resourceService;
+
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
-                                       @Lazy TermService termService, VocabularyImportService importService) {
+                                       @Lazy TermService termService, VocabularyImportService importService,
+                                       @Lazy ResourceService resourceService) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.termService = termService;
         this.changeRecordService = changeRecordService;
         this.importService = importService;
+        this.resourceService = resourceService;
     }
 
     @Override
@@ -73,6 +80,19 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     protected void preUpdate(Vocabulary instance) {
         super.preUpdate(instance);
         verifyVocabularyImports(instance);
+    }
+
+    @Override
+    @Transactional
+    public Vocabulary update(Vocabulary instance) {
+        final Document document = instance.getDocument();
+        if (document != null) {
+            // to prevent trying to persist an unmanaged object
+            Document d = (Document) resourceService.getRequiredReference(document.getUri());
+            instance.setDocument(d);
+        }
+        super.update(instance);
+        return instance;
     }
 
     /**
