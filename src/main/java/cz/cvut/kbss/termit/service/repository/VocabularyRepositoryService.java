@@ -88,7 +88,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         final Document document = instance.getDocument();
         if (document != null) {
             // to prevent trying to persist an unmanaged object
-            Document d = (Document) resourceService.findRequired(document.getUri());
+            Document d = (Document) resourceService.getRequiredReference(document.getUri());
             instance.setDocument(d);
         }
         super.update(instance);
