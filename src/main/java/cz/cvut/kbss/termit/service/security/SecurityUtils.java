@@ -15,22 +15,15 @@
 package cz.cvut.kbss.termit.service.security;
 
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.security.model.AuthenticationToken;
-import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 
 /**
  * Handle user session-related functions.
@@ -83,37 +76,5 @@ public class SecurityUtils {
      */
     public boolean isAuthenticated() {
         return authenticated();
-    }
-
-    /**
-     * Creates an authentication token based on the specified user details and sets it to the current thread's security
-     * context.
-     *
-     * @param userDetails Details of the user to set as current
-     * @return The generated authentication token
-     */
-    public AuthenticationToken setCurrentUser(TermItUserDetails userDetails) {
-        final AuthenticationToken token = new AuthenticationToken(userDetails.getAuthorities(), userDetails);
-        token.setAuthenticated(true);
-
-        final SecurityContext context = new SecurityContextImpl();
-        context.setAuthentication(token);
-        SecurityContextHolder.setContext(context);
-        return token;
-    }
-
-    /**
-     * Verifies that the specified user is enabled and not locked.
-     *
-     * @param user User to check
-     */
-    public static void verifyAccountStatus(UserAccount user) {
-        Objects.requireNonNull(user);
-        if (user.isLocked()) {
-            throw new LockedException("Account of user " + user + " is locked.");
-        }
-        if (!user.isEnabled()) {
-            throw new DisabledException("Account of user " + user + " is disabled.");
-        }
     }
 }
