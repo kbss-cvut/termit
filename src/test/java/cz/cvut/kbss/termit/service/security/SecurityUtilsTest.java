@@ -16,23 +16,14 @@ package cz.cvut.kbss.termit.service.security;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextImpl;
 
-import java.util.Collections;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SecurityUtilsTest extends BaseServiceTestRunner {
@@ -60,15 +51,6 @@ class SecurityUtilsTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void verifyCurrentUserPasswordThrowsIllegalArgumentWhenPasswordDoesNotMatch() {
-        Environment.setCurrentUser(user);
-        final String password = "differentPassword";
-        final ValidationException ex = assertThrows(ValidationException.class,
-                () -> sut.verifyCurrentUserPassword(password));
-        assertThat(ex.getMessage(), containsString("does not match"));
-    }
-
-    @Test
     void isAuthenticatedReturnsFalseForUnauthenticatedUser() {
         assertFalse(sut.isAuthenticated());
     }
@@ -80,10 +62,7 @@ class SecurityUtilsTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void isAuthenticatedReturnsFalseForAnonymousRequest() {
-        final AnonymousAuthenticationToken token = new AnonymousAuthenticationToken("anonymousUser", "anonymousUser",
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS")));
-        SecurityContextHolder.setContext(new SecurityContextImpl(token));
+    void isAuthenticatedReturnsFalseForEmptyContext() {
         assertFalse(sut.isAuthenticated());
     }
 

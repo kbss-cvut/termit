@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
@@ -51,11 +48,10 @@ import javax.servlet.Filter;
 import java.util.Collections;
 import java.util.List;
 
-import static cz.cvut.kbss.termit.service.IdentifierResolver.extractIdentifierFragment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -64,8 +60,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {TestConfig.class,
-                                 TestRestSecurityConfig.class,
-                                 UserControllerSecurityTest.Config.class})
+        TestRestSecurityConfig.class,
+        UserControllerSecurityTest.Config.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @WebAppConfiguration
 class UserControllerSecurityTest extends BaseControllerTestRunner {
@@ -160,40 +156,5 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
                                            .andExpect(status().isOk()).andReturn();
         final UserAccount result = readValue(mvcResult, UserAccount.class);
         assertEquals(user, result);
-    }
-
-    @Test
-    void unlockThrowsForbiddenForNonAdmin() throws Exception {
-        // This one is not an admin
-        Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
-        final UserAccount toUnlock = Generator.generateUserAccountWithPassword();
-
-        mockMvc.perform(
-                delete(BASE_URL + "/" + extractIdentifierFragment(toUnlock.getUri()) + "/lock")
-                        .content(toUnlock.getPassword()))
-               .andExpect(status().isForbidden());
-        verify(userService, never()).unlock(any(), any());
-    }
-
-    @Test
-    void enableThrowsForbiddenForNonAdmin() throws Exception {
-        // This one is not an admin
-        Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
-        final UserAccount toEnable = Generator.generateUserAccountWithPassword();
-
-        mockMvc.perform(post(BASE_URL + "/" + extractIdentifierFragment(toEnable.getUri()) + "/status"))
-               .andExpect(status().isForbidden());
-        verify(userService, never()).enable(any());
-    }
-
-    @Test
-    void disableThrowsForbiddenForNonAdmin() throws Exception {
-        // This one is not an admin
-        Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
-        final UserAccount toDisable = Generator.generateUserAccountWithPassword();
-
-        mockMvc.perform(delete(BASE_URL + "/" + extractIdentifierFragment(toDisable.getUri()) + "/status"))
-               .andExpect(status().isForbidden());
-        verify(userService, never()).disable(any());
     }
 }

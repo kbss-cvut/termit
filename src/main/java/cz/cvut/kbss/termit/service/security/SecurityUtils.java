@@ -14,7 +14,6 @@
  */
 package cz.cvut.kbss.termit.service.security;
 
-import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
@@ -29,7 +28,6 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -40,12 +38,10 @@ import java.util.Objects;
 @Service
 public class SecurityUtils {
 
-    private final PasswordEncoder passwordEncoder;
     private final IdentifierResolver idResolver;
 
     @Autowired
-    public SecurityUtils(PasswordEncoder passwordEncoder, IdentifierResolver idResolver) {
-        this.passwordEncoder = passwordEncoder;
+    public SecurityUtils(IdentifierResolver idResolver) {
         this.idResolver = idResolver;
         // Ensures security context is propagated to additionally spun threads, e.g., used by @Async methods
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
@@ -67,8 +63,7 @@ public class SecurityUtils {
         account.setUsername(keycloakToken.getPreferredUsername());
         context.getAuthentication().getAuthorities().stream().map(ga -> UserRole.fromRoleName(ga.getAuthority()))
                .filter(r -> !r.getType().isEmpty()).forEach(r -> account.addType(r.getType()));
-        account.setUri(idResolver
-                .generateIdentifier(ConfigParam.NAMESPACE_USER, account.getFirstName(), account.getLastName()));
+        account.setUri(idResolver.generateIdentifier(ConfigParam.NAMESPACE_USER, keycloakToken.getSubject()));
         return account;
     }
 
@@ -80,7 +75,7 @@ public class SecurityUtils {
      */
     public static boolean authenticated() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        return context.getAuthentication().isAuthenticated();
+        return context.getAuthentication() != null && context.getAuthentication().isAuthenticated();
     }
 
     /**
@@ -105,19 +100,6 @@ public class SecurityUtils {
         context.setAuthentication(token);
         SecurityContextHolder.setContext(context);
         return token;
-    }
-
-    /**
-     * Checks that the specified password corresponds to the current user's password.
-     *
-     * @param password The password to verify
-     * @throws IllegalArgumentException When the password's do not match
-     */
-    public void verifyCurrentUserPassword(String password) {
-        final UserAccount currentUser = getCurrentUser();
-        if (!passwordEncoder.matches(password, currentUser.getPassword())) {
-            throw new ValidationException("The specified password does not match the original one.");
-        }
     }
 
     /**
