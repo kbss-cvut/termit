@@ -20,7 +20,6 @@ import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.rest.handler.RestExceptionHandler;
-import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.service.business.UserService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -123,11 +122,6 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
         @Bean
         public RestExceptionHandler restExceptionHandler() {
             return new RestExceptionHandler();
-        }
-
-        @Bean
-        public JwtUtils jwtUtils(cz.cvut.kbss.termit.util.Configuration config) {
-            return new JwtUtils(config);
         }
 
         @Override
