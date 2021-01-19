@@ -66,7 +66,7 @@ public class Validator {
     @Transactional
     public List<ValidationResult> validate(final Collection<URI> vocabularyIris)
         throws IOException {
-        LOG.info("Validating");
+        LOG.info("Validating {}",vocabularyIris);
         final com.github.sgov.server.Validator validator = new com.github.sgov.server.Validator();
         final Set<URL> rules = new HashSet<>();
         rules.addAll(
@@ -80,13 +80,9 @@ public class Validator {
                 .collect(Collectors.toList())
         );
 
-        LOG.debug("Constructing RDF4J model ...");
         final Model model = getModelFromRdf4jRepository(vocabularyIris);
-
-        LOG.debug("Validating ...");
         org.topbraid.shacl.validation.ValidationReport report = validator.validate(model, rules);
-
-        LOG.info("Processing validation results ...");
+        LOG.info("Done.");
         return report.results().stream()
             .sorted(new ValidationResultSeverityComparator()).map(result -> {
                 final URI termUri = URI.create(result.getFocusNode().toString());
@@ -99,8 +95,6 @@ public class Validator {
                     .map(m -> m.asLiteral())
                     .collect(Collectors.toMap(Literal::getLanguage, Literal::getLexicalForm)));
 
-                LOG.debug("'{}' for {} with severity {} and rule {}",
-                    result.getMessage(),termUri, severity, errorUri);
                 return new ValidationResult()
                     .setTermUri(termUri)
                     .setIssueCauseUri(errorUri)
