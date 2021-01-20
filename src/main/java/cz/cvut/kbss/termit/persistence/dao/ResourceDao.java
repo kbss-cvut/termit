@@ -115,17 +115,6 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
         }
     }
 
-    @ModifiesData
-    @Override
-    public void remove(Resource entity) {
-        super.remove(entity);
-        URI context = null;
-        if (entity instanceof Document) {
-            context = em.find(Document.class, entity.getUri()).getVocabulary();
-        }
-        em.getEntityManagerFactory().getCache().evict(type, entity.getUri(), context);
-    }
-
     private URI resolveVocabularyId(Resource resource) {
         if (resource instanceof Document) {
             return ((Document) resource).getVocabulary();
@@ -246,5 +235,26 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
     @EventListener
     public void refreshLastModified(RefreshLastModifiedEvent event) {
         refreshLastModified();
+    }
+
+    /**
+     * Removes a document from the context (given by the document instance descriptor)
+     * and flushes the entity manager.
+     *
+     * @param document document
+     */
+    public void removeDocumentFromContext(final Document document) {
+        this.remove(document);
+        this.em.flush();
+    }
+
+    /**
+     * Adds a document to the context givent by the vocabulary IRI.
+     *
+     * @param document document
+     * @param vocabularyId URI of the vocabulary context
+     */
+    public void persistDocumentToVocabularyContext(final Document document, final URI vocabularyId) {
+        em.persist(document,descriptorFactory.vocabularyDescriptor(vocabularyId));
     }
 }

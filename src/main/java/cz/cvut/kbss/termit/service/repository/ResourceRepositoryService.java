@@ -169,4 +169,24 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     public long getLastModified() {
         return resourceDao.getLastModified();
     }
+
+    public void rewireDocumentsOnVocabularyUpdate(final Vocabulary vOriginal, final Vocabulary vNew) {
+        final Document dOriginal = vOriginal.getDocument();
+        if ( dOriginal != null ) {
+            // remove from vocabulary ctx
+            resourceDao.removeDocumentFromContext(dOriginal);
+            // add to default ctx
+            persist(dOriginal);
+        }
+
+        final Document document = vNew.getDocument();
+        if (document != null) {
+            Document dNew = (Document) getRequiredReference(document.getUri());
+            // remove from default ctx
+            resourceDao.removeDocumentFromContext(dNew);
+            document.setVocabulary(null);
+            // add to vocabulary context
+            resourceDao.persistDocumentToVocabularyContext(document,vNew.getUri());
+        }
+    }
 }

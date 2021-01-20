@@ -4,8 +4,6 @@ import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.resource.Document;
-import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
@@ -84,23 +82,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Override
     @Transactional
-    public Vocabulary update(Vocabulary instance) {
-        final Vocabulary vOriginal =  super.findRequired(instance.getUri());
-        final Document dOriginal = vOriginal.getDocument();
-        if ( dOriginal != null ) {
-            resourceService.remove(dOriginal);
-            Optional<Resource> d2 = resourceService.find(dOriginal.getUri());
-            System.out.println(d2.isPresent());
-            resourceService.persist(dOriginal);
-        }
-
-        final Document document = instance.getDocument();
-        if (document != null) {
-            Document dNew = (Document) resourceService.findRequired(document.getUri());
-            resourceService.remove(dNew);
-        }
-        super.update(instance);
-        return instance;
+    public Vocabulary update(Vocabulary vNew) {
+        final Vocabulary vOriginal = super.findRequired(vNew.getUri());
+        resourceService.rewireDocumentsOnVocabularyUpdate(vOriginal, vNew);
+        super.update(vNew);
+        return vNew;
     }
 
     /**
