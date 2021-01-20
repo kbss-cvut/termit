@@ -19,7 +19,6 @@ import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;

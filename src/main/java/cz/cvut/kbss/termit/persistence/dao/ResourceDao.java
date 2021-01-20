@@ -115,6 +115,17 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
         }
     }
 
+    @ModifiesData
+    @Override
+    public void remove(Resource entity) {
+        super.remove(entity);
+        URI context = null;
+        if (entity instanceof Document) {
+            context = em.find(Document.class, entity.getUri()).getVocabulary();
+        }
+        em.getEntityManagerFactory().getCache().evict(type, entity.getUri(), context);
+    }
+
     private URI resolveVocabularyId(Resource resource) {
         if (resource instanceof Document) {
             return ((Document) resource).getVocabulary();
