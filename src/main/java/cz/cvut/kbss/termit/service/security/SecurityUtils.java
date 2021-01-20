@@ -15,6 +15,8 @@
 package cz.cvut.kbss.termit.service.security;
 
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.security.model.AuthenticationToken;
+import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
@@ -48,6 +50,15 @@ public class SecurityUtils {
     public UserAccount getCurrentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
         assert context != null && context.getAuthentication().isAuthenticated();
+        if (context.getAuthentication().getPrincipal() instanceof KeycloakPrincipal) {
+            return resolveAccountFromKeycloakPrincipal(context);
+        } else {
+            assert context.getAuthentication() instanceof AuthenticationToken;
+            return ((TermItUserDetails) context.getAuthentication().getDetails()).getUser();
+        }
+    }
+
+    private UserAccount resolveAccountFromKeycloakPrincipal(SecurityContext context) {
         final KeycloakPrincipal<?> principal = (KeycloakPrincipal<?>) context.getAuthentication().getPrincipal();
         final AccessToken keycloakToken = principal.getKeycloakSecurityContext().getToken();
         final UserAccount account = new UserAccount();

@@ -41,13 +41,13 @@ public class UserRepositoryService {
     }
 
     public Optional<UserAccount> find(URI uri) {
-        return userAccountDao.find(uri);
+        return userAccountDao.find(uri).map(u -> {
+            u.erasePassword();
+            return u;
+        });
     }
 
     public UserAccount findRequired(URI uri) {
-        return find(uri).map(u -> {
-            u.erasePassword();
-            return u;
-        }).orElseThrow(() -> NotFoundException.create(UserAccount.class.getSimpleName(), uri));
+        return find(uri).orElseThrow(() -> NotFoundException.create(UserAccount.class.getSimpleName(), uri));
     }
 }
