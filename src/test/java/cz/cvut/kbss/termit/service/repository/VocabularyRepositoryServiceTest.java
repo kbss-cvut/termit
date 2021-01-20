@@ -136,7 +136,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void updateThrowsValidationExceptionForEmptyName() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(vocabulary));
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
         vocabulary.setLabel("");
         assertThrows(ValidationException.class, () -> sut.update(vocabulary));

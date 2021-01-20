@@ -170,6 +170,13 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         return resourceDao.getLastModified();
     }
 
+    /**
+     * Moves the triples of the document from the original vocabulary to the default context and from the
+     * new vocabulary to the context of this vocabulary.
+     *
+     * @param vOriginal original version of the vocabulary (before update)
+     * @param vNew new version of the vocabulary (after update)
+     */
     public void rewireDocumentsOnVocabularyUpdate(final Vocabulary vOriginal, final Vocabulary vNew) {
         final Document dOriginal = vOriginal.getDocument();
         if ( dOriginal != null ) {
