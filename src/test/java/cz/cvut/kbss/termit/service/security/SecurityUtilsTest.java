@@ -17,12 +17,23 @@ package cz.cvut.kbss.termit.service.security;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.KeycloakSecurityContext;
+import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
+import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
+
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,6 +59,29 @@ class SecurityUtilsTest extends BaseServiceTestRunner {
         Environment.setCurrentUser(user);
         final UserAccount result = sut.getCurrentUser();
         assertEquals(user, result);
+    }
+
+    @Test
+    void getCurrentUserSupportsExtractingCurrentUserFromKeycloakToken() {
+        setKeycloakToken();
+        final UserAccount result = sut.getCurrentUser();
+        assertEquals(user, result);
+    }
+
+    private void setKeycloakToken() {
+        final AccessToken token = new AccessToken();
+        token.setSubject(user.getUri().toString());
+        token.setGivenName(user.getFirstName());
+        token.setFamilyName(user.getLastName());
+        token.setEmail(user.getUsername());
+        token.setPreferredUsername(user.getUsername());
+        final KeycloakPrincipal<KeycloakSecurityContext> kp = new KeycloakPrincipal<>(user.getUsername(),
+                new KeycloakSecurityContext(null, token, null, null));
+        SecurityContext context = new SecurityContextImpl();
+        context.setAuthentication(new KeycloakAuthenticationToken(new SimpleKeycloakAccount(kp, Collections.singleton(
+                SecurityConstants.ROLE_USER), null), true,
+                Collections.singleton(new SimpleGrantedAuthority(SecurityConstants.ROLE_USER))));
+        SecurityContextHolder.setContext(context);
     }
 
     @Test

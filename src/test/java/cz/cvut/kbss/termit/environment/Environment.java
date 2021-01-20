@@ -20,22 +20,17 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.config.WebAppConfig;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.security.model.AuthenticationToken;
+import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.KeycloakSecurityContext;
-import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
-import org.keycloak.representations.AccessToken;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
@@ -47,6 +42,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 
 public class Environment {
@@ -66,18 +62,9 @@ public class Environment {
      */
     public static void setCurrentUser(UserAccount user) {
         currentUser = user;
-        final AccessToken token = new AccessToken();
-        token.setSubject(user.getUri().toString());
-        token.setGivenName(user.getFirstName());
-        token.setFamilyName(user.getLastName());
-        token.setEmail(user.getUsername());
-        token.setPreferredUsername(user.getUsername());
-        final KeycloakPrincipal<KeycloakSecurityContext> kp = new KeycloakPrincipal<>(user.getUsername(),
-                new KeycloakSecurityContext(null, token, null, null));
+        final TermItUserDetails userDetails = new TermItUserDetails(user, new HashSet<>());
         SecurityContext context = new SecurityContextImpl();
-        context.setAuthentication(new KeycloakAuthenticationToken(new SimpleKeycloakAccount(kp, Collections.singleton(
-                SecurityConstants.ROLE_USER), null), true,
-                Collections.singleton(new SimpleGrantedAuthority(SecurityConstants.ROLE_USER))));
+        context.setAuthentication(new AuthenticationToken(userDetails.getAuthorities(), userDetails));
         SecurityContextHolder.setContext(context);
     }
 
