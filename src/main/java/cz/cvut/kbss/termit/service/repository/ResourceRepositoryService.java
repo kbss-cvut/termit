@@ -179,6 +179,12 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
      */
     public void rewireDocumentsOnVocabularyUpdate(final Vocabulary vOriginal, final Vocabulary vNew) {
         final Document dOriginal = vOriginal.getDocument();
+        final Document document = vNew.getDocument();
+
+        if ( dOriginal == document || dOriginal.equals(document) ) {
+            return;
+        }
+
         if ( dOriginal != null ) {
             // remove from vocabulary ctx
             resourceDao.removeDocumentFromContext(dOriginal);
@@ -186,7 +192,6 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
             persist(dOriginal);
         }
 
-        final Document document = vNew.getDocument();
         if (document != null) {
             Document dNew = (Document) getRequiredReference(document.getUri());
             // remove from default ctx
