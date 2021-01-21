@@ -391,11 +391,10 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void rewireDocumentsOnVocabularyUpdatePutsUpdatedDocumentIntoVocabularyContext() {
         final cz.cvut.kbss.termit.model.Vocabulary vOriginal = Generator.generateVocabularyWithId();
-        final Document document = Generator.generateDocumentWithId();
         vOriginal.setDocument(null);
 
         final Descriptor d = descriptorFactory.vocabularyDescriptor(vOriginal);
-
+        final Document document = Generator.generateDocumentWithId();
         transactional(() -> {
             em.persist(vOriginal, d);
             em.persist(document);
