@@ -181,7 +181,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         final Document dOriginal = vOriginal.getDocument();
         final Document document = vNew.getDocument();
 
-        if ( dOriginal == document || ( dOriginal != null && dOriginal.equals(document) ) ) {
+        if (Objects.equals(dOriginal, document)) {
             return;
         }
 
