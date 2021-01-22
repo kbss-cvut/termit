@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -92,7 +93,7 @@ public class Validator {
                 final URI resultPath = result.getPath() != null && result.getPath().isURIResource() ?
                     URI.create(result.getPath().getURI()) : null;
                 final MultilingualString messages = new MultilingualString(result.getMessages().stream()
-                    .map(m -> m.asLiteral())
+                    .map(RDFNode::asLiteral)
                     .collect(Collectors.toMap(Literal::getLanguage, Literal::getLexicalForm)));
 
                 return new ValidationResult()

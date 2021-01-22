@@ -18,16 +18,11 @@
 package cz.cvut.kbss.termit.service.language;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import java.util.stream.Collectors;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.SKOS;
@@ -92,7 +87,6 @@ public class LanguageServiceJena extends LanguageService {
      *
      * @param resource source resource of the property
      * @param property property, value of which are used to construct the multilingual string
-     * @return
      */
     private MultilingualString create(final Resource resource, final Property property) {
         final MultilingualString s = new MultilingualString();

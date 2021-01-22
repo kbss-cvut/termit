@@ -140,21 +140,21 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
             final UpdateChangeRecord record = createChangeRecord(assetId, URI.create(RDF.TYPE));
             if (origTypes != null) {
                 record.setOriginalValue(origTypes.stream().map(t -> URI.create(t.toString()))
-                                                                   .collect(Collectors.toSet()));
+                                                 .collect(Collectors.toSet()));
             }
             if (updateTypes != null) {
                 record.setNewValue(updateTypes.stream().map(t -> URI.create(t.toString()))
-                                                                .collect(Collectors.toSet()));
+                                              .collect(Collectors.toSet()));
             }
             return Optional.of(record);
         }
     }
 
-    private boolean areCollectionsEqual(Collection<?> original, Collection<?> update) {
+    private static boolean areCollectionsEqual(Collection<?> original, Collection<?> update) {
         if (Objects.equals(original, update)) {
             return true;
         }
-        return original == null && update.size() == 0 || original != null && original.size() == 0 && update == null;
+        return original == null && update.isEmpty() || original != null && original.isEmpty() && update == null;
     }
 
     private Collection<UpdateChangeRecord> resolveUnmappedPropertiesChanges(Asset<?> original, Asset<?> update,
@@ -191,7 +191,7 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
         return records;
     }
 
-    private void recordPropertyValues(UpdateChangeRecord record, Object origValue, Object updateValue) {
+    private static void recordPropertyValues(UpdateChangeRecord record, Object origValue, Object updateValue) {
         if (origValue != null) {
             record.setOriginalValue(new HashSet<>((Set<?>) origValue));
         }
