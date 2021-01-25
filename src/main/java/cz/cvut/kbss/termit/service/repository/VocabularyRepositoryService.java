@@ -72,9 +72,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         if (instance.getModel() == null) {
             instance.setModel(new Model());
         }
-//        if (instance.getDocument() != null) {
-//            instance.getDocument().setVocabulary(null);
-//        }
+        if (instance.getDocument() != null) {
+            instance.getDocument().setVocabulary(null);
+        }
     }
 
     @Override
