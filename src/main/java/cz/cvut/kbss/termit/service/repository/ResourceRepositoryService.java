@@ -1,17 +1,18 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If
+ * not, see <https://www.gnu.org/licenses/>.
  */
+
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
@@ -41,7 +42,7 @@ import java.util.Objects;
 
 @Service
 public class ResourceRepositoryService extends BaseAssetRepositoryService<Resource>
-        implements SupportsLastModification {
+    implements SupportsLastModification {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResourceRepositoryService.class);
 
@@ -73,7 +74,8 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     protected void prePersist(Resource instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(idResolver.generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, instance.getLabel()));
+            instance.setUri(
+                idResolver.generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
     }
@@ -83,7 +85,8 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
      *
      * @param resource   Resource to persist
      * @param vocabulary Vocabulary context
-     * @throws IllegalArgumentException If the specified Resource is neither a {@code Document} nor a {@code File}
+     * @throws IllegalArgumentException If the specified Resource is neither a {@code Document}
+     * nor a {@code File}
      */
     @Transactional
     public void persist(Resource resource, Vocabulary vocabulary) {
@@ -118,9 +121,12 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     /**
      * Gets aggregated information about Terms assigned to the specified Resource.
      * <p>
-     * Since retrieving all the assignments and occurrences related to the specified Resource may be time consuming and
-     * is rarely required, this method provides aggregate information in that the returned instances contain only
-     * distinct Terms assigned to/occurring in a Resource together with information about how many times they occur and
+     * Since retrieving all the assignments and occurrences related to the specified Resource may
+     * be time consuming and
+     * is rarely required, this method provides aggregate information in that the returned
+     * instances contain only
+     * distinct Terms assigned to/occurring in a Resource together with information about how
+     * many times they occur and
      * whether they are suggested or asserted.
      *
      * @param resource Resource to get assignment info for
@@ -143,7 +149,8 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
 
     @Override
     protected void preRemove(Resource instance) {
-        LOG.trace("Removing term occurrences in resource {} which is about to be removed.", instance);
+        LOG.trace("Removing term occurrences in resource {} which is about to be removed.",
+            instance);
         termOccurrenceDao.removeAll(instance);
         assignmentService.removeAll(instance);
         removeFromParentDocumentIfFile(instance);
@@ -168,5 +175,34 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     @Override
     public long getLastModified() {
         return resourceDao.getLastModified();
+    }
+
+    /**
+     * Moves the triples of the document from the original vocabulary to the default context and
+     * from the
+     * new vocabulary to the context of this vocabulary.
+     *
+     * @param vOriginal original version of the vocabulary (before update)
+     * @param vNew new version of the vocabulary (after update)
+     */
+    public void rewireDocumentsOnVocabularyUpdate(final Vocabulary vOriginal,
+                                                  final Vocabulary vNew) {
+        final Document dOriginal = vOriginal.getDocument();
+        final Document dNew = vNew.getDocument();
+
+        if (Objects.equals(dOriginal, dNew)) {
+            return;
+        }
+
+        if (dOriginal != null) {
+            // rewire to default ctx
+            resourceDao.updateDocumentForVocabulary(dOriginal, dOriginal, null);
+        }
+
+        if (dNew != null) {
+            final Document dNewManaged = (Document) getRequiredReference(dNew.getUri());
+            // rewire to vocabulary ctx
+            resourceDao.updateDocumentForVocabulary(dNewManaged, dNew, vNew.getUri());
+        }
     }
 }
