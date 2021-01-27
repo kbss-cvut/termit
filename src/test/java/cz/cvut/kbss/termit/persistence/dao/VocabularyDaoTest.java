@@ -128,7 +128,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Test
     void updateWorksCorrectlyInContextsForDocumentVocabulary() {
-        final DocumentVocabulary vocabulary = new DocumentVocabulary();
+        final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(Generator.generateUri());
         vocabulary.setLabel("test-vocabulary");
         vocabulary.setGlossary(new Glossary());

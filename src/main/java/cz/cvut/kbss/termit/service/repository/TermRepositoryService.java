@@ -113,8 +113,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
-        return idResolver.generateDerivedIdentifier(vocabularyUri,
-                ConfigParam.TERM_NAMESPACE_SEPARATOR,
+        return idResolver.generateDerivedIdentifier(vocabularyUri, ConfigParam.TERM_NAMESPACE_SEPARATOR,
                 multilingualString.get(config.get(ConfigParam.LANGUAGE)));
     }
 
@@ -129,19 +128,20 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public void addChildTerm(Term instance, Term parentTerm) {
         validate(instance);
         final URI vocabularyIri =
-                instance.getVocabulary() != null ? instance.getVocabulary() :
-                parentTerm.getVocabulary();
+                instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
         if (instance.getUri() == null) {
             instance.setUri(generateIdentifier(vocabularyIri, instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
 
         instance.addParentTerm(parentTerm);
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(vocabularyIri);
+        instance.setGlossary(vocabulary.getGlossary().getUri());
         if (!instance.hasParentInSameVocabulary()) {
             addTermAsRootToGlossary(instance, vocabularyIri);
         }
 
-        termDao.persist(instance, vocabularyService.getRequiredReference(vocabularyIri));
+        termDao.persist(instance, vocabulary);
     }
 
     /**

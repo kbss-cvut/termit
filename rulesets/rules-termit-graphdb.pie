@@ -57,13 +57,6 @@ Rules
     -------------------------------
     this <pdp:má-dokumentový-slovník> vocabulary
 
-  Id: pdp_term_2_5
-    vocabulary <pdp:má-glosář> glossary
-    this <pdp:je-pojmem-ze-slovníku> vocabulary
-    -------------------------------
-    glossary <pdp:obsahuje-pojem> this
-    this <skos:inScheme> glossary
-
   Id: pdp_term_4
 
     this <rdf:type> <pdp:dokumentový-slovník>

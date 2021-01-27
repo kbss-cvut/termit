@@ -18,6 +18,8 @@ import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -390,6 +392,29 @@ class ResourceServiceTest {
         sut.addFileToDocument(doc, fOne);
         verify(resourceRepositoryService).update(doc);
         verify(vocabularyService).getRequiredReference(vocabulary.getUri());
+    }
+
+    @Test
+    void removeFileRemovesFileUpdatesDocumentAndRemovesContent() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Document doc = Generator.generateDocumentWithId();
+        doc.setVocabulary(vocabulary.getUri());
+        final File fOne = Generator.generateFileWithId("test.html");
+        fOne.setDocument(doc);
+
+        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+
+        sut.removeFile(fOne);
+
+        verify(resourceRepositoryService).update(doc);
+        verify(resourceRepositoryService).remove(fOne);
+        verify(documentManager).remove(fOne);
+    }
+
+    @Test
+    void removeFileThrowsTermItExceptionWhenFileIsNotLinkedToDocument() {
+        final File fOne = Generator.generateFileWithId("test.html");
+        assertThrows(TermItException.class, () -> sut.removeFile(fOne));
     }
 
     @Test

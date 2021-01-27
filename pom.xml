@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>2.1.1</version>
+    <version>2.1.2</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>war</packaging>
@@ -25,13 +25,13 @@
     </repositories>
 
     <properties>
-        <org.springframework.version>5.3.1</org.springframework.version>
-        <org.springframework.security.version>5.4.0</org.springframework.security.version>
-        <org.springframework.data.version>2.4.1</org.springframework.data.version>
-        <com.fasterxml.jackson.version>2.11.2</com.fasterxml.jackson.version>
-        <org.hibernate.validator.version>6.1.5.Final</org.hibernate.validator.version>
+        <org.springframework.version>5.3.3</org.springframework.version>
+        <org.springframework.security.version>5.4.2</org.springframework.security.version>
+        <org.springframework.data.version>2.4.3</org.springframework.data.version>
+        <com.fasterxml.jackson.version>2.12.1</com.fasterxml.jackson.version>
+        <org.hibernate.validator.version>6.1.7.Final</org.hibernate.validator.version>
         <cz.cvut.kbss.jopa.version>0.16.2</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.8.2</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jsonld.version>0.8.4</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.6</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>com.github.sgov</groupId>
             <artifactId>sgov-validator</artifactId>
-            <version>1.5.10</version>
+            <version>1.5.13</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
@@ -250,7 +250,7 @@
         <dependency>
             <groupId>net.bull.javamelody</groupId>
             <artifactId>javamelody-core</artifactId>
-            <version>1.82.0</version>
+            <version>1.86.0</version>
         </dependency>
 
         <!-- Test dependencies -->
@@ -453,7 +453,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.2.3</version>
+                <version>3.3.1</version>
                 <configuration>
                     <warName>termit</warName>
                 </configuration>
@@ -490,7 +490,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
+                <version>0.8.6</version>
                 <executions>
                     <execution>
                         <goals>
@@ -509,7 +509,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.7</version>
+                <version>1.10</version>
                 <executions>
                     <execution>
                         <id>add-source</id>
@@ -528,7 +528,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
                         <id>copy-resources</id>

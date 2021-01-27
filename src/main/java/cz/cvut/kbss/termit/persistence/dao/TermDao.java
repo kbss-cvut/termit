@@ -106,6 +106,7 @@ public class TermDao extends WorkspaceBasedAssetDao<Term> {
 
         try {
             entity.setGlossary(vocabulary.getGlossary().getUri());
+            entity.setVocabulary(null); // This is inferred
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

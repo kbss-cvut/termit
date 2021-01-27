@@ -312,7 +312,7 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         }
         if (hiddenLabels != null) {
             row.createCell(3).setCellValue(String.join(";",
-                    altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
+                    hiddenLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
         }
         if (definition != null) {
             row.createCell(4).setCellValue(definition.toString());
@@ -383,19 +383,4 @@ public class Term extends Asset<MultilingualString> implements HasTypes, Seriali
         }
     }
 
-    public static Field getDefinitionSourceField() {
-        try {
-            return Term.class.getDeclaredField("definitionSource");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"definitionSource\" field.", e);
-        }
-    }
-
-    public static Field getVocabularyField() {
-        try {
-            return Term.class.getDeclaredField("vocabulary");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"vocabulary\" field.", e);
-        }
-    }
 }

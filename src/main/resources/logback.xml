@@ -30,8 +30,8 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <!-- Prevent log polution -->
-    <logger name="cz.cvut.kbss.termit.security.JwtAuthenticationFilter" level="INFO" additivity="false">
+    <!-- Restrict logging inherited from the JwtAuthenticationFilter's parent class -->
+    <logger name="cz.cvut.kbss.termit.security.JwtAuthenticationFilter" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
 

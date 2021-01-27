@@ -172,6 +172,17 @@ public class ResourceController extends BaseController {
         return URI.create(u.replace("/" + parentIdFragment + "/files", ""));
     }
 
+    @DeleteMapping(value = "/{resourceName}/files/{fileName}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFileFromDocument(@PathVariable String resourceName,
+                                       @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
+                                       @PathVariable String fileName) {
+        final URI fileIdentifier = resolveIdentifier(namespace, fileName, ConfigParam.NAMESPACE_RESOURCE);
+        final File file = (File) resourceService.findRequired(fileIdentifier);
+        resourceService.removeFile(file);
+        LOG.debug("File {} successfully removed.", fileIdentifier);
+    }
+
     /**
      * Runs text analysis on the specified resource.
      *
