@@ -303,6 +303,18 @@ class TermDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void persistEnsuresVocabularyAttributeIsEmptySoThatItCanBeInferred() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> sut.persist(term, vocabulary));
+        assertNull(term.getVocabulary());
+
+        final Term result = em.find(Term.class, term.getUri(), descriptorFactory.termDescriptor(vocabulary));
+        assertNotNull(result);
+        // Term vocabulary should be null here, as we have inference disabled
+        assertNull(result.getVocabulary());
+    }
+
+    @Test
     void updateUpdatesTermInVocabularyContext() {
         final Term term = Generator.generateTermWithId();
         transactional(() -> {

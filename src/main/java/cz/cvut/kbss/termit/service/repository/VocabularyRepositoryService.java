@@ -42,10 +42,13 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final WorkspaceService workspaceService;
 
+    final ResourceRepositoryService resourceService;
+
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
                                        @Lazy TermService termService, VocabularyImportService importService,
+                                       @Lazy ResourceRepositoryService resourceService,
                                        WorkspaceService workspaceService) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
@@ -54,6 +57,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         this.changeRecordService = changeRecordService;
         this.importService = importService;
         this.workspaceService = workspaceService;
+        this.resourceService = resourceService;
     }
 
     @Override
@@ -81,6 +85,18 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         if (instance.getModel() == null) {
             instance.setModel(new Model());
         }
+        if (instance.getDocument() != null) {
+            instance.getDocument().setVocabulary(null);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Vocabulary update(Vocabulary vNew) {
+        final Vocabulary vOriginal = super.findRequired(vNew.getUri());
+        resourceService.rewireDocumentsOnVocabularyUpdate(vOriginal, vNew);
+        super.update(vNew);
+        return vNew;
     }
 
     @Override
@@ -115,7 +131,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Override
     public void remove(Vocabulary instance) {
-        if (instance instanceof DocumentVocabulary) {
+        if (instance.getDocument() != null) {
             throw new VocabularyRemovalException(
                     "Removal of document vocabularies is not supported yet.");
         }

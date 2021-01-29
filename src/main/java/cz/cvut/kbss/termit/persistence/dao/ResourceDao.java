@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -229,5 +230,52 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
     @EventListener
     public void refreshLastModified(RefreshLastModifiedEvent event) {
         refreshLastModified();
+    }
+
+    /**
+     * Removes a document from the context (given by the document instance descriptor)
+     * and flushes the entity manager.
+     *
+     * @param document document
+     */
+    private void removeDocumentFromContext(final Document document) {
+        if (document.getFiles() != null ) {
+            document.getFiles().forEach( f -> this.remove(f) );
+        }
+        this.remove(document);
+        this.em.flush();
+    }
+
+    /**
+     * Adds a document to the context givent by the vocabulary IRI.
+     *
+     * @param document document
+     * @param vocabularyId URI of the vocabulary context
+     */
+    private void persistDocumentToContext(final Document document, final URI vocabularyId) {
+        // to prevent persisting inferred attribute
+        document.setVocabulary(null);
+        final Descriptor d;
+        if ( vocabularyId == null ) {
+            d = new EntityDescriptor();
+        } else {
+            d = descriptorFactory.vocabularyDescriptor(vocabularyId);
+        }
+        if (document.getFiles() != null ) {
+            document.getFiles().forEach(f -> em.persist(f, d));
+        }
+        em.persist(document, d);
+    }
+
+    /**
+     * Updates a document from the original version to the new version for the given vocabulary.
+     *
+     * @param dOriginal original version of the document
+     * @param dNew new version of the document
+     * @param vocabularyIri URI of the new vocabulary, or null if the document is being removed from the vocabulary
+     */
+    public void updateDocumentForVocabulary(final Document dOriginal, final Document dNew, final URI vocabularyIri) {
+        this.removeDocumentFromContext(dOriginal);
+        this.persistDocumentToContext(dNew, vocabularyIri);
     }
 }

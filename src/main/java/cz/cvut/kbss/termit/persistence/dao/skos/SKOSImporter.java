@@ -44,10 +44,11 @@ import java.util.stream.Collectors;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SKOSImporter {
 
-    private static final SimpleDateFormat CREATED_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final String VOCABULARY_TYPE = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik;
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSImporter.class);
+
+    private final SimpleDateFormat createdFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     private final Configuration config;
     private final ChangeRecordDao changeRecordDao;
@@ -151,7 +152,7 @@ public class SKOSImporter {
         final List<Value> glossary = model
                 .filter(vocabularyId, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), null).stream()
                 .map(Statement::getObject).collect(Collectors.toList());
-        if (glossary.size() == 0) {
+        if (glossary.isEmpty()) {
             LOG.debug("No glossary found for imported vocabulary {}, top concepts will not be identified.",
                     vocabularyId);
             return;
@@ -183,7 +184,7 @@ public class SKOSImporter {
         }
         final Vocabulary asset = constructVocabularyInstance();
         try {
-            final Instant timestamp = CREATED_FORMAT.parse(created.get(0).stringValue()).toInstant();
+            final Instant timestamp = createdFormat.parse(created.get(0).stringValue()).toInstant();
             final AbstractChangeRecord changeRecord = new PersistChangeRecord(asset);
             changeRecord.setAuthor(SecurityUtils.currentUser().toUser());
             changeRecord.setTimestamp(timestamp);

@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 
+import cz.cvut.kbss.termit.model.resource.Document;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -43,6 +44,9 @@ public class Vocabulary extends Asset<String> implements Serializable {
 
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private String description;
+
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument, cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER)
+    private Document document;
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar, cascade = CascadeType.PERSIST,
@@ -82,6 +86,14 @@ public class Vocabulary extends Asset<String> implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
     }
 
     public Glossary getGlossary() {

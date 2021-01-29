@@ -68,7 +68,7 @@ class TermTest {
     @Test
     void toCsvPutsCommentInQuotesToEscapeCommas() {
         final Term term = Generator.generateTermWithId();
-        term.setDescription( MultilingualString.create("Comment, with a comma", Constants.DEFAULT_LANGUAGE));
+        term.setDescription(MultilingualString.create("Comment, with a comma", Constants.DEFAULT_LANGUAGE));
         final String result = term.toCsv();
         assertThat(result, containsString("\"" + term.getDescription().get(Constants.DEFAULT_LANGUAGE) + "\""));
     }
@@ -278,5 +278,23 @@ class TermTest {
         final String list = items[2];
         assertTrue(list.matches(".+;.+"));
         sut.getAltLabels().forEach(t -> t.getValue().values().forEach(v -> assertTrue(list.contains(v))));
+    }
+
+    @Test
+    void toExcelHandlesNullAltLabelsAttribute() {
+        final Term sut = Generator.generateTermWithId();
+        final MultilingualString hiddenOne = MultilingualString.create("budova", "cs");
+        final MultilingualString hiddenTwo = MultilingualString.create("budovy", "cs");
+        sut.setAltLabels(null);
+        sut.setHiddenLabels(new HashSet<>(Arrays.asList(hiddenOne, hiddenTwo)));
+
+        final XSSFWorkbook wb = new XSSFWorkbook();
+        final XSSFSheet sheet = wb.createSheet("test");
+        final XSSFRow row = sheet.createRow(0);
+        sut.toExcel(row);
+        assertEquals(sut.getUri().toString(), row.getCell(0).getStringCellValue());
+        sut.getHiddenLabels().forEach(ms -> ms.getValue().values()
+                                              .forEach(v -> assertThat(row.getCell(3).getStringCellValue(),
+                                                      containsString(v))));
     }
 }

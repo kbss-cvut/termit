@@ -39,8 +39,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TermRepositoryServiceTest extends BaseServiceTestRunner {
@@ -213,6 +212,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         parent.setVocabulary(vocabulary.getUri());
         sut.addChildTerm(child, parent);
+        em.getEntityManagerFactory().getCache().evictAll();
         final Glossary result = em.find(Glossary.class, vocabulary.getGlossary().getUri());
         assertEquals(1, result.getRootTerms().size());
         assertTrue(result.getRootTerms().contains(parent.getUri()));
@@ -495,9 +495,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setVocabulary(childVocabulary.getUri());
 
         sut.addChildTerm(childTerm, parentTerm);
-        assertTrue(sut.findAll(childVocabulary).contains(childTerm));
         final Term result = em.find(Term.class, childTerm.getUri(), descriptorFactory.termDescriptor(childVocabulary));
         assertEquals(childTerm, result);
+        assertEquals(childVocabulary.getGlossary().getUri(), childTerm.getGlossary());
+        final Glossary childGlossary = em.find(Glossary.class, childVocabulary.getGlossary().getUri(),
+                descriptorFactory.glossaryDescriptor(childVocabulary));
+        assertThat(childGlossary.getRootTerms(), hasItem(childTerm.getUri()));
     }
 
     private Term generateParentTermFromDifferentVocabulary() {

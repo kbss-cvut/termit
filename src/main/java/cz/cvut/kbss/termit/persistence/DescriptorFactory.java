@@ -18,7 +18,6 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
-import cz.cvut.kbss.termit.model.DocumentVocabulary;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -92,7 +91,7 @@ public class DescriptorFactory {
         Objects.requireNonNull(vocabularyUri);
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "glossary"), glossaryDescriptor(vocabularyUri));
-        descriptor.addAttributeDescriptor(fieldSpec(DocumentVocabulary.class, "document"),
+        descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "document"),
                 documentDescriptor(vocabularyUri));
         // dependencies are inferred, so they cannot be in a specific context
         descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "dependencies"),
@@ -102,7 +101,7 @@ public class DescriptorFactory {
 
     /**
      * Creates a JOPA descriptor for a {@link Document} related to the specified vocabulary (presumably a {@link
-     * DocumentVocabulary}).
+     * Vocabulary}).
      * <p>
      * This means that the context of the Document (and all its relevant attributes) is given by the specified
      * vocabulary's IRI.
@@ -119,7 +118,7 @@ public class DescriptorFactory {
 
     /**
      * Creates a JOPA descriptor for a {@link Document} related to a vocabulary with the specified identifier
-     * (presumably of a {@link DocumentVocabulary}).
+     * (presumably of a {@link Vocabulary}).
      * <p>
      * This means that the context of the Document (and all its relevant attributes) is given by the specified IRI.
      * <p>
@@ -244,6 +243,7 @@ public class DescriptorFactory {
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         final EntityDescriptor parentDescriptor = new EntityDescriptor();
+        // Vocabulary field is inferred, so it cannot be in any specific context
         parentDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         persistenceUtils.getCurrentWorkspaceVocabularyContexts().forEach(parentDescriptor::addContext);

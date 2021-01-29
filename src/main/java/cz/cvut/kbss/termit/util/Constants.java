@@ -97,6 +97,16 @@ public class Constants {
     public static final String DEFAULT_TERM_NAMESPACE_SEPARATOR = "/pojem";
 
     /**
+     * Default piece of text appended to vocabulary IRI for file IRI generation.
+     * <p>
+     * For example, if we have a vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
+     * and a term with label {@code Inhabited area}, the resulting IRI will be {@code
+     * http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where 'SEPARATOR' is
+     * this constant.
+     */
+    public static final String DEFAULT_FILE_NAMESPACE_SEPARATOR = "/soubor";
+
+    /**
      * Default value of the {@link ConfigParam#CHANGE_TRACKING_CONTEXT_EXTENSION} configuration.
      */
     public static final String DEFAULT_CHANGE_TRACKING_CONTEXT_EXTENSION = "/zmeny";

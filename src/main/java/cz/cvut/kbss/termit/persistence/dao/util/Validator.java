@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -66,7 +67,7 @@ public class Validator {
     @Transactional
     public List<ValidationResult> validate(final Collection<URI> vocabularyIris)
         throws IOException {
-        LOG.info("Validating");
+        LOG.info("Validating {}",vocabularyIris);
         final com.github.sgov.server.Validator validator = new com.github.sgov.server.Validator();
         final Set<URL> rules = new HashSet<>();
         rules.addAll(
@@ -80,13 +81,9 @@ public class Validator {
                 .collect(Collectors.toList())
         );
 
-        LOG.debug("Constructing RDF4J model ...");
         final Model model = getModelFromRdf4jRepository(vocabularyIris);
-
-        LOG.debug("Validating ...");
         org.topbraid.shacl.validation.ValidationReport report = validator.validate(model, rules);
-
-        LOG.info("Processing validation results ...");
+        LOG.info("Done.");
         return report.results().stream()
             .sorted(new ValidationResultSeverityComparator()).map(result -> {
                 final URI termUri = URI.create(result.getFocusNode().toString());
@@ -96,11 +93,9 @@ public class Validator {
                 final URI resultPath = result.getPath() != null && result.getPath().isURIResource() ?
                     URI.create(result.getPath().getURI()) : null;
                 final MultilingualString messages = new MultilingualString(result.getMessages().stream()
-                    .map(m -> m.asLiteral())
+                    .map(RDFNode::asLiteral)
                     .collect(Collectors.toMap(Literal::getLanguage, Literal::getLexicalForm)));
 
-                LOG.debug("'{}' for {} with severity {} and rule {}",
-                    result.getMessage(),termUri, severity, errorUri);
                 return new ValidationResult()
                     .setTermUri(termUri)
                     .setIssueCauseUri(errorUri)

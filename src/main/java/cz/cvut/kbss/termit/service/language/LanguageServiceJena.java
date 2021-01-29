@@ -100,7 +100,6 @@ public class LanguageServiceJena extends LanguageService {
      *
      * @param resource source resource of the property
      * @param property property, value of which are used to construct the multilingual string
-     * @return
      */
     private MultilingualString create(final Resource resource, final Property property) {
         final MultilingualString s = new MultilingualString();

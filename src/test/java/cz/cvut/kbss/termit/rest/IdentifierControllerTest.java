@@ -30,7 +30,6 @@ import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import java.net.URI;
-import java.util.Objects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,6 +82,25 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
+    void generateIdentifierFailsWhenAssetTypeDoesNotSupportContextIri() throws Exception {
+        final String label = "Metropolitan plan";
+        mockMvc.perform(post(PATH)
+            .param("name", label)
+            .param("contextIri", "http://example.org/")
+            .param("assetType", "VOCABULARY")
+        ).andExpect(status().is4xxClientError()).andReturn();
+    }
+
+    @Test
+    void generateIdentifierFailsWhenAssetTypeRequiresContextIriButItIsNotProvided() throws Exception {
+        final String label = "Metropolitan plan";
+        mockMvc.perform(post(PATH)
+            .param("name", label)
+            .param("assetType", "FILE")
+        ).andExpect(status().is4xxClientError()).andReturn();
+    }
+
+    @Test
     void generateResourceIdentifierLetsServiceGenerateIdentifierUsingSpecifiedLabel()
         throws Exception {
         final String label = "Metropolitan plan";
@@ -95,6 +113,30 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
             .andExpect(status().isOk()).andReturn();
         assertEquals(uri.toString(), readValue(mvcResult, String.class));
         verify(identifierResolverMock).generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, label);
+    }
+
+    @Test
+    void generateFileIdentifierLetsServiceGenerateIdentifierDerivedFromDocumentIdUsingSpecifiedLabel()
+        throws Exception {
+        final String label = "Metropolitan plan";
+        final String name = "metropolitan-plan";
+        final String documentName = "doc";
+        final URI documentUri = URI.create(Environment.BASE_URI + "/" + documentName +
+            Constants.DEFAULT_FILE_NAMESPACE_SEPARATOR + "/" + name);Generator.generateUri();
+        final URI fileUri = URI.create(Environment.BASE_URI + "/" + documentName +
+            Constants.DEFAULT_FILE_NAMESPACE_SEPARATOR + "/" + name);
+        when(identifierResolverMock.generateDerivedIdentifier(any(),any(),any())).thenReturn(fileUri);
+
+        final MvcResult mvcResult = mockMvc
+            .perform(post(PATH)
+                .param("name", label)
+                .param("contextIri", documentUri.toString())
+                .param("assetType", "FILE")
+            )
+            .andExpect(status().isOk()).andReturn();
+        final String result = readValue(mvcResult, String.class);
+        assertEquals(fileUri.toString(), result);
+        verify(identifierResolverMock).generateDerivedIdentifier(documentUri, ConfigParam.FILE_NAMESPACE_SEPARATOR, label);
     }
 
     @Test
@@ -127,7 +169,7 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
             .perform(post(PATH)
                 .param("name", label)
-                .param("vocabularyIri", vocabularyUri.toString())
+                .param("contextIri", vocabularyUri.toString())
                 .param("assetType", "TERM")
             )
             .andExpect(status().isOk()).andReturn();
