@@ -14,25 +14,22 @@
  */
 package cz.cvut.kbss.termit.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import cz.cvut.kbss.termit.security.*;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
+import cz.cvut.kbss.termit.security.Security;
 import cz.cvut.kbss.termit.util.ConfigParam;
+import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
+import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -44,71 +41,34 @@ import java.util.Collections;
 @ComponentScan(basePackageClasses = Security.class)
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-
-    private final AuthenticationProvider authenticationProvider;
-
-    private final AuthenticationEntryPoint authenticationEntryPoint;
-
-    private final AuthenticationSuccess authenticationSuccessHandler;
-
-    private final AuthenticationFailureHandler authenticationFailureHandler;
-
-    private final JwtUtils jwtUtils;
-
-    private final SecurityUtils securityUtils;
-
-    private final TermItUserDetailsService userDetailsService;
-
-    private final ObjectMapper objectMapper;
+@KeycloakConfiguration
+public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
 
     private final cz.cvut.kbss.termit.util.Configuration config;
 
     @Autowired
-    public SecurityConfig(AuthenticationProvider authenticationProvider,
-                          AuthenticationEntryPoint authenticationEntryPoint,
-                          AuthenticationSuccess authenticationSuccessHandler,
-                          AuthenticationFailureHandler authenticationFailureHandler,
-                          JwtUtils jwtUtils, SecurityUtils securityUtils,
-                          TermItUserDetailsService userDetailsService,
-                          ObjectMapper objectMapper, cz.cvut.kbss.termit.util.Configuration config) {
-        this.authenticationProvider = authenticationProvider;
-        this.authenticationEntryPoint = authenticationEntryPoint;
-        this.authenticationSuccessHandler = authenticationSuccessHandler;
-        this.authenticationFailureHandler = authenticationFailureHandler;
-        this.jwtUtils = jwtUtils;
-        this.securityUtils = securityUtils;
-        this.userDetailsService = userDetailsService;
-        this.objectMapper = objectMapper;
+    public SecurityConfig(cz.cvut.kbss.termit.util.Configuration config) {
         this.config = config;
     }
 
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) {
+        auth.authenticationProvider(keycloakAuthenticationProvider());
+    }
+
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) {
-        auth.authenticationProvider(authenticationProvider);
+    @Bean
+    protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf().disable()
-            .authorizeRequests().antMatchers("/**").permitAll()
-            .and().exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
-            .and().cors().and().csrf().disable()
-            .addFilter(authenticationFilter())
-            .addFilter(
-                    new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils, userDetailsService,
-                            objectMapper))
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER);
-    }
-
-    @Bean
-    public JwtAuthenticationFilter authenticationFilter() throws Exception {
-        final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager(),
-                jwtUtils);
-        authenticationFilter.setFilterProcessesUrl(SecurityConstants.SECURITY_CHECK_URI);
-        authenticationFilter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
-        authenticationFilter.setAuthenticationFailureHandler(authenticationFailureHandler);
-        return authenticationFilter;
+        super.configure(http);
+        http.authorizeRequests().antMatchers("/rest/query").permitAll()
+            .and().cors()
+            .and().csrf().disable()
+            .authorizeRequests().antMatchers("/**").permitAll();
     }
 
     @Bean

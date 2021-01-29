@@ -16,76 +16,38 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.validation.Validator;
+import java.net.URI;
+import java.util.List;
+import java.util.Optional;
 
 @Service
-public class UserRepositoryService extends BaseRepositoryService<UserAccount> {
+public class UserRepositoryService {
 
     private final UserAccountDao userAccountDao;
 
-    private final IdentifierResolver idResolver;
-
-    private final PasswordEncoder passwordEncoder;
-
     @Autowired
-    public UserRepositoryService(UserAccountDao userAccountDao, IdentifierResolver idResolver,
-                                 PasswordEncoder passwordEncoder, Validator validator) {
-        super(validator);
+    public UserRepositoryService(UserAccountDao userAccountDao) {
         this.userAccountDao = userAccountDao;
-        this.idResolver = idResolver;
-        this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
-    protected GenericDao<UserAccount> getPrimaryDao() {
-        return userAccountDao;
+    public List<UserAccount> findAll() {
+        final List<UserAccount> accounts = userAccountDao.findAll();
+        accounts.forEach(UserAccount::erasePassword);
+        return accounts;
     }
 
-    /**
-     * Checks whether a user with the specified username exists.
-     *
-     * @param username Username to search by
-     * @return {@code true} if a user with the specifier username exists
-     */
-    public boolean exists(String username) {
-        return userAccountDao.exists(username);
+    public Optional<UserAccount> find(URI uri) {
+        return userAccountDao.find(uri).map(u -> {
+            u.erasePassword();
+            return u;
+        });
     }
 
-    @Override
-    protected UserAccount postLoad(UserAccount instance) {
-        instance.erasePassword();
-        return instance;
-    }
-
-    @Override
-    protected void prePersist(UserAccount instance) {
-        validate(instance);
-        if (instance.getUri() == null) {
-            instance.setUri(idResolver
-                    .generateIdentifier(ConfigParam.NAMESPACE_USER, instance.getFirstName(), instance.getLastName()));
-        }
-        if (instance.getPassword() != null) {
-            instance.setPassword(passwordEncoder.encode(instance.getPassword()));
-        }
-    }
-
-    @Override
-    protected void preUpdate(UserAccount instance) {
-        final UserAccount original = userAccountDao.find(instance.getUri()).orElseThrow(
-                () -> new NotFoundException("User " + instance + " does not exist."));
-        if (instance.getPassword() != null) {
-            instance.setPassword(passwordEncoder.encode(instance.getPassword()));
-        } else {
-            instance.setPassword(original.getPassword());
-        }
-        validate(instance);
+    public UserAccount findRequired(URI uri) {
+        return find(uri).orElseThrow(() -> NotFoundException.create(UserAccount.class.getSimpleName(), uri));
     }
 }
