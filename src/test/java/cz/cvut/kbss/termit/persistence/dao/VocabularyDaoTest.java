@@ -408,4 +408,22 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final List<Vocabulary> result = sut.getDependentVocabularies(vocabulary);
         assertEquals(Collections.singletonList(importingVocabulary), result);
     }
+
+    @Test
+    void findVocabularyOfGlossaryRetrievesVocabularyContainingSpecifiedGlossary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> sut.persist(vocabulary));
+
+        final Optional<Vocabulary> result = sut.findVocabularyOfGlossary(vocabulary.getGlossary().getUri());
+        assertNotNull(result);
+        assertTrue(result.isPresent());
+        assertEquals(vocabulary, result.get());
+    }
+
+    @Test
+    void findVocabularyOfGlossaryReturnsEmptyOptionalForUnknownGlossaryUri() {
+        final Optional<Vocabulary> result = sut.findVocabularyOfGlossary(Generator.generateUri());
+        assertNotNull(result);
+        assertFalse(result.isPresent());
+    }
 }
