@@ -421,10 +421,10 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void updateAddsTermToRootTermsWhenParentIsRemovedFromIt() {
         final Term parent = Generator.generateTermWithId();
-        parent.setVocabulary(vocabulary.getUri());
+        parent.setGlossary(vocabulary.getGlossary().getUri());
         final Term child = Generator.generateTermWithId();
-        child.setVocabulary(vocabulary.getUri());
         child.addParentTerm(parent);
+        child.setGlossary(vocabulary.getGlossary().getUri());
         transactional(() -> {
             vocabulary.getGlossary().addRootTerm(parent);
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
@@ -565,6 +565,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.update(childTerm);
         assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList())
                       .contains(childTerm));
+        em.getEntityManagerFactory().getCache().evictAll();
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }

@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
@@ -294,6 +295,23 @@ public class VocabularyDao extends WorkspaceBasedAssetDao<Vocabulary> implements
             return validator.validate(closure);
         } catch (IOException e) {
             throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Gets vocabulary which contains a glossary with the specified identifier.
+     *
+     * @param glossaryUri Glossary identifier
+     * @return {@code Optional} wrapping matching vocabulary, if found. An empty {@code Optional} otherwise
+     */
+    public Optional<Vocabulary> findVocabularyOfGlossary(URI glossaryUri) {
+        Objects.requireNonNull(glossaryUri);
+        try {
+            return Optional.of(em.createQuery(
+                    "SELECT DISTINCT v FROM " + Vocabulary.class.getSimpleName() + " v WHERE v.glossary = :glossary",
+                    Vocabulary.class).setParameter("glossary", glossaryUri).getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
         }
     }
 }
