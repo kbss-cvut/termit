@@ -2,7 +2,6 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.TermDefinitionSourceExistsException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
@@ -16,6 +15,7 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.*;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * Service for term-related business logic.
  */
 @Service
-public class TermService implements RudService<Term>,ChangeRecordProvider<Term> {
+public class TermService implements RudService<Term>, ChangeRecordProvider<Term> {
 
     private final VocabularyExporters exporters;
 
@@ -304,13 +304,14 @@ public class TermService implements RudService<Term>,ChangeRecordProvider<Term> 
      * @param term             Term whose definition source is being specified
      * @param definitionSource Definition source representation
      */
+    @Transactional
     public void setTermDefinitionSource(Term term, TermDefinitionSource definitionSource) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(definitionSource);
         definitionSource.setTerm(term.getUri());
-        if (repositoryService.findRequired(term.getUri()).getDefinitionSource() != null) {
-            throw new TermDefinitionSourceExistsException(
-                    "Term " + term + " already has a definition source assigned.");
+        final Term existingTerm = repositoryService.findRequired(term.getUri());
+        if (existingTerm.getDefinitionSource() != null) {
+            termOccurrenceService.removeOccurrence(existingTerm.getDefinitionSource());
         }
         termOccurrenceService.persistOccurrence(definitionSource);
     }
@@ -321,7 +322,7 @@ public class TermService implements RudService<Term>,ChangeRecordProvider<Term> 
      * @param id Term occurrence identifier
      * @return Matching Term occurrence reference
      */
-    public TermOccurrence getRequiredOcurrenceReference(URI id) {
+    public TermOccurrence getRequiredOccurrenceReference(URI id) {
         return termOccurrenceService.getRequiredReference(id);
     }
 
