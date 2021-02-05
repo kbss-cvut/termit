@@ -4,7 +4,6 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.TermDefinitionSourceExistsException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
@@ -264,7 +263,7 @@ class TermServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void setTermDefinitionThrowsTermDefinitionSourceExistsExceptionWhenTermAlreadyHasDefinition() {
+    void setTermDefinitionReplacesExistingTermDefinition() {
         final Term term = Generator.generateTermWithId();
         final TermDefinitionSource existingSource = new TermDefinitionSource(term.getUri(),
                 new FileOccurrenceTarget(Generator.generateFileWithId("existing.html")));
@@ -273,9 +272,10 @@ class TermServiceTest extends BaseServiceTestRunner {
         definitionSource.setTarget(new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
         when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
 
-        assertThrows(TermDefinitionSourceExistsException.class,
-                () -> sut.setTermDefinitionSource(term, definitionSource));
-        verify(termOccurrenceService, never()).persistOccurrence(definitionSource);
+        sut.setTermDefinitionSource(term, definitionSource);
+        assertEquals(term.getUri(), definitionSource.getTerm());
+        verify(termOccurrenceService).removeOccurrence(existingSource);
+        verify(termOccurrenceService).persistOccurrence(definitionSource);
     }
 
     @Test

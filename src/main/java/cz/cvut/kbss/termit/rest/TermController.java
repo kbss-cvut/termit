@@ -395,7 +395,7 @@ public class TermController extends BaseController {
     public void removeOccurrence(@PathVariable String normalizedName,
                                  @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
-        termService.removeOccurrence(termService.getRequiredOcurrenceReference(identifier));
+        termService.removeOccurrence(termService.getRequiredOccurrenceReference(identifier));
         LOG.debug("Occurrence with identifier {} removed.", identifier);
     }
 
