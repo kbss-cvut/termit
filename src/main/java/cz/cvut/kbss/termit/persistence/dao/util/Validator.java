@@ -71,14 +71,20 @@ public class Validator {
         final com.github.sgov.server.Validator validator = new com.github.sgov.server.Validator();
         final Set<URL> rules = new HashSet<>();
         rules.addAll(
-            validator.getGlossaryRules());
+            validator.getGlossaryRules().stream().filter( r ->
+                // currently only using content rules, not OntoUml, as TermIt does not support adding
+                // OntoUml rules. Also filtering out m2.ttl, as it is not possible to assign more types
+                // to a term in TermIt
+                r.toString().contains("m1.ttl")
+            ).collect(Collectors.toList())
+        );
         rules.addAll(
             validator.getModelRules().stream().filter( r ->
                 // currently only using content rules, not OntoUml, as TermIt does not support adding
-                // OntoUml rules
+                // OntoUml rules. Also filtering out m2.ttl, as it is not possible to assign more types
+                // to a term in TermIt
                     r.toString().contains("m1.ttl")
-                 || r.toString().contains("m2.ttl"))
-                .collect(Collectors.toList())
+            ).collect(Collectors.toList())
         );
 
         final Model model = getModelFromRdf4jRepository(vocabularyIris);
