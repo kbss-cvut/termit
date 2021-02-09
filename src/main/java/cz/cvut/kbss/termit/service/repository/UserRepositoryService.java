@@ -88,4 +88,13 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount> {
         }
         validate(instance);
     }
+
+    /**
+     * Checks whether an admin account exists in the system.
+     *
+     * @return {@code true} when there is an admin account, {@code false} otherwise
+     */
+    public boolean doesAdminExist() {
+        return userAccountDao.doesAdminExist();
+    }
 }

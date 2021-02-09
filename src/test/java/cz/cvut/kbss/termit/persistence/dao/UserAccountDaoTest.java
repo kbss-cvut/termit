@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,5 +82,22 @@ class UserAccountDaoTest extends BaseDaoTestRunner {
         final List<UserAccount> result = sut.findAll();
         accounts.sort(Comparator.comparing(UserAccount::getLastName).thenComparing(UserAccount::getFirstName));
         assertEquals(result, accounts);
+    }
+
+    @Test
+    void doesAdminExistReturnsTrueWhenAdminAccountExists() {
+        final UserAccount user = Generator.generateUserAccountWithPassword();
+        user.addType(Vocabulary.s_c_administrator_termitu);
+        transactional(() -> em.persist(user));
+
+        assertTrue(sut.doesAdminExist());
+    }
+
+    @Test
+    void doesAdminExistReturnsFalseWhenNoAdminAccountExists() {
+        final UserAccount user = Generator.generateUserAccountWithPassword();
+        transactional(() -> em.persist(user));
+
+        assertFalse(sut.doesAdminExist());
     }
 }
