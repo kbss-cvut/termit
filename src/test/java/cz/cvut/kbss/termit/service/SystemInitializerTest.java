@@ -1,17 +1,17 @@
 /**
  * TermIt
  * Copyright (C) 2019 Czech Technical University in Prague
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
@@ -106,6 +106,15 @@ class SystemInitializerTest extends BaseServiceTestRunner {
         final UserAccount result = em.find(UserAccount.class, ADMIN_URI);
         // We know that password is generated, so the same password means no new instance was created
         assertEquals(admin.getPassword(), result.getPassword());
+    }
+
+    @Test
+    void doesNotCreateNewAdminWhenDifferentAdminAlreadyExists() {
+        final UserAccount differentAdmin = Generator.generateUserAccount();
+        differentAdmin.addType(Vocabulary.s_c_administrator_termitu);
+        transactional(() -> em.persist(differentAdmin));
+        sut.initSystemAdmin();
+        assertNull(em.find(UserAccount.class, ADMIN_URI));
     }
 
     @Test
