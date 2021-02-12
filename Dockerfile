@@ -5,6 +5,7 @@ ARG NAMESPACE_VOCABULARY=http://onto.fel.cvut.cz/ontologies/slovnik/
 ARG NAMESPACE_USER=http://onto.fel.cvut.cz/ontologies/uzivatel/
 ARG NAMESPACE_RESOURCE=http://onto.fel.cvut.cz/ontologies/zdroj/
 ARG TEXT_ANALYSIS_URL=http://localhost/annotace/annotate
+ARG DEPLOYMENT=NOT-SPECIFIED
 
 ENV TERMIT_HOME=/backend
 ENV FILE_STORAGE=$TERMIT_HOME/storage
@@ -18,7 +19,6 @@ RUN sed -E -i "s@namespace[.]user=(.*)@namespace.user=$NAMESPACE_USER@g" src/mai
 RUN sed -E -i "s@namespace[.]resource=(.*)@namespace.resource=$NAMESPACE_RESOURCE@g" src/main/resources/config.properties
 RUN sed -E -i "s@file[.]storage=(.*)@file.storage=$FILE_STORAGE@g" src/main/resources/config.properties
 RUN sed -E -i "s@textAnalysis[.]url=(.*)@textAnalysis.url=$TEXT_ANALYSIS_URL@g" src/main/resources/config.properties
-RUN mvn clean install -T 2C -DskipTests=true
-
+RUN mvn clean package -B -T 2C -P production,graphdb "-Ddeployment=$DEPLOYMENT"
 FROM tomcat:9-jdk8-corretto
 COPY --from=maven_builder /backend/target/termit.war /usr/local/tomcat/webapps
