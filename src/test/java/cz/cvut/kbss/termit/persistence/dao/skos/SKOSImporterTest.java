@@ -181,7 +181,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void importGeneratesRelationshipsBetweenTermsAndVocabularyBasedOnSKOSInScheme() {
+    void importGeneratesRelationshipsBetweenTermsAndGlossary() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             sut.importVocabulary(Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"),
@@ -192,8 +192,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 final List<Resource> terms = Iterations.stream(conn.getStatements(null, RDF.TYPE, SKOS.CONCEPT))
                                                        .map(Statement::getSubject).collect(Collectors.toList());
                 assertFalse(terms.isEmpty());
-                terms.forEach(t -> assertTrue(conn.getStatements(t, vf.createIRI(Vocabulary.s_p_je_pojmem_ze_slovniku),
-                        vf.createIRI(VOCABULARY_IRI)).hasNext()));
+                terms.forEach(t -> assertTrue(conn.getStatements(t, SKOS.IN_SCHEME,
+                        vf.createIRI(GLOSSARY_IRI)).hasNext()));
             }
         });
     }
