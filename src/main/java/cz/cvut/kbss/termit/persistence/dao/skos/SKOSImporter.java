@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,7 +78,7 @@ public class SKOSImporter {
         parseDataFromStreams(mediaType, inputStreams);
         resolveVocabularyIri();
         LOG.trace("Vocabulary identifier resolved to {}.", vocabularyIri);
-        insertTermVocabularyMembership();
+        insertTermGlossaryMembership();
         insertTopConceptAssertions();
         addDataIntoRepository();
         generatePersistChangeRecord();
@@ -137,27 +138,34 @@ public class SKOSImporter {
         return instance;
     }
 
-    private void insertTermVocabularyMembership() {
-        LOG.trace("Generating vocabulary membership statements for terms.");
-        final IRI vocabularyId = vf.createIRI(vocabularyIri);
+    private void insertTermGlossaryMembership() {
+        LOG.trace("Ensuring glossary membership statements (skos:inScheme) exist for terms.");
+        final Optional<IRI> glossary = resolveGlossary();
+        if (!glossary.isPresent()) {
+            LOG.warn("No glossary found. Will not be able to ensure terms are in a SKOS scheme.");
+            return;
+        }
         model.addAll(model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream()
-                          .map(s -> vf.createStatement(s.getSubject(), vf.createIRI(
-                                  cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku), vocabularyId))
+                          .map(s -> vf.createStatement(s.getSubject(), SKOS.IN_SCHEME, glossary.get()))
                           .collect(Collectors.toList()));
     }
 
-    private void insertTopConceptAssertions() {
-        LOG.trace("Generating top concept assertions.");
+    private Optional<IRI> resolveGlossary() {
         final IRI vocabularyId = vf.createIRI(vocabularyIri);
         final List<Value> glossary = model
                 .filter(vocabularyId, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), null).stream()
                 .map(Statement::getObject).collect(Collectors.toList());
-        if (glossary.isEmpty()) {
+        return glossary.size() != 0 ? Optional.of((IRI) glossary.get(0)) : Optional.empty();
+    }
+
+    private void insertTopConceptAssertions() {
+        LOG.trace("Generating top concept assertions.");
+        final Optional<IRI> glossary = resolveGlossary();
+        if (!glossary.isPresent()) {
             LOG.debug("No glossary found for imported vocabulary {}, top concepts will not be identified.",
-                    vocabularyId);
+                    vocabularyIri);
             return;
         }
-        assert glossary.size() == 1;
         final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream().map(Statement::getSubject)
                                           .collect(Collectors.toList());
         terms.forEach(t -> {
@@ -170,7 +178,7 @@ public class SKOSImporter {
             final boolean isNarrower = narrower.stream()
                                                .anyMatch(p -> model.contains((Resource) p, RDF.TYPE, SKOS.CONCEPT));
             if (!hasBroader && !isNarrower) {
-                model.add((Resource) glossary.get(0), SKOS.HAS_TOP_CONCEPT, t);
+                model.add(glossary.get(), SKOS.HAS_TOP_CONCEPT, t);
             }
         });
     }
