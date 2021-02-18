@@ -207,8 +207,8 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
 
     private List<TermOccurrence> generateTermOccurrences(Term term, Asset<?> target, boolean suggested) {
         final List<TermOccurrence> occurrences = IntStream.range(0, Generator.randomInt(5, 10))
-                                                          .mapToObj(i -> createOccurrence(term, target, suggested))
-                                                          .collect(Collectors.toList());
+                .mapToObj(i -> createOccurrence(term, target, suggested))
+                .collect(Collectors.toList());
         transactional(() -> occurrences.forEach(to -> {
             em.persist(to);
             em.persist(to.getTarget());
@@ -254,8 +254,8 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
             assertEquals(term.getPrimaryLabel(), rta.getTermLabel());
         });
         final Optional<ResourceTermAssignments> occ = result.stream()
-                                                            .filter(rta -> rta instanceof ResourceTermOccurrences)
-                                                            .findAny();
+                .filter(rta -> rta instanceof ResourceTermOccurrences)
+                .findAny();
         assertTrue(occ.isPresent());
         assertEquals(occurrences.size(), ((ResourceTermOccurrences) occ.get()).getCount().intValue());
     }
@@ -280,12 +280,12 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
             assertEquals(file.getUri(), rta.getResource());
             assertEquals(term.getUri(), rta.getTerm());
             assertEquals(term.getPrimaryLabel(), rta.getTermLabel());
-            assertThat(rta.getTypes(), anyOf(hasItem(Vocabulary.s_c_navrzene_prirazeni_termu),
-                    hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+            assertThat(rta.getTypes(), either(hasItem(Vocabulary.s_c_navrzene_prirazeni_termu))
+                    .or(hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
         });
         final Optional<ResourceTermAssignments> occ = result.stream()
-                                                            .filter(rta -> rta instanceof ResourceTermOccurrences)
-                                                            .findAny();
+                .filter(rta -> rta instanceof ResourceTermOccurrences)
+                .findAny();
         assertTrue(occ.isPresent());
         assertEquals(occurrences.size(), ((ResourceTermOccurrences) occ.get()).getCount().intValue());
     }
