@@ -385,3 +385,21 @@ termit-pojem:výskyt-termu
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Term occurrence"@en , "Výskyt termu"@cs .
+
+termit-pojem:reakce
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/objekt> , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Reaction"@en , "Reakce"@cs .
+
+termit-pojem:má-reakci
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has reaction"@en , "Má reakci"@cs .
