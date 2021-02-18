@@ -220,3 +220,13 @@ termit-pojem:má-analyzovaný-zdroj
 termit-pojem:výskyt-termu
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
         rdfs:subClassOf  termit-pojem:přiřazení-termu .
+
+termit-pojem:reakce
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+termit-pojem:má-reakci
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         <http://rdfs.org/sioc/types#Comment> ;
+        rdfs:range          termit-pojem:reakce ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
