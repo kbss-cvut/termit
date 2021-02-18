@@ -2,13 +2,18 @@ package cz.cvut.kbss.termit.persistence.dao.comment;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.comment.CommentReaction;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +75,10 @@ class CommentDaoTest extends BaseDaoTestRunner {
     private EntityDescriptor createDescriptor() {
         final EntityDescriptor descriptor = new EntityDescriptor(
                 URI.create(configuration.get(ConfigParam.COMMENTS_CONTEXT)));
-        descriptor.addAttributeDescriptor(Comment.getAuthorField(), new EntityDescriptor(null));
+        descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("author"),
+                new EntityDescriptor((URI) null));
+        descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("reactions"),
+                new FieldDescriptor((URI) null, em.getMetamodel().entity(Comment.class).getAttribute("reactions")));
         return descriptor;
     }
 
@@ -129,5 +137,34 @@ class CommentDaoTest extends BaseDaoTestRunner {
         assertNotNull(result);
         assertEquals(comments.size(), result.size());
         assertTrue(comments.containsAll(result));
+    }
+
+    @Test
+    void findAllByAssetHandlesCorrectlyReactionContext() {
+        final Term term = Generator.generateTermWithId();
+
+        final Comment comment = generateComment(term.getUri());
+        final EntityDescriptor descriptor = createDescriptor();
+        transactional(() -> {
+            em.persist(comment, descriptor);
+            final CommentReaction reaction = new CommentReaction(author, comment);
+            reaction.addType("https://www.w3.org/ns/activitystreams#Like");
+            em.persist(reaction, new EntityDescriptor(URI.create(configuration.get(ConfigParam.COMMENTS_CONTEXT))));
+            generateCommentReactionReference(reaction);
+        });
+        em.getEntityManagerFactory().getCache().evictAll();
+        final List<Comment> result = sut.findAll(term);
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    private void generateCommentReactionReference(CommentReaction reaction) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (final RepositoryConnection conn = repo.getConnection()) {
+            final ValueFactory vf = conn.getValueFactory();
+            conn.add(vf.createIRI(reaction.getObject().toString()),
+                    vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-reakci"),
+                    vf.createIRI(reaction.getUri().toString()));
+        }
     }
 }

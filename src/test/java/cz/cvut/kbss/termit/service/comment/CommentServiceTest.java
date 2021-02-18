@@ -11,6 +11,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -33,6 +34,9 @@ class CommentServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private CommentService sut;
@@ -72,7 +76,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             final EntityDescriptor descriptor = new EntityDescriptor(
                     URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
-            descriptor.addAttributeDescriptor(Comment.getAuthorField(), new EntityDescriptor(null));
+            descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
             comments.forEach(c -> em.persist(c, descriptor));
         });
 
@@ -103,7 +107,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             final EntityDescriptor descriptor = new EntityDescriptor(
                     URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
-            descriptor.addAttributeDescriptor(Comment.getAuthorField(), new EntityDescriptor(null));
+            descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
             em.persist(comment, descriptor);
         });
         return comment;
@@ -144,7 +148,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
             em.persist(differentUser);
             final EntityDescriptor descriptor = new EntityDescriptor(
                     URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
-            descriptor.addAttributeDescriptor(Comment.getAuthorField(), new EntityDescriptor(null));
+            descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
             em.persist(comment, descriptor);
         });
 
