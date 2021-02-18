@@ -50,18 +50,17 @@ public class CommentReactionDao {
      * @param comment Comment reacted to
      */
     public void removeExisting(User author, Comment comment) {
-        // TODO replace literal IRIs with constants once the comments model is settled
         try {
             em.createNativeQuery("DELETE WHERE {" +
                     "?x a ?type ;" +
                     "?hasAuthor ?author ;" +
                     "?reactsTo ?comment . }")
-              .setParameter("hasAuthor", URI.create("https://www.w3.org/ns/activitystreams#actor"))
-              .setParameter("author", author)
-              .setParameter("reactsTo", URI.create("https://www.w3.org/ns/activitystreams#object"))
-              .setParameter("comment", comment).executeUpdate();
+                    .setParameter("hasAuthor", em.getMetamodel().entity(CommentReaction.class).getAttribute("actor").getIRI().toURI())
+                    .setParameter("author", author)
+                    .setParameter("reactsTo", em.getMetamodel().entity(CommentReaction.class).getAttribute("object").getIRI().toURI())
+                    .setParameter("comment", comment).executeUpdate();
             em.getEntityManagerFactory().getCache()
-              .evict(Comment.class, comment.getUri(), commentDescriptor.getSingleContext().orElse(null));
+                    .evict(Comment.class, comment.getUri(), commentDescriptor.getSingleContext().orElse(null));
             em.getEntityManagerFactory().getCache().evict(CommentReaction.class);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
