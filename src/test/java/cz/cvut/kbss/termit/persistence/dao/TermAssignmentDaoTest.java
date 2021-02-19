@@ -254,7 +254,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
             assertEquals(term.getPrimaryLabel(), rta.getTermLabel());
         });
         final Optional<ResourceTermAssignments> occ = result.stream()
-                .filter(rta -> rta instanceof ResourceTermOccurrences)
+                .filter(ResourceTermOccurrences.class::isInstance)
                 .findAny();
         assertTrue(occ.isPresent());
         assertEquals(occurrences.size(), ((ResourceTermOccurrences) occ.get()).getCount().intValue());

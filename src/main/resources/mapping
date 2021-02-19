@@ -1,3 +1,5 @@
 http://onto.fel.cvut.cz/ontologies/application/termit > ../../../ontology/termit-slovník.ttl
 http://onto.fel.cvut.cz/ontologies/application/termit/glosář > ../../../ontology/termit-glosář.ttl
 http://onto.fel.cvut.cz/ontologies/application/termit/model > ../../../ontology/termit-model.ttl
+http://rdfs.org/sioc/ns# > ../../../ontology/sioc-ns.rdf
+http://www.w3.org/ns/activitystreams# > https://raw.githubusercontent.com/w3c/activitystreams/master/vocabulary/activitystreams2.owl
