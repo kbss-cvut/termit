@@ -1,12 +1,10 @@
 package cz.cvut.kbss.termit.model.comment;
 
 import cz.cvut.kbss.jopa.model.annotations.*;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.Date;
 import java.util.Objects;
@@ -15,22 +13,22 @@ import java.util.Set;
 /**
  * Represents a single comment in the comment/discussion module.
  */
-@OWLClass(iri = "http://rdfs.org/sioc/types#Comment")
+@OWLClass(iri = Vocabulary.s_c_Comment)
 public class Comment extends AbstractEntity {
 
     /**
      * The asset to which this comment has been made.
      */
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#topic")
+    @OWLObjectProperty(iri = Vocabulary.s_p_topic)
     private URI asset;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = "http://rdfs.org/sioc/ns#content")
+    @OWLDataProperty(iri = Vocabulary.s_p_content)
     private String content;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = "http://rdfs.org/sioc/ns#has_creator", fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_creator, fetch = FetchType.EAGER)
     private User author;
 
     @ParticipationConstraints(nonEmpty = true)
@@ -131,21 +129,5 @@ public class Comment extends AbstractEntity {
                 ", author=" + author +
                 ", created=" + created +
                 "}";
-    }
-
-    public static Field getAuthorField() {
-        try {
-            return Comment.class.getDeclaredField("author");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"author\" field.", e);
-        }
-    }
-
-    public static Field getReactionsField() {
-        try {
-            return Comment.class.getDeclaredField("reactions");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"likes\" field.", e);
-        }
     }
 }

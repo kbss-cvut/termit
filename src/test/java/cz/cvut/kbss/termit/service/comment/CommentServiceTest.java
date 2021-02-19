@@ -15,6 +15,7 @@ import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -182,7 +183,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
     @Test
     void addReactionToCreatesLikeByCurrentUser() {
         final Comment comment = persistComment();
-        final URI reaction = URI.create("https://www.w3.org/ns/activitystreams#Like");
+        final URI reaction = URI.create(Vocabulary.s_c_Like);
 
         sut.addReactionTo(comment, reaction.toString());
         assertTrue(doesReactionExist(comment, reaction));
@@ -194,18 +195,18 @@ class CommentServiceTest extends BaseServiceTestRunner {
                 "?x a ?type ;" +
                 "?hasAuthor ?author ;" +
                 "?reactsTo ?comment .}", Boolean.class)
-                 .setParameter("type", type)
-                 .setParameter("hasAuthor", URI.create("https://www.w3.org/ns/activitystreams#actor"))
-                 .setParameter("author", author)
-                 .setParameter("reactsTo", URI.create("https://www.w3.org/ns/activitystreams#object"))
-                 .setParameter("comment", comment).getSingleResult();
+                .setParameter("type", type)
+                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_actor))
+                .setParameter("author", author)
+                .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
+                .setParameter("comment", comment).getSingleResult();
     }
 
     @Test
     void addReactionToRemovesPreexistingCommentReaction() {
         final Comment comment = persistComment();
         final CommentReaction existingReaction = persistReaction(comment);
-        final URI reaction = URI.create("https://www.w3.org/ns/activitystreams#Like");
+        final URI reaction = URI.create(Vocabulary.s_c_Like);
 
         sut.addReactionTo(comment, reaction.toString());
         assertNull(em.find(CommentReaction.class, existingReaction.getUri()));
@@ -214,7 +215,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
 
     private CommentReaction persistReaction(Comment toComment) {
         final CommentReaction reaction = new CommentReaction(author, toComment);
-        reaction.addType("https://www.w3.org/ns/activitystreams#Dislike");
+        reaction.addType(Vocabulary.s_c_Dislike);
         transactional(
                 () -> em.persist(reaction, new EntityDescriptor(URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)))));
         return reaction;
