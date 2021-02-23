@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.config;
 
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
+import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,11 +22,14 @@ class ConfigurationProviderTest {
     @Autowired
     private Configuration config;
 
+    @Autowired
+    private UserRoleRepositoryService service;
+
     private ConfigurationProvider sut;
 
     @BeforeEach
     void setUp() {
-        this.sut = new ConfigurationProvider(config);
+        this.sut = new ConfigurationProvider(config, service);
     }
 
     @Test

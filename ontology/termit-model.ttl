@@ -32,7 +32,7 @@ termit-pojem:zablokovaný-uživatel-termitu
         a       owl:Class .
 
 termit-pojem:administrátor-termitu
-        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class, termit-pojem:uživatelská-role;
         rdfs:subClassOf  termit-pojem:uživatel-termitu .
 
 termit-pojem:má-koncovou-pozici
@@ -196,7 +196,11 @@ termit-pojem:selektor-text-quote
         rdfs:subClassOf  termit-pojem:selektor .
 
 termit-pojem:omezený-uživatel-termitu
-        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit-pojem:uživatelská-role ;
+        rdfs:subClassOf  termit-pojem:uživatel-termitu .
+
+termit-pojem:plný-uživatel-termitu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit-pojem:uživatelská-role ;
         rdfs:subClassOf  termit-pojem:uživatel-termitu .
 
 termit-pojem:má-suffix-text-quote
@@ -230,3 +234,18 @@ termit-pojem:má-reakci
         rdfs:domain         <http://rdfs.org/sioc/types#Comment> ;
         rdfs:range          termit-pojem:reakce ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+<http://purl.org/dc/terms/language>
+        a                owl:AnnotationProperty .
+
+termit-pojem:má-uživatelskou-roli
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:uživatel-termitu ;
+        rdfs:range          termit-pojem:uživatelská-role ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:uživatelská-role
+        a                   <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
+
+termit-pojem:konfigurace
+        a               owl:Class .
