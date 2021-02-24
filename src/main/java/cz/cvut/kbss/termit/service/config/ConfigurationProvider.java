@@ -1,14 +1,11 @@
 package cz.cvut.kbss.termit.service.config;
 
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
-import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.util.HashSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,14 +33,10 @@ public class ConfigurationProvider {
      * @return Configuration object
      */
     public ConfigurationDto getConfiguration() {
-        try {
-            final ConfigurationDto result = new ConfigurationDto();
-            result.setId(new URL(Vocabulary.s_c_konfigurace + "/default"));
-            result.setLanguage(config.get(ConfigParam.LANGUAGE));
-            result.setRoles(new HashSet<>(service.findAll()));
-            return result;
-        } catch(MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        final ConfigurationDto result = new ConfigurationDto();
+        result.setId(URI.create(Vocabulary.s_c_konfigurace + "/default"));
+        result.setLanguage(config.get(ConfigParam.LANGUAGE));
+        result.setRoles(new HashSet<>(service.findAll()));
+        return result;
     }
 }

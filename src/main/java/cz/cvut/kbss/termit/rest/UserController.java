@@ -45,8 +45,7 @@ public class UserController extends BaseController {
     private final UserService userService;
 
     @Autowired
-    public UserController(UserService userService, IdentifierResolver idResolver,
-                          Configuration config) {
+    public UserController(UserService userService, IdentifierResolver idResolver, Configuration config) {
         super(idResolver, config);
         this.userService = userService;
     }
@@ -57,15 +56,13 @@ public class UserController extends BaseController {
         return userService.findAll();
     }
 
-    @GetMapping(value = "/current", produces = {MediaType.APPLICATION_JSON_VALUE,
-        JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/current", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public UserAccount getCurrent() {
         return userService.getCurrent();
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping(value = "/current",
-        consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PutMapping(value = "/current", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public void updateCurrent(@RequestBody UserUpdateDto update) {
         userService.updateCurrent(update);
         LOG.debug("User {} successfully updated.", update);
@@ -74,8 +71,7 @@ public class UserController extends BaseController {
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping(value = "/{fragment}/lock")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void unlock(@PathVariable(name = "fragment") String identifierFragment,
-                       @RequestBody String newPassword) {
+    public void unlock(@PathVariable(name = "fragment") String identifierFragment, @RequestBody String newPassword) {
         final UserAccount user = getUserAccountForUpdate(identifierFragment);
         userService.unlock(user, newPassword);
         LOG.debug("User {} successfully unlocked.", user);
@@ -111,7 +107,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    @PostMapping(value = "/{fragment}/role",
+    @PutMapping(value = "/{fragment}/role",
         consumes = {MediaType.TEXT_PLAIN_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeRole(@PathVariable(name = "fragment") String identifierFragment,

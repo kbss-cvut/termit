@@ -4,10 +4,11 @@ import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import java.io.Serializable;
-import java.net.URL;
+import java.net.URI;
 import java.util.Set;
 
 /**
@@ -17,9 +18,9 @@ import java.util.Set;
 public class ConfigurationDto implements Serializable {
 
     @Id
-    private URL id;
+    private URI id;
 
-    @OWLAnnotationProperty(iri = Vocabulary.s_p_language)
+    @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE)
     private String language;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_uzivatelskou_roli)
@@ -33,11 +34,11 @@ public class ConfigurationDto implements Serializable {
         this.language = language;
     }
 
-    public URL getId() {
+    public URI getId() {
         return id;
     }
 
-    public void setId(URL id) {
+    public void setId(URI id) {
         this.id = id;
     }
 
