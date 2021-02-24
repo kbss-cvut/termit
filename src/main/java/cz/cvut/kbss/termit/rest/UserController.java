@@ -56,8 +56,7 @@ public class UserController extends BaseController {
         return userService.findAll();
     }
 
-    @GetMapping(value = "/current", produces = {MediaType.APPLICATION_JSON_VALUE,
-            JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/current", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public UserAccount getCurrent() {
         return userService.getCurrent();
     }
@@ -105,5 +104,16 @@ public class UserController extends BaseController {
     @GetMapping(value = "/username")
     public Boolean exists(@RequestParam(name = "username") String username) {
         return userService.exists(username);
+    }
+
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
+    @PutMapping(value = "/{fragment}/role",
+        consumes = {MediaType.TEXT_PLAIN_VALUE})
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changeRole(@PathVariable(name = "fragment") String identifierFragment,
+                           @RequestBody String role) {
+        final UserAccount user = getUserAccountForUpdate(identifierFragment);
+        userService.changeRole(user, role);
+        LOG.debug("Role of user {} successfully changed to {}.", user, role);
     }
 }

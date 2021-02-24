@@ -20,8 +20,10 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
+import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
@@ -46,11 +48,16 @@ public class UserService {
 
     private final UserRepositoryService repositoryService;
 
+    private final UserRoleRepositoryService userRoleRepositoryService;
+
     private final SecurityUtils securityUtils;
 
     @Autowired
-    public UserService(UserRepositoryService repositoryService, SecurityUtils securityUtils) {
+    public UserService(UserRepositoryService repositoryService,
+                       UserRoleRepositoryService userRoleRepositoryService,
+                       SecurityUtils securityUtils) {
         this.repositoryService = repositoryService;
+        this.userRoleRepositoryService = userRoleRepositoryService;
         this.securityUtils = securityUtils;
     }
 
@@ -193,6 +200,24 @@ public class UserService {
         ensureNotOwnAccount(account, "enable");
         LOG.trace("Enabling user account {}.", account);
         account.enable();
+        repositoryService.update(account);
+    }
+
+    /**
+     * Changes role of the given user.
+     *
+     * @param account Account to change role for
+     * @param roleIri IRI of the role to change
+     */
+    @Transactional
+    public void changeRole(UserAccount account, String roleIri) {
+        Objects.requireNonNull(account);
+        Objects.requireNonNull(roleIri);
+        ensureNotOwnAccount(account, "change role");
+        LOG.trace("Changing role of user {} to {}.", account, roleIri);
+        List<UserRole> roles = userRoleRepositoryService.findAll();
+        roles.forEach(r -> account.removeType(r.getUri().toString()));
+        account.addType(roleIri);
         repositoryService.update(account);
     }
 

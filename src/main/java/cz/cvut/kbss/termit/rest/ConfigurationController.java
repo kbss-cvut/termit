@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
@@ -22,7 +23,7 @@ public class ConfigurationController {
         this.configProvider = configProvider;
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE })
     public ConfigurationDto getConfiguration() {
         return configProvider.getConfiguration();
     }

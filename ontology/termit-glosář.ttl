@@ -59,7 +59,44 @@ termit-pojem:administrátor-termitu
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
-                "TermIt administrator"@en , "Administrátor TermItu"@cs .
+                "TermIt administrator"@en , "Administrátor TermItu"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "User with full access to TermIt, incl. user administration."@en , "Uživatel s plným přístupem k systému, vč. administrace uživatelů."@cs .
+
+termit-pojem:plný-uživatel-termitu
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "TermIt full user"@en , "Plný uživatel TermItu"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "User with full access to TermIt."@en , "Uživatel s plným přístupem k systému TermIt."@cs .
+
+termit-pojem:uživatelská-role
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader> <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "User role"@en , "Uživatelská role"@cs .
+
+termit-pojem:má-uživatelskou-roli
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader> <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has user role"@en , "Má uživatelskou roli"@cs .
+
+termit-pojem:konfigurace
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader> <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Configuration"@en , "Konfigurace"@cs .
 
 termit:glosář  a        owl:Ontology , <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/glosář> ;
         <http://purl.org/dc/terms/created>
@@ -348,7 +385,9 @@ termit-pojem:omezený-uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
-                "Limited TermIt user"@en , "Omezený uživatel TermItu"@cs .
+                "Restricted TermIt user"@en , "Omezený uživatel TermItu"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+                "User with restricted access to TermIt. Can view existing vocabularies and terms and comment on terms."@en , "Uživatel s omezeným přístupem k systému TermIt. Může prohlížet slovníky a pojmy a komentovat pojmy."@cs .
 
 termit-pojem:má-suffix-text-quote
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
