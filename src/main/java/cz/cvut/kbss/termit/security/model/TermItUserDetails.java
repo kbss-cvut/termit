@@ -17,6 +17,9 @@
  */
 package cz.cvut.kbss.termit.security.model;
 
+import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_RESTRICTED_USER;
+
+
 import cz.cvut.kbss.termit.model.UserAccount;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -30,7 +33,7 @@ public class TermItUserDetails implements UserDetails {
     /**
      * Default authority held by all registered users of the system.
      */
-    public static final GrantedAuthority DEFAULT_AUTHORITY = new SimpleGrantedAuthority(UserRole.USER.getName());
+    public static final GrantedAuthority DEFAULT_AUTHORITY = new SimpleGrantedAuthority(ROLE_RESTRICTED_USER);
 
     private final UserAccount user;
 
@@ -55,8 +58,9 @@ public class TermItUserDetails implements UserDetails {
         authorities.add(DEFAULT_AUTHORITY);
         if (user.getTypes() != null) {
             authorities.addAll(user.getTypes().stream().filter(UserRole::exists)
-                                   .map(r -> new SimpleGrantedAuthority(UserRole.fromType(r).getName()))
-                                   .collect(Collectors.toSet()));
+                .flatMap(r -> UserRole.fromType(r).getGranted().stream())
+                .map(r -> new SimpleGrantedAuthority(r.getName()))
+                .collect(Collectors.toSet()));
         }
         return authorities;
     }

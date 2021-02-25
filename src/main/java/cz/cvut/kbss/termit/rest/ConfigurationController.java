@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@PreAuthorize("hasRole('" + SecurityConstants.ROLE_USER + "')")
 @RestController
 @RequestMapping("/configuration")
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class ConfigurationController {
 
     private final ConfigurationProvider configProvider;
