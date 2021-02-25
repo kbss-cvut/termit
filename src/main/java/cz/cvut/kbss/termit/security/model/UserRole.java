@@ -18,9 +18,13 @@
 package cz.cvut.kbss.termit.security.model;
 
 import cz.cvut.kbss.termit.util.Vocabulary;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_ADMIN;
-import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_USER;
+import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_FULL_USER;
+import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_RESTRICTED_USER;
 
 /**
  * Represents user roles in the system.
@@ -30,24 +34,38 @@ import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_USER;
 public enum UserRole {
 
     /**
+     * Restricted TermIt user.
+     * <p>
+     * Maps to {@link Vocabulary#s_c_omezeny_uzivatel_termitu}.
+     */
+    RESTRICTED_USER(Vocabulary.s_c_omezeny_uzivatel_termitu, ROLE_RESTRICTED_USER),
+
+    /**
      * Regular application user.
+     *
+     * Maps to {@link Vocabulary#s_c_plny_uzivatel_termitu}.
      * <p>
      * Does not map to any specific subclass of {@link Vocabulary#s_c_uzivatel_termitu}.
      */
-    USER("", ROLE_USER),
+    FULL_USER(Vocabulary.s_c_plny_uzivatel_termitu, ROLE_FULL_USER, RESTRICTED_USER),
+
     /**
      * Application administrator.
      * <p>
      * Maps to {@link Vocabulary#s_c_administrator_termitu}.
      */
-    ADMIN(Vocabulary.s_c_administrator_termitu, ROLE_ADMIN);
+    ADMIN(Vocabulary.s_c_administrator_termitu, ROLE_ADMIN, FULL_USER, RESTRICTED_USER);
 
     private final String type;
     private final String name;
+    private final Set<UserRole> grantedRoleNames;
 
-    UserRole(String type, String name) {
+    UserRole(String type, String name, UserRole... inheritedRoleNames) {
         this.type = type;
         this.name = name;
+        this.grantedRoleNames = new HashSet<>();
+        this.grantedRoleNames.add(this);
+        this.grantedRoleNames.addAll(Arrays.asList(inheritedRoleNames));
     }
 
     public String getName() {
@@ -83,5 +101,9 @@ public enum UserRole {
             }
         }
         throw new IllegalArgumentException("No role found for type " + type + ".");
+    }
+
+    public Set<UserRole> getGranted() {
+        return grantedRoleNames; //.stream().map(UserRole::valueOf).collect(Collectors.toSet());
     }
 }

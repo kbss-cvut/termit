@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.util.ConfigParam;
@@ -75,6 +76,7 @@ public class ResourceController extends BaseController {
     }
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createResource(@RequestBody Resource resource) {
         resourceService.persist(resource);
         LOG.debug("Resource {} created.", resource);
@@ -90,6 +92,7 @@ public class ResourceController extends BaseController {
 
     @PutMapping(value = "/{normalizedName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void updateResource(@PathVariable String normalizedName,
                                @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                                @RequestBody Resource resource) {
@@ -123,6 +126,7 @@ public class ResourceController extends BaseController {
 
     @PutMapping(value = "/{normalizedName}/content")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void saveContent(@PathVariable String normalizedName,
                             @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                             @RequestParam(name = "file") MultipartFile attachment) {
@@ -158,6 +162,7 @@ public class ResourceController extends BaseController {
     }
 
     @PostMapping(value = "/{normalizedName}/files", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> addFileToDocument(@PathVariable String normalizedName,
                                                   @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                                                   @RequestBody File file) {
@@ -174,6 +179,7 @@ public class ResourceController extends BaseController {
 
     @DeleteMapping(value = "/{resourceName}/files/{fileName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeFileFromDocument(@PathVariable String resourceName,
                                        @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                                        @PathVariable String fileName) {
@@ -193,6 +199,7 @@ public class ResourceController extends BaseController {
      */
     @PutMapping(value = "/{normalizedName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void runTextAnalysis(@PathVariable String normalizedName,
                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                                 @RequestParam(name = "vocabulary", required = false, defaultValue = "") Set<URI> vocabularies) {
@@ -226,6 +233,7 @@ public class ResourceController extends BaseController {
 
     @PutMapping(value = "/{normalizedName}/terms", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void setTerms(@PathVariable String normalizedName,
                          @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                          @RequestBody List<URI> termIds) {
@@ -272,6 +280,7 @@ public class ResourceController extends BaseController {
      */
     @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeResource(@PathVariable String fragment,
                                @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
         final URI identifier = resolveIdentifier(namespace, fragment, NAMESPACE_RESOURCE);

@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.ConfigParam;
@@ -171,6 +172,7 @@ public class TermController extends BaseController {
      */
     @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
             consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createRootTerm(@PathVariable String vocabularyIdFragment,
                                                @RequestParam(name = QueryParams.NAMESPACE, required = false)
                                                        String namespace,
@@ -232,6 +234,7 @@ public class TermController extends BaseController {
     @PutMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}",
             consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void update(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                        @PathVariable("termIdFragment") String termIdFragment,
                        @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
@@ -251,6 +254,7 @@ public class TermController extends BaseController {
      */
     @PutMapping(value = "/terms/{termIdFragment}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void update(@PathVariable("termIdFragment") String termIdFragment,
                        @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                        @RequestBody Term term) {
@@ -270,6 +274,7 @@ public class TermController extends BaseController {
      */
     @DeleteMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeTerm(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                            @PathVariable("termIdFragment") String termIdFragment,
                            @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
@@ -322,6 +327,7 @@ public class TermController extends BaseController {
      */
     @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
             produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createSubTerm(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                               @PathVariable("termIdFragment") String parentIdFragment,
                                               @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
@@ -344,6 +350,7 @@ public class TermController extends BaseController {
      */
     @PostMapping(value = "/terms/{termIdFragment}/subterms",
             produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createSubTerm(@PathVariable("termIdFragment") String parentIdFragment,
                                               @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
                                               @RequestBody Term newTerm) {
@@ -381,6 +388,7 @@ public class TermController extends BaseController {
     @PutMapping(value = "/terms/{termIdFragment}/definition-source",
             consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void setTermDefinitionSource(@PathVariable String termIdFragment,
                                         @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                                         @RequestBody TermDefinitionSource definitionSource) {
@@ -394,6 +402,7 @@ public class TermController extends BaseController {
      */
     @DeleteMapping(value = "occurrence/{normalizedName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeOccurrence(@PathVariable String normalizedName,
                                  @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
@@ -406,6 +415,7 @@ public class TermController extends BaseController {
      */
     @PutMapping(value = "occurrence/{normalizedName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void approveOccurrence(@PathVariable String normalizedName,
                                   @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);

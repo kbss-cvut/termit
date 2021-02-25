@@ -35,7 +35,7 @@ import static cz.cvut.kbss.termit.util.Constants.*;
  * <p>
  * Will be used to define general security for the public API.
  */
-@PreAuthorize("hasRole('" + SecurityConstants.ROLE_USER + "')")
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class BaseController {
 
     protected final IdentifierResolver idResolver;

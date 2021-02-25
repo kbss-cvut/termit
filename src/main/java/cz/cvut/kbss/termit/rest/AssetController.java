@@ -29,7 +29,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/assets")
-@PreAuthorize("hasRole('" + SecurityConstants.ROLE_USER + "')")
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class AssetController {
 
     static final String DEFAULT_LIMIT = "10";

@@ -77,9 +77,14 @@ public class SecurityConstants {
     public static final String ROLE_ADMIN = "ROLE_ADMIN";
 
     /**
-     * Regular system user role
+     * Full user role
      */
-    public static final String ROLE_USER = "ROLE_USER";
+    public static final String ROLE_FULL_USER = "ROLE_FULL_USER";
+
+    /**
+     * Restricted user role
+     */
+    public static final String ROLE_RESTRICTED_USER = "ROLE_RESTRICTED_USER";
 
     private SecurityConstants() {
         throw new AssertionError();

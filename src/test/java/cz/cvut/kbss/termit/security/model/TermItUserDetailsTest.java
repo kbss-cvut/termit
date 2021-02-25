@@ -36,14 +36,14 @@ class TermItUserDetailsTest {
         final UserAccount user = Generator.generateUserAccount();
         final TermItUserDetails result = new TermItUserDetails(user);
         assertEquals(1, result.getAuthorities().size());
-        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.USER.getName())));
+        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
     }
 
     @Test
     void authorityBasedConstructorAddsDefaultAuthority() {
         final Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_MANAGER"));
         final TermItUserDetails result = new TermItUserDetails(Generator.generateUserAccount(), authorities);
-        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.USER.getName())));
+        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
     }
 
     @Test
@@ -51,8 +51,9 @@ class TermItUserDetailsTest {
         final UserAccount user = Generator.generateUserAccount();
         user.addType(Vocabulary.s_c_administrator_termitu);
         final TermItUserDetails result = new TermItUserDetails(user);
-        assertEquals(2, result.getAuthorities().size());
-        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.USER.getName())));
+        assertEquals(3, result.getAuthorities().size());
+        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
+        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.ADMIN.getName())));
     }
 
@@ -62,8 +63,9 @@ class TermItUserDetailsTest {
         final UserAccount user = Generator.generateUserAccount();
         user.addType(Vocabulary.s_c_administrator_termitu);
         final TermItUserDetails result = new TermItUserDetails(user, authorities);
-        assertEquals(3, result.getAuthorities().size());
-        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.USER.getName())));
+        assertEquals(4, result.getAuthorities().size());
+        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
+        assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.ADMIN.getName())));
         assertTrue(result.getAuthorities().containsAll(authorities));
     }
