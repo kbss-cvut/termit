@@ -8,7 +8,7 @@ Prefices
     pdp  :  http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/
     psys :  http://proton.semanticweb.org/protonsys#
     termit : http://onto.fel.cvut.cz/ontologies/application/termit/pojem/
-    activity: https://www.w3.org/ns/activitystreams#
+    activity: http://www.w3.org/ns/activitystreams#
 }
 
 Axioms
