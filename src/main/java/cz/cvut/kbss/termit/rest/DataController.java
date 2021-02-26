@@ -41,7 +41,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/data")
-@PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
 public class DataController {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataController.class);
@@ -59,6 +58,7 @@ public class DataController {
         return dataService.findAllProperties();
     }
 
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     @RequestMapping(value = "/properties", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> createProperty(@RequestBody RdfsResource property) {
