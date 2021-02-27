@@ -59,9 +59,9 @@ termit-pojem:administrátor-termitu
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
-                "TermIt administrator"@en , "Administrátor TermItu"@cs ;
+                "Administrator"@en , "Administrátor"@cs ;
         <http://www.w3.org/2004/02/skos/core#scopeNote>
-                "User with full access to TermIt, incl. user administration."@en , "Uživatel s plným přístupem k systému, vč. administrace uživatelů."@cs .
+                "She has full access to the system, including user administration."@en , "Má plný přístup k systému, včetně administrace uživatelů."@cs .
 
 termit-pojem:plný-uživatel-termitu
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
@@ -70,9 +70,9 @@ termit-pojem:plný-uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
-                "TermIt full user"@en , "Plný uživatel TermItu"@cs ;
+                "Editor"@en , "Editor"@cs ;
         <http://www.w3.org/2004/02/skos/core#scopeNote>
-                "User with full access to TermIt."@en , "Uživatel s plným přístupem k systému TermIt."@cs .
+                "She can view, create, edit and delete vocabularies, terms and resources. She can also comment on terms. She cannot manage users."@en , "Může prohlížet, vytvářet, měnit a mazat slovníky, pojmy a zdroje. Pojmy může rovněž komentovat. Nemůže spravovat uživatele."@cs .
 
 termit-pojem:uživatelská-role
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
@@ -385,9 +385,9 @@ termit-pojem:omezený-uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
-                "Restricted TermIt user"@en , "Omezený uživatel TermItu"@cs ;
+                "Reader"@en , "Čtenář"@cs ;
         <http://www.w3.org/2004/02/skos/core#scopeNote>
-                "User with restricted access to TermIt. Can view existing vocabularies and terms and comment on terms."@en , "Uživatel s omezeným přístupem k systému TermIt. Může prohlížet slovníky a pojmy a komentovat pojmy."@cs .
+                "She can list and view vocabularies and terms. She can also comment on terms."@en , "Může prohlížet slovníky a pojmy. Pojmy může rovněž komentovat."@cs .
 
 termit-pojem:má-suffix-text-quote
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
