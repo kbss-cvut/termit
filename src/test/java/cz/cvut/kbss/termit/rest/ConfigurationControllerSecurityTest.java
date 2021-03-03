@@ -1,17 +1,17 @@
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
-import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.handler.RestExceptionHandler;
 import cz.cvut.kbss.termit.security.JwtUtils;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import cz.cvut.kbss.termit.util.ConfigParam;
-import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,40 +20,40 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.servlet.Filter;
-import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {TestConfig.class,
         TestRestSecurityConfig.class,
-        VocabularyControllerSecurityTest.Config.class})
+        ConfigurationControllerSecurityTest.Config.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @WebAppConfiguration
-class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
+public class ConfigurationControllerSecurityTest extends BaseControllerTestRunner {
 
-    private static final String PATH = "/vocabularies";
-    private static final String NAMESPACE =
-            "http://onto.fel.cvut.cz/ontologies/termit/vocabularies/";
-    private static final String FRAGMENT = "test";
-    private static final URI VOCABULARY_URI = URI.create(NAMESPACE + FRAGMENT);
+    private static final String PATH = "/configuration";
 
     @Autowired
     private Filter springSecurityFilterChain;
@@ -62,68 +62,51 @@ class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
     private WebApplicationContext context;
 
     @Autowired
-    private VocabularyService serviceMock;
-
-    @Mock
-    private IdentifierResolver idResolverMock;
-
-    @Mock
-    private Configuration configMock;
+    private ConfigurationProvider configurationProvider;
 
     @InjectMocks
-    private VocabularyController sut;
+    private ConfigurationController sut;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
         super.setUp(sut);
-        when(configMock.get(ConfigParam.NAMESPACE_VOCABULARY)).thenReturn(Environment.BASE_URI + "/");
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity(springSecurityFilterChain))
-                .build();
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity(springSecurityFilterChain)).build();
     }
 
     @Test
-    void createVocabularyThrowsAuthorizationExceptionForRestrictedUsers() throws Exception {
-        // This one is restricted
+    void getConfigurationReturnsFullConfigurationWhenUserIsAuthenticated() throws Exception {
         Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
+        final ConfigurationDto config = generateConfiguration();
+        when(configurationProvider.getConfiguration()).thenReturn(config);
+        final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
+        final ConfigurationDto result = readValue(mvcResult, ConfigurationDto.class);
+        assertNotNull(result);
+        assertEquals(config.getLanguage(), result.getLanguage());
+        assertEquals(config.getRoles(), result.getRoles());
+    }
 
-        final Vocabulary vocabulary = generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
-
-        mockMvc.perform(
-                post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isForbidden());
-        verify(serviceMock, never()).update(any());
+    private static ConfigurationDto generateConfiguration() {
+        final ConfigurationDto config = new ConfigurationDto();
+        config.setLanguage(Constants.DEFAULT_LANGUAGE);
+        config.setRoles(IntStream.range(0, 3).mapToObj(i -> {
+            final UserRole r = new UserRole();
+            r.setUri(Generator.generateUri());
+            r.setLabel(MultilingualString.create("Role - " + i, Constants.DEFAULT_LANGUAGE));
+            return r;
+        }).collect(Collectors.toSet()));
+        return config;
     }
 
     @Test
-    void removeVocabularyThrowsAuthorizationExceptionForRestrictedUsers() throws Exception {
-        // This one is restricted
-        Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
-
-        final Vocabulary vocabulary = generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
-        mockMvc.perform(
-                delete(PATH + "/" + fragment))
-                .andExpect(status().isForbidden());
-        verify(serviceMock, never()).update(any());
-    }
-
-    @Test
-    void updateVocabularyThrowsAuthorizationExceptionForRestrictedUsers() throws Exception {
-        // This one is restricted
-        Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
-
-        final Vocabulary vocabulary = generateVocabulary();
-        vocabulary.setUri(VOCABULARY_URI);
-        when(idResolverMock.resolveIdentifier(eq(ConfigParam.NAMESPACE_VOCABULARY), any()))
-                .thenReturn(VOCABULARY_URI);
-        when(serviceMock.exists(VOCABULARY_URI)).thenReturn(true);
-        mockMvc.perform(put(PATH + "/test").contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content(toJson(vocabulary)))
-                .andExpect(status().isForbidden());
-        verify(serviceMock, never()).update(any());
+    void getConfigurationReturnsConfigurationWithoutRolesWhenUserIsNotAuthenticated() throws Exception {
+        final ConfigurationDto config = generateConfiguration();
+        when(configurationProvider.getConfiguration()).thenReturn(config);
+        final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
+        final ConfigurationDto result = readValue(mvcResult, ConfigurationDto.class);
+        assertNotNull(result);
+        assertEquals(config.getLanguage(), result.getLanguage());
+        assertThat(config.getRoles(), anyOf(nullValue(), empty()));
     }
 
     /**
@@ -133,25 +116,25 @@ class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
     @org.springframework.context.annotation.Configuration
     public static class Config implements WebMvcConfigurer {
         @Mock
-        private VocabularyService vocabularyService;
+        private ConfigurationProvider configurationProvider;
 
         @Mock
         private SecurityUtils securityUtilsMock;
 
         @InjectMocks
-        private VocabularyController controller;
+        private ConfigurationController controller;
 
         Config() {
             MockitoAnnotations.initMocks(this);
         }
 
         @Bean
-        public VocabularyService vocabularyService() {
-            return vocabularyService;
+        public ConfigurationProvider configurationProvider() {
+            return configurationProvider;
         }
 
         @Bean
-        public VocabularyController userController() {
+        public ConfigurationController userController() {
             return controller;
         }
 
