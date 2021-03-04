@@ -142,12 +142,11 @@ public class UserService {
         }
         if (!currentUser.getUsername().equals(update.getUsername())) {
             throw new ValidationException(
-                "User " + securityUtils.getCurrentUser() + " attempted to update his username.");
+                    "User " + securityUtils.getCurrentUser() + " attempted to update their username.");
         }
-        if (currentUser.getTypes() != update.getTypes()
-            || (currentUser.getTypes() != null && currentUser.getTypes().equals(update.getTypes()))) {
+        if (!Objects.equals(currentUser.getTypes(), update.getTypes())) {
             throw new ValidationException(
-                "User " + securityUtils.getCurrentUser() + " attempted to update his role.");
+                    "User " + securityUtils.getCurrentUser() + " attempted to update their role.");
         }
         if (update.getPassword() != null) {
             securityUtils.verifyCurrentUserPassword(update.getOriginalPassword());

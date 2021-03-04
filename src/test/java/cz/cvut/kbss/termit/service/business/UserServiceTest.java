@@ -28,8 +28,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.not;
+import java.util.HashSet;
+
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -269,5 +270,34 @@ class UserServiceTest {
         verify(repositoryServiceMock).persist(captor.capture());
         assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator_termitu));
         assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
+    }
+
+    @Test
+    void updateThrowsValidationExceptionWhenAttemptingToChangeRoles() {
+        final UserAccount ua = Generator.generateUserAccount();
+        final UserUpdateDto update = new UserUpdateDto();
+
+        update.setUri(ua.getUri());
+        update.setUsername(ua.getUsername());
+        update.addType(Vocabulary.s_c_administrator_termitu);
+
+        when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
+        ValidationException ex = assertThrows(ValidationException.class, () -> sut.updateCurrent(update));
+        assertThat(ex.getMessage(), containsString("role"));
+    }
+
+    @Test
+    void updateInvokesRepositoryServiceWhenDataAreValid() {
+        final UserAccount ua = Generator.generateUserAccount();
+        ua.addType(Vocabulary.s_c_plny_uzivatel_termitu);
+        final UserUpdateDto update = new UserUpdateDto();
+
+        update.setUri(ua.getUri());
+        update.setUsername(ua.getUsername());
+        update.setTypes(new HashSet<>(ua.getTypes()));
+
+        when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
+        sut.updateCurrent(update);
+        verify(repositoryServiceMock).update(update.asUserAccount());
     }
 }
