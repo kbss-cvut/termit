@@ -17,9 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
+import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
+
 @RestController
 @PreAuthorize("permitAll()")
-@RequestMapping("/public")
+@RequestMapping(PUBLIC_API_PATH)
 public class ReadOnlyTermController extends BaseController {
 
     private final ReadOnlyTermService termService;

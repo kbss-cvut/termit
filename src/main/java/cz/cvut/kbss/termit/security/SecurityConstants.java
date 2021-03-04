@@ -86,6 +86,11 @@ public class SecurityConstants {
      */
     public static final String ROLE_RESTRICTED_USER = "ROLE_RESTRICTED_USER";
 
+    /**
+     * Path of REST endpoints which are not secured.
+     */
+    public static final String PUBLIC_API_PATH = "/public";
+
     private SecurityConstants() {
         throw new AssertionError();
     }

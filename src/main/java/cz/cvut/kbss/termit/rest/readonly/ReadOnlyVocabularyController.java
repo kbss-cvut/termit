@@ -16,9 +16,11 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
+import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
+
 @RestController
 @PreAuthorize("permitAll()")
-@RequestMapping("/public/vocabularies")
+@RequestMapping(PUBLIC_API_PATH + "/vocabularies")
 public class ReadOnlyVocabularyController extends BaseController {
 
     private final ReadOnlyVocabularyService vocabularyService;
