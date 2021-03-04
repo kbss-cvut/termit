@@ -91,7 +91,7 @@ public class JwtUtils {
         try {
             return Jwts.parser().setSigningKey(config.get(ConfigParam.JWT_SECRET_KEY))
                        .parseClaimsJws(token).getBody();
-        } catch (MalformedJwtException e) {
+        } catch (MalformedJwtException | UnsupportedJwtException e) {
             throw new JwtException("Unable to parse the specified JWT.", e);
         } catch (SignatureException e) {
             throw new JwtException("Invalid signature of the specified JWT.", e);

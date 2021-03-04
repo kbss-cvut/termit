@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.JwtException;
+import cz.cvut.kbss.termit.rest.ConfigurationController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
@@ -42,6 +43,8 @@ import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
  * the application.
  */
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
+
+    private static final String PUBLIC_API = REST_MAPPING_PATH + PUBLIC_API_PATH;
 
     private final JwtUtils jwtUtils;
 
@@ -76,13 +79,26 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             SecurityUtils.verifyAccountStatus(existingDetails.getUser());
             securityUtils.setCurrentUser(existingDetails);
             refreshToken(authToken, response);
-        } catch (DisabledException | LockedException | JwtException | UsernameNotFoundException e) {
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            objectMapper.writeValue(response.getOutputStream(),
-                    ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
+        } catch (JwtException e) {
+            if (shouldAllowThroughUnauthenticated(request)) {
+                chain.doFilter(request, response);
+                return;
+            } else {
+                unauthorizedRequest(request, response, e);
+                return;
+            }
+        } catch (DisabledException | LockedException | UsernameNotFoundException e) {
+            unauthorizedRequest(request, response, e);
             return;
         }
         chain.doFilter(request, response);
+    }
+
+    private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)
+            throws IOException {
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        objectMapper.writeValue(response.getOutputStream(),
+                ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
     }
 
     private void refreshToken(String authToken, HttpServletResponse response) {
@@ -90,10 +106,22 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         response.setHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + newToken);
     }
 
+    /**
+     * Whether to allow the specified request through even though it does not contain a valid authentication token.
+     * <p>
+     * This is useful for endpoints which support both authenticated and unauthenticated access.
+     *
+     * @param request Request to allow/not allow throw
+     * @return Whether to allow the specified request through
+     */
+    private boolean shouldAllowThroughUnauthenticated(HttpServletRequest request) {
+        return request.getRequestURI().contains(REST_MAPPING_PATH + ConfigurationController.PATH);
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         // Public API endpoints are not secured, so there is no need to check for token.
         // This resolves issues with public API requests containing expired/invalid JWT being rejected
-        return request.getRequestURI().contains(REST_MAPPING_PATH + PUBLIC_API_PATH);
+        return request.getRequestURI().contains(PUBLIC_API);
     }
 }
