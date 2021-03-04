@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.security;
 
@@ -36,6 +33,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
+import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
+import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
 
 /**
  * This filter retrieves JWT from the incoming request and validates it, ensuring that the user is authorized to access
@@ -88,5 +88,12 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private void refreshToken(String authToken, HttpServletResponse response) {
         final String newToken = jwtUtils.refreshToken(authToken);
         response.setHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + newToken);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Public API endpoints are not secured, so there is no need to check for token.
+        // This resolves issues with public API requests containing expired/invalid JWT being rejected
+        return request.getRequestURI().contains(REST_MAPPING_PATH + PUBLIC_API_PATH);
     }
 }
