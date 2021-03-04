@@ -10,9 +10,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import static cz.cvut.kbss.termit.rest.ConfigurationController.PATH;
+
 @RestController
-@RequestMapping("/configuration")
+@RequestMapping(PATH)
 public class ConfigurationController {
+
+    public static final String PATH = "/configuration";
 
     private final ConfigurationProvider configProvider;
 

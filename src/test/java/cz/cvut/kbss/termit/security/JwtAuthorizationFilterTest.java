@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.rest.ConfigurationController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
@@ -156,7 +157,7 @@ class JwtAuthorizationFilterTest {
     }
 
     @Test
-    void doFilterInternalReturnsUnauthorizedWhenWhenTokenIsExpired() throws Exception {
+    void doFilterInternalReturnsUnauthorizedWhenTokenIsExpired() throws Exception {
         final String token = Jwts.builder().setSubject(user.getUsername())
                                  .setId(user.getUri().toString())
                                  .setIssuedAt(new Date())
@@ -240,5 +241,18 @@ class JwtAuthorizationFilterTest {
         assertFalse(sut.shouldNotFilter(mockRequest));
         mockRequest.setRequestURI("/termit" + REST_MAPPING_PATH + PUBLIC_API_PATH + "/vocabularies");
         assertTrue(sut.shouldNotFilter(mockRequest));
+    }
+
+    @Test
+    void doFilterInternalAllowsRequestThroughWhenTokenIsExpiredAndTargetIsConfiguration() throws Exception {
+        mockRequest.setRequestURI("/termit" + REST_MAPPING_PATH + ConfigurationController.PATH);
+        final String token = Jwts.builder().setSubject(user.getUsername())
+                                 .setId(user.getUri().toString())
+                                 .setIssuedAt(new Date())
+                                 .setExpiration(new Date(System.currentTimeMillis() - 10000))
+                                 .signWith(SignatureAlgorithm.HS512, config.get(ConfigParam.JWT_SECRET_KEY)).compact();
+        mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
+        sut.doFilterInternal(mockRequest, mockResponse, chainMock);
+        verify(chainMock).doFilter(mockRequest, mockResponse);
     }
 }
