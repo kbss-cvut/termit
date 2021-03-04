@@ -20,25 +20,34 @@ import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
+import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 
+import java.net.URI;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 class UserServiceTest {
 
     @Mock
     private UserRepositoryService repositoryServiceMock;
+
+    @Mock
+    private UserRoleRepositoryService roleServiceMock;
 
     @Mock
     private SecurityUtils securityUtilsMock;
@@ -299,5 +308,36 @@ class UserServiceTest {
         when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
         sut.updateCurrent(update);
         verify(repositoryServiceMock).update(update.asUserAccount());
+    }
+
+    @Test
+    void changeRoleThrowsUnsupportedOperationExceptionWhenAttemptingToChangeOwnRole() {
+        final UserAccount ua = Generator.generateUserAccount();
+        when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> sut.changeRole(ua, Vocabulary.s_c_administrator_termitu));
+    }
+
+    @Test
+    void changeRoleReplacesPreviouslyAssignedRoleTypeWithSpecifiedOne() {
+        final UserAccount ua = Generator.generateUserAccount();
+        ua.addType(Vocabulary.s_c_omezeny_uzivatel_termitu);
+        final UserAccount current = Generator.generateUserAccount();
+        final UserRole rOne = new UserRole();
+        rOne.setUri(URI.create(Vocabulary.s_c_administrator_termitu));
+        final UserRole rTwo = new UserRole();
+        rTwo.setUri(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
+        final UserRole rThree = new UserRole();
+        rThree.setUri(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final List<UserRole> roles = Arrays.asList(rOne, rTwo, rThree);
+
+        when(securityUtilsMock.getCurrentUser()).thenReturn(current);
+        when(roleServiceMock.findAll()).thenReturn(roles);
+        sut.changeRole(ua, Vocabulary.s_c_administrator_termitu);
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(repositoryServiceMock).update(captor.capture());
+        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator_termitu));
+        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
     }
 }
