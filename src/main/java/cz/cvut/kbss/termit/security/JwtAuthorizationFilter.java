@@ -79,19 +79,16 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             SecurityUtils.verifyAccountStatus(existingDetails.getUser());
             securityUtils.setCurrentUser(existingDetails);
             refreshToken(authToken, response);
+            chain.doFilter(request, response);
         } catch (JwtException e) {
             if (shouldAllowThroughUnauthenticated(request)) {
                 chain.doFilter(request, response);
-                return;
             } else {
                 unauthorizedRequest(request, response, e);
-                return;
             }
         } catch (DisabledException | LockedException | UsernameNotFoundException e) {
             unauthorizedRequest(request, response, e);
-            return;
         }
-        chain.doFilter(request, response);
     }
 
     private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)
