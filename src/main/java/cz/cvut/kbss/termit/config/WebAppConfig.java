@@ -149,10 +149,10 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        converters.add(createJsonLdMessageConverter());
-        converters.add(createDefaultMessageConverter());
         final StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
         converters.add(stringConverter);
+        converters.add(createJsonLdMessageConverter());
+        converters.add(createDefaultMessageConverter());
         converters.add(new ResourceHttpMessageConverter());
     }
 

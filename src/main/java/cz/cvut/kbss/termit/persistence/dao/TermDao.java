@@ -29,10 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -201,7 +198,7 @@ public class TermDao extends AssetDao<Term> {
                 "?entity a ?type ;" +
                 "?hasLabel ?label ;" +
                 "?inVocabulary ?vocabulary ." +
-                "FILTER (lang(?label) = ?labelLang) . }", "TermInfo")
+                "FILTER (lang(?label) = ?labelLang) . } ORDER BY ?label", "TermInfo")
                                                   .setParameter("type", typeUri)
                                                   .setParameter("narrower", URI.create(SKOS.NARROWER))
                                                   .setParameter("parent", parent.getUri())
@@ -211,7 +208,8 @@ public class TermDao extends AssetDao<Term> {
                                                                   cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                                                   .setParameter("labelLang", config.get(ConfigParam.LANGUAGE))
                                                   .getResultStream();
-        parent.setSubTerms(subTermsStream.collect(Collectors.toSet()));
+        // Use LinkedHashSet to preserve term order
+        parent.setSubTerms(subTermsStream.collect(Collectors.toCollection(LinkedHashSet::new)));
     }
 
     /**
