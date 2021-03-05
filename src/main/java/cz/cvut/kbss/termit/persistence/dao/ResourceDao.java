@@ -147,7 +147,7 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
                     "{ ?y ?hasFile ?x . }" +
                     " UNION " +
                     "{ ?x a ?vocabulary . }" +
-                    "} } ORDER BY ?label", Resource.class)
+                    "} } ORDER BY LCASE(?label)", Resource.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", labelProperty())
                      .setParameter("hasFile", URI.create(Vocabulary.s_p_ma_soubor))
@@ -175,7 +175,7 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
                     "?hasLabel ?label ." +
                     "?assignment ?is-assignment-of ?x ;" +
                     "?has-target/?has-source ?resource ." +
-                    "} ORDER BY ?label", Term.class)
+                    "} ORDER BY LCASE(?label)", Term.class)
                      .setParameter("term", URI.create(getOwlClassForEntity(Term.class)))
                      .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
                      .setParameter("is-assignment-of", URI.create(Vocabulary.s_p_je_prirazenim_termu))
@@ -246,14 +246,14 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
      */
     private void removeDocumentFromContext(final Document document) {
         if (document.getFiles() != null ) {
-            document.getFiles().forEach( f -> this.remove(f) );
+            document.getFiles().forEach(this::remove);
         }
         this.remove(document);
         this.em.flush();
     }
 
     /**
-     * Adds a document to the context givent by the vocabulary IRI.
+     * Adds a document to the context given by the vocabulary IRI.
      *
      * @param document document
      * @param vocabularyId URI of the vocabulary context
