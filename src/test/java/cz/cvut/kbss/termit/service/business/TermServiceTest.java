@@ -15,9 +15,7 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.CsvUtils;
-import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -25,10 +23,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -57,6 +52,9 @@ class TermServiceTest extends BaseServiceTestRunner {
     @Mock
     private CommentService commentService;
 
+    @Mock
+    private Configuration configuration;
+
     @InjectMocks
     private TermService sut;
 
@@ -67,6 +65,7 @@ class TermServiceTest extends BaseServiceTestRunner {
         MockitoAnnotations.initMocks(this);
         this.vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
+        when(configuration.get(ConfigParam.LANGUAGE)).thenReturn(Constants.DEFAULT_LANGUAGE);
     }
 
     @Test
@@ -317,5 +316,20 @@ class TermServiceTest extends BaseServiceTestRunner {
         comment.setContent("test comment");
         sut.addComment(comment, term);
         verify(commentService).addToAsset(comment, term);
+    }
+
+    @Test
+    void findSubTermsReturnsSubTermsSortedByLabel() {
+        final Term parent = generateTermWithId();
+        final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
+            final Term child = generateTermWithId();
+            when(termRepositoryService.find(child.getUri())).thenReturn(Optional.of(child));
+            return child;
+        }).collect(Collectors.toList());
+        parent.setSubTerms(children.stream().map(TermInfo::new).collect(Collectors.toSet()));
+
+        final List<Term> result = sut.findSubTerms(parent);
+        children.sort(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)));
+        assertEquals(children, result);
     }
 }

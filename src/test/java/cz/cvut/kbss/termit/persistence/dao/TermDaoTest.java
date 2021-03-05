@@ -839,4 +839,34 @@ class TermDaoTest extends BaseDaoTestRunner {
         }
         return source;
     }
+
+    @Test
+    void subTermLoadingSortsThemByLabel() {
+        final Term parent = Generator.generateTermWithId();
+        final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
+            final Term child = Generator.generateTermWithId();
+            child.setParentTerms(Collections.singleton(parent));
+            return child;
+        }).collect(Collectors.toList());
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(parent);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            children.forEach(child -> em.persist(child, descriptorFactory.termDescriptor(vocabulary)));
+            insertNarrowerStatements(children.toArray(new Term[]{}));
+            addTermInVocabularyRelationship(parent, vocabulary.getUri());
+            children.forEach(child -> addTermInVocabularyRelationship(child, vocabulary.getUri()));
+        });
+        children.sort(Comparator.comparing(child -> child.getLabel().get(Constants.DEFAULT_LANGUAGE)));
+
+        final Optional<Term> result = sut.find(parent.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(children.size(), result.get().getSubTerms().size());
+        final Iterator<TermInfo> it = result.get().getSubTerms().iterator();
+        for (Term child : children) {
+            assertTrue(it.hasNext());
+            final TermInfo next = it.next();
+            assertEquals(child.getUri(), next.getUri());
+        }
+    }
 }
