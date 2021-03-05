@@ -114,7 +114,7 @@ public class TermDao extends AssetDao<Term> {
                     "FILTER (lang(?label) = ?labelLang) ." +
                     "}" +
                     "?term ?inVocabulary ?vocabulary ." +
-                    " } ORDER BY ?label", Term.class)
+                    " } ORDER BY LCASE(?label)", Term.class)
                                                  .setParameter("type", typeUri)
                                                  .setParameter("vocabulary", vocabulary.getUri())
                                                  .setParameter("hasLabel", LABEL_PROP)
@@ -174,7 +174,7 @@ public class TermDao extends AssetDao<Term> {
                 "?inVocabulary ?parent ." +
                 "?vocabulary ?imports* ?parent ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "} ORDER BY ?label", Term.class).setParameter("type", typeUri)
+                "} ORDER BY LCASE(?label)", Term.class).setParameter("type", typeUri)
                                    .setParameter("hasLabel", LABEL_PROP)
                                    .setParameter("inVocabulary",
                                            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
@@ -198,7 +198,7 @@ public class TermDao extends AssetDao<Term> {
                 "?entity a ?type ;" +
                 "?hasLabel ?label ;" +
                 "?inVocabulary ?vocabulary ." +
-                "FILTER (lang(?label) = ?labelLang) . } ORDER BY ?label", "TermInfo")
+                "FILTER (lang(?label) = ?labelLang) . } ORDER BY LCASE(?label)", "TermInfo")
                                                   .setParameter("type", typeUri)
                                                   .setParameter("narrower", URI.create(SKOS.NARROWER))
                                                   .setParameter("parent", parent.getUri())
@@ -230,16 +230,14 @@ public class TermDao extends AssetDao<Term> {
                 "?hasLabel ?label ." +
                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "}} ORDER BY ?label OFFSET ?offset LIMIT ?limit", Term.class);
+                "}} ORDER BY LCASE(?label)", Term.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
             final List<Term> result = executeQueryAndLoadSubTerms(query.setParameter("vocabulary", vocabulary.getUri())
                                                                        .setParameter("labelLang",
                                                                                config.get(ConfigParam.LANGUAGE))
-                                                                       .setUntypedParameter("offset",
-                                                                               pageSpec.getOffset())
-                                                                       .setUntypedParameter("limit",
-                                                                               pageSpec.getPageSize()));
+                                                                       .setMaxResults(pageSpec.getPageSize())
+                                                                       .setFirstResult((int) pageSpec.getOffset()));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
         } catch (RuntimeException e) {
@@ -285,16 +283,14 @@ public class TermDao extends AssetDao<Term> {
                 "?vocabulary ?imports* ?parent ." +
                 "?parent ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "} ORDER BY ?label OFFSET ?offset LIMIT ?limit", Term.class);
+                "} ORDER BY LCASE(?label)", Term.class);
         query = setCommonFindAllRootsQueryParams(query, true);
         try {
             final List<Term> result = executeQueryAndLoadSubTerms(query.setParameter("vocabulary", vocabulary.getUri())
                                                                        .setParameter("labelLang",
                                                                                config.get(ConfigParam.LANGUAGE))
-                                                                       .setUntypedParameter("offset",
-                                                                               pageSpec.getOffset())
-                                                                       .setUntypedParameter("limit",
-                                                                               pageSpec.getPageSize()));
+                                                                       .setFirstResult((int) pageSpec.getOffset())
+                                                                       .setMaxResults(pageSpec.getPageSize()));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
         } catch (RuntimeException e) {
@@ -321,7 +317,7 @@ public class TermDao extends AssetDao<Term> {
                 "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
                 "}" +
                 "?term ?inVocabulary ?vocabulary ." +
-                "} ORDER BY ?label", Term.class)
+                "} ORDER BY LCASE(?label)", Term.class)
                                          .setParameter("type", typeUri)
                                          .setParameter("hasLabel", LABEL_PROP)
                                          .setParameter("inVocabulary", URI.create(
@@ -362,7 +358,7 @@ public class TermDao extends AssetDao<Term> {
                 "      ?hasLabel ?label ;\n" +
                 "      ?inVocabulary ?vocabulary ." +
                 "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .\n" +
-                "} ORDER BY ?label", Term.class)
+                "} ORDER BY LCASE(?label)", Term.class)
                                          .setParameter("type", typeUri)
                                          .setParameter("hasLabel", LABEL_PROP)
                                          .setParameter("inVocabulary", URI.create(
