@@ -61,7 +61,7 @@ termit-pojem:administrátor-termitu
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Administrator"@en , "Administrátor"@cs ;
         <http://www.w3.org/2004/02/skos/core#scopeNote>
-                "She has full access to the system, including user administration."@en , "Má plný přístup k systému, včetně administrace uživatelů."@cs .
+                "He or she has full access to the system, including user administration."@en , "Má plný přístup k systému, včetně administrace uživatelů."@cs .
 
 termit-pojem:plný-uživatel-termitu
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
@@ -72,7 +72,7 @@ termit-pojem:plný-uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Editor"@en , "Editor"@cs ;
         <http://www.w3.org/2004/02/skos/core#scopeNote>
-                "She can view, create, edit and delete vocabularies, terms and resources. She can also comment on terms. She cannot manage users."@en , "Může prohlížet, vytvářet, měnit a mazat slovníky, pojmy a zdroje. Pojmy může rovněž komentovat. Nemůže spravovat uživatele."@cs .
+                "He or she can view, create, edit and delete vocabularies, terms and resources. He or she can also comment on terms. He or she cannot manage users."@en , "Může prohlížet, vytvářet, měnit a mazat slovníky, pojmy a zdroje. Pojmy může rovněž komentovat. Nemůže spravovat uživatele."@cs .
 
 termit-pojem:uživatelská-role
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
@@ -387,7 +387,7 @@ termit-pojem:omezený-uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Reader"@en , "Čtenář"@cs ;
         <http://www.w3.org/2004/02/skos/core#scopeNote>
-                "She can list and view vocabularies and terms. She can also comment on terms."@en , "Může prohlížet slovníky a pojmy. Pojmy může rovněž komentovat."@cs .
+                "He or she can list and view vocabularies and terms. He or she can also comment on terms."@en , "Může prohlížet slovníky a pojmy. Pojmy může rovněž komentovat."@cs .
 
 termit-pojem:má-suffix-text-quote
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
