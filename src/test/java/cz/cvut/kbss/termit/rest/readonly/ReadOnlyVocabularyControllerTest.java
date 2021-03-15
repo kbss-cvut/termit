@@ -45,7 +45,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         setUp(sut);
     }
 
