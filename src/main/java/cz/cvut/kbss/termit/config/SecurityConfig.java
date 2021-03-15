@@ -107,7 +107,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return authenticationFilter;
     }
 
-    CorsConfigurationSource corsConfigurationSource() {
+    private CorsConfigurationSource corsConfigurationSource() {
         // We're allowing all methods from all origins so that the application API is usable also by other clients
         // than just the UI.
         // This behavior can be restricted later.
