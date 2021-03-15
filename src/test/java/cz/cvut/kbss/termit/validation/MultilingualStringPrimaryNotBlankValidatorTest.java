@@ -29,7 +29,7 @@ class MultilingualStringPrimaryNotBlankValidatorTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         when(config.get(ConfigParam.LANGUAGE)).thenReturn(Constants.DEFAULT_LANGUAGE);
     }
 

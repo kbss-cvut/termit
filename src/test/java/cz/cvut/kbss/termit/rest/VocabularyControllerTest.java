@@ -80,7 +80,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         super.setUp(sut);
         this.user = Generator.generateUserWithId();
         when(configMock.get(ConfigParam.NAMESPACE_VOCABULARY))

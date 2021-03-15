@@ -54,7 +54,7 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         super.setUp(sut);
         when(configMock.get(NAMESPACE_RESOURCE)).thenReturn(RESOURCE_NAMESPACE);
     }

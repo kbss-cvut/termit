@@ -45,7 +45,7 @@ class CommentControllerTest extends BaseControllerTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         super.setUp(sut);
         when(idResolver.resolveIdentifier(NAMESPACE, NAME)).thenReturn(URI.create(NAMESPACE + NAME));
     }
