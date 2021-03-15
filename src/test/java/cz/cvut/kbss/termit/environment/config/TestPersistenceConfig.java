@@ -18,16 +18,18 @@ import com.github.ledsoft.jopa.spring.transaction.DelegatingEntityManager;
 import com.github.ledsoft.jopa.spring.transaction.JopaTransactionManager;
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.termit.environment.TestPersistenceFactory;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@Configuration
+@TestConfiguration
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @Import({TestPersistenceFactory.class})
+@ComponentScan(basePackages = "cz.cvut.kbss.termit.persistence")
 @EnableTransactionManagement
 public class TestPersistenceConfig {
 
