@@ -1,0 +1,18 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+repository:
+  url: mem:termit
+persistence:
+  driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
+  language: cs
+jwt:
+  secretKey: TermItSecretKey
+namespace:
+  vocabulary: http://onto.fel.cvut.cz/ontologies/slovnik/
+  user: http://onto.fel.cvut.cz/ontologies/uzivatel/
+  resource: http://onto.fel.cvut.cz/ontologies/zdroj/
+file:
+  storage: /tmp/termit
+textAnalysis:
+  url:

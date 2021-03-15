@@ -28,6 +28,11 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
+    <!-- Restrict logging inherited from the JwtAuthenticationFilter's parent class -->
+    <logger name="cz.cvut.kbss.termit.security.JwtAuthenticationFilter" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
     <!-- Restrict logging of the Sesame HTTP client (used to connect to remote repositories) -->
     <logger name="org.eclipse.rdf4j" level="WARN" additivity="false">
         <appender-ref ref="STDOUT"/>
