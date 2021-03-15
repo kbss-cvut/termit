@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.termit.dto.TermDto;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -264,8 +265,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        final List<Term> resultOne = sut.findAllRoots(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
-        final List<Term> resultTwo = sut.findAllRoots(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
+        final List<TermDto> resultOne = sut.findAllRoots(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
+        final List<TermDto> resultTwo = sut.findAllRoots(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
 
         assertEquals(5, resultOne.size());
         assertEquals(5, resultTwo.size());
@@ -291,7 +292,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        List<Term> result = sut.findAll("Result", vocabulary);
+        List<TermDto> result = sut.findAll("Result", vocabulary);
         assertEquals(matching.size(), result.size());
         assertTrue(matching.containsAll(result));
     }
@@ -455,9 +456,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        final List<Term> resultOne = sut
+        final List<TermDto> resultOne = sut
                 .findAllRootsIncludingImported(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
-        final List<Term> resultTwo = sut
+        final List<TermDto> resultTwo = sut
                 .findAllRootsIncludingImported(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
 
         assertEquals(5, resultOne.size());
@@ -485,7 +486,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        List<Term> result = sut.findAllIncludingImported(searchString, vocabulary);
+        List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary);
         assertEquals(matching.size(), result.size());
         assertTrue(matching.containsAll(result));
     }

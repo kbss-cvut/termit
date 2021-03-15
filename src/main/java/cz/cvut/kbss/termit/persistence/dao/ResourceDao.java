@@ -143,16 +143,13 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
             return em.createNativeQuery("SELECT ?x WHERE {" +
                     "?x a ?type ;" +
                     "?hasLabel ?label ." +
-                    "FILTER NOT EXISTS {" +
-                    "{ ?y ?hasFile ?x . }" +
-                    " UNION " +
-                    "{ ?x a ?vocabulary . }" +
-                    "} } ORDER BY LCASE(?label)", Resource.class)
+                    "FILTER NOT EXISTS { ?y ?hasFile ?x . } " +
+                    "FILTER NOT EXISTS { ?x a ?vocabulary . } " +
+                    "} ORDER BY LCASE(?label)", Resource.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", labelProperty())
                      .setParameter("hasFile", URI.create(Vocabulary.s_p_ma_soubor))
-                     .setParameter("vocabulary",
-                             URI.create(getOwlClassForEntity(cz.cvut.kbss.termit.model.Vocabulary.class)))
+                     .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

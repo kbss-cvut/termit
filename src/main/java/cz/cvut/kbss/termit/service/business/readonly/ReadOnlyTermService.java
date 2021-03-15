@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ReadOnlyTermService {
+    // TODO
 
     private final TermService termService;
 
@@ -33,23 +34,27 @@ public class ReadOnlyTermService {
     }
 
     public List<ReadOnlyTerm> findAll(String searchString, Vocabulary vocabulary) {
-        return termService.findAll(searchString, vocabulary).stream().map(ReadOnlyTerm::new)
-                          .collect(Collectors.toList());
+//        return termService.findAll(searchString, vocabulary).stream().map(ReadOnlyTerm::new)
+//                          .collect(Collectors.toList());
+        return Collections.emptyList();
     }
 
     public List<ReadOnlyTerm> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
-        return termService.findAllIncludingImported(searchString, vocabulary).stream().map(ReadOnlyTerm::new)
-                          .collect(Collectors.toList());
+//        return termService.findAllIncludingImported(searchString, vocabulary).stream().map(ReadOnlyTerm::new)
+//                          .collect(Collectors.toList());
+        return Collections.emptyList();
     }
 
     public List<ReadOnlyTerm> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllRoots(vocabulary, pageSpec, Collections.emptyList()).stream().map(ReadOnlyTerm::new)
-                          .collect(Collectors.toList());
+//        return termService.findAllRoots(vocabulary, pageSpec, Collections.emptyList()).stream().map(ReadOnlyTerm::new)
+//                          .collect(Collectors.toList());
+        return Collections.emptyList();
     }
 
     public List<ReadOnlyTerm> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList()).stream()
-                          .map(ReadOnlyTerm::new).collect(Collectors.toList());
+//        return termService.findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList()).stream()
+//                          .map(ReadOnlyTerm::new).collect(Collectors.toList());
+        return Collections.emptyList();
     }
 
     public ReadOnlyTerm findRequired(URI termId) {

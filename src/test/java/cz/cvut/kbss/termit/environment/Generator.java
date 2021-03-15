@@ -18,6 +18,7 @@ package cz.cvut.kbss.termit.environment;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.assignment.Target;
 import cz.cvut.kbss.termit.model.assignment.TermAssignment;
@@ -314,16 +315,8 @@ public class Generator {
         if (Environment.getCurrentUser() != null) {
             record.setAuthor(Environment.getCurrentUser().toUser());
         }
-        try {
-            final Class<?> cls = asset.getClass();
-            final Field labelField = cls.getDeclaredField("label");
-            if (labelField.getAnnotation(OWLAnnotationProperty.class) != null) {
-                record.setChangedAttribute(
-                    URI.create(labelField.getAnnotation(OWLAnnotationProperty.class).iri()));
-            }
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException("Unable to generate update record.");
-        }
+            // TODO
+                record.setChangedAttribute(URI.create(RDFS.LABEL));
         record.setNewValue(Collections.singleton(asset.getLabel()));
         return record;
     }

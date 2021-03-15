@@ -238,44 +238,44 @@ class TermControllerTest extends BaseControllerTestRunner {
         verify(termServiceMock).findAll(vocabulary);
     }
 
-    @Test
-    void getAllReturnsAllTermsFromVocabularyChainWhenIncludeImportedIsSpecified() throws Exception {
-        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        when(idResolverMock.buildNamespace(eq(VOCABULARY_URI), any())).thenReturn(NAMESPACE);
-        final List<Term> terms = Generator.generateTermsWithIds(5);
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllIncludingImported(eq(vocabulary))).thenReturn(terms);
+//    @Test
+//    void getAllReturnsAllTermsFromVocabularyChainWhenIncludeImportedIsSpecified() throws Exception {
+//        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+//                .thenReturn(URI.create(VOCABULARY_URI));
+//        when(idResolverMock.buildNamespace(eq(VOCABULARY_URI), any())).thenReturn(NAMESPACE);
+//        final List<Term> terms = Generator.generateTermsWithIds(5);
+//        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+//        when(termServiceMock.findAllIncludingImported(eq(vocabulary))).thenReturn(terms);
+//
+//        final MvcResult mvcResult = mockMvc.perform(
+//                get(PATH + VOCABULARY_NAME + "/terms")
+//                        .param(QueryParams.NAMESPACE, Environment.BASE_URI)
+//                        .param("includeImported", Boolean.TRUE.toString()))
+//                                           .andExpect(status().isOk()).andReturn();
+//        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+//        });
+//        assertEquals(terms, result);
+//        verify(termServiceMock).findAllIncludingImported(vocabulary);
+//    }
 
-        final MvcResult mvcResult = mockMvc.perform(
-                get(PATH + VOCABULARY_NAME + "/terms")
-                        .param(QueryParams.NAMESPACE, Environment.BASE_URI)
-                        .param("includeImported", Boolean.TRUE.toString()))
-                                           .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
-        });
-        assertEquals(terms, result);
-        verify(termServiceMock).findAllIncludingImported(vocabulary);
-    }
-
-    @Test
-    void getAllUsesSearchStringToFindMatchingTerms() throws Exception {
-        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        when(idResolverMock.buildNamespace(eq(VOCABULARY_URI), any())).thenReturn(NAMESPACE);
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final List<Term> terms = Generator.generateTermsWithIds(5);
-        when(termServiceMock.findAll(anyString(), any())).thenReturn(terms);
-        final String searchString = "test";
-
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
-                .param(QueryParams.NAMESPACE, Environment.BASE_URI)
-                .param("searchString", searchString)).andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
-        });
-        assertEquals(terms, result);
-        verify(termServiceMock).findAll(searchString, vocabulary);
-    }
+//    @Test
+//    void getAllUsesSearchStringToFindMatchingTerms() throws Exception {
+//        when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
+//                .thenReturn(URI.create(VOCABULARY_URI));
+//        when(idResolverMock.buildNamespace(eq(VOCABULARY_URI), any())).thenReturn(NAMESPACE);
+//        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+//        final List<Term> terms = Generator.generateTermsWithIds(5);
+//        when(termServiceMock.findAll(anyString(), any())).thenReturn(terms);
+//        final String searchString = "test";
+//
+//        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
+//                .param(QueryParams.NAMESPACE, Environment.BASE_URI)
+//                .param("searchString", searchString)).andExpect(status().isOk()).andReturn();
+//        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+//        });
+//        assertEquals(terms, result);
+//        verify(termServiceMock).findAll(searchString, vocabulary);
+//    }
 
     @Test
     void getSubTermsFindsSubTermsOfTermWithSpecifiedId() throws Exception {
@@ -409,32 +409,32 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
     }
 
-    @Test
-    void getAllRootsLoadsRootsFromCorrectPage() throws Exception {
-        initNamespaceAndIdentifierResolution();
-        final List<Term> terms = Generator.generateTermsWithIds(5);
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
-               .andExpect(status().isOk());
-
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllRoots(eq(vocabulary), captor.capture(), anyCollection());
-        assertEquals(PageRequest.of(5, 100), captor.getValue());
-    }
-
-    @Test
-    void getAllRootsCreatesDefaultPageRequestWhenPagingInfoIsNotSpecified() throws Exception {
-        initNamespaceAndIdentifierResolution();
-        final List<Term> terms = Generator.generateTermsWithIds(5);
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")).andExpect(status().isOk());
-
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(termServiceMock).findAllRoots(eq(vocabulary), captor.capture(), anyCollection());
-        assertEquals(DEFAULT_PAGE_SPEC, captor.getValue());
-    }
+//    @Test
+//    void getAllRootsLoadsRootsFromCorrectPage() throws Exception {
+//        initNamespaceAndIdentifierResolution();
+//        final List<Term> terms = Generator.generateTermsWithIds(5);
+//        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+//        when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
+//        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
+//               .andExpect(status().isOk());
+//
+//        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+//        verify(termServiceMock).findAllRoots(eq(vocabulary), captor.capture(), anyCollection());
+//        assertEquals(PageRequest.of(5, 100), captor.getValue());
+//    }
+//
+//    @Test
+//    void getAllRootsCreatesDefaultPageRequestWhenPagingInfoIsNotSpecified() throws Exception {
+//        initNamespaceAndIdentifierResolution();
+//        final List<Term> terms = Generator.generateTermsWithIds(5);
+//        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+//        when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
+//        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")).andExpect(status().isOk());
+//
+//        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+//        verify(termServiceMock).findAllRoots(eq(vocabulary), captor.capture(), anyCollection());
+//        assertEquals(DEFAULT_PAGE_SPEC, captor.getValue());
+//    }
 
     @Test
     void createRootTermPassesNewTermToService() throws Exception {
@@ -822,20 +822,20 @@ class TermControllerTest extends BaseControllerTestRunner {
         assertEquals(records, result);
     }
 
-    @Test
-    void getAllRootsPassesProvidedIdentifiersOfTermsToIncludeToService() throws Exception {
-        initNamespaceAndIdentifierResolution();
-        final List<Term> terms = Generator.generateTermsWithIds(5);
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
-        final List<URI> toInclude = Arrays.asList(Generator.generateUri(), Generator.generateUri());
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeTerms",
-                toInclude.stream().map(URI::toString)
-                         .toArray(String[]::new)))
-               .andExpect(status().isOk());
-
-        verify(termServiceMock).findAllRoots(eq(vocabulary), any(Pageable.class), eq(toInclude));
-    }
+//    @Test
+//    void getAllRootsPassesProvidedIdentifiersOfTermsToIncludeToService() throws Exception {
+//        initNamespaceAndIdentifierResolution();
+//        final List<Term> terms = Generator.generateTermsWithIds(5);
+//        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+//        when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
+//        final List<URI> toInclude = Arrays.asList(Generator.generateUri(), Generator.generateUri());
+//        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeTerms",
+//                toInclude.stream().map(URI::toString)
+//                         .toArray(String[]::new)))
+//               .andExpect(status().isOk());
+//
+//        verify(termServiceMock).findAllRoots(eq(vocabulary), any(Pageable.class), eq(toInclude));
+//    }
 
     @Test
     void getCommentsRetrievesCommentsForSpecifiedTerm() throws Exception {
