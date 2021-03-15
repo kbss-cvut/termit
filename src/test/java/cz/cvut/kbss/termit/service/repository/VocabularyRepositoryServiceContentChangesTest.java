@@ -19,21 +19,22 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.business.TermService;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 
-class VocabularyRepositoryServiceContentChangesTest extends BaseServiceTestRunner {
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+class VocabularyRepositoryServiceContentChangesTest {
 
     @InjectMocks
     private VocabularyRepositoryService sut;
@@ -43,7 +44,7 @@ class VocabularyRepositoryServiceContentChangesTest extends BaseServiceTestRunne
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
@@ -59,10 +60,10 @@ class VocabularyRepositoryServiceContentChangesTest extends BaseServiceTestRunne
 
         User user = Generator.generateUser();
 
-        final List<AbstractChangeRecord> ucr1 = Generator.generateChangeRecords(vocabulary,user);
+        final List<AbstractChangeRecord> ucr1 = Generator.generateChangeRecords(vocabulary, user);
         when(termService.getChanges(t1)).thenReturn(ucr1);
 
-        final List<AbstractChangeRecord> ucr2 = Generator.generateChangeRecords(vocabulary,user);
+        final List<AbstractChangeRecord> ucr2 = Generator.generateChangeRecords(vocabulary, user);
         when(termService.getChanges(t2)).thenReturn(ucr2);
 
         final Set<AbstractChangeRecord> all = new HashSet<>();
@@ -70,6 +71,6 @@ class VocabularyRepositoryServiceContentChangesTest extends BaseServiceTestRunne
         all.addAll(ucr2);
 
         final List<AbstractChangeRecord> changes = sut.getChangesOfContent(vocabulary);
-        assertEquals( all, new HashSet<>(changes) );
+        assertEquals(all, new HashSet<>(changes));
     }
 }
