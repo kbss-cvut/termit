@@ -16,13 +16,13 @@ package cz.cvut.kbss.termit.environment.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.environment.Environment;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
 
-@Configuration
+@TestConfiguration
 public class TestSecurityConfig {
 
     @Bean

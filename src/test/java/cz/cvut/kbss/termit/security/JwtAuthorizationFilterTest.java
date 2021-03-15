@@ -36,6 +36,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -57,7 +58,7 @@ import static org.mockito.Mockito.*;
 
 @Tag("security")
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {TestConfig.class})
+@ContextConfiguration(classes = {TestConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
 class JwtAuthorizationFilterTest {
 
     @Autowired
@@ -89,7 +90,7 @@ class JwtAuthorizationFilterTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         this.user = Generator.generateUserAccount();
         this.jwtUtilsSpy = spy(new JwtUtils(config));
         this.objectMapper = Environment.getObjectMapper();

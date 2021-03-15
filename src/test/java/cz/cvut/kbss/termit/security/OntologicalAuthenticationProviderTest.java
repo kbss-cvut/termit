@@ -27,6 +27,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
@@ -46,9 +48,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-@Configuration
 @Tag("security")
-@ContextConfiguration(classes = {TestSecurityConfig.class, OntologicalAuthenticationProviderTest.class})
+@SpringBootTest
+@ContextConfiguration(classes = {TestSecurityConfig.class})
 class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
 
     @Bean
@@ -163,6 +165,15 @@ class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
         final Authentication auth = authentication(user.getUsername(), plainPassword);
         final DisabledException ex = assertThrows(DisabledException.class, () -> provider.authenticate(auth));
         assertEquals("Account of user " + user + " is disabled.", ex.getMessage());
+    }
+
+    @org.springframework.boot.test.context.TestConfiguration
+    public static class TestConfiguration {
+        @Bean
+        public Listener listener() {
+            return spy(new Listener());
+        }
+
     }
 
     public static class Listener {
