@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.environment.config.TestPersistenceConfig;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -30,5 +31,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
         TestPersistenceConfig.class,
         TestPersistenceAspectsConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@ActiveProfiles("test")
 public abstract class BaseDaoTestRunner extends TransactionalTestRunner {
 }

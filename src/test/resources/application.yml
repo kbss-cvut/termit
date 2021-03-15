@@ -1,4 +1,6 @@
 spring:
+  autoconfigure:
+    exclude: net.bull.javamelody.JavaMelodyAutoConfiguration
   main:
     allow-bean-definition-overriding: true
 repository:

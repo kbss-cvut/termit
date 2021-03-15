@@ -29,8 +29,8 @@ import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import javax.validation.Validator;
@@ -52,7 +52,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
     @Autowired
     private BaseAssetRepositoryServiceImpl sut;
 
-    @Configuration
+    @TestConfiguration
     public static class Config {
 
         @Bean
