@@ -12,6 +12,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,7 +65,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
             sut.recordAddEvent(newTerm);
         });
 
-        final List<AbstractChangeRecord> result = findRecords();
+        final List<AbstractChangeRecord> result = findRecords(newTerm);
         assertEquals(1, result.size());
         final AbstractChangeRecord record = result.get(0);
         assertThat(record, instanceOf(PersistChangeRecord.class));
@@ -72,9 +74,11 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         assertNotNull(record.getTimestamp());
     }
 
-    private List<AbstractChangeRecord> findRecords() {
-        return em.createNativeQuery("SELECT ?x WHERE { ?x a ?changeRecord . }", AbstractChangeRecord.class)
-                 .setParameter("changeRecord", em.getMetamodel().entity(AbstractChangeRecord.class).getIRI().toURI())
+    private List<AbstractChangeRecord> findRecords(HasIdentifier entity) {
+        return em.createNativeQuery("SELECT ?x WHERE { ?x a ?changeRecord ; ?concerns ?entity . }", AbstractChangeRecord.class)
+                 .setParameter("changeRecord", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
+                 .setParameter("concerns", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
+                 .setParameter("entity", entity.getUri())
                  .getResultList();
     }
 
@@ -88,7 +92,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         final Term update = cloneOf(original);
         transactional(() -> sut.recordUpdateEvent(update, original));
 
-        assertTrue(findRecords().isEmpty());
+        assertTrue(findRecords(original).isEmpty());
     }
 
     @Test
@@ -102,7 +106,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         update.setDefinition(MultilingualString.create("Updated definition of this term.", Constants.DEFAULT_LANGUAGE));
         transactional(() -> sut.recordUpdateEvent(update, original));
 
-        final List<AbstractChangeRecord> result = findRecords();
+        final List<AbstractChangeRecord> result = findRecords(original);
         assertEquals(1, result.size());
         final AbstractChangeRecord record = result.get(0);
         assertEquals(original.getUri(), record.getChangedEntity());
@@ -122,7 +126,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         update.setSources(Collections.singleton(Generator.generateUri().toString()));
         transactional(() -> sut.recordUpdateEvent(update, original));
 
-        final List<AbstractChangeRecord> result = findRecords();
+        final List<AbstractChangeRecord> result = findRecords(original);
         assertEquals(2, result.size());
         result.forEach(record -> {
             assertEquals(original.getUri(), record.getChangedEntity());

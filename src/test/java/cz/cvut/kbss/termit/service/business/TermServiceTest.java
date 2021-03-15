@@ -32,7 +32,7 @@ import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class TermServiceTest extends BaseServiceTestRunner {
+class TermServiceTest {
 
     @Mock
     private VocabularyExporters exporters;
@@ -62,7 +62,7 @@ class TermServiceTest extends BaseServiceTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         this.vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
         when(configuration.get(ConfigParam.LANGUAGE)).thenReturn(Constants.DEFAULT_LANGUAGE);

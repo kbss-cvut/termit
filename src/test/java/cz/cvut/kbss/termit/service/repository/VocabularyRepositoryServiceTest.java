@@ -32,7 +32,6 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
@@ -59,7 +58,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         this.user = Generator.generateUserAccountWithPassword();
         transactional(() -> em.persist(user));
         Environment.setCurrentUser(user);

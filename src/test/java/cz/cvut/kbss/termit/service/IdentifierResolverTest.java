@@ -16,13 +16,12 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
 import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.env.MockEnvironment;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.net.URI;
 
@@ -31,14 +30,17 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@ContextConfiguration(initializers = PropertyMockingApplicationContextInitializer.class)
-class IdentifierResolverTest extends BaseServiceTestRunner {
+class IdentifierResolverTest {
 
-    @Autowired
     private MockEnvironment environment;
 
-    @Autowired
     private IdentifierResolver sut;
+
+    @BeforeEach
+    void setUp() {
+        this.environment = new MockEnvironment();
+        this.sut = new IdentifierResolver(new Configuration(environment));
+    }
 
     @Test
     void normalizeTransformsValueToLowerCase() {
