@@ -5,7 +5,6 @@ repository:
   url: mem:termit
 persistence:
   driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
-  language: cs
 jwt:
   secretKey: TermItSecretKey
 namespace:
