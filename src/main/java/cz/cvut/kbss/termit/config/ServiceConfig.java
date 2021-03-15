@@ -16,7 +16,6 @@ package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
-import cz.cvut.kbss.termit.service.Services;
 import cz.cvut.kbss.termit.service.SystemInitializer;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import org.apache.http.client.HttpClient;
@@ -25,7 +24,6 @@ import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.aspectj.lang.Aspects;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -42,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 @Configuration
-@ComponentScan(basePackageClasses = {Services.class})
 public class ServiceConfig {
 
     @Bean

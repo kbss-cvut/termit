@@ -39,7 +39,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Collections;
 
 @Configuration
-@ComponentScan(basePackageClasses = Security.class)
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -89,7 +88,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .disable()
             .authorizeRequests().antMatchers("/**").permitAll()
             .and().exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
-            .and().cors().and().csrf().disable()
+            .and().cors().configurationSource(corsConfigurationSource()).and().csrf().disable()
             .addFilter(authenticationFilter())
             .addFilter(
                     new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils,
@@ -108,7 +107,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return authenticationFilter;
     }
 
-    @Bean
     CorsConfigurationSource corsConfigurationSource() {
         // We're allowing all methods from all origins so that the application API is usable also by other clients
         // than just the UI.
