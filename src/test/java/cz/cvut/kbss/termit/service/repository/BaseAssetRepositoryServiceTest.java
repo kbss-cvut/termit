@@ -25,8 +25,6 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -46,8 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BaseAssetRepositoryServiceTest.class);
 
     @Autowired
     private EntityManager em;
@@ -92,7 +88,6 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         em.getEntityManagerFactory().getCache().evictAll();
 
         final int count = 2;
-        LOG.debug("All last edited assets: {}", sut.findLastEdited(Integer.MAX_VALUE));
         final List<RecentlyModifiedAsset> result = sut.findLastEdited(count);
         persistRecords.sort(Comparator.comparing(AbstractChangeRecord::getTimestamp).reversed());
         assertEquals(count, result.size());
