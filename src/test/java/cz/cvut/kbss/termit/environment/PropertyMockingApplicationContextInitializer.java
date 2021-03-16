@@ -17,8 +17,13 @@
  */
 package cz.cvut.kbss.termit.environment;
 
+import org.springframework.boot.DefaultBootstrapContext;
+import org.springframework.boot.DefaultPropertiesPropertySource;
+import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor;
+import org.springframework.boot.env.RandomValuePropertySource;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.mock.env.MockEnvironment;
 
 /**
@@ -29,7 +34,14 @@ public class PropertyMockingApplicationContextInitializer
 
     @Override
     public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
+        final Environment realEnvironment = configurableApplicationContext.getEnvironment();
         MockEnvironment mockEnvironment = new MockEnvironment();
+        RandomValuePropertySource.addToEnvironment(mockEnvironment);
+        DefaultBootstrapContext bootstrapContext = new DefaultBootstrapContext();
+        ConfigDataEnvironmentPostProcessor.applyTo(mockEnvironment, configurableApplicationContext, bootstrapContext);
+        bootstrapContext.close(configurableApplicationContext);
+        DefaultPropertiesPropertySource.moveToEnd(mockEnvironment);
+        mockEnvironment.setActiveProfiles(realEnvironment.getActiveProfiles());
         configurableApplicationContext.setEnvironment(mockEnvironment);
     }
 }

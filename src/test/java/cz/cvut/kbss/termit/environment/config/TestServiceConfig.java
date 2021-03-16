@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import org.aspectj.lang.Aspects;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -32,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 @TestConfiguration
+@ComponentScan(basePackages = "cz.cvut.kbss.termit.service")
 public class TestServiceConfig {
 
     @Bean
