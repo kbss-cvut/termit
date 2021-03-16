@@ -7,10 +7,11 @@ import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,11 +25,11 @@ import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class VocabularyImportServiceTest {
 
     @Mock
@@ -42,7 +43,6 @@ class VocabularyImportServiceTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         when(context.getBean(SKOSImporter.class)).thenReturn(importer);
     }
 
@@ -64,7 +64,7 @@ class VocabularyImportServiceTest {
         final MultipartFile input = new MockMultipartFile("vocabulary.zip", "vocabulary.zip",
                 Constants.ZIP_MEDIA_TYPE, generateZipFile().toByteArray());
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        when(importer.importVocabulary(any())).thenReturn(vocabulary);
+        when(importer.importVocabulary(anyString(), any(InputStream.class))).thenReturn(vocabulary);
         sut.importVocabulary(input);
         final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
         verify(importer).importVocabulary(eq(Constants.Turtle.MEDIA_TYPE), captor.capture());
