@@ -26,7 +26,11 @@ import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -58,6 +62,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @ContextConfiguration(initializers = PropertyMockingApplicationContextInitializer.class)
 class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
@@ -94,7 +100,6 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
     @BeforeEach
     void setUp() throws Exception {
-        MockitoAnnotations.openMocks(this);
         this.mockServer = MockRestServiceServer.createServer(restTemplate);
         this.objectMapper = cz.cvut.kbss.termit.environment.Environment.getObjectMapper();
         this.vocabulary = Generator.generateVocabularyWithId();

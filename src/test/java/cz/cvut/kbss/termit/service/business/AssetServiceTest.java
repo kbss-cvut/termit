@@ -1,16 +1,13 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
@@ -27,11 +24,13 @@ import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,6 +40,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AssetServiceTest {
 
     @Mock
@@ -57,11 +58,6 @@ class AssetServiceTest {
 
     @InjectMocks
     private AssetService sut;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.initMocks(this);
-    }
 
     @Test
     void findRecentlyEditedCombinesOutputOfAllAssetServices() {
@@ -107,7 +103,7 @@ class AssetServiceTest {
                     vocabularies.add(rma);
                     break;
             }
-            rma.setModified(new Date(System.currentTimeMillis() - i * 1000));
+            rma.setModified(new Date(System.currentTimeMillis() - i * 1000L));
             rma.setEditor(author);
             assets.add(rma);
         }

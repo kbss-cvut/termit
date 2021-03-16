@@ -19,9 +19,11 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
 import java.util.*;
@@ -33,6 +35,7 @@ import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class TermServiceTest {
 
     @Mock
@@ -59,15 +62,7 @@ class TermServiceTest {
     @InjectMocks
     private TermService sut;
 
-    private Vocabulary vocabulary;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        this.vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        when(configuration.get(ConfigParam.LANGUAGE)).thenReturn(Constants.DEFAULT_LANGUAGE);
-    }
+    private Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
@@ -153,7 +148,6 @@ class TermServiceTest {
     @Test
     void updateUsesRepositoryServiceToUpdateTerm() {
         final Term term = generateTermWithId();
-        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
         sut.update(term);
         verify(termRepositoryService).update(term);
     }

@@ -15,10 +15,11 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MvcResult;
@@ -40,6 +41,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ExtendWith(MockitoExtension.class)
 class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     private static final String PATH = "/public/vocabularies/";
@@ -49,13 +51,13 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     private static final String NAMESPACE = VOCABULARY_URI + Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR + "/";
 
     @Mock
+    private Configuration config;
+
+    @Mock
     private ReadOnlyTermService termService;
 
     @Mock
     private IdentifierResolver idResolver;
-
-    @Mock
-    private Configuration configuration;
 
     private Vocabulary vocabulary;
 
@@ -64,21 +66,14 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         this.vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(VOCABULARY_URI));
-        when(configuration.get(ConfigParam.NAMESPACE_VOCABULARY)).thenReturn(Environment.BASE_URI);
-        when(configuration.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)).thenReturn(DEFAULT_TERM_NAMESPACE_SEPARATOR);
-        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
         setUp(sut);
     }
 
     @Test
     void getAllReturnsAllTermsFromVocabularyFromService() throws Exception {
-        when(idResolver.buildNamespace(eq(VOCABULARY_URI), any())).thenReturn(NAMESPACE);
+        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
         when(termService.findAll(any())).thenReturn(terms);
@@ -97,7 +92,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllWithSearchStringUsesServiceToRetrieveMatchingTermsAndReturnsThem() throws Exception {
-        when(idResolver.buildNamespace(eq(VOCABULARY_URI), any())).thenReturn(NAMESPACE);
+        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
         when(termService.findAll(any(), any())).thenReturn(terms);
@@ -116,7 +111,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     @Test
     void getAllWithSearchStringAndIncludeImportedUsesServiceToRetrieveMatchingTermsIncludingImportedOnesAndReturnsThem()
             throws Exception {
-        when(idResolver.buildNamespace(eq(VOCABULARY_URI), any())).thenReturn(NAMESPACE);
+        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
         when(termService.findAllIncludingImported(any(), any())).thenReturn(terms);
@@ -148,6 +143,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRootsCreatesDefaultPageRequestWhenPagingInfoIsNotSpecified() throws Exception {
+        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termService.findAllRoots(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
@@ -160,6 +156,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRootsRetrievesRootTermsIncludingImportedWhenParameterIsSpecified() throws Exception {
+        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termService.findAllRootsIncludingImported(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
@@ -176,7 +173,9 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     void getByIdRetrievesTermFromService() throws Exception {
         final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
+        when(config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)).thenReturn(DEFAULT_TERM_NAMESPACE_SEPARATOR);
         when(idResolver.buildNamespace(VOCABULARY_URI, DEFAULT_TERM_NAMESPACE_SEPARATOR)).thenReturn(NAMESPACE);
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(termService.findRequired(any())).thenReturn(term);
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME).param(
@@ -188,6 +187,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getByIdReturnsNotFoundWhenNotFoundExceptionIsThrownByService() throws Exception {
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenThrow(NotFoundException.class);
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME).param(
                 Constants.QueryParams.NAMESPACE, Environment.BASE_URI)).andExpect(status().isNotFound());
@@ -197,8 +197,10 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     void getSubTermsRetrievesSubTermsOfTermFromService() throws Exception {
         final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
+        when(config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)).thenReturn(DEFAULT_TERM_NAMESPACE_SEPARATOR);
         when(idResolver.buildNamespace(VOCABULARY_URI, DEFAULT_TERM_NAMESPACE_SEPARATOR)).thenReturn(NAMESPACE);
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenReturn(term);
         final List<ReadOnlyTerm> subTerms = Generator.generateTermsWithIds(5).stream().map(ReadOnlyTerm::new).collect(Collectors.toList());
         when(termService.findSubTerms(term)).thenReturn(subTerms);

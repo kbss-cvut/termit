@@ -61,7 +61,6 @@ class SystemInitializerTest extends BaseServiceTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         // Randomize admin credentials folder
         this.adminCredentialsDir =
                 System.getProperty("java.io.tmpdir") + File.separator + Generator.randomInt(0, 10000);
