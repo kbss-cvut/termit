@@ -26,11 +26,6 @@ import javax.servlet.http.HttpServletRequest;
 public class TestSecurityConfig {
 
     @Bean
-    public HttpServletRequest request() {
-        return new MockHttpServletRequest();
-    }
-
-    @Bean
     public ObjectMapper objectMapper() {
         return Environment.getObjectMapper();
     }
