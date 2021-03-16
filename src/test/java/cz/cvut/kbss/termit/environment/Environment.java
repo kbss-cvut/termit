@@ -18,6 +18,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.config.WebAppConfig;
+import cz.cvut.kbss.termit.dto.TermDto;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
@@ -43,7 +45,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class Environment {
 
@@ -177,5 +181,9 @@ public class Environment {
         } catch (IOException e) {
             throw new RuntimeException("Unable to load TermIt model for import.", e);
         }
+    }
+
+    public static List<TermDto> termsToDtos(List<Term> terms) {
+        return terms.stream().map(TermDto::new).collect(Collectors.toList());
     }
 }

@@ -1,7 +1,9 @@
 package cz.cvut.kbss.termit.rest.readonly;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.rest.BaseController;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -34,7 +36,7 @@ public class ReadOnlyTermController extends BaseController {
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
             produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ReadOnlyTerm> getTerms(@PathVariable String vocabularyIdFragment,
+    public List<?> getTerms(@PathVariable String vocabularyIdFragment,
                                        @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) String namespace,
                                        @RequestParam(name = "searchString", required = false) String searchString,
                                        @RequestParam(name = "includeImported", required = false) boolean includeImported) {
@@ -53,7 +55,7 @@ public class ReadOnlyTermController extends BaseController {
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/roots",
             produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ReadOnlyTerm> getAllRoots(@PathVariable String vocabularyIdFragment,
+    public List<TermDto> getAllRoots(@PathVariable String vocabularyIdFragment,
                                           @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) String namespace,
                                           @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
                                           @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
