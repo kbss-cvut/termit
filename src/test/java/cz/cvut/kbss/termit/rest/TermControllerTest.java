@@ -831,8 +831,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<URI> toInclude = Arrays.asList(Generator.generateUri(), Generator.generateUri());
         mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeTerms",
                 toInclude.stream().map(URI::toString)
-                        .toArray(String[]::new)))
-                .andExpect(status().isOk());
+                         .toArray(String[]::new)))
+               .andExpect(status().isOk());
 
         verify(termServiceMock).findAllRoots(eq(vocabulary), any(Pageable.class), eq(toInclude));
     }
