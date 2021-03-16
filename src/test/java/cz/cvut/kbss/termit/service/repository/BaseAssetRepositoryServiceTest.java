@@ -1,16 +1,13 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.repository;
 
@@ -28,6 +25,8 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -47,6 +46,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
+
+    private static final Logger LOG = LoggerFactory.getLogger(BaseAssetRepositoryServiceTest.class);
 
     @Autowired
     private EntityManager em;
@@ -81,27 +82,28 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
     void findRecentlyEditedLoadsRecentlyEditedItems() {
         enableRdfsInference(em);
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .collect(Collectors.toList());
+                .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(em::persist));
         final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                                                                     .collect(Collectors.toList());
+                .collect(Collectors.toList());
         setCreated(persistRecords);
         transactional(() -> persistRecords.forEach(em::persist));
 
         em.getEntityManagerFactory().getCache().evictAll();
 
         final int count = 2;
+        LOG.debug("All last edited assets: {}", sut.findLastEdited(Integer.MAX_VALUE));
         final List<RecentlyModifiedAsset> result = sut.findLastEdited(count);
         persistRecords.sort(Comparator.comparing(AbstractChangeRecord::getTimestamp).reversed());
         assertEquals(count, result.size());
         assertEquals(persistRecords.subList(0, count).stream().map(AbstractChangeRecord::getChangedEntity)
-                                   .collect(Collectors.toList()),
+                        .collect(Collectors.toList()),
                 result.stream().map(RecentlyModifiedAsset::getUri).collect(Collectors.toList()));
     }
 
     private void setCreated(List<? extends AbstractChangeRecord> changeRecords) {
         for (int i = 0; i < changeRecords.size(); i++) {
-            changeRecords.get(i).setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - (long) i * 1000));
+            changeRecords.get(i).setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - (long) i * 3600 * 1000));
         }
     }
 
@@ -109,10 +111,10 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
     void findRecentlyEditedPerUserLoadsRecentlyEditedItemsPerUser() {
         enableRdfsInference(em);
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .collect(Collectors.toList());
+                .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(em::persist));
         final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                                                                     .collect(Collectors.toList());
+                .collect(Collectors.toList());
         setCreated(persistRecords);
         transactional(() -> persistRecords.forEach(em::persist));
         em.getEntityManagerFactory().getCache().evictAll();
@@ -121,7 +123,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         final List<RecentlyModifiedAsset> result = sut.findLastEditedBy(persistRecords.get(0).getAuthor(), count);
         assertEquals(count, result.size());
         assertEquals(persistRecords.subList(0, count).stream().map(AbstractChangeRecord::getChangedEntity)
-                                   .collect(Collectors.toList()),
+                        .collect(Collectors.toList()),
                 result.stream().map(RecentlyModifiedAsset::getUri).collect(Collectors.toList()));
     }
 
