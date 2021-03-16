@@ -12,6 +12,8 @@ spring:
       max-request-size: 20MB
       file-size-threshold: 0B
       location: ${java.io.tmpdir}
+  profiles:
+    active: @spring.profiles.active@
 javamelody:
   init-parameters:
     authorized-users: admin:kral0vnat3rm1t1st3

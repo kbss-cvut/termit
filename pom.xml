@@ -357,6 +357,7 @@
     </profiles>
 
     <build>
+        <finalName>termit</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -439,6 +440,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${org.springframework.boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <!-- Generate entity classes from OWL integrity constraints -->
