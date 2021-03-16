@@ -824,20 +824,20 @@ class TermControllerTest extends BaseControllerTestRunner {
         assertEquals(records, result);
     }
 
-//    @Test
-//    void getAllRootsPassesProvidedIdentifiersOfTermsToIncludeToService() throws Exception {
-//        initNamespaceAndIdentifierResolution();
-//        final List<Term> terms = Generator.generateTermsWithIds(5);
-//        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-//        when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
-//        final List<URI> toInclude = Arrays.asList(Generator.generateUri(), Generator.generateUri());
-//        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeTerms",
-//                toInclude.stream().map(URI::toString)
-//                         .toArray(String[]::new)))
-//               .andExpect(status().isOk());
-//
-//        verify(termServiceMock).findAllRoots(eq(vocabulary), any(Pageable.class), eq(toInclude));
-//    }
+    @Test
+    void getAllRootsPassesProvidedIdentifiersOfTermsToIncludeToService() throws Exception {
+        initNamespaceAndIdentifierResolution();
+        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+        when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
+        final List<URI> toInclude = Arrays.asList(Generator.generateUri(), Generator.generateUri());
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeTerms",
+                toInclude.stream().map(URI::toString)
+                         .toArray(String[]::new)))
+               .andExpect(status().isOk());
+
+        verify(termServiceMock).findAllRoots(eq(vocabulary), any(Pageable.class), eq(toInclude));
+    }
 
     @Test
     void getCommentsRetrievesCommentsForSpecifiedTerm() throws Exception {
