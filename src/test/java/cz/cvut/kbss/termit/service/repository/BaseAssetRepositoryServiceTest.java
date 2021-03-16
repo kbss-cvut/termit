@@ -84,8 +84,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
                                                        .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(em::persist));
         final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                                                                     .collect(
-                                                                             Collectors.toList());
+                                                                     .collect(Collectors.toList());
         setCreated(persistRecords);
         transactional(() -> persistRecords.forEach(em::persist));
 
@@ -102,7 +101,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
 
     private void setCreated(List<? extends AbstractChangeRecord> changeRecords) {
         for (int i = 0; i < changeRecords.size(); i++) {
-            changeRecords.get(i).setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - (long) i * 1000 * 60));
+            changeRecords.get(i).setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - (long) i * 1000));
         }
     }
 
@@ -113,8 +112,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
                                                        .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(em::persist));
         final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                                                                     .collect(
-                                                                             Collectors.toList());
+                                                                     .collect(Collectors.toList());
         setCreated(persistRecords);
         transactional(() -> persistRecords.forEach(em::persist));
         em.getEntityManagerFactory().getCache().evictAll();
