@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
@@ -65,6 +66,20 @@ public class AssetService {
         return result.subList(0, Math.min(result.size(), limit));
     }
 
+    /**
+     * Finds the specified number of most recently commented assets.
+     *
+     * @param limit Maximum number of assets to retrieve
+     * @return List of recently commented assets
+     */
+    public List<RecentlyCommentedAsset> findLastCommented(int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
+        }
+        final List<RecentlyCommentedAsset> result = termRepositoryService.findLastCommented(limit);
+        return result.subList(0, Math.min(result.size(), limit));
+    }
+
     private static List<RecentlyModifiedAsset> mergeAssets(List<RecentlyModifiedAsset> listOne,
                                                            List<RecentlyModifiedAsset> listTwo) {
         int oneIndex = 0;
@@ -106,6 +121,36 @@ public class AssetService {
         final List<RecentlyModifiedAsset> terms = termRepositoryService.findLastEditedBy(me, limit);
         final List<RecentlyModifiedAsset> vocabularies = vocabularyRepositoryService.findLastEditedBy(me, limit);
         final List<RecentlyModifiedAsset> result = mergeAssets(mergeAssets(resources, terms), vocabularies);
+        return result.subList(0, Math.min(result.size(), limit));
+    }
+
+    /**
+     * Finds the specified number of assets last commented in reaction to the current user' comments.
+     *
+     * @param limit Maximum number of assets to retrieve
+     * @return List of recently commented assets
+     */
+    public List<RecentlyCommentedAsset> findLastCommentedInReactionToMine(int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
+        }
+        final User me = securityUtils.getCurrentUser().toUser();
+        final List<RecentlyCommentedAsset> result = termRepositoryService.findLastCommentedInReaction(me, limit);
+        return result.subList(0, Math.min(result.size(), limit));
+    }
+
+    /**
+     * Finds the specified number of my assets last commented.
+     *
+     * @param limit Maximum number of assets to retrieve
+     * @return List of recently commented assets
+     */
+    public List<RecentlyCommentedAsset> findMyLastCommented(int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
+        }
+        final User me = securityUtils.getCurrentUser().toUser();
+        final List<RecentlyCommentedAsset> result = termRepositoryService.findMyLastCommented(me, limit);
         return result.subList(0, Math.min(result.size(), limit));
     }
 }

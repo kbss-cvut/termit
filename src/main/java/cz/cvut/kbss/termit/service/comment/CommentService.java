@@ -139,4 +139,18 @@ public class CommentService {
         Objects.requireNonNull(comment);
         reactionDao.removeExisting(currentUser(), comment);
     }
-}
+
+    /**
+     * Finds the specified number of the current user's most recently added/edited comments
+     * and reactions on them.
+     *
+     * @param limit Maximum number of comments to retrieve
+     * @return List of recently added/edited comments
+     */
+    public List<Comment> findLastEditedByMe(int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("Maximum for recently edited comments must not be less than 0.");
+        }
+        final User me = securityUtils.getCurrentUser().toUser();
+        return dao.findLastEditedBy(me, limit);
+    }}

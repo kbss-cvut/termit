@@ -6,10 +6,12 @@ import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -119,6 +121,53 @@ public class CommentDao {
         Objects.requireNonNull(comment);
         try {
             em.remove(em.getReference(Comment.class, comment.getUri()));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    private List<Comment> findUniqueLastModifiedEntitiesBy(User author, int limit) {
+        List<Comment> list = em.createNativeQuery(
+            "SELECT DISTINCT ?comment WHERE {"
+                + "?comment a ?commentType ;"
+                + "       ?hasEditor ?editor ;"
+                + "       ?hasAsset ?asset ."
+                + "    OPTIONAL { ?comment ?hasModificationDate ?modified . }"
+                + "    OPTIONAL { ?comment ?hasCreationDate  ?created . }"
+                + "    BIND(COALESCE(?modified,?created) AS ?lastModified)"
+                + "    { FILTER( ?editor = ?author) } UNION {"
+                + "       ?comment2 a ?commentType ;"
+                + "       ?hasEditor ?author ;"
+                + "       ?hasAsset ?asset ."
+                + "       OPTIONAL { ?comment2 ?hasModificationDate ?modified2 . }"
+                + "       OPTIONAL { ?comment2 ?hasCreationDate ?created2 . }"
+                + "       BIND(COALESCE(?modified2,?created2) AS ?lastModified2)"
+                + "       FILTER( ?lastModified2 < ?lastModified )"
+                + "     }"
+                + "    "
+                + "} ORDER BY DESC(?lastModified)", Comment.class).setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
+            .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+            .setParameter("hasCreationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+            .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_creator))
+            .setParameter("author", author.getUri())
+            .setParameter("hasAsset", URI.create(Vocabulary.s_p_topic))
+            .setMaxResults(limit)
+            .getResultList();
+        return list;
+    }
+
+    /**
+     * Finds the specified number of most recently added/edited comments by the specified author
+     * and reactions on them.
+     *
+     * @param author Author of the modifications
+     * @param limit  Number of assets to load
+     * @return List of assets recently added/edited by the specified user
+     */
+    public List<Comment> findLastEditedBy(User author, int limit) {
+        Objects.requireNonNull(author);
+        try {
+            return findUniqueLastModifiedEntitiesBy(author, limit);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.model.Asset;
@@ -67,5 +68,41 @@ public abstract class BaseAssetRepositoryService<T extends Asset<?>> extends Bas
         if (exists(instance.getUri())) {
             throw ResourceExistsException.create(instance.getClass().getSimpleName(), instance.getUri());
         }
+    }
+
+    /**
+     * Gets the specified number of recently commented assets.
+     * <p>
+     * The returned assets are sorted by commented date in descending order.
+     *
+     * @param limit Maximum number of assets returned
+     * @return List of most recently commented assets
+     */
+    public List<RecentlyCommentedAsset> findLastCommented(int limit) {
+        return getPrimaryDao().findLastCommented(limit);
+    }
+
+    /**
+     * Gets the specified number of assets last commented in reaction to the given users' comments .
+     * <p>
+     * The returned assets are sorted by commented date in descending order.
+     *
+     * @param limit Maximum number of assets returned
+     * @return List of most recently commented assets
+     */
+    public List<RecentlyCommentedAsset> findLastCommentedInReaction(User me, int limit) {
+        return getPrimaryDao().findLastCommentedInReaction(me, limit);
+    }
+
+    /**
+     * Gets the specified number of my last commented assets.
+     * <p>
+     * The returned assets are sorted by commented date in descending order.
+     *
+     * @param limit Maximum number of assets returned
+     * @return List of most recently commented assets
+     */
+    public List<RecentlyCommentedAsset> findMyLastCommented(User me, int limit) {
+        return getPrimaryDao().findMyLastCommented(me, limit);
     }
 }
