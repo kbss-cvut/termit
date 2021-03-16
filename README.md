@@ -27,7 +27,7 @@ Both projects are built separately and can run separately.
 
 This section briefly lists the main technologies and principles used (or planned to be used) in the application.
 
-- Spring Boot, Spring Framework 5, Spring Security, Spring Data (paging, filtering)
+- Spring Boot 2, Spring Framework 5, Spring Security, Spring Data (paging, filtering)
 - Jackson 2.12
 - [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson)*
 - [JOPA](https://github.com/kbss-cvut/jopa)

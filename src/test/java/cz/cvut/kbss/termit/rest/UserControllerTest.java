@@ -1,19 +1,13 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
@@ -27,9 +21,10 @@ import cz.cvut.kbss.termit.service.business.UserService;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -44,6 +39,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ExtendWith(MockitoExtension.class)
 class UserControllerTest extends BaseControllerTestRunner {
 
     private static final String BASE_URL = "/users";
@@ -61,7 +57,6 @@ class UserControllerTest extends BaseControllerTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         super.setUp(sut);
         this.user = Generator.generateUserAccount();
         Environment.setCurrentUser(user);
@@ -70,11 +65,11 @@ class UserControllerTest extends BaseControllerTestRunner {
     @Test
     void getAllReturnsAllUsers() throws Exception {
         final List<UserAccount> users = IntStream.range(0, 5).mapToObj(i -> Generator.generateUserAccount())
-                                                 .collect(Collectors.toList());
+                .collect(Collectors.toList());
         when(userService.findAll()).thenReturn(users);
 
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL).accept(MediaType.APPLICATION_JSON_VALUE))
-                                           .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk()).andReturn();
         final List<UserAccount> result = readValue(mvcResult, new TypeReference<List<UserAccount>>() {
         });
         assertEquals(users, result);
@@ -86,7 +81,7 @@ class UserControllerTest extends BaseControllerTestRunner {
 
         mockMvc.perform(
                 put(BASE_URL + "/current").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         verify(userService).updateCurrent(dto);
     }
 
@@ -109,7 +104,7 @@ class UserControllerTest extends BaseControllerTestRunner {
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(delete(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/lock")
                 .content(newPassword))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         verify(userService).unlock(user, newPassword);
     }
 
@@ -118,7 +113,7 @@ class UserControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(eq(ConfigParam.NAMESPACE_USER), any())).thenReturn(user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(post(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/status"))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         verify(userService).enable(user);
     }
 
@@ -127,7 +122,7 @@ class UserControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(eq(ConfigParam.NAMESPACE_USER), any())).thenReturn(user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(delete(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/status"))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         verify(userService).disable(user);
     }
 
@@ -135,7 +130,7 @@ class UserControllerTest extends BaseControllerTestRunner {
     void existsChecksForUsernameExistence() throws Exception {
         when(userService.exists(user.getUsername())).thenReturn(true);
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL + "/username").param("username", user.getUsername()))
-                                           .andReturn();
+                .andReturn();
         final Boolean result = readValue(mvcResult, Boolean.class);
         assertTrue(result);
     }

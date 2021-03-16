@@ -2,27 +2,24 @@ package cz.cvut.kbss.termit.model.util.validation;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.validation.ConstraintValidatorContext;
 import java.net.URI;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(MockitoExtension.class)
 class WithoutQueryParametersValidatorTest {
 
     @Mock
     private ConstraintValidatorContext ctx;
 
     private final WithoutQueryParametersValidator sut = new WithoutQueryParametersValidator();
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.initMocks(this);
-    }
 
     @Test
     void isValidReturnsTrueForNormalUris() {

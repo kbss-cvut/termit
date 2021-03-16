@@ -23,9 +23,10 @@ import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -35,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class LuceneSearchDaoTest {
 
     @Mock
@@ -50,7 +52,6 @@ class LuceneSearchDaoTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         when(emMock.createNativeQuery(any(), anyString())).thenReturn(queryMock);
         when(queryMock.setParameter(anyString(), any())).thenReturn(queryMock);
         when(queryMock.setParameter(anyString(), any(), any())).thenReturn(queryMock);
