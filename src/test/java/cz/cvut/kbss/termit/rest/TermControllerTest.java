@@ -243,7 +243,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     @Test
     void getAllReturnsAllTermsFromVocabularyChainWhenIncludeImportedIsSpecified() throws Exception {
         when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI))
+                .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termServiceMock.findAllIncludingImported(eq(vocabulary))).thenReturn(terms);
