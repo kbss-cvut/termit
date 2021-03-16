@@ -44,7 +44,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(BaseAssetRepositoryServiceTest.class);
