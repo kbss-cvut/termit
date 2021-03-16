@@ -14,7 +14,7 @@
     <version>2.3.0</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
-    <packaging>jar</packaging>
+    <packaging>${packaging}</packaging>
 
     <!-- Required for the KBSS parent project -->
     <repositories>
@@ -37,6 +37,7 @@
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
+        <packaging>jar</packaging>
     </properties>
 
     <dependencies>
@@ -127,6 +128,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${org.springframework.boot.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -273,6 +280,52 @@
     </dependencies>
 
     <profiles>
+        <!-- Deployment type profiles -->
+        <profile>
+            <!-- Project is built as an executable JAR with an embedded Tomcat -->
+            <id>standalone</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <packaging>jar</packaging>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                    <version>${org.springframework.boot.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <!-- Project is built as a deployable WAR -->
+            <id>war</id>
+            <properties>
+                <packaging>war</packaging>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                    <version>${org.springframework.boot.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <configuration>
+                            <warName>termit</warName>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>dev</id>
             <activation>
@@ -428,14 +481,6 @@
                     </execution>
                 </executions>
             </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-war-plugin</artifactId>-->
-<!--                <version>3.3.1</version>-->
-<!--                <configuration>-->
-<!--                    <warName>termit</warName>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
