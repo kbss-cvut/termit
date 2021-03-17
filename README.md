@@ -12,7 +12,7 @@ An **asset** is an object of one of the main domain types managed by the system 
 
 ## Required Technologies
 
-- JDK 8 (preferably Oracle)
+- JDK 8 (preferably Oracle) or newer
 - Apache Maven 3.x
 - Apache Tomcat 9 or newer (required by Servlet API 4)
 
@@ -27,7 +27,7 @@ Both projects are built separately and can run separately.
 
 This section briefly lists the main technologies and principles used (or planned to be used) in the application.
 
-- Spring framework 5, Spring Security, Spring Data (paging, filtering)
+- Spring Boot 2, Spring Framework 5, Spring Security, Spring Data (paging, filtering)
 - Jackson 2.12
 - [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson)*
 - [JOPA](https://github.com/kbss-cvut/jopa)

@@ -39,8 +39,11 @@ public class BaseControllerTestRunner {
 
     protected MockMvc mockMvc;
 
-    public void setUp(Object controller) {
+    public BaseControllerTestRunner() {
         setupObjectMappers();
+    }
+
+    public void setUp(Object controller) {
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new RestExceptionHandler())
                                       .setMessageConverters(createJsonLdMessageConverter(),
                                               createDefaultMessageConverter(), createStringEncodingMessageConverter(),
@@ -50,7 +53,7 @@ public class BaseControllerTestRunner {
                                       .build();
     }
 
-    void setupObjectMappers() {
+    protected void setupObjectMappers() {
         this.objectMapper = Environment.getObjectMapper();
         this.jsonLdObjectMapper = Environment.getJsonLdObjectMapper();
     }

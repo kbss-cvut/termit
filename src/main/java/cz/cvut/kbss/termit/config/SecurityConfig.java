@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -32,6 +33,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -39,14 +41,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Collections;
 
 @Configuration
-@ComponentScan(basePackageClasses = Security.class)
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationProvider authenticationProvider;
-
-    private final AuthenticationEntryPoint authenticationEntryPoint;
 
     private final AuthenticationSuccess authenticationSuccessHandler;
 
@@ -62,14 +61,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     public SecurityConfig(AuthenticationProvider authenticationProvider,
-                          AuthenticationEntryPoint authenticationEntryPoint,
                           AuthenticationSuccess authenticationSuccessHandler,
                           AuthenticationFailureHandler authenticationFailureHandler,
                           JwtUtils jwtUtils, SecurityUtils securityUtils,
                           TermItUserDetailsService userDetailsService,
                           ObjectMapper objectMapper) {
         this.authenticationProvider = authenticationProvider;
-        this.authenticationEntryPoint = authenticationEntryPoint;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
         this.jwtUtils = jwtUtils;
@@ -88,8 +85,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf()
             .disable()
             .authorizeRequests().antMatchers("/**").permitAll()
-            .and().exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
-            .and().cors().and().csrf().disable()
+            .and().exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            .and().cors().configurationSource(corsConfigurationSource()).and().csrf().disable()
             .addFilter(authenticationFilter())
             .addFilter(
                     new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils,
@@ -108,8 +105,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return authenticationFilter;
     }
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    private CorsConfigurationSource corsConfigurationSource() {
         // We're allowing all methods from all origins so that the application API is usable also by other clients
         // than just the UI.
         // This behavior can be restricted later.

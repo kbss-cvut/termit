@@ -38,6 +38,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +49,7 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.AnyOf.anyOf;
 import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
@@ -375,15 +377,13 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Descriptor d = descriptorFactory.vocabularyDescriptor(vOriginal);
 
-        transactional(() -> { em.persist(vOriginal, d); });
+        transactional(() -> em.persist(vOriginal, d));
 
         final cz.cvut.kbss.termit.model.Vocabulary vUpdate = new cz.cvut.kbss.termit.model.Vocabulary();
         vUpdate.setUri(vOriginal.getUri());
         vUpdate.setDocument(null);
 
-        transactional(() -> {
-            sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate);
-        });
+        transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
 
         assertThat(em.find( Document.class, document.getUri(), d ), nullValue());
     }
@@ -404,9 +404,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         vUpdate.setUri(vOriginal.getUri());
         vUpdate.setDocument(document);
 
-        transactional(() -> {
-            sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate);
-        });
+        transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
 
         assertThat(em.find( Document.class, document.getUri(), d ), equalTo(document));
     }

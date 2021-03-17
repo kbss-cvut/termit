@@ -14,8 +14,10 @@
  */
 package cz.cvut.kbss.termit.config;
 
-import cz.cvut.kbss.termit.aspect.Aspects;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
 import org.springframework.core.env.Environment;
 
@@ -23,9 +25,6 @@ import org.springframework.core.env.Environment;
 @EnableMBeanExport
 @EnableSpringConfigured
 @EnableAspectJAutoProxy(proxyTargetClass = true)
-@ComponentScan(basePackageClasses = Aspects.class)
-@Import({PersistenceConfig.class, ServiceConfig.class, WebAppConfig.class})
-@PropertySource("classpath:config.properties")
 public class AppConfig {
 
     @Bean

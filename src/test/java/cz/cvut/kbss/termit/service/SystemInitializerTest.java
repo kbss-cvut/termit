@@ -1,25 +1,18 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.util.ConfigParam;
@@ -31,10 +24,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.mock.env.MockEnvironment;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,14 +36,12 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
-@ContextConfiguration(initializers = PropertyMockingApplicationContextInitializer.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SystemInitializerTest extends BaseServiceTestRunner {
 
     private static final URI ADMIN_URI = URI.create(Vocabulary.ONTOLOGY_IRI_termit + "/system-admin-user");
-
-    @Autowired
-    private Environment environment;
 
     @Autowired
     private Configuration config;
@@ -72,12 +61,10 @@ class SystemInitializerTest extends BaseServiceTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         // Randomize admin credentials folder
         this.adminCredentialsDir =
                 System.getProperty("java.io.tmpdir") + File.separator + Generator.randomInt(0, 10000);
-        ((MockEnvironment) environment)
-                .setProperty(ConfigParam.ADMIN_CREDENTIALS_LOCATION.toString(), adminCredentialsDir);
+        when(config.get(ConfigParam.ADMIN_CREDENTIALS_LOCATION)).thenReturn(adminCredentialsDir);
         this.sut = new SystemInitializer(config, userService, txManager);
     }
 
@@ -121,7 +108,7 @@ class SystemInitializerTest extends BaseServiceTestRunner {
     void savesAdminLoginCredentialsIntoHiddenFileInUserHome() throws Exception {
         sut.initSystemAdmin();
         final UserAccount admin = em.find(UserAccount.class, ADMIN_URI);
-        final String home = environment.getProperty(ConfigParam.ADMIN_CREDENTIALS_LOCATION.toString());
+        final String home = config.get(ConfigParam.ADMIN_CREDENTIALS_LOCATION);
         final File credentialsFile = new File(home + File.separator + Constants.ADMIN_CREDENTIALS_FILE);
         assertTrue(credentialsFile.exists());
         assertTrue(credentialsFile.isHidden());
@@ -138,7 +125,7 @@ class SystemInitializerTest extends BaseServiceTestRunner {
     @Test
     void savesAdminLoginCredentialsIntoConfiguredFile() throws Exception {
         final String adminFileName = ".admin-file-with-different-name";
-        ((MockEnvironment) environment).setProperty(ConfigParam.ADMIN_CREDENTIALS_FILE.toString(), adminFileName);
+        when(config.get(ConfigParam.ADMIN_CREDENTIALS_FILE)).thenReturn(adminFileName);
         this.sut = new SystemInitializer(config, userService, txManager);
         sut.initSystemAdmin();
         final UserAccount admin = em.find(UserAccount.class, ADMIN_URI);

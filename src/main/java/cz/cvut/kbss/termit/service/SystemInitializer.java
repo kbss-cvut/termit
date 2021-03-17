@@ -25,6 +25,8 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -38,6 +40,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.Random;
 
+@Service
+@Profile("!test")
 public class SystemInitializer {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemInitializer.class);

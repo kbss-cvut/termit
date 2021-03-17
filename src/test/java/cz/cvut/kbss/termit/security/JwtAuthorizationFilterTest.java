@@ -34,8 +34,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -56,8 +57,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @Tag("security")
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {TestConfig.class})
+@ExtendWith({SpringExtension.class, MockitoExtension.class})
+@ContextConfiguration(classes = {TestConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
 class JwtAuthorizationFilterTest {
 
     @Autowired
@@ -89,17 +90,16 @@ class JwtAuthorizationFilterTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         this.user = Generator.generateUserAccount();
         this.jwtUtilsSpy = spy(new JwtUtils(config));
         this.objectMapper = Environment.getObjectMapper();
         this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, securityUtilsMock, detailsServiceMock,
                 objectMapper);
-        when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
     }
 
     @Test
     void doFilterInternalExtractsUserInfoFromJwtAndSetsUpSecurityContext() throws Exception {
+        when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         generateJwtIntoRequest();
 
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
@@ -124,6 +124,7 @@ class JwtAuthorizationFilterTest {
 
     @Test
     void doFilterInternalInvokesFilterChainAfterSuccessfulExtractionOfUserInfo() throws Exception {
+        when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         generateJwtIntoRequest();
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         verify(chainMock).doFilter(mockRequest, mockResponse);
@@ -148,6 +149,7 @@ class JwtAuthorizationFilterTest {
 
     @Test
     void doFilterInternalRefreshesUserTokenOnSuccessfulAuthorization() throws Exception {
+        when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         generateJwtIntoRequest();
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertTrue(mockResponse.containsHeader(HttpHeaders.AUTHORIZATION));
@@ -173,6 +175,7 @@ class JwtAuthorizationFilterTest {
 
     @Test
     void doFilterInternalReturnsUnauthorizedWhenUserAccountIsLocked() throws Exception {
+        when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         generateJwtIntoRequest();
         user.lock();
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
@@ -184,6 +187,7 @@ class JwtAuthorizationFilterTest {
 
     @Test
     void doFilterInternalReturnsUnauthorizedWhenUserAccountIsDisabled() throws Exception {
+        when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         generateJwtIntoRequest();
         user.disable();
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);

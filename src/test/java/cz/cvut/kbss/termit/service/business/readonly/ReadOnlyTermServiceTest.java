@@ -6,12 +6,12 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.business.TermService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class ReadOnlyTermServiceTest {
 
     @Mock
@@ -32,11 +33,6 @@ class ReadOnlyTermServiceTest {
 
     @InjectMocks
     private ReadOnlyTermService sut;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.initMocks(this);
-    }
 
     @Test
     void getRequiredVocabularyReferenceRetrievesReferenceToVocabularyFromService() {
@@ -123,7 +119,6 @@ class ReadOnlyTermServiceTest {
         final Term term = Generator.generateTermWithId();
         final List<Term> subTerms = Generator.generateTermsWithIds(3);
         term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
-        when(termService.findRequired(any())).thenReturn(term);
         when(termService.findSubTerms(any())).thenReturn(subTerms);
 
         final List<ReadOnlyTerm> result = sut.findSubTerms(new ReadOnlyTerm(term));

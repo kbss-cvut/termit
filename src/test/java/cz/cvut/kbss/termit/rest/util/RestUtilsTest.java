@@ -22,11 +22,9 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockServletContext;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import java.net.URI;
 import java.net.URLEncoder;

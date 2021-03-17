@@ -22,22 +22,24 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
+import cz.cvut.kbss.termit.rest.servlet.DiagnosticsContextFilter;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
 import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
 import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.web.multipart.MultipartResolver;
-import org.springframework.web.multipart.support.StandardServletMultipartResolver;
-import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.method.HandlerTypePredicate;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -54,7 +56,6 @@ import static cz.cvut.kbss.termit.util.ConfigParam.REPOSITORY_URL;
 @Configuration
 @EnableWebMvc
 @EnableAsync
-@Import({RestConfig.class, SecurityConfig.class})
 public class WebAppConfig implements WebMvcConfigurer {
 
     private final cz.cvut.kbss.termit.util.Configuration config;
@@ -63,12 +64,8 @@ public class WebAppConfig implements WebMvcConfigurer {
         this.config = config;
     }
 
-    @Bean(name = "multipartResolver")
-    public MultipartResolver multipartResolver() {
-        return new StandardServletMultipartResolver();
-    }
-
     @Bean(name = "objectMapper")
+    @Primary
     public ObjectMapper objectMapper() {
         return createJsonObjectMapper();
     }
@@ -142,7 +139,7 @@ public class WebAppConfig implements WebMvcConfigurer {
     public SimpleUrlHandlerMapping sparqlQueryControllerMapping() {
         SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
         Properties urlProperties = new Properties();
-        urlProperties.put("/query", "sparqlEndpointProxyServlet");
+        urlProperties.put(Constants.REST_MAPPING_PATH + "/query", "sparqlEndpointProxyServlet");
         mapping.setMappings(urlProperties);
         return mapping;
     }
@@ -171,11 +168,14 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Override
     public void configurePathMatch(PathMatchConfigurer matcher) {
-        matcher.setUseSuffixPatternMatch(false);
+        matcher.addPathPrefix(Constants.REST_MAPPING_PATH, HandlerTypePredicate.forAnnotation(RestController.class));
     }
 
-    @Override
-    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-        configurer.favorPathExtension(false);
+    @Bean
+    public FilterRegistrationBean<DiagnosticsContextFilter> mdcFilter() {
+        FilterRegistrationBean<DiagnosticsContextFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new DiagnosticsContextFilter());
+        registrationBean.addUrlPatterns("/*");
+        return registrationBean;
     }
 }

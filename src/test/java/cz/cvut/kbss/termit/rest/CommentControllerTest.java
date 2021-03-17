@@ -9,9 +9,10 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ExtendWith(MockitoExtension.class)
 class CommentControllerTest extends BaseControllerTestRunner {
 
     private static final String PATH = "/comments/";
@@ -45,7 +47,6 @@ class CommentControllerTest extends BaseControllerTestRunner {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         super.setUp(sut);
         when(idResolver.resolveIdentifier(NAMESPACE, NAME)).thenReturn(URI.create(NAMESPACE + NAME));
     }
@@ -79,9 +80,9 @@ class CommentControllerTest extends BaseControllerTestRunner {
         final Comment comment = generateComment();
         mockMvc.perform(
                 put(PATH + NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
-                                .content(toJson(comment))
-                                .contentType(MediaType.APPLICATION_JSON))
-               .andExpect(status().isNoContent());
+                        .content(toJson(comment))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
 
         verify(commentService).update(comment);
     }
@@ -92,8 +93,8 @@ class CommentControllerTest extends BaseControllerTestRunner {
         comment.setUri(Generator.generateUri());
         final MvcResult mvcResult = mockMvc.perform(
                 put(PATH + NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
-                                .content(toJson(comment))
-                                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isConflict()).andReturn();
+                        .content(toJson(comment))
+                        .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isConflict()).andReturn();
         final ErrorInfo errorInfo = readValue(mvcResult, ErrorInfo.class);
         assertThat(errorInfo.getMessage(), containsString("does not match the ID of the specified entity"));
         verify(commentService, never()).update(any());
@@ -105,7 +106,7 @@ class CommentControllerTest extends BaseControllerTestRunner {
         when(commentService.findRequired(comment.getUri())).thenReturn(comment);
         mockMvc.perform(
                 delete(PATH + NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
-               .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
         verify(commentService).remove(comment);
     }
 
@@ -118,8 +119,8 @@ class CommentControllerTest extends BaseControllerTestRunner {
         final String likeType = "https://www.w3.org/ns/activitystreams#Like";
         mockMvc.perform(
                 post(PATH + NAME + "/reactions").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
-                                                .queryParam("type", likeType).principal(principal))
-               .andExpect(status().isNoContent());
+                        .queryParam("type", likeType).principal(principal))
+                .andExpect(status().isNoContent());
         verify(commentService).addReactionTo(comment, likeType);
     }
 
@@ -131,7 +132,7 @@ class CommentControllerTest extends BaseControllerTestRunner {
         when(principal.getName()).thenReturn("testuser");
         mockMvc.perform(
                 delete(PATH + NAME + "/reactions").queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE)
-                                                  .principal(principal)).andExpect(status().isNoContent());
+                        .principal(principal)).andExpect(status().isNoContent());
         verify(commentService).removeMyReactionTo(comment);
     }
 }

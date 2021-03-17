@@ -1,19 +1,13 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.security;
 
@@ -32,8 +26,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -48,8 +43,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 @Tag("security")
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {TestConfig.class})
+@ExtendWith({SpringExtension.class, MockitoExtension.class})
+@ContextConfiguration(classes = {TestConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
 class JwtAuthenticationFilterTest {
 
     @Autowired
@@ -68,7 +63,6 @@ class JwtAuthenticationFilterTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         this.user = Generator.generateUserAccount();
         this.mockRequest = new MockHttpServletRequest();
         this.mockResponse = new MockHttpServletResponse();
@@ -85,7 +79,7 @@ class JwtAuthenticationFilterTest {
         assertTrue(value.startsWith(SecurityConstants.JWT_TOKEN_PREFIX));
         final String jwtToken = value.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
         final Jws<Claims> jwt = Jwts.parser().setSigningKey(config.get(ConfigParam.JWT_SECRET_KEY))
-                                    .parseClaimsJws(jwtToken);
+                .parseClaimsJws(jwtToken);
         assertFalse(jwt.getBody().isEmpty());
     }
 }

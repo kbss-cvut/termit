@@ -1,16 +1,13 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.repository;
 
@@ -34,8 +31,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import javax.validation.Validator;
@@ -49,6 +47,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
@@ -59,7 +58,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
 
     private User author;
 
-    @Configuration
+    @TestConfiguration
     public static class Config {
 
         @Bean
@@ -86,11 +85,10 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
     void findRecentlyEditedLoadsRecentlyEditedItems() {
         enableRdfsInference(em);
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .collect(Collectors.toList());
+                .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(em::persist));
         final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                                                                     .collect(
-                                                                             Collectors.toList());
+                .collect(Collectors.toList());
         setCreated(persistRecords);
         transactional(() -> persistRecords.forEach(em::persist));
 
@@ -101,13 +99,13 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         persistRecords.sort(Comparator.comparing(AbstractChangeRecord::getTimestamp).reversed());
         assertEquals(count, result.size());
         assertEquals(persistRecords.subList(0, count).stream().map(AbstractChangeRecord::getChangedEntity)
-                                   .collect(Collectors.toList()),
+                        .collect(Collectors.toList()),
                 result.stream().map(RecentlyModifiedAsset::getUri).collect(Collectors.toList()));
     }
 
     private void setCreated(List<? extends AbstractChangeRecord> changeRecords) {
         for (int i = 0; i < changeRecords.size(); i++) {
-            changeRecords.get(i).setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000 * 60));
+            changeRecords.get(i).setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - (long) i * 3600 * 1000));
         }
     }
 
@@ -115,11 +113,10 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
     void findRecentlyEditedPerUserLoadsRecentlyEditedItemsPerUser() {
         enableRdfsInference(em);
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .collect(Collectors.toList());
+                .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(em::persist));
         final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                                                                     .collect(
-                                                                             Collectors.toList());
+                .collect(Collectors.toList());
         setCreated(persistRecords);
         transactional(() -> persistRecords.forEach(em::persist));
         em.getEntityManagerFactory().getCache().evictAll();
@@ -128,7 +125,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         final List<RecentlyModifiedAsset> result = sut.findLastEditedBy(persistRecords.get(0).getAuthor(), count);
         assertEquals(count, result.size());
         assertEquals(persistRecords.subList(0, count).stream().map(AbstractChangeRecord::getChangedEntity)
-                                   .collect(Collectors.toList()),
+                        .collect(Collectors.toList()),
                 result.stream().map(RecentlyModifiedAsset::getUri).collect(Collectors.toList()));
     }
 

@@ -14,22 +14,21 @@
  */
 package cz.cvut.kbss.termit.environment.config;
 
-import cz.cvut.kbss.termit.aspect.Aspects;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
 import org.springframework.core.env.Environment;
 
-@Configuration
+import static org.mockito.Mockito.spy;
+
 @EnableSpringConfigured
-@PropertySource("classpath:config.properties")
-@ComponentScan(basePackageClasses = {Aspects.class})
+@TestConfiguration
 public class TestConfig {
 
     @Bean
+    @Primary
     public cz.cvut.kbss.termit.util.Configuration configuration(Environment environment) {
-        return new cz.cvut.kbss.termit.util.Configuration(environment);
+        return spy(new cz.cvut.kbss.termit.util.Configuration(environment));
     }
 }

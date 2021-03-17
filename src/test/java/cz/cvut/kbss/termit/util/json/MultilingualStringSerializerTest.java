@@ -2,28 +2,24 @@ package cz.cvut.kbss.termit.util.json;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class MultilingualStringSerializerTest {
 
     private final MultilingualStringSerializer sut = new MultilingualStringSerializer();
 
     @Mock
     private JsonGenerator jsonGenerator;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.initMocks(this);
-    }
 
     @Test
     void serializeWritesMultilingualStringAsMapOfLanguageToValuePairs() throws Exception {
