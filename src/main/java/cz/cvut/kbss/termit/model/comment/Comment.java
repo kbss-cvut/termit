@@ -24,7 +24,7 @@ public class Comment extends AbstractEntity {
     private URI asset;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_content)
+    @OWLDataProperty(iri = Vocabulary.s_p_content_A)
     private String content;
 
     @ParticipationConstraints(nonEmpty = true)
