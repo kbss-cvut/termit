@@ -12,17 +12,22 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +56,8 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
     @Autowired
     private BaseAssetRepositoryServiceImpl sut;
 
+    private User author;
+
     @TestConfiguration
     public static class Config {
 
@@ -69,7 +76,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
 
     @BeforeEach
     void setUp() {
-        final User author = Generator.generateUserWithId();
+        author = Generator.generateUserWithId();
         transactional(() -> em.persist(author));
         Environment.setCurrentUser(author);
     }
@@ -120,6 +127,78 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         assertEquals(persistRecords.subList(0, count).stream().map(AbstractChangeRecord::getChangedEntity)
                         .collect(Collectors.toList()),
                 result.stream().map(RecentlyModifiedAsset::getUri).collect(Collectors.toList()));
+    }
+
+    @Test
+    void findLastCommentedLoadsLastCommentedItems() {
+        enableRdfsInference(em);
+        final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
+            .collect(Collectors.toList());
+        AtomicInteger i = new AtomicInteger(0);
+        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),"cs")));
+        transactional(() -> terms.forEach(em::persist));
+
+        final List<Comment> comments = terms.stream().map(t -> Generator.generateComment(author,t)).collect(
+            Collectors.toList());
+        transactional(() -> comments.forEach(em::persist));
+
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        final int count = 2;
+        final List<RecentlyCommentedAsset> result = sut.findLastCommented(count);
+        assertEquals(count, result.size());
+    }
+
+    @Test
+    void findMyLastCommentedLoadsLastCommentedItems() {
+        enableRdfsInference(em);
+        final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
+            .collect(Collectors.toList());
+        AtomicInteger i = new AtomicInteger(0);
+        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),"cs")));
+        transactional(() -> terms.forEach(em::persist));
+
+        final List<PersistChangeRecord> persistRecords = terms.stream().map(Generator::generatePersistChange)
+            .collect(
+                Collectors.toList());
+        setCreated(persistRecords);
+        transactional(() -> persistRecords.forEach(em::persist));
+
+        final List<Comment> comments = terms.stream().map(t -> Generator.generateComment(author,t)).collect(
+            Collectors.toList());
+        transactional(() -> comments.forEach(em::persist));
+
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        final int count = 2;
+        final List<RecentlyCommentedAsset> result = sut.findMyLastCommented(author, count);
+        assertEquals(count, result.size());
+    }
+
+    @Test
+    void findLastCommentedInReactionLoadsLastCommentedItems() {
+        enableRdfsInference(em);
+        final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
+            .collect(Collectors.toList());
+        AtomicInteger i = new AtomicInteger(0);
+        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),"cs")));
+        transactional(() -> terms.forEach(em::persist));
+
+        final List<PersistChangeRecord> persistRecords = terms.stream().map(Generator::generatePersistChange)
+            .collect(
+                Collectors.toList());
+        setCreated(persistRecords);
+        transactional(() -> persistRecords.forEach(em::persist));
+
+        final List<Comment> comments = terms.stream().map(t -> Generator.generateComment(author,t)).collect(
+            Collectors.toList());
+        transactional(() -> comments.forEach(em::persist));
+
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        final int count = 2;
+        final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReaction(author, count);
+        assertEquals(count, result.size());
     }
 
     @Test

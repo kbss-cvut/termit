@@ -13,6 +13,7 @@ package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.User;
@@ -91,5 +92,68 @@ class AssetControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(get(PATH + "/last-edited").param("forCurrentUserOnly", Boolean.TRUE.toString()))
                 .andExpect(status().isOk());
         verify(assetService).findMyLastEdited(Integer.parseInt(AssetController.DEFAULT_LIMIT));
+    }
+
+    private static List<RecentlyCommentedAsset> generateRecentlyCommentedAssetRecords() {
+        return IntStream.range(0, 5).mapToObj(i ->
+            new RecentlyCommentedAsset( Generator.generateUri(), Generator.generateUri(), SKOS.CONCEPT ))
+            .collect(Collectors.toList());
+    }
+
+    @Test
+    void getLastCommentedRetrievesLastCommentedWithDefaultLimit() throws Exception {
+        final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
+        when(assetService.findLastCommented(anyInt())).thenReturn(assets);
+        mockMvc.perform(get(PATH + "/last-commented")).andExpect(status().isOk());
+        verify(assetService).findLastCommented(Integer.parseInt(AssetController.DEFAULT_LIMIT));
+    }
+
+    @Test
+    void getLastCommentedWithCustomLimitRetrievesLastCommentedWithCustomLimit() throws Exception {
+        final int limit = Math.abs(Generator.randomInt());
+        final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
+        when(assetService.findLastCommented(anyInt())).thenReturn(assets);
+        mockMvc.perform(get(PATH + "/last-commented")
+            .param("limit", "" + limit))
+            .andExpect(status().isOk());
+        verify(assetService).findLastCommented(limit);
+    }
+
+    @Test
+    void getMyLastCommentedRetrievesMyLastCommentedWithDefaultLimit() throws Exception {
+        final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
+        when(assetService.findMyLastCommented(anyInt())).thenReturn(assets);
+        mockMvc.perform(get(PATH + "/my-last-commented")).andExpect(status().isOk());
+        verify(assetService).findMyLastCommented(Integer.parseInt(AssetController.DEFAULT_LIMIT));
+    }
+
+    @Test
+    void getMyLastCommentedWithCustomLimitRetrievesMyLastCommentedWithCustomLimit() throws Exception {
+        final int limit = Math.abs(Generator.randomInt());
+        final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
+        when(assetService.findMyLastCommented(anyInt())).thenReturn(assets);
+        mockMvc.perform(get(PATH + "/my-last-commented")
+            .param("limit", "" + limit))
+            .andExpect(status().isOk());
+        verify(assetService).findMyLastCommented(limit);
+    }
+
+    @Test
+    void getLastCommentedInReactionToMineRetrievesLastCommentedInReactionToMineWithDefaultLimit() throws Exception {
+        final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
+        when(assetService.findLastCommentedInReactionToMine(anyInt())).thenReturn(assets);
+        mockMvc.perform(get(PATH + "/last-commented-in-reaction-to-mine")).andExpect(status().isOk());
+        verify(assetService).findLastCommentedInReactionToMine(Integer.parseInt(AssetController.DEFAULT_LIMIT));
+    }
+
+    @Test
+    void getLastCommentedInReactionToMineRetrievesLastCommentedInReactionToMineWithCustomLimit() throws Exception {
+        final int limit = Math.abs(Generator.randomInt());
+        final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
+        when(assetService.findLastCommentedInReactionToMine(anyInt())).thenReturn(assets);
+        mockMvc.perform(get(PATH + "/last-commented-in-reaction-to-mine")
+            .param("limit", "" + limit))
+            .andExpect(status().isOk());
+        verify(assetService).findLastCommentedInReactionToMine(limit);
     }
 }

@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/comments")
 public class CommentController extends BaseController {
+
+    static final String DEFAULT_LIMIT = "10";
 
     private static final Logger LOG = LoggerFactory.getLogger(CommentController.class);
 
@@ -69,5 +72,11 @@ public class CommentController extends BaseController {
         final Comment comment = getById(idFragment, namespace);
         commentService.removeMyReactionTo(comment);
         LOG.trace("Reaction on comment {} removed.", comment);
+    }
+
+    @RequestMapping(value = "/last-edited-by-me", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<Comment> getLastEditedByMe(
+        @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
+        return commentService.findLastEditedByMe(limit);
     }
 }
