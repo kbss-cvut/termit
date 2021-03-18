@@ -56,9 +56,7 @@ public class AssetService {
      * @return List of recently added/edited assets
      */
     public List<RecentlyModifiedAsset> findLastEdited(int limit) {
-        if (limit < 0) {
-            throw new IllegalArgumentException("Maximum for recently edited assets must not be less than 0.");
-        }
+        ensureValidLimitForLastEdited(limit);
         final List<RecentlyModifiedAsset> resources = resourceRepositoryService.findLastEdited(limit);
         final List<RecentlyModifiedAsset> terms = termRepositoryService.findLastEdited(limit);
         final List<RecentlyModifiedAsset> vocabularies = vocabularyRepositoryService.findLastEdited(limit);
@@ -73,9 +71,7 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public List<RecentlyCommentedAsset> findLastCommented(int limit) {
-        if (limit < 0) {
-            throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
-        }
+        ensureValidLimitForLastCommented(limit);
         final List<RecentlyCommentedAsset> result = termRepositoryService.findLastCommented(limit);
         return result.subList(0, Math.min(result.size(), limit));
     }
@@ -113,15 +109,19 @@ public class AssetService {
      * @return List of recently added/edited assets
      */
     public List<RecentlyModifiedAsset> findMyLastEdited(int limit) {
-        if (limit < 0) {
-            throw new IllegalArgumentException("Maximum for recently edited assets must not be less than 0.");
-        }
+        ensureValidLimitForLastEdited(limit);
         final User me = securityUtils.getCurrentUser().toUser();
         final List<RecentlyModifiedAsset> resources = resourceRepositoryService.findLastEditedBy(me, limit);
         final List<RecentlyModifiedAsset> terms = termRepositoryService.findLastEditedBy(me, limit);
         final List<RecentlyModifiedAsset> vocabularies = vocabularyRepositoryService.findLastEditedBy(me, limit);
         final List<RecentlyModifiedAsset> result = mergeAssets(mergeAssets(resources, terms), vocabularies);
         return result.subList(0, Math.min(result.size(), limit));
+    }
+
+    private void ensureValidLimitForLastEdited(int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("Maximum for recently edited assets must not be less than 0.");
+        }
     }
 
     /**
@@ -131,9 +131,7 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public List<RecentlyCommentedAsset> findLastCommentedInReactionToMine(int limit) {
-        if (limit < 0) {
-            throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
-        }
+        ensureValidLimitForLastCommented(limit);
         final User me = securityUtils.getCurrentUser().toUser();
         final List<RecentlyCommentedAsset> result = termRepositoryService.findLastCommentedInReaction(me, limit);
         return result.subList(0, Math.min(result.size(), limit));
@@ -146,11 +144,15 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public List<RecentlyCommentedAsset> findMyLastCommented(int limit) {
-        if (limit < 0) {
-            throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
-        }
+        ensureValidLimitForLastCommented(limit);
         final User me = securityUtils.getCurrentUser().toUser();
         final List<RecentlyCommentedAsset> result = termRepositoryService.findMyLastCommented(me, limit);
         return result.subList(0, Math.min(result.size(), limit));
+    }
+
+    private void ensureValidLimitForLastCommented(int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
+        }
     }
 }
