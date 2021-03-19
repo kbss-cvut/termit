@@ -16,8 +16,10 @@ import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
 import cz.cvut.kbss.termit.environment.Environment;
 import org.aspectj.lang.Aspects;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -29,6 +31,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+
+import static org.mockito.Mockito.mock;
 
 @TestConfiguration
 @ComponentScan(basePackages = "cz.cvut.kbss.termit.service")
@@ -68,5 +72,11 @@ public class TestServiceConfig {
     @Bean
     VocabularyContentModificationAspect vocabularyContentModificationAspect() {
         return Aspects.aspectOf(VocabularyContentModificationAspect.class);
+    }
+
+    @Bean
+    @Primary
+    public ApplicationEventPublisher eventPublisher() {
+        return mock(ApplicationEventPublisher.class);
     }
 }

@@ -19,9 +19,12 @@ import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastModification {
@@ -40,11 +44,14 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
 
     private volatile long lastModified;
 
+    private final ChangeRecordDao changeRecordDao;
+
     private final ApplicationContext context;
 
     @Autowired
-    public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory, ApplicationContext context) {
+    public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory, ChangeRecordDao changeRecordDao, ApplicationContext context) {
         super(Vocabulary.class, em, config, descriptorFactory);
+        this.changeRecordDao = changeRecordDao;
         refreshLastModified();
         this.context = context;
     }
@@ -205,5 +212,27 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
         importClosure.add(voc.getUri());
         return validator.validate(importClosure);
+    }
+
+    /**
+     * Gets all changes of all of the terms in the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary to get changes for
+     * @return List of change records
+     */
+    public List<AbstractChangeRecord> getChangesOfContent(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        final List<URI> terms = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                "GRAPH ?vocabulary { " +
+                "?term a ?type ;" +
+                "}" +
+                "?term ?inVocabulary ?vocabulary ." +
+                " }", URI.class).setParameter("type", URI.create(SKOS.CONCEPT))
+                .setParameter("vocabulary", vocabulary).getResultList();
+        return terms.stream().flatMap(tUri -> {
+            final Term t = new Term();
+            t.setUri(tUri);
+            return changeRecordDao.findAll(t).stream();
+        }).collect(Collectors.toList());
     }
 }

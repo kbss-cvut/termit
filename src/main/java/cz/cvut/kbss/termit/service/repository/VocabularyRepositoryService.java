@@ -123,11 +123,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Override
     public List<AbstractChangeRecord> getChangesOfContent(Vocabulary asset) {
-        final List<AbstractChangeRecord> changes = new ArrayList<>();
-        for (final Term term : termService.findAll(asset)) {
-            changes.addAll(termService.getChanges(term));
-        }
-        return changes;
+        return vocabularyDao.getChangesOfContent(asset);
     }
 
     @Override
@@ -157,8 +153,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
 
         if (!termService.isEmpty(instance)) {
-            throw new VocabularyRemovalException(
-                    "Vocabulary cannot be removed. It contains terms.");
+            throw new VocabularyRemovalException("Vocabulary cannot be removed. It contains terms.");
         }
 
         super.remove(instance);
