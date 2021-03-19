@@ -1,0 +1,17 @@
+version: "3"
+services:
+  termit:
+    build: .
+    image: termit
+    volumes:
+      - termit-storage:/tmp/termit
+    restart: always
+    environment:
+      REPOSITORY_URL: https://localhost:7200/repositories/termit
+      DEBUG: "true"
+    ports:
+      - 8080:8080
+
+volumes:
+  termit-storage:
+
