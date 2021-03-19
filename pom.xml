@@ -32,7 +32,7 @@
         <com.fasterxml.jackson.version>2.12.1</com.fasterxml.jackson.version>
         <org.hibernate.validator.version>6.1.7.Final</org.hibernate.validator.version>
         <cz.cvut.kbss.jopa.version>0.16.4</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.8.4</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jsonld.version>0.8.6</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.6</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
