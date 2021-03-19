@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.AssetService;
@@ -46,5 +47,23 @@ public class AssetController {
             @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit,
             @RequestParam(name = "forCurrentUserOnly", required = false, defaultValue = "false") Boolean forCurrentUserOnly) {
         return forCurrentUserOnly ? assetService.findMyLastEdited(limit) : assetService.findLastEdited(limit);
+    }
+
+    @RequestMapping(value = "/last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RecentlyCommentedAsset> getLastCommented(
+        @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
+        return assetService.findLastCommented(limit);
+    }
+
+    @RequestMapping(value = "/last-commented-in-reaction-to-mine", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RecentlyCommentedAsset> getLastReactingCommentsToMine(
+        @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
+        return assetService.findLastCommentedInReactionToMine(limit);
+    }
+
+    @RequestMapping(value = "/my-last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RecentlyCommentedAsset> getMyLastCommented(
+        @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
+        return assetService.findMyLastCommented(limit);
     }
 }

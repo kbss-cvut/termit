@@ -12,11 +12,13 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -154,5 +156,54 @@ class AssetServiceTest {
         verify(resourceService).findLastEditedBy(currentUser.toUser(), count);
         verify(termService).findLastEditedBy(currentUser.toUser(), count);
         verify(vocabularyService).findLastEditedBy(currentUser.toUser(), count);
+    }
+
+    private List<RecentlyCommentedAsset> generateRecentlyCommentedAssets(int count) {
+        final List<RecentlyCommentedAsset> assets = new ArrayList<>();
+        final User author = Generator.generateUserWithId();
+        for (int i = 0; i < count; i++) {
+            final Term term = Generator.generateTermWithId();
+            Comment comment = Generator.generateComment(author, term);
+            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), SKOS.CONCEPT);
+            comment.setCreated(new Date(System.currentTimeMillis() - i * 1000));
+            comment.setAuthor(author);
+            comment.setAsset(term.getUri());
+            rca.setLastComment(comment);
+            assets.add(rca);
+        }
+        when(termService.findLastCommented(anyInt())).thenReturn(assets);
+        when(termService.findMyLastCommented(any(User.class), anyInt())).thenReturn(assets);
+        when(termService.findLastCommentedInReaction(any(User.class), anyInt())).thenReturn(assets);
+        return assets;
+    }
+
+    @Test
+    void findLastCommentedReturnsAssetsSortedByDateCommentCreatedDescending() {
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets(6);
+        allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        final List<RecentlyCommentedAsset> result = sut.findLastCommented(10);
+        assertEquals(allExpected, result);
+    }
+
+    @Test
+    void findMyLastCommentedReturnsAssetsSortedByDateCommentCreatedDescending() {
+        final UserAccount currentUser = Generator.generateUserAccount();
+        when(securityUtils.getCurrentUser()).thenReturn(currentUser);
+
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets(6);
+        allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        final List<RecentlyCommentedAsset> result = sut.findMyLastCommented(10);
+        assertEquals(allExpected, result);
+    }
+
+    @Test
+    void findLastCommentedInReactionToMineReturnsAssetsSortedByDateCommentCreatedDescending() {
+        final UserAccount currentUser = Generator.generateUserAccount();
+        when(securityUtils.getCurrentUser()).thenReturn(currentUser);
+
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets(6);
+        allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReactionToMine(10);
+        assertEquals(allExpected, result);
     }
 }

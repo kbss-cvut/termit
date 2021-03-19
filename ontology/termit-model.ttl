@@ -249,3 +249,7 @@ termit-pojem:uživatelská-role
 
 termit-pojem:konfigurace
         a               owl:Class .
+
+termit-pojem:je-tématem
+        a               owl:ObjectProperty;
+        owl:inverseOf   sioc:topic .

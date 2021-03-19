@@ -22,13 +22,14 @@ import cz.cvut.kbss.termit.model.assignment.TermAssignment;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.util.Constants;
 
 import java.util.Arrays;
-
+import java.util.Date;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -361,5 +362,22 @@ public class Generator {
                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
                     vf.createIRI(vocabularyIri.toString()));
         }
+    }
+
+    /**
+     * Generates a random {@link cz.cvut.kbss.termit.model.comment.Comment} instance, initialized
+     * with the term it is connected to.
+     *
+     * @return A new {@code Comment} instance
+     */
+    public static Comment generateComment(User user, Asset asset) {
+        final Comment comment = new Comment();
+        comment.setAsset(asset.getUri());
+        comment.setAuthor(user);
+        comment.setCreated(new Date());
+        comment.setModified(new Date());
+        comment.setContent("Comment " + randomInt());
+        comment.setUri(Generator.generateUri());
+        return comment;
     }
 }

@@ -15,10 +15,12 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -171,6 +173,142 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
                  .setParameter("author", author)
                  .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                  .setParameter("type", typeUri).setMaxResults(limit).getResultList();
+    }
+
+    /**
+     * Finds unique last commented assets.
+     *
+     * @param limit max number of entities
+     * @return list
+     */
+    public List<RecentlyCommentedAsset> findLastCommented(int limit) {
+        try {
+            return (List<RecentlyCommentedAsset>) em
+                .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?type"
+                    + " WHERE { ?lastCommentUri a ?commentType ;"
+                    + "           ?hasEntity ?entity ."
+                    + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
+                    + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
+                    + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
+                    + "  BIND(?cls as ?type) "
+                    + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
+                    + "           ?comment2 ?hasEntity ?entity ."
+                    + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
+                    + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
+                    + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
+                    + "        } GROUP BY ?entity"
+                    + "  }"
+                    + "  FILTER (?lastCommented = ?max )"
+                    + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
+                .setParameter("cls", typeUri)
+                .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
+                .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                .setParameter("hasModifiedTime",
+                    URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                .setParameter("hasCreatedTime",
+                    URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setMaxResults(limit).getResultStream()
+                .map(r -> {
+                        final RecentlyCommentedAsset a = (RecentlyCommentedAsset) r;
+                        return a.setLastComment(em.find(Comment.class, a.getLastCommentUri()));
+                    }
+                ).collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Finds unique last commented entities.
+     * @param limit max number of entities
+     * @return list
+     */
+    public List<RecentlyCommentedAsset> findLastCommentedInReaction(User author, int limit) {
+        try {
+            return (List<RecentlyCommentedAsset>) em
+                .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?type"
+                    + " WHERE { ?lastCommentUri a ?commentType ;"
+                    + "           ?hasEntity ?entity ."
+                    + "  FILTER EXISTS { ?comment3 ?hasEntity ?entity ;"
+                    + "                            ?hasAuthor ?author . }"
+                    + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
+                    + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
+                    + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
+                    + "  BIND(?cls as ?type) "
+                    + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
+                    + "           ?comment2 ?hasEntity ?entity ."
+                    + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
+                    + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
+                    + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
+                    + "        } GROUP BY ?entity"
+                    + "  }"
+                    + "  FILTER (?lastCommented = ?max )"
+                    + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
+                .setParameter("cls", typeUri)
+                .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
+                .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                .setParameter("hasModifiedTime",
+                    URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                .setParameter("hasCreatedTime",
+                    URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_creator))
+                .setParameter("author", author)
+                .setMaxResults(limit).getResultStream()
+                .map(r -> {
+                        final RecentlyCommentedAsset a = (RecentlyCommentedAsset) r;
+                        return a.setLastComment(em.find(Comment.class, a.getLastCommentUri()));
+                    }
+                ).collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Finds unique last commented entities.
+     * @param limit max number of entities
+     * @return list
+     */
+    public List<RecentlyCommentedAsset> findMyLastCommented(User author, int limit) {
+        try {
+            return (List<RecentlyCommentedAsset>) em
+                .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?type"
+                    + " WHERE { ?lastCommentUri a ?commentType ;"
+                    + "           ?hasEntity ?entity ."
+                    + "        FILTER EXISTS{ ?x ?hasModifiedEntity ?entity ;"
+                    + "           ?hasEditor ?author .}"
+                    + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
+                    + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
+                    + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
+                    + "  BIND(?cls as ?type) "
+                    + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
+                    + "           ?comment2 ?hasEntity ?entity ."
+                    + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
+                    + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
+                    + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
+                    + "        } GROUP BY ?entity"
+                    + "  }"
+                    + "  FILTER (?lastCommented = ?max )"
+                    + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
+                .setParameter("cls", typeUri)
+                .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
+                .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
+                .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
+                .setParameter("author", author)
+                .setParameter("hasModifiedTime",
+                    URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                .setParameter("hasCreatedTime",
+                    URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setMaxResults(limit).getResultStream()
+                .map(r -> {
+                        final RecentlyCommentedAsset a = (RecentlyCommentedAsset) r;
+                        return a.setLastComment(em.find(Comment.class, a.getLastCommentUri()));
+                    }
+                ).collect(Collectors.toList());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     /**
