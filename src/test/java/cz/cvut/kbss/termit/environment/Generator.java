@@ -14,7 +14,6 @@ package cz.cvut.kbss.termit.environment;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.assignment.Target;
@@ -27,24 +26,17 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.util.Constants;
-
-import java.util.Arrays;
-import java.util.Date;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.topbraid.shacl.vocabulary.SH;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.topbraid.shacl.vocabulary.SH;
 
 public class Generator {
 
@@ -296,7 +288,7 @@ public class Generator {
 
     public static PersistChangeRecord generatePersistChange(Asset<?> asset) {
         final PersistChangeRecord record = new PersistChangeRecord(asset);
-        record.setTimestamp(Instant.now());
+        record.setTimestamp(Instant.now().truncatedTo(ChronoUnit.MILLIS));
         if (Environment.getCurrentUser() != null) {
             record.setAuthor(Environment.getCurrentUser().toUser());
         }
@@ -312,7 +304,7 @@ public class Generator {
      */
     public static UpdateChangeRecord generateUpdateChange(Asset<?> asset) {
         final UpdateChangeRecord record = new UpdateChangeRecord(asset);
-        record.setTimestamp(Instant.now());
+        record.setTimestamp(Instant.now().truncatedTo(ChronoUnit.MILLIS));
         if (Environment.getCurrentUser() != null) {
             record.setAuthor(Environment.getCurrentUser().toUser());
         }
