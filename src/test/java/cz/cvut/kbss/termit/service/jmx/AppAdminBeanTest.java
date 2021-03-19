@@ -16,6 +16,7 @@ import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
+import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,10 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,7 +66,15 @@ class AppAdminBeanTest extends BaseServiceTestRunner {
     void invalidateCachesPublishesRefreshLastModifiedEvent() {
         sut.invalidateCaches();
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
-        verify(eventPublisherMock).publishEvent(captor.capture());
-        assertThat(captor.getValue(), instanceOf(RefreshLastModifiedEvent.class));
+        verify(eventPublisherMock, atLeastOnce()).publishEvent(captor.capture());
+        assertTrue(captor.getAllValues().stream().anyMatch(RefreshLastModifiedEvent.class::isInstance));
+    }
+
+    @Test
+    void invalidateCachesPublishesVocabularyContentModifiedEventToForceEvictionOfVocabularyContentBasedCaches() {
+        sut.invalidateCaches();
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisherMock, atLeastOnce()).publishEvent(captor.capture());
+        assertTrue(captor.getAllValues().stream().anyMatch(VocabularyContentModified.class::isInstance));
     }
 }

@@ -13,6 +13,7 @@ package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
+import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
@@ -80,5 +81,11 @@ public class ServiceConfig {
     ChangeTrackingAspect changeTrackingAspect() {
         // Need to create the aspect as a bean, so that it can be injected into
         return Aspects.aspectOf(ChangeTrackingAspect.class);
+    }
+
+    @Bean
+    VocabularyContentModificationAspect vocabularyContentModificationAspect() {
+        // Need to create the aspect as a bean, so that it can be injected into
+        return Aspects.aspectOf(VocabularyContentModificationAspect.class);
     }
 }

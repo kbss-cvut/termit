@@ -1,22 +1,20 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.TermDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -70,6 +68,7 @@ public class TermDao extends AssetDao<Term> {
      * @param entity     The term to persist
      * @param vocabulary Vocabulary which shall contain the persisted term
      */
+    @ModifiesData
     public void persist(Term entity, Vocabulary vocabulary) {
         Objects.requireNonNull(entity);
         Objects.requireNonNull(vocabulary);
@@ -83,6 +82,7 @@ public class TermDao extends AssetDao<Term> {
         }
     }
 
+    @ModifiesData
     @Override
     public Term update(Term entity) {
         Objects.requireNonNull(entity);
@@ -118,13 +118,13 @@ public class TermDao extends AssetDao<Term> {
                     "}" +
                     "?term ?inVocabulary ?vocabulary ." +
                     " } ORDER BY LCASE(?label)", Term.class)
-                                                 .setParameter("type", typeUri)
-                                                 .setParameter("vocabulary", vocabulary.getUri())
-                                                 .setParameter("hasLabel", LABEL_PROP)
-                                                 .setParameter("inVocabulary",
-                                                         URI.create(
-                                                                 cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                                 .setParameter("labelLang", config.get(ConfigParam.LANGUAGE)));
+                    .setParameter("type", typeUri)
+                    .setParameter("vocabulary", vocabulary.getUri())
+                    .setParameter("hasLabel", LABEL_PROP)
+                    .setParameter("inVocabulary",
+                            URI.create(
+                                    cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                    .setParameter("labelLang", config.get(ConfigParam.LANGUAGE)));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -145,11 +145,11 @@ public class TermDao extends AssetDao<Term> {
                     "}" +
                     "?term ?inVocabulary ?vocabulary ." +
                     " }", Boolean.class)
-                      .setParameter("type", typeUri)
-                      .setParameter("vocabulary", vocabulary.getUri())
-                      .setParameter("inVocabulary",
-                              URI.create(
-                                      cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
+                    .setParameter("type", typeUri)
+                    .setParameter("vocabulary", vocabulary.getUri())
+                    .setParameter("inVocabulary",
+                            URI.create(
+                                    cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -178,13 +178,13 @@ public class TermDao extends AssetDao<Term> {
                 "?vocabulary ?imports* ?parent ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
                 "} ORDER BY LCASE(?label)", TermDto.class).setParameter("type", typeUri)
-                                      .setParameter("hasLabel", LABEL_PROP)
-                                      .setParameter("inVocabulary",
-                                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                      .setParameter("imports",
-                                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                                      .setParameter("vocabulary", vocabulary)
-                                      .setParameter("labelLang", config.get(ConfigParam.LANGUAGE));
+                .setParameter("hasLabel", LABEL_PROP)
+                .setParameter("inVocabulary",
+                        URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("imports",
+                        URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                .setParameter("vocabulary", vocabulary)
+                .setParameter("labelLang", config.get(ConfigParam.LANGUAGE));
         return executeQueryAndLoadSubTerms(query);
     }
 
@@ -202,15 +202,15 @@ public class TermDao extends AssetDao<Term> {
                 "?hasLabel ?label ;" +
                 "?inVocabulary ?vocabulary ." +
                 "FILTER (lang(?label) = ?labelLang) . } ORDER BY LCASE(?label)", "TermInfo")
-                                                  .setParameter("type", typeUri)
-                                                  .setParameter("narrower", URI.create(SKOS.NARROWER))
-                                                  .setParameter("parent", parent.getUri())
-                                                  .setParameter("hasLabel", LABEL_PROP)
-                                                  .setParameter("inVocabulary",
-                                                          URI.create(
-                                                                  cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                                  .setParameter("labelLang", config.get(ConfigParam.LANGUAGE))
-                                                  .getResultStream();
+                .setParameter("type", typeUri)
+                .setParameter("narrower", URI.create(SKOS.NARROWER))
+                .setParameter("parent", parent.getUri())
+                .setParameter("hasLabel", LABEL_PROP)
+                .setParameter("inVocabulary",
+                        URI.create(
+                                cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("labelLang", config.get(ConfigParam.LANGUAGE))
+                .getResultStream();
         // Use LinkedHashSet to preserve term order
         return subTermsStream.collect(Collectors.toCollection(LinkedHashSet::new));
     }
@@ -238,10 +238,10 @@ public class TermDao extends AssetDao<Term> {
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("vocabulary", vocabulary.getUri())
-                         .setParameter("labelLang",
-                                 config.get(ConfigParam.LANGUAGE))
-                         .setMaxResults(pageSpec.getPageSize())
-                         .setFirstResult((int) pageSpec.getOffset()));
+                            .setParameter("labelLang",
+                                    config.get(ConfigParam.LANGUAGE))
+                            .setMaxResults(pageSpec.getPageSize())
+                            .setFirstResult((int) pageSpec.getOffset()));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
         } catch (RuntimeException e) {
@@ -251,10 +251,10 @@ public class TermDao extends AssetDao<Term> {
 
     private <T> TypedQuery<T> setCommonFindAllRootsQueryParams(TypedQuery<T> query, boolean includeImports) {
         final TypedQuery<T> tq = query.setParameter("type", typeUri)
-                                      .setParameter("hasLabel", LABEL_PROP)
-                                      .setParameter("hasGlossary",
-                                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar))
-                                      .setParameter("hasTerm", URI.create(SKOS.HAS_TOP_CONCEPT));
+                .setParameter("hasLabel", LABEL_PROP)
+                .setParameter("hasGlossary",
+                        URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar))
+                .setParameter("hasTerm", URI.create(SKOS.HAS_TOP_CONCEPT));
         if (includeImports) {
             tq.setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik));
         }
@@ -263,7 +263,7 @@ public class TermDao extends AssetDao<Term> {
 
     private List<TermDto> loadIncludedTerms(Collection<URI> includeTerms) {
         return includeTerms.stream().map(u -> em.find(TermDto.class, u)).filter(Objects::nonNull)
-                           .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     /**
@@ -292,10 +292,10 @@ public class TermDao extends AssetDao<Term> {
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("vocabulary", vocabulary.getUri())
-                         .setParameter("labelLang",
-                                 config.get(ConfigParam.LANGUAGE))
-                         .setFirstResult((int) pageSpec.getOffset())
-                         .setMaxResults(pageSpec.getPageSize()));
+                            .setParameter("labelLang",
+                                    config.get(ConfigParam.LANGUAGE))
+                            .setFirstResult((int) pageSpec.getOffset())
+                            .setMaxResults(pageSpec.getPageSize()));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
         } catch (RuntimeException e) {
@@ -323,13 +323,13 @@ public class TermDao extends AssetDao<Term> {
                 "}" +
                 "?term ?inVocabulary ?vocabulary ." +
                 "} ORDER BY LCASE(?label)", TermDto.class)
-                                            .setParameter("type", typeUri)
-                                            .setParameter("hasLabel", LABEL_PROP)
-                                            .setParameter("inVocabulary", URI.create(
-                                                    cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                            .setParameter("vocabulary", vocabulary.getUri())
-                                            .setParameter("searchString", searchString,
-                                                    config.get(ConfigParam.LANGUAGE));
+                .setParameter("type", typeUri)
+                .setParameter("hasLabel", LABEL_PROP)
+                .setParameter("inVocabulary", URI.create(
+                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("vocabulary", vocabulary.getUri())
+                .setParameter("searchString", searchString,
+                        config.get(ConfigParam.LANGUAGE));
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
@@ -365,16 +365,16 @@ public class TermDao extends AssetDao<Term> {
                 "      ?inVocabulary ?vocabulary ." +
                 "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .\n" +
                 "} ORDER BY LCASE(?label)", TermDto.class)
-                                            .setParameter("type", typeUri)
-                                            .setParameter("hasLabel", LABEL_PROP)
-                                            .setParameter("inVocabulary", URI.create(
-                                                    cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                            .setParameter("imports",
-                                                    URI.create(
-                                                            cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                                            .setParameter("targetVocabulary", vocabulary.getUri())
-                                            .setParameter("searchString", searchString,
-                                                    config.get(ConfigParam.LANGUAGE));
+                .setParameter("type", typeUri)
+                .setParameter("hasLabel", LABEL_PROP)
+                .setParameter("inVocabulary", URI.create(
+                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("imports",
+                        URI.create(
+                                cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                .setParameter("targetVocabulary", vocabulary.getUri())
+                .setParameter("searchString", searchString,
+                        config.get(ConfigParam.LANGUAGE));
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
@@ -403,13 +403,13 @@ public class TermDao extends AssetDao<Term> {
                     "?inVocabulary ?vocabulary ." +
                     "FILTER (LCASE(?label) = LCASE(?searchString)) . "
                     + "}", Boolean.class)
-                     .setParameter("type", typeUri)
-                     .setParameter("hasLabel", LABEL_PROP)
-                     .setParameter("inVocabulary",
-                             URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                     .setParameter("vocabulary", vocabulary.getUri())
-                     .setParameter("searchString", label,
-                             languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
+                    .setParameter("type", typeUri)
+                    .setParameter("hasLabel", LABEL_PROP)
+                    .setParameter("inVocabulary",
+                            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                    .setParameter("vocabulary", vocabulary.getUri())
+                    .setParameter("searchString", label,
+                            languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
