@@ -84,7 +84,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         enableRdfsInference(em);
         final Term asset = Generator.generateTermWithId();
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
-                i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000),
+                i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000L),
                         asset.getUri())).collect(Collectors.toList());
         transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
 
@@ -105,7 +105,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         enableRdfsInference(em);
         final Term asset = Generator.generateTermWithId();
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
-                i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() + i * 10000),
+                i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() + i * 10000L),
                         asset.getUri())).collect(Collectors.toList());
         transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
 

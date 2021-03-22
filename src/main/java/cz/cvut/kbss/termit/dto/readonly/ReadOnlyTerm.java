@@ -1,30 +1,24 @@
 package cz.cvut.kbss.termit.dto.readonly;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
-import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.io.Serializable;
-import java.net.URI;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @OWLClass(iri = SKOS.CONCEPT)
-public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
-
-    @Id
-    private URI uri;
-
-    @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
-    private MultilingualString label;
+public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<MultilingualString> altLabels;
@@ -35,20 +29,11 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private MultilingualString description;
 
-    @OWLAnnotationProperty(iri = SKOS.DEFINITION)
-    private MultilingualString definition;
-
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
     private Set<String> sources;
 
     @OWLObjectProperty(iri = SKOS.BROADER)
     private Set<ReadOnlyTerm> parentTerms;
-
-    @OWLObjectProperty(iri = SKOS.NARROWER)
-    private Set<TermInfo> subTerms;
-
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
-    private URI vocabulary;
 
     @Types
     private Set<String> types;
@@ -58,8 +43,8 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
 
     public ReadOnlyTerm(Term term) {
         Objects.requireNonNull(term);
-        this.uri = term.getUri();
-        this.label = term.getLabel();
+        setUri(term.getUri());
+        setLabel(new MultilingualString(term.getLabel().getValue()));
         if (term.getAltLabels() != null) {
             this.altLabels = new HashSet<>(term.getAltLabels());
         }
@@ -67,12 +52,12 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
             this.hiddenLabels = new HashSet<>(term.getHiddenLabels());
         }
         if (term.getDefinition() != null) {
-            this.definition = new MultilingualString(term.getDefinition().getValue());
+            setDefinition(new MultilingualString(term.getDefinition().getValue()));
         }
         if (term.getDescription() != null) {
             this.description = new MultilingualString(term.getDescription().getValue());
         }
-        this.vocabulary = term.getVocabulary();
+        setVocabulary(term.getVocabulary());
         if (term.getSources() != null) {
             this.sources = new HashSet<>(term.getSources());
         }
@@ -80,29 +65,11 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
             this.parentTerms = term.getParentTerms().stream().map(ReadOnlyTerm::new).collect(Collectors.toSet());
         }
         if (term.getSubTerms() != null) {
-            this.subTerms = new HashSet<>(term.getSubTerms());
+            setSubTerms(new LinkedHashSet<>(term.getSubTerms()));
         }
         if (term.getTypes() != null) {
             this.types = new HashSet<>(term.getTypes());
         }
-    }
-
-    @Override
-    public URI getUri() {
-        return uri;
-    }
-
-    @Override
-    public void setUri(URI uri) {
-        this.uri = uri;
-    }
-
-    public MultilingualString getLabel() {
-        return label;
-    }
-
-    public void setLabel(MultilingualString label) {
-        this.label = label;
     }
 
     public Set<MultilingualString> getAltLabels() {
@@ -129,14 +96,6 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
         this.description = description;
     }
 
-    public MultilingualString getDefinition() {
-        return definition;
-    }
-
-    public void setDefinition(MultilingualString definition) {
-        this.definition = definition;
-    }
-
     public Set<String> getSources() {
         return sources;
     }
@@ -153,22 +112,6 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
         this.parentTerms = parentTerms;
     }
 
-    public Set<TermInfo> getSubTerms() {
-        return subTerms;
-    }
-
-    public void setSubTerms(Set<TermInfo> subTerms) {
-        this.subTerms = subTerms;
-    }
-
-    public URI getVocabulary() {
-        return vocabulary;
-    }
-
-    public void setVocabulary(URI vocabulary) {
-        this.vocabulary = vocabulary;
-    }
-
     @Override
     public Set<String> getTypes() {
         return types;
@@ -180,27 +123,10 @@ public class ReadOnlyTerm implements HasIdentifier, HasTypes, Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ReadOnlyTerm)) {
-            return false;
-        }
-        ReadOnlyTerm that = (ReadOnlyTerm) o;
-        return uri.equals(that.uri);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(uri);
-    }
-
-    @Override
     public String toString() {
         return "ReadOnlyTerm{" +
-                label +
-                " <" + uri + '>' +
+                getLabel() +
+                " <" + getUri() + '>' +
                 ", types=" + types +
                 '}';
     }

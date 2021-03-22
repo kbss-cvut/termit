@@ -1,21 +1,19 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.termit.dto.TermDto;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -38,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -264,17 +263,18 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        final List<Term> resultOne = sut.findAllRoots(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
-        final List<Term> resultTwo = sut.findAllRoots(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
+        final List<TermDto> resultOne = sut.findAllRoots(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
+        final List<TermDto> resultTwo = sut.findAllRoots(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
 
         assertEquals(5, resultOne.size());
         assertEquals(5, resultTwo.size());
 
+        final List<TermDto> expectedDtos = termsToDtos(terms);
         resultOne.forEach(t -> {
-            assertTrue(terms.contains(t));
-            assertFalse(resultTwo.contains(t));
+            assertThat(expectedDtos, hasItem(t));
+            assertThat(resultTwo, not(hasItem(t)));
         });
-        resultTwo.forEach(t -> assertTrue(terms.contains(t)));
+        resultTwo.forEach(t -> assertThat(expectedDtos, hasItem(t)));
     }
 
     @Test
@@ -291,9 +291,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        List<Term> result = sut.findAll("Result", vocabulary);
+        List<TermDto> result = sut.findAll("Result", vocabulary);
         assertEquals(matching.size(), result.size());
-        assertTrue(matching.containsAll(result));
+        assertTrue(termsToDtos(matching).containsAll(result));
     }
 
     @Test
@@ -455,19 +455,20 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        final List<Term> resultOne = sut
+        final List<TermDto> resultOne = sut
                 .findAllRootsIncludingImported(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
-        final List<Term> resultTwo = sut
+        final List<TermDto> resultTwo = sut
                 .findAllRootsIncludingImported(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
 
         assertEquals(5, resultOne.size());
         assertEquals(5, resultTwo.size());
 
+        final List<TermDto> expectedDtos = termsToDtos(terms);
         resultOne.forEach(t -> {
-            assertTrue(terms.contains(t));
-            assertFalse(resultTwo.contains(t));
+            assertThat(expectedDtos, hasItem(t));
+            assertThat(resultTwo, not(hasItem(t)));
         });
-        resultTwo.forEach(t -> assertTrue(terms.contains(t)));
+        resultTwo.forEach(t -> assertThat(expectedDtos, hasItem(t)));
     }
 
     @Test
@@ -485,9 +486,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
 
-        List<Term> result = sut.findAllIncludingImported(searchString, vocabulary);
+        List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary);
         assertEquals(matching.size(), result.size());
-        assertTrue(matching.containsAll(result));
+        assertTrue(termsToDtos(matching).containsAll(result));
     }
 
     @Test
@@ -537,8 +538,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setVocabulary(childVocabulary.getUri());
         sut.addChildTerm(childTerm, parentTerm);
 
-        assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList())
-                      .contains(childTerm));
+        assertThat(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList()), hasItem(new TermDto(childTerm)));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
@@ -566,7 +566,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setParentTerms(Collections.singleton(newParentTerm));
         sut.update(childTerm);
         assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList())
-                      .contains(childTerm));
+                .contains(new TermDto(childTerm)));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }

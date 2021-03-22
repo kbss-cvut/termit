@@ -1,23 +1,20 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If
- * not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package cz.cvut.kbss.termit.environment;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.assignment.Target;
 import cz.cvut.kbss.termit.model.assignment.TermAssignment;
@@ -29,22 +26,17 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.util.Constants;
-import java.util.Arrays;
-import java.util.Date;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.topbraid.shacl.vocabulary.SH;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.topbraid.shacl.vocabulary.SH;
 
 public class Generator {
 
@@ -196,7 +188,7 @@ public class Generator {
      */
     public static cz.cvut.kbss.termit.model.Vocabulary generateVocabulary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary =
-            new cz.cvut.kbss.termit.model.Vocabulary();
+                new cz.cvut.kbss.termit.model.Vocabulary();
         vocabulary.setGlossary(new Glossary());
         vocabulary.setModel(new Model());
         vocabulary.setLabel("Vocabulary" + randomInt());
@@ -216,7 +208,7 @@ public class Generator {
         final MultilingualString definition = new MultilingualString();
         final MultilingualString description = new MultilingualString();
         int id = randomInt();
-        Arrays.stream(languages).forEach( language -> {
+        Arrays.stream(languages).forEach(language -> {
             label.set(language, "Term-" + language + "-" + id);
             definition.set(language, "Normative definition of term " + language + "-" + id);
             description.set(language, "Normative description of term " + language + "-" + id);
@@ -231,8 +223,8 @@ public class Generator {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Constants.DEFAULT_LANGUAGE));
         term.setDefinition(MultilingualString
-            .create("Normative definition of term " + term.getLabel().get(),
-                Constants.DEFAULT_LANGUAGE));
+                .create("Normative definition of term " + term.getLabel().get(),
+                        Constants.DEFAULT_LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Constants.DEFAULT_LANGUAGE));
         return term;
     }
@@ -251,7 +243,7 @@ public class Generator {
 
     public static List<Term> generateTermsWithIds(int count) {
         return IntStream.range(0, count).mapToObj(i -> generateTermWithId())
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     public static Resource generateResource() {
@@ -296,7 +288,7 @@ public class Generator {
 
     public static PersistChangeRecord generatePersistChange(Asset<?> asset) {
         final PersistChangeRecord record = new PersistChangeRecord(asset);
-        record.setTimestamp(Instant.now());
+        record.setTimestamp(Instant.now().truncatedTo(ChronoUnit.MILLIS));
         if (Environment.getCurrentUser() != null) {
             record.setAuthor(Environment.getCurrentUser().toUser());
         }
@@ -312,20 +304,11 @@ public class Generator {
      */
     public static UpdateChangeRecord generateUpdateChange(Asset<?> asset) {
         final UpdateChangeRecord record = new UpdateChangeRecord(asset);
-        record.setTimestamp(Instant.now());
+        record.setTimestamp(Instant.now().truncatedTo(ChronoUnit.MILLIS));
         if (Environment.getCurrentUser() != null) {
             record.setAuthor(Environment.getCurrentUser().toUser());
         }
-        try {
-            final Class<?> cls = asset.getClass();
-            final Field labelField = cls.getDeclaredField("label");
-            if (labelField.getAnnotation(OWLAnnotationProperty.class) != null) {
-                record.setChangedAttribute(
-                    URI.create(labelField.getAnnotation(OWLAnnotationProperty.class).iri()));
-            }
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException("Unable to generate update record.");
-        }
+        record.setChangedAttribute(URI.create(RDFS.LABEL));
         record.setNewValue(Collections.singleton(asset.getLabel()));
         return record;
     }
@@ -333,9 +316,9 @@ public class Generator {
     public static List<AbstractChangeRecord> generateChangeRecords(Asset<?> asset, User user) {
         final PersistChangeRecord persistRecord = generatePersistChange(asset);
         final List<AbstractChangeRecord> result =
-            IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset))
-                .collect(
-                    Collectors.toList());
+                IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset))
+                        .collect(
+                                Collectors.toList());
         result.add(0, persistRecord);
         if (user != null) {
             result.forEach(r -> r.setAuthor(user));
@@ -344,17 +327,14 @@ public class Generator {
     }
 
     public static List<cz.cvut.kbss.termit.model.validation.ValidationResult> generateValidationRecords() {
-        final List<cz.cvut.kbss.termit.model.validation.ValidationResult> result =
-            IntStream.range(0, 1)
+        return IntStream.range(0, 1)
                 .mapToObj(i ->
-                    new cz.cvut.kbss.termit.model.validation.ValidationResult()
-                        .setTermUri(URI.create("https://example.org/term-" + i))
-                        .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
-                        .setSeverity(URI.create(SH.Violation.toString()))
-            )
-            .collect(
-            Collectors.toList());
-        return result;
+                        new cz.cvut.kbss.termit.model.validation.ValidationResult()
+                                .setTermUri(URI.create("https://example.org/term-" + i))
+                                .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
+                                .setSeverity(URI.create(SH.Violation.toString()))
+                )
+                .collect(Collectors.toList());
     }
 
     /**
@@ -371,8 +351,8 @@ public class Generator {
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(term.getUri().toString()),
-                vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                vf.createIRI(vocabularyIri.toString()));
+                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                    vf.createIRI(vocabularyIri.toString()));
         }
     }
 

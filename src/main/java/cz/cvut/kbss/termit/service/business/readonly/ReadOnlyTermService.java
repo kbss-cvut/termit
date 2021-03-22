@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
+import cz.cvut.kbss.termit.dto.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -28,28 +29,24 @@ public class ReadOnlyTermService {
         return termService.findVocabularyRequired(vocabularyUri);
     }
 
-    public List<ReadOnlyTerm> findAll(Vocabulary vocabulary) {
-        return termService.findAll(vocabulary).stream().map(ReadOnlyTerm::new).collect(Collectors.toList());
+    public List<TermDto> findAll(Vocabulary vocabulary) {
+        return termService.findAll(vocabulary).stream().map(TermDto::new).collect(Collectors.toList());
     }
 
-    public List<ReadOnlyTerm> findAll(String searchString, Vocabulary vocabulary) {
-        return termService.findAll(searchString, vocabulary).stream().map(ReadOnlyTerm::new)
-                          .collect(Collectors.toList());
+    public List<TermDto> findAll(String searchString, Vocabulary vocabulary) {
+        return termService.findAll(searchString, vocabulary);
     }
 
-    public List<ReadOnlyTerm> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
-        return termService.findAllIncludingImported(searchString, vocabulary).stream().map(ReadOnlyTerm::new)
-                          .collect(Collectors.toList());
+    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
+        return termService.findAllIncludingImported(searchString, vocabulary);
     }
 
-    public List<ReadOnlyTerm> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllRoots(vocabulary, pageSpec, Collections.emptyList()).stream().map(ReadOnlyTerm::new)
-                          .collect(Collectors.toList());
+    public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec) {
+        return termService.findAllRoots(vocabulary, pageSpec, Collections.emptyList());
     }
 
-    public List<ReadOnlyTerm> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        return termService.findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList()).stream()
-                          .map(ReadOnlyTerm::new).collect(Collectors.toList());
+    public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
+        return termService.findAllRootsIncludingImported(vocabulary, pageSpec, Collections.emptyList());
     }
 
     public ReadOnlyTerm findRequired(URI termId) {

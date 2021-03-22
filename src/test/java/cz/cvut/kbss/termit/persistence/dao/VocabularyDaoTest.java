@@ -1,16 +1,13 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
@@ -20,6 +17,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.*;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
@@ -60,7 +58,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllReturnsVocabulariesOrderedByName() {
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .collect(Collectors.toList());
+                .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFor(v))));
 
         final List<Vocabulary> result = sut.findAll();
@@ -331,5 +329,25 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(newLabel, result.get().getLabel());
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
+    }
+
+    @Test
+    void getChangesOfContentLoadsChangesOfTermsInVocabulary() {
+        enableRdfsInference(em);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId();
+        final List<AbstractChangeRecord> changes = Generator.generateChangeRecords(term, author);
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            term.setGlossary(vocabulary.getGlossary().getUri());
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            changes.forEach(ch -> em.persist(ch));
+        });
+
+        final List<AbstractChangeRecord> result = sut.getChangesOfContent(vocabulary);
+        assertEquals(changes.size(), result.size());
+        assertTrue(changes.containsAll(result));
     }
 }
