@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:11-jdk-oracle
 
 ARG JAR_FILES="target/*.jar"
 ENV JAR=termit.jar
