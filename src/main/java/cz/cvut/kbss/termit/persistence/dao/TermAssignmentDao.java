@@ -49,7 +49,9 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
             "  BIND (false as ?suggested)" +
             "  }" +
             "  ?x ?hasTerm ?term ;" +
-            "    ?hasTarget/?hasSource ?resource.";
+            "     ?hasTarget ?target . " +
+            "  { ?target ?hasSource ?resource . FILTER NOT EXISTS { ?resource a ?fileType . } } " +
+            "  UNION { ?target ?hasSource ?file . ?resource ?isDocumentOf ?file . }";
 
     private static final String OCCURRENCES_CONDITION = "{" +
             "  ?x a ?suggestedOccurrence ." +
@@ -62,7 +64,9 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
             "  BIND (false as ?suggested)" +
             "} " +
             "  ?x ?hasTerm ?term ;" +
-            "    ?hasTarget/?hasSource ?resource." +
+            "     ?hasTarget ?target . " +
+            "  { ?target ?hasSource ?resource . FILTER NOT EXISTS { ?resource a ?fileType . } } " +
+            "  UNION { ?target ?hasSource ?file . ?resource ?isDocumentOf ?file . } " +
             "BIND (IF(EXISTS { ?resource a ?termType }, ?termDefOcc, ?fileOcc) as ?type)";
 
     private final Configuration config;
@@ -98,6 +102,8 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("hasTarget", URI.create(Vocabulary.s_p_ma_cil))
                  .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
                  .setParameter("assignment", URI.create(Vocabulary.s_c_prirazeni_termu))
+                 .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
+                 .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("hasLabel", URI.create(DC.Terms.TITLE))
                  .setParameter("lang", config.get(ConfigParam.LANGUAGE))
                  .setParameter("t", term.getUri()).getResultList();
@@ -117,6 +123,8 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
                  .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                  .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
+                 .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
+                 .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("lang", config.get(ConfigParam.LANGUAGE))
                  .setParameter("termType", URI.create(Vocabulary.s_c_term))
                  .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
@@ -176,6 +184,8 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("hasTarget", URI.create(Vocabulary.s_p_ma_cil))
                  .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
                  .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
+                 .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("assignment", URI.create(Vocabulary.s_c_prirazeni_termu))
                  .setParameter("lang", config.get(ConfigParam.LANGUAGE))
                  .setParameter("resource", resource.getUri()).getResultList();
@@ -195,6 +205,8 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
                  .setParameter("hasTarget", URI.create(Vocabulary.s_p_ma_cil))
                  .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
+                 .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
+                 .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                  .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                  .setParameter("lang", config.get(ConfigParam.LANGUAGE))
