@@ -26,6 +26,8 @@ javamelody:
     authorized-users: admin:kral0vnat3rm1t1st3
 repository:
   url: http://localhost:7200/repositories/termit
+  # if empty, repository.url will be used
+  public-url:
 persistence:
   driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
   language: cs
