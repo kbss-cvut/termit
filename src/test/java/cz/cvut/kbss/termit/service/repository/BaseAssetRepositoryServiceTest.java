@@ -194,6 +194,13 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
             Collectors.toList());
         transactional(() -> comments.forEach(em::persist));
 
+        User anotherUser = Generator.generateUserWithId();
+        transactional(() -> em.persist(anotherUser));
+
+        final List<Comment> otherComments = terms.stream().map(t -> Generator.generateComment(anotherUser,t)).collect(
+            Collectors.toList());
+        transactional(() -> otherComments.forEach(em::persist));
+
         em.getEntityManagerFactory().getCache().evictAll();
 
         final int count = 2;
