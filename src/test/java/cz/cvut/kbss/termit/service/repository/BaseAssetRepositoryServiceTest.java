@@ -194,10 +194,43 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
             Collectors.toList());
         transactional(() -> comments.forEach(em::persist));
 
+        User anotherUser = Generator.generateUserWithId();
+        transactional(() -> em.persist(anotherUser));
+
+        final List<Comment> otherComments = terms.stream().map(t -> Generator.generateComment(anotherUser,t)).collect(
+            Collectors.toList());
+        transactional(() -> otherComments.forEach(em::persist));
+
         em.getEntityManagerFactory().getCache().evictAll();
 
         final int count = 2;
         final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReaction(author, count);
+        assertEquals(count, result.size());
+    }
+
+    @Test
+    void findLastCommentedByMeLoadsLastCommentedByMe() {
+        enableRdfsInference(em);
+        final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
+            .collect(Collectors.toList());
+        AtomicInteger i = new AtomicInteger(0);
+        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),"cs")));
+        transactional(() -> terms.forEach(em::persist));
+
+        final List<PersistChangeRecord> persistRecords = terms.stream().map(Generator::generatePersistChange)
+            .collect(
+                Collectors.toList());
+        setCreated(persistRecords);
+        transactional(() -> persistRecords.forEach(em::persist));
+
+        final List<Comment> comments = terms.stream().map(t -> Generator.generateComment(author,t)).collect(
+            Collectors.toList());
+        transactional(() -> comments.forEach(em::persist));
+
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        final int count = 2;
+        final List<RecentlyCommentedAsset> result = sut.findLastCommentedByMe(author, count);
         assertEquals(count, result.size());
     }
 
