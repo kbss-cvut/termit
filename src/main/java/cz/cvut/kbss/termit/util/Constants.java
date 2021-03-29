@@ -33,13 +33,6 @@ public class Constants {
     public static final Double SCORE_THRESHOLD = 0.49;
 
     /**
-     * Version of this application.
-     * <p>
-     * Injected by Maven during production build.
-     */
-    public static final String VERSION = "$VERSION$";
-
-    /**
      * Default persistence unit language.
      */
     public static final String DEFAULT_LANGUAGE = "en";
