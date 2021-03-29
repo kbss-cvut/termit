@@ -52,7 +52,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.util.ConfigParam.REPOSITORY_URL;
 import static cz.cvut.kbss.termit.util.ConfigParam.TEXT_ANALYSIS_SERVICE_URL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -154,7 +153,11 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         final TextAnalysisInput input = new TextAnalysisInput();
         input.setContent(CONTENT);
         input.addVocabularyContext(vocabulary.getUri());
-        input.setVocabularyRepository(URI.create(config.get(REPOSITORY_URL)));
+        URI repositoryUrl = URI.create(
+            config.get(ConfigParam.REPOSITORY_PUBLIC_URL,
+                config.get(ConfigParam.REPOSITORY_URL))
+        );
+        input.setVocabularyRepository(repositoryUrl);
         input.setLanguage(config.get(ConfigParam.LANGUAGE));
         return input;
     }

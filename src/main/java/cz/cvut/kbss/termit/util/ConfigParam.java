@@ -25,6 +25,11 @@ public enum ConfigParam {
     REPOSITORY_URL("repository.url"),
 
     /**
+     * Public URL of the main application repository.
+     */
+    REPOSITORY_PUBLIC_URL("repository.publicUrl"),
+
+    /**
      * OntoDriver class for the repository.
      */
     DRIVER("persistence.driver"),
