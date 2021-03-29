@@ -159,18 +159,17 @@ class AssetControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getLastCommentedByMeRetrievesLastCommentedByMeWithDefaultLimit() throws Exception {
-        final int limit = Math.abs(Generator.randomInt());
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
-        when(assetService.findLastCommentedInReactionToMine(anyInt())).thenReturn(assets);
+        when(assetService.findLastCommentedByMe(anyInt())).thenReturn(assets);
         mockMvc.perform(get(PATH + "/last-commented-by-me")).andExpect(status().isOk());
-        verify(assetService).findLastCommentedByMe(limit);
+        verify(assetService).findLastCommentedByMe(Integer.parseInt(AssetController.DEFAULT_LIMIT));
     }
 
     @Test
     void getLastCommentedByMeRetrievesLastCommentedByMeWithCustomLimit() throws Exception {
         final int limit = Math.abs(Generator.randomInt());
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
-        when(assetService.findLastCommentedInReactionToMine(anyInt())).thenReturn(assets);
+        when(assetService.findLastCommentedByMe(anyInt())).thenReturn(assets);
         mockMvc.perform(get(PATH + "/last-commented-by-me")
             .param("limit", "" + limit))
             .andExpect(status().isOk());
