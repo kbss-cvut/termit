@@ -1,5 +1,3 @@
-application.version: @project.version@-TEST
-
 spring:
   autoconfigure:
     exclude: net.bull.javamelody.JavaMelodyAutoConfiguration
