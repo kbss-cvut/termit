@@ -105,4 +105,16 @@ public abstract class BaseAssetRepositoryService<T extends Asset<?>> extends Bas
     public List<RecentlyCommentedAsset> findMyLastCommented(User me, int limit) {
         return getPrimaryDao().findMyLastCommented(me, limit);
     }
+
+    /**
+     * Gets the specified number of assets last commented by me.
+     * <p>
+     * The returned assets are sorted by commented date in descending order.
+     *
+     * @param limit Maximum number of assets returned
+     * @return List of most recently commented assets
+     */
+    public List<RecentlyCommentedAsset> findLastCommentedByMe(User me, int limit) {
+        return getPrimaryDao().findLastCommentedByMe(me, limit);
+    }
 }
