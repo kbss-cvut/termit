@@ -52,7 +52,7 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDocumentManager.class);
 
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HHmmss");
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HHmmss_S");
 
     private final Configuration config;
 
