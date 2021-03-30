@@ -363,24 +363,6 @@
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>project-version</id>
-                                <phase>process-sources</phase>
-                                <goals>
-                                    <goal>replace</goal>
-                                </goals>
-                                <configuration>
-                                    <file>
-                                        ${project.basedir}/src/main/java/cz/cvut/kbss/termit/util/Constants.java
-                                    </file>
-                                    <outputFile>
-                                        ${project.basedir}/src/main/java/cz/cvut/kbss/termit/util/Constants.java
-                                    </outputFile>
-                                    <regex>false</regex>
-                                    <token>$VERSION$</token>
-                                    <value>${project.version}</value>
-                                </configuration>
-                            </execution>
-                            <execution>
                                 <phase>prepare-package</phase>
                                 <goals>
                                     <goal>replace</goal>
