@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,15 +92,6 @@ public class DefaultDocumentManager implements DocumentManager {
         return new TypeAwareFileSystemResource(resolveFile(file, true), getMediaType(file));
     }
 
-    private String getMediaType(File file) {
-        final java.io.File content = resolveFile(file, true);
-        try {
-            return Files.probeContentType(content.toPath());
-        } catch (IOException e) {
-            throw new DocumentManagerException("Unable to determine file content type.", e);
-        }
-    }
-
     @Override
     public void saveFileContent(File file, InputStream content) {
         try {
@@ -143,12 +135,20 @@ public class DefaultDocumentManager implements DocumentManager {
 
     @Override
     public Optional<String> getContentType(File file) {
-        final java.io.File physicalFile = resolveFile(file, true);
         try {
-            return Optional.ofNullable(Files.probeContentType(physicalFile.toPath()));
-        } catch (IOException e) {
+            return Optional.ofNullable(getMediaType(file));
+        } catch (DocumentManagerException e) {
             LOG.error("Exception caught when determining content type of file {}.", file, e);
             return Optional.empty();
+        }
+    }
+
+    private String getMediaType(File file) {
+        final java.io.File content = resolveFile(file, true);
+        try {
+            return new Tika().detect(content);
+        } catch (IOException e) {
+            throw new DocumentManagerException("Unable to determine file content type.", e);
         }
     }
 

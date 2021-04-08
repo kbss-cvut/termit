@@ -38,6 +38,7 @@
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
         <packaging>jar</packaging>
+        <org.apache.tika.tika-core.version>1.26</org.apache.tika.tika-core.version>
     </properties>
 
     <dependencies>
@@ -76,6 +77,13 @@
             <groupId>org.mitre.dsmiley.httpproxy</groupId>
             <artifactId>smiley-http-proxy-servlet</artifactId>
             <version>1.11</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${org.apache.tika.tika-core.version}</version>
         </dependency>
 
         <!-- JOPA -->
