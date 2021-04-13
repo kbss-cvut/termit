@@ -13,6 +13,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
@@ -351,12 +352,12 @@ class ResourceServiceTest {
     }
 
     @Test
-    void addFileToDocumentPersistsFileAndUpdatesDocumentWithAddedFile() {
+    void addFileToDocumentPersistsFileAndPersistsDocumentWithAddedFile() {
         final Document doc = Generator.generateDocumentWithId();
         final File fOne = Generator.generateFileWithId("test.html");
         sut.addFileToDocument(doc, fOne);
         verify(resourceRepositoryService).persist(fOne);
-        verify(resourceRepositoryService).update(doc);
+        verify(resourceRepositoryService).persist(doc);
     }
 
     @Test
@@ -388,12 +389,12 @@ class ResourceServiceTest {
         when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(doc, fOne);
-        verify(resourceRepositoryService).update(doc);
+        verify(resourceRepositoryService).persist(doc);
         verify(vocabularyService).getRequiredReference(vocabulary.getUri());
     }
 
     @Test
-    void removeFileRemovesFileUpdatesDocumentAndRemovesContent() {
+    void removeFileRemovesFileAndRemovesContent() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Document doc = Generator.generateDocumentWithId();
         doc.setVocabulary(vocabulary.getUri());
@@ -402,7 +403,6 @@ class ResourceServiceTest {
 
         sut.removeFile(fOne);
 
-        verify(resourceRepositoryService).update(doc);
         verify(resourceRepositoryService).remove(fOne);
         verify(documentManager).remove(fOne);
     }
@@ -496,6 +496,25 @@ class ResourceServiceTest {
         assertEquals(file, event.getSource());
         assertEquals(originalFile.getLabel(), event.getOriginalName());
         assertEquals(file.getLabel(), event.getNewName());
+    }
+
+    @Test
+    void updatePublishesEventOnDocumentLabelChange() {
+        final Document document = Generator.generateDocumentWithId();
+        document.setLabel("newTest");
+
+        final Document originalDocument = new Document();
+        originalDocument.setUri(document.getUri());
+        originalDocument.setLabel("originalTest");
+
+        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(originalDocument);
+        sut.update(document);
+        final ArgumentCaptor<DocumentRenameEvent> captor = ArgumentCaptor.forClass(DocumentRenameEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        final DocumentRenameEvent event = captor.getValue();
+        assertEquals(document, event.getSource());
+        assertEquals(originalDocument.getLabel(), event.getOriginalName());
+        assertEquals(document.getLabel(), event.getNewName());
     }
 
     @Test

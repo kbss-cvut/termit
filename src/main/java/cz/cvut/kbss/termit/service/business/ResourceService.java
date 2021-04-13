@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
+import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -238,7 +239,11 @@ public class ResourceService
         } else {
             persist(file);
         }
-        update(doc);
+        if ( !getReference(document.getUri()).isPresent() ) {
+            persist(document);
+        } else {
+            update(doc);
+        }
     }
 
     /**
@@ -255,7 +260,9 @@ public class ResourceService
             throw new InvalidParameterException("File was not attached to a document.");
         } else {
             doc.removeFile(file);
-            update(doc);
+            if ( repositoryService.getReference(doc.getUri()).isPresent() ) {
+                update(doc);
+            }
         }
         documentManager.remove(file);
         repositoryService.remove(file);
@@ -351,7 +358,7 @@ public class ResourceService
     @Transactional
     @Override
     public Resource update(Resource instance) {
-        final Optional<ApplicationEvent> evt = createFileLabelUpdateNotification(instance);
+        final Optional<ApplicationEvent> evt = createFileOrDocumentLabelUpdateNotification(instance);
         final Resource result = repositoryService.update(instance);
         // Notify only after update in repository to ensure that the change has succeeded
         // Note that since this is happening in the same transaction, we are relying on the hypothetical exception
@@ -361,13 +368,19 @@ public class ResourceService
         return result;
     }
 
-    private Optional<ApplicationEvent> createFileLabelUpdateNotification(Resource instance) {
-        if (!(instance instanceof File)) {
-            return Optional.empty();
-        }
-        final Resource original = findRequired(instance.getUri());
-        if (!Objects.equals(original.getLabel(), instance.getLabel())) {
-            return Optional.of(new FileRenameEvent((File) instance, original.getLabel(), instance.getLabel()));
+    private Optional<ApplicationEvent> createFileOrDocumentLabelUpdateNotification(Resource instance) {
+        if (instance instanceof File) {
+            final Resource original = findRequired(instance.getUri());
+            if (!Objects.equals(original.getLabel(), instance.getLabel())) {
+                return Optional.of(new FileRenameEvent((File) instance, original.getLabel(),
+                    instance.getLabel()));
+            }
+        } else if (instance instanceof Document ) {
+            final Resource original = findRequired(instance.getUri());
+            if (!Objects.equals(original.getLabel(), instance.getLabel())) {
+                return Optional.of(new DocumentRenameEvent((Document) instance, original.getLabel(),
+                    instance.getLabel()));
+            }
         }
         return Optional.empty();
     }
