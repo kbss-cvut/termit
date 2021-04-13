@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.service.document;
 
+import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.DocumentManagerException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -73,6 +74,13 @@ public class DefaultDocumentManager implements DocumentManager {
             throw new NotFoundException("File " + file + " not found on file system.");
         }
         return result;
+    }
+
+    private java.io.File resolveDocumentDirectory(Document document) {
+        Objects.requireNonNull(document);
+        final String path =
+            config.get(ConfigParam.FILE_STORAGE) + java.io.File.separator + document.getDirectoryName();
+        return new java.io.File(path);
     }
 
     @Override
@@ -233,6 +241,26 @@ public class DefaultDocumentManager implements DocumentManager {
             moveFile(tempOriginal, physicalOriginal, event);
         } catch (IOException e) {
             throw new DocumentManagerException("Unable to sync file content after file renaming.", e);
+        }
+    }
+
+    @EventListener
+    public void onDocumentRename(DocumentRenameEvent event) {
+        final Document tempOriginal = new Document();
+        tempOriginal.setUri(event.getSource().getUri());
+        tempOriginal.setLabel(event.getOriginalName());
+
+        final java.io.File originalDirectory = resolveDocumentDirectory(tempOriginal);
+
+        final Document tempNewDocument = new Document();
+        tempNewDocument.setUri(event.getSource().getUri());
+        tempNewDocument.setLabel(event.getNewName());
+        final java.io.File newDirectory = resolveDocumentDirectory(tempNewDocument);
+
+        try {
+            Files.move(originalDirectory.toPath(), newDirectory.toPath());
+        } catch (IOException e) {
+            throw new DocumentManagerException("Cannot rename the directory on document label change.", e);
         }
     }
 
