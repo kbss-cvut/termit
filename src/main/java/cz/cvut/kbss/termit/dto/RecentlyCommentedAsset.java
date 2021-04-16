@@ -108,8 +108,8 @@ public class RecentlyCommentedAsset implements Serializable {
     public String toString() {
         return "RecentlyCommentedAsset{" +
             "uri=" + uri +
-            ", comment=" + lastComment.toString() +
-            ", myLastComment=" + myLastComment.toString() +
+            ", comment=" + lastComment +
+            ", myLastComment=" + myLastComment +
             ", types=" + types +
             '}';
     }
