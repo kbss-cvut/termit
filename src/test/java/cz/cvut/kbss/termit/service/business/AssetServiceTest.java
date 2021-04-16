@@ -164,7 +164,7 @@ class AssetServiceTest {
         for (int i = 0; i < count; i++) {
             final Term term = Generator.generateTermWithId();
             Comment comment = Generator.generateComment(author, term);
-            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), SKOS.CONCEPT);
+            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), null, SKOS.CONCEPT);
             comment.setCreated(new Date(System.currentTimeMillis() - i * 1000));
             comment.setAuthor(author);
             comment.setAsset(term.getUri());
@@ -174,7 +174,6 @@ class AssetServiceTest {
         when(termService.findLastCommented(anyInt())).thenReturn(assets);
         when(termService.findMyLastCommented(any(User.class), anyInt())).thenReturn(assets);
         when(termService.findLastCommentedInReaction(any(User.class), anyInt())).thenReturn(assets);
-        when(termService.findLastCommentedByMe(any(User.class), anyInt())).thenReturn(assets);
         return assets;
     }
 
@@ -205,17 +204,6 @@ class AssetServiceTest {
         final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets(6);
         allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
         final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReactionToMine(10);
-        assertEquals(allExpected, result);
-    }
-
-    @Test
-    void findLastCommentedByMeReturnsAssetsSortedByDateCommentCreatedDescending() {
-        final UserAccount currentUser = Generator.generateUserAccount();
-        when(securityUtils.getCurrentUser()).thenReturn(currentUser);
-
-        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets(6);
-        allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
-        final List<RecentlyCommentedAsset> result = sut.findLastCommentedByMe(10);
         assertEquals(allExpected, result);
     }
 }

@@ -150,19 +150,6 @@ public class AssetService {
         return result.subList(0, Math.min(result.size(), limit));
     }
 
-    /**
-     * Finds the specified number of assets most recently commented by me.
-     *
-     * @param limit Maximum number of assets to retrieve
-     * @return List of recently commented assets
-     */
-    public List<RecentlyCommentedAsset> findLastCommentedByMe(int limit) {
-        ensureValidLimitForLastCommented(limit);
-        final User me = securityUtils.getCurrentUser().toUser();
-        final List<RecentlyCommentedAsset> result = termRepositoryService.findLastCommentedByMe(me, limit);
-        return result.subList(0, Math.min(result.size(), limit));
-    }
-
     private void ensureValidLimitForLastCommented(int limit) {
         if (limit < 0) {
             throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");

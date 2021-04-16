@@ -21,6 +21,7 @@ import java.util.Set;
         variables = {
             @VariableResult(name = "entity", type = URI.class),
             @VariableResult(name = "lastCommentUri", type = URI.class),
+            @VariableResult(name = "lastMyCommentUri", type = URI.class),
             @VariableResult(name = "type", type = String.class)
         })})
 public class RecentlyCommentedAsset implements Serializable {
@@ -34,15 +35,22 @@ public class RecentlyCommentedAsset implements Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_je_tematem)
     private Comment lastComment;
 
+    @Transient
+    private URI lastMyCommentUri;
+
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_muj_posledni_komentar)
+    private Comment lastMyComment;
+
     @Types
     private Set<String> types;
 
     public RecentlyCommentedAsset() {
     }
 
-    public RecentlyCommentedAsset(URI entity, URI lastCommentUri, String type) {
+    public RecentlyCommentedAsset(URI entity, URI lastCommentUri, URI lastMyCommentUri, String type) {
         this.uri = entity;
         this.lastCommentUri = lastCommentUri;
+        this.lastMyCommentUri = lastMyCommentUri;
         this.types = new HashSet<>(Collections.singleton(type));
     }
 
@@ -79,6 +87,23 @@ public class RecentlyCommentedAsset implements Serializable {
         return this;
     }
 
+    public URI getLastMyCommentUri() {
+        return lastMyCommentUri;
+    }
+
+    public void setLastMyCommentUri(URI lastMyCommentUri) {
+        this.lastMyCommentUri = lastMyCommentUri;
+    }
+
+    public Comment getLastMyComment() {
+        return lastMyComment;
+    }
+
+    public RecentlyCommentedAsset setLastMyComment(Comment lastMyComment) {
+        this.lastMyComment = lastMyComment;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "RecentlyCommentedAsset{" +
@@ -99,11 +124,12 @@ public class RecentlyCommentedAsset implements Serializable {
         RecentlyCommentedAsset that = (RecentlyCommentedAsset) o;
         return Objects.equals(uri, that.uri) &&
             Objects.equals(lastComment, that.lastComment) &&
+            Objects.equals(lastMyComment, that.lastMyComment) &&
             Objects.equals(types, that.types);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uri, lastComment, types);
+        return Objects.hash(uri, lastComment, lastMyComment, types);
     }
 }
