@@ -211,7 +211,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
             result.stream().map(a -> a.getUri()).collect(Collectors.toSet())
         );
         result.stream().forEach(a ->
-            assertNotNull(a.getLastMyComment())
+            assertNotNull(a.getMyLastComment())
         );
     }
 
