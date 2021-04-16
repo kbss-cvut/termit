@@ -66,10 +66,4 @@ public class AssetController {
         @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
         return assetService.findMyLastCommented(limit);
     }
-
-    @RequestMapping(value = "/last-commented-by-me", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<RecentlyCommentedAsset> getLastCommentedByMe(
-        @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
-        return assetService.findLastCommentedByMe(limit);
-    }
 }

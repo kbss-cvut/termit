@@ -21,6 +21,7 @@ import java.util.Set;
         variables = {
             @VariableResult(name = "entity", type = URI.class),
             @VariableResult(name = "lastCommentUri", type = URI.class),
+            @VariableResult(name = "myLastCommentUri", type = URI.class),
             @VariableResult(name = "type", type = String.class)
         })})
 public class RecentlyCommentedAsset implements Serializable {
@@ -34,15 +35,22 @@ public class RecentlyCommentedAsset implements Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_je_tematem)
     private Comment lastComment;
 
+    @Transient
+    private URI myLastCommentUri;
+
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_muj_posledni_komentar)
+    private Comment myLastComment;
+
     @Types
     private Set<String> types;
 
     public RecentlyCommentedAsset() {
     }
 
-    public RecentlyCommentedAsset(URI entity, URI lastCommentUri, String type) {
+    public RecentlyCommentedAsset(URI entity, URI lastCommentUri, URI myLastCommentUri, String type) {
         this.uri = entity;
         this.lastCommentUri = lastCommentUri;
+        this.myLastCommentUri = myLastCommentUri;
         this.types = new HashSet<>(Collections.singleton(type));
     }
 
@@ -79,11 +87,29 @@ public class RecentlyCommentedAsset implements Serializable {
         return this;
     }
 
+    public URI getMyLastCommentUri() {
+        return myLastCommentUri;
+    }
+
+    public void setMyLastCommentUri(URI myLastCommentUri) {
+        this.myLastCommentUri = myLastCommentUri;
+    }
+
+    public Comment getMyLastComment() {
+        return myLastComment;
+    }
+
+    public RecentlyCommentedAsset setMyLastComment(Comment myLastComment) {
+        this.myLastComment = myLastComment;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "RecentlyCommentedAsset{" +
             "uri=" + uri +
-            ", comment=" + lastComment.toString() +
+            ", comment=" + lastComment +
+            ", myLastComment=" + myLastComment +
             ", types=" + types +
             '}';
     }
@@ -99,11 +125,12 @@ public class RecentlyCommentedAsset implements Serializable {
         RecentlyCommentedAsset that = (RecentlyCommentedAsset) o;
         return Objects.equals(uri, that.uri) &&
             Objects.equals(lastComment, that.lastComment) &&
+            Objects.equals(myLastComment, that.myLastComment) &&
             Objects.equals(types, that.types);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uri, lastComment, types);
+        return Objects.hash(uri, lastComment, myLastComment, types);
     }
 }
