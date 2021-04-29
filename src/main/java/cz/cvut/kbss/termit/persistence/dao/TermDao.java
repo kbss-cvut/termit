@@ -1,13 +1,16 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
@@ -23,6 +26,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermInfoMapper;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +36,6 @@ import org.springframework.stereotype.Repository;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Repository
 public class TermDao extends AssetDao<Term> {
@@ -54,6 +57,16 @@ public class TermDao extends AssetDao<Term> {
         final Optional<Term> result = super.find(id);
         result.ifPresent(r -> r.setSubTerms(loadSubTerms(r)));
         return result;
+    }
+
+    /**
+     * Loads terms whose relatedness to the specified term is inferred due to the symmetric of SKOS
+     * related/relatedMatch
+     *
+     * @param term Term to load related terms for
+     */
+    private void loadInverseRelatedTerms(Term term) {
+        // TODO
     }
 
     @Override
@@ -158,7 +171,10 @@ public class TermDao extends AssetDao<Term> {
 
     private <T extends AbstractTerm> List<T> executeQueryAndLoadSubTerms(TypedQuery<T> query) {
         final List<T> terms = query.getResultList();
-        terms.forEach(t -> t.setSubTerms(loadSubTerms(t)));
+        terms.forEach(t -> {
+            t.setSubTerms(loadSubTerms(t));
+
+        });
         return terms;
     }
 
@@ -197,23 +213,20 @@ public class TermDao extends AssetDao<Term> {
      * @param parent Parent term
      */
     private Set<TermInfo> loadSubTerms(HasIdentifier parent) {
-        final Stream<TermInfo> subTermsStream = em.createNativeQuery("SELECT ?entity ?label ?vocabulary WHERE {" +
+        final List<?> subTerms = em.createNativeQuery("SELECT ?entity ?label ?vocabulary WHERE {" +
                 "?parent ?narrower ?entity ." +
                 "?entity a ?type ;" +
                 "?hasLabel ?label ;" +
-                "?inVocabulary ?vocabulary ." +
-                "FILTER (lang(?label) = ?labelLang) . } ORDER BY LCASE(?label)", "TermInfo")
+                "?inVocabulary ?vocabulary . } ORDER BY ?entity")
                 .setParameter("type", typeUri)
                 .setParameter("narrower", URI.create(SKOS.NARROWER))
                 .setParameter("parent", parent.getUri())
                 .setParameter("hasLabel", LABEL_PROP)
-                .setParameter("inVocabulary",
-                        URI.create(
-                                cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                .setParameter("labelLang", config.get(ConfigParam.LANGUAGE))
-                .getResultStream();
-        // Use LinkedHashSet to preserve term order
-        return subTermsStream.collect(Collectors.toCollection(LinkedHashSet::new));
+                .setParameter("inVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .getResultList();
+        final List<TermInfo> result = new SparqlResultToTermInfoMapper().map(subTerms);
+        result.sort(Comparator.comparing(t -> t.getLabel().get(config.get(ConfigParam.LANGUAGE))));
+        return new LinkedHashSet<>(result);
     }
 
     /**
