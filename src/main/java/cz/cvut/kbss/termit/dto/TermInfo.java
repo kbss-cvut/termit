@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.dto;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.Term;
@@ -42,7 +43,7 @@ public class TermInfo implements Serializable {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
-    private String label;
+    private MultilingualString label;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
@@ -54,17 +55,10 @@ public class TermInfo implements Serializable {
         this.uri = Objects.requireNonNull(uri);
     }
 
-    // Constructor used by SparqlResultSetMapping
-    public TermInfo(URI uri, String label, URI vocabulary) {
-        this.uri = uri;
-        this.label = label;
-        this.vocabulary = vocabulary;
-    }
-
     public TermInfo(Term term) {
         Objects.requireNonNull(term);
         this.uri = term.getUri();
-        this.label = term.getLabel().get();
+        this.label = new MultilingualString(term.getLabel().getValue());
         this.vocabulary = term.getVocabulary();
     }
 
@@ -76,11 +70,11 @@ public class TermInfo implements Serializable {
         this.uri = uri;
     }
 
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
     }
 

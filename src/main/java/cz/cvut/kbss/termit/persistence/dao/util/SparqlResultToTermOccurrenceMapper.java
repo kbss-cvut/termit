@@ -20,7 +20,7 @@ import java.util.*;
  * <p>
  * This class thus allows to take results of a single query which loads everything and map them to the Java objects.
  */
-public class SparqlResultToTermOccurrenceMapper {
+public class SparqlResultToTermOccurrenceMapper implements SparqlResultMapper<TermOccurrence> {
 
     private final URI source;
 
@@ -53,6 +53,7 @@ public class SparqlResultToTermOccurrenceMapper {
      * @param queryResult SPARQL query result list
      * @return List of {@code TermOccurrence}s
      */
+    @Override
     public List<TermOccurrence> map(List<?> queryResult) {
         for (Object item : queryResult) {
             final Object[] row = (Object[]) item;
