@@ -91,7 +91,8 @@ public class TermDao extends AssetDao<Term> {
         try {
             // Evict possibly cached instance loaded from default context
             em.getEntityManagerFactory().getCache().evict(Term.class, entity.getUri(), null);
-            final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
+            final Term original = em.find(Term.class, entity.getUri());
+            entity.setExactMatchesInferred(original.getExactMatchesInferred());
             entity.setDefinitionSource(original.getDefinitionSource());
             return em.merge(entity, descriptorFactory.termDescriptor(entity));
         } catch (RuntimeException e) {
@@ -242,6 +243,36 @@ public class TermDao extends AssetDao<Term> {
                                     config.get(ConfigParam.LANGUAGE))
                             .setMaxResults(pageSpec.getPageSize())
                             .setFirstResult((int) pageSpec.getOffset()));
+            result.addAll(loadIncludedTerms(includeTerms));
+            return result;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Loads a page of root terms (terms without a parent).
+     *
+     * @param pageSpec     Page specification
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @return Matching terms, ordered by their label
+     * @see #findAllRootsIncludingImports(Vocabulary, Pageable, Collection)
+     */
+    public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
+        Objects.requireNonNull(pageSpec);
+        TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+            "?term a ?type ;" +
+            "?hasLabel ?label ." +
+            "?vocabulary ?hasGlossary/?hasTerm ?term ." +
+            "FILTER (lang(?label) = ?labelLang) ." +
+            "} ORDER BY LCASE(?label)", TermDto.class);
+        query = setCommonFindAllRootsQueryParams(query, false);
+        try {
+            final List<TermDto> result = executeQueryAndLoadSubTerms(
+                query.setParameter("labelLang",
+                        config.get(ConfigParam.LANGUAGE))
+                    .setMaxResults(pageSpec.getPageSize())
+                    .setFirstResult((int) pageSpec.getOffset()));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
         } catch (RuntimeException e) {

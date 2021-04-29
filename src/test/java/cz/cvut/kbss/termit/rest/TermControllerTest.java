@@ -435,6 +435,29 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
+    void getAllRootsWithoutVocabularyLoadsRootsFromCorrectPage() throws Exception {
+        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findAllRoots(any(Pageable.class), anyCollection())).thenReturn(terms);
+        mockMvc.perform(get("/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
+            .andExpect(status().isOk());
+
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllRoots(captor.capture(), anyCollection());
+        assertEquals(PageRequest.of(5, 100), captor.getValue());
+    }
+
+    @Test
+    void getAllRootsWithoutVocabularyCreatesDefaultPageRequestWhenPagingInfoIsNotSpecified() throws Exception {
+        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findAllRoots(any(Pageable.class), anyCollection())).thenReturn(terms);
+        mockMvc.perform(get("/terms/roots")).andExpect(status().isOk());
+
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllRoots(captor.capture(), anyCollection());
+        assertEquals(DEFAULT_PAGE_SPEC, captor.getValue());
+    }
+
+    @Test
     void createRootTermPassesNewTermToService() throws Exception {
         initNamespaceAndIdentifierResolution();
 

@@ -26,6 +26,8 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -569,6 +571,33 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
                 .contains(new TermDto(childTerm)));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
+    }
+
+    @Test
+    void updateRemovesExactMatchAssertedAtThisTerm() {
+        final Term term = Generator.generateTermWithId();
+        final Term exactMatchOfTerm = generateParentTermFromDifferentVocabulary();
+        term.addExactMatch(exactMatchOfTerm);
+        term.setGlossary(childVocabulary.getGlossary().getUri());
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(childVocabulary));
+            em.merge(childVocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(childVocabulary));
+            Generator.addTermInVocabularyRelationship(term, childVocabulary.getUri(), em);
+        });
+
+        // This is normally inferred
+        term.setVocabulary(childVocabulary.getUri());
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        term.removeExactMatch(exactMatchOfTerm);
+
+        sut.update(term);
+        Term result = em.find(Term.class, term.getUri());
+        Set<Term> terms = result.getExactMatchesInferred();
+        if ( terms == null ) {
+            terms = new HashSet<>();
+        }
+        assertFalse(terms.contains(exactMatchOfTerm));
     }
 
     @Test

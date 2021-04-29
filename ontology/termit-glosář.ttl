@@ -460,3 +460,12 @@ termit-pojem:má-můj-poslední-komentář
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has my last comment"@en , "Má můj poslední komentář"@cs .
+
+termit-pojem:přesně-odpovídá
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Exactly Matches"@en , "Přesně odpovídá"@cs .

@@ -31,6 +31,8 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.jena.vocabulary.SKOS;
@@ -77,6 +79,39 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public void persist(Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
+    }
+
+    private <T> Set<T> getIfNullOrNewHashSetOtherwise(final Set<T> set) {
+        return set == null ? new HashSet<>() : set;
+    }
+
+    @Override
+    protected void preUpdate(Term entity) {
+        super.preUpdate(entity);
+        final Term original = findRequired(entity.getUri());
+
+        Set<Term> originalInferred = getIfNullOrNewHashSetOtherwise(original.getExactMatchesInferred());
+        Set<Term> entityInferred = getIfNullOrNewHashSetOtherwise(entity.getExactMatchesInferred());
+        if (!Objects.equals(originalInferred,entityInferred)) {
+            Set<Term> originalAsserted = getIfNullOrNewHashSetOtherwise(original.getExactMatches());
+
+            final Set<Term> exactMatchesToAdd = new HashSet<>(entityInferred);
+            exactMatchesToAdd.removeAll(originalInferred);
+            exactMatchesToAdd.addAll(originalAsserted);
+            exactMatchesToAdd.forEach(entity::addExactMatch);
+
+            final Set<Term> exactMatchesToRemove = new HashSet<>(originalInferred);
+            exactMatchesToRemove.removeAll(entityInferred);
+            exactMatchesToRemove.forEach( t -> {
+                if (original.containsExactMatch(t)) {
+                    entity.removeExactMatch(t);
+                } else {
+                    final Term tOriginal = findRequired(t.getUri());
+                    tOriginal.removeExactMatch(original);
+                    getPrimaryDao().update(tOriginal);
+                }
+            });
+        }
     }
 
     @Override
@@ -182,6 +217,19 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
                                    Collection<URI> includeTerms) {
         return termDao.findAllRoots(vocabulary, pageSpec, includeTerms);
+    }
+
+    /**
+     * Finds all root terms (terms without parent term).
+     *
+     * @param pageSpec     Page specifying result number and position
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @return Matching root terms
+     * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
+     */
+    public List<TermDto> findAllRoots( Pageable pageSpec,
+                                      Collection<URI> includeTerms) {
+        return termDao.findAllRoots(pageSpec, includeTerms);
     }
 
     /**

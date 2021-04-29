@@ -9,6 +9,7 @@ import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 
+import cz.cvut.kbss.termit.util.Vocabulary;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -25,6 +26,9 @@ public class TermDto extends AbstractTerm {
 
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<TermDto> parentTerms;
+
+    @OWLObjectProperty(iri = Vocabulary.s_p_presne_odpovida, fetch = FetchType.EAGER)
+    private Set<TermDto> exactMatches;
 
     public TermDto() {
     }
@@ -44,6 +48,9 @@ public class TermDto extends AbstractTerm {
         if (other.getParentTerms() != null) {
             setParentTerms(other.getParentTerms().stream().map(TermDto::new).collect(Collectors.toSet()));
         }
+        if (other.getExactMatchesInferred() != null) {
+            setExactMatches(other.getExactMatchesInferred().stream().map(TermDto::new).collect(Collectors.toSet()));
+        }
         if (other.getSubTerms() != null) {
             setSubTerms(new LinkedHashSet<>(other.getSubTerms()));
         }
@@ -55,5 +62,13 @@ public class TermDto extends AbstractTerm {
 
     public void setParentTerms(Set<TermDto> parentTerms) {
         this.parentTerms = parentTerms;
+    }
+
+    public Set<TermDto> getExactMatches() {
+        return exactMatches;
+    }
+
+    public void setExactMatches(Set<TermDto> exactMatches) {
+        this.exactMatches = exactMatches;
     }
 }

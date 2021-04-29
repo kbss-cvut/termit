@@ -110,6 +110,16 @@ class TermServiceTest {
     }
 
     @Test
+    void findAllRootsWithPagingRetrievesRootTermsUsingRepositoryService() {
+        final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
+        when(termRepositoryService.findAllRoots(eq(Constants.DEFAULT_PAGE_SPEC), anyCollection()))
+            .thenReturn(terms);
+        final List<TermDto> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        assertEquals(terms, result);
+        verify(termRepositoryService).findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+    }
+
+    @Test
     void findAllBySearchStringRetrievesMatchingTermsFromVocabularyUsingRepositoryService() {
         final String searchString = "test";
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));

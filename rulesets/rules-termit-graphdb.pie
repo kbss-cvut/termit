@@ -97,5 +97,24 @@ Rules
       source <activity:object> this
       -------------------------------
       this <termit:má-reakci> source
+
+  Id: exact_match
+
+      source <skos:exactMatch> this
+      -------------------------------
+      source <termit:přesně-odpovídá> this
+
+  Id: exact_match_symmetry
+
+      source <skos:exactMatch> this
+      -------------------------------
+      this <termit:přesně-odpovídá> source
+
+  Id: exact_match_transitivity
+
+      x <termit:přesně-odpovídá>    y           [Constraint x != y, x != z, y != z]
+      y <termit:přesně-odpovídá>    z
+      -------------------------------
+      x <termit:přesně-odpovídá>    z
 }
 

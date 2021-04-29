@@ -255,4 +255,7 @@ termit-pojem:je-tématem
         owl:inverseOf   sioc:topic .
 
 termit-pojem:má-můj-poslední-komentář
-        a               owl:ObjectProperty.
+        a               owl:ObjectProperty .
+
+termit-pojem:přesně-odpovídá
+        a               owl:ObjectProperty .
