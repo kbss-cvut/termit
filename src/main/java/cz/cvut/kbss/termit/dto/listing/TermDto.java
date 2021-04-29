@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.dto;
+package cz.cvut.kbss.termit.dto.listing;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
