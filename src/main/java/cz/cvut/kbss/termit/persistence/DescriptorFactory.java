@@ -19,6 +19,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -242,6 +243,9 @@ public class DescriptorFactory {
         // Vocabulary field is inferred, so it cannot be in any specific context
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
+        final EntityDescriptor relatedDescriptor = new EntityDescriptor(vocabularyUri);
+        relatedDescriptor.addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"), new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), relatedDescriptor);
         return descriptor;
     }
 

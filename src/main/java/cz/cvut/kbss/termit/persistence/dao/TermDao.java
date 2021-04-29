@@ -42,9 +42,12 @@ public class TermDao extends AssetDao<Term> {
 
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
 
+    private final Comparator<TermInfo> termInfoComparator;
+
     @Autowired
     public TermDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
         super(Term.class, em, config, descriptorFactory);
+        this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(config.get(ConfigParam.LANGUAGE)));
     }
 
     @Override
@@ -55,7 +58,10 @@ public class TermDao extends AssetDao<Term> {
     @Override
     public Optional<Term> find(URI id) {
         final Optional<Term> result = super.find(id);
-        result.ifPresent(r -> r.setSubTerms(loadSubTerms(r)));
+        result.ifPresent(r -> {
+            r.setSubTerms(loadSubTerms(r));
+            r.setInverseRelated(loadInverseRelatedTerms(r));
+        });
         return result;
     }
 
@@ -65,8 +71,23 @@ public class TermDao extends AssetDao<Term> {
      *
      * @param term Term to load related terms for
      */
-    private void loadInverseRelatedTerms(Term term) {
-        // TODO
+    private Set<TermInfo> loadInverseRelatedTerms(Term term) {
+        final List<?> inverse = em.createNativeQuery("SELECT ?inverse ?label ?vocabulary WHERE {" +
+                "?inverse ?related ?term ;" +
+                "a ?type ;" +
+                "?hasLabel ?label ;" +
+                "?inVocabulary ?vocabulary . " +
+                "FILTER (?inverse NOT IN (?relatedTerms))" +
+                "} ORDER BY ?inverse").setParameter("related", URI.create(SKOS.RELATED))
+                .setParameter("term", term)
+                .setParameter("type", typeUri)
+                .setParameter("hasLabel", labelProperty())
+                .setParameter("inVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("relatedTerms", term.getRelated() != null ? term.getRelated() : Collections.emptySet())
+                .getResultList();
+        final List<TermInfo> result = new SparqlResultToTermInfoMapper().map(inverse);
+        result.sort(termInfoComparator);
+        return new LinkedHashSet<>(result);
     }
 
     @Override
@@ -171,10 +192,7 @@ public class TermDao extends AssetDao<Term> {
 
     private <T extends AbstractTerm> List<T> executeQueryAndLoadSubTerms(TypedQuery<T> query) {
         final List<T> terms = query.getResultList();
-        terms.forEach(t -> {
-            t.setSubTerms(loadSubTerms(t));
-
-        });
+        terms.forEach(t -> t.setSubTerms(loadSubTerms(t)));
         return terms;
     }
 
@@ -225,7 +243,7 @@ public class TermDao extends AssetDao<Term> {
                 .setParameter("inVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                 .getResultList();
         final List<TermInfo> result = new SparqlResultToTermInfoMapper().map(subTerms);
-        result.sort(Comparator.comparing(t -> t.getLabel().get(config.get(ConfigParam.LANGUAGE))));
+        result.sort(termInfoComparator);
         return new LinkedHashSet<>(result);
     }
 

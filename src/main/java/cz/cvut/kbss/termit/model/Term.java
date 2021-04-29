@@ -36,12 +36,13 @@ public class Term extends AbstractTerm implements HasTypes {
 
     /**
      * Names of columns used in term export.
+     * <p>
+     * TODO Include related terms and exact matches in the export
      */
     public static final List<String> EXPORT_COLUMNS = Collections
             .unmodifiableList(
                     Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description",
-                            "Types", "Sources", "Parent term",
-                            "SubTerms", "Draft"));
+                            "Types", "Sources", "Parent terms", "SubTerms", "Draft"));
 
     @Autowired
     @Transient
@@ -63,12 +64,21 @@ public class Term extends AbstractTerm implements HasTypes {
     @OWLObjectProperty(iri = SKOS.EXACT_MATCH, fetch = FetchType.EAGER)
     private Set<Term> exactMatches;
 
-    @Inferred
-    @OWLObjectProperty(iri = Vocabulary.s_p_presne_odpovida, fetch = FetchType.EAGER)
-    private Set<Term> exactMatchesInferred;
-
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<Term> parentTerms;
+
+    @OWLObjectProperty(iri = SKOS.RELATED, fetch = FetchType.EAGER)
+    private Set<TermInfo> related;
+
+    // Terms related by the virtue of related being symmetric, i.e. those that assert relation with this term
+    private transient Set<TermInfo> inverseRelated;
+
+    // relatedMatch are related terms from a different vocabulary
+    @OWLObjectProperty(iri = SKOS.RELATED_MATCH, fetch = FetchType.EAGER)
+    private Set<TermInfo> relatedMatch;
+
+    // Terms from a different vocabulary related by the virtue of relatedMatch being symmetric, i.e. those that assert relation with this term
+    private transient Set<TermInfo> inverseRelatedMatch;
 
     @Inferred
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_zdroj_definice_termu, fetch = FetchType.EAGER)
@@ -150,38 +160,36 @@ public class Term extends AbstractTerm implements HasTypes {
         parentTerms.add(term);
     }
 
-    public void setExactMatchesInferred( Set<Term> exactMatchesInferred ) {
-        this.exactMatchesInferred = exactMatchesInferred;
+    public Set<TermInfo> getRelated() {
+        return related;
     }
 
-    public Set<Term> getExactMatchesInferred() {
-        return exactMatchesInferred;
+    public void setRelated(Set<TermInfo> related) {
+        this.related = related;
     }
 
-    public void setExactMatches(Set<Term> exactMatches) {
-        this.exactMatches = exactMatches;
+    public Set<TermInfo> getInverseRelated() {
+        return inverseRelated;
     }
 
-    public Set<Term> getExactMatches() {
-        return exactMatches;
+    public void setInverseRelated(Set<TermInfo> inverseRelated) {
+        this.inverseRelated = inverseRelated;
     }
 
-    public void addExactMatch(Term term) {
-        if (exactMatches == null) {
-            this.exactMatches = new HashSet<>();
-        }
-        exactMatches.add(term);
+    public Set<TermInfo> getRelatedMatch() {
+        return relatedMatch;
     }
 
-    public boolean containsExactMatch(Term term) {
-        return exactMatches != null && getExactMatches().contains(term);
+    public void setRelatedMatch(Set<TermInfo> relatedMatch) {
+        this.relatedMatch = relatedMatch;
     }
 
-    public void removeExactMatch(Term term) {
-        if (exactMatches == null) {
-            return;
-        }
-        exactMatches.remove(term);
+    public Set<TermInfo> getInverseRelatedMatch() {
+        return inverseRelatedMatch;
+    }
+
+    public void setInverseRelatedMatch(Set<TermInfo> inverseRelatedMatch) {
+        this.inverseRelatedMatch = inverseRelatedMatch;
     }
 
     public Set<String> getSources() {
@@ -292,13 +300,13 @@ public class Term extends AbstractTerm implements HasTypes {
         }
         if (parentTerms != null) {
             row.createCell(8)
-               .setCellValue(String.join(";",
-                       parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
+                    .setCellValue(String.join(";",
+                            parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
         }
         if (getSubTerms() != null) {
             row.createCell(9)
-               .setCellValue(String.join(";",
-                       getSubTerms().stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
+                    .setCellValue(String.join(";",
+                            getSubTerms().stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
         }
         row.createCell(10).setCellValue(isDraft());
     }
