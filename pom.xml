@@ -25,10 +25,10 @@
     </repositories>
 
     <properties>
-        <org.springframework.boot.version>2.4.3</org.springframework.boot.version>
-        <org.springframework.version>5.3.4</org.springframework.version>
-        <org.springframework.security.version>5.4.5</org.springframework.security.version>
-        <org.springframework.data.version>2.4.3</org.springframework.data.version>
+        <org.springframework.boot.version>2.4.5</org.springframework.boot.version>
+        <org.springframework.version>5.3.6</org.springframework.version>
+        <org.springframework.security.version>5.4.6</org.springframework.security.version>
+        <org.springframework.data.version>2.5.0</org.springframework.data.version>
         <com.fasterxml.jackson.version>2.12.1</com.fasterxml.jackson.version>
         <org.hibernate.validator.version>6.1.7.Final</org.hibernate.validator.version>
         <cz.cvut.kbss.jopa.version>0.16.5</cz.cvut.kbss.jopa.version>
