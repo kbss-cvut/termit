@@ -61,6 +61,10 @@ public class Term extends AbstractTerm implements HasTypes {
     @OWLObjectProperty(iri = SKOS.EXACT_MATCH, fetch = FetchType.EAGER)
     private Set<Term> exactMatches;
 
+    @Inferred
+    @OWLObjectProperty(iri = Vocabulary.s_p_presne_odpovida, fetch = FetchType.EAGER)
+    private Set<Term> exactMatchesInferred;
+
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<Term> parentTerms;
 
@@ -209,6 +213,40 @@ public class Term extends AbstractTerm implements HasTypes {
 
     public void setInverseRelatedMatch(Set<TermInfo> inverseRelatedMatch) {
         this.inverseRelatedMatch = inverseRelatedMatch;
+    }
+
+    public void setExactMatchesInferred( Set<Term> exactMatchesInferred ) {
+        this.exactMatchesInferred = exactMatchesInferred;
+    }
+
+    public Set<Term> getExactMatchesInferred() {
+        return exactMatchesInferred;
+    }
+
+    public void setExactMatches(Set<Term> exactMatches) {
+        this.exactMatches = exactMatches;
+    }
+
+    public Set<Term> getExactMatches() {
+        return exactMatches;
+    }
+
+    public void addExactMatch(Term term) {
+        if (exactMatches == null) {
+            this.exactMatches = new HashSet<>();
+        }
+        exactMatches.add(term);
+    }
+
+    public boolean containsExactMatch(Term term) {
+        return exactMatches != null && getExactMatches().contains(term);
+    }
+
+    public void removeExactMatch(Term term) {
+        if (exactMatches == null) {
+            return;
+        }
+        exactMatches.remove(term);
     }
 
     public Set<String> getSources() {
