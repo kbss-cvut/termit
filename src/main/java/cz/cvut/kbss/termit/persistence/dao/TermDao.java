@@ -61,33 +61,46 @@ public class TermDao extends AssetDao<Term> {
         result.ifPresent(r -> {
             r.setSubTerms(loadSubTerms(r));
             r.setInverseRelated(loadInverseRelatedTerms(r));
+            r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r));
         });
         return result;
     }
 
     /**
-     * Loads terms whose relatedness to the specified term is inferred due to the symmetric of SKOS
-     * related/relatedMatch
+     * Loads terms whose relatedness to the specified term is inferred due to the symmetric of SKOS related.
      *
      * @param term Term to load related terms for
      */
     private Set<TermInfo> loadInverseRelatedTerms(Term term) {
+        return loadTermInfo(term, SKOS.RELATED, term.getRelated() != null ? term.getRelated() : Collections.emptySet());
+    }
+
+    private Set<TermInfo> loadTermInfo(Term term, String property, Collection<TermInfo> exclude) {
         final List<?> inverse = em.createNativeQuery("SELECT ?inverse ?label ?vocabulary WHERE {" +
-                "?inverse ?related ?term ;" +
+                "?inverse ?property ?term ;" +
                 "a ?type ;" +
                 "?hasLabel ?label ;" +
                 "?inVocabulary ?vocabulary . " +
-                "FILTER (?inverse NOT IN (?relatedTerms))" +
-                "} ORDER BY ?inverse").setParameter("related", URI.create(SKOS.RELATED))
+                "FILTER (?inverse NOT IN (?exclude))" +
+                "} ORDER BY ?inverse").setParameter("property", URI.create(property))
                 .setParameter("term", term)
                 .setParameter("type", typeUri)
                 .setParameter("hasLabel", labelProperty())
                 .setParameter("inVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                .setParameter("relatedTerms", term.getRelated() != null ? term.getRelated() : Collections.emptySet())
+                .setParameter("exclude", exclude)
                 .getResultList();
         final List<TermInfo> result = new SparqlResultToTermInfoMapper().map(inverse);
         result.sort(termInfoComparator);
         return new LinkedHashSet<>(result);
+    }
+
+    /**
+     * Loads terms whose relatedness to the specified term is inferred due to the symmetric of SKOS relatedMatch.
+     *
+     * @param term Term to load related terms for
+     */
+    private Set<TermInfo> loadInverseRelatedMatchTerms(Term term) {
+        return loadTermInfo(term, SKOS.RELATED_MATCH, term.getRelatedMatch() != null ? term.getRelatedMatch() : Collections.emptySet());
     }
 
     @Override
