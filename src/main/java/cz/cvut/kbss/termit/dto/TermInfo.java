@@ -29,13 +29,7 @@ import java.util.Objects;
  * <p>
  * This is not a full blown entity and should not be used to modify data.
  */
-@SparqlResultSetMapping(name = "TermInfo", classes = {@ConstructorResult(targetClass = TermInfo.class,
-        variables = {
-                @VariableResult(name = "entity", type = URI.class),
-                @VariableResult(name = "label", type = String.class),
-                @VariableResult(name = "vocabulary", type = URI.class)
-        })})
-@OWLClass(iri = Vocabulary.s_c_term)
+@OWLClass(iri = SKOS.CONCEPT)
 public class TermInfo implements Serializable {
 
     @Id
@@ -58,6 +52,7 @@ public class TermInfo implements Serializable {
     public TermInfo(Term term) {
         Objects.requireNonNull(term);
         this.uri = term.getUri();
+        assert term.getLabel() != null;
         this.label = new MultilingualString(term.getLabel().getValue());
         this.vocabulary = term.getVocabulary();
     }
