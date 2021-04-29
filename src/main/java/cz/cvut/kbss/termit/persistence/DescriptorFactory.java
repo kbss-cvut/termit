@@ -246,6 +246,7 @@ public class DescriptorFactory {
         final EntityDescriptor relatedDescriptor = new EntityDescriptor(vocabularyUri);
         relatedDescriptor.addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"), new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), relatedDescriptor);
+        descriptor.addAttributeContext(fieldSpec(Term.class, "relatedMatch"), null);
         return descriptor;
     }
 
