@@ -31,10 +31,8 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-import java.net.URI;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+
+import java.util.Optional;
 import java.util.Set;
 import javax.validation.Validator;
 import org.apache.jena.vocabulary.SKOS;
@@ -69,7 +67,16 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     @Override
     protected AssetDao<Term> getPrimaryDao() {
-        return this.termDao;
+        return termDao;
+    }
+
+    @Override
+    public Optional<Term> find(URI id) {
+        final Optional<Term> result = super.find(id);
+        return result.map(t -> {
+            t.consolidateRelatedAndRelatedMatch();
+            return t;
+        });
     }
 
     @Override

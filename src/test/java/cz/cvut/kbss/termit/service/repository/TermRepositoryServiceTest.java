@@ -13,6 +13,8 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -26,8 +28,9 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
-import java.util.HashSet;
-import java.util.Set;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -611,5 +614,36 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.remove(term);
         final Term result = em.find(Term.class, term.getUri());
         assertNull(result);
+    }
+
+    @Test
+    void findConsolidatesRelatedAndRelatedMatchTerms() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term related = Generator.generateTermWithId(vocabulary.getUri());
+        final Term inverseRelated = Generator.generateTermWithId(vocabulary.getUri());
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        related.setGlossary(vocabulary.getGlossary().getUri());
+        term.addRelatedTerm(new TermInfo(related));
+        vocabulary.getGlossary().addRootTerm(term);
+        transactional(() -> {
+            em.persist(related, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(inverseRelated, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(related, vocabulary.getUri(), em);
+            generateRelatedInverse(term, inverseRelated);
+        });
+
+        final Term result = sut.findRequired(term.getUri());
+        assertThat(result.getRelated(), hasItems(new TermInfo(related), new TermInfo(inverseRelated)));
+    }
+
+    private void generateRelatedInverse(Term term, Term related) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (final RepositoryConnection conn = repo.getConnection()) {
+            final ValueFactory vf = conn.getValueFactory();
+            conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(SKOS.RELATED), vf.createIRI(term.getUri().toString()));
+        }
     }
 }
