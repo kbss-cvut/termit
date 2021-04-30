@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermAssignmentDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 
@@ -87,6 +88,17 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public void persist(Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
+    }
+
+    @Override
+    protected void preUpdate(Term instance) {
+        super.preUpdate(instance);
+        // Existence check is done as part of super.preUpdate
+        final Term original = termDao.find(instance.getUri()).get();
+        final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
+        differentiator.differentiateRelatedTerms(instance, original);
+        differentiator.differentiateRelatedMatchTerms(instance, original);
+        // TODO Reflect removals on the inferred side
     }
 
     @Override
@@ -190,7 +202,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
-                                   Collection<URI> includeTerms) {
+                                      Collection<URI> includeTerms) {
         return termDao.findAllRoots(vocabulary, pageSpec, includeTerms);
     }
 
@@ -208,7 +220,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @see #findAllRoots(Vocabulary, Pageable, Collection)
      */
     public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec,
-                                                    Collection<URI> includeTerms) {
+                                                       Collection<URI> includeTerms) {
         return termDao.findAllRootsIncludingImports(vocabulary, pageSpec, includeTerms);
     }
 
