@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.service.repository;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
@@ -30,20 +31,16 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-
+import java.net.URI;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.List;
 import java.util.Set;
-
+import javax.validation.Validator;
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.validation.Validator;
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
 
 @Service
 public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
@@ -90,28 +87,27 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         super.preUpdate(entity);
         final Term original = findRequired(entity.getUri());
 
-        Set<Term> originalInferred = getIfNullOrNewHashSetOtherwise(original.getExactMatchesInferred());
+        Set<Term> originalInferred =
+            getIfNullOrNewHashSetOtherwise(original.getExactMatchesInferred());
         Set<Term> entityInferred = getIfNullOrNewHashSetOtherwise(entity.getExactMatchesInferred());
-        if (!Objects.equals(originalInferred,entityInferred)) {
-            Set<Term> originalAsserted = getIfNullOrNewHashSetOtherwise(original.getExactMatches());
+        Set<Term> originalAsserted = getIfNullOrNewHashSetOtherwise(original.getExactMatches());
 
-            final Set<Term> exactMatchesToAdd = new HashSet<>(entityInferred);
-            exactMatchesToAdd.removeAll(originalInferred);
-            exactMatchesToAdd.addAll(originalAsserted);
-            exactMatchesToAdd.forEach(entity::addExactMatch);
+        final Set<Term> exactMatchesToAdd = new HashSet<>(entityInferred);
+        exactMatchesToAdd.removeAll(originalInferred);
+        exactMatchesToAdd.addAll(originalAsserted);
+        exactMatchesToAdd.forEach(entity::addExactMatch);
 
-            final Set<Term> exactMatchesToRemove = new HashSet<>(originalInferred);
-            exactMatchesToRemove.removeAll(entityInferred);
-            exactMatchesToRemove.forEach( t -> {
-                if (original.containsExactMatch(t)) {
-                    entity.removeExactMatch(t);
-                } else {
-                    final Term tOriginal = findRequired(t.getUri());
-                    tOriginal.removeExactMatch(original);
-                    getPrimaryDao().update(tOriginal);
-                }
-            });
-        }
+        final Set<Term> exactMatchesToRemove = new HashSet<>(originalInferred);
+        exactMatchesToRemove.removeAll(entityInferred);
+        exactMatchesToRemove.forEach(t -> {
+            if (original.containsExactMatch(t)) {
+                entity.removeExactMatch(t);
+            } else {
+                final Term tOriginal = findRequired(t.getUri());
+                tOriginal.removeExactMatch(original);
+                getPrimaryDao().update(tOriginal);
+            }
+        });
     }
 
     @Override
