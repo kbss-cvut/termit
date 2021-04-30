@@ -27,32 +27,13 @@ public class TermDto extends AbstractTerm {
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<TermDto> parentTerms;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_presne_odpovida, fetch = FetchType.EAGER)
-    private Set<TermDto> exactMatches;
-
     public TermDto() {
     }
 
     public TermDto(Term other) {
-        // This copy constructor is used mainly in tests to allow seamless transformation between the two classes
-        Objects.requireNonNull(other);
-        setUri(other.getUri());
-        if (other.getLabel() != null) {
-            setLabel(new MultilingualString(other.getLabel().getValue()));
-        }
-        if (other.getDefinition() != null) {
-            setDefinition(new MultilingualString(other.getDefinition().getValue()));
-        }
-        setDraft(other.isDraft());
-        setGlossary(other.getGlossary());
+        super(other);
         if (other.getParentTerms() != null) {
             setParentTerms(other.getParentTerms().stream().map(TermDto::new).collect(Collectors.toSet()));
-        }
-        if (other.getExactMatchesInferred() != null) {
-            setExactMatches(other.getExactMatchesInferred().stream().map(TermDto::new).collect(Collectors.toSet()));
-        }
-        if (other.getSubTerms() != null) {
-            setSubTerms(new LinkedHashSet<>(other.getSubTerms()));
         }
     }
 
@@ -62,13 +43,5 @@ public class TermDto extends AbstractTerm {
 
     public void setParentTerms(Set<TermDto> parentTerms) {
         this.parentTerms = parentTerms;
-    }
-
-    public Set<TermDto> getExactMatches() {
-        return exactMatches;
-    }
-
-    public void setExactMatches(Set<TermDto> exactMatches) {
-        this.exactMatches = exactMatches;
     }
 }
