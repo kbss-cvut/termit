@@ -16,14 +16,11 @@ import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -73,6 +70,7 @@ public class Term extends AbstractTerm implements HasTypes {
     // Terms related by the virtue of related being symmetric, i.e. those that assert relation with this term
     // Loaded outside of JOPA entity loading mechanism
     @Transient
+    @JsonIgnore
     private Set<TermInfo> inverseRelated;
 
     // relatedMatch are related terms from a different vocabulary
@@ -82,6 +80,7 @@ public class Term extends AbstractTerm implements HasTypes {
     // Terms from a different vocabulary related by the virtue of relatedMatch being symmetric, i.e. those that assert relation with this term
     // Loaded outside of JOPA entity loading mechanism
     @Transient
+    @JsonIgnore
     private Set<TermInfo> inverseRelatedMatch;
 
     @Inferred
@@ -172,6 +171,14 @@ public class Term extends AbstractTerm implements HasTypes {
         this.related = related;
     }
 
+    public void addRelatedTerm(TermInfo ti) {
+        Objects.requireNonNull(ti);
+        if (related == null) {
+            this.related = new LinkedHashSet<>();
+        }
+        related.add(ti);
+    }
+
     public Set<TermInfo> getInverseRelated() {
         return inverseRelated;
     }
@@ -186,6 +193,14 @@ public class Term extends AbstractTerm implements HasTypes {
 
     public void setRelatedMatch(Set<TermInfo> relatedMatch) {
         this.relatedMatch = relatedMatch;
+    }
+
+    public void addRelatedMatchTerm(TermInfo ti) {
+        Objects.requireNonNull(ti);
+        if (relatedMatch == null) {
+            this.relatedMatch = new LinkedHashSet<>();
+        }
+        relatedMatch.add(ti);
     }
 
     public Set<TermInfo> getInverseRelatedMatch() {
@@ -323,6 +338,23 @@ public class Term extends AbstractTerm implements HasTypes {
      */
     public boolean hasParentInSameVocabulary() {
         return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getGlossary().equals(getGlossary()));
+    }
+
+    /**
+     * Consolidates the asserted related (relatedMatch) and inferred inverse related (relatedMatch) terms into related
+     * (relatedMatch).
+     * <p>
+     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}) to {@code related}
+     * ({@code relatedMatch}) so that they act as they should in reality because of skos:related (skos:relatedMatch)
+     * being symmetric.
+     */
+    public void consolidateRelatedAndRelatedMatch() {
+        if (inverseRelated != null) {
+            inverseRelated.forEach(ti -> addRelatedTerm(new TermInfo(ti)));
+        }
+        if (inverseRelatedMatch != null) {
+            inverseRelatedMatch.forEach(ti -> addRelatedMatchTerm(new TermInfo(ti)));
+        }
     }
 
     @Override
