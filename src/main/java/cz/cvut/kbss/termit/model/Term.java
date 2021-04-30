@@ -67,14 +67,18 @@ public class Term extends AbstractTerm implements HasTypes {
     private Set<TermInfo> related;
 
     // Terms related by the virtue of related being symmetric, i.e. those that assert relation with this term
-    private transient Set<TermInfo> inverseRelated;
+    // Loaded outside of JOPA entity loading mechanism
+    @Transient
+    private Set<TermInfo> inverseRelated;
 
     // relatedMatch are related terms from a different vocabulary
     @OWLObjectProperty(iri = SKOS.RELATED_MATCH, fetch = FetchType.EAGER)
     private Set<TermInfo> relatedMatch;
 
     // Terms from a different vocabulary related by the virtue of relatedMatch being symmetric, i.e. those that assert relation with this term
-    private transient Set<TermInfo> inverseRelatedMatch;
+    // Loaded outside of JOPA entity loading mechanism
+    @Transient
+    private Set<TermInfo> inverseRelatedMatch;
 
     @Inferred
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_zdroj_definice_termu, fetch = FetchType.EAGER)

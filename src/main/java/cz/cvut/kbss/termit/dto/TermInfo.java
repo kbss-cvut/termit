@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.dto;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -49,12 +50,20 @@ public class TermInfo implements Serializable {
         this.uri = Objects.requireNonNull(uri);
     }
 
-    public TermInfo(Term term) {
+    public TermInfo(AbstractTerm term) {
         Objects.requireNonNull(term);
         this.uri = term.getUri();
         assert term.getLabel() != null;
         this.label = new MultilingualString(term.getLabel().getValue());
         this.vocabulary = term.getVocabulary();
+    }
+
+    public TermInfo(TermInfo other) {
+        Objects.requireNonNull(other);
+        this.uri = other.getUri();
+        assert other.getLabel() != null;
+        this.label = new MultilingualString(other.getLabel().getValue());
+        this.vocabulary = other.getVocabulary();
     }
 
     public URI getUri() {
