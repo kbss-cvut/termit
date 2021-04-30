@@ -646,4 +646,31 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(SKOS.RELATED), vf.createIRI(term.getUri().toString()));
         }
     }
+
+    @Test
+    void updateDifferentiatesAssertedAndInverseRelatedTermsBeforeMergingStateIntoRepository() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term related = Generator.generateTermWithId(vocabulary.getUri());
+        final Term inverseRelated = Generator.generateTermWithId(vocabulary.getUri());
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        related.setGlossary(vocabulary.getGlossary().getUri());
+        term.addRelatedTerm(new TermInfo(related));
+        vocabulary.getGlossary().addRootTerm(term);
+        transactional(() -> {
+            em.persist(related, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(inverseRelated, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(related, vocabulary.getUri(), em);
+            generateRelatedInverse(term, inverseRelated);
+        });
+
+        term.addRelatedTerm(new TermInfo(inverseRelated));
+        term.getLabel().set("cs", "Test aktualizace");
+        sut.update(term);
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertEquals(Collections.singleton(new TermInfo(related)), result.getRelated());
+    }
 }
