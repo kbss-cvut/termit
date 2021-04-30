@@ -112,23 +112,17 @@ Rules
       -------------------------------
       this <termit:má-reakci> source
 
-  Id: exact_match
+  Id: skos_exact_match_symmetry
 
       source <skos:exactMatch> this
       -------------------------------
-      source <termit:přesně-odpovídá> this
+      this <skos:exactMatch> source
 
-  Id: exact_match_symmetry
+  Id: skos_exact_match_transitivity
 
-      source <skos:exactMatch> this
+      x <skos:exactMatch>    y           [Constraint x != y, x != z, y != z]
+      y <skos:exactMatch>    z
       -------------------------------
-      this <termit:přesně-odpovídá> source
-
-  Id: exact_match_transitivity
-
-      x <termit:přesně-odpovídá>    y           [Constraint x != y, x != z, y != z]
-      y <termit:přesně-odpovídá>    z
-      -------------------------------
-      x <termit:přesně-odpovídá>    z
+      x <skos:exactMatch>    z
 }
 

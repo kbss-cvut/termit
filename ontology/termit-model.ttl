@@ -256,6 +256,3 @@ termit-pojem:je-tématem
 
 termit-pojem:má-můj-poslední-komentář
         a               owl:ObjectProperty .
-
-termit-pojem:přesně-odpovídá
-        a               owl:ObjectProperty .
