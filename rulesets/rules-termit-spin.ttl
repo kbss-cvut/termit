@@ -71,6 +71,25 @@ skos:Concept a rdfs:Class ;
                WHERE { ?this a skos:Concept ;
                         skos:relatedMatch ?related . }"""
     ]
+
+    # Make skos:exactMatch symmetric
+    spin:rule [
+      	a sp:Construct ;
+    sp:text """PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+               CONSTRUCT { ?exactMatch skos:exactMatch ?this . }
+               WHERE { ?this a skos:Concept ;
+                        skos:exactMatch ?exactMatch . }"""
+    ]
+
+    # Make skos:exactMatch transitive
+    spin:rule [
+      	a sp:Construct ;
+    sp:text """PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+               CONSTRUCT { ?exactMatch skos:exactMatch ?this . }
+               WHERE { ?this a skos:Concept ;
+                        skos:exactMatch/skos:exactMatch ?exactMatch .
+                        FILTER(?this != ?exactMatch) }"""
+    ]
 .
 
 pdp:dokumentovy-slovnik a rdfs:Class ;
