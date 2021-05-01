@@ -68,4 +68,21 @@ public class AssertedInferredValueDifferentiator {
         }
         target.setInverseRelatedMatch(differentiateAssertedAndInferred(target.getRelatedMatch(), original.getInverseRelatedMatch()));
     }
+
+    /**
+     * Differentiates the values of the skos:exactMatch attribute.
+     * <p>
+     * See class documentation for detailed explanation.
+     *
+     * @param target   Input data that require differentiation
+     * @param original Original instance containing separate asserted and inferred values
+     */
+    public void differentiateExactMatchTerms(Term target, Term original) {
+        Objects.requireNonNull(target);
+        Objects.requireNonNull(original);
+        if (target.getExactMatchTerms() == null || original.getInverseExactMatchTerms() == null) {
+            return;
+        }
+        target.setInverseExactMatchTerms(differentiateAssertedAndInferred(target.getExactMatchTerms(), original.getInverseExactMatchTerms()));
+    }
 }

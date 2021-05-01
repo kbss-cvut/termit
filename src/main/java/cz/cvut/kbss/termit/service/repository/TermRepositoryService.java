@@ -33,6 +33,9 @@ import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.validation.Validator;
@@ -75,7 +78,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public Optional<Term> find(URI id) {
         final Optional<Term> result = super.find(id);
         return result.map(t -> {
-            t.consolidateRelatedAndRelatedMatch();
+            t.consolidateInferred();
             return t;
         });
     }
@@ -126,6 +129,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
         differentiator.differentiateRelatedTerms(instance, original);
         differentiator.differentiateRelatedMatchTerms(instance, original);
+        differentiator.differentiateExactMatchTerms(instance, original);
         // TODO Reflect removals on the inferred side
     }
 

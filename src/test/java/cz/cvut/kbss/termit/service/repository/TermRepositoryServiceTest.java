@@ -577,33 +577,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void updateRemovesExactMatchAssertedAtThisTerm() {
-        final Term term = Generator.generateTermWithId();
-        final Term exactMatchOfTerm = generateParentTermFromDifferentVocabulary();
-        term.addExactMatch(exactMatchOfTerm);
-        term.setGlossary(childVocabulary.getGlossary().getUri());
-        transactional(() -> {
-            em.persist(term, descriptorFactory.termDescriptor(childVocabulary));
-            em.merge(childVocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(childVocabulary));
-            Generator.addTermInVocabularyRelationship(term, childVocabulary.getUri(), em);
-        });
-
-        // This is normally inferred
-        term.setVocabulary(childVocabulary.getUri());
-        em.getEntityManagerFactory().getCache().evictAll();
-
-        term.removeExactMatch(exactMatchOfTerm);
-
-        sut.update(term);
-        Term result = em.find(Term.class, term.getUri());
-        Set<Term> terms = result.getExactMatchesInferred();
-        if ( terms == null ) {
-            terms = new HashSet<>();
-        }
-        assertFalse(terms.contains(exactMatchOfTerm));
-    }
-
-    @Test
     void removeRemovesNonReferencedNonOccurringTerm() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term term = Generator.generateTermWithId(vocabulary.getUri());

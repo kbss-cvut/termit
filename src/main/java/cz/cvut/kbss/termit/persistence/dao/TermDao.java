@@ -62,6 +62,7 @@ public class TermDao extends AssetDao<Term> {
             r.setSubTerms(loadSubTerms(r));
             r.setInverseRelated(loadInverseRelatedTerms(r));
             r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r));
+            r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
         });
         return result;
     }
@@ -103,6 +104,15 @@ public class TermDao extends AssetDao<Term> {
         return loadTermInfo(term, SKOS.RELATED_MATCH, term.getRelatedMatch() != null ? term.getRelatedMatch() : Collections.emptySet());
     }
 
+    /**
+     * Loads terms whose exact match to the specified term is inferred due to the symmetric of SKOS exactMatch.
+     *
+     * @param term Term to load related terms for
+     */
+    private Set<TermInfo> loadInverseExactMatchTerms(Term term) {
+        return loadTermInfo(term, SKOS.EXACT_MATCH, term.getExactMatchTerms() != null ? term.getExactMatchTerms() : Collections.emptySet());
+    }
+
     @Override
     public void persist(Term entity) {
         throw new UnsupportedOperationException(
@@ -139,7 +149,6 @@ public class TermDao extends AssetDao<Term> {
             // Evict possibly cached instance loaded from default context
             em.getEntityManagerFactory().getCache().evict(Term.class, entity.getUri(), null);
             final Term original = em.find(Term.class, entity.getUri());
-            entity.setExactMatchesInferred(original.getExactMatchesInferred());
             entity.setDefinitionSource(original.getDefinitionSource());
             return em.merge(entity, descriptorFactory.termDescriptor(entity));
         } catch (RuntimeException e) {

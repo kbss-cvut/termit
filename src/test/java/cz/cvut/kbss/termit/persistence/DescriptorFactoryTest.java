@@ -81,17 +81,6 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void termDescriptorCreatesDescriptorWithExactMatchesContextSetToDefaultToAllowExactMatchesFromMultipleVocabularies() {
-        final Term exactMatch = Generator.generateTermWithId();
-        final URI parentVocabulary = Generator.generateUri();
-        exactMatch.setVocabulary(parentVocabulary);
-        term.addExactMatch(exactMatch);
-        final Descriptor result = sut.termDescriptor(term);
-        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
-        assertFalse(result.getAttributeDescriptor(parentFieldSpec).getSingleContext().isPresent());
-    }
-
-    @Test
     void fileDescriptorContainsAlsoDescriptorForDocument() {
         final File file = Generator.generateFileWithId("test.html");
         final Document doc = Generator.generateDocumentWithId();

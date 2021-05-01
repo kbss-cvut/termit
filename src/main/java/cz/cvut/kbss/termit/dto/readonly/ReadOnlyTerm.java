@@ -11,7 +11,6 @@ import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 
-import cz.cvut.kbss.termit.util.Vocabulary;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
@@ -35,9 +34,6 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
 
     @OWLObjectProperty(iri = SKOS.BROADER)
     private Set<ReadOnlyTerm> parentTerms;
-
-    @OWLObjectProperty(iri = Vocabulary.s_p_presne_odpovida)
-    private Set<ReadOnlyTerm> exactMatches;
 
     @Types
     private Set<String> types;
@@ -67,9 +63,6 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         }
         if (term.getParentTerms() != null) {
             this.parentTerms = term.getParentTerms().stream().map(ReadOnlyTerm::new).collect(Collectors.toSet());
-        }
-        if (term.getExactMatches() != null) {
-            this.exactMatches = term.getExactMatchesInferred().stream().map(ReadOnlyTerm::new).collect(Collectors.toSet());
         }
         if (term.getSubTerms() != null) {
             setSubTerms(new LinkedHashSet<>(term.getSubTerms()));
@@ -117,14 +110,6 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
 
     public void setParentTerms(Set<ReadOnlyTerm> parentTerms) {
         this.parentTerms = parentTerms;
-    }
-
-    public Set<ReadOnlyTerm> getExactMatches() {
-        return exactMatches;
-    }
-
-    public void setExactMatches(Set<ReadOnlyTerm> exactMatches) {
-        this.exactMatches = exactMatches;
     }
 
     @Override
