@@ -93,4 +93,32 @@ class AssertedInferredValueDifferentiatorTest {
         assertEquals(asserted, target.getRelatedMatch());
         assertThat(target.getInverseRelatedMatch(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
     }
+
+
+    @Test
+    void differentiateExactMatchHandlesMovesTermsKnownToBeInferredInOriginalToInferredInTarget() {
+        final Term target = Generator.generateTermWithId();
+        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        final Set<TermInfo> inferred = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        final Set<TermInfo> consolidated = new HashSet<>(asserted);
+        consolidated.addAll(inferred);
+        target.setExactMatchTerms(consolidated);
+        final Term original = new Term();
+        original.setExactMatchTerms(new HashSet<>(asserted));
+        original.setInverseExactMatchTerms(new HashSet<>(inferred));
+        sut.differentiateExactMatchTerms(target, original);
+        assertEquals(asserted, target.getExactMatchTerms());
+        assertEquals(inferred, target.getInverseExactMatchTerms());
+    }
+
+    @Test
+    void differentiateExactMatchDoesNothingWhenOriginalInferredAreNotPresent() {
+        final Term target = Generator.generateTermWithId();
+        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId())).collect(Collectors.toSet());
+        target.setExactMatchTerms(asserted);
+        final Term original = new Term();
+        sut.differentiateExactMatchTerms(target, original);
+        assertEquals(asserted, target.getExactMatchTerms());
+        assertThat(target.getInverseExactMatchTerms(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
+    }
 }

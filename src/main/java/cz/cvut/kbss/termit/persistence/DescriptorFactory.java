@@ -233,6 +233,10 @@ public class DescriptorFactory {
         parentDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), parentDescriptor);
+        final EntityDescriptor exactMatchTermsDescriptor = new EntityDescriptor();
+        exactMatchTermsDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
+            new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"), exactMatchTermsDescriptor);
         // Definition source is inferred. That means it is in a special context in GraphDB. Therefore, we need to use
         // the default context to prevent JOPA from thinking the value has changed on merge
         descriptor.addAttributeContext(fieldSpec(Term.class, "definitionSource"), null);

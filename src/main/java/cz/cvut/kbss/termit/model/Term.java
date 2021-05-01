@@ -34,7 +34,7 @@ public class Term extends AbstractTerm implements HasTypes {
     /**
      * Names of columns used in term export.
      * <p>
-     * TODO Include related terms in the export
+     * TODO Include related terms and exact matches in the export
      */
     public static final List<String> EXPORT_COLUMNS = Collections
             .unmodifiableList(
@@ -56,6 +56,13 @@ public class Term extends AbstractTerm implements HasTypes {
 
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
     private Set<String> sources;
+
+    @OWLObjectProperty(iri = SKOS.EXACT_MATCH, fetch = FetchType.EAGER)
+    private Set<TermInfo> exactMatchTerms;
+
+    @Transient
+    @JsonIgnore
+    private Set<TermInfo> inverseExactMatchTerms;
 
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<Term> parentTerms;
@@ -207,6 +214,30 @@ public class Term extends AbstractTerm implements HasTypes {
         this.inverseRelatedMatch = inverseRelatedMatch;
     }
 
+    public void setExactMatchTerms(Set<TermInfo> exactMatchTerms) {
+        this.exactMatchTerms = exactMatchTerms;
+    }
+
+    public Set<TermInfo> getExactMatchTerms() {
+        return exactMatchTerms;
+    }
+
+    public void addExactMatch(TermInfo term) {
+        Objects.requireNonNull(term);
+        if (exactMatchTerms == null) {
+            this.exactMatchTerms = new HashSet<>();
+        }
+        exactMatchTerms.add(term);
+    }
+
+    public Set<TermInfo> getInverseExactMatchTerms() {
+        return inverseExactMatchTerms;
+    }
+
+    public void setInverseExactMatchTerms(Set<TermInfo> inverseExactMatchTerms) {
+        this.inverseExactMatchTerms = inverseExactMatchTerms;
+    }
+
     public Set<String> getSources() {
         return sources;
     }
@@ -337,19 +368,22 @@ public class Term extends AbstractTerm implements HasTypes {
     }
 
     /**
-     * Consolidates the asserted related (relatedMatch) and inferred inverse related (relatedMatch) terms into related
-     * (relatedMatch).
+     * Consolidates the asserted related (relatedMatch, exactMatch) and inferred inverse related (relatedMatch, exactMatch) terms into related
+     * (relatedMatch, exactMatch).
      * <p>
-     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}) to {@code related}
-     * ({@code relatedMatch}) so that they act as they should in reality because of skos:related (skos:relatedMatch)
+     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}, {@code exactMatch}) to {@code related}
+     * ({@code relatedMatch}, {@code exactMatch}) so that they act as they should in reality because of skos:related (skos:relatedMatch, skos:exactMatch)
      * being symmetric.
      */
-    public void consolidateRelatedAndRelatedMatch() {
+    public void consolidateInferred() {
         if (inverseRelated != null) {
             inverseRelated.forEach(ti -> addRelatedTerm(new TermInfo(ti)));
         }
         if (inverseRelatedMatch != null) {
             inverseRelatedMatch.forEach(ti -> addRelatedMatchTerm(new TermInfo(ti)));
+        }
+        if (inverseExactMatchTerms != null) {
+            inverseExactMatchTerms.forEach(ti -> addExactMatch(new TermInfo(ti)));
         }
     }
 
