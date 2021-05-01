@@ -211,6 +211,19 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     /**
+     * Finds all root terms (terms without parent term).
+     *
+     * @param pageSpec     Page specifying result number and position
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @return Matching root terms
+     * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
+     */
+    public List<TermDto> findAllRoots( Pageable pageSpec,
+                                      Collection<URI> includeTerms) {
+        return termDao.findAllRoots(pageSpec, includeTerms);
+    }
+
+    /**
      * Finds all root terms (terms without parent term) in the specified vocabulary or any of its imported
      * vocabularies.
      * <p>

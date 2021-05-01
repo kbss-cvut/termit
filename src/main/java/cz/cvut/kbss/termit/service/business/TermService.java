@@ -113,6 +113,20 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Retrieves root terms (terms without parent).
+     * <p>
+     * The page specification parameter allows configuration of the number of results and their offset.
+     *
+     * @param pageSpec     Paging specification
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @return Matching terms
+     */
+    public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllRoots(pageSpec, includeTerms);
+    }
+
+    /**
      * Finds all root terms (terms without parent term) in the specified vocabulary or any of its imported
      * vocabularies.
      * <p>

@@ -111,5 +111,18 @@ Rules
       source <activity:object> this
       -------------------------------
       this <termit:má-reakci> source
+
+  Id: skos_exact_match_symmetry
+
+      source <skos:exactMatch> this
+      -------------------------------
+      this <skos:exactMatch> source
+
+  Id: skos_exact_match_transitivity
+
+      x <skos:exactMatch>    y           [Constraint x != y, x != z, y != z]
+      y <skos:exactMatch>    z
+      -------------------------------
+      x <skos:exactMatch>    z
 }
 

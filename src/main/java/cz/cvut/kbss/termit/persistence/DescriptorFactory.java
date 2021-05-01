@@ -234,7 +234,7 @@ public class DescriptorFactory {
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), parentDescriptor);
         final EntityDescriptor exactMatchTermsDescriptor = new EntityDescriptor();
-        exactMatchTermsDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
+        exactMatchTermsDescriptor.addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"),
             new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"), exactMatchTermsDescriptor);
         // Definition source is inferred. That means it is in a special context in GraphDB. Therefore, we need to use
