@@ -73,12 +73,14 @@ public class VocabularyController extends BaseController {
     /**
      * Allows to import a vocabulary (or its  glossary) from the specified file.
      *
+     * @param vocabularyIri IRI of the resulting vocabulary. It is not taken from data, as term IRIs are derived from it.
      * @param file File containing data to import
      */
     @PostMapping("/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createVocabulary(@RequestParam(name = "file") MultipartFile file) {
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(file);
+    public ResponseEntity<Void> createVocabulary(@RequestParam(name = "vocabularyIri") String vocabularyIri,
+                                                 @RequestParam(name = "file") MultipartFile file) {
+        final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
         LOG.debug("Vocabulary {} created.", vocabulary);
         final URI location = generateLocation(vocabulary.getUri(), ConfigParam.NAMESPACE_VOCABULARY);
         final String adjustedLocation = location.toString().replace("/import/", "/");
