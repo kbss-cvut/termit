@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.TermDto;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
@@ -16,6 +16,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.Excel;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.Constants.Turtle;
@@ -515,5 +516,24 @@ public class TermController extends BaseController {
                 .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}", QueryParams.NAMESPACE,
                         IdentifierResolver.extractIdentifierNamespace(comment.getUri()),
                         IdentifierResolver.extractIdentifierFragment(comment.getUri()))).build();
+    }
+
+    /**
+     * Get all root terms from all vocabularies
+     * <p>
+     * Optionally, the terms can be filtered by the specified search string, so that only roots with descendants with
+     * label matching the specified string are returned.
+     *
+     * @param pageSize             Limit the number of elements in the returned page. Optional
+     * @param pageNo               Number of the page to return. Optional
+     * @param includeTerms         List of terms to include in the results. Optional
+     * @return List of root terms across all vocabularies
+     */
+    @GetMapping(value = "/terms/roots",
+        produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<TermDto> getAllRoots(@RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+                                     @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
+                                     @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
+        return termService.findAllRoots(createPageRequest(pageSize, pageNo), includeTerms);
     }
 }

@@ -14,8 +14,10 @@
  */
 package cz.cvut.kbss.termit.dto;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -28,13 +30,7 @@ import java.util.Objects;
  * <p>
  * This is not a full blown entity and should not be used to modify data.
  */
-@SparqlResultSetMapping(name = "TermInfo", classes = {@ConstructorResult(targetClass = TermInfo.class,
-        variables = {
-                @VariableResult(name = "entity", type = URI.class),
-                @VariableResult(name = "label", type = String.class),
-                @VariableResult(name = "vocabulary", type = URI.class)
-        })})
-@OWLClass(iri = Vocabulary.s_c_term)
+@OWLClass(iri = SKOS.CONCEPT)
 public class TermInfo implements Serializable {
 
     @Id
@@ -42,7 +38,7 @@ public class TermInfo implements Serializable {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
-    private String label;
+    private MultilingualString label;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
@@ -54,18 +50,20 @@ public class TermInfo implements Serializable {
         this.uri = Objects.requireNonNull(uri);
     }
 
-    // Constructor used by SparqlResultSetMapping
-    public TermInfo(URI uri, String label, URI vocabulary) {
-        this.uri = uri;
-        this.label = label;
-        this.vocabulary = vocabulary;
-    }
-
-    public TermInfo(Term term) {
+    public TermInfo(AbstractTerm term) {
         Objects.requireNonNull(term);
         this.uri = term.getUri();
-        this.label = term.getLabel().get();
+        assert term.getLabel() != null;
+        this.label = new MultilingualString(term.getLabel().getValue());
         this.vocabulary = term.getVocabulary();
+    }
+
+    public TermInfo(TermInfo other) {
+        Objects.requireNonNull(other);
+        this.uri = other.getUri();
+        assert other.getLabel() != null;
+        this.label = new MultilingualString(other.getLabel().getValue());
+        this.vocabulary = other.getVocabulary();
     }
 
     public URI getUri() {
@@ -76,11 +74,11 @@ public class TermInfo implements Serializable {
         this.uri = uri;
     }
 
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
     }
 

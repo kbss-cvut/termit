@@ -91,11 +91,38 @@ Rules
     -------------------------------
     this <termit:má-zdroj-definice-termu> source
 
+  Id: pdp_term_9
+
+      this <rdf:type> <skos:Concept>
+      this <skos:related> related
+      -------------------------------
+      related <skos:related> this
+
+  Id: pdp_term_10
+
+        this <rdf:type> <skos:Concept>
+        this <skos:relatedMatch> related
+        -------------------------------
+        related <skos:relatedMatch> this
+
   Id: sioc_comment_1
 
       source <rdf:type> <termit:reakce>
       source <activity:object> this
       -------------------------------
       this <termit:má-reakci> source
+
+  Id: skos_exact_match_symmetry
+
+      source <skos:exactMatch> this
+      -------------------------------
+      this <skos:exactMatch> source
+
+  Id: skos_exact_match_transitivity
+
+      x <skos:exactMatch>    y           [Constraint x != y, x != z, y != z]
+      y <skos:exactMatch>    z
+      -------------------------------
+      x <skos:exactMatch>    z
 }
 

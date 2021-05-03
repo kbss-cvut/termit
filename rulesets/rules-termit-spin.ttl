@@ -52,6 +52,41 @@ skos:Concept a rdfs:Class ;
 	           CONSTRUCT { ?this termit:má-zdroj-definice-termu ?source . }
 	           WHERE { ?source a termit:zdroj-definice-termu ;
 	                           termit:je-přiřazením-termu ?this . }"""
+    ];
+
+    # Make skos:related symmetric
+    spin:rule [
+      	a sp:Construct ;
+    sp:text """PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+               CONSTRUCT { ?related skos:related ?this . }
+               WHERE { ?this a skos:Concept ;
+                        skos:related ?related . }"""
+    ];
+
+    # Make skos:relatedMatch symmetric
+    spin:rule [
+      	a sp:Construct ;
+    sp:text """PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+               CONSTRUCT { ?related skos:relatedMatch ?this . }
+               WHERE { ?this a skos:Concept ;
+                        skos:relatedMatch ?related . }"""
+    ]
+
+    # Make skos:exactMatch symmetric
+    spin:rule [
+      	a sp:Construct ;
+    sp:text """PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+               CONSTRUCT { ?exactMatch skos:exactMatch ?this . }
+               WHERE { ?this skos:exactMatch ?exactMatch . }"""
+    ]
+
+    # Make skos:exactMatch transitive
+    spin:rule [
+      	a sp:Construct ;
+    sp:text """PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+               CONSTRUCT { ?this skos:exactMatch ?exactMatch . }
+               WHERE { ?this skos:exactMatch/skos:exactMatch ?exactMatch .
+                       FILTER(?this != ?exactMatch) }"""
     ]
 .
 

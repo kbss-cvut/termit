@@ -16,14 +16,11 @@ import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,12 +33,13 @@ public class Term extends AbstractTerm implements HasTypes {
 
     /**
      * Names of columns used in term export.
+     * <p>
+     * TODO Include related terms and exact matches in the export
      */
     public static final List<String> EXPORT_COLUMNS = Collections
             .unmodifiableList(
                     Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description",
-                            "Types", "Sources", "Parent term",
-                            "SubTerms", "Draft"));
+                            "Types", "Sources", "Parent terms", "SubTerms", "Draft"));
 
     @Autowired
     @Transient
@@ -59,8 +57,34 @@ public class Term extends AbstractTerm implements HasTypes {
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
     private Set<String> sources;
 
+    @OWLObjectProperty(iri = SKOS.EXACT_MATCH, fetch = FetchType.EAGER)
+    private Set<TermInfo> exactMatchTerms;
+
+    @Transient
+    @JsonIgnore
+    private Set<TermInfo> inverseExactMatchTerms;
+
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<Term> parentTerms;
+
+    @OWLObjectProperty(iri = SKOS.RELATED, fetch = FetchType.EAGER)
+    private Set<TermInfo> related;
+
+    // Terms related by the virtue of related being symmetric, i.e. those that assert relation with this term
+    // Loaded outside of JOPA entity loading mechanism
+    @Transient
+    @JsonIgnore
+    private Set<TermInfo> inverseRelated;
+
+    // relatedMatch are related terms from a different vocabulary
+    @OWLObjectProperty(iri = SKOS.RELATED_MATCH, fetch = FetchType.EAGER)
+    private Set<TermInfo> relatedMatch;
+
+    // Terms from a different vocabulary related by the virtue of relatedMatch being symmetric, i.e. those that assert relation with this term
+    // Loaded outside of JOPA entity loading mechanism
+    @Transient
+    @JsonIgnore
+    private Set<TermInfo> inverseRelatedMatch;
 
     @Inferred
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_zdroj_definice_termu, fetch = FetchType.EAGER)
@@ -140,6 +164,78 @@ public class Term extends AbstractTerm implements HasTypes {
             this.parentTerms = new HashSet<>();
         }
         parentTerms.add(term);
+    }
+
+    public Set<TermInfo> getRelated() {
+        return related;
+    }
+
+    public void setRelated(Set<TermInfo> related) {
+        this.related = related;
+    }
+
+    public void addRelatedTerm(TermInfo ti) {
+        Objects.requireNonNull(ti);
+        if (related == null) {
+            this.related = new LinkedHashSet<>();
+        }
+        related.add(ti);
+    }
+
+    public Set<TermInfo> getInverseRelated() {
+        return inverseRelated;
+    }
+
+    public void setInverseRelated(Set<TermInfo> inverseRelated) {
+        this.inverseRelated = inverseRelated;
+    }
+
+    public Set<TermInfo> getRelatedMatch() {
+        return relatedMatch;
+    }
+
+    public void setRelatedMatch(Set<TermInfo> relatedMatch) {
+        this.relatedMatch = relatedMatch;
+    }
+
+    public void addRelatedMatchTerm(TermInfo ti) {
+        Objects.requireNonNull(ti);
+        if (relatedMatch == null) {
+            this.relatedMatch = new LinkedHashSet<>();
+        }
+        relatedMatch.add(ti);
+    }
+
+    public Set<TermInfo> getInverseRelatedMatch() {
+        return inverseRelatedMatch;
+    }
+
+    public void setInverseRelatedMatch(Set<TermInfo> inverseRelatedMatch) {
+        this.inverseRelatedMatch = inverseRelatedMatch;
+    }
+
+    public void setExactMatchTerms(Set<TermInfo> exactMatchTerms) {
+        this.exactMatchTerms = exactMatchTerms;
+    }
+
+    public Set<TermInfo> getExactMatchTerms() {
+        return exactMatchTerms;
+    }
+
+    public void addExactMatch(TermInfo term) {
+        Objects.requireNonNull(term);
+        if (exactMatchTerms == null) {
+            this.exactMatchTerms = new HashSet<>();
+        }
+        exactMatchTerms.add(term);
+    }
+
+    public Set<TermInfo> getInverseExactMatchTerms() {
+        return inverseExactMatchTerms;
+    }
+
+    public void setInverseExactMatchTerms(Set<TermInfo> inverseExactMatchTerms) {
+        this.inverseExactMatchTerms = inverseExactMatchTerms;
     }
 
     public Set<String> getSources() {
@@ -250,13 +346,13 @@ public class Term extends AbstractTerm implements HasTypes {
         }
         if (parentTerms != null) {
             row.createCell(8)
-               .setCellValue(String.join(";",
-                       parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
+                    .setCellValue(String.join(";",
+                            parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
         }
         if (getSubTerms() != null) {
             row.createCell(9)
-               .setCellValue(String.join(";",
-                       getSubTerms().stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
+                    .setCellValue(String.join(";",
+                            getSubTerms().stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
         }
         row.createCell(10).setCellValue(isDraft());
     }
@@ -269,6 +365,26 @@ public class Term extends AbstractTerm implements HasTypes {
      */
     public boolean hasParentInSameVocabulary() {
         return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getGlossary().equals(getGlossary()));
+    }
+
+    /**
+     * Consolidates the asserted related (relatedMatch, exactMatch) and inferred inverse related (relatedMatch, exactMatch) terms into related
+     * (relatedMatch, exactMatch).
+     * <p>
+     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}, {@code exactMatch}) to {@code related}
+     * ({@code relatedMatch}, {@code exactMatch}) so that they act as they should in reality because of skos:related (skos:relatedMatch, skos:exactMatch)
+     * being symmetric.
+     */
+    public void consolidateInferred() {
+        if (inverseRelated != null) {
+            inverseRelated.forEach(ti -> addRelatedTerm(new TermInfo(ti)));
+        }
+        if (inverseRelatedMatch != null) {
+            inverseRelatedMatch.forEach(ti -> addRelatedMatchTerm(new TermInfo(ti)));
+        }
+        if (inverseExactMatchTerms != null) {
+            inverseExactMatchTerms.forEach(ti -> addExactMatch(new TermInfo(ti)));
+        }
     }
 
     @Override

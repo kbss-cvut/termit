@@ -18,7 +18,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.dto.TermDto;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
@@ -28,9 +28,14 @@ import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermAssignmentDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.jena.vocabulary.SKOS;
@@ -70,13 +75,34 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     @Override
     protected AssetDao<Term> getPrimaryDao() {
-        return this.termDao;
+        return termDao;
+    }
+
+    @Override
+    public Optional<Term> find(URI id) {
+        final Optional<Term> result = super.find(id);
+        return result.map(t -> {
+            t.consolidateInferred();
+            return t;
+        });
     }
 
     @Override
     public void persist(Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
+    }
+
+    @Override
+    protected void preUpdate(Term instance) {
+        super.preUpdate(instance);
+        // Existence check is done as part of super.preUpdate
+        final Term original = termDao.find(instance.getUri()).get();
+        final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
+        differentiator.differentiateRelatedTerms(instance, original);
+        differentiator.differentiateRelatedMatchTerms(instance, original);
+        differentiator.differentiateExactMatchTerms(instance, original);
+        // TODO Reflect removals on the inferred side
     }
 
     @Override
@@ -180,8 +206,21 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
-                                   Collection<URI> includeTerms) {
+                                      Collection<URI> includeTerms) {
         return termDao.findAllRoots(vocabulary, pageSpec, includeTerms);
+    }
+
+    /**
+     * Finds all root terms (terms without parent term).
+     *
+     * @param pageSpec     Page specifying result number and position
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @return Matching root terms
+     * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
+     */
+    public List<TermDto> findAllRoots( Pageable pageSpec,
+                                      Collection<URI> includeTerms) {
+        return termDao.findAllRoots(pageSpec, includeTerms);
     }
 
     /**
@@ -198,7 +237,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @see #findAllRoots(Vocabulary, Pageable, Collection)
      */
     public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec,
-                                                    Collection<URI> includeTerms) {
+                                                       Collection<URI> includeTerms) {
         return termDao.findAllRootsIncludingImports(vocabulary, pageSpec, includeTerms);
     }
 

@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.rest.readonly;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import cz.cvut.kbss.termit.dto.TermDto;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;

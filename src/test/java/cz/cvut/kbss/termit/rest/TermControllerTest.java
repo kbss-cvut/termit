@@ -5,7 +5,7 @@ import com.github.jsonldjava.utils.JsonUtils;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.TermDto;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -431,6 +431,29 @@ class TermControllerTest extends BaseControllerTestRunner {
 
         final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
         verify(termServiceMock).findAllRoots(eq(vocabulary), captor.capture(), anyCollection());
+        assertEquals(DEFAULT_PAGE_SPEC, captor.getValue());
+    }
+
+    @Test
+    void getAllRootsWithoutVocabularyLoadsRootsFromCorrectPage() throws Exception {
+        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findAllRoots(any(Pageable.class), anyCollection())).thenReturn(terms);
+        mockMvc.perform(get("/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
+            .andExpect(status().isOk());
+
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllRoots(captor.capture(), anyCollection());
+        assertEquals(PageRequest.of(5, 100), captor.getValue());
+    }
+
+    @Test
+    void getAllRootsWithoutVocabularyCreatesDefaultPageRequestWhenPagingInfoIsNotSpecified() throws Exception {
+        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
+        when(termServiceMock.findAllRoots(any(Pageable.class), anyCollection())).thenReturn(terms);
+        mockMvc.perform(get("/terms/roots")).andExpect(status().isOk());
+
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllRoots(captor.capture(), anyCollection());
         assertEquals(DEFAULT_PAGE_SPEC, captor.getValue());
     }
 

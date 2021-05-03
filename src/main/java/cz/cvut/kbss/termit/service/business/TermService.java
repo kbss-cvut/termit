@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.TermDto;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
@@ -110,6 +110,20 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         return repositoryService.findAllRoots(vocabulary, pageSpec, includeTerms);
+    }
+
+    /**
+     * Retrieves root terms (terms without parent).
+     * <p>
+     * The page specification parameter allows configuration of the number of results and their offset.
+     *
+     * @param pageSpec     Paging specification
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @return Matching terms
+     */
+    public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllRoots(pageSpec, includeTerms);
     }
 
     /**
