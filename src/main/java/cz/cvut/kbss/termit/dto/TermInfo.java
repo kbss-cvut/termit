@@ -40,6 +40,7 @@ public class TermInfo implements Serializable {
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
     private MultilingualString label;
 
+    @Inferred
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
