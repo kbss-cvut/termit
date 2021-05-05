@@ -646,4 +646,25 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term result = em.find(Term.class, term.getUri());
         assertEquals(Collections.singleton(new TermInfo(related)), result.getRelated());
     }
+
+    @Test
+    void updateDeletesRelatedRelationshipFromOtherSideWhenItWasRemovedFromTargetTerm() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term inverseRelated = Generator.generateTermWithId(vocabulary.getUri());
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        vocabulary.getGlossary().addRootTerm(term);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(inverseRelated, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(inverseRelated, vocabulary.getUri(), em);
+            generateRelatedInverse(term, inverseRelated);
+        });
+
+        term.setRelated(Collections.emptySet());
+        sut.update(term);
+        final Term inverseResult = em.find(Term.class, inverseRelated.getUri());
+        assertThat(inverseResult.getRelated(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
+    }
 }

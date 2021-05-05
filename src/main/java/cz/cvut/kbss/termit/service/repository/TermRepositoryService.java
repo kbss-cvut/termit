@@ -14,13 +14,10 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -29,21 +26,21 @@ import cz.cvut.kbss.termit.persistence.dao.TermAssignmentDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
+import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-
-import java.util.Optional;
-import java.util.Set;
-
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Validator;
 import java.net.URI;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
@@ -54,18 +51,21 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     private final TermDao termDao;
 
+    private final OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover;
+
     private final TermAssignmentDao termAssignmentDao;
 
     private final VocabularyRepositoryService vocabularyService;
 
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver,
                                  Configuration config, TermDao termDao,
-                                 TermAssignmentDao termAssignmentDao,
+                                 OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover, TermAssignmentDao termAssignmentDao,
                                  VocabularyRepositoryService vocabularyService) {
         super(validator);
         this.idResolver = idResolver;
         this.config = config;
         this.termDao = termDao;
+        this.orphanedRelationshipRemover = orphanedRelationshipRemover;
         this.termAssignmentDao = termAssignmentDao;
         this.vocabularyService = vocabularyService;
     }
@@ -95,10 +95,18 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
+        termDao.detach(original);
         final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
         differentiator.differentiateRelatedTerms(instance, original);
         differentiator.differentiateRelatedMatchTerms(instance, original);
         // TODO Reflect removals on the inferred side
+        removeInverseRelatedness(instance, original);
+    }
+
+    public void removeInverseRelatedness(Term instance, Term original) {
+        final Set<TermInfo> orphanedRelated = new HashSet<>(original.getInverseRelated());
+        orphanedRelated.removeAll(instance.getInverseRelated());
+        orphanedRelationshipRemover.removeOrphanedRelatedRelationships(orphanedRelated, instance);
     }
 
     @Override
