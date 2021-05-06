@@ -33,8 +33,11 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
 import java.util.Collections;
@@ -46,7 +49,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TermRepositoryServiceTest extends BaseServiceTestRunner {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TermRepositoryServiceTest.class);
 
     @Autowired
     private EntityManager em;
@@ -605,18 +611,18 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(related, vocabulary.getUri(), em);
-            generateRelatedInverse(term, inverseRelated);
+            generateRelatedInverse(term, inverseRelated, SKOS.RELATED);
         });
 
         final Term result = sut.findRequired(term.getUri());
         assertThat(result.getRelated(), hasItems(new TermInfo(related), new TermInfo(inverseRelated)));
     }
 
-    private void generateRelatedInverse(Term term, Term related) {
+    private void generateRelatedInverse(Term term, Term related, String property) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
-            conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(SKOS.RELATED), vf.createIRI(term.getUri().toString()));
+            conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(property), vf.createIRI(term.getUri().toString()));
         }
     }
 
@@ -636,7 +642,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(related, vocabulary.getUri(), em);
-            generateRelatedInverse(term, inverseRelated);
+            generateRelatedInverse(term, inverseRelated, SKOS.RELATED);
         });
 
         term.addRelatedTerm(new TermInfo(inverseRelated));
@@ -659,12 +665,34 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(inverseRelated, vocabulary.getUri(), em);
-            generateRelatedInverse(term, inverseRelated);
+            generateRelatedInverse(term, inverseRelated, SKOS.RELATED);
         });
 
         term.setRelated(Collections.emptySet());
         sut.update(term);
         final Term inverseResult = em.find(Term.class, inverseRelated.getUri());
         assertThat(inverseResult.getRelated(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
+    }
+
+    @Test
+    void updatesDeletesRelatedMatchRelationshipFromOtherSideWhenItWasRemovedFromTargetTerm() {
+        LOG.warn("updatesDeletesRelatedMatchRelationshipFromOtherSideWhenItWasRemovedFromTargetTerm");
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term inverseRelatedMatch = Generator.generateTermWithId(childVocabulary.getUri());
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        vocabulary.getGlossary().addRootTerm(term);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(inverseRelatedMatch, descriptorFactory.termDescriptor(childVocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(inverseRelatedMatch, childVocabulary.getUri(), em);
+            generateRelatedInverse(term, inverseRelatedMatch, SKOS.RELATED_MATCH);
+        });
+
+        term.setRelatedMatch(Collections.emptySet());
+        sut.update(term);
+        final Term inverseResult = em.find(Term.class, inverseRelatedMatch.getUri());
+        assertThat(inverseResult.getRelatedMatch(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
     }
 }

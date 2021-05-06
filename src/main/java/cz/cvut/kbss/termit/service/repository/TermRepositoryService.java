@@ -32,12 +32,14 @@ import cz.cvut.kbss.termit.util.Configuration;
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Validator;
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -99,14 +101,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
         differentiator.differentiateRelatedTerms(instance, original);
         differentiator.differentiateRelatedMatchTerms(instance, original);
-        // TODO Reflect removals on the inferred side
-        removeInverseRelatedness(instance, original);
-    }
-
-    public void removeInverseRelatedness(Term instance, Term original) {
-        final Set<TermInfo> orphanedRelated = new HashSet<>(original.getInverseRelated());
-        orphanedRelated.removeAll(instance.getInverseRelated());
-        orphanedRelationshipRemover.removeOrphanedRelatedRelationships(orphanedRelated, instance);
+        orphanedRelationshipRemover.removeOrphanedInverseTermRelationships(instance, original);
     }
 
     @Override
