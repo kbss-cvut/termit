@@ -125,6 +125,47 @@ class TermDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void findAllRootsWithoutVocabularyReturnsMatchingPageWithTerms() {
+        final List<Term> terms = generateTerms(10);
+        addTermsAndSave(new HashSet<>(terms), vocabulary);
+
+        // Paging starts at 0
+        final List<TermDto> result = sut
+            .findAllRoots(PageRequest.of(1, terms.size() / 2), Collections.emptyList());
+        final List<Term> subList = terms.subList(terms.size() / 2, terms.size());
+        assertEquals(toDtos(subList), result);
+    }
+
+    @Test
+    void findAllRootsWithoutVocabularyReturnsOnlyRootTerms() {
+        final List<Term> rootTerms = generateTerms(10);
+        addTermsAndSave(new HashSet<>(rootTerms), vocabulary);
+        transactional(() -> rootTerms.forEach(t -> {
+            final Term child = Generator.generateTermWithId(vocabulary.getUri());
+            child.setParentTerms(Collections.singleton(t));
+            em.persist(child, descriptorFactory.termDescriptor(vocabulary));
+        }));
+
+        final Vocabulary vocabulary2 = Generator.generateVocabulary();
+        vocabulary2.setUri(Generator.generateUri());
+        transactional(() -> em.persist(vocabulary2, descriptorFactory.vocabularyDescriptor(vocabulary2)));
+        final List<Term> rootTerms2 = generateTerms(10);
+        addTermsAndSave(new HashSet<>(rootTerms2), vocabulary2);
+        transactional(() -> rootTerms.forEach(t -> {
+            final Term child = Generator.generateTermWithId(vocabulary2.getUri());
+            child.setParentTerms(Collections.singleton(t));
+            em.persist(child, descriptorFactory.termDescriptor(vocabulary2));
+        }));
+
+        final List<TermDto> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        final List<TermDto> set = new ArrayList<>();
+        set.addAll(toDtos(rootTerms));
+        set.addAll(toDtos(rootTerms2));
+        set.sort(Comparator.comparing(o -> o.getLabel().get()));
+        assertEquals(set, result);
+    }
+
+    @Test
     void findAllRootsReturnsOnlyRootTerms() {
         final List<Term> rootTerms = generateTerms(10);
         addTermsAndSave(new HashSet<>(rootTerms), vocabulary);

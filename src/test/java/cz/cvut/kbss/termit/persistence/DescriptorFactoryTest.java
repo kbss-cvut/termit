@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.persistence;
 
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -75,6 +76,17 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         final URI parentVocabulary = Generator.generateUri();
         parent.setVocabulary(parentVocabulary);
         term.addParentTerm(parent);
+        final Descriptor result = sut.termDescriptor(term);
+        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
+        assertFalse(result.getAttributeDescriptor(parentFieldSpec).getSingleContext().isPresent());
+    }
+
+    @Test
+    void termDescriptorCreatesDescriptorWithExactMatchesContextSetToDefaultToAllowExactMatchesFromMultipleVocabularies() {
+        final TermInfo exactMatch = Generator.generateTermInfoWithId();
+        final URI parentVocabulary = Generator.generateUri();
+        exactMatch.setVocabulary(parentVocabulary);
+        term.addExactMatch(exactMatch);
         final Descriptor result = sut.termDescriptor(term);
         assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
         assertFalse(result.getAttributeDescriptor(parentFieldSpec).getSingleContext().isPresent());

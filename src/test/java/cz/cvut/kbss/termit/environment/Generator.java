@@ -15,6 +15,7 @@ package cz.cvut.kbss.termit.environment;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.assignment.Target;
 import cz.cvut.kbss.termit.model.assignment.TermAssignment;
@@ -232,6 +233,13 @@ public class Generator {
     public static Term generateTermWithId() {
         final Term term = generateTerm();
         term.setUri(Generator.generateUri());
+        return term;
+    }
+
+    public static TermInfo generateTermInfoWithId() {
+        final TermInfo term = new TermInfo();
+        term.setUri(Generator.generateUri());
+        term.setLabel(MultilingualString.create("Term" + randomInt(), Constants.DEFAULT_LANGUAGE));
         return term;
     }
 

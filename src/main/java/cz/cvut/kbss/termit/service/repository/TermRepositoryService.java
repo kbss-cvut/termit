@@ -81,7 +81,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public Optional<Term> find(URI id) {
         final Optional<Term> result = super.find(id);
         return result.map(t -> {
-            t.consolidateRelatedAndRelatedMatch();
+            t.consolidateInferred();
             return t;
         });
     }
@@ -101,6 +101,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
         differentiator.differentiateRelatedTerms(instance, original);
         differentiator.differentiateRelatedMatchTerms(instance, original);
+        differentiator.differentiateExactMatchTerms(instance, original);
         orphanedRelationshipRemover.removeOrphanedInverseTermRelationships(instance, original);
     }
 
@@ -207,6 +208,19 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
                                       Collection<URI> includeTerms) {
         return termDao.findAllRoots(vocabulary, pageSpec, includeTerms);
+    }
+
+    /**
+     * Finds all root terms (terms without parent term).
+     *
+     * @param pageSpec     Page specifying result number and position
+     * @param includeTerms Identifiers of terms which should be a part of the result. Optional
+     * @return Matching root terms
+     * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
+     */
+    public List<TermDto> findAllRoots( Pageable pageSpec,
+                                      Collection<URI> includeTerms) {
+        return termDao.findAllRoots(pageSpec, includeTerms);
     }
 
     /**
