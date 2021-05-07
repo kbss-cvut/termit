@@ -48,10 +48,12 @@ public class OrphanedInverseTermRelationshipRemover {
         final Set<TermInfo> orphaned = determineOrphaned(update.getInverseRelated(), original.getInverseRelated());
         LOG.trace("Found {} orphaned related to remove.", orphaned);
         orphaned.forEach(o -> {
-            final Optional<Term> t = termDao.find(o.getUri());
-            assert t.isPresent();
-            assert t.get().getRelated() != null;
-            t.get().getRelated().remove(tiUpdate);
+            final Optional<Term> tOpt = termDao.find(o.getUri());
+            assert tOpt.isPresent();
+            final Term t = tOpt.get();
+            if (t.getRelated() != null) {
+                t.getRelated().remove(tiUpdate);
+            }
         });
     }
 
@@ -62,10 +64,12 @@ public class OrphanedInverseTermRelationshipRemover {
                 determineOrphaned(update.getInverseRelatedMatch(), original.getInverseRelatedMatch());
         LOG.trace("Found {} orphaned relatedMatch to remove.", orphaned);
         orphaned.forEach(o -> {
-            final Optional<Term> t = termDao.find(o.getUri());
-            assert t.isPresent();
-            assert t.get().getRelatedMatch() != null;
-            t.get().getRelatedMatch().remove(tiUpdate);
+            final Optional<Term> tOpt = termDao.find(o.getUri());
+            assert tOpt.isPresent();
+            final Term t = tOpt.get();
+            if (t.getRelatedMatch() != null) {
+                t.getRelatedMatch().remove(tiUpdate);
+            }
         });
     }
 }
