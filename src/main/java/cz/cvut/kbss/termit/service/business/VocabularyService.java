@@ -45,10 +45,11 @@ public interface VocabularyService
      * The file could be a text file containing RDF, or it could be a ZIP file containing separate vocabulary, glossary
      * and model files.
      *
+     * @param vocabularyIri IRI of the vocabulary to be created.
      * @param file File from which to import the vocabulary
      * @return The imported vocabulary metadata
      */
-    Vocabulary importVocabulary(MultipartFile file);
+    Vocabulary importVocabulary(String vocabularyIri, MultipartFile file);
 
     /**
      * Gets change records of the listed assets.
