@@ -67,6 +67,11 @@ public class TermDao extends AssetDao<Term> {
         return result;
     }
 
+    public void detach(Term term) {
+        Objects.requireNonNull(term);
+        em.detach(term);
+    }
+
     /**
      * Loads terms whose relatedness to the specified term is inferred due to the symmetric of SKOS related.
      *
