@@ -171,6 +171,17 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Finds all terms label of which is matching the searchString.
+     *
+     * @param searchString string to search the label by
+     * @return Matching terms
+     */
+    public List<TermDto> findAll(String searchString) {
+        Objects.requireNonNull(searchString);
+        return repositoryService.findAll(searchString);
+    }
+
+    /**
      * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
      * (transitively) imports.
      *

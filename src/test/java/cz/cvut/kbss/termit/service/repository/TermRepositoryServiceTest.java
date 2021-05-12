@@ -502,6 +502,27 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void findAllWithSearchStringReturnsMatchingTerms() {
+        final List<TermDto> terms = Generator
+            .generateTermsWithIds(10)
+            .stream().map(TermDto::new).collect(Collectors.toList());
+        final String searchString = "Result";
+        final List<TermDto> matching = terms.subList(0, 5);
+        matching.forEach(t -> t.getLabel().set(Constants.DEFAULT_LANGUAGE, searchString + " " + t.getLabel()));
+
+        vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
+        terms.forEach(t -> t.setVocabulary(vocabulary.getUri()));
+        final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
+        transactional(() -> {
+            terms.forEach(t -> em.persist(t, termDescriptor));
+        });
+
+        List<TermDto> result = sut.findAll(searchString);
+        assertEquals(matching.size(), result.size());
+        assertTrue(matching.containsAll(result));
+    }
+
+    @Test
     void addChildTermAllowsAddingChildTermToDifferentVocabularyThanParent() {
         final Term parentTerm = generateParentTermFromDifferentVocabulary();
         final Term childTerm = Generator.generateTermWithId();

@@ -536,4 +536,16 @@ public class TermController extends BaseController {
                                      @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
         return termService.findAllRoots(createPageRequest(pageSize, pageNo), includeTerms);
     }
+
+    /**
+     * Get all terms preferred labels of which match the given searchString.
+     *
+     * @param searchString  String to filter term labels by.
+     * @return List of terms of the specific vocabulary.
+     */
+    @GetMapping(value = "/terms",
+        produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<TermDto> getAll(@RequestParam(required = false) String searchString) {
+        return termService.findAll(searchString);
+    }
 }
