@@ -131,7 +131,7 @@ class TermDaoTest extends BaseDaoTestRunner {
 
         // Paging starts at 0
         final List<TermDto> result = sut
-            .findAllRoots(PageRequest.of(1, terms.size() / 2), Collections.emptyList());
+                .findAllRoots(PageRequest.of(1, terms.size() / 2), Collections.emptyList());
         final List<Term> subList = terms.subList(terms.size() / 2, terms.size());
         assertEquals(toDtos(subList), result);
     }
@@ -925,5 +925,31 @@ class TermDaoTest extends BaseDaoTestRunner {
             final TermInfo next = it.next();
             assertEquals(child.getUri(), next.getUri());
         }
+    }
+
+    /**
+     * Bug #1576
+     */
+    @Test
+    void updateClearsPossiblyStaleTermDtoFromCache() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final String originalLabel = "Uppercase Test";
+        term.getLabel().set(Constants.DEFAULT_LANGUAGE, originalLabel);
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        vocabulary.getGlossary().addRootTerm(term);
+        transactional(() -> {
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            addTermInVocabularyRelationship(term, vocabulary.getUri());
+        });
+        final List<TermDto> dto = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        assertEquals(1, dto.size());
+        assertEquals(originalLabel, dto.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE));
+        final String newLabel = originalLabel.toLowerCase();
+        term.setLabel(MultilingualString.create(newLabel, Constants.DEFAULT_LANGUAGE));
+        transactional(() -> sut.update(term));
+        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        assertEquals(1, result.size());
+        assertEquals(newLabel, result.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE));
     }
 }
