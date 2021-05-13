@@ -428,6 +428,37 @@ public class TermDao extends AssetDao<Term> {
         }
     }
 
+    /**
+     * Finds terms whose label contains the specified search string.
+     *
+     * @param searchString String the search term labels by
+     * @return List of matching terms
+     */
+    public List<TermDto> findAll(String searchString) {
+        Objects.requireNonNull(searchString);
+        final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+            "GRAPH ?vocabulary { " +
+            "?term a ?type ; " +
+            "      ?hasLabel ?label ; " +
+            "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+            "}" +
+            "?term ?inVocabulary ?vocabulary ." +
+            "} ORDER BY LCASE(?label)", TermDto.class)
+            .setParameter("type", typeUri)
+            .setParameter("hasLabel", LABEL_PROP)
+            .setParameter("inVocabulary", URI.create(
+                cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+            .setParameter("searchString", searchString,
+        config.get(ConfigParam.LANGUAGE));
+        try {
+            final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
+            terms.forEach(this::loadParentSubTerms);
+            return terms;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     private void loadParentSubTerms(TermDto parent) {
         parent.setSubTerms(loadSubTerms(parent));
         if (parent.getParentTerms() != null) {

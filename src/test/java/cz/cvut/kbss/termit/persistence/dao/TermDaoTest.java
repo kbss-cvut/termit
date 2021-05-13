@@ -191,6 +191,16 @@ class TermDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void findAllBySearchStringWithoutVocabularyReturnsTermsWithMatchingLabel() {
+        final List<Term> terms = generateTerms(10);
+        addTermsAndSave(new HashSet<>(terms), vocabulary);
+
+        final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE));
+        assertEquals(1, result.size());
+        assertTrue(toDtos(terms).contains(result.get(0)));
+    }
+
+    @Test
     void findAllBySearchStringReturnsTermsWithMatchingLabelWhichAreNotRoots() {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);

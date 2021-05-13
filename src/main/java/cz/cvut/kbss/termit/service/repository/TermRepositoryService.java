@@ -253,6 +253,16 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     /**
+     * Gets all terms from a vocabulary, with label matching the searchString
+     *
+     * @param searchString String to search by
+     * @return List of terms ordered by label
+     */
+    public List<TermDto> findAll(String searchString) {
+        return termDao.findAll(searchString);
+    }
+
+    /**
      * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
      * (transitively) imports.
      *

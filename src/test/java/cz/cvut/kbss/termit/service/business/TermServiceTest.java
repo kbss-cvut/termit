@@ -199,6 +199,16 @@ class TermServiceTest {
     }
 
     @Test
+    void findAllCallsFindAllInRepositoryService() {
+        final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
+        final String searchString = "test";
+        when(termRepositoryService.findAll(searchString)).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(searchString);
+        assertEquals(terms, result);
+        verify(termRepositoryService).findAll(searchString);
+    }
+
+    @Test
     void getReferenceRetrievesTermReferenceFromRepositoryService() {
         final Term t = Generator.generateTermWithId();
         when(termRepositoryService.getReference(t.getUri())).thenReturn(Optional.of(t));
