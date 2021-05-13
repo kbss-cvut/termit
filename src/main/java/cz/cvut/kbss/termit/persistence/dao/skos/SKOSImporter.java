@@ -8,20 +8,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Literal;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -39,12 +26,19 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * The tool to import plain SKOS thesauri.
- *
- * It takes the thesauri as a TermIt glossary and 1) creates the necessary metadata (vocabulary,
- * model) 2) generates the necessary hasTopConcept relationships based on the broader/narrower
- * hierarchy.
+ * <p>
+ * It takes the thesauri as a TermIt glossary and 1) creates the necessary metadata (vocabulary, model) 2) generates the
+ * necessary hasTopConcept relationships based on the broader/narrower hierarchy.
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -74,7 +68,7 @@ public class SKOSImporter {
 
     public Vocabulary importVocabulary(String vocabularyIri, String mediaType,
                                        InputStream... inputStreams) {
-        Objects.nonNull(vocabularyIri);
+        Objects.requireNonNull(vocabularyIri);
         if (inputStreams.length == 0) {
             throw new IllegalArgumentException("No input provided for importing vocabulary.");
         }
@@ -92,8 +86,8 @@ public class SKOSImporter {
 
     private void parseDataFromStreams(String mediaType, InputStream... inputStreams) {
         final RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(mediaType).orElseThrow(
-            () -> new UnsupportedImportMediaTypeException(
-                "Media type" + mediaType + "not supported."));
+                () -> new UnsupportedImportMediaTypeException(
+                        "Media type" + mediaType + "not supported."));
         final RDFParser p = Rio.createParser(rdfFormat);
         final StatementCollector collector = new StatementCollector(model);
         p.setRDFHandler(collector);
@@ -122,14 +116,13 @@ public class SKOSImporter {
             final Resource glossary = glossaryRes.iterator().next().getSubject();
             if (glossary.isIRI()) {
                 this.glossary = (IRI) glossary;
-                return;
             } else {
                 throw new IllegalArgumentException(
-                    "Blank node skos:ConceptScheme not supported.");
+                        "Blank node skos:ConceptScheme not supported.");
             }
         } else {
             throw new IllegalArgumentException(
-                "No unique skos:ConceptScheme found in the provided data.");
+                    "No unique skos:ConceptScheme found in the provided data.");
         }
     }
 
@@ -149,7 +142,7 @@ public class SKOSImporter {
         labels.stream().filter(s -> {
             assert s.getObject() instanceof Literal;
             return Objects.equals(config.get(ConfigParam.LANGUAGE),
-                ((Literal) s.getObject()).getLanguage().orElse(config.get(ConfigParam.LANGUAGE)));
+                    ((Literal) s.getObject()).getLanguage().orElse(config.get(ConfigParam.LANGUAGE)));
         }).findAny().ifPresent(s -> instance.setLabel(s.getObject().stringValue()));
         return instance;
     }
@@ -157,21 +150,21 @@ public class SKOSImporter {
     private void insertTopConceptAssertions() {
         LOG.trace("Generating top concept assertions.");
         final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream().map
-            (Statement::getSubject)
-            .collect(Collectors.toList());
+                (Statement::getSubject)
+                .collect(Collectors.toList());
         terms.forEach(t -> {
             final List<Value> broader = model.filter(t, SKOS.BROADER, null).stream().map
-                (Statement::getObject)
-                .collect(Collectors.toList());
+                    (Statement::getObject)
+                    .collect(Collectors.toList());
             final boolean hasBroader = broader.stream()
-                .anyMatch(p -> model.contains((Resource) p, RDF
-                    .TYPE, SKOS.CONCEPT));
+                    .anyMatch(p -> model.contains((Resource) p, RDF
+                            .TYPE, SKOS.CONCEPT));
             final List<Value> narrower = model.filter(null, SKOS.NARROWER, t).stream().map
-                (Statement::getObject)
-                .collect(Collectors.toList());
+                    (Statement::getObject)
+                    .collect(Collectors.toList());
             final boolean isNarrower = narrower.stream()
-                .anyMatch(p -> model.contains((Resource) p, RDF
-                    .TYPE, SKOS.CONCEPT));
+                    .anyMatch(p -> model.contains((Resource) p, RDF
+                            .TYPE, SKOS.CONCEPT));
             if (!hasBroader && !isNarrower) {
                 model.add(glossary, SKOS.HAS_TOP_CONCEPT, t);
             }
