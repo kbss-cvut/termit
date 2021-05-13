@@ -42,30 +42,21 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     }
 
     public ReadOnlyTerm(Term term) {
-        Objects.requireNonNull(term);
-        setUri(term.getUri());
-        setLabel(new MultilingualString(term.getLabel().getValue()));
+        super(term);
         if (term.getAltLabels() != null) {
             this.altLabels = new HashSet<>(term.getAltLabels());
         }
         if (term.getHiddenLabels() != null) {
             this.hiddenLabels = new HashSet<>(term.getHiddenLabels());
         }
-        if (term.getDefinition() != null) {
-            setDefinition(new MultilingualString(term.getDefinition().getValue()));
-        }
         if (term.getDescription() != null) {
             this.description = new MultilingualString(term.getDescription().getValue());
         }
-        setVocabulary(term.getVocabulary());
         if (term.getSources() != null) {
             this.sources = new HashSet<>(term.getSources());
         }
         if (term.getParentTerms() != null) {
             this.parentTerms = term.getParentTerms().stream().map(ReadOnlyTerm::new).collect(Collectors.toSet());
-        }
-        if (term.getSubTerms() != null) {
-            setSubTerms(new LinkedHashSet<>(term.getSubTerms()));
         }
         if (term.getTypes() != null) {
             this.types = new HashSet<>(term.getTypes());
