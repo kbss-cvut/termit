@@ -12,8 +12,6 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 
 import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,7 +24,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
     private Set<MultilingualString> hiddenLabels;
 
-    @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
+    @OWLAnnotationProperty(iri = SKOS.SCOPE_NOTE)
     private MultilingualString description;
 
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
