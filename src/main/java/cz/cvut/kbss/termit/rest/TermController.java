@@ -545,7 +545,7 @@ public class TermController extends BaseController {
      */
     @GetMapping(value = "/terms",
         produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<TermDto> getAll(@RequestParam(required = false) String searchString) {
+    public List<TermDto> getAll(@RequestParam String searchString) {
         return termService.findAll(searchString);
     }
 }
