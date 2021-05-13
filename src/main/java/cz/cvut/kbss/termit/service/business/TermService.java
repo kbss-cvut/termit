@@ -140,7 +140,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @see #findAllRoots(Vocabulary, Pageable, Collection)
      */
     public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec,
-                                                    Collection<URI> includeTerms) {
+                                                       Collection<URI> includeTerms) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         return repositoryService.findAllRootsIncludingImported(vocabulary, pageSpec, includeTerms);
@@ -205,7 +205,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public Vocabulary findVocabularyRequired(URI id) {
         Objects.requireNonNull(id);
         return vocabularyService.find(id)
-                                .orElseThrow(() -> NotFoundException.create(Vocabulary.class.getSimpleName(), id));
+            .orElseThrow(() -> NotFoundException.create(Vocabulary.class.getSimpleName(), id));
     }
 
     /**
@@ -259,11 +259,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                       () -> new NotFoundException(
-                               "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.get(ConfigParam.LANGUAGE))))
-                     .collect(Collectors.toList());
+            parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                () -> new NotFoundException(
+                    "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.get(ConfigParam.LANGUAGE))))
+                .collect(Collectors.toList());
     }
 
     /**
