@@ -28,7 +28,6 @@ import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.Set;
 
-@Audited
 @OWLClass(iri = Vocabulary.s_c_soubor)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class File extends Resource implements SupportsStorage {

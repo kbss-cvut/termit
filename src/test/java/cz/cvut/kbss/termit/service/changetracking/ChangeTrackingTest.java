@@ -222,14 +222,12 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void persistingFileCreatesPersistChangeRecord() {
+    void persistingFileDoesNotCreatePersistChangeRecord() {
         enableRdfsInference(em);
         final File file = Generator.generateFileWithId("test.html");
         transactional(() -> resourceService.persist(file));
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(file);
-        assertEquals(1, result.size());
-        assertEquals(file.getUri(), result.get(0).getChangedEntity());
-        assertThat(result.get(0), instanceOf(PersistChangeRecord.class));
+        assertEquals(0, result.size());
     }
 }
