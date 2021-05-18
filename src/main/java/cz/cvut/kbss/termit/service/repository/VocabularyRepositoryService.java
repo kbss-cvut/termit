@@ -127,7 +127,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    public Vocabulary importVocabulary(String vocabularyIri, MultipartFile file) {
+    public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(file);
         return importService.importVocabulary(vocabularyIri, file);
     }

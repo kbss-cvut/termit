@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -34,13 +35,13 @@ public class VocabularyImportService {
     /**
      * Import vocabulary from the specified file.
      *
-     * @param vocabularyIri IRI of the vocabulary to be created.
+     * @param vocabularyIri IRI of an existing vocabulary.
      * @param file File containing the vocabulary to import. Can be a file containing RDF, or a ZIP containing multiple
      *             RDF files
      * @return {@code Vocabulary} object containing metadata of the imported vocabulary
      */
     @Transactional
-    public Vocabulary importVocabulary(String vocabularyIri, MultipartFile file) {
+    public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(file);
         try {
             return getSKOSImporter().importVocabulary(vocabularyIri, file.getContentType(), file.getInputStream());

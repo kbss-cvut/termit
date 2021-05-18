@@ -5,7 +5,9 @@ import cz.cvut.kbss.termit.exception.DataImportException;
 import cz.cvut.kbss.termit.exception.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.eclipse.rdf4j.model.*;
@@ -48,6 +50,8 @@ public class SKOSImporter {
 
     private final Configuration config;
     private final VocabularyDao vocabularyDao;
+    private final TermDao termDao;
+    private final IdentifierResolver resolver;
 
     private final Repository repository;
     private final ValueFactory vf;
@@ -59,14 +63,18 @@ public class SKOSImporter {
     @Autowired
     public SKOSImporter(Configuration config,
                         VocabularyDao vocabularyDao,
+                        TermDao termDao,
+                        IdentifierResolver resolver,
                         EntityManager em) {
         this.config = config;
         this.vocabularyDao = vocabularyDao;
+        this.termDao = termDao;
+        this.resolver = resolver;
         this.repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         vf = repository.getValueFactory();
     }
 
-    public Vocabulary importVocabulary(String vocabularyIri, String mediaType,
+    public Vocabulary importVocabulary(URI vocabularyIri, String mediaType,
                                        InputStream... inputStreams) {
         Objects.requireNonNull(vocabularyIri);
         if (inputStreams.length == 0) {
@@ -86,8 +94,8 @@ public class SKOSImporter {
 
     private void parseDataFromStreams(String mediaType, InputStream... inputStreams) {
         final RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(mediaType).orElseThrow(
-                () -> new UnsupportedImportMediaTypeException(
-                        "Media type" + mediaType + "not supported."));
+            () -> new UnsupportedImportMediaTypeException(
+                "Media type" + mediaType + "not supported."));
         final RDFParser p = Rio.createParser(rdfFormat);
         final StatementCollector collector = new StatementCollector(model);
         p.setRDFHandler(collector);
@@ -100,10 +108,26 @@ public class SKOSImporter {
         }
     }
 
-    private void addDataIntoRepository(String vocabularyIri) {
+    private boolean canBeImportedIntoVocabulary(final Resource r, final URI vocabularyIri) {
+        return resolver
+            .buildNamespace(
+                vocabularyIri.toString(),
+                config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)
+            ).equals(IdentifierResolver.extractIdentifierNamespace(URI.create(r.stringValue())));
+    }
+
+    private void addDataIntoRepository(URI vocabularyIri) {
+        final Set<Resource> unmappedConcepts = model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream()
+            .map(s -> s.getSubject())
+            .filter(s -> !canBeImportedIntoVocabulary(s, vocabularyIri))
+            .collect(Collectors.toSet());
+
+        LOG.warn("Cannot import concepts {}, removing", unmappedConcepts);
+        unmappedConcepts.forEach( a -> model.remove(a, null, null));
+
         try (final RepositoryConnection conn = repository.getConnection()) {
             conn.begin();
-            final IRI targetContext = vf.createIRI(vocabularyIri);
+            final IRI targetContext = vf.createIRI(vocabularyIri.toString());
             LOG.debug("Importing vocabulary into context <{}>.", targetContext);
             conn.add(model, targetContext);
             conn.commit();
@@ -126,9 +150,12 @@ public class SKOSImporter {
         }
     }
 
-    private Vocabulary resolveVocabularyFromGlossary(final String vocabularyIri) {
-        final Vocabulary instance = new Vocabulary();
-        instance.setUri(URI.create(vocabularyIri));
+    private Vocabulary resolveVocabularyFromGlossary(final URI vocabularyIri) {
+        final Vocabulary instance = vocabularyDao.find(vocabularyIri).get();
+
+        termDao.findAll(instance).forEach(term -> {
+            termDao.remove(term);
+        });
 
         final Glossary gls = new Glossary();
         gls.setUri(URI.create(glossary.stringValue()));

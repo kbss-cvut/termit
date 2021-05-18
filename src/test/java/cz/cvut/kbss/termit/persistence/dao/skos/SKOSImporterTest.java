@@ -5,6 +5,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -24,23 +25,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SKOSImporterTest extends BaseDaoTestRunner {
 
-    private static final String VOCABULARY_IRI = "http://onto.fel.cvut.cz/ontologies/application/termit/slovník";
+    private static final URI VOCABULARY_IRI = URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/slovník");
     private static final String GLOSSARY_IRI = "http://onto.fel.cvut.cz/ontologies/application/termit/glosář";
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private ApplicationContext context;
@@ -52,6 +58,11 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final User author = Generator.generateUserWithId();
         Environment.setCurrentUser(author);
         transactional(() -> em.persist(author));
+        transactional(() -> {
+            final cz.cvut.kbss.termit.model.Vocabulary v = generateVocabulary();
+            v.setUri(VOCABULARY_IRI);
+            em.persist(v, descriptorFactory.vocabularyDescriptor(VOCABULARY_IRI));
+        });
     }
 
     @Test
@@ -85,11 +96,11 @@ class SKOSImporterTest extends BaseDaoTestRunner {
 
     @Test
     void importInsertsImportedDataIntoContextBasedOnOntologyIdentifier() {
-        final AtomicInteger existingStatementCount = new AtomicInteger(0);
+        final AtomicInteger existingStatementCountInDefault = new AtomicInteger(0);
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                existingStatementCount.set(Iterations.asList(conn.getStatements(null, null, null, false)).size());
+                existingStatementCountInDefault.set(Iterations.asList(conn.getStatements(null, null, null, false, (Resource) null)).size());
             }
         });
         transactional(() -> {
@@ -101,12 +112,12 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             try (final RepositoryConnection conn = repo.getConnection()) {
                 final List<Resource> contexts = Iterations.asList(conn.getContextIDs());
                 assertFalse(contexts.isEmpty());
-                final Optional<Resource> ctx = contexts.stream().filter(r -> r.stringValue().contains(VOCABULARY_IRI))
+                final Optional<Resource> ctx = contexts.stream().filter(r -> r.stringValue().contains(VOCABULARY_IRI.toString()))
                                                        .findFirst();
                 assertTrue(ctx.isPresent());
                 final List<Statement> inAll = Iterations.asList(conn.getStatements(null, null, null, false));
                 final List<Statement> inCtx = Iterations.asList(conn.getStatements(null, null, null, false, ctx.get()));
-                assertEquals(inAll.size() - existingStatementCount.get(), inCtx.size());
+                assertEquals(inAll.size() - existingStatementCountInDefault.get(), inCtx.size());
             }
         });
     }
@@ -123,7 +134,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             try (final RepositoryConnection conn = repo.getConnection()) {
                 final List<Resource> contexts = Iterations.asList(conn.getContextIDs());
                 assertFalse(contexts.isEmpty());
-                contexts.forEach(ctx -> assertThat(ctx.stringValue(), containsString(VOCABULARY_IRI)));
+                contexts.forEach(ctx -> assertThat(ctx.stringValue(), containsString(VOCABULARY_IRI.toString())));
 
             }
         });
@@ -171,7 +182,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             final cz.cvut.kbss.termit.model.Vocabulary result = sut
                     .importVocabulary(VOCABULARY_IRI, Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
             assertNotNull(result);
-            assertEquals(VOCABULARY_IRI, result.getUri().toString());
+            assertEquals(VOCABULARY_IRI, result.getUri());
             assertEquals("Vocabulary of system TermIt - glossary", result.getLabel());
         });
     }

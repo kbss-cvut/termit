@@ -70,23 +70,6 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.created(generateLocation(vocabulary.getUri(), ConfigParam.NAMESPACE_VOCABULARY)).build();
     }
 
-    /**
-     * Allows to import a vocabulary (or its  glossary) from the specified file.
-     *
-     * @param vocabularyIri IRI of the resulting vocabulary. It is not taken from data, as term IRIs are derived from it.
-     * @param file File containing data to import
-     */
-    @PostMapping("/import")
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createVocabulary(@RequestParam(name = "vocabularyIri") String vocabularyIri,
-                                                 @RequestParam(name = "file") MultipartFile file) {
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
-        LOG.debug("Vocabulary {} created.", vocabulary);
-        final URI location = generateLocation(vocabulary.getUri(), ConfigParam.NAMESPACE_VOCABULARY);
-        final String adjustedLocation = location.toString().replace("/import/", "/");
-        return ResponseEntity.created(URI.create(adjustedLocation)).build();
-    }
-
     @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Vocabulary getById(@PathVariable String fragment,
                               @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
@@ -102,6 +85,26 @@ public class VocabularyController extends BaseController {
                                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
+    }
+
+    /**
+     * Allows to import a SKOS glossary from the specified file.
+     *
+     * @param fragment vocabulary name
+     * @param namespace (optional) vocabulary namespace
+     * @param file File containing data to import
+     */
+    @PostMapping("/{fragment}/import")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public ResponseEntity<Void> createVocabulary(@PathVariable String fragment,
+                                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
+                                                 @RequestParam(name = "file") MultipartFile file) {
+        final URI vocabularyIri = resolveVocabularyUri(fragment, namespace);
+        final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
+        LOG.debug("Vocabulary {} created.", vocabulary);
+        final URI location = generateLocation(vocabulary.getUri(), ConfigParam.NAMESPACE_VOCABULARY);
+        final String adjustedLocation = location.toString().replace("/import/", "/");
+        return ResponseEntity.created(URI.create(adjustedLocation)).build();
     }
 
     private URI resolveVocabularyUri(String fragment, String namespace) {

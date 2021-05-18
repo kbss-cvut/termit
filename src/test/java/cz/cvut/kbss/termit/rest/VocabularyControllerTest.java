@@ -168,7 +168,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isCreated())
                 .andReturn();
         verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
-        verify(serviceMock).importVocabulary(vocabulary.getUri().toString(), upload);
+        verify(serviceMock).importVocabulary(vocabulary.getUri(), upload);
     }
 
     @Test

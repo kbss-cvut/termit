@@ -49,7 +49,7 @@ public interface VocabularyService
      * @param file File from which to import the vocabulary
      * @return The imported vocabulary metadata
      */
-    Vocabulary importVocabulary(String vocabularyIri, MultipartFile file);
+    Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file);
 
     /**
      * Gets change records of the listed assets.
