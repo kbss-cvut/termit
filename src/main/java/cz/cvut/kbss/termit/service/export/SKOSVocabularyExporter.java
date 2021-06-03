@@ -41,7 +41,7 @@ public class SKOSVocabularyExporter implements VocabularyExporter {
     @Transactional
     public TypeAwareResource exportVocabularyGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        LOG.debug("Exporting glossary of vocabular {} to SKOS.", vocabulary);
+        LOG.debug("Exporting glossary of vocabulary {} to SKOS.", vocabulary);
         final SKOSExporter skosExporter = getSKOSExporter();
         LOG.trace("Exporting glossary.");
         skosExporter.exportGlossaryInstance(vocabulary);

@@ -58,7 +58,7 @@ public class SKOSImporter {
 
     private final Model model = new LinkedHashModel();
 
-    private IRI glossary;
+    private IRI glossaryIri;
 
     @Autowired
     public SKOSImporter(Configuration config,
@@ -82,10 +82,10 @@ public class SKOSImporter {
         }
         LOG.debug("Vocabulary import started.");
         parseDataFromStreams(mediaType, inputStreams);
-        resolveGlossary();
-        LOG.trace("Glossary identifier resolved to {}.", glossary);
+        glossaryIri = resolveGlossaryIriFromImportedData(model);
+        LOG.trace("Importing glossary {}.", glossaryIri);
         insertTopConceptAssertions();
-        Vocabulary vocabulary = resolveVocabularyFromGlossary(vocabularyIri);
+        Vocabulary vocabulary = resolveVocabulary(vocabularyIri);
         vocabularyDao.persist(vocabulary);
         addDataIntoRepository(vocabularyIri);
         LOG.debug("Vocabulary import successfully finished.");
@@ -134,12 +134,12 @@ public class SKOSImporter {
         }
     }
 
-    private void resolveGlossary() {
+    private IRI resolveGlossaryIriFromImportedData(final Model model) {
         final Model glossaryRes = model.filter(null, RDF.TYPE, SKOS.CONCEPT_SCHEME);
         if (glossaryRes.size() == 1) {
             final Resource glossary = glossaryRes.iterator().next().getSubject();
             if (glossary.isIRI()) {
-                this.glossary = (IRI) glossary;
+                return (IRI) glossary;
             } else {
                 throw new IllegalArgumentException(
                         "Blank node skos:ConceptScheme not supported.");
@@ -150,28 +150,37 @@ public class SKOSImporter {
         }
     }
 
-    private Vocabulary resolveVocabularyFromGlossary(final URI vocabularyIri) {
-        final Vocabulary instance = vocabularyDao.find(vocabularyIri).get();
+    private Vocabulary resolveVocabulary(final URI vocabularyIri) {
+        final Vocabulary vocabulary;
+        if ( vocabularyIri != null ) {
+            vocabulary = vocabularyDao.find(vocabularyIri).get();
+        } else {
+            throw new IllegalArgumentException("Cannot import glossaries without vocabulary IRI being specified, yet.");
+        }
 
-        termDao.findAll(instance).forEach(term -> {
+        // check if the glossary is the same;
+        final URI newUri = URI.create(glossaryIri.stringValue());
+        final Glossary glossary;
+        if ( !vocabulary.getGlossary().getUri().equals( newUri ) ) {
+            glossary = new Glossary();
+            glossary.setUri(newUri);
+            vocabulary.setGlossary(glossary);
+        } else {
+            glossary = vocabulary.getGlossary();
+        }
+
+        // remove old terms
+        termDao.findAll(vocabulary).forEach(term -> {
             termDao.remove(term);
         });
 
-        final Glossary gls = new Glossary();
-        gls.setUri(URI.create(glossary.stringValue()));
-        instance.setGlossary(gls);
-
-        final cz.cvut.kbss.termit.model.Model mdl = new cz.cvut.kbss.termit.model.Model();
-        mdl.setUri(URI.create(vocabularyIri + "/model"));
-        instance.setModel(mdl);
-
-        final Set<Statement> labels = model.filter(glossary, DCTERMS.TITLE, null);
+        final Set<Statement> labels = model.filter(glossaryIri, DCTERMS.TITLE, null);
         labels.stream().filter(s -> {
             assert s.getObject() instanceof Literal;
             return Objects.equals(config.get(ConfigParam.LANGUAGE),
                     ((Literal) s.getObject()).getLanguage().orElse(config.get(ConfigParam.LANGUAGE)));
-        }).findAny().ifPresent(s -> instance.setLabel(s.getObject().stringValue()));
-        return instance;
+        }).findAny().ifPresent(s -> vocabulary.setLabel(s.getObject().stringValue()));
+        return vocabulary;
     }
 
     private void insertTopConceptAssertions() {
@@ -193,7 +202,7 @@ public class SKOSImporter {
                     .anyMatch(p -> model.contains((Resource) p, RDF
                             .TYPE, SKOS.CONCEPT));
             if (!hasBroader && !isNarrower) {
-                model.add(glossary, SKOS.HAS_TOP_CONCEPT, t);
+                model.add(glossaryIri, SKOS.HAS_TOP_CONCEPT, t);
             }
         });
     }

@@ -195,6 +195,14 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
+    void getByIdReturnsSkosNotation() throws Exception {
+        when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(termService.findRequired(any())).thenThrow(NotFoundException.class);
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME).param(
+            Constants.QueryParams.NAMESPACE, Environment.BASE_URI)).andExpect(status().isNotFound());
+    }
+
+    @Test
     void getSubTermsRetrievesSubTermsOfTermFromService() throws Exception {
         final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
