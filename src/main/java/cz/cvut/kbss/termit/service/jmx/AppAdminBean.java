@@ -41,7 +41,7 @@ public class AppAdminBean {
         this.emf = emf;
     }
 
-    @CacheEvict(allEntries = true, cacheNames = "resources")
+    @CacheEvict(allEntries = true, cacheNames = {"resources", "vocabularies"})
     @ManagedOperation(description = "Invalidates the application caches.")
     public void invalidateCaches() {
         LOG.info("Invalidating application caches...");

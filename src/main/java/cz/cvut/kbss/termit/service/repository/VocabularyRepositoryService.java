@@ -14,6 +14,9 @@ import cz.cvut.kbss.termit.service.importer.VocabularyImportService;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@CacheConfig(cacheNames = "vocabularies")
 @Service
 public class VocabularyRepositoryService extends BaseAssetRepositoryService<Vocabulary> implements VocabularyService {
 
@@ -58,6 +62,18 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao;
     }
 
+    @Cacheable
+    @Override
+    public List<Vocabulary> findAll() {
+        return super.findAll();
+    }
+
+    @CacheEvict(allEntries = true)
+    @Override
+    public void persist(Vocabulary instance) {
+        super.persist(instance);
+    }
+
     @Override
     protected void prePersist(Vocabulary instance) {
         super.prePersist(instance);
@@ -83,6 +99,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         verifyVocabularyImports(instance);
     }
 
+    @CacheEvict(allEntries = true)
     @Override
     @Transactional
     public Vocabulary update(Vocabulary vNew) {
@@ -137,6 +154,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getLastModified();
     }
 
+    @CacheEvict(allEntries = true)
     @Override
     public void remove(Vocabulary instance) {
         if (instance.getDocument() != null) {
