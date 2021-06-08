@@ -402,8 +402,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 readValue(mvcResult, new TypeReference<List<ValidationResult>>() {
                 });
         assertNotNull(result);
-        assertEquals(records.stream().map(i -> i.getId()).collect(Collectors.toList()),
-                result.stream().map(i -> i.getId()).collect(Collectors.toList()));
+        assertEquals(records.stream().map(ValidationResult::getId).collect(Collectors.toList()),
+                result.stream().map(ValidationResult::getId).collect(Collectors.toList()));
         verify(serviceMock).validateContents(vocabulary);
     }
 
