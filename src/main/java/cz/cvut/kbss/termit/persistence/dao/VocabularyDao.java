@@ -164,6 +164,17 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     }
 
     /**
+     * Finds a glossary given its URI.
+     *
+     * @param uri glossary URI to find
+     * @return Glossary, if found
+     */
+    public Optional<Glossary> findGlossary(URI uri) {
+        Objects.requireNonNull(uri);
+        return Optional.ofNullable(em.find(Glossary.class, uri));
+    }
+
+    /**
      * Checks whether terms from the {@code subjectVocabulary} reference (as parent terms) any terms from the {@code targetVocabulary}.
      *
      * @param subjectVocabulary Subject vocabulary identifier

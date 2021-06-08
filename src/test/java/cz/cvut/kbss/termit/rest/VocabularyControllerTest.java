@@ -160,15 +160,16 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     void createVocabularyRunsImportWhenFileIsUploaded() throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
-        when(serviceMock.importVocabulary(any(),any())).thenReturn(vocabulary);
+        when(serviceMock.importVocabulary(anyBoolean(),any(),any())).thenReturn(vocabulary);
 
         final MockMultipartFile upload = new MockMultipartFile("file", "test-glossary.ttl",
                 Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
-        final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/import").file(upload).param("vocabularyIri",vocabulary.getUri().toString()))
+        final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/import").file(upload)
+            .param("rename", "false"))
                 .andExpect(status().isCreated())
                 .andReturn();
         verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
-        verify(serviceMock).importVocabulary(vocabulary.getUri(), upload);
+        verify(serviceMock).importVocabulary(false, null, upload);
     }
 
     @Test

@@ -88,6 +88,22 @@ public class VocabularyController extends BaseController {
     }
 
     /**
+     * Allows to import a vocabulary (or its  glossary) from the specified file.
+     *
+     * @param file File containing data to import
+     */
+    @PostMapping("/import")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public ResponseEntity<Void> createVocabulary(@RequestParam(name = "file") MultipartFile file,
+                                                 @RequestParam(name = "rename") boolean rename) {
+        final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, null, file);
+        LOG.debug("Vocabulary {} created.", vocabulary);
+        final URI location = generateLocation(vocabulary.getUri(), ConfigParam.NAMESPACE_VOCABULARY);
+        final String adjustedLocation = location.toString().replace("/import/", "/");
+        return ResponseEntity.created(URI.create(adjustedLocation)).build();
+    }
+
+    /**
      * Allows to import a SKOS glossary from the specified file.
      *
      * @param fragment vocabulary name
@@ -98,9 +114,10 @@ public class VocabularyController extends BaseController {
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(@PathVariable String fragment,
                                                  @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace,
+                                                 @RequestParam(name = "rename", required = false, defaultValue = "false") boolean rename,
                                                  @RequestParam(name = "file") MultipartFile file) {
         final URI vocabularyIri = resolveVocabularyUri(fragment, namespace);
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
+        final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, vocabularyIri, file);
         LOG.debug("Vocabulary {} created.", vocabulary);
         final URI location = generateLocation(vocabulary.getUri(), ConfigParam.NAMESPACE_VOCABULARY);
         final String adjustedLocation = location.toString().replace("/import/", "/");

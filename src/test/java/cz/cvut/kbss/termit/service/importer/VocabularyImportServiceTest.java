@@ -47,10 +47,10 @@ class VocabularyImportServiceTest {
         final MultipartFile input = new MockMultipartFile("vocabulary.ttl", "vocabulary.ttl",
                 Constants.Turtle.MEDIA_TYPE, Environment.loadFile("vocabularies/ipr-glossaries.ttl"));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        when(importer.importVocabulary(any(), any(), any())).thenReturn(vocabulary);
-        final Vocabulary result = sut.importVocabulary(vocabulary.getUri(),input);
+        when(importer.importVocabulary(any(), anyBoolean(), any(), any())).thenReturn(vocabulary);
+        final Vocabulary result = sut.importVocabulary(false,vocabulary.getUri(),input);
         final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
-        verify(importer).importVocabulary(eq(vocabulary.getUri()), eq(Constants.Turtle.MEDIA_TYPE), captor.capture());
+        verify(importer).importVocabulary(eq(vocabulary.getUri()), eq(false), eq(Constants.Turtle.MEDIA_TYPE), captor.capture());
         assertNotNull(captor.getValue());
         assertEquals(vocabulary, result);
     }

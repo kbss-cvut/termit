@@ -34,7 +34,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     private Set<ReadOnlyTerm> parentTerms;
 
     @OWLObjectProperty(iri = SKOS.NOTATION)
-    private String notation ;
+    private String notation;
 
     @Types
     private Set<String> types;
@@ -59,7 +59,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         if (term.getParentTerms() != null) {
             this.parentTerms = term.getParentTerms().stream().map(ReadOnlyTerm::new).collect(Collectors.toSet());
         }
-        if (term.getProperties().containsKey(SKOS.NOTATION)) {
+        if (term.getProperties() != null && term.getProperties().containsKey(SKOS.NOTATION)) {
             final Set<String> set = term.getProperties().get(SKOS.NOTATION);
             if ( set.size() == 1 ) {
                 this.notation = set.iterator().next();

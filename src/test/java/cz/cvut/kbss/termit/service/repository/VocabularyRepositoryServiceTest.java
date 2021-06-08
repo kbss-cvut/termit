@@ -19,6 +19,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
@@ -30,11 +31,15 @@ import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import org.hamcrest.collection.IsEmptyCollection;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -241,5 +246,44 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
         final List<AbstractChangeRecord> changes = sut.getChanges(vocabulary);
         assertTrue(changes.isEmpty());
+    }
+
+    @Test
+    void importVocabularyImportsAValidVocabulary() {
+        final String skos =
+            "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
+                "@prefix dc : <http://purl.org/dc/terms/> . " +
+                "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . " ;
+
+
+        final MultipartFile mf = new MockMultipartFile(
+            "test",
+            "test",
+            "text/turtle",
+            skos.getBytes(StandardCharsets.UTF_8)
+        );
+
+        final Vocabulary v = sut.importVocabulary(false, null, mf);
+        assertEquals(v.getLabel(), "Test");
+    }
+
+    @Test
+    void importVocabularyThrowsExceptionOnMissingConceptScheme() {
+        final String skos =
+            "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
+                "@prefix dc : <http://purl.org/dc/terms/> . " +
+                "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . " ;
+
+        Assertions.assertThrows(TermItException.class, () -> {
+            final MultipartFile mf = new MockMultipartFile(
+                "test",
+                "test",
+                "text/turtle",
+                skos.getBytes(StandardCharsets.UTF_8)
+            );
+            final Vocabulary v = sut.importVocabulary(false, null, mf);
+            assertEquals(v.getLabel(), "Test");
+        });
     }
 }

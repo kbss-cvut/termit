@@ -42,14 +42,14 @@ public interface VocabularyService
     /**
      * Imports vocabulary from the specified file.
      * <p>
-     * The file could be a text file containing RDF, or it could be a ZIP file containing separate vocabulary, glossary
-     * and model files.
+     * The file could be a text file containing RDF.
      *
+     * @param rename true, if the IRIs should be modified in order to prevent clashes with existing data.
      * @param vocabularyIri IRI of the vocabulary to be created.
      * @param file File from which to import the vocabulary
      * @return The imported vocabulary metadata
      */
-    Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file);
+    Vocabulary importVocabulary(boolean rename, URI vocabularyIri, MultipartFile file);
 
     /**
      * Gets change records of the listed assets.
