@@ -33,12 +33,13 @@ The rest of the configuration is done in the `application.yml` file in `src/main
 
 Most of the parameters there should be self-explanatory or have documentation in the `ConfigParam` class.
 
-There is one parameter not used by the application itself, but by Spring - `spring.profiles.active`. There are two Spring profiles currently used
+There is one parameter not used by the application itself, but by Spring - `spring.profiles.active`. There are several Spring profiles currently used
 by the application:
 * `lucene` - decides whether Lucene text indexing is enabled and should be used in full text search queries.
 * `admin-registration-only` - decides whether new users can be registered only by application admin, or whether anyone can register.
+* `no-cache` - disables EhCache which is used to cache lists of resources and vocabularies for faster retrieval.
 
-The `lucene` Spring profile is activated automatically by the `rdf4j` and `graphdb` Maven profiles. `admin-registration-only` has to be added
+The `lucene` Spring profile is activated automatically by the `rdf4j` and `graphdb` Maven profiles. `admin-registration-only` and `no-cache` have to be added
 either in `application.yml` directly, or one can pass the parameter to Maven build, e.g.:
 
 * `mvn clean package -P graphdb "-Dspring.profiles.active=lucene,admin-registration-only"`
