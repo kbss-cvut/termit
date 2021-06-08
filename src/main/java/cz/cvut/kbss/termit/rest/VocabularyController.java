@@ -132,6 +132,7 @@ public class VocabularyController extends BaseController {
     /**
      * Gets the number of terms in the vocabulary with the specified identification
      */
+    @PreAuthorize("permitAll()")
     @GetMapping(value = "/{fragment}/terms/count")
     public Integer getTermCount(@PathVariable String fragment,
                                     @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
