@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.util.ConfigParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+@CacheConfig(cacheNames = "resources")
 @Service
 public class ResourceRepositoryService extends BaseAssetRepositoryService<Resource>
     implements SupportsLastModification {
@@ -72,25 +74,25 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         return resourceDao;
     }
 
-    @Cacheable("resources")
+    @Cacheable
     @Override
     public List<Resource> findAll() {
         return super.findAll();
     }
 
-    @CacheEvict("resources")
+    @CacheEvict(allEntries = true)
     @Override
     public void persist(Resource instance) {
         super.persist(instance);
     }
 
-    @CacheEvict("resources")
+    @CacheEvict(allEntries = true)
     @Override
     public Resource update(Resource instance) {
         return super.update(instance);
     }
 
-    @CacheEvict("resources")
+    @CacheEvict(allEntries = true)
     @Override
     public void remove(Resource instance) {
         super.remove(instance);
