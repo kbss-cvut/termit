@@ -181,4 +181,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public List<ValidationResult> validateContents(Vocabulary instance) {
         return vocabularyDao.validateContents(instance);
     }
+
+    @Override
+    public Integer getTermCount(Vocabulary vocabulary) {
+        return vocabularyDao.getTermCount(vocabulary);
+    }
 }

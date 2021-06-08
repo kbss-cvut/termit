@@ -406,4 +406,20 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 result.stream().map(i -> i.getId()).collect(Collectors.toList()));
         verify(serviceMock).validateContents(vocabulary);
     }
+
+    @Test
+    void getTermCountRetrievesNumberOfTermsInVocabularyFromService() throws Exception {
+        final Vocabulary vocabulary = generateVocabulary();
+        vocabulary.setUri(VOCABULARY_URI);
+        when(idResolverMock.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, FRAGMENT))
+            .thenReturn(VOCABULARY_URI);
+        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        final Integer count = 97;
+        when(serviceMock.getTermCount(vocabulary)).thenReturn(count);
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/terms/count"))
+                                           .andExpect(status().isOk())
+                                           .andReturn();
+        assertEquals(count, readValue(mvcResult, Integer.class));
+        verify(serviceMock).getTermCount(vocabulary);
+    }
 }

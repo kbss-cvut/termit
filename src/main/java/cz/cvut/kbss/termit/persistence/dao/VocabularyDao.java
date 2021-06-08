@@ -49,7 +49,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     private final ApplicationContext context;
 
     @Autowired
-    public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory, ChangeRecordDao changeRecordDao, ApplicationContext context) {
+    public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
+                         ChangeRecordDao changeRecordDao, ApplicationContext context) {
         super(Vocabulary.class, em, config, descriptorFactory);
         this.changeRecordDao = changeRecordDao;
         refreshLastModified();
@@ -98,10 +99,10 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(entity);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
-                    "?x ?imports+ ?imported ." +
-                    "}", URI.class)
-                    .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                    .setParameter("x", entity.getUri()).getResultList();
+                "?x ?imports+ ?imported ." +
+                "}", URI.class)
+                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                     .setParameter("x", entity.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -117,10 +118,10 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
-                    "?importing ?imports ?imported ." +
-                    "}", Vocabulary.class)
-                    .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                    .setParameter("imported", vocabulary.getUri()).getResultList();
+                "?importing ?imports ?imported ." +
+                "}", Vocabulary.class)
+                     .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                     .setParameter("imported", vocabulary.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -174,21 +175,21 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(subjectVocabulary);
         Objects.requireNonNull(targetVocabulary);
         return em.createNativeQuery("ASK WHERE {" +
-                "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
-                "       ?hasParentTerm ?parent . " +
-                "    ?parent ?isTermFromVocabulary ?import . " +
-                "    {" +
-                "        SELECT ?import WHERE {" +
-                "           ?targetVocabulary ?importsVocabulary* ?import . " +
-                "} } }", Boolean.class)
-                .setParameter("isTermFromVocabulary",
-                        URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                .setParameter("subjectVocabulary", subjectVocabulary)
-                .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
-                .setParameter("targetVocabulary", targetVocabulary)
-                .setParameter("importsVocabulary",
-                        URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                .getSingleResult();
+            "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
+            "       ?hasParentTerm ?parent . " +
+            "    ?parent ?isTermFromVocabulary ?import . " +
+            "    {" +
+            "        SELECT ?import WHERE {" +
+            "           ?targetVocabulary ?importsVocabulary* ?import . " +
+            "} } }", Boolean.class)
+                 .setParameter("isTermFromVocabulary",
+                     URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("subjectVocabulary", subjectVocabulary)
+                 .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
+                 .setParameter("targetVocabulary", targetVocabulary)
+                 .setParameter("importsVocabulary",
+                     URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                 .getSingleResult();
     }
 
     @Override
@@ -223,16 +224,28 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public List<AbstractChangeRecord> getChangesOfContent(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final List<URI> terms = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                "GRAPH ?vocabulary { " +
-                "?term a ?type ;" +
-                "}" +
-                "?term ?inVocabulary ?vocabulary ." +
-                " }", URI.class).setParameter("type", URI.create(SKOS.CONCEPT))
-                .setParameter("vocabulary", vocabulary).getResultList();
+            "GRAPH ?vocabulary { " +
+            "?term a ?type ;" +
+            "}" +
+            "?term ?inVocabulary ?vocabulary ." +
+            " }", URI.class).setParameter("type", URI.create(SKOS.CONCEPT))
+                                  .setParameter("vocabulary", vocabulary).getResultList();
         return terms.stream().flatMap(tUri -> {
             final Term t = new Term();
             t.setUri(tUri);
             return changeRecordDao.findAll(t).stream();
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns the number of all terms in the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary whose terms should be counted
+     * @return Number of terms in a vocabulary, 0 if the vocabulary is empty or does not exist.
+     */
+    public Integer getTermCount(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return em.createQuery("SELECT COUNT(t) FROM Term t WHERE t.vocabulary = :vocabulary", Integer.class)
+                 .setParameter("vocabulary", vocabulary).getSingleResult();
     }
 }

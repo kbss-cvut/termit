@@ -129,6 +129,16 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getChangesOfContent(vocabulary);
     }
 
+    /**
+     * Gets the number of terms in the vocabulary with the specified identification
+     */
+    @GetMapping(value = "/{fragment}/terms/count")
+    public Integer getTermCount(@PathVariable String fragment,
+                                    @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
+        return vocabularyService.getTermCount(vocabulary);
+    }
+
     @PutMapping(value = "/{fragment}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
