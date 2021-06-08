@@ -21,6 +21,9 @@ spring:
       max-request-size: 20MB
       file-size-threshold: 0B
       location: ${java.io.tmpdir}
+  cache:
+      jcache:
+          config: classpath:ehcache.xml
   profiles:
     active: @spring.profiles.active@
 javamelody:
