@@ -34,6 +34,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
 import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
@@ -44,7 +47,10 @@ import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
  */
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
-    private static final String PUBLIC_API = REST_MAPPING_PATH + PUBLIC_API_PATH;
+    private static final Set<String> PUBLIC_ENDPOINTS = new HashSet<>(Arrays.asList(
+        REST_MAPPING_PATH + PUBLIC_API_PATH,
+        "data/label"    // DataController.getLabel
+    ));
 
     private final JwtUtils jwtUtils;
 
@@ -66,7 +72,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+        throws IOException, ServletException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith(SecurityConstants.JWT_TOKEN_PREFIX)) {
             chain.doFilter(request, response);
@@ -92,10 +98,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)
-            throws IOException {
+        throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         objectMapper.writeValue(response.getOutputStream(),
-                ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
+            ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
     }
 
     private void refreshToken(String authToken, HttpServletResponse response) {
@@ -119,6 +125,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         // Public API endpoints are not secured, so there is no need to check for token.
         // This resolves issues with public API requests containing expired/invalid JWT being rejected
-        return request.getRequestURI().contains(PUBLIC_API);
+        return PUBLIC_ENDPOINTS.stream().anyMatch(pattern -> request.getRequestURI().contains(pattern));
     }
 }
