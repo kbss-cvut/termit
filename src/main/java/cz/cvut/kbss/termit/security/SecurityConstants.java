@@ -65,13 +65,6 @@ public class SecurityConstants {
     public static final int MAX_LOGIN_ATTEMPTS = 5;
 
     /**
-     * User credentials for access to the JavaMelody monitoring page.
-     * <p>
-     * Using BASIC authentication.
-     */
-    public static final String MONITORING_USER_CREDENTIALS = "admin:kral0vnat3rm1t1st3";
-
-    /**
      * System administrator role
      */
     public static final String ROLE_ADMIN = "ROLE_ADMIN";

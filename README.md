@@ -115,7 +115,8 @@ used by TermIt.
 ## Monitoring
 
 We are using [JavaMelody](https://github.com/javamelody/javamelody) for monitoring the application and its usage. The data are available
-on the `/monitoring` endpoint and are secured using _basic_ authentication, see `SecurityConstants` for credentials.
+on the `/monitoring` endpoint and are secured using _basic_ authentication. Credentials are configured using the `javamelody.init-parameters.authorized-users`
+parameter in `application.yml` (see the [JavaMelody Spring Boot Starter docs](https://github.com/javamelody/javamelody/wiki/SpringBootStarter)).
 
 ## Documentation
 
