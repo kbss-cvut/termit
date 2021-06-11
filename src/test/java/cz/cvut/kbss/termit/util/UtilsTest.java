@@ -110,6 +110,6 @@ class UtilsTest {
     }
 
     private long getStatementCountWithSubject(Model model, IRI subject) {
-        return StreamSupport.stream(model.getStatements(subject, null, null).spliterator(), false).count();
+        return model.filter(subject, null, null).size();
     }
 }

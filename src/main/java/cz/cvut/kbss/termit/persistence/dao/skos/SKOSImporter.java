@@ -67,7 +67,6 @@ public class SKOSImporter {
     @Autowired
     public SKOSImporter(Configuration config,
                         VocabularyDao vocabularyDao,
-//                        IdentifierResolver resolver,
                         EntityManager em) {
         this.config = config;
         this.vocabularyDao = vocabularyDao;
@@ -141,9 +140,10 @@ public class SKOSImporter {
 
     private String resolveVocabularyIriFromImportedData(final Model model) {
         return Utils
-            .getVocabularyIri(StreamSupport.stream(model
-                    .getStatements(null, RDF.TYPE, SKOS.CONCEPT)
-                    .spliterator(), false).map(s -> s.getSubject().stringValue()).collect(Collectors.toSet()),
+            .getVocabularyIri(
+                model.filter(null, RDF.TYPE, SKOS.CONCEPT)
+                    .stream()
+                    .map(s -> s.getSubject().stringValue()).collect(Collectors.toSet()),
                 config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR));
     }
 

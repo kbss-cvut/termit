@@ -15,7 +15,7 @@
 package cz.cvut.kbss.termit.util;
 
 /**
- * Application configuration parameters, loaded from {@code config.properties} provided on classpath.
+ * Application configuration parameters, loaded from {@code application.yml} provided on classpath.
  */
 public enum ConfigParam {
 
