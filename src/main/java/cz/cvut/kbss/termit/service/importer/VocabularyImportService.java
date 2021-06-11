@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.service.importer;
 
-import cz.cvut.kbss.termit.exception.DataImportException;
+import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import java.net.URI;
@@ -34,19 +34,21 @@ public class VocabularyImportService {
     /**
      * Import vocabulary from the specified file.
      *
+     * @param rename if true, IRIs can be modified to avoid collisions with existing data.
      * @param vocabularyIri IRI of an existing vocabulary.
      * @param file File containing the vocabulary to import. Can be a file containing RDF, or a ZIP containing multiple
      *             RDF files
-     * @param rename if true, IRIs can be modified to avoid collisions with existing data.
      * @return {@code Vocabulary} object containing metadata of the imported vocabulary
      */
     @Transactional
     public Vocabulary importVocabulary(boolean rename, URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(file);
         try {
-            return getSKOSImporter().importVocabulary( vocabularyIri, rename, file.getContentType(), file.getInputStream());
+            return getSKOSImporter().importVocabulary( rename, vocabularyIri, file.getContentType(), file.getInputStream());
+        } catch (VocabularyImportException e) {
+            throw e;
         } catch (Exception e) {
-            throw new DataImportException("Unable to import vocabulary.", e);
+            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage());
         }
     }
 }

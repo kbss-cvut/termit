@@ -23,6 +23,11 @@ import org.springframework.data.domain.Pageable;
 public class Constants {
 
     /**
+     * Fragment of the glossary.
+     */
+    public static final String GLOSSARY_FRAGMENT = "glosář";
+
+    /**
      * URL path to the application's REST API.
      */
     public static final String REST_MAPPING_PATH = "/rest";

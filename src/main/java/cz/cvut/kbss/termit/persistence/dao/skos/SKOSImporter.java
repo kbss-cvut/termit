@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.termit.exception.DataImportException;
 import cz.cvut.kbss.termit.exception.UnsupportedImportMediaTypeException;
+import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
@@ -36,8 +36,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
+import static cz.cvut.kbss.termit.util.Constants.GLOSSARY_FRAGMENT;
 import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 
 /**
@@ -79,13 +79,12 @@ public class SKOSImporter {
      * Imports a SKOS vocabulary from file.
      *
      * @param vocabularyIri (Optional) IRI of the vocabulary to import. If not supplied, the IRI is inferred from the data.
-     * @param rename        (Optional) if true, then new vocabulary/glossary/concept IRIs are generated whenever they exist in the database.
      * @param mediaType     media type of the imported input streams
      * @param inputStreams  input streams with the SKOS data
      * @return
      */
-    public Vocabulary importVocabulary(final URI vocabularyIri,
-                                       final boolean rename,
+    public Vocabulary importVocabulary(final boolean rename,
+                                       final URI vocabularyIri,
                                        final String mediaType,
                                        final InputStream... inputStreams) {
         if (inputStreams.length == 0) {
@@ -101,7 +100,7 @@ public class SKOSImporter {
         vocabularyDao.updateGlossary(vocabulary);
         vocabularyDao.persist(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
-        em.getEntityManagerFactory().getCache().evictAll();
+        em.getEntityManagerFactory().getCache().evict(vocabularyIri);
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;
     }
@@ -117,7 +116,7 @@ public class SKOSImporter {
             try {
                 p.parse(is, "");
             } catch (IOException e) {
-                throw new DataImportException("Unable to parse data for import.", e);
+                throw new VocabularyImportException("Unable to parse data for import.");
             }
         }
     }
@@ -129,11 +128,11 @@ public class SKOSImporter {
             if (glossary.isIRI()) {
                 return (IRI) glossary;
             } else {
-                throw new IllegalArgumentException(
+                throw new VocabularyImportException(
                     "Blank node skos:ConceptScheme not supported.");
             }
         } else {
-            throw new IllegalArgumentException(
+            throw new VocabularyImportException(
                 "No unique skos:ConceptScheme found in the provided data.");
         }
     }
@@ -229,7 +228,7 @@ public class SKOSImporter {
 
         final Optional<Vocabulary> possiblyVocabulary = vocabularyDao.find(URI.create(newVocabularyIri));
         if (possiblyVocabulary.isPresent()) {
-            throw new IllegalArgumentException("The same vocabulary already exists elsewhere, set rename=true if you don't mind that the glossary IRI changes.");
+            throw new IllegalArgumentException("The vocabulary IRI '" + newVocabularyIri + "' already exists, set rename=true to change the IRI automatically.");
         }
 
         return newVocabularyIri;
@@ -238,7 +237,7 @@ public class SKOSImporter {
     private String getFreshGlossaryIri(final boolean rename, final String newVocabularyIri) {
         final String newGlossaryIri;
         if (rename) {
-            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/glosář", (r) -> vocabularyDao.findGlossary(URI.create(r)));
+            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + GLOSSARY_FRAGMENT, (r) -> vocabularyDao.findGlossary(URI.create(r)));
             if (!newGlossaryIri.equals(glossaryIri)) {
                 Utils.changeIri(glossaryIri.toString(), newGlossaryIri, model);
             }
@@ -248,7 +247,7 @@ public class SKOSImporter {
 
         final Optional<Glossary> glossary = vocabularyDao.findGlossary(URI.create(newGlossaryIri));
         if (glossary.isPresent()) {
-            throw new IllegalArgumentException("The same glossary already exists elsewhere.");
+            throw new IllegalArgumentException("The glossary '" + newGlossaryIri + "' already exists.");
         }
 
         return newGlossaryIri;
