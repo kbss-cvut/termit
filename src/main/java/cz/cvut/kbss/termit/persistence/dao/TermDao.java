@@ -524,12 +524,12 @@ public class TermDao extends AssetDao<Term> {
                     "?inVocabulary ?vocabulary ." +
                     "FILTER (LCASE(?label) = LCASE(?searchString)) . "
                     + "}", Boolean.class)
-                    .setParameter("type", typeUri)
-                    .setParameter("hasLabel", LABEL_PROP)
-                    .setParameter("inVocabulary",
-                            URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                    .setParameter("vocabulary", vocabulary.getUri())
-                    .setParameter("searchString", label,
+                     .setParameter("type", typeUri)
+                     .setParameter("hasLabel", LABEL_PROP)
+                     .setParameter("inVocabulary",
+                             URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("vocabulary", vocabulary)
+                     .setParameter("searchString", label,
                             languageTag != null ? languageTag : config.get(ConfigParam.LANGUAGE)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -83,6 +83,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findAll(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return repositoryService.findAll(vocabulary);
+    }
+
+    /**
+     * Gets the total number of terms in the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary reference
+     * @return Number of terms in the specified vocabulary
+     */
+    public Integer getTermCount(Vocabulary vocabulary) {
+        return vocabularyService.getTermCount(vocabulary);
     }
 
     /**
@@ -203,9 +213,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @throws NotFoundException When vocabulary with the specified identifier does not exist
      */
     public Vocabulary findVocabularyRequired(URI id) {
-        Objects.requireNonNull(id);
-        return vocabularyService.find(id)
-            .orElseThrow(() -> NotFoundException.create(Vocabulary.class.getSimpleName(), id));
+        return vocabularyService.findRequired(id);
+    }
+
+    /**
+     * Gets a reference to the vocabulary with the specified identifier.
+     *
+     * @param id Vocabulary identifier
+     * @return Matching vocabulary reference
+     * @throws NotFoundException When vocabulary with the specified identifier does not exist
+     */
+    public Vocabulary getRequiredVocabularyReference(URI id) {
+        return vocabularyService.getRequiredReference(id);
     }
 
     /**
@@ -259,11 +278,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-            parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                () -> new NotFoundException(
-                    "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.get(ConfigParam.LANGUAGE))))
-                .collect(Collectors.toList());
+                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                        () -> new NotFoundException(
+                                "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.get(ConfigParam.LANGUAGE))))
+                      .collect(Collectors.toList());
     }
 
     /**
