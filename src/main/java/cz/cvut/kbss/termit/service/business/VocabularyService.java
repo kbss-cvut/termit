@@ -29,7 +29,7 @@ import java.util.List;
  * Interface of business logic concerning vocabularies.
  */
 public interface VocabularyService
-    extends CrudService<Vocabulary>, ChangeRecordProvider<Vocabulary>, SupportsLastModification {
+        extends CrudService<Vocabulary>, ChangeRecordProvider<Vocabulary>, SupportsLastModification {
 
     /**
      * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
