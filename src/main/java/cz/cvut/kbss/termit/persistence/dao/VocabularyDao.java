@@ -99,8 +99,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(entity);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
-                "?x ?imports+ ?imported ." +
-                "}", URI.class)
+                    "?x ?imports+ ?imported ." +
+                    "}", URI.class)
                      .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                      .setParameter("x", entity.getUri()).getResultList();
         } catch (RuntimeException e) {
@@ -118,8 +118,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
-                "?importing ?imports ?imported ." +
-                "}", Vocabulary.class)
+                    "?importing ?imports ?imported ." +
+                    "}", Vocabulary.class)
                      .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                      .setParameter("imported", vocabulary.getUri()).getResultList();
         } catch (RuntimeException e) {
@@ -175,20 +175,20 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(subjectVocabulary);
         Objects.requireNonNull(targetVocabulary);
         return em.createNativeQuery("ASK WHERE {" +
-            "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
-            "       ?hasParentTerm ?parent . " +
-            "    ?parent ?isTermFromVocabulary ?import . " +
-            "    {" +
-            "        SELECT ?import WHERE {" +
-            "           ?targetVocabulary ?importsVocabulary* ?import . " +
-            "} } }", Boolean.class)
+                "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
+                "       ?hasParentTerm ?parent . " +
+                "    ?parent ?isTermFromVocabulary ?import . " +
+                "    {" +
+                "        SELECT ?import WHERE {" +
+                "           ?targetVocabulary ?importsVocabulary* ?import . " +
+                "} } }", Boolean.class)
                  .setParameter("isTermFromVocabulary",
-                     URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                  .setParameter("subjectVocabulary", subjectVocabulary)
                  .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
                  .setParameter("targetVocabulary", targetVocabulary)
                  .setParameter("importsVocabulary",
-                     URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                  .getSingleResult();
     }
 
@@ -224,11 +224,11 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     public List<AbstractChangeRecord> getChangesOfContent(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final List<URI> terms = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-            "GRAPH ?vocabulary { " +
-            "?term a ?type ;" +
-            "}" +
-            "?term ?inVocabulary ?vocabulary ." +
-            " }", URI.class).setParameter("type", URI.create(SKOS.CONCEPT))
+                "GRAPH ?vocabulary { " +
+                "?term a ?type ;" +
+                "}" +
+                "?term ?inVocabulary ?vocabulary ." +
+                " }", URI.class).setParameter("type", URI.create(SKOS.CONCEPT))
                                   .setParameter("vocabulary", vocabulary).getResultList();
         return terms.stream().flatMap(tUri -> {
             final Term t = new Term();
