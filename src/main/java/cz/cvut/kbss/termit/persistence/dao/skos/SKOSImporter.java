@@ -228,7 +228,7 @@ public class SKOSImporter {
 
         final Optional<Vocabulary> possiblyVocabulary = vocabularyDao.find(URI.create(newVocabularyIri));
         if (possiblyVocabulary.isPresent()) {
-            throw new IllegalArgumentException("The vocabulary IRI '" + newVocabularyIri + "' already exists, set rename=true to change the IRI automatically.");
+            throw new IllegalArgumentException("The vocabulary IRI '" + newVocabularyIri + "' already exists.");
         }
 
         return newVocabularyIri;
