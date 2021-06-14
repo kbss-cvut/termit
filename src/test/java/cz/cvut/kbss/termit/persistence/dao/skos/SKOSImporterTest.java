@@ -88,6 +88,44 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void importVocabularyRenamesVocabularyIriWhenAlreadyPresent() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(false, null, Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
+        });
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(true, null, Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
+        });
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection conn = repo.getConnection()) {
+                assertTrue(conn.hasStatement(vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit-0"), RDF.TYPE,
+                    vf.createIRI(Vocabulary.s_c_slovnik), false));
+            }
+        });
+    }
+
+    @Test
+    void importVocabularyRenamesTermIriUponRenamingVocabularyIri() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(false, null, Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
+        });
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(true, null, Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
+        });
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection conn = repo.getConnection()) {
+                assertTrue(conn.hasStatement(vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit-0/pojem/zablokovan\u00fd-u\u017eivatel-termitu"), RDF.TYPE,
+                    SKOS.CONCEPT, false));
+            }
+        });
+    }
+
+    @Test
     void importThrowsIllegalArgumentExceptionWhenNoStreamIsProvided() {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
@@ -182,7 +220,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             final cz.cvut.kbss.termit.model.Vocabulary result = sut
-                .importVocabulary(false, VOCABULARY_IRI,  Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
+                .importVocabulary(false, VOCABULARY_IRI, Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
             assertNotNull(result);
             assertEquals(VOCABULARY_IRI, result.getUri());
             assertEquals("Vocabulary of system TermIt - glossary", result.getLabel());
