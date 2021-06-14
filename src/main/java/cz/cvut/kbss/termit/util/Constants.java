@@ -98,6 +98,12 @@ public class Constants {
     public static final String QUERY_DIRECTORY = "query";
 
     /**
+     * Represents the X-Total-Count HTTP header used to convey the total number of items in paged or otherwise
+     * restricted response.
+     */
+    public static final String X_TOTAL_COUNT_HEADER = "X-Total-Count";
+
+    /**
      * MIME type for ZIP files.
      */
     public static final String ZIP_MEDIA_TYPE = "application/zip";
