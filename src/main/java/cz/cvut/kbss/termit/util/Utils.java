@@ -125,6 +125,7 @@ public class Utils {
      * Extracts the necessary vocabulary IRI from the namespace of the current concepts.
      *
      * @param conceptUris set of concept IRIs
+     * @param termSeparator separator between a term local name and vocabulary IRI
      * @return IRI of the vocabulary
      * @throws IllegalArgumentException if the namespace is not unique in concept IRIs, there is no concept,
      * or the concept IRI does not have the form "pojem".
@@ -138,11 +139,19 @@ public class Utils {
 
         final String conceptUri = i.next();
 
-        if (conceptUri.indexOf(termSeparator) < 0) {
+        final String separator;
+
+        if (conceptUri.lastIndexOf(termSeparator) > 0) {
+            separator = termSeparator;
+        } else if (conceptUri.lastIndexOf("#") > 0) {
+            separator = "#";
+        } else if (conceptUri.lastIndexOf("/") > 0) {
+            separator = "/";
+        } else {
             throw new IllegalArgumentException("The IRI does not have a proper format: " + conceptUri);
         }
 
-        final String namespace = conceptUri.substring(0, conceptUri.lastIndexOf(termSeparator));
+        final String namespace = conceptUri.substring(0, conceptUri.lastIndexOf(separator));
 
         for (final String s : conceptUris) {
             if (!s.startsWith(namespace)) {

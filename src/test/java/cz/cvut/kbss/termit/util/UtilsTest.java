@@ -65,6 +65,33 @@ class UtilsTest {
     }
 
     @Test
+    public void getVocabularyIriReturnsCorrectVocabularyIriForTermItVocabularies() {
+        final Set<String> conceptIris = new HashSet<>();
+        final String vocabularyIri = "https://example.org";
+        final String namespace = vocabularyIri + "/pojem";
+        conceptIris.add(namespace + "A");
+        Assert.equals(vocabularyIri, Utils.getVocabularyIri(conceptIris, "/pojem"));
+    }
+
+    @Test
+    public void getVocabularyIriReturnsCorrectVocabularyIriForExternalSlashVocabularies() {
+        final Set<String> conceptIris = new HashSet<>();
+        final String vocabularyIri = "https://example.org";
+        final String namespace = vocabularyIri + "/";
+        conceptIris.add(namespace + "A");
+        Assert.equals(vocabularyIri, Utils.getVocabularyIri(conceptIris, "/pojem"));
+    }
+
+    @Test
+    public void getVocabularyIriReturnsCorrectVocabularyIriForExternalHashVocabularies() {
+        final Set<String> conceptIris = new HashSet<>();
+        final String vocabularyIri = "https://example.org";
+        final String namespace = vocabularyIri + "#";
+        conceptIris.add(namespace + "A");
+        Assert.equals(vocabularyIri, Utils.getVocabularyIri(conceptIris, "/pojem"));
+    }
+
+    @Test
     public void getVocabularyIriThrowsExceptionIfNoConceptIsProvided() {
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
             Utils.getVocabularyIri(Collections.emptySet(), "/pojem");
