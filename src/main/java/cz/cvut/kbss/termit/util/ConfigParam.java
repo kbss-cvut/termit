@@ -15,7 +15,7 @@
 package cz.cvut.kbss.termit.util;
 
 /**
- * Application configuration parameters, loaded from {@code config.properties} provided on classpath.
+ * Application configuration parameters, loaded from {@code application.yml} provided on classpath.
  */
 public enum ConfigParam {
 
@@ -134,7 +134,14 @@ public enum ConfigParam {
     /**
      * IRI of the repository context used to store comments (discussion to assets)
      */
-    COMMENTS_CONTEXT("comments.context");
+    COMMENTS_CONTEXT("comments.context"),
+
+    /**
+     * Fragment of glossaries when generated automatically during import.
+     *
+     * Defaults to {@link Constants#DEFAULT_GLOSSARY_FRAGMENT}.
+     */
+    GLOSSARY_FRAGMENT("glossary.fragment");
 
     private final String parameter;
 

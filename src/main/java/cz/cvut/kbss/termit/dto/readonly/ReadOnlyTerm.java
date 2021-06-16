@@ -33,6 +33,9 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     @OWLObjectProperty(iri = SKOS.BROADER)
     private Set<ReadOnlyTerm> parentTerms;
 
+    @OWLObjectProperty(iri = SKOS.NOTATION)
+    private String notation;
+
     @Types
     private Set<String> types;
 
@@ -55,6 +58,12 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         }
         if (term.getParentTerms() != null) {
             this.parentTerms = term.getParentTerms().stream().map(ReadOnlyTerm::new).collect(Collectors.toSet());
+        }
+        if (term.getProperties() != null && term.getProperties().containsKey(SKOS.NOTATION)) {
+            final Set<String> set = term.getProperties().get(SKOS.NOTATION);
+            if ( set.size() == 1 ) {
+                this.notation = set.iterator().next();
+            }
         }
         if (term.getTypes() != null) {
             this.types = new HashSet<>(term.getTypes());
@@ -99,6 +108,14 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
 
     public void setParentTerms(Set<ReadOnlyTerm> parentTerms) {
         this.parentTerms = parentTerms;
+    }
+
+    public String getNotation() {
+        return notation;
+    }
+
+    public void setNotation(String notation) {
+        this.notation = notation;
     }
 
     @Override

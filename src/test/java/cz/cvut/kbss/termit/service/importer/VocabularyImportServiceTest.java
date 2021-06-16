@@ -16,12 +16,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -51,10 +47,10 @@ class VocabularyImportServiceTest {
         final MultipartFile input = new MockMultipartFile("vocabulary.ttl", "vocabulary.ttl",
                 Constants.Turtle.MEDIA_TYPE, Environment.loadFile("vocabularies/ipr-glossaries.ttl"));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        when(importer.importVocabulary(any(), any(), any())).thenReturn(vocabulary);
-        final Vocabulary result = sut.importVocabulary(vocabulary.getUri().toString(),input);
+        when(importer.importVocabulary(anyBoolean(), any(),  any(), any())).thenReturn(vocabulary);
+        final Vocabulary result = sut.importVocabulary(false,vocabulary.getUri(),input);
         final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
-        verify(importer).importVocabulary(eq(vocabulary.getUri().toString()), eq(Constants.Turtle.MEDIA_TYPE), captor.capture());
+        verify(importer).importVocabulary(eq(false), eq(vocabulary.getUri()), eq(Constants.Turtle.MEDIA_TYPE), captor.capture());
         assertNotNull(captor.getValue());
         assertEquals(vocabulary, result);
     }
