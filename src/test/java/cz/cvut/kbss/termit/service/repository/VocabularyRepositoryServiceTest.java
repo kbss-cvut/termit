@@ -77,8 +77,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(result);
 
         final PersistChangeRecord record = em
-            .createQuery("SELECT r FROM PersistChangeRecord r WHERE r.changedEntity = :vocabularyIri",
-                PersistChangeRecord.class).setParameter("vocabularyIri", vocabulary.getUri()).getSingleResult();
+                .createQuery("SELECT r FROM PersistChangeRecord r WHERE r.changedEntity = :vocabularyIri",
+                        PersistChangeRecord.class).setParameter("vocabularyIri", vocabulary.getUri()).getSingleResult();
         assertNotNull(record);
         assertEquals(user.toUser(), record.getAuthor());
         assertNotNull(record.getTimestamp());
@@ -221,7 +221,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
         sut.update(subjectVocabulary);
         assertThat(em.find(Vocabulary.class, subjectVocabulary.getUri()).getImportedVocabularies(),
-            anyOf(nullValue(), IsEmptyCollection.empty()));
+                anyOf(nullValue(), IsEmptyCollection.empty()));
     }
 
     @Test
@@ -251,17 +251,17 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void importVocabularyImportsAValidVocabulary() {
         final String skos =
-            "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
-                "@prefix dc : <http://purl.org/dc/terms/> . " +
-                "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
-                "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . " ;
+                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
+                        "@prefix dc : <http://purl.org/dc/terms/> . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
 
         final MultipartFile mf = new MockMultipartFile(
-            "test",
-            "test",
-            "text/turtle",
-            skos.getBytes(StandardCharsets.UTF_8)
+                "test",
+                "test",
+                "text/turtle",
+                skos.getBytes(StandardCharsets.UTF_8)
         );
 
         final Vocabulary v = sut.importVocabulary(false, null, mf);
@@ -271,23 +271,24 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void importVocabularyThrowsExceptionOnMissingConceptScheme() {
         final String skos =
-            "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
-                "@prefix dc : <http://purl.org/dc/terms/> . " +
-                "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . " ;
+                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
+                        "@prefix dc : <http://purl.org/dc/terms/> . " +
+                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
         Assertions.assertThrows(TermItException.class, () -> {
             final MultipartFile mf = new MockMultipartFile(
-                "test",
-                "test",
-                "text/turtle",
-                skos.getBytes(StandardCharsets.UTF_8)
+                    "test",
+                    "test",
+                    "text/turtle",
+                    skos.getBytes(StandardCharsets.UTF_8)
             );
             final Vocabulary v = sut.importVocabulary(false, null, mf);
             assertEquals(v.getLabel(), "Test");
         });
-      
-     @Test
-     void getTermCountRetrievesNumberOfTermsInVocabulary() {
+    }
+
+    @Test
+    void getTermCountRetrievesNumberOfTermsInVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
