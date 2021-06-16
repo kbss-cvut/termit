@@ -38,7 +38,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static cz.cvut.kbss.termit.util.Constants.GLOSSARY_FRAGMENT;
+import static cz.cvut.kbss.termit.util.Constants.DEFAULT_GLOSSARY_FRAGMENT;
 import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 
 /**
@@ -281,7 +281,7 @@ public class SKOSImporter {
     private String getFreshGlossaryIri(final boolean rename, final String newVocabularyIri) {
         final String newGlossaryIri;
         if (rename) {
-            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + GLOSSARY_FRAGMENT, (r) -> vocabularyDao.findGlossary(URI.create(r)));
+            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + config.get(ConfigParam.GLOSSARY_FRAGMENT), (r) -> vocabularyDao.findGlossary(URI.create(r)));
             if (!newGlossaryIri.equals(glossaryIri)) {
                 Utils.changeIri(glossaryIri.toString(), newGlossaryIri, model);
             }

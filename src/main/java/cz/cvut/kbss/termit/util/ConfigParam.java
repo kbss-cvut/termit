@@ -134,7 +134,14 @@ public enum ConfigParam {
     /**
      * IRI of the repository context used to store comments (discussion to assets)
      */
-    COMMENTS_CONTEXT("comments.context");
+    COMMENTS_CONTEXT("comments.context"),
+
+    /**
+     * Fragment of glossaries when generated automatically during import.
+     *
+     * Defaults to {@link Constants#DEFAULT_GLOSSARY_FRAGMENT}.
+     */
+    GLOSSARY_FRAGMENT("glossary.fragment");
 
     private final String parameter;
 

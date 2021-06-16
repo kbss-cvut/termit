@@ -25,7 +25,7 @@ public class Constants {
     /**
      * Fragment of the glossary.
      */
-    public static final String GLOSSARY_FRAGMENT = "glosář";
+    public static final String DEFAULT_GLOSSARY_FRAGMENT = "glosář";
 
     /**
      * URL path to the application's REST API.
