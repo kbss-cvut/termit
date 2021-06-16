@@ -45,12 +45,12 @@ public class Vocabulary extends Asset<String> implements Serializable {
     private Document document;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar, cascade = CascadeType.PERSIST,
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar, cascade = { CascadeType.PERSIST, CascadeType.REMOVE },
             fetch = FetchType.EAGER)
     private Glossary glossary;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_model, cascade = CascadeType.PERSIST,
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_model, cascade = { CascadeType.PERSIST, CascadeType.REMOVE },
             fetch = FetchType.EAGER)
     private Model model;
 
