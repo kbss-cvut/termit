@@ -360,6 +360,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(glossary));
         final Optional<Glossary> result = sut.findGlossary(uri);
         assertEquals(uri, result.get().getUri());
+    }
 
     @Test
     void getTermCountRetrievesNumberOfTermsInVocabulary() {
