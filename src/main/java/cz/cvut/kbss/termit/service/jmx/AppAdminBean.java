@@ -17,6 +17,7 @@ import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jmx.export.annotation.ManagedOperation;
@@ -40,6 +41,7 @@ public class AppAdminBean {
         this.emf = emf;
     }
 
+    @CacheEvict(allEntries = true, cacheNames = {"resources", "vocabularies"})
     @ManagedOperation(description = "Invalidates the application caches.")
     public void invalidateCaches() {
         LOG.info("Invalidating application caches...");

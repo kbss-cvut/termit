@@ -70,6 +70,24 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.created(generateLocation(vocabulary.getUri(), ConfigParam.NAMESPACE_VOCABULARY)).build();
     }
 
+    /**
+     * Allows to import a vocabulary (or its  glossary) from the specified file.
+     *
+     * @param vocabularyIri IRI of the resulting vocabulary. It is not taken from data, as term IRIs are derived from
+     *                      it.
+     * @param file          File containing data to import
+     */
+    @PostMapping("/import")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public ResponseEntity<Void> createVocabulary(@RequestParam(name = "vocabularyIri") String vocabularyIri,
+                                                 @RequestParam(name = "file") MultipartFile file) {
+        final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
+        LOG.debug("Vocabulary {} created.", vocabulary);
+        final URI location = generateLocation(vocabulary.getUri(), ConfigParam.NAMESPACE_VOCABULARY);
+        final String adjustedLocation = location.toString().replace("/import/", "/");
+        return ResponseEntity.created(URI.create(adjustedLocation)).build();
+    }
+
     @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Vocabulary getById(@PathVariable String fragment,
                               @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
@@ -82,7 +100,8 @@ public class VocabularyController extends BaseController {
      */
     @GetMapping(value = "/{fragment}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Collection<URI> getTransitiveImports(@PathVariable String fragment,
-                                                @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+                                                @RequestParam(name = QueryParams.NAMESPACE,
+                                                              required = false) String namespace) {
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
@@ -133,7 +152,8 @@ public class VocabularyController extends BaseController {
      */
     @GetMapping(value = "/{fragment}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(@PathVariable String fragment,
-                                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+                                                 @RequestParam(name = QueryParams.NAMESPACE,
+                                                               required = false) String namespace) {
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
         return vocabularyService.getChanges(vocabulary);
     }
@@ -141,10 +161,11 @@ public class VocabularyController extends BaseController {
     /**
      * Gets the change history of a vocabulary content with the specified identification
      */
-    @GetMapping(value = "/{fragment}/history-of-content", produces = {MediaType.APPLICATION_JSON_VALUE,
-            JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/{fragment}/history-of-content",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistoryOfContent(@PathVariable String fragment,
-                                                          @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+                                                          @RequestParam(name = QueryParams.NAMESPACE,
+                                                                        required = false) String namespace) {
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
         return vocabularyService.getChangesOfContent(vocabulary);
     }
@@ -163,16 +184,16 @@ public class VocabularyController extends BaseController {
 
     /**
      * Removes a vocabulary.
-     * @see VocabularyService#remove(Vocabulary)  for details.
      *
-     * @param fragment vocabulary name
+     * @param fragment  vocabulary name
      * @param namespace (optional) vocabulary namespace
+     * @see VocabularyService#remove(Vocabulary)  for details.
      */
     @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeVocabulary(@PathVariable String fragment,
-                               @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
         final URI identifier = resolveIdentifier(namespace, fragment, ConfigParam.NAMESPACE_VOCABULARY);
         final Vocabulary toRemove = vocabularyService.getRequiredReference(identifier);
         vocabularyService.remove(toRemove);
@@ -182,15 +203,16 @@ public class VocabularyController extends BaseController {
     /**
      * Validates a vocabulary.
      *
-     * @param fragment vocabulary name
+     * @param fragment  vocabulary name
      * @param namespace (optional) vocabulary namespace
      * @return list of validation outcomes
      */
     @PreAuthorize("permitAll()")
-    @GetMapping(value = "/{fragment}/validate", produces = {MediaType.APPLICATION_JSON_VALUE,
-        JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/{fragment}/validate",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<ValidationResult> validateVocabulary(@PathVariable String fragment,
-                                                     @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+                                                     @RequestParam(name = QueryParams.NAMESPACE,
+                                                                   required = false) String namespace) {
         final URI identifier = resolveIdentifier(namespace, fragment, ConfigParam.NAMESPACE_VOCABULARY);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         return vocabularyService.validateContents(vocabulary);

@@ -59,7 +59,7 @@ class TermServiceTest {
     @InjectMocks
     private TermService sut;
 
-    private Vocabulary vocabulary = Generator.generateVocabularyWithId();
+    private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
@@ -74,16 +74,10 @@ class TermServiceTest {
 
     @Test
     void findVocabularyLoadsVocabularyFromRepositoryService() {
-        when(vocabularyService.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        when(vocabularyService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final Vocabulary result = sut.findVocabularyRequired(vocabulary.getUri());
         assertEquals(vocabulary, result);
-        verify(vocabularyService).find(vocabulary.getUri());
-    }
-
-    @Test
-    void findVocabularyThrowsNotFoundExceptionWhenVocabularyIsNotFound() {
-        when(vocabularyService.find(any())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> sut.findVocabularyRequired(vocabulary.getUri()));
+        verify(vocabularyService).findRequired(vocabulary.getUri());
     }
 
     @Test
@@ -341,5 +335,16 @@ class TermServiceTest {
         final List<Term> result = sut.findSubTerms(parent);
         children.sort(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)));
         assertEquals(children, result);
+    }
+
+    @Test
+    void getTermCountRetrievesTermCountFromVocabularyService() {
+        final Integer count = 117;
+        when(vocabularyService.getTermCount(any(Vocabulary.class))).thenReturn(count);
+        final Vocabulary voc = new Vocabulary();
+        voc.setUri(Generator.generateUri());
+        final Integer result = sut.getTermCount(voc);
+        assertEquals(count, result);
+        verify(vocabularyService).getTermCount(voc);
     }
 }

@@ -59,7 +59,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllReturnsVocabulariesOrderedByName() {
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                .collect(Collectors.toList());
+                                                       .collect(Collectors.toList());
         transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFor(v))));
 
         final List<Vocabulary> result = sut.findAll();
@@ -181,7 +181,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         });
 
         final Glossary result = em.find(Glossary.class, vocabulary.getGlossary().getUri(),
-                descriptorFactory.glossaryDescriptor(vocabulary));
+            descriptorFactory.glossaryDescriptor(vocabulary));
         assertTrue(result.getRootTerms().contains(term.getUri()));
     }
 
@@ -266,7 +266,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary importedVocabularyTwo = Generator.generateVocabularyWithId();
         final Vocabulary transitiveVocabulary = Generator.generateVocabularyWithId();
         subjectVocabulary.setImportedVocabularies(
-                new HashSet<>(Arrays.asList(importedVocabularyOne.getUri(), importedVocabularyTwo.getUri())));
+            new HashSet<>(Arrays.asList(importedVocabularyOne.getUri(), importedVocabularyTwo.getUri())));
         importedVocabularyOne.setImportedVocabularies(Collections.singleton(transitiveVocabulary.getUri()));
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
@@ -360,5 +360,26 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(glossary));
         final Optional<Glossary> result = sut.findGlossary(uri);
         assertEquals(uri, result.get().getUri());
+
+    @Test
+    void getTermCountRetrievesNumberOfTermsInVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
+                                          .collect(
+                                              Collectors.toList());
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            terms.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(t));
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
+            });
+        });
+
+        assertEquals(terms.size(), sut.getTermCount(vocabulary));
+    }
+
+    @Test
+    void getTermCountReturnsZeroForUnknownVocabulary() {
+        assertEquals(0, sut.getTermCount(Generator.generateVocabularyWithId()));
     }
 }

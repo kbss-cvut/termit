@@ -31,6 +31,7 @@
         <org.springframework.data.version>2.5.0</org.springframework.data.version>
         <com.fasterxml.jackson.version>2.12.1</com.fasterxml.jackson.version>
         <org.hibernate.validator.version>6.1.7.Final</org.hibernate.validator.version>
+        <org.apache.tika.tika-core.version>1.26</org.apache.tika.tika-core.version>
         <cz.cvut.kbss.jopa.version>0.16.5</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.8.6</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.6</org.aspectj.version>
@@ -38,7 +39,6 @@
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
         <packaging>jar</packaging>
-        <org.apache.tika.tika-core.version>1.26</org.apache.tika.tika-core.version>
     </properties>
 
     <dependencies>
@@ -139,6 +139,11 @@
             <version>${org.springframework.boot.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+            <version>${org.springframework.boot.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-commons</artifactId>
             <version>${org.springframework.data.version}</version>
@@ -228,6 +233,30 @@
             <groupId>net.bull.javamelody</groupId>
             <artifactId>javamelody-spring-boot-starter</artifactId>
             <version>1.86.0</version>
+        </dependency>
+
+        <!-- Caching -->
+        <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ehcache</groupId>
+            <artifactId>ehcache</artifactId>
+            <version>3.9.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-core</artifactId>
+            <version>2.2.11</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>2.3.1</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Test dependencies -->

@@ -31,6 +31,9 @@ import cz.cvut.kbss.termit.util.ConfigParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +43,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+@CacheConfig(cacheNames = "resources")
 @Service
 public class ResourceRepositoryService extends BaseAssetRepositoryService<Resource>
     implements SupportsLastModification {
@@ -70,6 +74,30 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         return resourceDao;
     }
 
+    @Cacheable
+    @Override
+    public List<Resource> findAll() {
+        return super.findAll();
+    }
+
+    @CacheEvict(allEntries = true)
+    @Override
+    public void persist(Resource instance) {
+        super.persist(instance);
+    }
+
+    @CacheEvict(allEntries = true)
+    @Override
+    public Resource update(Resource instance) {
+        return super.update(instance);
+    }
+
+    @CacheEvict(allEntries = true)
+    @Override
+    public void remove(Resource instance) {
+        super.remove(instance);
+    }
+
     @Override
     protected void prePersist(Resource instance) {
         super.prePersist(instance);
@@ -86,7 +114,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
      * @param resource   Resource to persist
      * @param vocabulary Vocabulary context
      * @throws IllegalArgumentException If the specified Resource is neither a {@code Document}
-     * nor a {@code File}
+     *                                  nor a {@code File}
      */
     @Transactional
     public void persist(Resource resource, Vocabulary vocabulary) {
@@ -183,7 +211,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
      * new vocabulary to the context of this vocabulary.
      *
      * @param vOriginal original version of the vocabulary (before update)
-     * @param vNew new version of the vocabulary (after update)
+     * @param vNew      new version of the vocabulary (after update)
      */
     public void rewireDocumentsOnVocabularyUpdate(final Vocabulary vOriginal,
                                                   final Vocabulary vNew) {

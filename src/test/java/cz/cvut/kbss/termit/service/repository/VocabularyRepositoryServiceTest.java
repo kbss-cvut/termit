@@ -77,8 +77,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(result);
 
         final PersistChangeRecord record = em
-                .createQuery("SELECT r FROM PersistChangeRecord r WHERE r.changedEntity = :vocabularyIri",
-                        PersistChangeRecord.class).setParameter("vocabularyIri", vocabulary.getUri()).getSingleResult();
+            .createQuery("SELECT r FROM PersistChangeRecord r WHERE r.changedEntity = :vocabularyIri",
+                PersistChangeRecord.class).setParameter("vocabularyIri", vocabulary.getUri()).getSingleResult();
         assertNotNull(record);
         assertEquals(user.toUser(), record.getAuthor());
         assertNotNull(record.getTimestamp());
@@ -221,7 +221,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
         sut.update(subjectVocabulary);
         assertThat(em.find(Vocabulary.class, subjectVocabulary.getUri()).getImportedVocabularies(),
-                anyOf(nullValue(), IsEmptyCollection.empty()));
+            anyOf(nullValue(), IsEmptyCollection.empty()));
     }
 
     @Test
@@ -285,5 +285,16 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
             final Vocabulary v = sut.importVocabulary(false, null, mf);
             assertEquals(v.getLabel(), "Test");
         });
+      
+     @Test
+     void getTermCountRetrievesNumberOfTermsInVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+        assertEquals(1, sut.getTermCount(vocabulary));
     }
 }
