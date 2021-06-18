@@ -16,10 +16,10 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.OWLPersistenceException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -97,13 +97,13 @@ class BaseDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         transactional(() -> sut.persist(term));
         final String lastNameUpdate = "updatedLastName";
-        term.getLabel().set(Constants.DEFAULT_LANGUAGE, lastNameUpdate);
+        term.getLabel().set(Environment.LANGUAGE, lastNameUpdate);
         transactional(() -> {
             final Term updated = sut.update(term);
             assertTrue(em.contains(updated));
-            assertEquals(lastNameUpdate, updated.getLabel().get(Constants.DEFAULT_LANGUAGE));
+            assertEquals(lastNameUpdate, updated.getLabel().get(Environment.LANGUAGE));
         });
-        assertEquals(lastNameUpdate, em.find(Term.class, term.getUri()).getLabel().get(Constants.DEFAULT_LANGUAGE));
+        assertEquals(lastNameUpdate, em.find(Term.class, term.getUri()).getLabel().get(Environment.LANGUAGE));
     }
 
     @Test

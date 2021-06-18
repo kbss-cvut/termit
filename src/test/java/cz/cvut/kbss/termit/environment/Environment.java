@@ -53,6 +53,8 @@ public class Environment {
 
     public static final String BASE_URI = Vocabulary.ONTOLOGY_IRI_termit;
 
+    public static final String LANGUAGE = "en";
+
     private static UserAccount currentUser;
 
     private static ObjectMapper objectMapper;

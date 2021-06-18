@@ -38,7 +38,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static cz.cvut.kbss.termit.util.Constants.DEFAULT_GLOSSARY_FRAGMENT;
 import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 
 /**
@@ -143,7 +142,7 @@ public class SKOSImporter {
     private void ensureConceptIrisAreCompatibleWithTermIt() {
         final Statement[] statements = model.filter(null, RDF.TYPE, SKOS.CONCEPT).toArray(new Statement[]{});
         for ( final Statement c : statements ) {
-            String separator = config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR);
+            String separator = config.getNamespace().getTerm().getSeparator();
             if ( c.getSubject().stringValue().contains(separator) ) {
                 continue;
             }
@@ -154,7 +153,7 @@ public class SKOSImporter {
                 final String sIri = c.getSubject().stringValue();
                 final int lastSeparator = sIri.lastIndexOf(separator);
                 final String newIri = sIri.substring(0,lastSeparator)
-                    + config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR) + "/"
+                    + config.getNamespace().getTerm().getSeparator() + "/"
                     + sIri.substring(lastSeparator + 1);
                 Utils.changeIri(c.getSubject().stringValue(), newIri, model);
         }
@@ -198,7 +197,7 @@ public class SKOSImporter {
                 model.filter(null, RDF.TYPE, SKOS.CONCEPT)
                     .stream()
                     .map(s -> s.getSubject().stringValue()).collect(Collectors.toSet()),
-                config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR));
+                config.getNamespace().getTerm().getSeparator());
     }
 
     private void insertTopConceptAssertions() {
@@ -239,8 +238,8 @@ public class SKOSImporter {
         final Set<Statement> labels = model.filter(Values.iri(newGlossaryIri), DCTERMS.TITLE, null);
         labels.stream().filter(s -> {
             assert s.getObject() instanceof Literal;
-            return Objects.equals(config.get(ConfigParam.LANGUAGE),
-                ((Literal) s.getObject()).getLanguage().orElse(config.get(ConfigParam.LANGUAGE)));
+            return Objects.equals(config.getPersistence().getLanguage(),
+                ((Literal) s.getObject()).getLanguage().orElse(config.getPersistence().getLanguage()));
         }).findAny().ifPresent(s -> vocabulary.setLabel(s.getObject().stringValue()));
     }
 
@@ -281,7 +280,7 @@ public class SKOSImporter {
     private String getFreshGlossaryIri(final boolean rename, final String newVocabularyIri) {
         final String newGlossaryIri;
         if (rename) {
-            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + config.get(ConfigParam.GLOSSARY_FRAGMENT), (r) -> vocabularyDao.findGlossary(URI.create(r)));
+            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + config.getGlossary().getFragment(), (r) -> vocabularyDao.findGlossary(URI.create(r)));
             if (!newGlossaryIri.equals(glossaryIri)) {
                 Utils.changeIri(glossaryIri.toString(), newGlossaryIri, model);
             }

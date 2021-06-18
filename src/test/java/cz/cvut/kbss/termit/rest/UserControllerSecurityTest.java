@@ -16,13 +16,11 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserService;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -45,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * UserControllerTest}.
  */
 @WebMvcTest(UserController.class)
-@Import({TestConfig.class, TestRestSecurityConfig.class})
+@Import({TestRestSecurityConfig.class})
 class UserControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String BASE_URL = REST_MAPPING_PATH + "/users";

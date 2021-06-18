@@ -21,9 +21,9 @@ import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -35,12 +35,12 @@ import java.util.Optional;
 @Repository
 public class UserAccountDao extends BaseDao<UserAccount> {
 
-    private final Configuration config;
+    private final Persistence config;
 
     @Autowired
     public UserAccountDao(EntityManager em, Configuration config) {
         super(UserAccount.class, em);
-        this.config = config;
+        this.config = config.getPersistence();
     }
 
     /**
@@ -56,7 +56,7 @@ public class UserAccountDao extends BaseDao<UserAccount> {
                     .of(em.createNativeQuery("SELECT ?x WHERE { ?x a ?type ; ?hasUsername ?username . }", type)
                             .setParameter("type", typeUri)
                             .setParameter("hasUsername", URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
-                            .setParameter("username", username, config.get(ConfigParam.LANGUAGE)).getSingleResult());
+                            .setParameter("username", username, config.getLanguage()).getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         } catch (RuntimeException e) {
@@ -75,7 +75,7 @@ public class UserAccountDao extends BaseDao<UserAccount> {
         return em.createNativeQuery("ASK WHERE { ?x a ?type ; ?hasUsername ?username . }", Boolean.class)
                 .setParameter("type", typeUri)
                 .setParameter("hasUsername", URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
-                .setParameter("username", username, config.get(ConfigParam.LANGUAGE)).getSingleResult();
+                .setParameter("username", username, config.getLanguage()).getSingleResult();
     }
 
     @Override

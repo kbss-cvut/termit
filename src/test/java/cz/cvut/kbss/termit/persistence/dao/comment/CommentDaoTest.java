@@ -9,7 +9,6 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -74,7 +73,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
 
     private EntityDescriptor createDescriptor() {
         final EntityDescriptor descriptor = new EntityDescriptor(
-                URI.create(configuration.get(ConfigParam.COMMENTS_CONTEXT)));
+                URI.create(configuration.getComments().getContext()));
         descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("author"),
                 new EntityDescriptor((URI) null));
         descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("reactions"),
@@ -149,7 +148,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
             em.persist(comment, descriptor);
             final CommentReaction reaction = new CommentReaction(author, comment);
             reaction.addType("https://www.w3.org/ns/activitystreams#Like");
-            em.persist(reaction, new EntityDescriptor(URI.create(configuration.get(ConfigParam.COMMENTS_CONTEXT))));
+            em.persist(reaction, new EntityDescriptor(URI.create(configuration.getComments().getContext())));
             generateCommentReactionReference(reaction);
         });
         em.getEntityManagerFactory().getCache().evictAll();

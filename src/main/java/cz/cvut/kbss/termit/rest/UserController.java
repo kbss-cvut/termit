@@ -23,7 +23,6 @@ import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserService;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +77,7 @@ public class UserController extends BaseController {
     }
 
     private UserAccount getUserAccountForUpdate(String identifierFragment) {
-        final URI id = idResolver.resolveIdentifier(ConfigParam.NAMESPACE_USER, identifierFragment);
+        final URI id = idResolver.resolveIdentifier(config.getNamespace().getUser(), identifierFragment);
         return userService.findRequired(id);
     }
 

@@ -18,7 +18,6 @@ import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.rest.dto.AssetType;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -55,21 +54,23 @@ public class IdentifierController extends BaseController {
             throw new UnsupportedOperationException("No asset type supplied.");
         }
 
+        final Configuration.Namespace cfgNamespace = config.getNamespace();
+
         switch (assetType) {
             case TERM:
                 ensureContextIriIsNotNull(assetType, contextIri);
                 return idResolver
-                        .generateDerivedIdentifier(URI.create(contextIri), ConfigParam.TERM_NAMESPACE_SEPARATOR, name);
+                        .generateDerivedIdentifier(URI.create(contextIri), cfgNamespace.getTerm().getSeparator(), name);
             case VOCABULARY:
                 ensureContextIriIsNull(assetType, contextIri);
-                return idResolver.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY, name);
+                return idResolver.generateIdentifier(cfgNamespace.getVocabulary(), name);
             case FILE:
                 ensureContextIriIsNotNull(assetType, contextIri);
                 return idResolver
-                        .generateDerivedIdentifier(URI.create(contextIri), ConfigParam.FILE_NAMESPACE_SEPARATOR, name);
+                        .generateDerivedIdentifier(URI.create(contextIri), cfgNamespace.getFile().getSeparator(), name);
             case RESOURCE:
                 ensureContextIriIsNull(assetType, contextIri);
-                return idResolver.generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, name);
+                return idResolver.generateIdentifier(cfgNamespace.getResource(), name);
             default:
                 throw new UnsupportedOperationException("Unsupported asset type " + assetType + " supplied.");
         }

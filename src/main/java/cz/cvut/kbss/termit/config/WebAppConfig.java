@@ -53,17 +53,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static cz.cvut.kbss.termit.util.ConfigParam.REPOSITORY_URL;
-
 @Configuration
 @EnableWebMvc
 @EnableAsync
 public class WebAppConfig implements WebMvcConfigurer {
 
-    private final cz.cvut.kbss.termit.util.Configuration config;
+    private final cz.cvut.kbss.termit.util.Configuration.Repository config;
 
     public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config) {
-        this.config = config;
+        this.config = config.getRepository();
     }
 
     @Bean(name = "objectMapper")
@@ -127,10 +125,10 @@ public class WebAppConfig implements WebMvcConfigurer {
         controller.setServletClass(AdjustedUriTemplateProxyServlet.class);
         controller.setBeanName("sparqlEndpointProxyServlet");
         final Properties p = new Properties();
-        p.setProperty("targetUri", config.get(REPOSITORY_URL));
+        p.setProperty("targetUri", config.getUrl());
         p.setProperty("log", "false");
-        p.setProperty(ConfigParam.REPO_USERNAME.toString(), config.get(ConfigParam.REPO_USERNAME, ""));
-        p.setProperty(ConfigParam.REPO_PASSWORD.toString(), config.get(ConfigParam.REPO_PASSWORD, ""));
+        p.setProperty(ConfigParam.REPO_USERNAME.toString(), config.getUsername() != null ? config.getUsername() : "");
+        p.setProperty(ConfigParam.REPO_PASSWORD.toString(), config.getPassword()  != null ? config.getPassword() : "");
         controller.setInitParameters(p);
         controller.afterPropertiesSet();
         return controller;

@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
-import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +34,7 @@ class ConfigurationControllerTest extends BaseControllerTestRunner {
     @Test
     void getConfigurationRetrievesConfigurationFromConfigProvider() throws Exception {
         final ConfigurationDto config = new ConfigurationDto();
-        config.setLanguage(Constants.DEFAULT_LANGUAGE);
+        config.setLanguage(Environment.LANGUAGE);
         when(configurationProvider.getConfiguration()).thenReturn(config);
         final MvcResult mvcResult = mockMvc.perform(get("/configuration")).andExpect(status().isOk()).andReturn();
         final ConfigurationDto result = readValue(mvcResult, ConfigurationDto.class);

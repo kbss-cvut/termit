@@ -13,7 +13,6 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,7 +75,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
         }).collect(Collectors.toList());
         transactional(() -> {
             final EntityDescriptor descriptor = new EntityDescriptor(
-                    URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
+                    URI.create(config.getComments().getContext()));
             descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
             comments.forEach(c -> em.persist(c, descriptor));
         });
@@ -107,7 +106,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
         comment.setAuthor(author);
         transactional(() -> {
             final EntityDescriptor descriptor = new EntityDescriptor(
-                    URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
+                    URI.create(config.getComments().getContext()));
             descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
             em.persist(comment, descriptor);
         });
@@ -148,7 +147,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(differentUser);
             final EntityDescriptor descriptor = new EntityDescriptor(
-                    URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
+                    URI.create(config.getComments().getContext()));
             descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
             em.persist(comment, descriptor);
         });
@@ -217,7 +216,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
         final CommentReaction reaction = new CommentReaction(author, toComment);
         reaction.addType(Vocabulary.s_c_Dislike);
         transactional(
-                () -> em.persist(reaction, new EntityDescriptor(URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)))));
+                () -> em.persist(reaction, new EntityDescriptor(URI.create(config.getComments().getContext()))));
         return reaction;
     }
 

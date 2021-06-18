@@ -19,7 +19,7 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,13 +35,17 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount> {
 
     private final PasswordEncoder passwordEncoder;
 
+    private Configuration.Namespace cfgNamespace;
+
     @Autowired
     public UserRepositoryService(UserAccountDao userAccountDao, IdentifierResolver idResolver,
-                                 PasswordEncoder passwordEncoder, Validator validator) {
+                                 PasswordEncoder passwordEncoder, Validator validator,
+                                 Configuration config) {
         super(validator);
         this.userAccountDao = userAccountDao;
         this.idResolver = idResolver;
         this.passwordEncoder = passwordEncoder;
+        this.cfgNamespace = config.getNamespace();
     }
 
     @Override
@@ -70,7 +74,7 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount> {
         validate(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver
-                    .generateIdentifier(ConfigParam.NAMESPACE_USER, instance.getFirstName(), instance.getLastName()));
+                    .generateIdentifier(cfgNamespace.getUser(), instance.getFirstName(), instance.getLastName()));
         }
         if (instance.getPassword() != null) {
             instance.setPassword(passwordEncoder.encode(instance.getPassword()));

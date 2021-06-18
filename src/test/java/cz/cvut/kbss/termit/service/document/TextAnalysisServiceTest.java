@@ -52,7 +52,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.util.ConfigParam.TEXT_ANALYSIS_SERVICE_URL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
@@ -79,9 +78,6 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private DocumentManager documentManager;
-
-    @Autowired
-    private Environment environment;
 
     @Mock
     private TextAnalysisRecordDao textAnalysisRecordDao;
@@ -117,7 +113,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     void analyzeFileInvokesTextAnalysisServiceWithDocumentContent() {
         final TextAnalysisInput input = new TextAnalysisInput();
         input.setContent(CONTENT);
-        mockServer.expect(requestTo(config.get(TEXT_ANALYSIS_SERVICE_URL)))
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
                 .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
@@ -127,7 +123,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     private void generateFile() throws IOException {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
-        ((MockEnvironment) environment).setProperty(ConfigParam.FILE_STORAGE.toString(), dir.getAbsolutePath());
+        config.getFile().setStorage(dir.getAbsolutePath());
         final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
                 file.getDirectoryName());
         Files.createDirectory(docDir.toPath());
@@ -141,7 +137,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     @Test
     void analyzeFilePassesRepositoryAndVocabularyContextToService() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
-        mockServer.expect(requestTo(config.get(TEXT_ANALYSIS_SERVICE_URL)))
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().string(objectMapper.writeValueAsString(input)))
                 .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
@@ -154,18 +150,18 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         input.setContent(CONTENT);
         input.addVocabularyContext(vocabulary.getUri());
         URI repositoryUrl = URI.create(
-            config.get(ConfigParam.REPOSITORY_PUBLIC_URL,
-                config.get(ConfigParam.REPOSITORY_URL))
+            config.getRepository().getPublicUrl()
+                  .orElse(config.getRepository().getUrl())
         );
         input.setVocabularyRepository(repositoryUrl);
-        input.setLanguage(config.get(ConfigParam.LANGUAGE));
+        input.setLanguage(config.getPersistence().getLanguage());
         return input;
     }
 
     @Test
     void analyzeFilePassesContentTypeAndAcceptHeadersToService() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
-        mockServer.expect(requestTo(config.get(TEXT_ANALYSIS_SERVICE_URL)))
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().string(objectMapper.writeValueAsString(input)))
                 .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
@@ -178,7 +174,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     @Test
     void analyzeFileThrowsWebServiceIntegrationExceptionOnError() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
-        mockServer.expect(requestTo(config.get(TEXT_ANALYSIS_SERVICE_URL)))
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().string(objectMapper.writeValueAsString(input)))
                 .andRespond(withServerError());
@@ -198,7 +194,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     @Test
     void analyzeFileThrowsWebServiceIntegrationExceptionWhenRemoteServiceReturnsEmptyBody() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
-        mockServer.expect(requestTo(config.get(TEXT_ANALYSIS_SERVICE_URL)))
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().string(objectMapper.writeValueAsString(input)))
                 .andRespond(withSuccess());
@@ -214,7 +210,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                 .collect(Collectors.toSet());
         final TextAnalysisInput expected = textAnalysisInput();
         expected.setVocabularyContexts(vocabs);
-        mockServer.expect(requestTo(config.get(TEXT_ANALYSIS_SERVICE_URL)))
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().string(objectMapper.writeValueAsString(expected)))
                 .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
@@ -225,7 +221,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     @Test
     void analyzeFileBacksUpFileContentBeforeSavingNewAnalyzedContent() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
-        mockServer.expect(requestTo(config.get(TEXT_ANALYSIS_SERVICE_URL)))
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().string(objectMapper.writeValueAsString(input)))
                 .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
@@ -238,7 +234,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
     @Test
     void analyzeFileCreatesTextAnalysisRecord() {
-        mockServer.expect(requestTo(config.get(TEXT_ANALYSIS_SERVICE_URL)))
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
                 .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));

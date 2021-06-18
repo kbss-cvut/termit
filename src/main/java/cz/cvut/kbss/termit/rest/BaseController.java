@@ -19,7 +19,6 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -69,19 +68,14 @@ public class BaseController {
      *
      * @param namespace       Explicitly provided namespace. Optional
      * @param fragment        Locally unique identifier fragment
-     * @param namespaceConfig Namespace configuration parameter. Used in {@code namespace} is not specified
      * @return Resolved identifier
      */
-    protected URI resolveIdentifier(String namespace, String fragment, ConfigParam namespaceConfig) {
-        if (namespace != null) {
-            return idResolver.resolveIdentifier(namespace, fragment);
-        } else {
-            return idResolver.resolveIdentifier(namespaceConfig, fragment);
-        }
+    protected URI resolveIdentifier(String namespace, String fragment) {
+        return idResolver.resolveIdentifier(namespace, fragment);
     }
 
-    URI generateLocation(URI identifier, ConfigParam namespaceConfig) {
-        if (Objects.equals(IdentifierResolver.extractIdentifierNamespace(identifier), (config.get(namespaceConfig)))) {
+    URI generateLocation(URI identifier, String namespace) {
+        if (Objects.equals(IdentifierResolver.extractIdentifierNamespace(identifier), namespace)) {
             return RestUtils.createLocationFromCurrentUriWithPath("/{name}",
                     IdentifierResolver.extractIdentifierFragment(identifier));
         } else {

@@ -15,7 +15,6 @@
 package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.exception.TermItException;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -160,32 +159,6 @@ public class IdentifierResolver {
     }
 
     /**
-     * Generates identifier, appending a normalized string consisting of the specified components to namespace
-     * configured by the specified configuration parameter.
-     *
-     * @param namespaceConfig Configuration parameter for namespace
-     * @param components      Components to normalize and add to the identifier
-     * @return Generated identifier
-     */
-    public URI generateIdentifier(ConfigParam namespaceConfig, String... components) {
-        Objects.requireNonNull(namespaceConfig);
-        return generateIdentifier(config.get(namespaceConfig), components);
-    }
-
-    /**
-     * Generates identifier, appending a normalized string consisting of the specified component
-     * to namespace configured by the specified configuration parameter.
-     *
-     * @param namespaceConfig Configuration parameter for namespace
-     * @param component      Component to normalize and add to the identifier
-     * @return Generated identifier
-     */
-    public URI generateIdentifier(ConfigParam namespaceConfig, String component) {
-        Objects.requireNonNull(component);
-        return generateIdentifier(config.get(namespaceConfig), new String[]{ component });
-    }
-
-    /**
      * Generates term identifier of a dependent asset, appending a normalized string consisting
      * of the specified components to a namespace which is derived from baseUri by appending
      * namespace separator defined by namespaceSeparatorConfig.
@@ -194,10 +167,10 @@ public class IdentifierResolver {
      * @param label      Components to normalize and add to the identifier
      * @return Generated identifier
      */
-    public URI generateDerivedIdentifier(URI baseUri, ConfigParam namespaceSeparatorConfig, String label) {
+    public URI generateDerivedIdentifier(URI baseUri, String namespaceSeparator, String label) {
         return generateIdentifier(buildNamespace(baseUri.toString(),
-            config.get(namespaceSeparatorConfig)),
-            label
+                namespaceSeparator),
+                label
         );
     }
 
@@ -223,19 +196,6 @@ public class IdentifierResolver {
     }
 
     /**
-     * Builds an identifier from a namespace loaded from application configuration and the specified fragment.
-     *
-     * @param namespaceConfig Configuration parameter for loading namespace
-     * @param fragment        Normalized string unique in the loaded namespace
-     * @return Identifier
-     * @see #resolveIdentifier(String, String)
-     */
-    public URI resolveIdentifier(ConfigParam namespaceConfig, String fragment) {
-        Objects.requireNonNull(namespaceConfig);
-        return resolveIdentifier(config.get(namespaceConfig), fragment);
-    }
-
-    /**
      * Creates a namespace URI by appending the specified components to the specified base URI, adding separators where
      * necessary.
      *
@@ -256,19 +216,6 @@ public class IdentifierResolver {
             sb.append('/');
         }
         return sb.toString();
-    }
-
-    /**
-     * Creates a namespace URI by appending the specified components to base URI loaded from system configuration,
-     * adding separators where necessary.
-     *
-     * @param baseUriParam Configuration parameter specifying namespace base URI
-     * @param components   Components to add to namespace URI. Should be normalized
-     * @return Namespace URI, ending with a forward slash
-     */
-    public String buildNamespace(ConfigParam baseUriParam, String... components) {
-        Objects.requireNonNull(baseUriParam);
-        return buildNamespace(config.get(baseUriParam), components);
     }
 
     /**

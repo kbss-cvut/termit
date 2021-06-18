@@ -55,7 +55,7 @@ public class JwtUtils {
                    .setIssuedAt(issued)
                    .setExpiration(new Date(issued.getTime() + SecurityConstants.SESSION_TIMEOUT))
                    .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
-                   .signWith(SignatureAlgorithm.HS512, config.get(ConfigParam.JWT_SECRET_KEY))
+                   .signWith(SignatureAlgorithm.HS512, getJwtSecretKey())
                    .compact();
     }
 
@@ -89,7 +89,7 @@ public class JwtUtils {
 
     private Claims getClaimsFromToken(String token) {
         try {
-            return Jwts.parser().setSigningKey(config.get(ConfigParam.JWT_SECRET_KEY))
+            return Jwts.parser().setSigningKey(getJwtSecretKey())
                        .parseClaimsJws(token).getBody();
         } catch (MalformedJwtException | UnsupportedJwtException e) {
             throw new JwtException("Unable to parse the specified JWT.", e);
@@ -137,6 +137,10 @@ public class JwtUtils {
         claims.setIssuedAt(issuedAt);
         claims.setExpiration(new Date(issuedAt.getTime() + SecurityConstants.SESSION_TIMEOUT));
         return Jwts.builder().setClaims(claims)
-                   .signWith(SignatureAlgorithm.HS512, config.get(ConfigParam.JWT_SECRET_KEY)).compact();
+                   .signWith(SignatureAlgorithm.HS512, getJwtSecretKey()).compact();
+    }
+
+    private String getJwtSecretKey() {
+        return config.getJwt().getSecretKey();
     }
 }

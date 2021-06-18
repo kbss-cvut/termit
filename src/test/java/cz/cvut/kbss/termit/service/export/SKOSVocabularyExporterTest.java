@@ -90,7 +90,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
     }
 
     private String lang() {
-        return config.get(ConfigParam.LANGUAGE);
+        return config.getPersistence().getLanguage();
     }
 
     @Test

@@ -1,11 +1,10 @@
 package cz.cvut.kbss.termit.validation;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,7 +18,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class MultilingualStringPrimaryNotBlankValidatorTest {
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Configuration config;
 
     @Mock
@@ -35,15 +34,15 @@ class MultilingualStringPrimaryNotBlankValidatorTest {
 
     @Test
     void isValidReturnsFalseWhenValueDoesNotContainPrimaryTranslation() {
-        when(config.get(ConfigParam.LANGUAGE)).thenReturn(Constants.DEFAULT_LANGUAGE);
+        when(config.getPersistence().getLanguage()).thenReturn("es");
         final MultilingualString value = MultilingualString.create("test", "cs");
         assertFalse(sut.isValid(value, validatorContext));
     }
 
     @Test
     void isValidReturnsTrueWhenValueContainsPrimaryTranslation() {
-        when(config.get(ConfigParam.LANGUAGE)).thenReturn(Constants.DEFAULT_LANGUAGE);
-        final MultilingualString value = MultilingualString.create("test", Constants.DEFAULT_LANGUAGE);
+        when(config.getPersistence().getLanguage()).thenReturn("es");
+        final MultilingualString value = MultilingualString.create("test", "es");
         value.set("test");
         assertTrue(sut.isValid(value, validatorContext));
     }

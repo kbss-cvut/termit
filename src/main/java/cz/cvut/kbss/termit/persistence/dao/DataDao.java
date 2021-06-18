@@ -23,10 +23,10 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants.Turtle;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -51,12 +51,12 @@ public class DataDao {
 
     private final EntityManager em;
 
-    private final Configuration config;
+    private final Persistence config;
 
     @Autowired
     public DataDao(EntityManager em, Configuration config) {
         this.em = em;
-        this.config = config;
+        this.config = config.getPersistence();
     }
 
     /**
@@ -136,7 +136,7 @@ public class DataDao {
                     "FILTER (LANGMATCHES(LANG(?label), ?tag) || lang(?label) = \"\") }", String.class)
                                  .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
                                  .setParameter("has-title", URI.create(DC.Terms.TITLE))
-                                 .setParameter("tag", config.get(ConfigParam.LANGUAGE), null).getSingleResult());
+                                 .setParameter("tag", config.getLanguage(), null).getSingleResult());
         } catch (NoResultException | NoUniqueResultException e) {
             return Optional.empty();
         }

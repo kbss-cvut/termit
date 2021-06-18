@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Constants;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -85,7 +86,7 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
     @Test
     void exportVocabularyGlossaryOutputsGlossaryTermsOrderedByLabel() throws Exception {
         final List<Term> terms = generateTerms();
-        terms.sort(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)));
+        terms.sort(Comparator.comparing((Term t) -> t.getLabel().get(Environment.LANGUAGE)));
         final Resource result = sut.exportVocabularyGlossary(vocabulary);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
