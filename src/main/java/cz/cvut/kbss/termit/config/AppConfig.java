@@ -17,11 +17,9 @@ package cz.cvut.kbss.termit.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.EnableMBeanExport;
-import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
 
 @Configuration
 @EnableMBeanExport
-@EnableSpringConfigured
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 public class AppConfig {
 }
