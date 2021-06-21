@@ -275,7 +275,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
     }
 
     @Test
-    void exportVocabularyGlossaryExportsCustomTypeAsBroader() throws Exception {
+    void exportVocabularyGlossaryExportsCustomTypeAsSuperType() throws Exception {
         final List<Term> terms = generateTerms();
         final Term typed = terms.get(Generator.randomIndex(terms));
         final String type = "http://onto.fel.cvut.cz/ontologies/ufo/object-type";
@@ -287,7 +287,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         final TypeAwareResource result = sut.exportVocabularyGlossary(vocabulary);
         final Model model = loadAsModel(result);
         assertThat(model,
-                hasItem(vf.createStatement(vf.createIRI(typed.getUri().toString()), SKOS.BROADER,
+                hasItem(vf.createStatement(vf.createIRI(typed.getUri().toString()), RDF.TYPE,
                         vf.createIRI(type))));
     }
 
