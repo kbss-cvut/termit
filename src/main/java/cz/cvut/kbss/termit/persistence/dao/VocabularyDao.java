@@ -262,7 +262,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
      */
     public Integer getTermCount(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        return em.createQuery("SELECT COUNT(t) FROM Term t WHERE t.vocabulary = :vocabulary", Integer.class)
+        return em.createQuery("SELECT DISTINCT COUNT(t) FROM Term t WHERE t.vocabulary = :vocabulary", Integer.class)
                  .setParameter("vocabulary", vocabulary).getSingleResult();
     }
 }
