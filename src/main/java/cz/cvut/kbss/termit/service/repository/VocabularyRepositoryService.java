@@ -11,7 +11,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.importer.VocabularyImportService;
-import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
@@ -43,11 +43,14 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     final ResourceRepositoryService resourceService;
 
+    private final Configuration.Namespace config;
+
     @Autowired
     public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
                                        @Lazy TermService termService, VocabularyImportService importService,
-                                       @Lazy ResourceRepositoryService resourceService) {
+                                       @Lazy ResourceRepositoryService resourceService,
+                                       final Configuration config) {
         super(validator);
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
@@ -55,6 +58,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         this.changeRecordService = changeRecordService;
         this.importService = importService;
         this.resourceService = resourceService;
+        this.config = config.getNamespace();
     }
 
     @Override
@@ -78,7 +82,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     protected void prePersist(Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(idResolver.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY,
+            instance.setUri(idResolver.generateIdentifier(config.getVocabulary(),
                 instance.getLabel()));
         }
         verifyIdentifierUnique(instance);

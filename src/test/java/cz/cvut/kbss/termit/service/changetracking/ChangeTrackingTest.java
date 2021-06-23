@@ -19,7 +19,6 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
-import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,7 +132,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
-        term.setDefinition(MultilingualString.create("Updated term definition.", Constants.DEFAULT_LANGUAGE));
+        term.setDefinition(MultilingualString.create("Updated term definition.", Environment.LANGUAGE));
         // This is normally inferred
         term.setVocabulary(vocabulary.getUri());
         transactional(() -> termService.update(term));
@@ -183,7 +182,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         final MultilingualString newDefinition = MultilingualString
-                .create("Updated term definition.", Constants.DEFAULT_LANGUAGE);
+                .create("Updated term definition.", Environment.LANGUAGE);
         term.setDefinition(newDefinition);
         // This is normally inferred
         term.setVocabulary(vocabulary.getUri());

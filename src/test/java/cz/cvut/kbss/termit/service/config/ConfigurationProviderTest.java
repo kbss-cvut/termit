@@ -34,6 +34,6 @@ class ConfigurationProviderTest extends BaseServiceTestRunner {
     void getConfigurationReturnsConfigurationDtoWithRelevantConfigurationValues() {
         final ConfigurationDto result = sut.getConfiguration();
         assertNotNull(result);
-        assertEquals(config.get(ConfigParam.LANGUAGE), result.getLanguage());
+        assertEquals(config.getPersistence().getLanguage(), result.getLanguage());
     }
 }

@@ -19,6 +19,7 @@ import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.ontodriver.sesame.config.SesameOntoDriverProperties;
 import cz.cvut.kbss.termit.persistence.MainPersistenceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -29,9 +30,9 @@ import javax.annotation.PreDestroy;
 import java.util.Map;
 
 import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.*;
-import static cz.cvut.kbss.termit.util.ConfigParam.*;
 
 @Configuration
+@EnableConfigurationProperties(cz.cvut.kbss.termit.util.Configuration.class)
 @Profile("test")
 public class TestPersistenceFactory {
 
@@ -53,11 +54,11 @@ public class TestPersistenceFactory {
     @PostConstruct
     private void init() {
         final Map<String, String> properties = MainPersistenceFactory.defaultParams();
-        properties.put(ONTOLOGY_PHYSICAL_URI_KEY, config.get(REPOSITORY_URL));
+        properties.put(ONTOLOGY_PHYSICAL_URI_KEY, config.getRepository().getUrl());
         properties.put(SesameOntoDriverProperties.SESAME_USE_VOLATILE_STORAGE, Boolean.TRUE.toString());
         properties.put(SesameOntoDriverProperties.SESAME_USE_INFERENCE, Boolean.TRUE.toString());
-        properties.put(DATA_SOURCE_CLASS, config.get(DRIVER));
-        properties.put(LANG, config.get(LANGUAGE));
+        properties.put(DATA_SOURCE_CLASS, config.getPersistence().getDriver());
+        properties.put(LANG, config.getPersistence().getLanguage());
         properties.put(PREFER_MULTILINGUAL_STRING, Boolean.TRUE.toString());
         // OPTIMIZATION: Always use statement retrieval with unbound property. Should spare repository queries
         properties.put(SesameOntoDriverProperties.SESAME_LOAD_ALL_THRESHOLD, "1");

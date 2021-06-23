@@ -12,7 +12,6 @@
 package cz.cvut.kbss.termit.service.document;
 
 import static cz.cvut.kbss.termit.environment.Environment.loadFile;
-import static cz.cvut.kbss.termit.util.ConfigParam.FILE_STORAGE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.startsWith;
@@ -32,7 +31,7 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -44,9 +43,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
-import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.util.MimeTypeUtils;
 
@@ -57,7 +54,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
             "<html><body><h1>Metropolitan plan</h1><p>Description of the metropolitan plan.</body></html>";
 
     @Autowired
-    private Environment environment;
+    private Configuration configuration;
 
     @Autowired
     private DefaultDocumentManager sut;
@@ -78,7 +75,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     private java.io.File generateDirectory() throws Exception {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
-        ((MockEnvironment) environment).setProperty(ConfigParam.FILE_STORAGE.toString(), dir.getAbsolutePath());
+        configuration.getFile().setStorage(dir.getAbsolutePath());
         final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
             document.getDirectoryName());
         docDir.mkdir();
@@ -98,7 +95,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     void loadFileContentThrowsNotFoundExceptionIfFileCannotBeFound() throws Exception {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
-        ((MockEnvironment) environment).setProperty(ConfigParam.FILE_STORAGE.toString(), dir.getAbsolutePath());
+        configuration.getFile().setStorage(dir.getAbsolutePath());
         final File file = new File();
         file.setLabel("unknown.html");
         document.addFile(file);
@@ -131,7 +128,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     private java.io.File generateFileWithoutParentDocument(File file) throws Exception {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
-        ((MockEnvironment) environment).setProperty(ConfigParam.FILE_STORAGE.toString(), dir.getAbsolutePath());
+        configuration.getFile().setStorage(dir.getAbsolutePath());
         final java.io.File fileDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
                 file.getDirectoryName());
         fileDir.mkdir();
@@ -189,7 +186,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         file.setDocument(document);
         sut.saveFileContent(file, content);
         final java.io.File contentFile = new java.io.File(
-                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator +
+                configuration.getFile().getStorage() + java.io.File.separator +
                         document.getDirectoryName() + java.io.File.separator + file.getLabel());
         final List<String> lines = Files.readAllLines(contentFile.toPath());
         final String result = String.join("\n", lines);
@@ -289,7 +286,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     void saveFileContentCreatesParentDirectoryWhenItDoesNotExist() throws Exception {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
-        ((MockEnvironment) environment).setProperty(ConfigParam.FILE_STORAGE.toString(), dir.getAbsolutePath());
+        configuration.getFile().setStorage(dir.getAbsolutePath());
         final InputStream content = loadFile("data/rdfa-simple.html");
         final File file = new File();
         file.setUri(Generator.generateUri());
@@ -307,7 +304,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     void resolveFileSanitizesFileLabelToEnsureValidFileName() throws Exception {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
-        ((MockEnvironment) environment).setProperty(ConfigParam.FILE_STORAGE.toString(), dir.getAbsolutePath());
+        configuration.getFile().setStorage(dir.getAbsolutePath());
         final File file = new File();
         file.setUri(Generator.generateUri());
         final String label = "Zákon 130/2002";
@@ -326,7 +323,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     void createBackupSanitizesFileLabelToEnsureValidFileName() throws Exception {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
-        ((MockEnvironment) environment).setProperty(ConfigParam.FILE_STORAGE.toString(), dir.getAbsolutePath());
+        configuration.getFile().setStorage(dir.getAbsolutePath());
         final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
                 document.getDirectoryName());
         docDir.mkdir();
@@ -485,7 +482,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
 
         sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
         final java.io.File newFile = new java.io.File(
-                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName() +
+                configuration.getFile().getStorage()  + java.io.File.separator + file.getDirectoryName() +
                         java.io.File.separator + file.getLabel());
         assertTrue(newFile.exists());
         newFile.deleteOnExit();
@@ -501,7 +498,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
 
         sut.onFileRename(new FileRenameEvent(file, oldName, file.getLabel()));
         final java.io.File docDir = new java.io.File(
-                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName());
+                configuration.getFile().getStorage()  + java.io.File.separator + file.getDirectoryName());
         assertFalse(docDir.exists());
     }
 
@@ -517,7 +514,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         sut.onFileRename(new FileRenameEvent(file, physicalFile.getName(), newName));
         for (java.io.File backup : backups) {
             final java.io.File newBackup = new java.io.File(
-                    environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator +
+                    configuration.getFile().getStorage()  + java.io.File.separator +
                             file.getDirectoryName() +
                             java.io.File.separator + backup.getName().replace(physicalFile.getName(), newName));
             assertTrue(newBackup.exists());
@@ -525,7 +522,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
             assertFalse(backup.exists());
         }
         final java.io.File newFile = new java.io.File(
-                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName() +
+                configuration.getFile().getStorage()  + java.io.File.separator + file.getDirectoryName() +
                         java.io.File.separator + file.getLabel());
         assertTrue(newFile.exists());
         newFile.deleteOnExit();
@@ -542,11 +539,10 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
 
         sut.onFileRename(new FileRenameEvent(file, physicalOriginal.getName(), newName));
         final java.io.File newDirectory = new java.io.File(
-                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName());
+                configuration.getFile().getStorage()  + java.io.File.separator + file.getDirectoryName());
         assertTrue(newDirectory.exists());
         newDirectory.deleteOnExit();
-        final java.io.File newFile = new java.io.File(
-                environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + file.getDirectoryName() +
+        final java.io.File newFile = new java.io.File(configuration.getFile().getStorage()  + java.io.File.separator + file.getDirectoryName() +
                         java.io.File.separator + file.getLabel());
         assertTrue(newFile.exists());
         newFile.deleteOnExit();
@@ -563,8 +559,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         document.setLabel(newDirLabel);
         sut.onDocumentRename(new DocumentRenameEvent(document, oldDirLabel, document.getLabel()));
 
-        final java.io.File newDirectory = new java.io.File(
-            environment.getProperty(FILE_STORAGE.toString()) + java.io.File.separator + document.getDirectoryName());
+        final java.io.File newDirectory = new java.io.File( configuration.getFile().getStorage() + java.io.File.separator + document.getDirectoryName());
 
         assertTrue(newDirectory.exists());
         newDirectory.deleteOnExit();

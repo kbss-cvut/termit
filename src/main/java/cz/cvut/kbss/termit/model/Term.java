@@ -12,7 +12,6 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -108,9 +107,9 @@ public class Term extends AbstractTerm implements HasTypes {
     @JsonIgnore
     public void setPrimaryLabel(String label) {
         if (this.getLabel() == null) {
-            this.setLabel(MultilingualString.create(label, config.get(ConfigParam.LANGUAGE)));
+            this.setLabel(MultilingualString.create(label, config.getPersistence().getLanguage()));
         } else {
-            this.getLabel().set(config.get(ConfigParam.LANGUAGE), label);
+            this.getLabel().set(config.getPersistence().getLanguage(), label);
         }
     }
 
@@ -124,7 +123,7 @@ public class Term extends AbstractTerm implements HasTypes {
      */
     @JsonIgnore
     public String getPrimaryLabel() {
-        return getLabel() != null ? getLabel().get(config.get(ConfigParam.LANGUAGE)) : null;
+        return getLabel() != null ? getLabel().get(config.getPersistence().getLanguage()) : null;
     }
 
     public Set<MultilingualString> getAltLabels() {

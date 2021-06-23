@@ -1,48 +1,63 @@
 application.version: @project.version@
 
 management:
-  endpoints:
-    enabled-by-default: false
-  endpoint:
-    health:
-      enabled: true
+    endpoints:
+        enabled-by-default: false
+    endpoint:
+        health:
+            enabled: true
 
 server:
-  servlet:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
-    context-path: /termit
+    servlet:
+        encoding:
+            charset: UTF-8
+            enabled: true
+            force: true
+        context-path: /termit
 spring:
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 20MB
-      file-size-threshold: 0B
-      location: ${java.io.tmpdir}
-  cache:
-      jcache:
-          config: classpath:ehcache.xml
-  profiles:
-    active: @spring.profiles.active@
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 20MB
+            file-size-threshold: 0B
+            location: ${java.io.tmpdir}
+    cache:
+        jcache:
+            config: classpath:ehcache.xml
+    profiles:
+        active: @spring.profiles.active@
 javamelody:
-  init-parameters:
-    authorized-users: admin:kral0vnat3rm1t1st3
-repository:
-  url: http://localhost:7200/repositories/termit
-  # if empty, repository.url will be used
-  publicUrl:
-persistence:
-  driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
-  language: cs
-jwt:
-  secretKey: TermItSecretKey
-namespace:
-  vocabulary: http://onto.fel.cvut.cz/ontologies/slovnik/
-  user: http://onto.fel.cvut.cz/ontologies/uzivatel/
-  resource: http://onto.fel.cvut.cz/ontologies/zdroj/
-file:
-  storage: /tmp/termit
-textAnalysis:
-  url: http://localhost/annotace/annotate
+    init-parameters:
+        authorized-users: admin:kral0vnat3rm1t1st3
+termit:
+    repository:
+        url: http://localhost:7200/repositories/termit
+        # if empty, repository.url will be used
+        publicUrl:
+    persistence:
+        driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
+        language: cs
+    jwt:
+        secretKey: TermItSecretKey
+    namespace:
+        vocabulary: http://onto.fel.cvut.cz/ontologies/slovnik/
+        user: http://onto.fel.cvut.cz/ontologies/uzivatel/
+        resource: http://onto.fel.cvut.cz/ontologies/zdroj/
+        term:
+            separator: /pojem
+        file:
+            separator: /soubor
+    file:
+        storage: /tmp/termit
+    textAnalysis:
+        url: http://localhost/annotace/annotate
+    changetracking:
+        context:
+            extension: /zmeny
+    comments:
+        context: http://onto.fel.cvut.cz/ontologies/komentare
+    glossary:
+        fragment: glosář
+    admin:
+        credentialsLocation: ${user.home}
+        credentialsFile: .termit-admin

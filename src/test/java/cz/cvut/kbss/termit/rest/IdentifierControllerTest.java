@@ -15,12 +15,13 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,6 +40,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class IdentifierControllerTest extends BaseControllerTestRunner {
 
     private static final String PATH = "/identifiers";
+
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private Configuration config;
 
     @Mock
     private IdentifierResolver identifierResolverMock;
@@ -97,14 +101,14 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
             throws Exception {
         final String label = "Metropolitan plan";
         final URI uri = Generator.generateUri();
-        when(identifierResolverMock.generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, label)).thenReturn(uri);
+        when(identifierResolverMock.generateIdentifier(config.getNamespace().getResource(), label)).thenReturn(uri);
         final MvcResult mvcResult = mockMvc.perform(post(PATH)
                 .param("name", label)
                 .param("assetType", "RESOURCE")
         )
                 .andExpect(status().isOk()).andReturn();
         assertEquals(uri.toString(), readValue(mvcResult, String.class));
-        verify(identifierResolverMock).generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, label);
+        verify(identifierResolverMock).generateIdentifier(config.getNamespace().getResource(), label);
     }
 
     @Test
@@ -114,10 +118,10 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
         final String name = "metropolitan-plan";
         final String documentName = "doc";
         final URI documentUri = URI.create(Environment.BASE_URI + "/" + documentName +
-                Constants.DEFAULT_FILE_NAMESPACE_SEPARATOR + "/" + name);
+                "/soubor/" + name);
         Generator.generateUri();
         final URI fileUri = URI.create(Environment.BASE_URI + "/" + documentName +
-                Constants.DEFAULT_FILE_NAMESPACE_SEPARATOR + "/" + name);
+                "/soubor/" + name);
         when(identifierResolverMock.generateDerivedIdentifier(any(), any(), any())).thenReturn(fileUri);
 
         final MvcResult mvcResult = mockMvc
@@ -129,7 +133,7 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isOk()).andReturn();
         final String result = readValue(mvcResult, String.class);
         assertEquals(fileUri.toString(), result);
-        verify(identifierResolverMock).generateDerivedIdentifier(documentUri, ConfigParam.FILE_NAMESPACE_SEPARATOR, label);
+        verify(identifierResolverMock).generateDerivedIdentifier(documentUri, config.getNamespace().getFile().getSeparator(), label);
     }
 
     @Test
@@ -137,14 +141,14 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
             throws Exception {
         final String label = "Metropolitan plan";
         final URI uri = Generator.generateUri();
-        when(identifierResolverMock.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY, label)).thenReturn(uri);
+        when(identifierResolverMock.generateIdentifier(config.getNamespace().getVocabulary(), label)).thenReturn(uri);
         final MvcResult mvcResult = mockMvc.perform(post(PATH)
                 .param("name", label)
                 .param("assetType", "VOCABULARY")
         )
                 .andExpect(status().isOk()).andReturn();
         assertEquals(uri.toString(), readValue(mvcResult, String.class));
-        verify(identifierResolverMock).generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY, label);
+        verify(identifierResolverMock).generateIdentifier(config.getNamespace().getVocabulary(), label);
     }
 
     @Test
@@ -153,11 +157,9 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
         final String label = "Metropolitan plan";
         final String name = "metropolitan-plan";
         final String vocabularyName = "voc";
-        final URI vocabularyUri = URI.create(Environment.BASE_URI + "/" + vocabularyName +
-                Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR + "/" + name);
+        final URI vocabularyUri = URI.create(Environment.BASE_URI + "/" + vocabularyName + "/pojem/" + name);
         Generator.generateUri();
-        final URI termUri = URI.create(Environment.BASE_URI + "/" + vocabularyName +
-                Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR + "/" + name);
+        final URI termUri = URI.create(Environment.BASE_URI + "/" + vocabularyName + "/pojem/" + name);
         when(identifierResolverMock.generateDerivedIdentifier(any(), any(), any())).thenReturn(termUri);
 
         final MvcResult mvcResult = mockMvc
@@ -169,6 +171,6 @@ class IdentifierControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isOk()).andReturn();
         final String result = readValue(mvcResult, String.class);
         assertEquals(termUri.toString(), result);
-        verify(identifierResolverMock).generateDerivedIdentifier(vocabularyUri, ConfigParam.TERM_NAMESPACE_SEPARATOR, label);
+        verify(identifierResolverMock).generateDerivedIdentifier(vocabularyUri, config.getNamespace().getTerm().getSeparator(), label);
     }
 }

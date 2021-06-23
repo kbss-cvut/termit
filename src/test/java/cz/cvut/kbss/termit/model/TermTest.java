@@ -16,8 +16,8 @@ package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -68,16 +68,16 @@ class TermTest {
     @Test
     void toCsvPutsCommentInQuotesToEscapeCommas() {
         final Term term = Generator.generateTermWithId();
-        term.setDescription(MultilingualString.create("Comment, with a comma", Constants.DEFAULT_LANGUAGE));
+        term.setDescription(MultilingualString.create("Comment, with a comma", Environment.LANGUAGE));
         final String result = term.toCsv();
-        assertThat(result, containsString("\"" + term.getDescription().get(Constants.DEFAULT_LANGUAGE) + "\""));
+        assertThat(result, containsString("\"" + term.getDescription().get(Environment.LANGUAGE) + "\""));
     }
 
     @Test
     void toCsvExportsAltLabelsDelimitedBySemicolons() {
         final Term term = Generator.generateTermWithId();
-        term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
-                MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
+        term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
+                MultilingualString.create("Construction", Environment.LANGUAGE))));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertEquals(items.length, 11);
@@ -90,8 +90,8 @@ class TermTest {
     void toCsvExportsHiddenLabelsDelimitedBySemicolons() {
         final Term term = Generator.generateTermWithId();
         term.setHiddenLabels(
-                new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
-                        MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
+                new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
+                        MultilingualString.create("Construction", Environment.LANGUAGE))));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertEquals(items.length, 11);
@@ -151,7 +151,7 @@ class TermTest {
 
     private TermInfo generateTermInfo() {
         final TermInfo ti = new TermInfo(Generator.generateUri());
-        ti.setLabel(MultilingualString.create("Term " + Generator.randomInt(), Constants.DEFAULT_LANGUAGE));
+        ti.setLabel(MultilingualString.create("Term " + Generator.randomInt(), Environment.LANGUAGE));
         ti.setVocabulary(Generator.generateUri());
         return ti;
     }
@@ -160,11 +160,11 @@ class TermTest {
     void toExcelExportsTermToExcelRow() {
         final Term term = Generator.generateTermWithId();
         term.setTypes(Collections.singleton(Vocabulary.s_c_object));
-        term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
-                MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
+        term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
+                MultilingualString.create("Construction", Environment.LANGUAGE))));
         term.setHiddenLabels(
-                new HashSet<>(Arrays.asList(MultilingualString.create("Building", Constants.DEFAULT_LANGUAGE),
-                        MultilingualString.create("Construction", Constants.DEFAULT_LANGUAGE))));
+                new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
+                        MultilingualString.create("Construction", Environment.LANGUAGE))));
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
@@ -300,7 +300,7 @@ class TermTest {
 
     @Test
     void consolidateInferredCopiesInverseRelatedTermsToRelated() {
-        final Term sut = Generator.generateMultiLingualTerm(Constants.DEFAULT_LANGUAGE, "cs");
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
         sut.setVocabulary(Generator.generateUri());
         sut.setRelated(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary()))).collect(Collectors.toSet()));
         sut.setInverseRelated(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary()))).collect(Collectors.toSet()));

@@ -15,14 +15,11 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
@@ -36,7 +33,6 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SystemInitializerTest extends BaseServiceTestRunner {
@@ -64,7 +60,7 @@ class SystemInitializerTest extends BaseServiceTestRunner {
         // Randomize admin credentials folder
         this.adminCredentialsDir =
                 System.getProperty("java.io.tmpdir") + File.separator + Generator.randomInt(0, 10000);
-        when(config.get(ConfigParam.ADMIN_CREDENTIALS_LOCATION)).thenReturn(adminCredentialsDir);
+        config.getAdmin().setCredentialsLocation(adminCredentialsDir);
         this.sut = new SystemInitializer(config, userService, txManager);
     }
 
@@ -108,8 +104,8 @@ class SystemInitializerTest extends BaseServiceTestRunner {
     void savesAdminLoginCredentialsIntoHiddenFileInUserHome() throws Exception {
         sut.initSystemAdmin();
         final UserAccount admin = em.find(UserAccount.class, ADMIN_URI);
-        final String home = config.get(ConfigParam.ADMIN_CREDENTIALS_LOCATION);
-        final File credentialsFile = new File(home + File.separator + Constants.ADMIN_CREDENTIALS_FILE);
+        final String home = config.getAdmin().getCredentialsLocation();
+        final File credentialsFile = new File(home + File.separator + config.getAdmin().getCredentialsFile());
         assertTrue(credentialsFile.exists());
         assertTrue(credentialsFile.isHidden());
         verifyAdminCredentialsFileContent(admin, credentialsFile);
@@ -125,7 +121,7 @@ class SystemInitializerTest extends BaseServiceTestRunner {
     @Test
     void savesAdminLoginCredentialsIntoConfiguredFile() throws Exception {
         final String adminFileName = ".admin-file-with-different-name";
-        when(config.get(ConfigParam.ADMIN_CREDENTIALS_FILE)).thenReturn(adminFileName);
+        config.getAdmin().setCredentialsFile(adminFileName);
         this.sut = new SystemInitializer(config, userService, txManager);
         sut.initSystemAdmin();
         final UserAccount admin = em.find(UserAccount.class, ADMIN_URI);

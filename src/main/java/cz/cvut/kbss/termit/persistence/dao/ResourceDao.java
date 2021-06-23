@@ -48,7 +48,7 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
     private volatile long lastModified;
 
     public ResourceDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
-        super(Resource.class, em, config, descriptorFactory);
+        super(Resource.class, em, config.getPersistence(), descriptorFactory);
         refreshLastModified();
     }
 

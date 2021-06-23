@@ -25,7 +25,7 @@ public class ChangeTrackingContextResolver {
     @Autowired
     public ChangeTrackingContextResolver(EntityManager em, Configuration config) {
         this.em = em;
-        this.contextExtension = config.get(ConfigParam.CHANGE_TRACKING_CONTEXT_EXTENSION);
+        this.contextExtension = config.getChangetracking().getContext().getExtension();
     }
 
     /**

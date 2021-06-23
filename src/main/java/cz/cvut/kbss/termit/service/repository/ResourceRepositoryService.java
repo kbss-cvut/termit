@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.ConfigParam;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,16 +57,20 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
 
     private final IdentifierResolver idResolver;
 
+    private final Configuration.Namespace cfgNamespace;
+
     @Autowired
     public ResourceRepositoryService(Validator validator, ResourceDao resourceDao,
                                      TermOccurrenceDao termOccurrenceDao,
                                      TermAssignmentRepositoryService assignmentService,
-                                     IdentifierResolver idResolver) {
+                                     IdentifierResolver idResolver,
+                                     Configuration config) {
         super(validator);
         this.resourceDao = resourceDao;
         this.termOccurrenceDao = termOccurrenceDao;
         this.assignmentService = assignmentService;
         this.idResolver = idResolver;
+        this.cfgNamespace = config.getNamespace();
     }
 
     @Override
@@ -103,7 +107,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(
-                idResolver.generateIdentifier(ConfigParam.NAMESPACE_RESOURCE, instance.getLabel()));
+                idResolver.generateIdentifier(cfgNamespace.getResource(), instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
     }

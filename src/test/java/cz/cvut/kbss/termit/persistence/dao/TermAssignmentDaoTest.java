@@ -16,7 +16,6 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.XPathSelector;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
@@ -406,7 +405,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
     }
 
     private void saveAssetLabelInOtherLanguage(Asset<?> asset) {
-        assertEquals(Constants.DEFAULT_LANGUAGE,
+        assertEquals(Environment.LANGUAGE,
                 em.getEntityManagerFactory().getProperties().get(JOPAPersistenceProperties.LANG));
         final Repository repo = em.unwrap(Repository.class);
         final ValueFactory vf = repo.getValueFactory();

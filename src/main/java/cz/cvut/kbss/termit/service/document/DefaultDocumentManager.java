@@ -24,7 +24,6 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.apache.tika.Tika;
@@ -66,7 +65,7 @@ public class DefaultDocumentManager implements DocumentManager {
     private java.io.File resolveFile(File file, boolean verifyExists) {
         Objects.requireNonNull(file);
         final String path =
-                config.get(ConfigParam.FILE_STORAGE) + java.io.File.separator + file.getDirectoryName() +
+                config.getFile().getStorage() + java.io.File.separator + file.getDirectoryName() +
                         java.io.File.separator + IdentifierResolver.sanitizeFileName(file.getLabel());
         final java.io.File result = new java.io.File(path);
         if (verifyExists && !result.exists()) {
@@ -79,7 +78,7 @@ public class DefaultDocumentManager implements DocumentManager {
     private java.io.File resolveDocumentDirectory(Document document) {
         Objects.requireNonNull(document);
         final String path =
-            config.get(ConfigParam.FILE_STORAGE) + java.io.File.separator + document.getDirectoryName();
+            config.getFile().getStorage() + java.io.File.separator + document.getDirectoryName();
         return new java.io.File(path);
     }
 
@@ -211,7 +210,7 @@ public class DefaultDocumentManager implements DocumentManager {
     private void removeDocumentFolderWithContent(Document document) {
         LOG.debug("Removing directory of document {} together will all its content.", document);
         final String path =
-                config.get(ConfigParam.FILE_STORAGE) + java.io.File.separator + document.getDirectoryName();
+                config.getFile().getStorage() + java.io.File.separator + document.getDirectoryName();
         final java.io.File result = new java.io.File(path);
         if (result.exists()) {
             final java.io.File[] files = result.listFiles();
