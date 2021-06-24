@@ -14,9 +14,9 @@ CONSTRUCT {
         dc:source ?source ;
         skos:broader ?parent ;
         skos:topConceptOf ?topOf ;
-        skos:broader ?type ;
-        skos:broader ?supertype ;
-        skos:broader  ?owner ;
+        a ?type ;
+        skos:broader ?superClass ;
+        skos:broader ?whole ;
         skos:broader ?parentEvent .
 } WHERE {
     ?term a skos:Concept ;
@@ -59,21 +59,21 @@ CONSTRUCT {
         }
     }
     OPTIONAL {
-        ?term rdfs:subClassOf ?supertype .
-        FILTER (!sameTerm(?term, ?supertype))
-        FILTER(!STRSTARTS(STR(?supertype), "http://www.w3.org/2002/07/owl#"))
+        ?term rdfs:subClassOf ?superClass .
+        FILTER (!sameTerm(?term, ?superClass))
+        FILTER(!STRSTARTS(STR(?superClass), "http://www.w3.org/2002/07/owl#"))
         FILTER NOT EXISTS {
-            ?term rdfs:subClassOf ?intermediateSupertype .
-            ?intermediateSupertype rdfs:subClassOf ?supertype .
-            FILTER (!sameTerm(?term, ?supertype) && !sameTerm(?term, ?intermediateSupertype) && !sameTerm(?supertype, ?intermediateSupertype))
+            ?term rdfs:subClassOf ?intermediateSuperClass .
+            ?intermediateSuperClass rdfs:subClassOf ?superClass .
+            FILTER (!sameTerm(?term, ?superClass) && !sameTerm(?term, ?intermediateSuperClass) && !sameTerm(?superClass, ?intermediateSuperClass))
         }
     }
     OPTIONAL {
-        ?owner <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?term .
+        ?whole <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?term .
         FILTER NOT EXISTS {
-            ?intermediateOwner <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?term .
-            ?owner <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?intermediateOwner .
-            FILTER (?owner != ?intermediateOwner)
+            ?intermediateWhole <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?term .
+            ?whole <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?intermediateWhole .
+            FILTER (?whole != ?intermediateWhole)
         }
     }
     OPTIONAL {
