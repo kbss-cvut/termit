@@ -89,7 +89,7 @@ class TermDaoTest extends BaseDaoTestRunner {
 
     private List<Term> generateTerms(int count) {
         return IntStream.range(0, count).mapToObj(i -> Generator.generateTermWithId())
-                .sorted(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)))
+                .sorted(Comparator.comparing((Term t) -> t.getLabel().get(Environment.LANGUAGE)))
                 .collect(Collectors.toList());
     }
 
@@ -185,7 +185,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE), vocabulary);
+        final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Environment.LANGUAGE), vocabulary);
         assertEquals(1, result.size());
         assertTrue(toDtos(terms).contains(result.get(0)));
     }
@@ -195,7 +195,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE));
+        final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Environment.LANGUAGE));
         assertEquals(1, result.size());
         assertTrue(toDtos(terms).contains(result.get(0)));
     }
@@ -251,8 +251,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        final String label = terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE);
-        assertTrue(sut.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE));
+        final String label = terms.get(0).getLabel().get(Environment.LANGUAGE);
+        assertTrue(sut.existsInVocabulary(label, vocabulary, Environment.LANGUAGE));
     }
 
     @Test
@@ -260,7 +260,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        assertFalse(sut.existsInVocabulary("unknown label", vocabulary, Constants.DEFAULT_LANGUAGE));
+        assertFalse(sut.existsInVocabulary("unknown label", vocabulary, Environment.LANGUAGE));
     }
 
     @Test
@@ -268,8 +268,8 @@ class TermDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(terms, vocabulary);
 
-        final String label = terms.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE).toLowerCase();
-        assertTrue(sut.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE));
+        final String label = terms.get(0).getLabel().get(Environment.LANGUAGE).toLowerCase();
+        assertTrue(sut.existsInVocabulary(label, vocabulary, Environment.LANGUAGE));
     }
 
     @Test
@@ -370,16 +370,16 @@ class TermDaoTest extends BaseDaoTestRunner {
         });
 
         final String updatedLabel = "Updated label";
-        final String oldLabel = term.getLabel().get(Constants.DEFAULT_LANGUAGE);
+        final String oldLabel = term.getLabel().get(Environment.LANGUAGE);
         term.setPrimaryLabel(updatedLabel);
         em.getEntityManagerFactory().getCache().evictAll();
         transactional(() -> sut.update(term));
 
         final Term result = em.find(Term.class, term.getUri(), descriptorFactory.termDescriptor(vocabulary));
-        assertEquals(updatedLabel, result.getLabel().get(Constants.DEFAULT_LANGUAGE));
+        assertEquals(updatedLabel, result.getLabel().get(Environment.LANGUAGE));
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?hasLabel ?label }", Boolean.class)
-                .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
-                .setParameter("label", oldLabel, Constants.DEFAULT_LANGUAGE).getSingleResult());
+                      .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
+                      .setParameter("label", oldLabel, Environment.LANGUAGE).getSingleResult());
     }
 
     @Test
@@ -578,7 +578,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Term toUpdate = sut.find(term.getUri()).get();
         assertEquals(Collections.singleton(parent), toUpdate.getParentTerms());
         final MultilingualString newDefinition = MultilingualString
-                .create("Updated definition", Constants.DEFAULT_LANGUAGE);
+                .create("Updated definition", Environment.LANGUAGE);
         toUpdate.setDefinition(newDefinition);
         transactional(() -> sut.update(toUpdate));
 
@@ -873,11 +873,11 @@ class TermDaoTest extends BaseDaoTestRunner {
             term.setDefinitionSource(source);
         });
         final String newDefinition = "new definition";
-        term.getDefinition().set(Constants.DEFAULT_LANGUAGE, newDefinition);
+        term.getDefinition().set(Environment.LANGUAGE, newDefinition);
         transactional(() -> sut.update(term));
 
         final Term result = em.find(Term.class, term.getUri());
-        assertEquals(newDefinition, result.getDefinition().get(Constants.DEFAULT_LANGUAGE));
+        assertEquals(newDefinition, result.getDefinition().get(Environment.LANGUAGE));
         assertNotNull(result.getDefinitionSource());
     }
 
@@ -914,7 +914,7 @@ class TermDaoTest extends BaseDaoTestRunner {
             addTermInVocabularyRelationship(parent, vocabulary.getUri());
             children.forEach(child -> addTermInVocabularyRelationship(child, vocabulary.getUri()));
         });
-        children.sort(Comparator.comparing(child -> child.getLabel().get(Constants.DEFAULT_LANGUAGE)));
+        children.sort(Comparator.comparing(child -> child.getLabel().get(Environment.LANGUAGE)));
 
         final Optional<Term> result = sut.find(parent.getUri());
         assertTrue(result.isPresent());
@@ -934,7 +934,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     void updateClearsPossiblyStaleTermDtoFromCache() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         final String originalLabel = "Uppercase Test";
-        term.getLabel().set(Constants.DEFAULT_LANGUAGE, originalLabel);
+        term.getLabel().set(Environment.LANGUAGE, originalLabel);
         term.setGlossary(vocabulary.getGlossary().getUri());
         vocabulary.getGlossary().addRootTerm(term);
         transactional(() -> {
@@ -944,12 +944,12 @@ class TermDaoTest extends BaseDaoTestRunner {
         });
         final List<TermDto> dto = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, dto.size());
-        assertEquals(originalLabel, dto.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE));
+        assertEquals(originalLabel, dto.get(0).getLabel().get(Environment.LANGUAGE));
         final String newLabel = originalLabel.toLowerCase();
-        term.setLabel(MultilingualString.create(newLabel, Constants.DEFAULT_LANGUAGE));
+        term.setLabel(MultilingualString.create(newLabel, Environment.LANGUAGE));
         transactional(() -> sut.update(term));
         final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, result.size());
-        assertEquals(newLabel, result.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE));
+        assertEquals(newLabel, result.get(0).getLabel().get(Environment.LANGUAGE));
     }
 }

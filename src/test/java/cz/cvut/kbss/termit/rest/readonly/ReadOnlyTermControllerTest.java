@@ -10,12 +10,12 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.rest.BaseControllerTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyTermService;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SPEC;
-import static cz.cvut.kbss.termit.util.Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,9 +47,9 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     private static final String VOCABULARY_NAME = "metropolitan-plan";
     private static final String TERM_NAME = "locality";
     private static final String VOCABULARY_URI = Environment.BASE_URI + "/" + VOCABULARY_NAME;
-    private static final String NAMESPACE = VOCABULARY_URI + Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR + "/";
+    private static final String NAMESPACE = VOCABULARY_URI + "/pojem/";
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Configuration config;
 
     @Mock
@@ -69,11 +68,12 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         this.vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         setUp(sut);
+        when(config.getNamespace().getVocabulary()).thenReturn(Environment.BASE_URI + "/");
     }
 
     @Test
     void getAllReturnsAllTermsFromVocabularyFromService() throws Exception {
-        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(URI.create(VOCABULARY_URI))).thenReturn(vocabulary);
         when(termService.findAll(any())).thenReturn(terms);
@@ -130,7 +130,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRootsLoadsRootsFromCorrectPage() throws Exception {
-        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termService.findAllRoots(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
@@ -144,7 +144,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRootsCreatesDefaultPageRequestWhenPagingInfoIsNotSpecified() throws Exception {
-        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termService.findAllRoots(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
@@ -157,7 +157,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllRootsRetrievesRootTermsIncludingImportedWhenParameterIsSpecified() throws Exception {
-        when(idResolver.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = generateTerms();
         when(termService.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termService.findAllRootsIncludingImported(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
@@ -174,8 +174,8 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     void getByIdRetrievesTermFromService() throws Exception {
         final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
-        when(config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)).thenReturn(DEFAULT_TERM_NAMESPACE_SEPARATOR);
-        when(idResolver.buildNamespace(VOCABULARY_URI, DEFAULT_TERM_NAMESPACE_SEPARATOR)).thenReturn(NAMESPACE);
+        when(config.getNamespace().getTerm().getSeparator()).thenReturn("/pojem");
+        when(idResolver.buildNamespace(VOCABULARY_URI, "/pojem")).thenReturn(NAMESPACE);
         when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(termService.findRequired(any())).thenReturn(term);
@@ -206,8 +206,8 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
     void getSubTermsRetrievesSubTermsOfTermFromService() throws Exception {
         final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
-        when(config.get(ConfigParam.TERM_NAMESPACE_SEPARATOR)).thenReturn(DEFAULT_TERM_NAMESPACE_SEPARATOR);
-        when(idResolver.buildNamespace(VOCABULARY_URI, DEFAULT_TERM_NAMESPACE_SEPARATOR)).thenReturn(NAMESPACE);
+        when(config.getNamespace().getTerm().getSeparator()).thenReturn("/pojem");
+        when(idResolver.buildNamespace(VOCABULARY_URI, "/pojem")).thenReturn(NAMESPACE);
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenReturn(term);

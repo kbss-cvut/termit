@@ -6,11 +6,11 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,14 +30,14 @@ class ChangeTrackingContextResolverTest {
     @Mock
     private EntityManager em;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Configuration config;
 
     private ChangeTrackingContextResolver sut;
 
     @BeforeEach
     void setUp() {
-        when(config.get(ConfigParam.CHANGE_TRACKING_CONTEXT_EXTENSION)).thenReturn(CHANGE_CONTEXT_EXTENSION);
+        when(config.getChangetracking().getContext().getExtension()).thenReturn(CHANGE_CONTEXT_EXTENSION);
         this.sut = new ChangeTrackingContextResolver(em, config);
     }
 

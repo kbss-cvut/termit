@@ -16,12 +16,12 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.env.MockEnvironment;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 
@@ -32,14 +32,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class IdentifierResolverTest {
 
-    private MockEnvironment environment;
+    @Mock
+    private Configuration config;
 
     private IdentifierResolver sut;
 
     @BeforeEach
     void setUp() {
-        this.environment = new MockEnvironment();
-        this.sut = new IdentifierResolver(new Configuration(environment));
+        this.sut = new IdentifierResolver(config);
     }
 
     @Test
@@ -134,8 +134,7 @@ class IdentifierResolverTest {
     void generateIdentifierAppendsNormalizedComponentsToNamespaceLoadedFromConfig() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary/";
         final String comp = "Metropolitan Plan";
-        environment.setProperty(ConfigParam.NAMESPACE_VOCABULARY.toString(), namespace);
-        final String result = sut.generateIdentifier(ConfigParam.NAMESPACE_VOCABULARY, comp).toString();
+        final String result = sut.generateIdentifier(namespace, comp).toString();
         assertEquals(namespace + "metropolitan-plan", result);
     }
 
@@ -164,9 +163,8 @@ class IdentifierResolverTest {
     void resolveIdentifierAppendsFragmentToNamespaceLoadedFromConfiguration() {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary/";
         final String fragment = "metropolitan-plan";
-        environment.setProperty(ConfigParam.NAMESPACE_VOCABULARY.toString(), namespace);
         assertEquals(namespace + fragment,
-                sut.resolveIdentifier(ConfigParam.NAMESPACE_VOCABULARY, fragment).toString());
+                sut.resolveIdentifier(namespace, fragment).toString());
     }
 
     @Test
@@ -203,15 +201,15 @@ class IdentifierResolverTest {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary/metropolitan-plan";
         final String fragment = "locality";
         final URI result = sut
-                .resolveIdentifier(sut.buildNamespace(namespace, Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR), fragment);
-        assertEquals(namespace + Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR + "/" + fragment, result.toString());
+                .resolveIdentifier(sut.buildNamespace(namespace, "/pojem"), fragment);
+        assertEquals(namespace + "/pojem/" + fragment, result.toString());
     }
 
     @Test
     void buildNamespaceAddsComponentsToBaseUri() {
         final String base = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary";
         final String cOne = "metropolitan-plan";
-        final String cTwo = Constants.DEFAULT_TERM_NAMESPACE_SEPARATOR;
+        final String cTwo = "/pojem";
         assertEquals(base + "/" + cOne + cTwo + "/", sut.buildNamespace(base, cOne, cTwo));
     }
 
@@ -231,8 +229,7 @@ class IdentifierResolverTest {
     void buildNamespaceLoadsBaseUriFromConfiguration() {
         final String base = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary";
         final String component = "/term/";
-        environment.setProperty(ConfigParam.NAMESPACE_VOCABULARY.toString(), base);
-        assertEquals(base + component, sut.buildNamespace(ConfigParam.NAMESPACE_VOCABULARY, component));
+        assertEquals(base + component, sut.buildNamespace(base, component));
     }
 
     @Test

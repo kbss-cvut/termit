@@ -31,8 +31,8 @@ public class CommentDao {
     @Autowired
     public CommentDao(EntityManager em, DescriptorFactory descriptorFactory, Configuration config) {
         this.em = em;
-        this.loadingDescriptor = createLoadingDescriptor(config.get(ConfigParam.COMMENTS_CONTEXT), descriptorFactory);
-        this.savingDescriptor = createSavingDescriptor(config.get(ConfigParam.COMMENTS_CONTEXT), descriptorFactory);
+        this.loadingDescriptor = createLoadingDescriptor(config.getComments().getContext(), descriptorFactory);
+        this.savingDescriptor = createSavingDescriptor(config.getComments().getContext(), descriptorFactory);
     }
 
     private Descriptor createLoadingDescriptor(String context, DescriptorFactory descriptorFactory) {

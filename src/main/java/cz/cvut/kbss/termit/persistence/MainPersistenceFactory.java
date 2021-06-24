@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.*;
-import static cz.cvut.kbss.termit.util.ConfigParam.*;
 
 /**
  * Sets up persistence and provides {@link EntityManagerFactory} as Spring bean.
@@ -43,13 +42,13 @@ import static cz.cvut.kbss.termit.util.ConfigParam.*;
 @Profile("!test")
 public class MainPersistenceFactory {
 
-    private final cz.cvut.kbss.termit.util.Configuration config;
+    private cz.cvut.kbss.termit.util.Configuration configuration;
 
     private EntityManagerFactory emf;
 
     @Autowired
-    public MainPersistenceFactory(cz.cvut.kbss.termit.util.Configuration config) {
-        this.config = config;
+    public MainPersistenceFactory(cz.cvut.kbss.termit.util.Configuration configuration) {
+        this.configuration = configuration;
     }
 
     @Bean
@@ -64,13 +63,13 @@ public class MainPersistenceFactory {
         // Temporary, should be configurable via JOPA
         System.setProperty("http.maxConnections", "20");
         final Map<String, String> properties = defaultParams();
-        properties.put(ONTOLOGY_PHYSICAL_URI_KEY, config.get(REPOSITORY_URL));
-        properties.put(DATA_SOURCE_CLASS, config.get(DRIVER));
-        properties.put(LANG, config.get(LANGUAGE));
+        properties.put(ONTOLOGY_PHYSICAL_URI_KEY, configuration.getRepository().getUrl());
+        properties.put(DATA_SOURCE_CLASS, configuration.getPersistence().getDriver());
+        properties.put(LANG, configuration.getPersistence().getLanguage());
         properties.put(PREFER_MULTILINGUAL_STRING, Boolean.TRUE.toString());
-        if (config.contains(REPO_USERNAME)) {
-            properties.put(OntoDriverProperties.DATA_SOURCE_USERNAME, config.get(REPO_USERNAME));
-            properties.put(OntoDriverProperties.DATA_SOURCE_PASSWORD, config.get(REPO_PASSWORD));
+        if (configuration.getRepository().getUsername() != null) {
+            properties.put(OntoDriverProperties.DATA_SOURCE_USERNAME, configuration.getRepository().getUsername());
+            properties.put(OntoDriverProperties.DATA_SOURCE_PASSWORD, configuration.getRepository().getPassword());
         }
         // OPTIMIZATION: Always use statement retrieval with unbound property. Should spare repository queries
         properties.put(SesameOntoDriverProperties.SESAME_LOAD_ALL_THRESHOLD, "1");

@@ -22,9 +22,8 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.util.ConfigParam;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.util.Configuration.Persistence;
 
 import java.net.URI;
 import java.util.List;
@@ -38,11 +37,11 @@ import java.util.stream.Collectors;
  */
 public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
 
-    protected final Configuration config;
+    protected final Persistence config;
 
     protected final DescriptorFactory descriptorFactory;
 
-    AssetDao(Class<T> type, EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
+    AssetDao(Class<T> type, EntityManager em, Persistence config, DescriptorFactory descriptorFactory) {
         super(type, em);
         this.config = config;
         this.descriptorFactory = descriptorFactory;
@@ -84,7 +83,7 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
                                 .setParameter("isFromVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                                 .setParameter("persist", URI.create(Vocabulary.s_c_vytvoreni_entity))
                                 .setParameter("update", URI.create(Vocabulary.s_c_uprava_entity))
-                                .setParameter("language", config.get(ConfigParam.LANGUAGE)).setMaxResults(1).getSingleResult();
+                                .setParameter("language", config.getLanguage()).setMaxResults(1).getSingleResult();
                     }
             ).collect(Collectors.toList());
             loadLastEditors(modified);
@@ -150,7 +149,7 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
                                 .setParameter("isFromVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                                 .setParameter("persist", URI.create(Vocabulary.s_c_vytvoreni_entity))
                                 .setParameter("update", URI.create(Vocabulary.s_c_uprava_entity))
-                                .setParameter("language", config.get(ConfigParam.LANGUAGE)).setMaxResults(1).getSingleResult();
+                                .setParameter("language", config.getLanguage()).setMaxResults(1).getSingleResult();
                         rec.setEditor(author);
                         return rec;
                     }

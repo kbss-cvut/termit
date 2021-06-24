@@ -1,19 +1,35 @@
 spring:
-  autoconfigure:
-    exclude: net.bull.javamelody.JavaMelodyAutoConfiguration
-  main:
-    allow-bean-definition-overriding: true
-repository:
-  url: mem:termit
-persistence:
-  driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
-jwt:
-  secretKey: TermItSecretKey
-namespace:
-  vocabulary: http://onto.fel.cvut.cz/ontologies/slovnik/
-  user: http://onto.fel.cvut.cz/ontologies/uzivatel/
-  resource: http://onto.fel.cvut.cz/ontologies/zdroj/
-file:
-  storage: /tmp/termit
-textAnalysis:
-  url:
+    autoconfigure:
+        exclude: net.bull.javamelody.JavaMelodyAutoConfiguration
+    main:
+        allow-bean-definition-overriding: true
+termit:
+    repository:
+        url: mem:termit
+    persistence:
+        driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
+        language: en
+    jwt:
+        secretKey: TermItSecretKey
+    namespace:
+        vocabulary: http://onto.fel.cvut.cz/ontologies/slovnik/
+        user: http://onto.fel.cvut.cz/ontologies/uzivatel/
+        resource: http://onto.fel.cvut.cz/ontologies/zdroj/
+        term:
+            separator: /pojem
+        file:
+            separator: /soubor
+    file:
+        storage: /tmp/termit
+    textAnalysis:
+        url:
+    comments:
+        context: http://onto.fel.cvut.cz/ontologies/komentare
+    changetracking:
+        context:
+            extension: /zmeny
+    glossary:
+        fragment: glosář
+    admin:
+        credentialsLocation: ${user.home}
+        credentialsFile: .termit-admin

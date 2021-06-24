@@ -23,9 +23,9 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.Target;
 import cz.cvut.kbss.termit.model.assignment.TermAssignment;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -69,12 +69,12 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
             "  UNION { ?target ?hasSource ?file . ?resource ?isDocumentOf ?file . } " +
             "BIND (IF(EXISTS { ?resource a ?termType }, ?termDefOcc, ?fileOcc) as ?type)";
 
-    private final Configuration config;
+    private final Persistence config;
 
     @Autowired
     public TermAssignmentDao(EntityManager em, Configuration config) {
         super(TermAssignment.class, em);
-        this.config = config;
+        this.config = config.getPersistence();
     }
 
     /**
@@ -105,7 +105,7 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
                  .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("hasLabel", URI.create(DC.Terms.TITLE))
-                 .setParameter("lang", config.get(ConfigParam.LANGUAGE))
+                 .setParameter("lang", config.getLanguage())
                  .setParameter("t", term.getUri()).getResultList();
     }
 
@@ -125,7 +125,7 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
                  .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
                  .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
-                 .setParameter("lang", config.get(ConfigParam.LANGUAGE))
+                 .setParameter("lang", config.getLanguage())
                  .setParameter("termType", URI.create(Vocabulary.s_c_term))
                  .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
                  .setParameter("fileOcc", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
@@ -187,7 +187,7 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
                  .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("assignment", URI.create(Vocabulary.s_c_prirazeni_termu))
-                 .setParameter("lang", config.get(ConfigParam.LANGUAGE))
+                 .setParameter("lang", config.getLanguage())
                  .setParameter("resource", resource.getUri()).getResultList();
     }
 
@@ -209,7 +209,7 @@ public class TermAssignmentDao extends BaseDao<TermAssignment> {
                  .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                  .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
-                 .setParameter("lang", config.get(ConfigParam.LANGUAGE))
+                 .setParameter("lang", config.getLanguage())
                  .setParameter("resource", resource.getUri()).getResultList();
     }
 

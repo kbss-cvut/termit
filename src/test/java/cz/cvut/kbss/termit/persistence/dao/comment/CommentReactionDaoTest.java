@@ -8,7 +8,6 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,7 @@ class CommentReactionDaoTest extends BaseDaoTestRunner {
 
     @BeforeEach
     void setUp() {
-        this.descriptor = new EntityDescriptor(URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
+        this.descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
     }
 
     @Test

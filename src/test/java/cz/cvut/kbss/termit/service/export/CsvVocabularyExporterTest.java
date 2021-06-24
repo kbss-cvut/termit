@@ -17,8 +17,8 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +73,7 @@ class CsvVocabularyExporterTest extends VocabularyExporterTestBase {
     @Test
     void exportVocabularyGlossaryExportsTermsOrderedByLabel() throws Exception {
         final List<Term> terms = generateTerms();
-        terms.sort(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)));
+        terms.sort(Comparator.comparing((Term t) -> t.getLabel().get(Environment.LANGUAGE)));
         final Resource result = sut.exportVocabularyGlossary(vocabulary);
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(result.getInputStream()))) {
             final List<String> lines = reader.lines().collect(Collectors.toList());

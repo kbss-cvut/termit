@@ -2,12 +2,10 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(VocabularyController.class)
-@Import({TestConfig.class, TestRestSecurityConfig.class})
+@Import({TestRestSecurityConfig.class})
 class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String PATH = REST_MAPPING_PATH + "/vocabularies";
@@ -50,7 +48,7 @@ class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
 
     @BeforeEach
     void setUp() {
-        when(configuration.get(ConfigParam.NAMESPACE_VOCABULARY)).thenReturn(Environment.BASE_URI + "/");
+        configuration.getNamespace().setVocabulary(Environment.BASE_URI + "/");
     }
 
     @Test
@@ -88,7 +86,7 @@ class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
 
         final Vocabulary vocabulary = generateVocabulary();
         vocabulary.setUri(VOCABULARY_URI);
-        when(idResolverMock.resolveIdentifier(eq(ConfigParam.NAMESPACE_VOCABULARY), any()))
+        when(idResolverMock.resolveIdentifier(any(), any()))
                 .thenReturn(VOCABULARY_URI);
         when(serviceMock.exists(VOCABULARY_URI)).thenReturn(true);
         mockMvc.perform(put(PATH + "/test").contentType(MediaType.APPLICATION_JSON_VALUE)

@@ -30,13 +30,13 @@ import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -56,7 +56,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.util.ConfigParam.NAMESPACE_RESOURCE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
@@ -80,7 +79,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @Mock
     private ResourceService resourceServiceMock;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Configuration configMock;
 
     @Mock
@@ -140,7 +139,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final Resource resource = Generator.generateResource();
         resource.setLabel(RESOURCE_NAME);
         resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(NAMESPACE_RESOURCE, RESOURCE_NAME))
+        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME))
                 .thenReturn(RESOURCE_URI);
         when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(resource);
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + RESOURCE_NAME)).andExpect(status().isOk())
@@ -148,7 +147,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final Resource result = readValue(mvcResult, Resource.class);
         assertEquals(resource, result);
         verify(resourceServiceMock).findRequired(RESOURCE_URI);
-        verify(identifierResolverMock).resolveIdentifier(NAMESPACE_RESOURCE, RESOURCE_NAME);
+        verify(identifierResolverMock).resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME);
     }
 
     @Test
@@ -206,11 +205,11 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final Resource resource = Generator.generateResource();
         resource.setLabel(RESOURCE_NAME);
         resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(NAMESPACE_RESOURCE, RESOURCE_NAME)).thenReturn(resource.getUri());
+        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME)).thenReturn(resource.getUri());
         mockMvc.perform(
                 put(PATH + "/" + RESOURCE_NAME).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
-        verify(identifierResolverMock).resolveIdentifier(NAMESPACE_RESOURCE, RESOURCE_NAME);
+        verify(identifierResolverMock).resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME);
         verify(resourceServiceMock).update(resource);
     }
 
@@ -232,7 +231,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final Resource resource = Generator.generateResource();
         resource.setLabel(RESOURCE_NAME);
         resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(NAMESPACE_RESOURCE, RESOURCE_NAME)).thenReturn(resource.getUri());
+        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME)).thenReturn(resource.getUri());
         when(resourceServiceMock.findRequired(resource.getUri())).thenReturn(resource);
         final List<URI> uris = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri())
                 .collect(Collectors.toList());
@@ -260,7 +259,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final Resource resource = Generator.generateResource();
         resource.setLabel(RESOURCE_NAME);
         resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(NAMESPACE_RESOURCE, RESOURCE_NAME)).thenReturn(resource.getUri());
+        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME)).thenReturn(resource.getUri());
         when(resourceServiceMock.getRequiredReference(resource.getUri())).thenReturn(resource);
         mockMvc.perform(delete(PATH + "/" + RESOURCE_NAME)).andExpect(status().isNoContent());
         verify(resourceServiceMock).getRequiredReference(resource.getUri());
@@ -292,7 +291,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @Test
     void getContentReturnsContentOfRequestedFile() throws Exception {
         final File file = generateFile();
-        when(identifierResolverMock.resolveIdentifier(any(ConfigParam.class), eq(FILE_NAME)))
+        when(identifierResolverMock.resolveIdentifier(any(), eq(FILE_NAME)))
                 .thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
         final java.io.File content = createTemporaryHtmlFile();
@@ -316,7 +315,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @Test
     void saveContentSavesContentViaServiceAndReturnsNoContentStatus() throws Exception {
         final File file = generateFile();
-        when(identifierResolverMock.resolveIdentifier(any(ConfigParam.class), eq(FILE_NAME)))
+        when(identifierResolverMock.resolveIdentifier(any(), eq(FILE_NAME)))
                 .thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
 
@@ -485,7 +484,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         document.setUri(RESOURCE_URI);
         final File file = generateFile();
         document.addFile(file);
-        when(identifierResolverMock.resolveIdentifier(NAMESPACE_RESOURCE, FILE_NAME)).thenReturn(file.getUri());
+        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), FILE_NAME)).thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
         mockMvc
                 .perform(delete(PATH + "/" + RESOURCE_NAME + "/files/" + FILE_NAME, RESOURCE_NAMESPACE))
@@ -573,7 +572,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @Test
     void getContentSupportsReturningContentAsAttachment() throws Exception {
         final File file = generateFile();
-        when(identifierResolverMock.resolveIdentifier(any(ConfigParam.class), eq(FILE_NAME)))
+        when(identifierResolverMock.resolveIdentifier(any(), eq(FILE_NAME)))
                 .thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
         final java.io.File content = createTemporaryHtmlFile();
@@ -622,7 +621,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @Test
     void createResourceReturnsCorrectLocationHeaderForIdentifierStartingWithConfiguredNamespace() throws Exception {
         // This applies to all asset controllers
-        when(configMock.get(NAMESPACE_RESOURCE)).thenReturn(RESOURCE_NAMESPACE);
+        when(configMock.getNamespace().getResource()).thenReturn(RESOURCE_NAMESPACE);
         final String newNamespace = RESOURCE_NAMESPACE + "added/";
         final Resource resource = Generator.generateResource();
         resource.setUri(URI.create(newNamespace + RESOURCE_NAME));

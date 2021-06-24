@@ -19,7 +19,6 @@ import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,11 +76,10 @@ public class TextAnalysisService {
         final TextAnalysisInput input = new TextAnalysisInput();
         input.setContent(documentManager.loadFileContent(file));
         URI repositoryUrl = URI.create(
-            config.get(ConfigParam.REPOSITORY_PUBLIC_URL,
-                config.get(ConfigParam.REPOSITORY_URL))
+            config.getRepository().getPublicUrl().orElse(config.getRepository().getUrl())
         );
         input.setVocabularyRepository(repositoryUrl);
-        input.setLanguage(config.get(ConfigParam.LANGUAGE));
+        input.setLanguage(config.getPersistence().getLanguage());
         return input;
     }
 
@@ -105,7 +103,7 @@ public class TextAnalysisService {
         headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE);
         LOG.debug("Invoking text analysis service on input: {}", input);
         final ResponseEntity<Resource> resp = restClient
-                .exchange(config.get(ConfigParam.TEXT_ANALYSIS_SERVICE_URL), HttpMethod.POST,
+                .exchange(config.getTextAnalysis().getUrl(), HttpMethod.POST,
                         new HttpEntity<>(input, headers), Resource.class);
         if (!resp.hasBody()) {
             throw new WebServiceIntegrationException("Text analysis service returned empty response.");

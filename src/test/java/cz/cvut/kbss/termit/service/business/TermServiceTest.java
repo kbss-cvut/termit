@@ -1,10 +1,10 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
@@ -15,7 +15,10 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.util.*;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.CsvUtils;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +32,8 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -163,6 +167,9 @@ class TermServiceTest {
     @Test
     void findSubTermsLoadsChildTermsOfTermUsingRepositoryService() {
         final Term parent = generateTermWithId();
+        final Configuration.Persistence p = new Configuration.Persistence();
+        p.setLanguage("en");
+        when(configuration.getPersistence()).thenReturn(p);
         final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
             final Term child = generateTermWithId();
             when(termRepositoryService.find(child.getUri())).thenReturn(Optional.of(child));
@@ -178,9 +185,9 @@ class TermServiceTest {
     @Test
     void existsInVocabularyChecksForLabelExistenceInVocabularyViaRepositoryService() {
         final String label = "test";
-        when(termRepositoryService.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE)).thenReturn(true);
-        assertTrue(sut.existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE));
-        verify(termRepositoryService).existsInVocabulary(label, vocabulary, Constants.DEFAULT_LANGUAGE);
+        when(termRepositoryService.existsInVocabulary(label, vocabulary, Environment.LANGUAGE)).thenReturn(true);
+        assertTrue(sut.existsInVocabulary(label, vocabulary, Environment.LANGUAGE));
+        verify(termRepositoryService).existsInVocabulary(label, vocabulary, Environment.LANGUAGE);
     }
 
     @Test
@@ -325,6 +332,10 @@ class TermServiceTest {
     @Test
     void findSubTermsReturnsSubTermsSortedByLabel() {
         final Term parent = generateTermWithId();
+        final Configuration.Persistence p = new Configuration.Persistence();
+        p.setLanguage("en");
+        when(configuration.getPersistence()).thenReturn(p);
+
         final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
             final Term child = generateTermWithId();
             when(termRepositoryService.find(child.getUri())).thenReturn(Optional.of(child));
@@ -333,7 +344,7 @@ class TermServiceTest {
         parent.setSubTerms(children.stream().map(TermInfo::new).collect(Collectors.toSet()));
 
         final List<Term> result = sut.findSubTerms(parent);
-        children.sort(Comparator.comparing((Term t) -> t.getLabel().get(Constants.DEFAULT_LANGUAGE)));
+        children.sort(Comparator.comparing((Term t) -> t.getLabel().get(Environment.LANGUAGE)));
         assertEquals(children, result);
     }
 

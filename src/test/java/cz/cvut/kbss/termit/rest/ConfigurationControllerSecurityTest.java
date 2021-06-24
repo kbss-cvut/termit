@@ -4,11 +4,9 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
-import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -30,7 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ConfigurationController.class)
-@Import({TestConfig.class, TestRestSecurityConfig.class})
+@Import({TestRestSecurityConfig.class})
 public class ConfigurationControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String PATH = REST_MAPPING_PATH + "/configuration";
@@ -55,11 +53,11 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
 
     private static ConfigurationDto generateConfiguration() {
         final ConfigurationDto config = new ConfigurationDto();
-        config.setLanguage(Constants.DEFAULT_LANGUAGE);
+        config.setLanguage(Environment.LANGUAGE);
         config.setRoles(IntStream.range(0, 3).mapToObj(i -> {
             final UserRole r = new UserRole();
             r.setUri(Generator.generateUri());
-            r.setLabel(MultilingualString.create("Role - " + i, Constants.DEFAULT_LANGUAGE));
+            r.setLabel(MultilingualString.create("Role - " + i, Environment.LANGUAGE));
             return r;
         }).collect(Collectors.toSet()));
         return config;

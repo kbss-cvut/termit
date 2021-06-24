@@ -79,7 +79,7 @@ public class SystemInitializer {
         LOG.info("----------------------------------------------");
         LOG.info("Admin credentials are: {}/{}", admin.getUsername(), passwordPlain);
         LOG.info("----------------------------------------------");
-        final File directory = new File(config.get(ConfigParam.ADMIN_CREDENTIALS_LOCATION));
+        final File directory = new File(config.getAdmin().getCredentialsLocation());
         try {
             if (!directory.exists()) {
                 Files.createDirectories(directory.toPath());
@@ -98,12 +98,12 @@ public class SystemInitializer {
     }
 
     private File createHiddenFile() throws IOException {
-        final File credentialsFile = new File(config.get(ConfigParam.ADMIN_CREDENTIALS_LOCATION) + File.separator +
-                config.get(ConfigParam.ADMIN_CREDENTIALS_FILE));
+        final File credentialsFile = new File(config.getAdmin().getCredentialsLocation() + File.separator +
+                config.getAdmin().getCredentialsFile());
         final boolean result = credentialsFile.createNewFile();
         if (!result) {
             LOG.error("Unable to create admin credentials file {}. Admin credentials won't be saved in any file!",
-                    config.get(ConfigParam.ADMIN_CREDENTIALS_FILE));
+                    config.getAdmin().getCredentialsFile());
             return null;
         }
         // Hidden attribute on Windows

@@ -2,8 +2,8 @@ package cz.cvut.kbss.termit.persistence.dao.util;
 
 import cz.cvut.kbss.ontodriver.model.LangString;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -20,11 +20,11 @@ class SparqlResultToTermInfoMapperTest {
     void mapsResultsWithSingleLabelToTermInfoInstances() {
         final List<Object[]> toMap = Arrays.asList(new Object[]{
                 Generator.generateUri(),
-                new LangString("Test one", Constants.DEFAULT_LANGUAGE),
+                new LangString("Test one", Environment.LANGUAGE),
                 Generator.generateUri()
         }, new Object[]{
                 Generator.generateUri(),
-                new LangString("Test two", Constants.DEFAULT_LANGUAGE),
+                new LangString("Test two", Environment.LANGUAGE),
                 Generator.generateUri()
         });
         final List<TermInfo> result = sut.map(toMap);
@@ -45,7 +45,7 @@ class SparqlResultToTermInfoMapperTest {
         final URI tTwoUri = Generator.generateUri();
         final List<Object[]> toMap = Arrays.asList(new Object[]{
                 tOneUri,
-                new LangString("Test one", Constants.DEFAULT_LANGUAGE),
+                new LangString("Test one", Environment.LANGUAGE),
                 vocUri
         }, new Object[]{
                 tOneUri,
@@ -53,7 +53,7 @@ class SparqlResultToTermInfoMapperTest {
                 vocUri
         }, new Object[]{
                 tTwoUri,
-                new LangString("Test two", Constants.DEFAULT_LANGUAGE),
+                new LangString("Test two", Environment.LANGUAGE),
                 vocUri
         }, new Object[]{
                 tTwoUri,
@@ -63,9 +63,9 @@ class SparqlResultToTermInfoMapperTest {
 
         final List<TermInfo> result = sut.map(toMap);
         assertEquals(2, result.size());
-        assertEquals("Test one", result.get(0).getLabel().get(Constants.DEFAULT_LANGUAGE));
+        assertEquals("Test one", result.get(0).getLabel().get(Environment.LANGUAGE));
         assertEquals("Test jedna", result.get(0).getLabel().get("cs"));
-        assertEquals("Test two", result.get(1).getLabel().get(Constants.DEFAULT_LANGUAGE));
+        assertEquals("Test two", result.get(1).getLabel().get(Environment.LANGUAGE));
         assertEquals("Test dva", result.get(1).getLabel().get("cs"));
         assertEquals(tOneUri, result.get(0).getUri());
         assertEquals(vocUri, result.get(0).getVocabulary());

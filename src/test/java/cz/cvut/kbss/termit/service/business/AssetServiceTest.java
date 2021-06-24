@@ -14,6 +14,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
@@ -24,7 +25,6 @@ import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -92,7 +92,7 @@ class AssetServiceTest {
                     break;
                 case 1:
                     final Term term = Generator.generateTermWithId();
-                    rma = new RecentlyModifiedAsset(term.getUri(), term.getLabel().get(Constants.DEFAULT_LANGUAGE),
+                    rma = new RecentlyModifiedAsset(term.getUri(), term.getLabel().get(Environment.LANGUAGE),
                             new Date(), author.getUri(), null,
                             SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity);
                     terms.add(rma);

@@ -7,7 +7,6 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -26,7 +25,7 @@ public class CommentReactionDao {
     @Autowired
     public CommentReactionDao(EntityManager em, Configuration config) {
         this.em = em;
-        this.commentDescriptor = new EntityDescriptor(URI.create(config.get(ConfigParam.COMMENTS_CONTEXT)));
+        this.commentDescriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
     }
 
     /**
