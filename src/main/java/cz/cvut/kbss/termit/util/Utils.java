@@ -38,11 +38,11 @@ public class Utils {
      */
     public static String loadQuery(String queryFileName) {
         final InputStream is = Utils.class.getClassLoader().getResourceAsStream(
-            Constants.QUERY_DIRECTORY + File.separator + queryFileName);
+                Constants.QUERY_DIRECTORY + File.separator + queryFileName);
         if (is == null) {
             throw new TermItException(
-                "Initialization exception. Query file not found in " + Constants.QUERY_DIRECTORY +
-                    File.separator + queryFileName);
+                    "Initialization exception. Query file not found in " + Constants.QUERY_DIRECTORY +
+                            File.separator + queryFileName);
         }
         try (final BufferedReader in = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
             return in.lines().collect(Collectors.joining("\n"));
@@ -59,7 +59,7 @@ public class Utils {
      * @param model       model to change the IRI in
      */
     public static void changeIri(final String originalIri, final String newIri, final Model model) {
-        changeIrisByFunction(oIri -> originalIri.equals(oIri), oIri -> newIri, model);
+        changeIrisByFunction(originalIri::equals, oIri -> newIri, model);
     }
 
     /**
@@ -73,9 +73,9 @@ public class Utils {
                                        final String newNamespace,
                                        final Model model) {
         changeIrisByFunction(
-            oIri -> oIri.startsWith(originalNamespace),
-            oIri -> oIri.replaceFirst("^" + originalNamespace, newNamespace),
-            model
+                oIri -> oIri.startsWith(originalNamespace),
+                oIri -> oIri.replaceFirst("^" + originalNamespace, newNamespace),
+                model
         );
     }
 
@@ -114,7 +114,8 @@ public class Utils {
 
             if (changed) {
                 statementsToAdd.add(Statements.statement(subject, predicate, object, s.getContext()));
-                statementsToRemove.add(Statements.statement(s.getSubject(), s.getPredicate(), s.getObject(), s.getContext()));
+                statementsToRemove
+                        .add(Statements.statement(s.getSubject(), s.getPredicate(), s.getObject(), s.getContext()));
             }
         });
         model.removeAll(statementsToRemove);
@@ -124,11 +125,11 @@ public class Utils {
     /**
      * Extracts the necessary vocabulary IRI from the namespace of the current concepts.
      *
-     * @param conceptUris set of concept IRIs
+     * @param conceptUris   set of concept IRIs
      * @param termSeparator separator between a term local name and vocabulary IRI
      * @return IRI of the vocabulary
-     * @throws IllegalArgumentException if the namespace is not unique in concept IRIs, there is no concept,
-     * or the concept IRI does not have the form "pojem".
+     * @throws IllegalArgumentException if the namespace is not unique in concept IRIs, there is no concept, or the
+     *                                  concept IRI does not have the form "pojem".
      */
     public static String getVocabularyIri(final Set<String> conceptUris, String termSeparator) {
         if (conceptUris.isEmpty()) {
@@ -170,7 +171,7 @@ public class Utils {
      * @param base     base string to derive the IRI from
      * @param getAsset checker function to see
      * @param <T>      type of the asset
-     * @return
+     * @return Generated identifier
      */
     public static <T> String getUniqueIriFromBase(final String base, final Function<String, Optional<T>> getAsset) {
         int i = 0;
@@ -181,5 +182,25 @@ public class Utils {
             possiblyAsset = getAsset.apply(iri);
         }
         return iri;
+    }
+
+    /**
+     * Joins the contents of the specified collections into one.
+     * <p>
+     * Note that this method performs no uniqueness checks or sorting. It only handles possible {@code null} arguments.
+     *
+     * @param collections Collections to join, can be null
+     * @param <T>         Type of the collection elements
+     * @return Collection containing elements from all the specified collections
+     */
+    @SafeVarargs
+    public static <T> Collection<T> joinCollections(Collection<T>... collections) {
+        final List<T> result = new ArrayList<>();
+        for (Collection<T> col : collections) {
+            if (col != null) {
+                result.addAll(col);
+            }
+        }
+        return result;
     }
 }

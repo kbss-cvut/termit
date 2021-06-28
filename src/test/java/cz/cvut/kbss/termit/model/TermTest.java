@@ -80,7 +80,7 @@ class TermTest {
                 MultilingualString.create("Construction", Environment.LANGUAGE))));
         final String result = term.toCsv();
         final String[] items = result.split(",");
-        assertEquals(items.length, 11);
+        assertEquals(items.length, 14);
         final String list = items[2];
         assertTrue(list.matches(".+;.+"));
         term.getAltLabels().forEach(t -> assertTrue(list.contains(t.get())));
@@ -94,7 +94,7 @@ class TermTest {
                         MultilingualString.create("Construction", Environment.LANGUAGE))));
         final String result = term.toCsv();
         final String[] items = result.split(",");
-        assertEquals(items.length, 11);
+        assertEquals(items.length, 14);
         final String list = items[3];
         assertTrue(list.matches(".+;.+"));
         term.getHiddenLabels().forEach(t -> assertTrue(list.contains(t.get())));
@@ -169,9 +169,7 @@ class TermTest {
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
         term.setSubTerms(IntStream.range(0, 5).mapToObj(i -> generateTermInfo()).collect(Collectors.toSet()));
-        final XSSFWorkbook wb = new XSSFWorkbook();
-        final XSSFSheet sheet = wb.createSheet("test");
-        final XSSFRow row = sheet.createRow(0);
+        final XSSFRow row = generateExcel();
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         term.getLabel().getValue().values()
@@ -200,14 +198,12 @@ class TermTest {
         final Term term = Generator.generateTermWithId();
         term.setDescription(null);
         term.setDefinition(null);
-        final XSSFWorkbook wb = new XSSFWorkbook();
-        final XSSFSheet sheet = wb.createSheet("test");
-        final XSSFRow row = sheet.createRow(0);
+        final XSSFRow row = generateExcel();
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         term.getLabel().getValue().values()
-                .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
-        assertEquals(11, row.getLastCellNum());
+            .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
+        assertEquals(Term.EXPORT_COLUMNS.size(), row.getLastCellNum());
     }
 
     @Test
@@ -216,9 +212,7 @@ class TermTest {
         term.setDescription(null);
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
-        final XSSFWorkbook wb = new XSSFWorkbook();
-        final XSSFSheet sheet = wb.createSheet("test");
-        final XSSFRow row = sheet.createRow(0);
+        final XSSFRow row = generateExcel();
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         term.getLabel().getValue().values()
@@ -288,22 +282,30 @@ class TermTest {
         sut.setAltLabels(null);
         sut.setHiddenLabels(new HashSet<>(Arrays.asList(hiddenOne, hiddenTwo)));
 
-        final XSSFWorkbook wb = new XSSFWorkbook();
-        final XSSFSheet sheet = wb.createSheet("test");
-        final XSSFRow row = sheet.createRow(0);
+        final XSSFRow row = generateExcel();
         sut.toExcel(row);
         assertEquals(sut.getUri().toString(), row.getCell(0).getStringCellValue());
         sut.getHiddenLabels().forEach(ms -> ms.getValue().values()
-                .forEach(v -> assertThat(row.getCell(3).getStringCellValue(),
-                        containsString(v))));
+                                              .forEach(v -> assertThat(row.getCell(3).getStringCellValue(),
+                                                      containsString(v))));
+    }
+
+    private XSSFRow generateExcel() {
+        final XSSFWorkbook wb = new XSSFWorkbook();
+        final XSSFSheet sheet = wb.createSheet("test");
+        return sheet.createRow(0);
     }
 
     @Test
     void consolidateInferredCopiesInverseRelatedTermsToRelated() {
         final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
         sut.setVocabulary(Generator.generateUri());
-        sut.setRelated(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary()))).collect(Collectors.toSet()));
-        sut.setInverseRelated(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary()))).collect(Collectors.toSet()));
+        sut.setRelated(IntStream.range(0, 5)
+                                .mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                                .collect(Collectors.toSet()));
+        sut.setInverseRelated(IntStream.range(0, 5)
+                                       .mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                                       .collect(Collectors.toSet()));
         final int originalRelatedSize = sut.getRelated().size();
 
         sut.consolidateInferred();
@@ -326,12 +328,117 @@ class TermTest {
     @Test
     void consolidateInferredCopiesInverseExactMatchTermsToExactMatch() {
         final Term sut = Generator.generateTermWithId();
-        sut.setExactMatchTerms(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
-        sut.setInverseExactMatchTerms(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
+        sut.setExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator
+                .generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
+        sut.setInverseExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator
+                .generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
         final int originalExactMatchSize = sut.getExactMatchTerms().size();
 
         sut.consolidateInferred();
         assertEquals(originalExactMatchSize + sut.getInverseExactMatchTerms().size(), sut.getExactMatchTerms().size());
         sut.getInverseExactMatchTerms().forEach(ti -> assertThat(sut.getExactMatchTerms(), hasItem(ti)));
+    }
+
+    @Test
+    void toCsvIncludesRelatedAndInverseRelatedTerms() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        sut.setVocabulary(Generator.generateUri());
+        sut.setRelated(IntStream.range(0, 5)
+                                .mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                                .collect(Collectors.toSet()));
+        sut.setInverseRelated(IntStream.range(0, 5)
+                                       .mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                                       .collect(Collectors.toSet()));
+        final String result = sut.toCsv();
+        final String[] items = result.split(",");
+        final String related = items[10];
+        assertTrue(related.matches(".+;.+"));
+        sut.getRelated().forEach(t -> assertTrue(related.contains(t.getUri().toString())));
+        sut.getInverseRelated().forEach(t -> assertTrue(related.contains(t.getUri().toString())));
+    }
+
+    @Test
+    void toCsvIncludesRelatedMatchAndInverseRelatedMatchTerms() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        sut.setVocabulary(Generator.generateUri());
+        sut.setRelatedMatch(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                     .collect(Collectors.toSet()));
+        sut.setInverseRelatedMatch(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                            .collect(Collectors.toSet()));
+        final String result = sut.toCsv();
+        final String[] items = result.split(",");
+        final String related = items[11];
+        assertTrue(related.matches(".+;.+"));
+        sut.getRelatedMatch().forEach(t -> assertTrue(related.contains(t.getUri().toString())));
+        sut.getInverseRelatedMatch().forEach(t -> assertTrue(related.contains(t.getUri().toString())));
+    }
+
+    @Test
+    void toCsvIncludesExactMatchAndInverseExactMatchTerms() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        sut.setVocabulary(Generator.generateUri());
+        sut.setExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                        .collect(Collectors.toSet()));
+        sut.setInverseExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                               .collect(Collectors.toSet()));
+        final String result = sut.toCsv();
+        final String[] items = result.split(",");
+        final String related = items[12];
+        assertTrue(related.matches(".+;.+"));
+        sut.getExactMatchTerms().forEach(t -> assertTrue(related.contains(t.getUri().toString())));
+        sut.getInverseExactMatchTerms().forEach(t -> assertTrue(related.contains(t.getUri().toString())));
+    }
+
+    @Test
+    void toExcelIncludesRelatedAndInverseRelatedTerms() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        sut.setVocabulary(Generator.generateUri());
+        sut.setRelated(IntStream.range(0, 5)
+                                .mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                                .collect(Collectors.toSet()));
+        sut.setInverseRelated(IntStream.range(0, 5)
+                                       .mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                                       .collect(Collectors.toSet()));
+
+        final XSSFRow row = generateExcel();
+        sut.toExcel(row);
+        final String related = row.getCell(10).getStringCellValue();
+        assertTrue(related.matches(".+;.+"));
+        sut.getRelated().forEach(t -> assertTrue(related.contains(t.getUri().toString())));
+        sut.getInverseRelated().forEach(t -> assertTrue(related.contains(t.getUri().toString())));
+    }
+
+    @Test
+    void toExcelIncludesRelatedMatchAndInverseRelatedMatchTerms() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        sut.setVocabulary(Generator.generateUri());
+        sut.setRelatedMatch(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                     .collect(Collectors.toSet()));
+        sut.setInverseRelatedMatch(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                            .collect(Collectors.toSet()));
+
+        final XSSFRow row = generateExcel();
+        sut.toExcel(row);
+        final String relatedMatch = row.getCell(11).getStringCellValue();
+        assertTrue(relatedMatch.matches(".+;.+"));
+        sut.getRelatedMatch().forEach(t -> assertTrue(relatedMatch.contains(t.getUri().toString())));
+        sut.getInverseRelatedMatch().forEach(t -> assertTrue(relatedMatch.contains(t.getUri().toString())));
+    }
+
+    @Test
+    void toExcelIncludesExactMatchAndInverseExactMatchTerms() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        sut.setVocabulary(Generator.generateUri());
+        sut.setExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                        .collect(Collectors.toSet()));
+        sut.setInverseExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                               .collect(Collectors.toSet()));
+
+        final XSSFRow row = generateExcel();
+        sut.toExcel(row);
+        final String exactMatch = row.getCell(12).getStringCellValue();
+        assertTrue(exactMatch.matches(".+;.+"));
+        sut.getExactMatchTerms().forEach(t -> assertTrue(exactMatch.contains(t.getUri().toString())));
+        sut.getInverseExactMatchTerms().forEach(t -> assertTrue(exactMatch.contains(t.getUri().toString())));
     }
 }
