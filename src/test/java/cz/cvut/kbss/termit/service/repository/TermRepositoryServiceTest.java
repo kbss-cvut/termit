@@ -504,8 +504,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void findAllWithSearchStringReturnsMatchingTerms() {
         final List<TermDto> terms = Generator
-            .generateTermsWithIds(10)
-            .stream().map(TermDto::new).collect(Collectors.toList());
+                .generateTermsWithIds(10)
+                .stream().map(TermDto::new).collect(Collectors.toList());
         final String searchString = "Result";
         final List<TermDto> matching = terms.subList(0, 5);
         matching.forEach(t -> t.getLabel().set(Environment.LANGUAGE, searchString + " " + t.getLabel()));
@@ -513,9 +513,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
         terms.forEach(t -> t.setVocabulary(vocabulary.getUri()));
         final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
-        transactional(() -> {
-            terms.forEach(t -> em.persist(t, termDescriptor));
-        });
+        transactional(() -> terms.forEach(t -> em.persist(t, termDescriptor)));
 
         List<TermDto> result = sut.findAll(searchString);
         assertEquals(matching.size(), result.size());
@@ -569,7 +567,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         childTerm.setVocabulary(childVocabulary.getUri());
         sut.addChildTerm(childTerm, parentTerm);
 
-        assertThat(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList()), hasItem(new TermDto(childTerm)));
+        assertThat(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections
+                .emptyList()), hasItem(new TermDto(childTerm)));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
@@ -578,12 +577,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     void updateAddsTermToGlossaryRootTermsWhenNewParentIsFromDifferentVocabulary() {
         final Term newParentTerm = generateParentTermFromDifferentVocabulary();
         final Term oldParentTerm = Generator.generateTermWithId();
+        oldParentTerm.setGlossary(childVocabulary.getGlossary().getUri());
         final Term childTerm = Generator.generateTermWithId();
         childTerm.addParentTerm(oldParentTerm);
         childTerm.setGlossary(childVocabulary.getGlossary().getUri());
         transactional(() -> {
             childVocabulary.getGlossary().addRootTerm(oldParentTerm);
-            oldParentTerm.setGlossary(childVocabulary.getGlossary().getUri());
             em.persist(oldParentTerm, descriptorFactory.termDescriptor(childVocabulary));
             em.persist(childTerm, descriptorFactory.termDescriptor(childVocabulary));
             em.merge(childVocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(childVocabulary));
@@ -594,10 +593,10 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         // This is normally inferred
         childTerm.setVocabulary(childVocabulary.getUri());
         em.getEntityManagerFactory().getCache().evictAll();
-        childTerm.setParentTerms(Collections.singleton(newParentTerm));
+        childTerm.setExternalParentTerms(Collections.singleton(newParentTerm));
         sut.update(childTerm);
         assertTrue(sut.findAllRoots(childVocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList())
-                .contains(new TermDto(childTerm)));
+                      .contains(new TermDto(childTerm)));
         final Glossary result = em.find(Glossary.class, childVocabulary.getGlossary().getUri());
         assertTrue(result.getRootTerms().contains(childTerm.getUri()));
     }
@@ -642,7 +641,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
-            conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(property), vf.createIRI(term.getUri().toString()));
+            conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(property), vf
+                    .createIRI(term.getUri().toString()));
         }
     }
 
