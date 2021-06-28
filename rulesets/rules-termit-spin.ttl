@@ -70,7 +70,7 @@ skos:Concept a rdfs:Class ;
                CONSTRUCT { ?related skos:relatedMatch ?this . }
                WHERE { ?this a skos:Concept ;
                         skos:relatedMatch ?related . }"""
-    ]
+    ];
 
     # Make skos:exactMatch symmetric
     spin:rule [
@@ -78,7 +78,7 @@ skos:Concept a rdfs:Class ;
     sp:text """PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                CONSTRUCT { ?exactMatch skos:exactMatch ?this . }
                WHERE { ?this skos:exactMatch ?exactMatch . }"""
-    ]
+    ];
 
     # Make skos:exactMatch transitive
     spin:rule [
@@ -87,6 +87,16 @@ skos:Concept a rdfs:Class ;
                CONSTRUCT { ?this skos:exactMatch ?exactMatch . }
                WHERE { ?this skos:exactMatch/skos:exactMatch ?exactMatch .
                        FILTER(?this != ?exactMatch) }"""
+    ];
+
+    # InverseOf between skos:broadMatch and skos:narrowMatch
+    spin:rule [
+        a sp:Construct ;
+        sp:text """PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                   PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                   CONSTRUCT { ?parent skos:narrowMatch ?this . }
+                   WHERE { ?this a skos:Concept ;
+                                skos:broadMatch ?parent . }"""
     ]
 .
 
