@@ -14,6 +14,7 @@ import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +34,11 @@ public class Term extends AbstractTerm implements HasTypes {
     /**
      * Names of columns used in term export.
      * <p>
-     * TODO Include related terms and exact matches in the export
      */
     public static final List<String> EXPORT_COLUMNS = Collections
             .unmodifiableList(
                     Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description",
-                            "Types", "Sources", "Parent terms", "SubTerms", "Draft"));
+                            "Types", "Sources", "Parent Terms", "SubTerms", "Related Terms", "Related Match Terms", "Exact Match Terms", "Draft"));
 
     @Autowired
     @Transient
@@ -271,13 +271,6 @@ public class Term extends AbstractTerm implements HasTypes {
         this.properties = properties;
     }
 
-    private static <T> void exportMulti(final StringBuilder sb, final Set<T> collection, Function<T, String> toString) {
-        sb.append(',');
-        if (collection != null && !collection.isEmpty()) {
-            sb.append(exportCollection(collection.stream().map(toString).collect(Collectors.toSet())));
-        }
-    }
-
     /**
      * Generates a CSV line representing this term.
      * <p>
@@ -295,7 +288,10 @@ public class Term extends AbstractTerm implements HasTypes {
         exportMulti(sb, types, String::toString);
         exportMulti(sb, sources, String::toString);
         exportMulti(sb, parentTerms, pt -> pt.getUri().toString());
-        exportMulti(sb, getSubTerms(), pt -> pt.getUri().toString());
+        exportMulti(sb, getSubTerms(), Term::termInfoStringIri);
+        consolidateAndExportMulti(sb, related, inverseRelated, Term::termInfoStringIri);
+        consolidateAndExportMulti(sb, relatedMatch, inverseRelatedMatch, Term::termInfoStringIri);
+        consolidateAndExportMulti(sb, exactMatchTerms, inverseExactMatchTerms, Term::termInfoStringIri);
         sb.append(',');
         sb.append(isDraft());
         return sb.toString();
@@ -312,6 +308,20 @@ public class Term extends AbstractTerm implements HasTypes {
         return CsvUtils.sanitizeString(String.join(";", col));
     }
 
+    private static <T> void exportMulti(final StringBuilder sb, final Collection<T> collection,
+                                        Function<T, String> toString) {
+        sb.append(',');
+        if (collection != null && !collection.isEmpty()) {
+            sb.append(exportCollection(collection.stream().map(toString).collect(Collectors.toSet())));
+        }
+    }
+
+    private static <T> void consolidateAndExportMulti(final StringBuilder sb, final Collection<T> collectionOne,
+                                                      final Collection<T> collectionTwo, Function<T, String> toString) {
+        final Collection<T> toExport = Utils.joinCollections(collectionOne, collectionTwo);
+        exportMulti(sb, toExport, toString);
+    }
+
     /**
      * Generates an Excel line (line with tab separated values) representing this term.
      * <p>
@@ -323,37 +333,43 @@ public class Term extends AbstractTerm implements HasTypes {
         Objects.requireNonNull(row);
         row.createCell(0).setCellValue(getUri().toString());
         row.createCell(1).setCellValue(getLabel().toString());
-        if (altLabels != null) {
-            row.createCell(2).setCellValue(String.join(";",
-                    altLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
-        }
-        if (hiddenLabels != null) {
-            row.createCell(3).setCellValue(String.join(";",
-                    hiddenLabels.stream().map(Term::exportMultilingualString).collect(Collectors.toSet())));
-        }
+        row.createCell(2)
+           .setCellValue(exportCollection(Utils.emptyIfNull(altLabels).stream().map(Term::exportMultilingualString)
+                                               .collect(Collectors.toSet())));
+        row.createCell(3)
+           .setCellValue(exportCollection(Utils.emptyIfNull(hiddenLabels).stream().map(Term::exportMultilingualString)
+                                               .collect(Collectors.toSet())));
         if (getDefinition() != null) {
             row.createCell(4).setCellValue(getDefinition().toString());
         }
         if (description != null) {
             row.createCell(5).setCellValue(description.toString());
         }
-        if (types != null) {
-            row.createCell(6).setCellValue(String.join(";", types));
-        }
-        if (sources != null) {
-            row.createCell(7).setCellValue(String.join(";", sources));
-        }
-        if (parentTerms != null) {
-            row.createCell(8)
-                    .setCellValue(String.join(";",
-                            parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
-        }
-        if (getSubTerms() != null) {
-            row.createCell(9)
-                    .setCellValue(String.join(";",
-                            getSubTerms().stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
-        }
-        row.createCell(10).setCellValue(isDraft());
+        row.createCell(6).setCellValue(exportCollection(Utils.emptyIfNull(types)));
+        row.createCell(7).setCellValue(exportCollection(Utils.emptyIfNull(sources)));
+        row.createCell(8)
+           .setCellValue(exportCollection(Utils.emptyIfNull(parentTerms).stream().map(pt -> pt.getUri().toString())
+                                               .collect(Collectors.toSet())));
+        row.createCell(9)
+           .setCellValue(exportCollection(Utils.emptyIfNull(getSubTerms()).stream().map(Term::termInfoStringIri)
+                                               .collect(Collectors.toSet())));
+        row.createCell(10).setCellValue(exportCollection(Utils.joinCollections(related, inverseRelated).stream()
+                                                              .map(Term::termInfoStringIri)
+                                                              .collect(Collectors.toList())));
+        row.createCell(11)
+           .setCellValue(exportCollection(Utils.joinCollections(relatedMatch, inverseRelatedMatch).stream()
+                                               .map(Term::termInfoStringIri)
+                                               .collect(Collectors.toList())));
+        row.createCell(12)
+           .setCellValue(exportCollection(Utils.joinCollections(exactMatchTerms, inverseExactMatchTerms).stream()
+                                               .map(Term::termInfoStringIri)
+                                               .collect(Collectors.toList())));
+        row.createCell(13).setCellValue(isDraft());
+    }
+
+    private static String termInfoStringIri(TermInfo ti) {
+        assert ti != null;
+        return ti.getUri().toString();
     }
 
     /**
@@ -367,12 +383,12 @@ public class Term extends AbstractTerm implements HasTypes {
     }
 
     /**
-     * Consolidates the asserted related (relatedMatch, exactMatch) and inferred inverse related (relatedMatch, exactMatch) terms into related
-     * (relatedMatch, exactMatch).
+     * Consolidates the asserted related (relatedMatch, exactMatch) and inferred inverse related (relatedMatch,
+     * exactMatch) terms into related (relatedMatch, exactMatch).
      * <p>
-     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}, {@code exactMatch}) to {@code related}
-     * ({@code relatedMatch}, {@code exactMatch}) so that they act as they should in reality because of skos:related (skos:relatedMatch, skos:exactMatch)
-     * being symmetric.
+     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}, {@code exactMatch})
+     * to {@code related} ({@code relatedMatch}, {@code exactMatch}) so that they act as they should in reality because
+     * of skos:related (skos:relatedMatch, skos:exactMatch) being symmetric.
      */
     public void consolidateInferred() {
         if (inverseRelated != null) {

@@ -25,16 +25,18 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.locationtech.jts.util.Assert;
 import org.mockito.Mockito;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 class UtilsTest {
@@ -117,9 +119,9 @@ class UtilsTest {
 
         Utils.changeIri(oldIri, newIri, model);
 
-        Assert.equals(1l, getStatementCountWithSubject(model, null));
-        Assert.equals(0l, getStatementCountWithSubject(model, Values.iri(oldIri)));
-        Assert.equals(1l, getStatementCountWithSubject(model, Values.iri(newIri)));
+        Assert.equals(1L, getStatementCountWithSubject(model, null));
+        Assert.equals(0L, getStatementCountWithSubject(model, Values.iri(oldIri)));
+        Assert.equals(1L, getStatementCountWithSubject(model, Values.iri(newIri)));
     }
 
     @Test
@@ -131,12 +133,28 @@ class UtilsTest {
 
         Utils.changeNamespace("https://example.org/", newNamespace, model);
 
-        Assert.equals(1l, getStatementCountWithSubject(model, null));
-        Assert.equals(0l, getStatementCountWithSubject(model, Values.iri(oldIri)));
-        Assert.equals(1l, getStatementCountWithSubject(model, Values.iri(newNamespace + "a")));
+        Assert.equals(1L, getStatementCountWithSubject(model, null));
+        Assert.equals(0L, getStatementCountWithSubject(model, Values.iri(oldIri)));
+        Assert.equals(1L, getStatementCountWithSubject(model, Values.iri(newNamespace + "a")));
     }
 
     private long getStatementCountWithSubject(Model model, IRI subject) {
         return model.filter(subject, null, null).size();
+    }
+
+    @ParameterizedTest
+    @MethodSource("collectionGenerator")
+    void joinCollectionsJoinsCollections(Collection<String> cOne, Collection<String> cTwo,
+                                         Collection<String> expected) {
+        assertEquals(expected, Utils.joinCollections(cOne, cTwo));
+    }
+
+    static Stream<Arguments> collectionGenerator() {
+        return Stream.of(
+                Arguments.of(Collections.singleton("a"), Collections.singletonList("b"), Arrays.asList("a", "b")),
+                Arguments.of(Collections.emptySet(), Collections.singleton("b"), Collections.singletonList("b")),
+                Arguments.of(null, null, Collections.emptyList()),
+                Arguments.of(null, Collections.singletonList("a"), Collections.singletonList("a"))
+        );
     }
 }
