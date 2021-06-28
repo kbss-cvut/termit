@@ -8,7 +8,6 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
@@ -19,7 +18,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -63,8 +61,19 @@ public class Term extends AbstractTerm implements HasTypes {
     @JsonIgnore
     private Set<TermInfo> inverseExactMatchTerms;
 
+    /**
+     * Parent terms from the same vocabulary.
+     */
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<Term> parentTerms;
+
+    /**
+     * Parent terms from different vocabularies.
+     * <p>
+     * Represents the {@code skos:broadMatch} property.
+     */
+    @OWLObjectProperty(iri = SKOS.BROAD_MATCH, fetch = FetchType.EAGER)
+    private Set<Term> externalParentTerms;
 
     @OWLObjectProperty(iri = SKOS.RELATED, fetch = FetchType.EAGER)
     private Set<TermInfo> related;
@@ -158,11 +167,35 @@ public class Term extends AbstractTerm implements HasTypes {
         this.parentTerms = parentTerms;
     }
 
+    public Set<Term> getExternalParentTerms() {
+        return externalParentTerms;
+    }
+
+    public void setExternalParentTerms(Set<Term> externalParentTerms) {
+        this.externalParentTerms = externalParentTerms;
+    }
+
+    /**
+     * Adds the specified term to the parent terms of this instance.
+     * <p>
+     * If the specified term is from the same glossary, it is added to {@code parentTerms}, otherwise, it is added to
+     * the {@code importedParentTerms}.
+     *
+     * @param term Term to add as parent
+     */
     public void addParentTerm(Term term) {
-        if (parentTerms == null) {
-            this.parentTerms = new HashSet<>();
+        Objects.requireNonNull(term);
+        if (!Objects.equals(getGlossary(), term.getGlossary())) {
+            if (externalParentTerms == null) {
+                this.externalParentTerms = new HashSet<>();
+            }
+            externalParentTerms.add(term);
+        } else {
+            if (parentTerms == null) {
+                this.parentTerms = new HashSet<>();
+            }
+            parentTerms.add(term);
         }
-        parentTerms.add(term);
     }
 
     public Set<TermInfo> getRelated() {
@@ -345,13 +378,13 @@ public class Term extends AbstractTerm implements HasTypes {
         }
         if (parentTerms != null) {
             row.createCell(8)
-                    .setCellValue(String.join(";",
-                            parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
+               .setCellValue(String.join(";",
+                       parentTerms.stream().map(pt -> pt.getUri().toString()).collect(Collectors.toSet())));
         }
         if (getSubTerms() != null) {
             row.createCell(9)
-                    .setCellValue(String.join(";",
-                            getSubTerms().stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
+               .setCellValue(String.join(";",
+                       getSubTerms().stream().map(ti -> ti.getUri().toString()).collect(Collectors.toSet())));
         }
         row.createCell(10).setCellValue(isDraft());
     }
@@ -363,16 +396,16 @@ public class Term extends AbstractTerm implements HasTypes {
      * term at all
      */
     public boolean hasParentInSameVocabulary() {
-        return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getGlossary().equals(getGlossary()));
+        return parentTerms != null && !parentTerms.isEmpty();
     }
 
     /**
-     * Consolidates the asserted related (relatedMatch, exactMatch) and inferred inverse related (relatedMatch, exactMatch) terms into related
-     * (relatedMatch, exactMatch).
+     * Consolidates the asserted related (relatedMatch, exactMatch) and inferred inverse related (relatedMatch,
+     * exactMatch) terms into related (relatedMatch, exactMatch).
      * <p>
-     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}, {@code exactMatch}) to {@code related}
-     * ({@code relatedMatch}, {@code exactMatch}) so that they act as they should in reality because of skos:related (skos:relatedMatch, skos:exactMatch)
-     * being symmetric.
+     * This basically means copying items from {@code inverseRelated} ({@code inverseRelatedMatch}, {@code exactMatch})
+     * to {@code related} ({@code relatedMatch}, {@code exactMatch}) so that they act as they should in reality because
+     * of skos:related (skos:relatedMatch, skos:exactMatch) being symmetric.
      */
     public void consolidateInferred() {
         if (inverseRelated != null) {
@@ -394,13 +427,4 @@ public class Term extends AbstractTerm implements HasTypes {
                 ", types=" + types +
                 '}';
     }
-
-    public static Field getParentTermsField() {
-        try {
-            return Term.class.getDeclaredField("parentTerms");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"parentTerms\" field.", e);
-        }
-    }
-
 }

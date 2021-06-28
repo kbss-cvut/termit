@@ -326,12 +326,42 @@ class TermTest {
     @Test
     void consolidateInferredCopiesInverseExactMatchTermsToExactMatch() {
         final Term sut = Generator.generateTermWithId();
-        sut.setExactMatchTerms(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
-        sut.setInverseExactMatchTerms(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
+        sut.setExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator
+                .generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
+        sut.setInverseExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator
+                .generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
         final int originalExactMatchSize = sut.getExactMatchTerms().size();
 
         sut.consolidateInferred();
         assertEquals(originalExactMatchSize + sut.getInverseExactMatchTerms().size(), sut.getExactMatchTerms().size());
         sut.getInverseExactMatchTerms().forEach(ti -> assertThat(sut.getExactMatchTerms(), hasItem(ti)));
+    }
+
+    @Test
+    void addParentTermAddsSpecifiedTermToParentsWhenItIsFromSameGlossary() {
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.getGlossary().setUri(Generator.generateUri());
+        final Term sut = Generator.generateTermWithId();
+        sut.setGlossary(vocabulary.getGlossary().getUri());
+        final Term parentToAdd = Generator.generateTermWithId();
+        parentToAdd.setGlossary(vocabulary.getGlossary().getUri());
+
+        sut.addParentTerm(parentToAdd);
+        assertThat(sut.getParentTerms(), hasItem(parentToAdd));
+        assertThat(sut.getExternalParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
+    }
+
+    @Test
+    void addParentTermAddsSpecifiedTermToImportedParentsWhenItIsFromDifferentGlossary() {
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.getGlossary().setUri(Generator.generateUri());
+        final Term sut = Generator.generateTermWithId();
+        sut.setGlossary(vocabulary.getGlossary().getUri());
+        final Term parentToAdd = Generator.generateTermWithId();
+        parentToAdd.setGlossary(Generator.generateUri());
+
+        sut.addParentTerm(parentToAdd);
+        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
+        assertThat(sut.getExternalParentTerms(), hasItem(parentToAdd));
     }
 }
