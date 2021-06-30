@@ -8,4 +8,8 @@ public class UnsupportedOperationException extends TermItException {
     public UnsupportedOperationException(String message) {
         super(message);
     }
+
+    public UnsupportedOperationException(String message, boolean suppressLogging) {
+        super(message, suppressLogging);
+    }
 }

@@ -40,6 +40,13 @@ public class RestExceptionHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestExceptionHandler.class);
 
+    private static void logException(TermItException ex) {
+        if (ex.shouldSuppressLogging()) {
+            return;
+        }
+        logException("Exception caught.", ex);
+    }
+
     private static void logException(Throwable ex) {
         logException("Exception caught.", ex);
     }
