@@ -62,7 +62,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver,
                                  Configuration config, TermDao termDao,
-                                 OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover, TermAssignmentDao termAssignmentDao,
+                                 OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
+                                 TermAssignmentDao termAssignmentDao,
                                  VocabularyRepositoryService vocabularyService) {
         super(validator);
         this.idResolver = idResolver;
@@ -90,7 +91,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     @Override
     public void persist(Term instance) {
         throw new UnsupportedOperationException(
-            "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
+                "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
     }
 
     @Override
@@ -108,8 +109,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     @Override
     protected void postUpdate(Term instance) {
-        final Vocabulary vocabulary =
-            vocabularyService.getRequiredReference(instance.getVocabulary());
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.getGlossary().removeRootTerm(instance);
         } else {
@@ -126,13 +126,15 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         }
         verifyIdentifierUnique(instance);
         instance.setGlossary(vocabulary.getGlossary().getUri());
+
+        assert !instance.hasParentInSameVocabulary();
         addTermAsRootToGlossary(instance, vocabulary.getUri());
         termDao.persist(instance, vocabulary);
     }
 
     private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
         return idResolver.generateDerivedIdentifier(vocabularyUri, config.getNamespace().getTerm().getSeparator(),
-            multilingualString.get(config.getPersistence().getLanguage()));
+                multilingualString.get(config.getPersistence().getLanguage()));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
@@ -320,33 +322,33 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
         if (!ai.isEmpty()) {
             throw new TermRemovalException(
-                "Cannot delete the term. It is used for annotating resources : " +
-                    ai.stream().map(TermAssignments::getResourceLabel).collect(
-                        joining(",")));
+                    "Cannot delete the term. It is used for annotating resources : " +
+                            ai.stream().map(TermAssignments::getResourceLabel).collect(
+                                    joining(",")));
         }
 
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
             throw new TermRemovalException(
-                "Cannot delete the term. It is a parent of other terms : " + subTerms
-                    .stream().map(t -> t.getUri().toString())
-                    .collect(joining(",")));
+                    "Cannot delete the term. It is a parent of other terms : " + subTerms
+                            .stream().map(t -> t.getUri().toString())
+                            .collect(joining(",")));
         }
 
         if (instance.getProperties() != null) {
             Set<String> props = instance.getProperties().keySet();
             List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.getURI())) && !(
-                s.equalsIgnoreCase(SKOS.changeNote.toString())
-                    || s.equalsIgnoreCase(SKOS.editorialNote.toString())
-                    || s.equalsIgnoreCase(SKOS.historyNote.toString())
-                    || s.equalsIgnoreCase(SKOS.example.toString())
-                    || s.equalsIgnoreCase(SKOS.note.toString())
-                    || s.equalsIgnoreCase(SKOS.scopeNote.toString())
-                    || s.equalsIgnoreCase(SKOS.notation.toString()))).collect(toList());
+                    s.equalsIgnoreCase(SKOS.changeNote.toString())
+                            || s.equalsIgnoreCase(SKOS.editorialNote.toString())
+                            || s.equalsIgnoreCase(SKOS.historyNote.toString())
+                            || s.equalsIgnoreCase(SKOS.example.toString())
+                            || s.equalsIgnoreCase(SKOS.note.toString())
+                            || s.equalsIgnoreCase(SKOS.scopeNote.toString())
+                            || s.equalsIgnoreCase(SKOS.notation.toString()))).collect(toList());
             if (!properties.isEmpty()) {
                 throw new TermRemovalException(
-                    "Cannot delete the term. It is linked to another term through properties "
-                        + String.join(",", properties));
+                        "Cannot delete the term. It is linked to another term through properties "
+                                + String.join(",", properties));
             }
         }
 
