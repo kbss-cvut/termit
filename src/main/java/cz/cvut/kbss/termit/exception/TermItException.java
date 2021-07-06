@@ -21,37 +21,18 @@ package cz.cvut.kbss.termit.exception;
  */
 public class TermItException extends RuntimeException {
 
-    protected final boolean suppressLogging;
-
     protected TermItException() {
-        this.suppressLogging = false;
     }
 
     public TermItException(String message) {
-        this(message, false);
-    }
-
-    public TermItException(String message, boolean suppressLogging) {
         super(message);
-        this.suppressLogging = suppressLogging;
     }
 
     public TermItException(String message, Throwable cause) {
         super(message, cause);
-        this.suppressLogging = false;
     }
 
     public TermItException(Throwable cause) {
         super(cause);
-        this.suppressLogging = false;
-    }
-
-    /**
-     * Whether logging of this exception should be suppressed.
-     *
-     * @return True if exception should not be logged
-     */
-    public boolean shouldSuppressLogging() {
-        return suppressLogging;
     }
 }

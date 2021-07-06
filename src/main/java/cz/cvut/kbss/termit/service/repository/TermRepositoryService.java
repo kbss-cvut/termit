@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.exception.DisabledOperationException;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
@@ -306,7 +307,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of definitionally related terms of the specified term
      */
     public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
-        throw new UnsupportedOperationException("This method is disabled, not working correctly.", true);
+        throw new DisabledOperationException("This method is disabled, not working correctly.");
     }
 
     /**
