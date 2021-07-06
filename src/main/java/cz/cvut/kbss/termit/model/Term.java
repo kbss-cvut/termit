@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -311,7 +312,7 @@ public class Term extends AbstractTerm implements HasTypes {
     private static <T> void exportMulti(final StringBuilder sb, final Collection<T> collection,
                                         Function<T, String> toString) {
         sb.append(',');
-        if (collection != null && !collection.isEmpty()) {
+        if (!CollectionUtils.isEmpty(collection)) {
             sb.append(exportCollection(collection.stream().map(toString).collect(Collectors.toSet())));
         }
     }
