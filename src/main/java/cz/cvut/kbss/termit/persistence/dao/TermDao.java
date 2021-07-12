@@ -187,7 +187,7 @@ public class TermDao extends AssetDao<Term> {
                     "FILTER (lang(?label) = ?labelLang) ." +
                     "}" +
                     "?term ?inVocabulary ?vocabulary ." +
-                    " } ORDER BY LCASE(?label)", URI.class)
+                    " } ORDER BY " + orderSentence(config.getLanguage(), "?label" ), URI.class)
                                          .setParameter("type", typeUri)
                                          .setParameter("vocabulary", vocabulary.getUri())
                                          .setParameter("hasLabel", LABEL_PROP)
@@ -246,7 +246,7 @@ public class TermDao extends AssetDao<Term> {
                 "?inVocabulary ?parent ." +
                 "?vocabulary ?imports* ?parent ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "} ORDER BY LCASE(?label)", TermDto.class).setParameter("type", typeUri)
+                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class).setParameter("type", typeUri)
                                       .setParameter("hasLabel", LABEL_PROP)
                                       .setParameter("inVocabulary",
                                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
@@ -300,7 +300,7 @@ public class TermDao extends AssetDao<Term> {
                 "?hasLabel ?label ." +
                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "}} ORDER BY LCASE(?label)", TermDto.class);
+                "}} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
@@ -313,6 +313,34 @@ public class TermDao extends AssetDao<Term> {
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    private String orderSentence(String lang, String var) {
+        switch (lang) {
+            case "cs":
+                return
+                        r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
+                                "'á'", "'azz'"),
+                                "'č'", "'czz'"),
+                                "'ď'", "'dzz'"),
+                                "'é'", "'ezz'"),
+                                "'ě'", "'ezz'"),
+                                "'í'", "'izz'"),
+                                "'ň'", "'nzz'"),
+                                "'ó'", "'ozz'"),
+                                "'ř'", "'rzz'"),
+                                "'š'", "'szz'"),
+                                "'ť'", "'tzz'"),
+                                "'ú'", "'uzz'"),
+                                "'ý'", "'yzz'"),
+                                "'ž'", "'zzz'");
+            default:
+                return "lcase(" + var + ")";
+        }
+    }
+
+    private String r(String string, String from, String to) {
+        return "replace(" + string + ", " + from + ", " + to + ")";
     }
 
     /**
@@ -330,7 +358,7 @@ public class TermDao extends AssetDao<Term> {
                 "?hasLabel ?label ." +
                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "} ORDER BY LCASE(?label)", TermDto.class);
+                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
@@ -382,7 +410,7 @@ public class TermDao extends AssetDao<Term> {
                 "?vocabulary ?imports* ?parent ." +
                 "?parent ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "} ORDER BY LCASE(?label)", TermDto.class);
+                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, true);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
@@ -416,7 +444,7 @@ public class TermDao extends AssetDao<Term> {
                 "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
                 "}" +
                 "?term ?inVocabulary ?vocabulary ." +
-                "} ORDER BY LCASE(?label)", TermDto.class)
+                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
@@ -447,7 +475,7 @@ public class TermDao extends AssetDao<Term> {
                 "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
                 "}" +
                 "?term ?inVocabulary ?vocabulary ." +
-                "} ORDER BY LCASE(?label)", TermDto.class)
+                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
@@ -487,7 +515,7 @@ public class TermDao extends AssetDao<Term> {
                 "      ?hasLabel ?label ;\n" +
                 "      ?inVocabulary ?vocabulary ." +
                 "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .\n" +
-                "} ORDER BY LCASE(?label)", TermDto.class)
+                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
