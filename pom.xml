@@ -45,7 +45,7 @@
         <dependency>
             <groupId>com.github.sgov</groupId>
             <artifactId>sgov-validator</artifactId>
-            <version>1.6.4</version>
+            <version>1.6.5</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
