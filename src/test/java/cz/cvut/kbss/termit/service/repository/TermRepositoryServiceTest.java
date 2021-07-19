@@ -735,4 +735,23 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term inverseResult = em.find(Term.class, inverseExactMatch.getUri());
         assertThat(inverseResult.getExactMatchTerms(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
     }
+
+    @Test
+    void postLoadConsolidatesTermsParents() {
+        final Term term = Generator.generateTermWithId(childVocabulary.getUri());
+        term.setGlossary(childVocabulary.getGlossary().getUri());
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        parent.setGlossary(vocabulary.getGlossary().getUri());
+        term.addParentTerm(parent);
+        assertThat(term.getParentTerms(), not(hasItem(parent)));
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(parent, descriptorFactory.termDescriptor(parent));
+            Generator.addTermInVocabularyRelationship(term, childVocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
+        });
+
+        final Term result = sut.findRequired(term.getUri());
+        assertThat(result.getParentTerms(), hasItem(parent));
+    }
 }

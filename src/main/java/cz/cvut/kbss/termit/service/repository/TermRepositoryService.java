@@ -27,9 +27,7 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,7 +37,6 @@ import javax.validation.Validator;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static java.util.stream.Collectors.joining;
@@ -83,6 +80,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     protected Term postLoad(Term instance) {
         final Term t = super.postLoad(instance);
         t.consolidateInferred();
+        t.consolidateParents();
         return t;
     }
 
