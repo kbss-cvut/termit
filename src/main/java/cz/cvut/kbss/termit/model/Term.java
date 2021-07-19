@@ -72,6 +72,7 @@ public class Term extends AbstractTerm implements HasTypes {
      * <p>
      * Represents the {@code skos:broadMatch} property.
      */
+    @JsonIgnore
     @OWLObjectProperty(iri = SKOS.BROAD_MATCH, fetch = FetchType.EAGER)
     private Set<Term> externalParentTerms;
 
@@ -416,6 +417,21 @@ public class Term extends AbstractTerm implements HasTypes {
         }
         if (inverseExactMatchTerms != null) {
             inverseExactMatchTerms.forEach(ti -> addExactMatch(new TermInfo(ti)));
+        }
+    }
+
+    /**
+     * Consolidates parent and external parent terms into just parent terms.
+     * <p>
+     * This is based on the fact that external parents are a special case of parent terms (SKOS broadMatch is a sub-property of broader).
+     * Clients need not know about their distinction, which is important only at repository level.
+     */
+    public void consolidateParents() {
+        if (externalParentTerms != null && !externalParentTerms.isEmpty()) {
+            if (parentTerms == null) {
+                parentTerms = new LinkedHashSet<>();
+            }
+            parentTerms.addAll(externalParentTerms);
         }
     }
 

@@ -25,10 +25,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -175,24 +172,24 @@ class TermTest {
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         term.getLabel().getValue().values()
-                .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
+            .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertTrue(row.getCell(2).getStringCellValue().matches(".+;.+"));
         term.getAltLabels().forEach(s -> assertTrue(row.getCell(2).getStringCellValue().contains(s.get())));
         assertTrue(row.getCell(3).getStringCellValue().matches(".+;.+"));
         term.getHiddenLabels().forEach(s -> assertTrue(row.getCell(3).getStringCellValue().contains(s.get())));
         term.getDefinition().getValue().values()
-                .forEach(v -> assertThat(row.getCell(4).getStringCellValue(), containsString(v)));
+            .forEach(v -> assertThat(row.getCell(4).getStringCellValue(), containsString(v)));
         term.getDescription().getValue().values()
-                .forEach(v -> assertThat(row.getCell(5).getStringCellValue(), containsString(v)));
+            .forEach(v -> assertThat(row.getCell(5).getStringCellValue(), containsString(v)));
         assertEquals(term.getTypes().iterator().next(), row.getCell(6).getStringCellValue());
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
         term.getSources().forEach(s -> assertTrue(row.getCell(7).getStringCellValue().contains(s)));
         assertTrue(row.getCell(8).getStringCellValue().matches(".+;.+"));
         term.getParentTerms()
-                .forEach(st -> assertTrue(row.getCell(8).getStringCellValue().contains(st.getUri().toString())));
+            .forEach(st -> assertTrue(row.getCell(8).getStringCellValue().contains(st.getUri().toString())));
         assertTrue(row.getCell(9).getStringCellValue().matches(".+;.+"));
         term.getSubTerms()
-                .forEach(st -> assertTrue(row.getCell(9).getStringCellValue().contains(st.getUri().toString())));
+            .forEach(st -> assertTrue(row.getCell(9).getStringCellValue().contains(st.getUri().toString())));
     }
 
     @Test
@@ -206,7 +203,7 @@ class TermTest {
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         term.getLabel().getValue().values()
-                .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
+            .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertEquals(11, row.getLastCellNum());
     }
 
@@ -222,7 +219,7 @@ class TermTest {
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         term.getLabel().getValue().values()
-                .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
+            .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
         term.getSources().forEach(s -> assertTrue(row.getCell(7).getStringCellValue().contains(s)));
     }
@@ -294,16 +291,20 @@ class TermTest {
         sut.toExcel(row);
         assertEquals(sut.getUri().toString(), row.getCell(0).getStringCellValue());
         sut.getHiddenLabels().forEach(ms -> ms.getValue().values()
-                .forEach(v -> assertThat(row.getCell(3).getStringCellValue(),
-                        containsString(v))));
+                                              .forEach(v -> assertThat(row.getCell(3).getStringCellValue(),
+                                                      containsString(v))));
     }
 
     @Test
     void consolidateInferredCopiesInverseRelatedTermsToRelated() {
         final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
         sut.setVocabulary(Generator.generateUri());
-        sut.setRelated(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary()))).collect(Collectors.toSet()));
-        sut.setInverseRelated(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary()))).collect(Collectors.toSet()));
+        sut.setRelated(
+                IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                         .collect(Collectors.toSet()));
+        sut.setInverseRelated(
+                IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(sut.getVocabulary())))
+                         .collect(Collectors.toSet()));
         final int originalRelatedSize = sut.getRelated().size();
 
         sut.consolidateInferred();
@@ -314,8 +315,12 @@ class TermTest {
     @Test
     void consolidateInferredCopiesInverseRelatedMatchTermsToRelatedMatch() {
         final Term sut = Generator.generateTermWithId();
-        sut.setRelatedMatch(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
-        sut.setInverseRelatedMatch(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
+        sut.setRelatedMatch(
+                IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                         .collect(Collectors.toSet()));
+        sut.setInverseRelatedMatch(
+                IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                         .collect(Collectors.toSet()));
         final int originalRelatedMatchSize = sut.getRelatedMatch().size();
 
         sut.consolidateInferred();
@@ -352,7 +357,7 @@ class TermTest {
     }
 
     @Test
-    void addParentTermAddsSpecifiedTermToImportedParentsWhenItIsFromDifferentGlossary() {
+    void addParentTermAddsSpecifiedTermToExternalParentsWhenItIsFromDifferentGlossary() {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
         vocabulary.getGlossary().setUri(Generator.generateUri());
         final Term sut = Generator.generateTermWithId();
@@ -363,5 +368,31 @@ class TermTest {
         sut.addParentTerm(parentToAdd);
         assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
         assertThat(sut.getExternalParentTerms(), hasItem(parentToAdd));
+    }
+
+    @Test
+    void consolidateParentsCopiesExternalParentTermsToParentTerms() {
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.getGlossary().setUri(Generator.generateUri());
+        final Term sut = Generator.generateTermWithId();
+        final Set<Term> externalParents = IntStream.range(0, 5).mapToObj(i -> {
+            final Term t = Generator.generateTermWithId();
+            t.setGlossary(Generator.generateUri());
+            return t;
+        }).collect(Collectors.toSet());
+        sut.setExternalParentTerms(externalParents);
+
+        sut.consolidateParents();
+        assertThat(sut.getParentTerms(), hasItems(externalParents.toArray(new Term[0])));
+    }
+
+    @Test
+    void consolidateParentsHandlesNullExternalParentTerms() {
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.getGlossary().setUri(Generator.generateUri());
+        final Term sut = Generator.generateTermWithId();
+
+        sut.consolidateParents();
+        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
     }
 }

@@ -43,14 +43,4 @@ class ReadOnlyTermTest {
         final ReadOnlyTerm result = new ReadOnlyTerm(term);
         assertEquals(Collections.singleton(new ReadOnlyTerm(parent)), result.getParentTerms());
     }
-
-    @Test
-    void constructorCopiesExternalParentTermsAsReadonly() {
-        final Term term = Generator.generateTermWithId();
-        final Term parent = Generator.generateTermWithId();
-        term.setExternalParentTerms(Collections.singleton(parent));
-
-        final ReadOnlyTerm result = new ReadOnlyTerm(term);
-        assertEquals(Collections.singleton(new ReadOnlyTerm(parent)), result.getExternalParentTerms());
-    }
 }

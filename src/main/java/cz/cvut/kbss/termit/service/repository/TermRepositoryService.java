@@ -80,12 +80,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     @Override
-    public Optional<Term> find(URI id) {
-        final Optional<Term> result = super.find(id);
-        return result.map(t -> {
-            t.consolidateInferred();
-            return t;
-        });
+    protected Term postLoad(Term instance) {
+        final Term t = super.postLoad(instance);
+        t.consolidateInferred();
+        return t;
     }
 
     @Override
@@ -173,7 +171,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of terms ordered by label
      */
     public List<Term> findAll(Vocabulary vocabulary) {
-        return termDao.findAll(vocabulary);
+        return termDao.findAll(vocabulary).stream().map(this::postLoad).collect(toList());
     }
 
     /**
