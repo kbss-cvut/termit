@@ -40,6 +40,17 @@ public class RestExceptionHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestExceptionHandler.class);
 
+    private static void logException(TermItException ex) {
+        if (shouldSuppressLogging(ex)) {
+            return;
+        }
+        logException("Exception caught.", ex);
+    }
+
+    private static boolean shouldSuppressLogging(TermItException ex) {
+        return ex.getClass().getAnnotation(SuppressibleLogging.class) != null;
+    }
+
     private static void logException(Throwable ex) {
         logException("Exception caught.", ex);
     }
@@ -126,6 +137,12 @@ public class RestExceptionHandler {
     @ExceptionHandler(UnsupportedOperationException.class)
     public ResponseEntity<ErrorInfo> unsupportedAssetOperationException(HttpServletRequest request,
                                                                         UnsupportedOperationException e) {
+        logException(e);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(DisabledOperationException.class)
+    public ResponseEntity<ErrorInfo> disabledOperationException(HttpServletRequest request, DisabledOperationException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }

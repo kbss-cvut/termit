@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -141,5 +142,45 @@ public class TermDaoRelatedTermsTest extends BaseDaoTestRunner {
         assertTrue(result.isPresent());
         assertFalse(result.get().getInverseRelatedMatch().isEmpty());
         relatedMatch.forEach(r -> assertThat(result.get().getInverseRelatedMatch(), not(hasItem(new TermInfo(r)))));
+    }
+
+    @Test
+    void findAllLoadsInferredInverseRelatedAndRelatedMatchTerms() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final List<Term> related = Arrays.asList(Generator.generateTermWithId(vocabulary.getUri()), Generator
+                .generateTermWithId(vocabulary.getUri()));
+        final List<Term> inverseRelated = new ArrayList<>(Arrays
+                .asList(Generator.generateTermWithId(vocabulary.getUri()), Generator
+                        .generateTermWithId(vocabulary.getUri())));
+        final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(Generator.generateUri()), Generator
+                .generateTermWithId(Generator.generateUri()));
+        final List<Term> inverseRelatedMatch = new ArrayList<>(Collections
+                .singletonList(Generator.generateTermWithId(Generator.generateUri())));
+        final Collection<Term> allRelated = Utils.joinCollections(related, inverseRelated);
+        final Collection<Term> allRelatedMatch = Utils.joinCollections(relatedMatch, inverseRelatedMatch);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            allRelated.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(vocabulary));
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
+            });
+            generateRelatedRelationships(term, allRelated, SKOS.RELATED);
+            allRelatedMatch.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary()));
+                Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
+            });
+            generateRelatedRelationships(term, allRelatedMatch, SKOS.RELATED_MATCH);
+        });
+        term.setRelated(related.stream().map(TermInfo::new).collect(Collectors.toSet()));
+        term.setRelatedMatch(relatedMatch.stream().map(TermInfo::new).collect(Collectors.toSet()));
+        transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
+
+        final List<Term> result = sut.findAll(vocabulary);
+        final Optional<Term> singleResult = result.stream().filter(t -> t.equals(term)).findFirst();
+        assertTrue(singleResult.isPresent());
+        inverseRelated.forEach(ir -> assertThat(singleResult.get().getInverseRelated(), hasItem(new TermInfo(ir))));
+        inverseRelatedMatch
+                .forEach(ir -> assertThat(singleResult.get().getInverseRelatedMatch(), hasItem(new TermInfo(ir))));
     }
 }
