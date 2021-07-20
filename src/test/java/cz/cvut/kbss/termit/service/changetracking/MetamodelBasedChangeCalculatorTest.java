@@ -22,6 +22,8 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
@@ -390,7 +392,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
         final UpdateChangeRecord record = result.iterator().next();
-        assertNull(record.getOriginalValue());
+        assertThat(record.getOriginalValue(), anyOf(nullValue(), emptyCollectionOf(Object.class)));
         assertEquals(changed.getParentTerms().stream().map(Term::getUri).collect(Collectors.toSet()),
                 record.getNewValue());
     }
@@ -415,5 +417,14 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final UpdateChangeRecord record = result.iterator().next();
         assertEquals(original.getLabel(), record.getOriginalValue().iterator().next());
         assertEquals(changed.getLabel(), record.getNewValue().iterator().next());
+    }
+
+    @Test
+    void calculateChangesDoesNotRegisterChangeInPluralAssociationWhenOriginalIsNullAndUpdateIsEmpty() {
+        final Term original = Generator.generateTermWithId();
+        final Term changed = cloneOf(original);
+        changed.setExternalParentTerms(new HashSet<>());
+        final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
+        assertThat(result, emptyCollectionOf(UpdateChangeRecord.class));
     }
 }

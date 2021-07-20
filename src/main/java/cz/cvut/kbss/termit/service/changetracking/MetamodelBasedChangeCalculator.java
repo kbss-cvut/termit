@@ -115,7 +115,7 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
     private Object extractIdentifiersInCollection(Object col) {
         return col != null ?
                ((Collection<?>) col).stream().map(item -> getIdentifier(item, metamodel)).collect(Collectors.toSet()) :
-               null;
+               Collections.emptySet();
     }
 
     private UpdateChangeRecord createChangeRecord(URI assetId, URI property) {
