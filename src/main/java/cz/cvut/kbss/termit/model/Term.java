@@ -423,8 +423,11 @@ public class Term extends AbstractTerm implements HasTypes {
     /**
      * Consolidates parent and external parent terms into just parent terms.
      * <p>
-     * This is based on the fact that external parents are a special case of parent terms (SKOS broadMatch is a sub-property of broader).
-     * Clients need not know about their distinction, which is important only at repository level.
+     * This is based on the fact that external parents are a special case of parent terms (SKOS broadMatch is a
+     * sub-property of broader). Clients need not know about their distinction, which is important only at repository
+     * level.
+     *
+     * @see #splitExternalAndInternalParents()
      */
     public void consolidateParents() {
         if (externalParentTerms != null && !externalParentTerms.isEmpty()) {
@@ -433,6 +436,33 @@ public class Term extends AbstractTerm implements HasTypes {
             }
             parentTerms.addAll(externalParentTerms);
         }
+    }
+
+    /**
+     * Splits consolidated parent terms into external and (internal) parent terms.
+     * <p>
+     * This split is driven by the fact that external parents belong to a different glossary than this term and should
+     * thus be differentiated on repository level.
+     * <p>
+     * This method does the inverse of {@link #consolidateParents()}.
+     *
+     * @see #consolidateParents()
+     */
+    public void splitExternalAndInternalParents() {
+        if (parentTerms == null || parentTerms.isEmpty()) {
+            return;
+        }
+        final Set<Term> parents = new LinkedHashSet<>();
+        final Set<Term> externalParents = new LinkedHashSet<>();
+        for (Term p : parentTerms) {
+            if (Objects.equals(getGlossary(), p.getGlossary())) {
+                parents.add(p);
+            } else {
+                externalParents.add(p);
+            }
+        }
+        this.parentTerms = parents;
+        this.externalParentTerms = externalParents;
     }
 
     @Override

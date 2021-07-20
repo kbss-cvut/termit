@@ -41,7 +41,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -753,5 +755,71 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Term result = sut.findRequired(term.getUri());
         assertThat(result.getParentTerms(), hasItem(parent));
+    }
+
+    @Test
+    void preUpdateSplitsExternalAndInternalTermParents() {
+        final Term term = Generator.generateTermWithId(childVocabulary.getUri());
+        term.setGlossary(childVocabulary.getGlossary().getUri());
+        final Term internalParent = Generator.generateTermWithId(childVocabulary.getUri());
+        internalParent.setGlossary(childVocabulary.getGlossary().getUri());
+        final Term externalParent = Generator.generateTermWithId(vocabulary.getUri());
+        externalParent.setGlossary(vocabulary.getGlossary().getUri());
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(internalParent, descriptorFactory.termDescriptor(internalParent));
+            em.persist(externalParent, descriptorFactory.termDescriptor(externalParent));
+            Generator.addTermInVocabularyRelationship(term, childVocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(internalParent, childVocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(externalParent, vocabulary.getUri(), em);
+        });
+
+        term.setParentTerms(new HashSet<>(Arrays.asList(internalParent, externalParent)));
+        sut.update(term);
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertThat(result.getParentTerms(), hasItem(internalParent));
+        assertThat(result.getExternalParentTerms(), hasItem(externalParent));
+    }
+
+    @Test
+    void addRootTermToVocabularySplitsExternalAndInternalTermParents() {
+        final Term term = Generator.generateTermWithId(childVocabulary.getUri());
+        term.setGlossary(childVocabulary.getGlossary().getUri());
+        final Term externalParent = Generator.generateTermWithId(vocabulary.getUri());
+        externalParent.setGlossary(vocabulary.getGlossary().getUri());
+        transactional(() -> {
+            em.persist(externalParent, descriptorFactory.termDescriptor(externalParent));
+            Generator.addTermInVocabularyRelationship(externalParent, vocabulary.getUri(), em);
+        });
+
+        term.setParentTerms(Collections.singleton(externalParent));
+        sut.addRootTermToVocabulary(term, childVocabulary);
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertThat(result.getExternalParentTerms(), hasItem(externalParent));
+    }
+
+    @Test
+    void addChildTermSplitsExternalAndInternalTermParents() {
+        final Term term = Generator.generateTermWithId(childVocabulary.getUri());
+        term.setGlossary(childVocabulary.getGlossary().getUri());
+        final Term internalParent = Generator.generateTermWithId(childVocabulary.getUri());
+        internalParent.setGlossary(childVocabulary.getGlossary().getUri());
+        final Term externalParent = Generator.generateTermWithId(vocabulary.getUri());
+        externalParent.setGlossary(vocabulary.getGlossary().getUri());
+        transactional(() -> {
+            em.persist(internalParent, descriptorFactory.termDescriptor(internalParent));
+            em.persist(externalParent, descriptorFactory.termDescriptor(externalParent));
+            Generator.addTermInVocabularyRelationship(internalParent, childVocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(externalParent, vocabulary.getUri(), em);
+        });
+
+        term.setParentTerms(new HashSet<>(Arrays.asList(internalParent, externalParent)));
+        sut.addChildTerm(term, internalParent);
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertThat(result.getParentTerms(), hasItem(internalParent));
+        assertThat(result.getExternalParentTerms(), hasItem(externalParent));
     }
 }

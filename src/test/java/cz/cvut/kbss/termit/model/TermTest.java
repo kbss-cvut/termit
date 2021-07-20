@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.apache.lucene.geo.GeoEncodingUtils;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -388,11 +389,41 @@ class TermTest {
 
     @Test
     void consolidateParentsHandlesNullExternalParentTerms() {
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.getGlossary().setUri(Generator.generateUri());
         final Term sut = Generator.generateTermWithId();
 
         sut.consolidateParents();
         assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
+    }
+
+    @Test
+    void splitExternalAndInternalParentsMovesParentsWithDifferentGlossaryFromParentTermsToExternalParentTerms() {
+        final URI glossaryUri = Generator.generateUri();
+        final Term sut = Generator.generateTermWithId();
+        sut.setGlossary(glossaryUri);
+        final Set<Term> externalParents = IntStream.range(0, 5).mapToObj(i -> {
+            final Term t = Generator.generateTermWithId();
+            t.setGlossary(Generator.generateUri());
+            return t;
+        }).collect(Collectors.toSet());
+        final Set<Term> internalParents = IntStream.range(0, 5).mapToObj(i -> {
+            final Term t = Generator.generateTermWithId();
+            t.setGlossary(glossaryUri);
+            return t;
+        }).collect(Collectors.toSet());
+        final Set<Term> allParents = new HashSet<>(externalParents);
+        allParents.addAll(internalParents);
+        sut.setParentTerms(allParents);
+
+        sut.splitExternalAndInternalParents();
+        assertEquals(internalParents, sut.getParentTerms());
+        assertEquals(externalParents, sut.getExternalParentTerms());
+    }
+
+    @Test
+    void splitExternalAndInternalParentsDoesNothingWhenTermHasNoParents() {
+        final Term sut = Generator.generateTermWithId();
+        sut.splitExternalAndInternalParents();
+        assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
+        assertThat(sut.getExternalParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
     }
 }
