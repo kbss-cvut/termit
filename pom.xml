@@ -25,16 +25,16 @@
     </repositories>
 
     <properties>
-        <org.springframework.boot.version>2.4.5</org.springframework.boot.version>
-        <org.springframework.version>5.3.6</org.springframework.version>
-        <org.springframework.security.version>5.4.6</org.springframework.security.version>
+        <org.springframework.boot.version>2.5.2</org.springframework.boot.version>
+        <org.springframework.version>5.3.8</org.springframework.version>
+        <org.springframework.security.version>5.5.1</org.springframework.security.version>
         <org.springframework.data.version>2.5.0</org.springframework.data.version>
-        <com.fasterxml.jackson.version>2.12.1</com.fasterxml.jackson.version>
-        <org.hibernate.validator.version>6.1.7.Final</org.hibernate.validator.version>
+        <com.fasterxml.jackson.version>2.12.4</com.fasterxml.jackson.version>
+        <org.hibernate.validator.version>6.2.0.Final</org.hibernate.validator.version>
         <org.apache.tika.tika-core.version>1.26</org.apache.tika.tika-core.version>
-        <cz.cvut.kbss.jopa.version>0.16.5</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.8.6</cz.cvut.kbss.jsonld.version>
-        <org.aspectj.version>1.9.6</org.aspectj.version>
+        <cz.cvut.kbss.jopa.version>0.17.0</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.8.8</cz.cvut.kbss.jsonld.version>
+        <org.aspectj.version>1.9.7</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
@@ -296,7 +296,7 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>3.6.3</version>
+            <version>3.7.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
