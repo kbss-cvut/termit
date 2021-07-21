@@ -7,7 +7,6 @@ import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.*;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
@@ -89,6 +89,7 @@ public class SKOSImporter {
     public Vocabulary importVocabulary(final boolean rename,
                                        final URI vocabularyIri,
                                        final String mediaType,
+                                       final Consumer<Vocabulary> persist,
                                        final InputStream... inputStreams) {
         if (inputStreams.length == 0) {
             throw new IllegalArgumentException("No input provided for importing vocabulary.");
@@ -119,7 +120,7 @@ public class SKOSImporter {
         }
 
         em.flush();
-        vocabularyDao.persist(vocabulary);
+        persist.accept(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;

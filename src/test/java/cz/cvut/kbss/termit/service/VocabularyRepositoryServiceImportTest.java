@@ -1,9 +1,11 @@
-package cz.cvut.kbss.termit.service.importer;
+package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class VocabularyImportServiceTest {
+class VocabularyRepositoryServiceImportTest {
 
     @Mock
     private SKOSImporter importer;
@@ -34,8 +36,11 @@ class VocabularyImportServiceTest {
     @Mock
     private ApplicationContext context;
 
+    @Mock
+    private Configuration configuration;
+
     @InjectMocks
-    private VocabularyImportService sut;
+    private VocabularyRepositoryService sut;
 
     @BeforeEach
     void setUp() {
@@ -47,10 +52,10 @@ class VocabularyImportServiceTest {
         final MultipartFile input = new MockMultipartFile("vocabulary.ttl", "vocabulary.ttl",
                 Constants.Turtle.MEDIA_TYPE, Environment.loadFile("vocabularies/ipr-glossaries.ttl"));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        when(importer.importVocabulary(anyBoolean(), any(),  any(), any())).thenReturn(vocabulary);
+        when(importer.importVocabulary(anyBoolean(), any(),  any(), any(), any())).thenReturn(vocabulary);
         final Vocabulary result = sut.importVocabulary(false,vocabulary.getUri(),input);
         final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
-        verify(importer).importVocabulary(eq(false), eq(vocabulary.getUri()), eq(Constants.Turtle.MEDIA_TYPE), captor.capture());
+        verify(importer).importVocabulary(eq(false), eq(vocabulary.getUri()), eq(Constants.Turtle.MEDIA_TYPE), any(), captor.capture());
         assertNotNull(captor.getValue());
         assertEquals(vocabulary, result);
     }
