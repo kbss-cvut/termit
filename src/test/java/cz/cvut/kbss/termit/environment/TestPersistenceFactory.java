@@ -62,7 +62,7 @@ public class TestPersistenceFactory {
         properties.put(PREFER_MULTILINGUAL_STRING, Boolean.TRUE.toString());
         // OPTIMIZATION: Always use statement retrieval with unbound property. Should spare repository queries
         properties.put(SesameOntoDriverProperties.SESAME_LOAD_ALL_THRESHOLD, "1");
-        properties.put(SesameOntoDriverProperties.SESAME_REPOSITORY_CONFIG, "rdf4j-memory-spin-rdfs.ttl");
+        properties.put(SesameOntoDriverProperties.SESAME_REPOSITORY_CONFIG, "classpath:rdf4j-memory-spin-rdfs.ttl");
         this.emf = Persistence.createEntityManagerFactory("termitTestPU", properties);
     }
 
