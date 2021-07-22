@@ -233,6 +233,7 @@ public class DescriptorFactory {
         externalParentDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "externalParentTerms"), externalParentDescriptor);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), descriptor);
         final EntityDescriptor exactMatchTermsDescriptor = new EntityDescriptor();
         exactMatchTermsDescriptor.addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
