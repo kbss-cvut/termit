@@ -7,16 +7,17 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.importer.VocabularyImportService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,26 +40,33 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final ChangeRecordService changeRecordService;
 
-    final VocabularyImportService importService;
-
-    final ResourceRepositoryService resourceService;
+    private final ResourceRepositoryService resourceService;
 
     private final Configuration.Namespace config;
 
+    private final ApplicationContext context;
+
     @Autowired
-    public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
+    public VocabularyRepositoryService(ApplicationContext context, VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
-                                       @Lazy TermService termService, VocabularyImportService importService,
+                                       @Lazy TermService termService,
                                        @Lazy ResourceRepositoryService resourceService,
                                        final Configuration config) {
         super(validator);
+        this.context = context;
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.termService = termService;
         this.changeRecordService = changeRecordService;
-        this.importService = importService;
         this.resourceService = resourceService;
         this.config = config.getNamespace();
+    }
+
+    /**
+     * This method ensures new instances of the prototype-scoped bean are returned on every call.
+     */
+    private SKOSImporter getSKOSImporter() {
+        return context.getBean(SKOSImporter.class);
     }
 
     @Override
@@ -147,10 +155,24 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getChangesOfContent(asset);
     }
 
+    @CacheEvict(allEntries = true)
+    @Transactional
     @Override
     public Vocabulary importVocabulary(boolean rename, URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(file);
-        return importService.importVocabulary(rename, vocabularyIri, file);
+        try {
+            final Vocabulary vocabulary = getSKOSImporter().importVocabulary(rename,
+                    vocabularyIri,
+                    file.getContentType(),
+                    (v) -> this.persist(v),
+                    file.getInputStream()
+            );
+            return vocabulary;
+        } catch (VocabularyImportException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage());
+        }
     }
 
     @Override
