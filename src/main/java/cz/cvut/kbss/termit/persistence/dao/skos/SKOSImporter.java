@@ -83,6 +83,7 @@ public class SKOSImporter {
      *
      * @param vocabularyIri (Optional) IRI of the vocabulary to import. If not supplied, the IRI is inferred from the data.
      * @param mediaType     media type of the imported input streams
+     * @param persist   an implementation of the persist operation (e.g. as performed by a VocabularyService)
      * @param inputStreams  input streams with the SKOS data
      * @return
      */
