@@ -175,7 +175,7 @@ public class TermController extends BaseController {
      * @param namespace            Vocabulary namespace. Optional
      * @param term                 Vocabulary term that will be created
      * @return Response with {@code Location} header.
-     * @see #createSubTerm(String, String, String, Term)
+     * @see #createSubTerm(String, String, Optional, Term)
      */
     @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
                  consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -214,7 +214,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method for accessing a Term without using its Vocabulary.
      *
-     * @see #getById(String, String, Optional<String>)
+     * @see #getById(String, String)
      */
     @GetMapping(value = "/terms/{termIdFragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Term getById(@PathVariable("termIdFragment") String termIdFragment,
@@ -257,7 +257,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method for accessing a Term without using its Vocabulary.
      *
-     * @see #update(String, String, Optional<String>, Term)
+     * @see #update(String, String, Optional, Term)
      */
     @PutMapping(value = "/terms/{termIdFragment}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -330,7 +330,7 @@ public class TermController extends BaseController {
      * @param namespace            Vocabulary namespace. Optional
      * @param newTerm              Vocabulary term that will be created
      * @return Response with {@code Location} header.
-     * @see #createRootTerm(String, Optional<String>, Term)
+     * @see #createRootTerm(String, Optional, Term)
      */
     @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
                  produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -354,7 +354,7 @@ public class TermController extends BaseController {
     /**
      * Creates a new term under the specified parent Term.
      *
-     * @see #createSubTerm(String, String, Optional<String>, Term)
+     * @see #createSubTerm(String, String, Optional, Term)
      */
     @PostMapping(value = "/terms/{termIdFragment}/subterms",
                  produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -384,7 +384,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
-     * @see #getAssignmentInfo(String, String, Optional<String>)
+     * @see #getAssignmentInfo(String, String, Optional)
      */
     @GetMapping(value = "/terms/{termIdFragment}/assignments", produces = {MediaType.APPLICATION_JSON_VALUE,
                                                                            JsonLd.MEDIA_TYPE})
@@ -448,7 +448,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
-     * @see #getHistory(String, String, Optional<String>)
+     * @see #getHistory(String, String, Optional)
      */
     @GetMapping(value = "/terms/{termIdFragment}/history",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -478,7 +478,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
-     * @see #getComments(String, String, Optional<String>)
+     * @see #getComments(String, String, Optional)
      */
     @GetMapping(value = "/terms/{termIdFragment}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -513,7 +513,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
-     * @see #addComment(String, String, Optional<String>, Comment)
+     * @see #addComment(String, String, Optional, Comment)
      */
     @PostMapping(value = "/terms/{termIdFragment}/comments", consumes = {MediaType.APPLICATION_JSON_VALUE,
                                                                          JsonLd.MEDIA_TYPE})

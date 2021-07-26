@@ -39,7 +39,6 @@ import javax.validation.Validator;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static java.util.stream.Collectors.joining;
@@ -80,12 +79,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     @Override
-    public Optional<Term> find(URI id) {
-        final Optional<Term> result = super.find(id);
-        return result.map(t -> {
-            t.consolidateInferred();
-            return t;
-        });
+    protected Term postLoad(Term instance) {
+        final Term t = super.postLoad(instance);
+        t.consolidateInferred();
+        t.consolidateParents();
+        return t;
     }
 
     @Override
@@ -105,6 +103,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         differentiator.differentiateRelatedMatchTerms(instance, original);
         differentiator.differentiateExactMatchTerms(instance, original);
         orphanedRelationshipRemover.removeOrphanedInverseTermRelationships(instance, original);
+        instance.splitExternalAndInternalParents();
     }
 
     @Override
@@ -119,17 +118,22 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     @Transactional
     public void addRootTermToVocabulary(Term instance, Vocabulary vocabulary) {
-        validate(instance);
-
-        if (instance.getUri() == null) {
-            instance.setUri(generateIdentifier(vocabulary.getUri(), instance.getLabel()));
-        }
-        verifyIdentifierUnique(instance);
+        prepareTermForPersist(instance, vocabulary.getUri());
         instance.setGlossary(vocabulary.getGlossary().getUri());
+        instance.splitExternalAndInternalParents();
 
         assert !instance.hasParentInSameVocabulary();
         addTermAsRootToGlossary(instance, vocabulary.getUri());
         termDao.persist(instance, vocabulary);
+    }
+
+    private void prepareTermForPersist(Term instance, URI vocabularyUri) {
+        validate(instance);
+
+        if (instance.getUri() == null) {
+            instance.setUri(generateIdentifier(vocabularyUri, instance.getLabel()));
+        }
+        verifyIdentifierUnique(instance);
     }
 
     private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
@@ -146,17 +150,14 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     @Transactional
     public void addChildTerm(Term instance, Term parentTerm) {
-        validate(instance);
         final URI vocabularyIri =
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
-        if (instance.getUri() == null) {
-            instance.setUri(generateIdentifier(vocabularyIri, instance.getLabel()));
-        }
-        verifyIdentifierUnique(instance);
+        prepareTermForPersist(instance, vocabularyIri);
 
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(vocabularyIri);
         instance.setGlossary(vocabulary.getGlossary().getUri());
         instance.addParentTerm(parentTerm);
+        instance.splitExternalAndInternalParents();
         if (!instance.hasParentInSameVocabulary()) {
             addTermAsRootToGlossary(instance, vocabularyIri);
         }
@@ -173,7 +174,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of terms ordered by label
      */
     public List<Term> findAll(Vocabulary vocabulary) {
-        return termDao.findAll(vocabulary);
+        return termDao.findAll(vocabulary).stream().map(this::postLoad).collect(toList());
     }
 
     /**

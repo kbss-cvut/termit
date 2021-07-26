@@ -8,7 +8,6 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
@@ -21,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.util.CollectionUtils;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,8 +62,20 @@ public class Term extends AbstractTerm implements HasTypes {
     @JsonIgnore
     private Set<TermInfo> inverseExactMatchTerms;
 
+    /**
+     * Parent terms from the same vocabulary.
+     */
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<Term> parentTerms;
+
+    /**
+     * Parent terms from different vocabularies.
+     * <p>
+     * Represents the {@code skos:broadMatch} property.
+     */
+    @JsonIgnore
+    @OWLObjectProperty(iri = SKOS.BROAD_MATCH, fetch = FetchType.EAGER)
+    private Set<Term> externalParentTerms;
 
     @OWLObjectProperty(iri = SKOS.RELATED, fetch = FetchType.EAGER)
     private Set<TermInfo> related;
@@ -159,11 +169,35 @@ public class Term extends AbstractTerm implements HasTypes {
         this.parentTerms = parentTerms;
     }
 
+    public Set<Term> getExternalParentTerms() {
+        return externalParentTerms;
+    }
+
+    public void setExternalParentTerms(Set<Term> externalParentTerms) {
+        this.externalParentTerms = externalParentTerms;
+    }
+
+    /**
+     * Adds the specified term to the parent terms of this instance.
+     * <p>
+     * If the specified term is from the same glossary, it is added to {@code parentTerms}, otherwise, it is added to
+     * the {@code importedParentTerms}.
+     *
+     * @param term Term to add as parent
+     */
     public void addParentTerm(Term term) {
-        if (parentTerms == null) {
-            this.parentTerms = new HashSet<>();
+        Objects.requireNonNull(term);
+        if (!Objects.equals(getGlossary(), term.getGlossary())) {
+            if (externalParentTerms == null) {
+                this.externalParentTerms = new HashSet<>();
+            }
+            externalParentTerms.add(term);
+        } else {
+            if (parentTerms == null) {
+                this.parentTerms = new HashSet<>();
+            }
+            parentTerms.add(term);
         }
-        parentTerms.add(term);
     }
 
     public Set<TermInfo> getRelated() {
@@ -403,6 +437,51 @@ public class Term extends AbstractTerm implements HasTypes {
         }
     }
 
+    /**
+     * Consolidates parent and external parent terms into just parent terms.
+     * <p>
+     * This is based on the fact that external parents are a special case of parent terms (SKOS broadMatch is a
+     * sub-property of broader). Clients need not know about their distinction, which is important only at repository
+     * level.
+     *
+     * @see #splitExternalAndInternalParents()
+     */
+    public void consolidateParents() {
+        if (externalParentTerms != null && !externalParentTerms.isEmpty()) {
+            if (parentTerms == null) {
+                parentTerms = new LinkedHashSet<>();
+            }
+            parentTerms.addAll(externalParentTerms);
+        }
+    }
+
+    /**
+     * Splits consolidated parent terms into external and (internal) parent terms.
+     * <p>
+     * This split is driven by the fact that external parents belong to a different glossary than this term and should
+     * thus be differentiated on repository level.
+     * <p>
+     * This method does the inverse of {@link #consolidateParents()}.
+     *
+     * @see #consolidateParents()
+     */
+    public void splitExternalAndInternalParents() {
+        if (parentTerms == null || parentTerms.isEmpty()) {
+            return;
+        }
+        final Set<Term> parents = new LinkedHashSet<>();
+        final Set<Term> externalParents = new LinkedHashSet<>();
+        for (Term p : parentTerms) {
+            if (Objects.equals(getGlossary(), p.getGlossary())) {
+                parents.add(p);
+            } else {
+                externalParents.add(p);
+            }
+        }
+        this.parentTerms = parents;
+        this.externalParentTerms = externalParents;
+    }
+
     @Override
     public String toString() {
         return "Term{" +
@@ -411,13 +490,4 @@ public class Term extends AbstractTerm implements HasTypes {
                 ", types=" + types +
                 '}';
     }
-
-    public static Field getParentTermsField() {
-        try {
-            return Term.class.getDeclaredField("parentTerms");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"parentTerms\" field.", e);
-        }
-    }
-
 }

@@ -228,14 +228,15 @@ public class DescriptorFactory {
      */
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        final EntityDescriptor parentDescriptor = new EntityDescriptor();
+        final EntityDescriptor externalParentDescriptor = new EntityDescriptor();
         // Vocabulary field is inferred, so it cannot be in any specific context
-        parentDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
+        externalParentDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), parentDescriptor);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "externalParentTerms"), externalParentDescriptor);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), descriptor);
         final EntityDescriptor exactMatchTermsDescriptor = new EntityDescriptor();
         exactMatchTermsDescriptor.addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"),
-            new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
+                new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"), exactMatchTermsDescriptor);
         // Definition source is inferred. That means it is in a special context in GraphDB. Therefore, we need to use
         // the default context to prevent JOPA from thinking the value has changed on merge
@@ -244,7 +245,8 @@ public class DescriptorFactory {
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
                 new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         final EntityDescriptor relatedDescriptor = new EntityDescriptor(vocabularyUri);
-        relatedDescriptor.addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"), new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
+        relatedDescriptor
+                .addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"), new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), relatedDescriptor);
         descriptor.addAttributeContext(fieldSpec(Term.class, "relatedMatch"), null);
         return descriptor;

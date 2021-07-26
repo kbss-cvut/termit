@@ -124,5 +124,11 @@ Rules
       y <skos:exactMatch>    z
       -------------------------------
       x <skos:exactMatch>    z
-}
 
+  Id: skos_broad_match_inverse
+
+    this <rdf:type> <skos:Concept>
+    this <skos:broadMatch> parent
+    -------------------------------
+    parent <skos:narrowMatch> this
+}

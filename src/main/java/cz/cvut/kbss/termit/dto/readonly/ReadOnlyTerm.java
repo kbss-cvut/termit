@@ -61,7 +61,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         }
         if (term.getProperties() != null && term.getProperties().containsKey(SKOS.NOTATION)) {
             final Set<String> set = term.getProperties().get(SKOS.NOTATION);
-            if ( set.size() == 1 ) {
+            if (set.size() == 1) {
                 this.notation = set.iterator().next();
             }
         }

@@ -46,11 +46,11 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
     private DescriptorFactory sut;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         this.term = Generator.generateTermWithId();
         term.setVocabulary(vocabulary.getUri());
         this.parentFieldSpec = mock(FieldSpecification.class);
-        when(parentFieldSpec.getJavaField()).thenReturn(Term.getParentTermsField());
+        when(parentFieldSpec.getJavaField()).thenReturn(Term.class.getDeclaredField("externalParentTerms"));
     }
 
     @Test
