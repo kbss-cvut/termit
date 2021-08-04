@@ -990,4 +990,31 @@ class TermDaoTest extends BaseDaoTestRunner {
         assertEquals(1, result.size());
         assertEquals(newLabel, result.get(0).getLabel().get(Environment.LANGUAGE));
     }
+
+    @Test
+    void loadsSubTermsForIncludedTermsLoadedWhenFetchingRoots() {
+        final List<Term> rootTerms = generateTerms(10);
+        addTermsAndSave(rootTerms, vocabulary);
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        // Make it last
+        term.getLabel().set(Environment.LANGUAGE, "zzzzzz");
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        final Term child = Generator.generateTermWithId(vocabulary.getUri());
+        child.setGlossary(vocabulary.getGlossary().getUri());
+        child.addParentTerm(term);
+        vocabulary.getGlossary().addRootTerm(term);
+        transactional(() -> {
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(child, descriptorFactory.termDescriptor(child));
+            addTermInVocabularyRelationship(term, vocabulary.getUri());
+            addTermInVocabularyRelationship(child, vocabulary.getUri());
+            insertNarrowerStatements(child);
+        });
+
+        final List<TermDto> result = sut.findAllRoots(vocabulary, PageRequest.of(0, rootTerms.size() / 2), Collections.singleton(term.getUri()));
+        final Optional<TermDto> toFind = result.stream().filter(dto -> term.getUri().equals(dto.getUri())).findFirst();
+        assertTrue(toFind.isPresent());
+        assertFalse(toFind.get().getSubTerms().isEmpty());
+    }
 }

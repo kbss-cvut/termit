@@ -82,12 +82,12 @@ public class TermDao extends AssetDao<Term> {
 
     private Set<TermInfo> loadTermInfo(Term term, String property, Collection<TermInfo> exclude) {
         final List<?> inverse = em.createNativeQuery("SELECT ?inverse ?label ?vocabulary WHERE {" +
-                "?inverse ?property ?term ;" +
-                "a ?type ;" +
-                "?hasLabel ?label ;" +
-                "?inVocabulary ?vocabulary . " +
-                "FILTER (?inverse NOT IN (?exclude))" +
-                "} ORDER BY ?inverse").setParameter("property", URI.create(property))
+                                          "?inverse ?property ?term ;" +
+                                          "a ?type ;" +
+                                          "?hasLabel ?label ;" +
+                                          "?inVocabulary ?vocabulary . " +
+                                          "FILTER (?inverse NOT IN (?exclude))" +
+                                          "} ORDER BY ?inverse").setParameter("property", URI.create(property))
                                   .setParameter("term", term)
                                   .setParameter("type", typeUri)
                                   .setParameter("hasLabel", labelProperty())
@@ -181,13 +181,13 @@ public class TermDao extends AssetDao<Term> {
             // for each find call
             // The price for this solution is that this methods performs very poorly for larger vocabularies (hundreds of terms)
             final List<URI> termIris = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                    "GRAPH ?vocabulary { " +
-                    "?term a ?type ;" +
-                    "?hasLabel ?label ;" +
-                    "FILTER (lang(?label) = ?labelLang) ." +
-                    "}" +
-                    "?term ?inVocabulary ?vocabulary ." +
-                    " } ORDER BY " + orderSentence(config.getLanguage(), "?label" ), URI.class)
+                                                 "GRAPH ?vocabulary { " +
+                                                 "?term a ?type ;" +
+                                                 "?hasLabel ?label ;" +
+                                                 "FILTER (lang(?label) = ?labelLang) ." +
+                                                 "}" +
+                                                 "?term ?inVocabulary ?vocabulary ." +
+                                                 " } ORDER BY " + orderSentence(config.getLanguage(), "?label"), URI.class)
                                          .setParameter("type", typeUri)
                                          .setParameter("vocabulary", vocabulary.getUri())
                                          .setParameter("hasLabel", LABEL_PROP)
@@ -211,11 +211,11 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(vocabulary);
         try {
             return !em.createNativeQuery("ASK WHERE {" +
-                    "GRAPH ?vocabulary { " +
-                    "?term a ?type ;" +
-                    "}" +
-                    "?term ?inVocabulary ?vocabulary ." +
-                    " }", Boolean.class)
+                              "GRAPH ?vocabulary { " +
+                              "?term a ?type ;" +
+                              "}" +
+                              "?term ?inVocabulary ?vocabulary ." +
+                              " }", Boolean.class)
                       .setParameter("type", typeUri)
                       .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("inVocabulary",
@@ -241,12 +241,13 @@ public class TermDao extends AssetDao<Term> {
     public List<TermDto> findAllIncludingImported(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                "?term a ?type ;" +
-                "?hasLabel ?label ;" +
-                "?inVocabulary ?parent ." +
-                "?vocabulary ?imports* ?parent ." +
-                "FILTER (lang(?label) = ?labelLang) ." +
-                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class).setParameter("type", typeUri)
+                                              "?term a ?type ;" +
+                                              "?hasLabel ?label ;" +
+                                              "?inVocabulary ?parent ." +
+                                              "?vocabulary ?imports* ?parent ." +
+                                              "FILTER (lang(?label) = ?labelLang) ." +
+                                              "} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class)
+                                      .setParameter("type", typeUri)
                                       .setParameter("hasLabel", LABEL_PROP)
                                       .setParameter("inVocabulary",
                                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
@@ -266,10 +267,10 @@ public class TermDao extends AssetDao<Term> {
      */
     private Set<TermInfo> loadSubTerms(HasIdentifier parent) {
         final List<?> subTerms = em.createNativeQuery("SELECT ?entity ?label ?vocabulary WHERE {" +
-                "?parent ?narrower ?entity ." +
-                "?entity a ?type ;" +
-                "?hasLabel ?label ;" +
-                "?inVocabulary ?vocabulary . } ORDER BY ?entity")
+                                           "?parent ?narrower ?entity ." +
+                                           "?entity a ?type ;" +
+                                           "?hasLabel ?label ;" +
+                                           "?inVocabulary ?vocabulary . } ORDER BY ?entity")
                                    .setParameter("type", typeUri)
                                    .setParameter("narrower", URI.create(SKOS.NARROWER))
                                    .setParameter("parent", parent.getUri())
@@ -320,19 +321,19 @@ public class TermDao extends AssetDao<Term> {
             case "cs":
                 return
                         r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
-                                "'á'", "'azz'"),
-                                "'č'", "'czz'"),
-                                "'ď'", "'dzz'"),
-                                "'é'", "'ezz'"),
-                                "'ě'", "'ezz'"),
-                                "'í'", "'izz'"),
-                                "'ň'", "'nzz'"),
-                                "'ó'", "'ozz'"),
-                                "'ř'", "'rzz'"),
-                                "'š'", "'szz'"),
-                                "'ť'", "'tzz'"),
-                                "'ú'", "'uzz'"),
-                                "'ý'", "'yzz'"),
+                                                                                                                                        "'á'", "'azz'"),
+                                                                                                                                "'č'", "'czz'"),
+                                                                                                                        "'ď'", "'dzz'"),
+                                                                                                                "'é'", "'ezz'"),
+                                                                                                        "'ě'", "'ezz'"),
+                                                                                                "'í'", "'izz'"),
+                                                                                        "'ň'", "'nzz'"),
+                                                                                "'ó'", "'ozz'"),
+                                                                        "'ř'", "'rzz'"),
+                                                                "'š'", "'szz'"),
+                                                        "'ť'", "'tzz'"),
+                                                "'ú'", "'uzz'"),
+                                        "'ý'", "'yzz'"),
                                 "'ž'", "'zzz'");
             default:
                 return "lcase(" + var + ")";
@@ -358,7 +359,7 @@ public class TermDao extends AssetDao<Term> {
                 "?hasLabel ?label ." +
                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class);
+                "} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
@@ -385,7 +386,9 @@ public class TermDao extends AssetDao<Term> {
     }
 
     private List<TermDto> loadIncludedTerms(Collection<URI> includeTerms) {
-        return includeTerms.stream().map(u -> em.find(TermDto.class, u)).filter(Objects::nonNull)
+        return includeTerms.stream().map(u -> em.find(TermDto.class, u))
+                           .filter(Objects::nonNull)
+                           .peek(t -> t.setSubTerms(loadSubTerms(t)))
                            .collect(Collectors.toList());
     }
 
@@ -410,7 +413,7 @@ public class TermDao extends AssetDao<Term> {
                 "?vocabulary ?imports* ?parent ." +
                 "?parent ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
-                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class);
+                "} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, true);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
@@ -438,13 +441,13 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                "GRAPH ?vocabulary { " +
-                "?term a ?type ; " +
-                "      ?hasLabel ?label ; " +
-                "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
-                "}" +
-                "?term ?inVocabulary ?vocabulary ." +
-                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class)
+                                                    "GRAPH ?vocabulary { " +
+                                                    "?term a ?type ; " +
+                                                    "      ?hasLabel ?label ; " +
+                                                    "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+                                                    "}" +
+                                                    "?term ?inVocabulary ?vocabulary ." +
+                                                    "} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
@@ -469,13 +472,13 @@ public class TermDao extends AssetDao<Term> {
     public List<TermDto> findAll(String searchString) {
         Objects.requireNonNull(searchString);
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                "GRAPH ?vocabulary { " +
-                "?term a ?type ; " +
-                "      ?hasLabel ?label ; " +
-                "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
-                "}" +
-                "?term ?inVocabulary ?vocabulary ." +
-                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class)
+                                                    "GRAPH ?vocabulary { " +
+                                                    "?term a ?type ; " +
+                                                    "      ?hasLabel ?label ; " +
+                                                    "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
+                                                    "}" +
+                                                    "?term ?inVocabulary ?vocabulary ." +
+                                                    "} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
@@ -510,12 +513,12 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                "?targetVocabulary ?imports* ?vocabulary ." +
-                "?term a ?type ;\n" +
-                "      ?hasLabel ?label ;\n" +
-                "      ?inVocabulary ?vocabulary ." +
-                "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .\n" +
-                "} ORDER BY " + orderSentence(config.getLanguage(), "?label" ), TermDto.class)
+                                                    "?targetVocabulary ?imports* ?vocabulary ." +
+                                                    "?term a ?type ;\n" +
+                                                    "      ?hasLabel ?label ;\n" +
+                                                    "      ?inVocabulary ?vocabulary ." +
+                                                    "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .\n" +
+                                                    "} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
@@ -549,10 +552,10 @@ public class TermDao extends AssetDao<Term> {
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("ASK { ?term a ?type ; " +
-                    "?hasLabel ?label ;" +
-                    "?inVocabulary ?vocabulary ." +
-                    "FILTER (LCASE(?label) = LCASE(?searchString)) . "
-                    + "}", Boolean.class)
+                             "?hasLabel ?label ;" +
+                             "?inVocabulary ?vocabulary ." +
+                             "FILTER (LCASE(?label) = LCASE(?searchString)) . "
+                             + "}", Boolean.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("inVocabulary",
