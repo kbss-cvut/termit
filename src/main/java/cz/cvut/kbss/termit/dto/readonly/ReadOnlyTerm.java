@@ -1,17 +1,16 @@
 package cz.cvut.kbss.termit.dto.readonly;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
-import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
-import cz.cvut.kbss.jopa.model.annotations.Types;
+import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,6 +35,12 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     @OWLObjectProperty(iri = SKOS.NOTATION)
     private String notation;
 
+    @OWLObjectProperty(iri = SKOS.EXACT_MATCH, fetch = FetchType.EAGER)
+    private Set<TermInfo> exactMatchTerms;
+
+    @OWLObjectProperty(iri = SKOS.RELATED, fetch = FetchType.EAGER)
+    private Set<TermInfo> related;
+
     @Types
     private Set<String> types;
 
@@ -58,6 +63,12 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         }
         if (term.getParentTerms() != null) {
             this.parentTerms = term.getParentTerms().stream().map(ReadOnlyTerm::new).collect(Collectors.toSet());
+        }
+        if (term.getRelated() != null) {
+            this.related = new HashSet<>(term.getRelated());
+        }
+        if (term.getExactMatchTerms() != null) {
+            this.exactMatchTerms = new HashSet<>(term.getExactMatchTerms());
         }
         if (term.getProperties() != null && term.getProperties().containsKey(SKOS.NOTATION)) {
             final Set<String> set = term.getProperties().get(SKOS.NOTATION);
@@ -108,6 +119,22 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
 
     public void setParentTerms(Set<ReadOnlyTerm> parentTerms) {
         this.parentTerms = parentTerms;
+    }
+
+    public Set<TermInfo> getExactMatchTerms() {
+        return exactMatchTerms;
+    }
+
+    public void setExactMatchTerms(Set<TermInfo> exactMatchTerms) {
+        this.exactMatchTerms = exactMatchTerms;
+    }
+
+    public Set<TermInfo> getRelated() {
+        return related;
+    }
+
+    public void setRelated(Set<TermInfo> related) {
+        this.related = related;
     }
 
     public String getNotation() {
