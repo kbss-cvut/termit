@@ -10,7 +10,6 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,6 +40,9 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     @OWLObjectProperty(iri = SKOS.RELATED, fetch = FetchType.EAGER)
     private Set<TermInfo> related;
 
+    @OWLObjectProperty(iri = SKOS.RELATED_MATCH, fetch = FetchType.EAGER)
+    private Set<TermInfo> relatedMatch;
+
     @Types
     private Set<String> types;
 
@@ -66,6 +68,9 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         }
         if (term.getRelated() != null) {
             this.related = new HashSet<>(term.getRelated());
+        }
+        if (term.getRelatedMatch() != null) {
+            this.relatedMatch = new HashSet<>(term.getRelatedMatch());
         }
         if (term.getExactMatchTerms() != null) {
             this.exactMatchTerms = new HashSet<>(term.getExactMatchTerms());
@@ -135,6 +140,14 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
 
     public void setRelated(Set<TermInfo> related) {
         this.related = related;
+    }
+
+    public Set<TermInfo> getRelatedMatch() {
+        return relatedMatch;
+    }
+
+    public void setRelatedMatch(Set<TermInfo> relatedMatch) {
+        this.relatedMatch = relatedMatch;
     }
 
     public String getNotation() {

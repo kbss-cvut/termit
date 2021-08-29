@@ -32,6 +32,9 @@ class ReadOnlyTermTest {
         assertEquals(term.getTypes(), result.getTypes());
         assertEquals(term.getSubTerms(), result.getSubTerms());
         assertEquals(term.getGlossary(), result.getGlossary());
+        assertEquals(term.getExactMatchTerms(), result.getExactMatchTerms());
+        assertEquals(term.getRelated(), result.getRelated());
+        assertEquals(term.getRelatedMatch(), result.getRelatedMatch());
     }
 
     @Test
