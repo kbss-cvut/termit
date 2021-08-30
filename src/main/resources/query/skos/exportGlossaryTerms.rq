@@ -9,12 +9,19 @@ CONSTRUCT {
         skos:inScheme ?glossary ;
         skos:prefLabel ?prefLabel ;
         skos:definition ?definition ;
+        skos:scopeNote ?scopeNote ;
         skos:altLabel ?altLabel ;
         skos:related ?related ;
         dc:source ?source ;
-        skos:broader ?parent ;
+        skos:exactMatch ?exactMatch ;
+        skos:broader ?broader ;
+        skos:broadMatch ?broadMatch ;
+        skos:related ?related ;
+        skos:relatedMatch ?relatedMatch ;
         skos:topConceptOf ?topOf ;
         a ?type ;
+        skos:notation ?notation ;
+        skos:example ?example ;
         skos:broader ?superClass ;
         skos:broader ?whole ;
         skos:broader ?parentEvent .
@@ -27,6 +34,9 @@ CONSTRUCT {
         ?term skos:definition ?definition .
     }
     OPTIONAL {
+        ?term skos:scopeNote ?scopeNote .
+    }
+    OPTIONAL {
         ?term skos:altLabel ?altLabel .
     }
     OPTIONAL {
@@ -36,12 +46,27 @@ CONSTRUCT {
         ?term dc:source ?source .
     }
     OPTIONAL {
+        ?term skos:notation ?notation .
+    }
+    OPTIONAL {
+        ?term skos:example ?example .
+    }
+    OPTIONAL {
         ?term skos:broader ?parent .
         FILTER NOT EXISTS {
             ?term skos:broader ?intermediate .
             ?intermediate skos:broader ?parent .
             FILTER (?parent != ?intermediate)
         }
+    }
+    OPTIONAL {
+        ?term skos:related ?related .
+    }
+    OPTIONAL {
+        ?term skos:relatedMatch ?relatedMatch .
+    }
+    OPTIONAL {
+        ?term skos:exactMatch ?exactMatch .
     }
     OPTIONAL {
     # This ensures only parent-less terms become top concepts of their glossaries
