@@ -8,10 +8,7 @@ CONSTRUCT {
     ?term a skos:Concept ;
         skos:inScheme ?glossary ;
         skos:prefLabel ?prefLabel ;
-        skos:definition ?definition ;
-        skos:scopeNote ?scopeNote ;
-        skos:altLabel ?altLabel ;
-        dc:source ?source ;
+        ?skosProperty ?skosPropertyValue ;
         skos:exactMatch ?exactMatch ;
         skos:broader ?broader ;
         skos:broadMatch ?broadMatch ;
@@ -19,8 +16,6 @@ CONSTRUCT {
         skos:relatedMatch ?relatedMatch ;
         skos:topConceptOf ?topOf ;
         a ?type ;
-        skos:notation ?notation ;
-        skos:example ?example ;
         skos:broader ?superClass ;
         skos:broader ?whole ;
         skos:broader ?parentEvent .
@@ -30,22 +25,8 @@ CONSTRUCT {
         skos:prefLabel ?prefLabel .
     ?vocabulary pdp:má-glosář ?glossary .
     OPTIONAL {
-        ?term skos:definition ?definition .
-    }
-    OPTIONAL {
-        ?term skos:scopeNote ?scopeNote .
-    }
-    OPTIONAL {
-        ?term skos:altLabel ?altLabel .
-    }
-    OPTIONAL {
-        ?term dc:source ?source .
-    }
-    OPTIONAL {
-        ?term skos:notation ?notation .
-    }
-    OPTIONAL {
-        ?term skos:example ?example .
+        ?term ?skosProperty ?skosPropertyValue .
+        FILTER( ?skosProperty in ( dc:source, skos:altLabel, skos:definition, skos:scopeNote, skos:changeNote, skos:editorialNote, skos:historyNote, skos:notation, skos:example ) )
     }
     OPTIONAL {
         ?term skos:broader ?broader .
