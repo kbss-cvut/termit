@@ -14,12 +14,22 @@
  */
 package cz.cvut.kbss.termit.config;
 
+import cz.cvut.kbss.termit.util.AsyncExceptionHandler;
+import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.EnableMBeanExport;
+import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @Configuration
 @EnableMBeanExport
 @EnableAspectJAutoProxy(proxyTargetClass = true)
-public class AppConfig {
+@EnableAsync
+public class AppConfig implements AsyncConfigurer {
+
+    @Override
+    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+        return new AsyncExceptionHandler();
+    }
 }

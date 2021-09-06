@@ -23,9 +23,11 @@ import cz.cvut.kbss.termit.exception.TermRemovalException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermAssignmentDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
+import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
@@ -59,10 +61,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     private final VocabularyRepositoryService vocabularyService;
 
+    private final TermOccurrenceDao termOccurrenceDao;
+
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver,
                                  Configuration config, TermDao termDao,
                                  OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
-                                 TermAssignmentDao termAssignmentDao,
+                                 TermAssignmentDao termAssignmentDao, TermOccurrenceDao termOccurrenceDao,
                                  VocabularyRepositoryService vocabularyService) {
         super(validator);
         this.idResolver = idResolver;
@@ -71,6 +75,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         this.orphanedRelationshipRemover = orphanedRelationshipRemover;
         this.termAssignmentDao = termAssignmentDao;
         this.vocabularyService = vocabularyService;
+        this.termOccurrenceDao = termOccurrenceDao;
     }
 
     @Override
@@ -299,6 +304,26 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      */
     public List<TermAssignments> getAssignmentsInfo(Term instance) {
         return termAssignmentDao.getAssignmentInfo(instance);
+    }
+
+    /**
+     * Gets definitionally related terms of the specified term.
+     *
+     * @param instance Term to search from
+     * @return List of definitionally related terms of the specified term
+     */
+    public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
+        return termOccurrenceDao.findAllTargeting(instance);
+    }
+
+    /**
+     * Gets definitionally related terms of the specified term.
+     *
+     * @param instance Term to search from
+     * @return List of definitionally related terms of the specified term
+     */
+    public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
+        return termOccurrenceDao.findAllDefinitionalOf(instance);
     }
 
     /**

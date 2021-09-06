@@ -14,7 +14,11 @@ package cz.cvut.kbss.termit.environment.config;
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
 import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
 import cz.cvut.kbss.termit.environment.Environment;
+import cz.cvut.kbss.termit.model.selector.Selector;
+import cz.cvut.kbss.termit.service.document.html.DummySelectorGenerator;
+import cz.cvut.kbss.termit.service.document.html.HtmlSelectorGenerators;
 import org.aspectj.lang.Aspects;
+import org.jsoup.nodes.Element;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +35,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
 import static org.mockito.Mockito.mock;
 
@@ -57,6 +63,17 @@ public class TestServiceConfig {
     @Bean
     public LocalValidatorFactoryBean validatorFactoryBean() {
         return new LocalValidatorFactoryBean();
+    }
+
+    @Bean
+    @Primary
+    public HtmlSelectorGenerators htmlSelectorGenerators() {
+        return new HtmlSelectorGenerators() {
+            @Override
+            public Set<Selector> generateSelectors(Element... elements) {
+                return Collections.singleton(new DummySelectorGenerator().generateSelector(elements));
+            }
+        };
     }
 
     @Bean

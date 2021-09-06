@@ -60,6 +60,19 @@ public interface VocabularyService
     List<AbstractChangeRecord> getChangesOfContent(Vocabulary asset);
 
     /**
+     * Runs text analysis on the definitions of all terms in the specified vocabulary, including terms in the
+     * transitively imported vocabularies.
+     *
+     * @param vocabulary Vocabulary to be analyzed
+     */
+    void runTextAnalysisOnAllTerms(Vocabulary vocabulary);
+
+    /**
+     * Runs text analysis on definitions of all terms in all vocabularies.
+     */
+    void runTextAnalysisOnAllVocabularies();
+
+    /**
      * Removes a vocabulary if:
      * - it is not a document vocabulary, or
      * - it is imported by another vocabulary, or

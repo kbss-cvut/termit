@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
 
@@ -44,14 +46,17 @@ public class TextAnalysisService {
 
     private final DocumentManager documentManager;
 
+    private final AnnotationGenerator annotationGenerator;
+
     private final TextAnalysisRecordDao recordDao;
 
     @Autowired
     public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
-                               TextAnalysisRecordDao recordDao) {
+                               AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao) {
         this.restClient = restClient;
         this.config = config;
         this.documentManager = documentManager;
+        this.annotationGenerator = annotationGenerator;
         this.recordDao = recordDao;
     }
 
@@ -88,7 +93,9 @@ public class TextAnalysisService {
         try {
             final Resource result = invokeTextAnalysisService(input);
             documentManager.createBackup(file);
-            documentManager.saveFileContent(file, result.getInputStream());
+            try (final InputStream is = result.getInputStream()) {
+                annotationGenerator.generateAnnotations(is, file);
+            }
             storeTextAnalysisRecord(file, input);
         } catch (WebServiceIntegrationException e) {
             throw e;
@@ -132,4 +139,38 @@ public class TextAnalysisService {
         return recordDao.findLatest(resource);
     }
 
+    /**
+     * Invokes text analysis on the specified term's definition.
+     * <p>
+     * The the specified vocabulary context is used for analysis. Analysis results are stored as definitional term
+     * occurrences.
+     *
+     * @param term Term whose definition is to be analyzed.
+     */
+    public void analyzeTermDefinition(Term term, URI vocabularyContext) {
+        Objects.requireNonNull(term);
+        final String language = config.getPersistence().getLanguage();
+        if (term.getDefinition() != null && term.getDefinition().contains(language)) {
+            final TextAnalysisInput input = new TextAnalysisInput(term.getDefinition().get(language), language,
+                    URI.create(config.getRepository().getUrl()));
+            input.addVocabularyContext(vocabularyContext);
+
+            invokeTextAnalysisOnTerm(term, input);
+        }
+    }
+
+    private void invokeTextAnalysisOnTerm(Term term, TextAnalysisInput input) {
+        try {
+            final Resource result = invokeTextAnalysisService(input);
+            try (final InputStream is = result.getInputStream()) {
+                annotationGenerator.generateAnnotations(is, term);
+            }
+        } catch (WebServiceIntegrationException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new WebServiceIntegrationException("Text analysis invocation failed.", e);
+        } catch (IOException e) {
+            throw new WebServiceIntegrationException("Unable to read text analysis result from response.", e);
+        }
+    }
 }

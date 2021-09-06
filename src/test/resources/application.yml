@@ -23,6 +23,8 @@ termit:
         storage: /tmp/termit
     textAnalysis:
         url:
+        termAssignmentMinScore: 1
+        termOccurrenceMinScore: 0.49
     comments:
         context: http://onto.fel.cvut.cz/ontologies/komentare
     changetracking:

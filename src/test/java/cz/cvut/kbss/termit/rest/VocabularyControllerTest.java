@@ -31,6 +31,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -103,8 +104,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final long lastModified = (System.currentTimeMillis() / 1000) * 1000;
         when(serviceMock.getLastModified()).thenReturn(lastModified);
 
-        final MvcResult mvcResult =
-                mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
         final String lastModifiedHeader =
                 mvcResult.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
         assertNotNull(lastModifiedHeader);
@@ -119,9 +119,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final long lastModified = (System.currentTimeMillis() - 60 * 1000);
         when(serviceMock.getLastModified()).thenReturn(lastModified);
 
-        mockMvc.perform(
-                get(PATH).header(HttpHeaders.IF_MODIFIED_SINCE,
-                        DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now())))
+        mockMvc.perform(get(PATH).header(HttpHeaders.IF_MODIFIED_SINCE, DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now())))
                .andExpect(status().isNotModified());
         verify(serviceMock).getLastModified();
         verify(serviceMock, never()).findAll();
@@ -132,8 +130,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
 
-        mockMvc.perform(
-                post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
+        mockMvc.perform(post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isCreated());
         final ArgumentCaptor<Vocabulary> captor = ArgumentCaptor.forClass(Vocabulary.class);
         verify(serviceMock).persist(captor.capture());
@@ -146,8 +143,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(Generator.generateUri());
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
 
-        final MvcResult mvcResult = mockMvc.perform(
-                post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
+        final MvcResult mvcResult = mockMvc.perform(post(PATH).content(toJson(vocabulary))
+                                                              .contentType(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isCreated()).andReturn();
         verifyLocationEquals(PATH + "/" + fragment, mvcResult);
     }
@@ -156,13 +153,13 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     void createVocabularyRunsImportWhenFileIsUploaded() throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
-        when(serviceMock.importVocabulary(anyBoolean(),any(),any())).thenReturn(vocabulary);
+        when(serviceMock.importVocabulary(anyBoolean(), any(), any())).thenReturn(vocabulary);
         final MockMultipartFile upload = new MockMultipartFile("file", "test-glossary.ttl",
                 Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
         final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/import").file(upload)
-            .param("rename", "false"))
-                .andExpect(status().isCreated())
-                .andReturn();
+                                                                               .param("rename", "false"))
+                                           .andExpect(status().isCreated())
+                                           .andReturn();
         verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
         verify(serviceMock).importVocabulary(false, null, upload);
     }
@@ -195,8 +192,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         when(serviceMock.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
 
         final MvcResult mvcResult = mockMvc.perform(
-                get(PATH + "/" + fragment).accept(MediaType.APPLICATION_JSON_VALUE)
-                                          .param(QueryParams.NAMESPACE, namespace))
+                                                   get(PATH + "/" + fragment).accept(MediaType.APPLICATION_JSON_VALUE)
+                                                                             .param(QueryParams.NAMESPACE, namespace))
                                            .andReturn();
         assertEquals(200, mvcResult.getResponse().getStatus());
         verify(idResolverMock).resolveIdentifier(namespace, fragment);
@@ -208,21 +205,21 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(Generator.generateUri());
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
         mockMvc.perform(
-                delete(PATH + "/" + fragment))
+                       delete(PATH + "/" + fragment))
                .andExpect(status().is2xxSuccessful()).andReturn();
     }
 
     @Test
     void removeVocabularyReturns4xxForNotRemovableVocabulary() throws Exception {
         Mockito.doThrow(
-                new VocabularyRemovalException("Vocabulary cannot be removed. It contains terms."))
+                       new VocabularyRemovalException("Vocabulary cannot be removed. It contains terms."))
                .when(serviceMock).remove(any());
 
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
         mockMvc.perform(
-                delete(PATH + "/" + fragment))
+                       delete(PATH + "/" + fragment))
                .andExpect(status().is4xxClientError()).andReturn();
     }
 
@@ -235,7 +232,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 "http://kbss.felk.cvut.cz/ontologies/termit/vocabularies/";
         configMock.getNamespace().setVocabulary(configuredNamespace);
         final MvcResult mvcResult = mockMvc.perform(
-                post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
+                                                   post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isCreated()).andReturn();
         final String location = mvcResult.getResponse().getHeader(HttpHeaders.LOCATION);
         assertThat(location, containsString(QueryParams.NAMESPACE + "=" + NAMESPACE));
@@ -333,6 +330,21 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertTrue(result.isEmpty());
         verify(serviceMock).getRequiredReference(VOCABULARY_URI);
         verify(serviceMock).getTransitivelyImportedVocabularies(vocabulary);
+    }
+
+    @Test
+    void runTextAnalysisOnAllTermsInvokesTextAnalysisOnAllTermsFromService() throws Exception {
+        final Vocabulary vocabulary = generateVocabulary();
+        vocabulary.setUri(VOCABULARY_URI);
+        when(sut.getById(FRAGMENT, Optional.of(NAMESPACE))).thenReturn(vocabulary);
+        mockMvc.perform(put(PATH + "/" + FRAGMENT + "/terms/text-analysis")).andExpect(status().isAccepted());
+        verify(serviceMock).runTextAnalysisOnAllTerms(vocabulary);
+    }
+
+    @Test
+    void runTextAnalysisOnAllVocabulariesInvokesTextAnalysisOnAllVocabulariesFromService() throws Exception {
+        mockMvc.perform(get(PATH + "/text-analysis")).andExpect(status().isAccepted());
+        verify(serviceMock).runTextAnalysisOnAllVocabularies();
     }
 
     @Test

@@ -11,11 +11,14 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.comment.CommentService;
+import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,11 +34,15 @@ import java.util.stream.Collectors;
 @Service
 public class TermService implements RudService<Term>, ChangeRecordProvider<Term> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TermService.class);
+
     private final VocabularyExporters exporters;
 
     private final VocabularyService vocabularyService;
 
     private final TermRepositoryService repositoryService;
+
+    private final TextAnalysisService textAnalysisService;
 
     private final TermOccurrenceService termOccurrenceService;
 
@@ -47,12 +54,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     @Autowired
     public TermService(VocabularyExporters exporters, VocabularyService vocabularyService,
-                       TermRepositoryService repositoryService,
+                       TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
                        TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
                        CommentService commentService, Configuration config) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.repositoryService = repositoryService;
+        this.textAnalysisService = textAnalysisService;
         this.termOccurrenceService = termOccurrenceService;
         this.changeRecordService = changeRecordService;
         this.commentService = commentService;
@@ -319,6 +327,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(term);
         Objects.requireNonNull(owner);
         repositoryService.addRootTermToVocabulary(term, owner);
+        analyzeTermDefinition(term, owner.getUri());
+        vocabularyService.runTextAnalysisOnAllTerms(owner);
     }
 
     /**
@@ -331,6 +341,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(child);
         Objects.requireNonNull(parent);
         repositoryService.addChildTerm(child, parent);
+        analyzeTermDefinition(child, parent.getVocabulary());
+        vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(parent.getVocabulary()));
     }
 
     /**
@@ -341,7 +353,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     public Term update(Term term) {
         Objects.requireNonNull(term);
-        return repositoryService.update(term);
+        final Term original = repositoryService.findRequired(term.getUri());
+        if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
+            analyzeTermDefinition(term, term.getVocabulary());
+        }
+        final Term result = repositoryService.update(term);
+        // Ensure the change is merged into the repo before analyzing other terms
+        if (!Objects.equals(original.getLabel(), term.getLabel())) {
+            vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(original.getVocabulary()));
+        }
+        return result;
     }
 
     /**
@@ -352,6 +373,44 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void remove(Term term) {
         Objects.requireNonNull(term);
         repositoryService.remove(term);
+    }
+
+    /**
+     * Executes text analysis on the specified term's definition.
+     * <p>
+     * A vocabulary with the specified identifier is used as base for the text analysis (its terms are searched for
+     * during the analysis).
+     *
+     * @param term              Term to analyze
+     * @param vocabularyContext Identifier of the vocabulary used for analysis
+     */
+    public void analyzeTermDefinition(Term term, URI vocabularyContext) {
+        Objects.requireNonNull(term);
+        if (term.getDefinition().isEmpty()) {
+            return;
+        }
+        LOG.debug("Analyzing definition of term {}.", term);
+        textAnalysisService.analyzeTermDefinition(term, vocabularyContext);
+    }
+
+    /**
+     * Gets definitionally related terms of the specified term.
+     *
+     * @param instance Term to search from
+     * @return List of definitionally related terms of the specified term
+     */
+    public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
+        return repositoryService.getDefinitionallyRelatedTargeting(instance);
+    }
+
+    /**
+     * Gets All occurrences of the specified terms where it appears in other terms' definitions.
+     *
+     * @param instance Term to search for
+     * @return List of related terms to the specified term where this term appeared in their definitions
+     */
+    public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
+        return repositoryService.getDefinitionallyRelatedOf(instance);
     }
 
     /**

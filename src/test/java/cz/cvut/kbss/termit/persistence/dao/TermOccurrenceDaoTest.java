@@ -19,9 +19,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
-import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
-import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.assignment.*;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -247,5 +245,54 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
         assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class).setParameter("target",
                 URI.create(Vocabulary.s_c_cil)).getSingleResult());
+    }
+
+    @Test
+    void findAllDefinitionalOfReturnsDefinitionalOccurrencesOfSpecifiedTerm() {
+        final Term term = Generator.generateTermWithId();
+        final Term otherTerm = Generator.generateTermWithId();
+        generateDefinitionalOccurrence(term, otherTerm);
+
+        final List<TermOccurrence> result = sut.findAllDefinitionalOf(term);
+        assertFalse(result.isEmpty());
+        result.forEach(to -> {
+            assertEquals(term.getUri(), to.getTerm());
+            assertEquals(otherTerm.getUri(), to.getTarget().getSource());
+        });
+    }
+
+    private void generateDefinitionalOccurrence(Term of, Term in) {
+        final DefinitionalOccurrenceTarget target = new DefinitionalOccurrenceTarget(in);
+        target.setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+        final TermOccurrence occurrence = new TermDefinitionalOccurrence(of.getUri(), target);
+        transactional(() -> {
+            em.persist(occurrence);
+            em.persist(target);
+        });
+    }
+
+    @Test
+    void findAllDefinitionalOfReturnsOnlyDefinitionalOccurrencesOfSpecifiedTerm() {
+        enableRdfsInference(em);
+        final Term term = Generator.generateTermWithId();
+        final Term otherTerm = Generator.generateTermWithId();
+        generateDefinitionalOccurrence(term, otherTerm);
+        generateFileOccurrence(term);
+
+        final List<TermOccurrence> result = sut.findAllDefinitionalOf(term);
+        assertEquals(1, result.size());
+        result.forEach(to -> assertEquals(otherTerm.getUri(), to.getTarget().getSource()));
+    }
+
+    private void generateFileOccurrence(Term of) {
+        final File file = Generator.generateFileWithId("test.html");
+        final FileOccurrenceTarget target = new FileOccurrenceTarget(file);
+        target.setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+        final TermFileOccurrence occurrence = new TermFileOccurrence(of.getUri(), target);
+        transactional(() -> {
+            em.persist(file);
+            em.persist(occurrence);
+            em.persist(target);
+        });
     }
 }
