@@ -30,7 +30,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/search")
@@ -48,6 +50,16 @@ public class SearchController extends BaseController {
     @RequestMapping(value = "/fts", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
     public List<FullTextSearchResult> fullTextSearch(@RequestParam(name = "searchString") String searchString) {
-        return searchService.fullTextSearch(searchString);
+        return searchService.fullTextSearch(searchString, null, false);
+    }
+
+    @PreAuthorize("permitAll()")
+    @RequestMapping(value = "/fts/terms", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_VALUE,
+                                                                            JsonLd.MEDIA_TYPE})
+    public List<FullTextSearchResult> fullTextSearchTerms(
+            @RequestParam(name = "searchString") String searchString,
+            @RequestParam(name = "vocabulary", required = false) Set<URI> vocabularies
+    ) {
+        return searchService.fullTextSearch(searchString, vocabularies, true);
     }
 }
