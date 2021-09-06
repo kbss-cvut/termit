@@ -72,7 +72,7 @@ public class TermDao extends AssetDao<Term> {
     }
 
     /**
-     * Loads terms whose relatedness to the specified term is inferred due to the symmetric of SKOS related.
+     * Loads terms whose relatedness to the specified term is inferred due to the symmetry of SKOS related.
      *
      * @param term Term to load related terms for
      */

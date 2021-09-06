@@ -31,7 +31,7 @@ public class CssSelector extends Selector {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = RDF.VALUE)
+    @OWLDataProperty(iri = RDF.VALUE, simpleLiteral = true)
     private String value;
 
     public CssSelector() {

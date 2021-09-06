@@ -12,37 +12,42 @@
 package cz.cvut.kbss.termit.service.document;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -80,6 +85,9 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     private DocumentManager documentManager;
 
     @Mock
+    private AnnotationGenerator annotationGeneratorMock;
+
+    @Mock
     private TextAnalysisRecordDao textAnalysisRecordDao;
 
     private TextAnalysisService sut;
@@ -105,7 +113,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         this.documentManagerSpy = spy(documentManager);
         doCallRealMethod().when(documentManagerSpy).loadFileContent(any());
         doNothing().when(documentManagerSpy).createBackup(any());
-        this.sut = new TextAnalysisService(restTemplate, config, documentManagerSpy,
+        this.sut = new TextAnalysisService(restTemplate, config, documentManagerSpy, annotationGeneratorMock,
                 textAnalysisRecordDao);
     }
 
@@ -184,6 +192,22 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void analyzeFileInvokesAnnotationGeneratorWithResultFromTextAnalysisService() throws Exception {
+        final TextAnalysisInput input = textAnalysisInput();
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+        sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
+        mockServer.verify();
+        final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
+        verify(annotationGeneratorMock).generateAnnotations(captor.capture(), eq(file));
+        final String result = new BufferedReader(new InputStreamReader(captor.getValue())).lines().collect(
+                Collectors.joining("\n"));
+        assertEquals(CONTENT, result);
+    }
+
+    @Test
     void analyzeFileThrowsNotFoundExceptionWhenFileCannotBeFound() {
         file.setLabel("unknown.html");
         final NotFoundException result = assertThrows(NotFoundException.class,
@@ -202,6 +226,20 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                 () -> sut.analyzeFile(file, Collections.singleton(vocabulary.getUri())));
         assertThat(result.getMessage(), containsString("empty response"));
         mockServer.verify();
+    }
+
+    @Test
+    void analyzeFileCreatesFileBackupBeforeInvokingAnnotationGenerator() throws Exception {
+        final TextAnalysisInput input = textAnalysisInput();
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+        sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
+        mockServer.verify();
+        final InOrder inOrder = Mockito.inOrder(documentManagerSpy, annotationGeneratorMock);
+        inOrder.verify(documentManagerSpy).createBackup(file);
+        inOrder.verify(annotationGeneratorMock).generateAnnotations(any(), eq(file));
     }
 
     @Test
@@ -227,9 +265,9 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                 .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
-        final InOrder inOrder = Mockito.inOrder(documentManagerSpy);
+        final InOrder inOrder = Mockito.inOrder(documentManagerSpy, annotationGeneratorMock);
         inOrder.verify(documentManagerSpy).createBackup(file);
-        inOrder.verify(documentManagerSpy).saveFileContent(eq(file), any(InputStream.class));
+        inOrder.verify(annotationGeneratorMock).generateAnnotations(any(InputStream.class), eq(file));
     }
 
     @Test
@@ -254,5 +292,49 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         assertTrue(result.isPresent());
         assertEquals(record, result.get());
         verify(textAnalysisRecordDao).findLatest(file);
+    }
+
+    @Test
+    void analyzeTermDefinitionInvokesTextAnalysisServiceWithTermDefinitionAsContentAndTermVocabularyAsVocabulary()
+            throws Exception {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        final TextAnalysisInput input = textAnalysisInput();
+        input.setContent(term.getDefinition().get(Environment.LANGUAGE));
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+
+        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        mockServer.verify();
+    }
+
+    @Test
+    void analyzeTermDefinitionInvokesAnnotationGeneratorWithResultFromTextAnalysisService() {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(containsString(term.getDefinition().get(Environment.LANGUAGE))))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+
+        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
+        verify(annotationGeneratorMock).generateAnnotations(captor.capture(), eq(term));
+        final String result = new BufferedReader(new InputStreamReader(captor.getValue())).lines().collect(
+                Collectors.joining("\n"));
+        assertEquals(CONTENT, result);
+    }
+
+    @Test
+    void analyzeTermDefinitionDoesNotInvokeTextAnalysisServiceWhenDefinitionInConfiguredLanguageIsMissing() {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        term.setDefinition(MultilingualString.create("test value", "cs"));
+        assertNotEquals(term.getDefinition().getLanguages(), Collections.singleton(Environment.LANGUAGE));
+        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        mockServer.verify();
+        verify(annotationGeneratorMock, never()).generateAnnotations(any(), any(Term.class));
     }
 }

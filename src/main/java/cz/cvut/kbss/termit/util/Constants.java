@@ -57,8 +57,53 @@ public class Constants {
      */
     public static final String X_TOTAL_COUNT_HEADER = "X-Total-Count";
 
+    /**
+     * Score threshold for term occurrence.
+     */
+    public static final Double SCORE_THRESHOLD = 0.49;
+
     private Constants() {
         throw new AssertionError();
+    }
+
+    /**
+     * Constants from the RDFa vocabulary.
+     */
+    public static final class RDFa {
+
+        /**
+         * RDFa property attribute.
+         */
+        public static final String PROPERTY = "property";
+
+        /**
+         * RDFa context identifier attribute.
+         */
+        public static final String ABOUT = "about";
+
+        /**
+         * RDFa content attribute.
+         */
+        public static final String CONTENT = "content";
+
+        /**
+         * RDFa type identifier attribute.
+         */
+        public static final String TYPE = "typeof";
+
+        /**
+         * RDFa resource identifier.
+         */
+        public static final String RESOURCE = "resource";
+
+        /**
+         * RDFa prefix attribute.
+         */
+        public static final String PREFIX = "prefix";
+
+        private RDFa() {
+            throw new AssertionError();
+        }
     }
 
     public static final class Excel {

@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
@@ -392,6 +393,58 @@ public class TermController extends BaseController {
                                                    @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         return termService.getAssignmentInfo(termService.getRequiredReference(termUri));
+    }
+
+
+    /**
+     * Gets definitionally related terms of the specified term.
+     *
+     * @return List of definitionally related terms of the specified term
+     */
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {
+            MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(@PathVariable String vocabularyIdFragment,
+                                                                       @PathVariable String termIdFragment,
+                                                                       @RequestParam(name = QueryParams.NAMESPACE,
+                                                                                     required = false)
+                                                                               Optional<String> namespace) {
+        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
+    }
+
+    /**
+     * Gets All occurrences of the specified terms where it appears in other terms' definitions.
+     *
+     * @return List of related terms to the specified term where this term appeared in their definitions
+     */
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
+            MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public List<TermOccurrence> getDefinitionallyRelatedTermsOf(@PathVariable String vocabularyIdFragment,
+                                                                @PathVariable String termIdFragment,
+                                                                @RequestParam(name = QueryParams.NAMESPACE,
+                                                                              required = false)
+                                                                        Optional<String> namespace) {
+        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
+    }
+
+    /**
+     * Runs text analysis on the specified Term's definition.
+     * <p>
+     * This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed automatically
+     * when specific conditions are fulfilled.
+     */
+    @PutMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/text-analysis")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public void runTextAnalysisOnTerm(@PathVariable String vocabularyIdFragment,
+                                      @PathVariable String termIdFragment,
+                                      @RequestParam(name = QueryParams.NAMESPACE, required = false)
+                                              Optional<String> namespace) {
+        termService.analyzeTermDefinition(getById(vocabularyIdFragment, termIdFragment, namespace),
+                getVocabularyUri(namespace, vocabularyIdFragment));
     }
 
     @PutMapping(value = "/terms/{termIdFragment}/definition-source",

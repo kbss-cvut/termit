@@ -428,12 +428,43 @@ public class Configuration {
         @NotNull
         String url;
 
+        /**
+         * Minimal match score of a term occurrence for which a term assignment should be automatically generated.
+         * <p>
+         * More specifically, when annotated file content is being processed, term occurrences with sufficient score will
+         * cause creation of corresponding term assignments to the file.
+         */
+        @NotNull
+        String termAssignmentMinScore;
+
+        /**
+         * Score threshold for a term occurrence for it to be saved into the repository.
+         */
+        @NotNull
+        String termOccurrenceMinScore;
+
         public String getUrl() {
             return url;
         }
 
         public void setUrl(String url) {
             this.url = url;
+        }
+
+        public String getTermAssignmentMinScore() {
+            return termAssignmentMinScore;
+        }
+
+        public void setTermAssignmentMinScore(String termAssignmentMinScore) {
+            this.termAssignmentMinScore = termAssignmentMinScore;
+        }
+
+        public String getTermOccurrenceMinScore() {
+            return termOccurrenceMinScore;
+        }
+
+        public void setTermOccurrenceMinScore(String termOccurrenceMinScore) {
+            this.termOccurrenceMinScore = termOccurrenceMinScore;
         }
     }
 

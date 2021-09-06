@@ -35,7 +35,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Perf #1283
-     *
+     * <p>
      * Query for loading term occurrences targeting a specified source (file, another term) in a single go.
      */
     private static final String FIND_ALL_TARGETING_QUERY =
@@ -83,6 +83,19 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                  .setParameter("type", typeUri)
                  .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
                  .setParameter("term", term.getUri()).getResultList();
+    }
+
+    /**
+     * Finds all definitional occurrences of the specified term.
+     *
+     * @param term Term whose occurrences should be returned
+     * @return List of term occurrences
+     */
+    public List<TermOccurrence> findAllDefinitionalOf(Term term) {
+        Objects.requireNonNull(term);
+        return em
+                .createQuery("SELECT to FROM TermDefinitionalOccurrence to WHERE to.term = :term", TermOccurrence.class)
+                .setParameter("term", term).getResultList();
     }
 
     /**

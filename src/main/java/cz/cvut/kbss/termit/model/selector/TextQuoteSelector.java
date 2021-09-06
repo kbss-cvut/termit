@@ -35,13 +35,13 @@ public class TextQuoteSelector extends Selector {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_presny_text_quote)
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_presny_text_quote, simpleLiteral = true)
     private String exactMatch;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_prefix_text_quote)
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_prefix_text_quote, simpleLiteral = true)
     private String prefix;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_ma_suffix_text_quote)
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_suffix_text_quote, simpleLiteral = true)
     private String suffix;
 
     public TextQuoteSelector() {
