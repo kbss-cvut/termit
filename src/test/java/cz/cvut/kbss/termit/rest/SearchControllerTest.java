@@ -30,7 +30,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -56,7 +55,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void fullTextSearchExecutesSearchOnService() throws Exception {
         final List<FullTextSearchResult> expected = Collections
                 .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", null, Vocabulary.s_c_term, "test", "test", 1.0));
-        when(searchServiceMock.fullTextSearch(any(), any(), anyBoolean())).thenReturn(expected);
+        when(searchServiceMock.fullTextSearch(any())).thenReturn(expected);
         final String searchString = "test";
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/fts").param("searchString", searchString))
                                            .andExpect(status().isOk()).andReturn();
@@ -66,7 +65,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
         assertEquals(expected.get(0).getUri(), result.get(0).getUri());
         assertEquals(expected.get(0).getLabel(), result.get(0).getLabel());
         assertEquals(expected.get(0).getTypes(), result.get(0).getTypes());
-        verify(searchServiceMock).fullTextSearch(searchString, null, false);
+        verify(searchServiceMock).fullTextSearch(searchString);
     }
 
     @Test
@@ -74,12 +73,12 @@ class SearchControllerTest extends BaseControllerTestRunner {
         final URI vocabularyIri = URI.create("https://test.org/vocabulary");
         final List<FullTextSearchResult> expected = Collections
                 .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", vocabularyIri, Vocabulary.s_c_term, "test", "test", 1.0));
-        when(searchServiceMock.fullTextSearch(any(), any(), anyBoolean())).thenReturn(expected);
+        when(searchServiceMock.fullTextSearchOfTerms(any(), any())).thenReturn(expected);
         final String searchString = "test";
         mockMvc.perform(get(PATH + "/fts/terms")
                        .param("searchString", searchString)
                        .param("vocabulary", vocabularyIri.toString()))
                .andExpect(status().isOk()).andReturn();
-        verify(searchServiceMock).fullTextSearch(searchString, Collections.singleton(vocabularyIri), true);
+        verify(searchServiceMock).fullTextSearchOfTerms(searchString, Collections.singleton(vocabularyIri));
     }
 }

@@ -50,7 +50,7 @@ public class SearchController extends BaseController {
     @RequestMapping(value = "/fts", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
     public List<FullTextSearchResult> fullTextSearch(@RequestParam(name = "searchString") String searchString) {
-        return searchService.fullTextSearch(searchString, null, false);
+        return searchService.fullTextSearch(searchString);
     }
 
     @PreAuthorize("permitAll()")
@@ -60,6 +60,6 @@ public class SearchController extends BaseController {
             @RequestParam(name = "searchString") String searchString,
             @RequestParam(name = "vocabulary", required = false) Set<URI> vocabularies
     ) {
-        return searchService.fullTextSearch(searchString, vocabularies, true);
+        return searchService.fullTextSearchOfTerms(searchString, vocabularies);
     }
 }

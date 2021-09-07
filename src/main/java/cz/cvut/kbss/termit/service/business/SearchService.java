@@ -43,15 +43,22 @@ public class SearchService {
      * Executes full text search in assets.
      *
      * @param searchString String to search by
-     * @param vocabularies URIs of vocabularies to search in, or null, if all vocabularies shall be searched
-     * @param termsOnly whether to return only matches related to terms (not vocabularies)
      * @return Matching assets
      */
-    public List<FullTextSearchResult> fullTextSearch(String searchString, Set<URI> vocabularies, boolean termsOnly) {
+    public List<FullTextSearchResult> fullTextSearch(String searchString) {
+        return searchDao.fullTextSearch(searchString);
+    }
+
+    /**
+     * Executes full text search in terms, possibly filtered by vocabularies.
+     *
+     * @param searchString String to search by
+     * @param vocabularies URIs of vocabularies to search in, or null, if all vocabularies shall be searched
+     * @return Matching terms
+     */
+    public List<FullTextSearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies) {
         Stream<FullTextSearchResult> result = searchDao.fullTextSearch(searchString).stream();
-        if (termsOnly) {
-            result = result.filter(r -> r.getTypes().contains(SKOS.CONCEPT));
-        }
+        result = result.filter(r -> r.getTypes().contains(SKOS.CONCEPT));
         if (vocabularies != null) {
             result = result.filter(r -> vocabularies.contains(r.getVocabulary()));
         }
