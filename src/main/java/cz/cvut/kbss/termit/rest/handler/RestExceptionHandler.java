@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -142,7 +143,8 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(DisabledOperationException.class)
-    public ResponseEntity<ErrorInfo> disabledOperationException(HttpServletRequest request, DisabledOperationException e) {
+    public ResponseEntity<ErrorInfo> disabledOperationException(HttpServletRequest request,
+                                                                DisabledOperationException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
@@ -182,5 +184,14 @@ public class RestExceptionHandler {
                                                       InvalidParameterException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> maxUploadSizeExceededException(HttpServletRequest request,
+                                                                    MaxUploadSizeExceededException e) {
+        logException(e);
+        return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(
+                e.getMessage(),
+                "error.file.maxUploadSizeExceeded", request.getRequestURI()), HttpStatus.BAD_REQUEST);
     }
 }
