@@ -1,9 +1,6 @@
 package cz.cvut.kbss.termit.dto;
 
-import cz.cvut.kbss.jopa.model.annotations.Id;
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
-import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -25,6 +22,9 @@ public class ConfigurationDto implements Serializable {
 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_uzivatelskou_roli)
     private Set<UserRole> roles;
+
+    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/max-file-upload-size")
+    private String maxFileUploadSize;
 
     public String getLanguage() {
         return language;
@@ -48,5 +48,13 @@ public class ConfigurationDto implements Serializable {
 
     public void setRoles(Set<UserRole> roles) {
         this.roles = roles;
+    }
+
+    public String getMaxFileUploadSize() {
+        return maxFileUploadSize;
+    }
+
+    public void setMaxFileUploadSize(String maxFileUploadSize) {
+        this.maxFileUploadSize = maxFileUploadSize;
     }
 }

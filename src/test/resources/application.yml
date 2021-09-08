@@ -1,4 +1,7 @@
 spring:
+    servlet:
+        multipart:
+            max-file-size: 1KB
     autoconfigure:
         exclude: net.bull.javamelody.JavaMelodyAutoConfiguration
     main:

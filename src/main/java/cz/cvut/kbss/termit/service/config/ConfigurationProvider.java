@@ -9,6 +9,7 @@ import java.util.HashSet;
 
 import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 /**
@@ -21,11 +22,15 @@ public class ConfigurationProvider {
 
     private final UserRoleRepositoryService service;
 
+    private final Environment environment;
+
     @Autowired
     public ConfigurationProvider(Configuration config,
-                                 UserRoleRepositoryService service) {
+                                 UserRoleRepositoryService service,
+                                 Environment environment) {
         this.config = config.getPersistence();
         this.service = service;
+        this.environment = environment;
     }
 
     /**
@@ -38,6 +43,7 @@ public class ConfigurationProvider {
         result.setId(URI.create(Vocabulary.s_c_konfigurace + "/default"));
         result.setLanguage(config.getLanguage());
         result.setRoles(new HashSet<>(service.findAll()));
+        result.setMaxFileUploadSize(environment.getProperty("spring.servlet.multipart.max-file-size"));
         return result;
     }
 }
