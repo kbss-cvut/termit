@@ -8,7 +8,6 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
-import cz.cvut.kbss.termit.service.comment.CommentService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -35,9 +34,6 @@ class ReadOnlyTermServiceTest {
 
     @Mock
     private TermService termService;
-
-    @Mock
-    private CommentService commentService;
 
     @InjectMocks
     private ReadOnlyTermService sut;
@@ -144,10 +140,10 @@ class ReadOnlyTermServiceTest {
         final Comment comment = new Comment();
         comment.setAsset(term.getUri());
         comment.setCreated(new Date());
-        when(commentService.findAll(term)).thenReturn(Collections.singletonList(comment));
+        when(termService.getComments(term)).thenReturn(Collections.singletonList(comment));
 
         final List<Comment> result = sut.getComments(term);
         assertEquals(Collections.singletonList(comment), result);
-        verify(commentService).findAll(term);
+        verify(termService).getComments(term);
     }
 }
