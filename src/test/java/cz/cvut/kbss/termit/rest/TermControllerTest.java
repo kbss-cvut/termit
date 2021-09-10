@@ -50,6 +50,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
+import static cz.cvut.kbss.termit.environment.Generator.generateComment;
+import static cz.cvut.kbss.termit.environment.Generator.generateComments;
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SPEC;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE_SIZE;
@@ -902,19 +904,6 @@ class TermControllerTest extends BaseControllerTestRunner {
         return termUri;
     }
 
-    private static List<Comment> generateComments(Term term) {
-        return IntStream.range(0, 5).mapToObj(i -> generateComment(term)).collect(Collectors.toList());
-    }
-
-    private static Comment generateComment(Term term) {
-        final Comment c = new Comment();
-        c.setContent("Comment " + Generator.randomInt());
-        if (term != null) {
-            c.setAsset(term.getUri());
-            c.setCreated(new Date());
-        }
-        return c;
-    }
 
     @Test
     void getCommentsStandaloneRetrievesCommentsForSpecifiedTerm() throws Exception {

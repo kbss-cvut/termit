@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -61,5 +62,13 @@ public class ReadOnlyTermService {
             arg.setSubTerms(parent.getSubTerms());
         }
         return termService.findSubTerms(arg).stream().map(ReadOnlyTerm::new).collect(Collectors.toList());
+    }
+
+    public List<Comment> getComments(Term term) {
+        return termService.getComments(term);
+    }
+
+    public Term getRequiredReference(URI uri) {
+        return termService.getRequiredReference(uri);
     }
 }

@@ -6,7 +6,9 @@ import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.rest.BaseControllerTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyTermService;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
+import static cz.cvut.kbss.termit.environment.Generator.generateComments;
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SPEC;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE_SIZE;
@@ -69,6 +72,16 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         setUp(sut);
         when(config.getNamespace().getVocabulary()).thenReturn(Environment.BASE_URI + "/");
+    }
+
+    private URI initTermUriResolution() {
+        final URI termUri = URI.create(Environment.BASE_URI + "/" + VOCABULARY_NAME +
+                config.getNamespace().getTerm().getSeparator() + "/" + TERM_NAME);
+        when(idResolver.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
+                .thenReturn(URI.create(VOCABULARY_URI));
+        when(idResolver.buildNamespace(eq(VOCABULARY_URI), any())).thenReturn(NAMESPACE);
+        when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
+        return termUri;
     }
 
     @Test
@@ -213,5 +226,22 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         });
         assertEquals(subTerms, result);
         verify(termService).findSubTerms(term);
+    }
+
+    @Test
+    void getCommentsRetrievesCommentsForSpecifiedTerm() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termService.getRequiredReference(term.getUri())).thenReturn(term);
+        final List<Comment> comments = generateComments(term);
+        when(termService.getComments(term)).thenReturn(comments);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments"))
+                                           .andExpect(status().isOk()).andReturn();
+        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        });
+        assertEquals(comments, result);
+        verify(termService).getComments(term);
     }
 }

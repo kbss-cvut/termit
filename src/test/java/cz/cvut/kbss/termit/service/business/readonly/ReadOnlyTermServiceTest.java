@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -130,5 +132,18 @@ class ReadOnlyTermServiceTest {
         final Term arg = captor.getValue();
         assertEquals(term.getUri(), arg.getUri());
         assertEquals(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()), arg.getSubTerms());
+    }
+
+    @Test
+    void getCommentsRetrievesCommentsForSpecifiedTerm() {
+        final Term term = Generator.generateTermWithId();
+        final Comment comment = new Comment();
+        comment.setAsset(term.getUri());
+        comment.setCreated(new Date());
+        when(termService.getComments(term)).thenReturn(Collections.singletonList(comment));
+
+        final List<Comment> result = sut.getComments(term);
+        assertEquals(Collections.singletonList(comment), result);
+        verify(termService).getComments(term);
     }
 }
