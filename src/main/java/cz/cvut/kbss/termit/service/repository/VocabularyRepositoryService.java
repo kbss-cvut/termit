@@ -16,6 +16,9 @@ import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.apache.tika.Tika;
+import org.apache.tika.metadata.Metadata;
+import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -170,9 +173,13 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Vocabulary importVocabulary(boolean rename, URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(file);
         try {
+            Metadata metadata = new Metadata();
+            metadata.add(Metadata.RESOURCE_NAME_KEY, file.getName());
+            metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
+            String contentType = new Tika().detect(file.getInputStream(), metadata);
             final Vocabulary vocabulary = getSKOSImporter().importVocabulary(rename,
                     vocabularyIri,
-                    file.getContentType(),
+                    contentType,
                     (v) -> this.persist(v),
                     file.getInputStream()
             );
