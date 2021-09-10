@@ -4,6 +4,7 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.rest.BaseController;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyTermService;
@@ -88,5 +89,14 @@ public class ReadOnlyTermController extends BaseController {
                                           @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
         final ReadOnlyTerm parent = getById(vocabularyIdFragment, termIdFragment, namespace);
         return termService.findSubTerms(parent);
+    }
+
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
+                                     @PathVariable("termIdFragment") String termIdFragment,
+                                     @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        return termService.getComments(termService.getRequiredReference(termUri));
     }
 }
