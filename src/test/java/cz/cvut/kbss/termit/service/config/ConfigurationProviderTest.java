@@ -2,9 +2,7 @@ package cz.cvut.kbss.termit.service.config;
 
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
-import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +19,10 @@ class ConfigurationProviderTest extends BaseServiceTestRunner {
     private Configuration config;
 
     @Autowired
-    private UserRoleRepositoryService service;
-
-    @Autowired
     private Environment environment;
 
+    @Autowired
     private ConfigurationProvider sut;
-
-    @BeforeEach
-    void setUp() {
-        this.sut = new ConfigurationProvider(config, service, environment);
-    }
 
     @Test
     void getConfigurationReturnsConfigurationDtoWithRelevantConfigurationValues() {
