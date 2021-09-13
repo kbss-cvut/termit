@@ -460,3 +460,12 @@ termit-pojem:má-můj-poslední-komentář
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has my last comment"@en , "Má můj poslední komentář"@cs .
+
+termit-pojem:má-maximální-velikost-souboru
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has maximum file size"@en , "Má maximální velikost souboru"@cs .

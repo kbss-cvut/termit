@@ -256,3 +256,7 @@ termit-pojem:je-tématem
 
 termit-pojem:má-můj-poslední-komentář
         a               owl:ObjectProperty.
+
+termit-pojem:má-maximální-velikost-souboru
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
