@@ -23,7 +23,7 @@ public class ConfigurationDto implements Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_uzivatelskou_roli)
     private Set<UserRole> roles;
 
-    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/max-file-upload-size")
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_maximalni_velikost_souboru)
     private String maxFileUploadSize;
 
     public String getLanguage() {
