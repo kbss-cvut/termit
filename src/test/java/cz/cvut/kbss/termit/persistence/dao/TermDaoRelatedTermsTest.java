@@ -19,8 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TermDaoRelatedTermsTest extends BaseDaoTestRunner {
@@ -182,5 +181,25 @@ public class TermDaoRelatedTermsTest extends BaseDaoTestRunner {
         inverseRelated.forEach(ir -> assertThat(singleResult.get().getInverseRelated(), hasItem(new TermInfo(ir))));
         inverseRelatedMatch
                 .forEach(ir -> assertThat(singleResult.get().getInverseRelatedMatch(), hasItem(new TermInfo(ir))));
+    }
+
+    @Test
+    void inferredInverseRelatedDoesNotContainRelatedMatch() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(Generator.generateUri()), Generator
+                .generateTermWithId(Generator.generateUri()));
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            relatedMatch.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
+            generateRelatedRelationships(term, relatedMatch, SKOS.RELATED);
+        });
+        term.setRelatedMatch(relatedMatch.stream().map(TermInfo::new).collect(Collectors.toSet()));
+        transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
+
+        final Optional<Term> result = sut.find(term.getUri());
+        assertTrue(result.isPresent());
+        assertThat(result.get().getInverseRelated(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
+        assertThat(result.get().getRelatedMatch(), hasItems(relatedMatch.stream().map(TermInfo::new)
+                                                                        .toArray(TermInfo[]::new)));
     }
 }
