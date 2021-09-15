@@ -31,7 +31,6 @@ import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TermTest {
@@ -313,8 +312,12 @@ class TermTest {
     @Test
     void consolidateInferredCopiesInverseRelatedMatchTermsToRelatedMatch() {
         final Term sut = Generator.generateTermWithId();
-        sut.setRelatedMatch(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
-        sut.setInverseRelatedMatch(IntStream.range(0,5).mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
+        sut.setRelatedMatch(IntStream.range(0, 5)
+                                     .mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                                     .collect(Collectors.toSet()));
+        sut.setInverseRelatedMatch(IntStream.range(0, 5)
+                                            .mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                                            .collect(Collectors.toSet()));
         final int originalRelatedMatchSize = sut.getRelatedMatch().size();
 
         sut.consolidateInferred();
@@ -521,5 +524,64 @@ class TermTest {
         sut.splitExternalAndInternalParents();
         assertThat(sut.getParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
         assertThat(sut.getExternalParentTerms(), anyOf(nullValue(), emptyCollectionOf(Term.class)));
+    }
+
+    @Test
+    void toExcelEnsuresNoDuplicatesInRelatedRelatedMatchAndExactMatchTerms() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        sut.setVocabulary(Generator.generateUri());
+        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                                .collect(Collectors.toSet());
+        sut.setRelated(new HashSet<>(asserted));
+        sut.setRelatedMatch(new HashSet<>(asserted));
+        sut.setExactMatchTerms(new HashSet<>(asserted));
+        final Set<TermInfo> inverse = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                               .collect(Collectors.toSet());
+        sut.setInverseRelated(new HashSet<>(inverse));
+        sut.setInverseRelatedMatch(new HashSet<>(inverse));
+        sut.setInverseExactMatchTerms(new HashSet<>(inverse));
+        sut.consolidateInferred();
+
+        final XSSFRow row = generateExcel();
+        sut.toExcel(row);
+        final String resultRelated = row.getCell(10).getStringCellValue();
+        final String[] relatedIris = resultRelated.split(";");
+        assertEquals(asserted.size() + inverse.size(), relatedIris.length);
+        final String resultRelatedMatch = row.getCell(11).getStringCellValue();
+        final String[] relatedMatchIris = resultRelatedMatch.split(";");
+        assertEquals(asserted.size() + inverse.size(), relatedMatchIris.length);
+        final String resultExactMatch = row.getCell(12).getStringCellValue();
+        final String[] exactMatchIris = resultExactMatch.split(";");
+        assertEquals(asserted.size() + inverse.size(), exactMatchIris.length);
+    }
+
+    @Test
+    void toCsvEnsuresNoDuplicatesInRelatedRelatedMatchAndExactMatchTerms() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        sut.setVocabulary(Generator.generateUri());
+        final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                                .collect(Collectors.toSet());
+        sut.setRelated(new HashSet<>(asserted));
+        sut.setRelatedMatch(new HashSet<>(asserted));
+        sut.setExactMatchTerms(new HashSet<>(asserted));
+        final Set<TermInfo> inverse = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
+                                               .collect(Collectors.toSet());
+        sut.setInverseRelated(new HashSet<>(inverse));
+        sut.setInverseRelatedMatch(new HashSet<>(inverse));
+        sut.setInverseExactMatchTerms(new HashSet<>(inverse));
+        sut.consolidateInferred();
+
+        final String result = sut.toCsv();
+        final String[] items = result.split(",");
+        assertThat(items.length, greaterThanOrEqualTo(7));
+        final String resultRelated = items[10];
+        final String[] relatedIris = resultRelated.split(";");
+        assertEquals(asserted.size() + inverse.size(), relatedIris.length);
+        final String resultRelatedMatch = items[11];
+        final String[] relatedMatchIris = resultRelatedMatch.split(";");
+        assertEquals(asserted.size() + inverse.size(), relatedMatchIris.length);
+        final String resultExactMatch = items[12];
+        final String[] exactMatchIris = resultExactMatch.split(";");
+        assertEquals(asserted.size() + inverse.size(), exactMatchIris.length);
     }
 }
