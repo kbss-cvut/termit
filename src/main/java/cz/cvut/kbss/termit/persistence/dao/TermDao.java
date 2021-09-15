@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermInfoMapper;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -77,7 +78,7 @@ public class TermDao extends AssetDao<Term> {
      * @param term Term to load related terms for
      */
     private Set<TermInfo> loadInverseRelatedTerms(Term term) {
-        return loadTermInfo(term, SKOS.RELATED, term.getRelated() != null ? term.getRelated() : Collections.emptySet());
+        return loadTermInfo(term, SKOS.RELATED, Utils.joinCollections(term.getRelated(), term.getRelatedMatch()));
     }
 
     private Set<TermInfo> loadTermInfo(Term term, String property, Collection<TermInfo> exclude) {
@@ -317,27 +318,25 @@ public class TermDao extends AssetDao<Term> {
     }
 
     private String orderSentence(String lang, String var) {
-        switch (lang) {
-            case "cs":
-                return
-                        r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
-                                                                                                                                        "'á'", "'azz'"),
-                                                                                                                                "'č'", "'czz'"),
-                                                                                                                        "'ď'", "'dzz'"),
-                                                                                                                "'é'", "'ezz'"),
-                                                                                                        "'ě'", "'ezz'"),
-                                                                                                "'í'", "'izz'"),
-                                                                                        "'ň'", "'nzz'"),
-                                                                                "'ó'", "'ozz'"),
-                                                                        "'ř'", "'rzz'"),
-                                                                "'š'", "'szz'"),
-                                                        "'ť'", "'tzz'"),
-                                                "'ú'", "'uzz'"),
-                                        "'ý'", "'yzz'"),
-                                "'ž'", "'zzz'");
-            default:
-                return "lcase(" + var + ")";
+        if ("cs".equals(lang)) {
+            return
+                    r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
+                                                                                                                                    "'á'", "'azz'"),
+                                                                                                                            "'č'", "'czz'"),
+                                                                                                                    "'ď'", "'dzz'"),
+                                                                                                            "'é'", "'ezz'"),
+                                                                                                    "'ě'", "'ezz'"),
+                                                                                            "'í'", "'izz'"),
+                                                                                    "'ň'", "'nzz'"),
+                                                                            "'ó'", "'ozz'"),
+                                                                    "'ř'", "'rzz'"),
+                                                            "'š'", "'szz'"),
+                                                    "'ť'", "'tzz'"),
+                                            "'ú'", "'uzz'"),
+                                    "'ý'", "'yzz'"),
+                            "'ž'", "'zzz'");
         }
+        return "lcase(" + var + ")";
     }
 
     private String r(String string, String from, String to) {
