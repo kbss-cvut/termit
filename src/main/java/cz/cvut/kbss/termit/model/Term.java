@@ -390,14 +390,17 @@ public class Term extends AbstractTerm implements HasTypes {
                                                .collect(Collectors.toSet())));
         row.createCell(10).setCellValue(exportCollection(Utils.joinCollections(related, inverseRelated).stream()
                                                               .map(Term::termInfoStringIri)
+                                                              .distinct()
                                                               .collect(Collectors.toList())));
         row.createCell(11)
            .setCellValue(exportCollection(Utils.joinCollections(relatedMatch, inverseRelatedMatch).stream()
                                                .map(Term::termInfoStringIri)
+                                               .distinct()
                                                .collect(Collectors.toList())));
         row.createCell(12)
            .setCellValue(exportCollection(Utils.joinCollections(exactMatchTerms, inverseExactMatchTerms).stream()
                                                .map(Term::termInfoStringIri)
+                                               .distinct()
                                                .collect(Collectors.toList())));
         row.createCell(13).setCellValue(isDraft());
     }
