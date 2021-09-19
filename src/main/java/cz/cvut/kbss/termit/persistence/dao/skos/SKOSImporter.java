@@ -85,7 +85,7 @@ public class SKOSImporter {
      * @param mediaType     media type of the imported input streams
      * @param persist   an implementation of the persist operation (e.g. as performed by a VocabularyService)
      * @param inputStreams  input streams with the SKOS data
-     * @return
+     * @return imported vocabulary
      */
     public Vocabulary importVocabulary(final boolean rename,
                                        final URI vocabularyIri,
@@ -104,7 +104,7 @@ public class SKOSImporter {
         final Vocabulary vocabulary = createVocabulary(rename, vocabularyIri);
         ensureConceptIrisAreCompatibleWithTermIt();
 
-        LOG.trace("New vocabulary {} with new glossary.", vocabulary.getUri(), vocabulary.getGlossary().getUri());
+        LOG.trace("New vocabulary {} with a new glossary {}.", vocabulary.getUri(), vocabulary.getGlossary().getUri());
 
         final Optional<Glossary> glossary = vocabularyDao.findGlossary(vocabulary.getGlossary().getUri());
         if (glossary.isPresent()) {
@@ -164,7 +164,7 @@ public class SKOSImporter {
     private void parseDataFromStreams(String mediaType, InputStream... inputStreams) {
         final RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(mediaType).orElseThrow(
             () -> new UnsupportedImportMediaTypeException(
-                "Media type" + mediaType + "not supported."));
+                "Media type '" + mediaType + "' not supported."));
         final RDFParser p = Rio.createParser(rdfFormat);
         final StatementCollector collector = new StatementCollector(model);
         p.setRDFHandler(collector);
@@ -283,7 +283,7 @@ public class SKOSImporter {
         final String newGlossaryIri;
         if (rename) {
             newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + config.getGlossary().getFragment(), (r) -> vocabularyDao.findGlossary(URI.create(r)));
-            if (!newGlossaryIri.equals(glossaryIri)) {
+            if (!newGlossaryIri.equals(glossaryIri.toString())) {
                 Utils.changeIri(glossaryIri.toString(), newGlossaryIri, model);
             }
         } else {

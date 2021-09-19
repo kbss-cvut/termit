@@ -18,7 +18,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
-import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,13 +176,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
             metadata.add(Metadata.RESOURCE_NAME_KEY, file.getName());
             metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
             String contentType = new Tika().detect(file.getInputStream(), metadata);
-            final Vocabulary vocabulary = getSKOSImporter().importVocabulary(rename,
+            return getSKOSImporter().importVocabulary(rename,
                     vocabularyIri,
                     contentType,
-                    (v) -> this.persist(v),
+                    this::persist,
                     file.getInputStream()
             );
-            return vocabulary;
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
