@@ -258,7 +258,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
 
         final MultipartFile mf = new MockMultipartFile(
-                "test",
+                "test.ttl",
                 "test",
                 "text/turtle",
                 skos.getBytes(StandardCharsets.UTF_8)
