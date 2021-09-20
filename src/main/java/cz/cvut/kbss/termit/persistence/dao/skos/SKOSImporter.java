@@ -114,6 +114,7 @@ public class SKOSImporter {
             clearVocabulary(vocabularyIri);
         }
 
+        em.flush();
         persist.accept(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
