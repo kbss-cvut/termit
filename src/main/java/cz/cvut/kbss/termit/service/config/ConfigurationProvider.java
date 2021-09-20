@@ -18,7 +18,7 @@ import java.util.HashSet;
 @Service
 public class ConfigurationProvider {
 
-    private final Persistence config;
+    private final Persistence persistenceConfig;
 
     private final UserRoleRepositoryService service;
 
@@ -27,7 +27,7 @@ public class ConfigurationProvider {
 
     @Autowired
     public ConfigurationProvider(Configuration config, UserRoleRepositoryService service) {
-        this.config = config.getPersistence();
+        this.persistenceConfig = config.getPersistence();
         this.service = service;
     }
 
@@ -39,7 +39,7 @@ public class ConfigurationProvider {
     public ConfigurationDto getConfiguration() {
         final ConfigurationDto result = new ConfigurationDto();
         result.setId(URI.create(Vocabulary.s_c_konfigurace + "/default"));
-        result.setLanguage(config.getLanguage());
+        result.setLanguage(persistenceConfig.getLanguage());
         result.setRoles(new HashSet<>(service.findAll()));
         result.setMaxFileUploadSize(maxFileUploadSize);
         return result;
