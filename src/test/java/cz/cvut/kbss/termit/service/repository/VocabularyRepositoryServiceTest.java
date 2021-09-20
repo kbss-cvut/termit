@@ -264,7 +264,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                 skos.getBytes(StandardCharsets.UTF_8)
         );
 
-        final Vocabulary v = sut.importVocabulary(false, null, mf);
+        final Vocabulary v = sut.importVocabulary(true, null, mf);
         assertEquals(v.getLabel(), "Test");
     }
 
@@ -284,7 +284,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                 skos.getBytes(StandardCharsets.UTF_8)
         );
 
-        final Vocabulary v = sut.importVocabulary(false, null, mf);
+        final Vocabulary v = sut.importVocabulary(true, null, mf);
         assertEquals(v.getLabel(), "Test");
     }
 

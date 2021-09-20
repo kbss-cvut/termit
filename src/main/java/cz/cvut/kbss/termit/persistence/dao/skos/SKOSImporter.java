@@ -236,8 +236,14 @@ public class SKOSImporter {
         }
     }
 
-    private void setVocabularyLabelFromGlossary(final Vocabulary vocabulary, final String newGlossaryIri) {
-        final Set<Statement> labels = model.filter(Values.iri(newGlossaryIri), DCTERMS.TITLE, null);
+    private Resource getGlossaryUri() {
+        Set<Resource> glossaries = model.filter(null, RDF.TYPE, SKOS.CONCEPT_SCHEME).subjects();
+        assert !glossaries.isEmpty() && glossaries.size() == 1;
+        return glossaries.iterator().next();
+    }
+
+    private void setVocabularyLabelFromGlossary(final Vocabulary vocabulary) {
+        final Set<Statement> labels = model.filter(getGlossaryUri(), DCTERMS.TITLE, null);
         labels.stream().filter(s -> {
             assert s.getObject() instanceof Literal;
             return Objects.equals(config.getPersistence().getLanguage(),
@@ -256,12 +262,12 @@ public class SKOSImporter {
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(newVocabularyIri);
 
-        String newGlossaryIri = getFreshGlossaryIri(rename, newVocabularyIri.toString());
+        String newGlossaryIri = getFreshGlossaryIri(rename, glossaryIri.toString());
         final Glossary glossary = new Glossary();
         glossary.setUri(URI.create(newGlossaryIri));
         vocabulary.setGlossary(glossary);
         vocabulary.setModel(new cz.cvut.kbss.termit.model.Model());
-        setVocabularyLabelFromGlossary(vocabulary, newGlossaryIri);
+        setVocabularyLabelFromGlossary(vocabulary);
         return vocabulary;
     }
 
@@ -279,15 +285,15 @@ public class SKOSImporter {
         return newVocabularyIri;
     }
 
-    private String getFreshGlossaryIri(final boolean rename, final String newVocabularyIri) {
+    private String getFreshGlossaryIri(final boolean rename, final String glossaryIri) {
         final String newGlossaryIri;
         if (rename) {
-            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + config.getGlossary().getFragment(), (r) -> vocabularyDao.findGlossary(URI.create(r)));
-            if (!newGlossaryIri.equals(glossaryIri.toString())) {
-                Utils.changeIri(glossaryIri.toString(), newGlossaryIri, model);
+            newGlossaryIri = getUniqueIriFromBase(glossaryIri, (r) -> vocabularyDao.findGlossary(URI.create(r)));
+            if (!newGlossaryIri.equals(this.glossaryIri.toString())) {
+                Utils.changeIri(this.glossaryIri.toString(), newGlossaryIri, model);
             }
         } else {
-            newGlossaryIri = glossaryIri.stringValue();
+            newGlossaryIri = this.glossaryIri.stringValue();
         }
 
         return newGlossaryIri;
