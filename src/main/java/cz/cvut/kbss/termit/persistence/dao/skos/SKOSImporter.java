@@ -11,7 +11,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -58,9 +57,6 @@ public class SKOSImporter {
 
     private final EntityManager em;
 
-    private final Repository repository;
-    private final ValueFactory vf;
-
     private final Model model = new LinkedHashModel();
 
     private IRI glossaryIri;
@@ -73,8 +69,6 @@ public class SKOSImporter {
         this.config = config;
         this.vocabularyDao = vocabularyDao;
         this.termDao = termDao;
-        this.repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
-        vf = repository.getValueFactory();
         this.em = em;
     }
 
@@ -120,7 +114,6 @@ public class SKOSImporter {
             clearVocabulary(vocabularyIri);
         }
 
-        em.flush();
         persist.accept(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
@@ -227,9 +220,10 @@ public class SKOSImporter {
     }
 
     private void addDataIntoRepository(URI vocabularyIri) {
+        final Repository repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         try (final RepositoryConnection conn = repository.getConnection()) {
             conn.begin();
-            final IRI targetContext = vf.createIRI(vocabularyIri.toString());
+            final IRI targetContext = repository.getValueFactory().createIRI(vocabularyIri.toString());
             LOG.debug("Importing vocabulary into context <{}>.", targetContext);
             conn.add(model, targetContext);
             conn.commit();
@@ -262,7 +256,7 @@ public class SKOSImporter {
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(newVocabularyIri);
 
-        String newGlossaryIri = getFreshGlossaryIri(rename, glossaryIri.toString());
+        String newGlossaryIri = getFreshGlossaryIri(rename, newVocabularyIri.toString());
         final Glossary glossary = new Glossary();
         glossary.setUri(URI.create(newGlossaryIri));
         vocabulary.setGlossary(glossary);
@@ -285,10 +279,10 @@ public class SKOSImporter {
         return newVocabularyIri;
     }
 
-    private String getFreshGlossaryIri(final boolean rename, final String glossaryIri) {
+    private String getFreshGlossaryIri(final boolean rename, final String newVocabularyIri) {
         final String newGlossaryIri;
         if (rename) {
-            newGlossaryIri = getUniqueIriFromBase(glossaryIri, (r) -> vocabularyDao.findGlossary(URI.create(r)));
+            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + config.getGlossary().getFragment(), (r) -> vocabularyDao.findGlossary(URI.create(r)));
             if (!newGlossaryIri.equals(this.glossaryIri.toString())) {
                 Utils.changeIri(this.glossaryIri.toString(), newGlossaryIri, model);
             }
