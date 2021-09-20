@@ -258,13 +258,33 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
 
         final MultipartFile mf = new MockMultipartFile(
-                "test",
+                "test.ttl",
                 "test",
                 "text/turtle",
                 skos.getBytes(StandardCharsets.UTF_8)
         );
 
-        final Vocabulary v = sut.importVocabulary(false, null, mf);
+        final Vocabulary v = sut.importVocabulary(true, null, mf);
+        assertEquals(v.getLabel(), "Test");
+    }
+
+    @Test
+    void importVocabularyCorrectlyImportsTurtleFileOnWindows() {
+        final String skos =
+                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
+                        "@prefix dc : <http://purl.org/dc/terms/> . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
+
+
+        final MultipartFile mf = new MockMultipartFile(
+                "test.ttl",
+                "test",
+                "text/plain",
+                skos.getBytes(StandardCharsets.UTF_8)
+        );
+
+        final Vocabulary v = sut.importVocabulary(true, null, mf);
         assertEquals(v.getLabel(), "Test");
     }
 
