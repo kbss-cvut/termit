@@ -258,8 +258,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
 
         final MultipartFile mf = new MockMultipartFile(
-                "test.ttl",
-                "test",
+                "file",
+                "thesaurus",
                 "text/turtle",
                 skos.getBytes(StandardCharsets.UTF_8)
         );
@@ -278,9 +278,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
 
         final MultipartFile mf = new MockMultipartFile(
-                "test.ttl",
-                "test",
-                "text/plain",
+                "file",
+                "thesaurus",
+                "application/octet-stream",
                 skos.getBytes(StandardCharsets.UTF_8)
         );
 

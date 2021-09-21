@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mime-info>
     <mime-type type="text/turtle">
+        <sub-class-of type="text/plain"/>
         <glob pattern="*.ttl"/>
+        <magic priority="70">
+            <match value="@prefix" type="stringignorecase" offset="0" />
+        </magic>
     </mime-type>
 </mime-info>
