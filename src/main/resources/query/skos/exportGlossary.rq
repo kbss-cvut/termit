@@ -46,6 +46,13 @@ CONSTRUCT {
             pdp:má-datum-a-čas-modifikace ?created .
         ?author pdp:má-křestní-jméno ?firstName ;
             pdp:má-příjmení ?lastName .
+        {
+          SELECT (max(?createdDate) AS ?createdDateMax)
+          WHERE {   ?createRecord a pdp:vytvoření-entity ;
+                    pdp:má-změněnou-entitu ?vocabulary ;
+                    pdp:má-datum-a-čas-modifikace ?createdDate . }
+        }
+        FILTER(?createdDateMax = ?created)
     }
     BIND (CONCAT(?firstName, " ", ?lastName) AS ?fullName)
     BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)

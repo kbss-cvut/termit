@@ -92,6 +92,7 @@ public class VocabularyController extends BaseController {
      * Allows to import a vocabulary (or its  glossary) from the specified file.
      *
      * @param file File containing data to import
+     * @param rename true if the IRIs should be renamed
      */
     @PostMapping("/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
