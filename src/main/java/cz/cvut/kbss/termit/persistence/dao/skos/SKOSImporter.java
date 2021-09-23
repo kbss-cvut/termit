@@ -127,7 +127,9 @@ public class SKOSImporter {
         if ( possibleVocabulary.isPresent() ) {
             Vocabulary vocabulary = possibleVocabulary.get();
             termDao.findAll(vocabulary).forEach(t -> {
-                t.getProperties().clear();
+                if (t.getProperties() != null) {
+                    t.getProperties().clear();
+                }
                 termDao.remove(t);
                 vocabulary.getGlossary().removeRootTerm(t);
             });
@@ -248,11 +250,14 @@ public class SKOSImporter {
 
     private Vocabulary createVocabulary(boolean rename, final URI vocabularyIri) {
         URI newVocabularyIri;
+        final String newVocabularyIriBase = resolveVocabularyIriFromImportedData();
         if ( vocabularyIri == null ) {
-            final String newVocabularyIriBase = resolveVocabularyIriFromImportedData();
             newVocabularyIri = URI.create(getFreshVocabularyIri(rename, newVocabularyIriBase));
         } else {
             newVocabularyIri = vocabularyIri;
+            if ( rename ) {
+                Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri.toString(), model);
+            }
         }
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(newVocabularyIri);
