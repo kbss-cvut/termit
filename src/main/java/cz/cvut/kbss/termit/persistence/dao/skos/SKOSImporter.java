@@ -255,7 +255,9 @@ public class SKOSImporter {
             newVocabularyIri = URI.create(getFreshVocabularyIri(rename, newVocabularyIriBase));
         } else {
             newVocabularyIri = vocabularyIri;
-            Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri.toString(), model);
+            if ( rename ) {
+                Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri.toString(), model);
+            }
         }
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(newVocabularyIri);
