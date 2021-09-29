@@ -32,7 +32,7 @@
         <org.springframework.data.version>2.5.0</org.springframework.data.version>
         <org.hibernate.validator.version>6.2.0.Final</org.hibernate.validator.version>
         <org.apache.tika.tika-core.version>1.26</org.apache.tika.tika-core.version>
-        <cz.cvut.kbss.jopa.version>0.17.1</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>0.17.2</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.8.8</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.7</org.aspectj.version>
 
@@ -290,7 +290,7 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>3.7.2</version>
+            <version>3.7.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
