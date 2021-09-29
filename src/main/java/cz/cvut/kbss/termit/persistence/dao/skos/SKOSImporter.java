@@ -75,6 +75,7 @@ public class SKOSImporter {
     /**
      * Imports a SKOS vocabulary from file.
      *
+     * @param rename whether to rename IRIs in case a conflicting IRI is found.
      * @param vocabularyIri (Optional) IRI of the vocabulary to import. If not supplied, the IRI is inferred from the data.
      * @param mediaType     media type of the imported input streams
      * @param persist   an implementation of the persist operation (e.g. as performed by a VocabularyService)
@@ -126,12 +127,13 @@ public class SKOSImporter {
         if ( possibleVocabulary.isPresent() ) {
             Vocabulary vocabulary = possibleVocabulary.get();
             termDao.findAll(vocabulary).forEach(t -> {
+                if (t.getProperties() != null) {
+                    t.getProperties().clear();
+                }
                 termDao.remove(t);
                 vocabulary.getGlossary().removeRootTerm(t);
             });
             vocabularyDao.remove(vocabulary);
-            em.getEntityManagerFactory().getCache().evict(vocabulary.getUri());
-            em.getEntityManagerFactory().getCache().evict(vocabulary.getGlossary().getUri());
         }
     }
 
@@ -187,7 +189,7 @@ public class SKOSImporter {
         }
     }
 
-    private String resolveVocabularyIriFromImportedData(final Model model) {
+    private String resolveVocabularyIriFromImportedData() {
         return Utils
             .getVocabularyIri(
                 model.filter(null, RDF.TYPE, SKOS.CONCEPT)
@@ -248,16 +250,19 @@ public class SKOSImporter {
 
     private Vocabulary createVocabulary(boolean rename, final URI vocabularyIri) {
         URI newVocabularyIri;
+        final String newVocabularyIriBase = resolveVocabularyIriFromImportedData();
         if ( vocabularyIri == null ) {
-            final String newVocabularyIriBase = resolveVocabularyIriFromImportedData(model);
             newVocabularyIri = URI.create(getFreshVocabularyIri(rename, newVocabularyIriBase));
         } else {
             newVocabularyIri = vocabularyIri;
+            if ( rename ) {
+                Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri.toString(), model);
+            }
         }
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(newVocabularyIri);
 
-        String newGlossaryIri = getFreshGlossaryIri(rename, newVocabularyIri.toString());
+        String newGlossaryIri = getFreshGlossaryIri(rename);
         final Glossary glossary = new Glossary();
         glossary.setUri(URI.create(newGlossaryIri));
         vocabulary.setGlossary(glossary);
@@ -267,28 +272,25 @@ public class SKOSImporter {
     }
 
     private String getFreshVocabularyIri(final boolean rename, final String newVocabularyIriBase) {
-        final String newVocabularyIri;
+        String newVocabularyIri = newVocabularyIriBase;
         if (rename) {
             newVocabularyIri = getUniqueIriFromBase(newVocabularyIriBase, (r) -> vocabularyDao.find(URI.create(r)));
             if (!newVocabularyIri.equals(newVocabularyIriBase)) {
                 Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri, model);
             }
-        } else {
-            newVocabularyIri = newVocabularyIriBase;
         }
 
         return newVocabularyIri;
     }
 
-    private String getFreshGlossaryIri(final boolean rename, final String newVocabularyIri) {
-        final String newGlossaryIri;
+    private String getFreshGlossaryIri(final boolean rename) {
+        final String origGlossary = getGlossaryUri().toString();
+        String newGlossaryIri = origGlossary;
         if (rename) {
-            newGlossaryIri = getUniqueIriFromBase(newVocabularyIri + "/" + config.getGlossary().getFragment(), (r) -> vocabularyDao.findGlossary(URI.create(r)));
-            if (!newGlossaryIri.equals(this.glossaryIri.toString())) {
-                Utils.changeIri(this.glossaryIri.toString(), newGlossaryIri, model);
+            newGlossaryIri = getUniqueIriFromBase(origGlossary, (r) -> vocabularyDao.findGlossary(URI.create(r)));
+            if (!newGlossaryIri.equals(origGlossary)) {
+                Utils.changeIri(origGlossary, newGlossaryIri, model);
             }
-        } else {
-            newGlossaryIri = this.glossaryIri.stringValue();
         }
 
         return newGlossaryIri;
