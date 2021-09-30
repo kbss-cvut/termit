@@ -96,7 +96,12 @@ public class SKOSImporter {
         LOG.trace("Importing glossary {}.", glossaryIri);
         insertTopConceptAssertions();
 
-        final Vocabulary vocabulary = createVocabulary(rename, vocabularyIri);
+        final String vocabularyIriFromData = resolveVocabularyIriFromImportedData();
+        if ( vocabularyIri != null && !vocabularyIri.toString().equals(vocabularyIriFromData) ) {
+            throw new IllegalArgumentException("Cannot import a vocabulary into an existing one with different identifier.");
+        }
+
+        final Vocabulary vocabulary = createVocabulary(rename, vocabularyIri, vocabularyIriFromData);
         ensureConceptIrisAreCompatibleWithTermIt();
 
         LOG.trace("New vocabulary {} with a new glossary {}.", vocabulary.getUri(), vocabulary.getGlossary().getUri());
@@ -248,9 +253,9 @@ public class SKOSImporter {
         }).findAny().ifPresent(s -> vocabulary.setLabel(s.getObject().stringValue()));
     }
 
-    private Vocabulary createVocabulary(boolean rename, final URI vocabularyIri) {
+    private Vocabulary createVocabulary(boolean rename, final URI vocabularyIri, final String vocabularyIriFromData) {
         URI newVocabularyIri;
-        final String newVocabularyIriBase = resolveVocabularyIriFromImportedData();
+        final String newVocabularyIriBase = vocabularyIriFromData;
         if ( vocabularyIri == null ) {
             newVocabularyIri = URI.create(getFreshVocabularyIri(rename, newVocabularyIriBase));
         } else {
