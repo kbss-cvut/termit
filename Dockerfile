@@ -2,9 +2,7 @@ FROM maven:3-openjdk-11 as build
 
 COPY . /termit
 WORKDIR /termit
-RUN mvn compile
-RUN mvn test
-RUN mvn package
+RUN mvn package -B -P graphdb,standalone,no-cache
 
 FROM openjdk:11-jdk-oracle as runtime
 COPY --from=build  /termit/target/termit.jar termit.jar
