@@ -43,7 +43,7 @@ public interface VocabularyExporter {
      * <p>
      * That is, besides the exported glossary specified by the argument, terms from other vocabularies referenced by terms from the exported
      * glossary via one of the specified properties are included in the result as well. If {@code properties} are empty, this method behaves exactly
-     * as {@link #exportGlossary(Vocabulary)}.
+     * as {@link #exportGlossary(Vocabulary)}. Only SKOS-based properties (e.g, skos:exactMatch, skos:relatedMatch) are supported.
      *
      * @param vocabulary Vocabulary whose glossary should be exported
      * @param properties Properties used to identify references to terms from other glossaries (e.g., skos:exactMatch)
