@@ -94,15 +94,14 @@ public class TermController extends BaseController {
                     termService.findAllIncludingImported(searchString, vocabulary) :
                     termService.findAll(searchString, vocabulary));
         }
-        final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, vocabularyIdFragment, withReferences, properties, acceptType);
+        final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, withReferences, properties, acceptType);
         return export.orElse(ResponseEntity
                 .ok(includeImported ? termService.findAllIncludingImported(vocabulary) :
                         termService.findAll(vocabulary)));
     }
 
-    private Optional<ResponseEntity<?>> exportTerms(Vocabulary vocabulary, String fileName, boolean withReferences,
-                                                    Collection<String> properties,
-                                                    String mediaType) {
+    private Optional<ResponseEntity<?>> exportTerms(Vocabulary vocabulary, boolean withReferences,
+                                                    Collection<String> properties, String mediaType) {
         final Optional<TypeAwareResource> content = withReferences ?
                 termService.exportGlossaryWithReferences(vocabulary, properties, mediaType) : termService.exportGlossary(vocabulary, mediaType);
         return content.map(r -> {
@@ -111,7 +110,7 @@ public class TermController extends BaseController {
                                      .contentLength(r.contentLength())
                                      .contentType(MediaType.parseMediaType(mediaType))
                                      .header(HttpHeaders.CONTENT_DISPOSITION,
-                                             "attachment; filename=\"" + fileName +
+                                             "attachment; filename=\"" + IdentifierResolver.extractIdentifierFragment(vocabulary.getUri()) +
                                                      r.getFileExtension().orElse("") + "\"")
                                      .body(r);
             } catch (IOException e) {
