@@ -41,9 +41,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1018,5 +1020,37 @@ class TermControllerTest extends BaseControllerTestRunner {
         final String countHeader = mvcResult.getResponse().getHeader(Constants.X_TOTAL_COUNT_HEADER);
         assertNotNull(countHeader);
         assertEquals(termCount, Integer.parseInt(countHeader));
+    }
+
+    @Test
+    void getAllExportsTermsWithReferencesToTurtleWhenAcceptMediaTypeIsTurtle() throws Exception {
+        initNamespaceAndIdentifierResolution();
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(URI.create(VOCABULARY_URI));
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+        final TypeAwareByteArrayResource export = prepareTurtle();
+        when(termServiceMock.exportGlossaryWithReferences(eq(vocabulary), anyCollection(), eq(Turtle.MEDIA_TYPE))).thenReturn(Optional.of(export));
+
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Turtle.MEDIA_TYPE)
+                                                              .queryParam("withReferences", Boolean.toString(true)))
+               .andExpect(status().isOk());
+        verify(termServiceMock).exportGlossaryWithReferences(eq(vocabulary), anyCollection(), eq(Turtle.MEDIA_TYPE));
+    }
+
+    @Test
+    void getAllExportsTermsWithReferencesUsingProvidedReferencingProperties() throws Exception {
+        initNamespaceAndIdentifierResolution();
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(URI.create(VOCABULARY_URI));
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+        final TypeAwareByteArrayResource export = prepareTurtle();
+        when(termServiceMock.exportGlossaryWithReferences(eq(vocabulary), anyCollection(), eq(Turtle.MEDIA_TYPE))).thenReturn(Optional.of(export));
+        final Set<String> properties = new HashSet<>(Arrays.asList(SKOS.EXACT_MATCH, SKOS.RELATED_MATCH));
+
+        final MockHttpServletRequestBuilder builder = get(PATH + VOCABULARY_NAME + "/terms").accept(Turtle.MEDIA_TYPE)
+                                                                                            .queryParam("withReferences", Boolean.toString(true));
+        properties.forEach(p -> builder.queryParam("property", p));
+        mockMvc.perform(builder).andExpect(status().isOk());
+        verify(termServiceMock).exportGlossaryWithReferences(vocabulary, properties, Turtle.MEDIA_TYPE);
     }
 }
