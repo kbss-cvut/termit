@@ -84,7 +84,8 @@ public class TermController extends BaseController {
                                     @RequestParam(name = "searchString", required = false) String searchString,
                                     @RequestParam(name = "includeImported", required = false) boolean includeImported,
                                     @RequestParam(name = "withReferences", required = false) boolean withReferences,
-                                    @RequestParam(name = "property", required = false, defaultValue = "[]") Set<String> properties,
+                                    @RequestParam(name = "property", required = false,
+                                                  defaultValue = "[]") Set<String> properties,
                                     @RequestHeader(value = HttpHeaders.ACCEPT, required = false) String acceptType) {
         final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);

@@ -52,6 +52,10 @@ abstract class VocabularyExporterTestBase extends BaseServiceTestRunner {
     }
 
     List<Term> generateTerms() {
+        return generateTerms(vocabulary);
+    }
+
+    List<Term> generateTerms(Vocabulary target) {
         final List<Term> terms = new ArrayList<>(10);
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = Generator.generateTermWithId();
@@ -59,13 +63,13 @@ abstract class VocabularyExporterTestBase extends BaseServiceTestRunner {
                 term.setSources(Collections.singleton("PSP/c-1/p-2/b-c"));
             }
             terms.add(term);
-            term.setGlossary(vocabulary.getGlossary().getUri());
+            term.setGlossary(target.getGlossary().getUri());
         }
-        vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
+        target.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
         transactional(() -> {
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
-            terms.forEach(t -> Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em));
+            em.merge(target.getGlossary(), descriptorFactory.glossaryDescriptor(target));
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(target)));
+            terms.forEach(t -> Generator.addTermInVocabularyRelationship(t, target.getUri(), em));
         });
         return terms;
     }
