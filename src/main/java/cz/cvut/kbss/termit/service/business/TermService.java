@@ -78,7 +78,24 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     public Optional<TypeAwareResource> exportGlossary(Vocabulary vocabulary, String mediaType) {
         Objects.requireNonNull(vocabulary);
-        return exporters.exportVocabularyGlossary(vocabulary, mediaType);
+        return exporters.exportGlossary(vocabulary, mediaType);
+    }
+
+    /**
+     * Attempts to export glossary terms including references to external terms from the specified vocabulary as the specified media type.
+     * <p>
+     * If export into the specified media type is not supported, an empty {@link Optional} is returned.
+     *
+     * @param vocabulary Vocabulary to export
+     * @param mediaType  Expected media type of the export
+     * @return Exported resource wrapped in an {@code Optional}
+     * @see cz.cvut.kbss.termit.service.export.VocabularyExporter
+     */
+    public Optional<TypeAwareResource> exportGlossaryWithReferences(Vocabulary vocabulary,
+                                                                    Collection<String> properties, String mediaType) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(properties);
+        return exporters.exportGlossaryWithReferences(vocabulary, properties, mediaType);
     }
 
     /**
@@ -286,8 +303,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
                 parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                        () -> new NotFoundException(
-                                "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                              () -> new NotFoundException(
+                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
                       .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
                       .collect(Collectors.toList());
     }

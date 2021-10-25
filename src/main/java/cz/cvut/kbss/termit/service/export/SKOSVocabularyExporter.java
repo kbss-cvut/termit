@@ -11,6 +11,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Objects;
 
 import static cz.cvut.kbss.termit.util.Constants.Turtle;
@@ -38,8 +39,8 @@ public class SKOSVocabularyExporter implements VocabularyExporter {
     }
 
     @Override
-    @Transactional
-    public TypeAwareResource exportVocabularyGlossary(Vocabulary vocabulary) {
+    @Transactional(readOnly = true)
+    public TypeAwareResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         LOG.debug("Exporting glossary of vocabulary {} to SKOS.", vocabulary);
         final SKOSExporter skosExporter = getSKOSExporter();
@@ -48,6 +49,14 @@ public class SKOSVocabularyExporter implements VocabularyExporter {
         LOG.trace("Exporting terms.");
         skosExporter.exportGlossaryTerms(vocabulary);
         return new TypeAwareByteArrayResource(skosExporter.exportAsTtl(), Turtle.MEDIA_TYPE, Turtle.FILE_EXTENSION);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public TypeAwareResource exportGlossaryWithReferences(Vocabulary vocabulary,
+                                                          Collection<String> properties) {
+        // TODO
+        return null;
     }
 
     @Override
