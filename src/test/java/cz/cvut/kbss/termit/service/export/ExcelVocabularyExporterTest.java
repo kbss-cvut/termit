@@ -47,7 +47,7 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportVocabularyGlossaryOutputsExcelWorkbookWithSingleSheet() throws Exception {
-        final Resource result = sut.exportVocabularyGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary);
         assertNotNull(result);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         assertEquals(1, wb.getNumberOfSheets());
@@ -56,7 +56,7 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportVocabularyGlossaryOutputsHeaderRowWithColumnNamesIntoSheet() throws Exception {
-        final Resource result = sut.exportVocabularyGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
         assertNotNull(sheet);
@@ -70,7 +70,7 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
     @Test
     void exportVocabularyGlossaryOutputsGlossaryTermsIntoSheet() throws Exception {
         final List<Term> terms = generateTerms();
-        final Resource result = sut.exportVocabularyGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
         assertNotNull(sheet);
@@ -87,7 +87,7 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
     void exportVocabularyGlossaryOutputsGlossaryTermsOrderedByLabel() throws Exception {
         final List<Term> terms = generateTerms();
         terms.sort(Comparator.comparing((Term t) -> t.getLabel().get(Environment.LANGUAGE)));
-        final Resource result = sut.exportVocabularyGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
         assertNotNull(sheet);

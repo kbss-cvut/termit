@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,12 +43,18 @@ public class CsvVocabularyExporter implements VocabularyExporter {
     }
 
     @Override
-    public TypeAwareResource exportVocabularyGlossary(Vocabulary vocabulary) {
+    public TypeAwareResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final StringBuilder export = new StringBuilder(String.join(",", Term.EXPORT_COLUMNS));
         final List<Term> terms = termService.findAll(vocabulary);
         terms.forEach(t -> export.append('\n').append(t.toCsv()));
         return new TypeAwareByteArrayResource(export.toString().getBytes(), MEDIA_TYPE, FILE_EXTENSION);
+    }
+
+    @Override
+    public TypeAwareResource exportGlossaryWithReferences(Vocabulary vocabulary,
+                                                          Collection<String> properties) {
+        throw new UnsupportedOperationException("Exporting glossary with references to CSV is not supported.");
     }
 
     @Override

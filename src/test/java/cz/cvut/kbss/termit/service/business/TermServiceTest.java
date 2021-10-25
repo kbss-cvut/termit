@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -11,8 +12,8 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.comment.Comment;
-import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.comment.CommentService;
+import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
@@ -75,11 +76,11 @@ class TermServiceTest {
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
         final TypeAwareByteArrayResource resource = new TypeAwareByteArrayResource("test".getBytes(),
                 CsvUtils.MEDIA_TYPE, CsvUtils.FILE_EXTENSION);
-        when(exporters.exportVocabularyGlossary(vocabulary, CsvUtils.MEDIA_TYPE)).thenReturn(Optional.of(resource));
+        when(exporters.exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE)).thenReturn(Optional.of(resource));
         final Optional<TypeAwareResource> result = sut.exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE);
         assertTrue(result.isPresent());
         assertEquals(resource, result.get());
-        verify(exporters).exportVocabularyGlossary(vocabulary, CsvUtils.MEDIA_TYPE);
+        verify(exporters).exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE);
     }
 
     @Test
@@ -114,7 +115,7 @@ class TermServiceTest {
     void findAllRootsWithPagingRetrievesRootTermsUsingRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         when(termRepositoryService.findAllRoots(eq(Constants.DEFAULT_PAGE_SPEC), anyCollection()))
-            .thenReturn(terms);
+                .thenReturn(terms);
         final List<TermDto> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(terms, result);
         verify(termRepositoryService).findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
@@ -441,5 +442,17 @@ class TermServiceTest {
 
         sut.update(update);
         verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+    }
+
+    @Test
+    void exportGlossaryWithReferencesGetsGlossaryExportWithReferencesForSpecifiedVocabularyFromExporters() {
+        final TypeAwareByteArrayResource resource = new TypeAwareByteArrayResource("test".getBytes(),
+                CsvUtils.MEDIA_TYPE, CsvUtils.FILE_EXTENSION);
+        final Collection<String> properties = Collections.singleton(SKOS.EXACT_MATCH);
+        when(exporters.exportGlossaryWithReferences(vocabulary, properties, CsvUtils.MEDIA_TYPE)).thenReturn(Optional.of(resource));
+        final Optional<TypeAwareResource> result = sut.exportGlossaryWithReferences(vocabulary, properties, CsvUtils.MEDIA_TYPE);
+        assertTrue(result.isPresent());
+        assertEquals(resource, result.get());
+        verify(exporters).exportGlossaryWithReferences(vocabulary, properties, CsvUtils.MEDIA_TYPE);
     }
 }

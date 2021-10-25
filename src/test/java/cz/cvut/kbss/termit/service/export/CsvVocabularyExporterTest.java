@@ -47,7 +47,7 @@ class CsvVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportVocabularyGlossaryOutputsHeaderContainingColumnNamesIntoResult() throws Exception {
-        final Resource result = sut.exportVocabularyGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary);
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(result.getInputStream()))) {
             final String header = reader.readLine();
             assertEquals(String.join(",", Term.EXPORT_COLUMNS), header);
@@ -57,7 +57,7 @@ class CsvVocabularyExporterTest extends VocabularyExporterTestBase {
     @Test
     void exportVocabularyGlossaryOutputsTermsContainedInVocabularyAsCsv() throws Exception {
         final List<Term> terms = generateTerms();
-        final Resource result = sut.exportVocabularyGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary);
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(result.getInputStream()))) {
             final List<String> lines = reader.lines().collect(Collectors.toList());
             // terms + header
@@ -74,7 +74,7 @@ class CsvVocabularyExporterTest extends VocabularyExporterTestBase {
     void exportVocabularyGlossaryExportsTermsOrderedByLabel() throws Exception {
         final List<Term> terms = generateTerms();
         terms.sort(Comparator.comparing((Term t) -> t.getLabel().get(Environment.LANGUAGE)));
-        final Resource result = sut.exportVocabularyGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary);
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(result.getInputStream()))) {
             final List<String> lines = reader.lines().collect(Collectors.toList());
             for (int i = 0; i < terms.size(); i++) {
