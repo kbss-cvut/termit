@@ -15,10 +15,13 @@ import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
-import cz.cvut.kbss.termit.util.*;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.Excel;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.Constants.Turtle;
+import cz.cvut.kbss.termit.util.CsvUtils;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +34,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/")
@@ -61,6 +66,10 @@ public class TermController extends BaseController {
      * @param vocabularyIdFragment Vocabulary name
      * @param namespace            Vocabulary namespace. Optional
      * @param searchString         String to filter term labels by. Optional
+     * @param includeImported      Whether to include imported vocabularies when searching for terms. Does not apply to term export. Optional, defaults to false
+     * @param withReferences       Whether to include terms from other vocabularies referenced by terms from the vocabulary being exported. Relevant only for term export. Optional, defaults to false
+     * @param properties           A set of properties representing references to terms from other vocabularies to take into account in export. Relevant only for term export. Optional
+     * @param acceptType           MIME type accepted by the client, relevant only for term export
      * @return List of terms of the specific vocabulary
      */
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
@@ -70,9 +79,12 @@ public class TermController extends BaseController {
                             Excel.MEDIA_TYPE,
                             Turtle.MEDIA_TYPE})
     public ResponseEntity<?> getAll(@PathVariable String vocabularyIdFragment,
-                                    @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+                                    @RequestParam(name = QueryParams.NAMESPACE,
+                                                  required = false) Optional<String> namespace,
                                     @RequestParam(name = "searchString", required = false) String searchString,
                                     @RequestParam(name = "includeImported", required = false) boolean includeImported,
+                                    @RequestParam(name = "withReferences", required = false) boolean withReferences,
+                                    @RequestParam(name = "property", required = false, defaultValue = "[]") Set<String> properties,
                                     @RequestHeader(value = HttpHeaders.ACCEPT, required = false) String acceptType) {
         final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
@@ -81,15 +93,17 @@ public class TermController extends BaseController {
                     termService.findAllIncludingImported(searchString, vocabulary) :
                     termService.findAll(searchString, vocabulary));
         }
-        final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, vocabularyIdFragment, acceptType);
+        final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, vocabularyIdFragment, withReferences, properties, acceptType);
         return export.orElse(ResponseEntity
                 .ok(includeImported ? termService.findAllIncludingImported(vocabulary) :
                         termService.findAll(vocabulary)));
     }
 
-    private Optional<ResponseEntity<?>> exportTerms(Vocabulary vocabulary, String fileName,
+    private Optional<ResponseEntity<?>> exportTerms(Vocabulary vocabulary, String fileName, boolean withReferences,
+                                                    Collection<String> properties,
                                                     String mediaType) {
-        final Optional<TypeAwareResource> content = termService.exportGlossary(vocabulary, mediaType);
+        final Optional<TypeAwareResource> content = withReferences ?
+                termService.exportGlossaryWithReferences(vocabulary, properties, mediaType) : termService.exportGlossary(vocabulary, mediaType);
         return content.map(r -> {
             try {
                 return ResponseEntity.ok()
@@ -156,7 +170,8 @@ public class TermController extends BaseController {
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/roots",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getAllRoots(@PathVariable String vocabularyIdFragment,
-                                     @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+                                     @RequestParam(name = QueryParams.NAMESPACE,
+                                                   required = false) Optional<String> namespace,
                                      @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
                                      @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo,
                                      @RequestParam(name = "includeImported", required = false) boolean includeImported,
@@ -307,7 +322,8 @@ public class TermController extends BaseController {
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Term> getSubTerms(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                   @PathVariable("termIdFragment") String termIdFragment,
-                                  @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                                  @RequestParam(name = QueryParams.NAMESPACE,
+                                                required = false) Optional<String> namespace) {
         final Term parent = getById(vocabularyIdFragment, termIdFragment, namespace);
         return termService.findSubTerms(parent);
     }
@@ -521,7 +537,8 @@ public class TermController extends BaseController {
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                      @PathVariable("termIdFragment") String termIdFragment,
-                                     @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                                     @RequestParam(name = QueryParams.NAMESPACE,
+                                                   required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
         return termService.getComments(termService.getRequiredReference(termUri));
     }
