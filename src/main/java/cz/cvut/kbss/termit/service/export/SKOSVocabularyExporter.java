@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Objects;
 
 import static cz.cvut.kbss.termit.util.Constants.Turtle;
@@ -44,7 +43,11 @@ public class SKOSVocabularyExporter implements VocabularyExporter {
     public TypeAwareResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         LOG.debug("Exporting glossary of vocabulary {} to SKOS.", vocabulary);
-        return export(vocabulary, Collections.emptySet());
+        final SKOSExporter skosExporter = getSKOSExporter();
+        skosExporter.exportGlossary(vocabulary);
+        final TypeAwareResource res = new TypeAwareByteArrayResource(skosExporter.exportAsTtl(), Turtle.MEDIA_TYPE, Turtle.FILE_EXTENSION);
+        LOG.trace("Export finished successfully.");
+        return res;
     }
 
     @Transactional(readOnly = true)
@@ -55,22 +58,11 @@ public class SKOSVocabularyExporter implements VocabularyExporter {
         Objects.requireNonNull(properties);
         LOG.debug("Exporting glossary of vocabulary {} to SKOS, " +
                 "including any external terms referenced via one of the following properties: {}.", vocabulary, properties);
-        return export(vocabulary, properties);
-    }
-
-    private TypeAwareByteArrayResource export(Vocabulary vocabulary, Collection<String> properties) {
         final SKOSExporter skosExporter = getSKOSExporter();
-        LOG.trace("Exporting glossary.");
-        skosExporter.exportGlossaryInstance(vocabulary);
-        LOG.trace("Exporting terms.");
-        skosExporter.exportGlossaryTerms(vocabulary);
-        if (!properties.isEmpty()) {
-            LOG.trace("Exporting referenced terms.");
-            skosExporter.exportReferencedTerms(properties);
-            LOG.trace("Exporting glossaries of referenced terms.");
-            skosExporter.exportReferencedGlossaries();
-        }
-        return new TypeAwareByteArrayResource(skosExporter.exportAsTtl(), Turtle.MEDIA_TYPE, Turtle.FILE_EXTENSION);
+        skosExporter.exportGlossaryWithReferences(vocabulary, properties);
+        final TypeAwareResource res = new TypeAwareByteArrayResource(skosExporter.exportAsTtl(), Turtle.MEDIA_TYPE, Turtle.FILE_EXTENSION);
+        LOG.trace("Export finished successfully.");
+        return res;
     }
 
     @Override
