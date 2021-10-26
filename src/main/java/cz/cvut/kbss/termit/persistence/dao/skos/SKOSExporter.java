@@ -98,8 +98,8 @@ public class SKOSExporter {
     }
 
     /**
-     * Exports terms referenced by terms from the previously exported glossary terms ({@link #exportGlossaryTerms(Vocabulary)}) via
-     * one of the specified properties.
+     * Exports terms referenced by terms from the previously exported glossary terms ({@link
+     * #exportGlossaryTerms(Vocabulary)}) via one of the specified properties.
      * <p>
      * Note that this expects {@link #exportGlossaryTerms(Vocabulary)} to have been called prior to this method.
      *
@@ -111,7 +111,7 @@ public class SKOSExporter {
             return;
         }
         try (final RepositoryConnection conn = repository.getConnection()) {
-            final GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(TERMS_EXPORT_QUERY));
+            final String queryString = Utils.loadQuery(TERMS_EXPORT_QUERY);
             properties.forEach(p -> {
                 final IRI property = vf.createIRI(p);
                 final Set<IRI> referencedTerms = model.stream().filter(s -> s.getPredicate().equals(property))
@@ -120,6 +120,7 @@ public class SKOSExporter {
                                                           return (IRI) s.getObject();
                                                       }).collect(Collectors.toSet());
                 referencedTerms.forEach(referencedTerm -> {
+                    final GraphQuery gq = conn.prepareGraphQuery(queryString);
                     gq.setBinding("term", referencedTerm);
                     evaluateAndAddToModel(gq);
                 });
@@ -128,7 +129,8 @@ public class SKOSExporter {
     }
 
     /**
-     * Exports metadata of glossaries containing the referenced external terms as discovered by {@link #exportReferencedTerms(Collection)}.
+     * Exports metadata of glossaries containing the referenced external terms as discovered by {@link
+     * #exportReferencedTerms(Collection)}.
      */
     public void exportReferencedGlossaries() {
         final Set<IRI> glossariesToExport = model.stream().filter(s -> s.getPredicate().equals(SKOS.IN_SCHEME))
@@ -138,11 +140,15 @@ public class SKOSExporter {
                                                  }).filter(gIri -> !model.contains(gIri, RDF.TYPE, SKOS.CONCEPT_SCHEME))
                                                  .collect(Collectors.toSet());
         try (final RepositoryConnection conn = repository.getConnection()) {
-            final GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(GLOSSARY_EXPORT_QUERY));
+            final String queryString = Utils.loadQuery(GLOSSARY_EXPORT_QUERY);
             glossariesToExport.forEach(gIri -> {
-                gq.setBinding("glossary", gIri);
-                evaluateAndAddToModel(gq);
-                resolvePrefixes(gIri, conn);
+                conn.getStatements(null, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), gIri).stream()
+                    .forEach(s -> {
+                        final GraphQuery gq = conn.prepareGraphQuery(queryString);
+                        gq.setBinding("vocabulary", s.getSubject());
+                        evaluateAndAddToModel(gq);
+                        resolvePrefixes(gIri, conn);
+                    });
             });
         }
     }
