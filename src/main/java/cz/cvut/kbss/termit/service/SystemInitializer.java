@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;

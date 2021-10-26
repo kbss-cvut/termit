@@ -62,10 +62,7 @@ public class SKOSImporter {
     private IRI glossaryIri;
 
     @Autowired
-    public SKOSImporter(Configuration config,
-                        VocabularyDao vocabularyDao,
-                        TermDao termDao,
-                        EntityManager em) {
+    public SKOSImporter(Configuration config, VocabularyDao vocabularyDao, TermDao termDao, EntityManager em) {
         this.config = config;
         this.vocabularyDao = vocabularyDao;
         this.termDao = termDao;
@@ -75,10 +72,11 @@ public class SKOSImporter {
     /**
      * Imports a SKOS vocabulary from file.
      *
-     * @param rename whether to rename IRIs in case a conflicting IRI is found.
-     * @param vocabularyIri (Optional) IRI of the vocabulary to import. If not supplied, the IRI is inferred from the data.
+     * @param rename        whether to rename IRIs in case a conflicting IRI is found.
+     * @param vocabularyIri (Optional) IRI of the vocabulary to import. If not supplied, the IRI is inferred from the
+     *                      data.
      * @param mediaType     media type of the imported input streams
-     * @param persist   an implementation of the persist operation (e.g. as performed by a VocabularyService)
+     * @param persist       an implementation of the persist operation (e.g. as performed by a VocabularyService)
      * @param inputStreams  input streams with the SKOS data
      * @return imported vocabulary
      */
@@ -97,7 +95,7 @@ public class SKOSImporter {
         insertTopConceptAssertions();
 
         final String vocabularyIriFromData = resolveVocabularyIriFromImportedData();
-        if ( vocabularyIri != null && !vocabularyIri.toString().equals(vocabularyIriFromData) ) {
+        if (vocabularyIri != null && !vocabularyIri.toString().equals(vocabularyIriFromData)) {
             throw new IllegalArgumentException("Cannot import a vocabulary into an existing one with different identifier.");
         }
 
@@ -108,10 +106,11 @@ public class SKOSImporter {
 
         final Optional<Glossary> glossary = vocabularyDao.findGlossary(vocabulary.getGlossary().getUri());
         if (glossary.isPresent()) {
-            throw new IllegalArgumentException("The glossary '" + vocabulary.getGlossary().getUri() + "' already exists.");
+            throw new IllegalArgumentException("The glossary '" + vocabulary.getGlossary()
+                                                                            .getUri() + "' already exists.");
         }
 
-        if ( vocabularyIri == null ) {
+        if (vocabularyIri == null) {
             final Optional<Vocabulary> possiblyVocabulary = vocabularyDao.find(vocabulary.getUri());
             if (possiblyVocabulary.isPresent()) {
                 throw new IllegalArgumentException("The vocabulary IRI '" + vocabulary.getUri() + "' already exists.");
@@ -129,7 +128,7 @@ public class SKOSImporter {
 
     private void clearVocabulary(final URI vocabularyIri) {
         final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(vocabularyIri);
-        if ( possibleVocabulary.isPresent() ) {
+        if (possibleVocabulary.isPresent()) {
             Vocabulary vocabulary = possibleVocabulary.get();
             termDao.findAll(vocabulary).forEach(t -> {
                 if (t.getProperties() != null) {
@@ -144,28 +143,27 @@ public class SKOSImporter {
 
     private void ensureConceptIrisAreCompatibleWithTermIt() {
         final Statement[] statements = model.filter(null, RDF.TYPE, SKOS.CONCEPT).toArray(new Statement[]{});
-        for ( final Statement c : statements ) {
+        for (final Statement c : statements) {
             String separator = config.getNamespace().getTerm().getSeparator();
-            if ( c.getSubject().stringValue().contains(separator) ) {
+            if (c.getSubject().stringValue().contains(separator)) {
                 continue;
             }
             separator = "#";
-            if ( !c.getSubject().stringValue().contains(separator) ) {
+            if (!c.getSubject().stringValue().contains(separator)) {
                 separator = "/";
             }
-                final String sIri = c.getSubject().stringValue();
-                final int lastSeparator = sIri.lastIndexOf(separator);
-                final String newIri = sIri.substring(0,lastSeparator)
+            final String sIri = c.getSubject().stringValue();
+            final int lastSeparator = sIri.lastIndexOf(separator);
+            final String newIri = sIri.substring(0, lastSeparator)
                     + config.getNamespace().getTerm().getSeparator() + "/"
                     + sIri.substring(lastSeparator + 1);
-                Utils.changeIri(c.getSubject().stringValue(), newIri, model);
+            Utils.changeIri(c.getSubject().stringValue(), newIri, model);
         }
     }
 
     private void parseDataFromStreams(String mediaType, InputStream... inputStreams) {
         final RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(mediaType).orElseThrow(
-            () -> new UnsupportedImportMediaTypeException(
-                "Media type '" + mediaType + "' not supported."));
+                () -> new UnsupportedImportMediaTypeException("Media type '" + mediaType + "' not supported."));
         final RDFParser p = Rio.createParser(rdfFormat);
         final StatementCollector collector = new StatementCollector(model);
         p.setRDFHandler(collector);
@@ -185,42 +183,39 @@ public class SKOSImporter {
             if (glossary.isIRI()) {
                 return (IRI) glossary;
             } else {
-                throw new VocabularyImportException(
-                    "Blank node skos:ConceptScheme not supported.");
+                throw new VocabularyImportException("Blank node skos:ConceptScheme not supported.");
             }
         } else {
-            throw new VocabularyImportException(
-                "No unique skos:ConceptScheme found in the provided data.");
+            throw new VocabularyImportException("No unique skos:ConceptScheme found in the provided data.");
         }
     }
 
     private String resolveVocabularyIriFromImportedData() {
-        return Utils
-            .getVocabularyIri(
+        return Utils.getVocabularyIri(
                 model.filter(null, RDF.TYPE, SKOS.CONCEPT)
-                    .stream()
-                    .map(s -> s.getSubject().stringValue()).collect(Collectors.toSet()),
+                     .stream()
+                     .map(s -> s.getSubject().stringValue()).collect(Collectors.toSet()),
                 config.getNamespace().getTerm().getSeparator());
     }
 
     private void insertTopConceptAssertions() {
         LOG.trace("Generating top concept assertions.");
         final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream().map
-            (Statement::getSubject)
-            .collect(Collectors.toList());
+                                                  (Statement::getSubject)
+                                          .collect(Collectors.toList());
         terms.forEach(t -> {
             final List<Value> broader = model.filter(t, SKOS.BROADER, null).stream().map
-                (Statement::getObject)
-                .collect(Collectors.toList());
+                                                     (Statement::getObject)
+                                             .collect(Collectors.toList());
             final boolean hasBroader = broader.stream()
-                .anyMatch(p -> model.contains((Resource) p, RDF
-                    .TYPE, SKOS.CONCEPT));
+                                              .anyMatch(p -> model.contains((Resource) p, RDF
+                                                      .TYPE, SKOS.CONCEPT));
             final List<Value> narrower = model.filter(null, SKOS.NARROWER, t).stream().map
-                (Statement::getObject)
-                .collect(Collectors.toList());
+                                                      (Statement::getObject)
+                                              .collect(Collectors.toList());
             final boolean isNarrower = narrower.stream()
-                .anyMatch(p -> model.contains((Resource) p, RDF
-                    .TYPE, SKOS.CONCEPT));
+                                               .anyMatch(p -> model.contains((Resource) p, RDF
+                                                       .TYPE, SKOS.CONCEPT));
             if (!hasBroader && !isNarrower) {
                 model.add(glossaryIri, SKOS.HAS_TOP_CONCEPT, t);
             }
@@ -240,7 +235,7 @@ public class SKOSImporter {
 
     private Resource getGlossaryUri() {
         Set<Resource> glossaries = model.filter(null, RDF.TYPE, SKOS.CONCEPT_SCHEME).subjects();
-        assert !glossaries.isEmpty() && glossaries.size() == 1;
+        assert glossaries.size() == 1;
         return glossaries.iterator().next();
     }
 
@@ -249,19 +244,18 @@ public class SKOSImporter {
         labels.stream().filter(s -> {
             assert s.getObject() instanceof Literal;
             return Objects.equals(config.getPersistence().getLanguage(),
-                ((Literal) s.getObject()).getLanguage().orElse(config.getPersistence().getLanguage()));
+                    ((Literal) s.getObject()).getLanguage().orElse(config.getPersistence().getLanguage()));
         }).findAny().ifPresent(s -> vocabulary.setLabel(s.getObject().stringValue()));
     }
 
     private Vocabulary createVocabulary(boolean rename, final URI vocabularyIri, final String vocabularyIriFromData) {
         URI newVocabularyIri;
-        final String newVocabularyIriBase = vocabularyIriFromData;
-        if ( vocabularyIri == null ) {
-            newVocabularyIri = URI.create(getFreshVocabularyIri(rename, newVocabularyIriBase));
+        if (vocabularyIri == null) {
+            newVocabularyIri = URI.create(getFreshVocabularyIri(rename, vocabularyIriFromData));
         } else {
             newVocabularyIri = vocabularyIri;
-            if ( rename ) {
-                Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri.toString(), model);
+            if (rename) {
+                Utils.changeNamespace(vocabularyIriFromData, newVocabularyIri.toString(), model);
             }
         }
         final Vocabulary vocabulary = new Vocabulary();
@@ -279,7 +273,7 @@ public class SKOSImporter {
     private String getFreshVocabularyIri(final boolean rename, final String newVocabularyIriBase) {
         String newVocabularyIri = newVocabularyIriBase;
         if (rename) {
-            newVocabularyIri = getUniqueIriFromBase(newVocabularyIriBase, (r) -> vocabularyDao.find(URI.create(r)));
+            newVocabularyIri = getUniqueIriFromBase(newVocabularyIriBase, r -> vocabularyDao.find(URI.create(r)));
             if (!newVocabularyIri.equals(newVocabularyIriBase)) {
                 Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri, model);
             }
@@ -292,7 +286,7 @@ public class SKOSImporter {
         final String origGlossary = getGlossaryUri().toString();
         String newGlossaryIri = origGlossary;
         if (rename) {
-            newGlossaryIri = getUniqueIriFromBase(origGlossary, (r) -> vocabularyDao.findGlossary(URI.create(r)));
+            newGlossaryIri = getUniqueIriFromBase(origGlossary, r -> vocabularyDao.findGlossary(URI.create(r)));
             if (!newGlossaryIri.equals(origGlossary)) {
                 Utils.changeIri(origGlossary, newGlossaryIri, model);
             }

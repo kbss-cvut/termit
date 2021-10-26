@@ -9,7 +9,6 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,33 +126,33 @@ public class CommentDao {
     }
 
     private List<Comment> findUniqueLastModifiedEntitiesBy(User author, int limit) {
-        List<Comment> list = em.createNativeQuery(
-            "SELECT DISTINCT ?comment WHERE {"
-                + "?comment a ?commentType ;"
-                + "       ?hasEditor ?editor ;"
-                + "       ?hasAsset ?asset ."
-                + "    OPTIONAL { ?comment ?hasModificationDate ?modified . }"
-                + "    OPTIONAL { ?comment ?hasCreationDate  ?created . }"
-                + "    BIND(COALESCE(?modified,?created) AS ?lastModified)"
-                + "    { FILTER( ?editor = ?author) } UNION {"
-                + "       ?comment2 a ?commentType ;"
-                + "       ?hasEditor ?author ;"
-                + "       ?hasAsset ?asset ."
-                + "       OPTIONAL { ?comment2 ?hasModificationDate ?modified2 . }"
-                + "       OPTIONAL { ?comment2 ?hasCreationDate ?created2 . }"
-                + "       BIND(COALESCE(?modified2,?created2) AS ?lastModified2)"
-                + "       FILTER( ?lastModified2 < ?lastModified )"
-                + "     }"
-                + "    "
-                + "} ORDER BY DESC(?lastModified)", Comment.class).setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
-            .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-            .setParameter("hasCreationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-            .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_creator))
-            .setParameter("author", author.getUri())
-            .setParameter("hasAsset", URI.create(Vocabulary.s_p_topic))
-            .setMaxResults(limit)
-            .getResultList();
-        return list;
+        return em.createNativeQuery(
+                         "SELECT DISTINCT ?comment WHERE {"
+                                 + "?comment a ?commentType ;"
+                                 + "       ?hasEditor ?editor ;"
+                                 + "       ?hasAsset ?asset ."
+                                 + "    OPTIONAL { ?comment ?hasModificationDate ?modified . }"
+                                 + "    OPTIONAL { ?comment ?hasCreationDate  ?created . }"
+                                 + "    BIND(COALESCE(?modified,?created) AS ?lastModified)"
+                                 + "    { FILTER( ?editor = ?author) } UNION {"
+                                 + "       ?comment2 a ?commentType ;"
+                                 + "       ?hasEditor ?author ;"
+                                 + "       ?hasAsset ?asset ."
+                                 + "       OPTIONAL { ?comment2 ?hasModificationDate ?modified2 . }"
+                                 + "       OPTIONAL { ?comment2 ?hasCreationDate ?created2 . }"
+                                 + "       BIND(COALESCE(?modified2,?created2) AS ?lastModified2)"
+                                 + "       FILTER( ?lastModified2 < ?lastModified )"
+                                 + "     }"
+                                 + "    "
+                                 + "} ORDER BY DESC(?lastModified)", Comment.class)
+                 .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
+                 .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                 .setParameter("hasCreationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                 .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_creator))
+                 .setParameter("author", author.getUri())
+                 .setParameter("hasAsset", URI.create(Vocabulary.s_p_topic))
+                 .setMaxResults(limit)
+                 .getResultList();
     }
 
     /**

@@ -41,7 +41,7 @@ public class Term extends AbstractTerm implements HasTypes {
 
     @Autowired
     @Transient
-    private Configuration config;
+    private transient Configuration config;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<MultilingualString> altLabels;

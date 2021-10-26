@@ -40,7 +40,7 @@ public class CommentService {
      * @param asset Target of the comments
      * @return List of comments, ordered by date of creation
      */
-    public List<Comment> findAll(Asset asset) {
+    public List<Comment> findAll(Asset<?> asset) {
         return dao.findAll(asset);
     }
 
@@ -63,7 +63,7 @@ public class CommentService {
      * @param asset   Target of the comment
      */
     @Transactional
-    public void addToAsset(Comment comment, Asset asset) {
+    public void addToAsset(Comment comment, Asset<?> asset) {
         Objects.requireNonNull(asset);
         Objects.requireNonNull(comment);
         comment.setAuthor(currentUser());
@@ -141,8 +141,7 @@ public class CommentService {
     }
 
     /**
-     * Finds the specified number of the current user's most recently added/edited comments
-     * and reactions on them.
+     * Finds the specified number of the current user's most recently added/edited comments and reactions on them.
      *
      * @param limit Maximum number of comments to retrieve
      * @return List of recently added/edited comments
@@ -153,4 +152,5 @@ public class CommentService {
         }
         final User me = securityUtils.getCurrentUser().toUser();
         return dao.findLastEditedBy(me, limit);
-    }}
+    }
+}

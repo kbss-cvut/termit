@@ -23,7 +23,7 @@ import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
 
 @RestController
 @PreAuthorize("permitAll()")
-@RequestMapping(PUBLIC_API_PATH)
+@RequestMapping(PUBLIC_API_PATH + "/vocabularies")
 public class ReadOnlyTermController extends BaseController {
 
     private final ReadOnlyTermService termService;
@@ -34,8 +34,8 @@ public class ReadOnlyTermController extends BaseController {
         this.termService = termService;
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
-            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/{vocabularyIdFragment}/terms",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<?> getTerms(@PathVariable String vocabularyIdFragment,
                                        @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
                                        @RequestParam(name = "searchString", required = false) String searchString,
@@ -53,8 +53,8 @@ public class ReadOnlyTermController extends BaseController {
         return termService.findVocabularyRequired(uri);
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/roots",
-            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/{vocabularyIdFragment}/terms/roots",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getAllRoots(@PathVariable String vocabularyIdFragment,
                                           @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
                                           @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
@@ -66,8 +66,8 @@ public class ReadOnlyTermController extends BaseController {
                termService.findAllRoots(vocabulary, pageSpec);
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}",
-            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ReadOnlyTerm getById(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                 @PathVariable("termIdFragment") String termIdFragment,
                                 @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
@@ -82,8 +82,8 @@ public class ReadOnlyTermController extends BaseController {
                         config.getNamespace().getTerm().getSeparator()), termIdFragment);
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
-            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<ReadOnlyTerm> getSubTerms(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                           @PathVariable("termIdFragment") String termIdFragment,
                                           @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
@@ -91,7 +91,7 @@ public class ReadOnlyTermController extends BaseController {
         return termService.findSubTerms(parent);
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
+    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                      @PathVariable("termIdFragment") String termIdFragment,

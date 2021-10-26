@@ -26,7 +26,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
     @Override
     public List<ValidationResult> validate(Collection<URI> vocabularyIris) {
         final Set<URI> copy = new HashSet<>(vocabularyIris);    // Defensive copy
-        return new ArrayList<>(validationCache.computeIfAbsent(copy, (uris) -> getValidator().validate(vocabularyIris)));
+        return new ArrayList<>(validationCache.computeIfAbsent(copy, uris -> getValidator().validate(vocabularyIris)));
     }
 
     @Lookup

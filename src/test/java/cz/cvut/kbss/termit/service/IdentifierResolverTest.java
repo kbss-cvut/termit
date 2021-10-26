@@ -16,12 +16,8 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 
@@ -32,14 +28,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class IdentifierResolverTest {
 
-    @Mock
-    private Configuration config;
-
     private IdentifierResolver sut;
 
     @BeforeEach
     void setUp() {
-        this.sut = new IdentifierResolver(config);
+        this.sut = new IdentifierResolver();
     }
 
     @Test

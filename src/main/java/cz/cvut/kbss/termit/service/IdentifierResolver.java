@@ -15,8 +15,6 @@
 package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.exception.TermItException;
-import cz.cvut.kbss.termit.util.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -33,56 +31,49 @@ public class IdentifierResolver {
 
     private static final char REPLACEMENT_CHARACTER = '-';
     private static final int[] ILLEGAL_FILENAME_CHARS = {34,
-            60,
-            62,
-            124,
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20,
-            21,
-            22,
-            23,
-            24,
-            25,
-            26,
-            27,
-            28,
-            29,
-            30,
-            31,
-            58,
-            42,
-            63,
-            92,
-            47};
+                                                         60,
+                                                         62,
+                                                         124,
+                                                         0,
+                                                         1,
+                                                         2,
+                                                         3,
+                                                         4,
+                                                         5,
+                                                         6,
+                                                         7,
+                                                         8,
+                                                         9,
+                                                         10,
+                                                         11,
+                                                         12,
+                                                         13,
+                                                         14,
+                                                         15,
+                                                         16,
+                                                         17,
+                                                         18,
+                                                         19,
+                                                         20,
+                                                         21,
+                                                         22,
+                                                         23,
+                                                         24,
+                                                         25,
+                                                         26,
+                                                         27,
+                                                         28,
+                                                         29,
+                                                         30,
+                                                         31,
+                                                         58,
+                                                         42,
+                                                         63,
+                                                         92,
+                                                         47};
 
     static {
         Arrays.sort(ILLEGAL_FILENAME_CHARS);
-    }
-
-    private final Configuration config;
-
-    @Autowired
-    public IdentifierResolver(Configuration config) {
-        this.config = config;
     }
 
     /**
@@ -159,17 +150,17 @@ public class IdentifierResolver {
     }
 
     /**
-     * Generates term identifier of a dependent asset, appending a normalized string consisting
-     * of the specified components to a namespace which is derived from baseUri by appending
-     * namespace separator defined by namespaceSeparatorConfig.
+     * Generates term identifier of a dependent asset, appending a normalized string consisting of the specified
+     * components to a namespace which is derived from baseUri by appending namespace separator defined by
+     * namespaceSeparatorConfig.
      *
      * @param baseUri Configuration parameter for namespace
-     * @param label      Components to normalize and add to the identifier
+     * @param label   Components to normalize and add to the identifier
      * @return Generated identifier
      */
     public URI generateDerivedIdentifier(URI baseUri, String namespaceSeparator, String label) {
         return generateIdentifier(buildNamespace(baseUri.toString(),
-                namespaceSeparator),
+                        namespaceSeparator),
                 label
         );
     }

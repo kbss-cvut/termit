@@ -99,7 +99,7 @@ public class VocabularyController extends BaseController {
     public ResponseEntity<Void> createVocabulary(@RequestParam(name = "file") MultipartFile file,
                                                  @RequestParam(name = "rename") boolean rename) {
         final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, null, file);
-        LOG.debug("Vocabulary {} created.", vocabulary);
+        LOG.debug("New vocabulary {} imported.", vocabulary);
         final URI location = generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary());
         final String adjustedLocation = location.toString().replace("/import/", "/");
         return ResponseEntity.created(URI.create(adjustedLocation)).build();
@@ -120,7 +120,7 @@ public class VocabularyController extends BaseController {
                                                  @RequestParam(name = "file") MultipartFile file) {
         final URI vocabularyIri = resolveVocabularyUri(fragment, namespace);
         final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, vocabularyIri, file);
-        LOG.debug("Vocabulary {} created.", vocabulary);
+        LOG.debug("Vocabulary {} re-imported.", vocabulary);
         final URI location = generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary());
         final String adjustedLocation = location.toString().replace("/import/", "/");
         return ResponseEntity.created(URI.create(adjustedLocation)).build();
