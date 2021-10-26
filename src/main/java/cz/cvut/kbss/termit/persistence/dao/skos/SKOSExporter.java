@@ -12,6 +12,8 @@ import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -31,6 +33,8 @@ import java.util.stream.Collectors;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SKOSExporter {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SKOSExporter.class);
+
     private static final String GLOSSARY_EXPORT_QUERY = "skos" + File.separator + "exportGlossary.rq";
     private static final String TERMS_EXPORT_QUERY = "skos" + File.separator + "exportGlossaryTerms.rq";
 
@@ -46,11 +50,27 @@ public class SKOSExporter {
     }
 
     /**
+     * Exports glossary and terms of the specified vocabulary as a SKOS model.
+     * <p>
+     * The exported data can be retrieved using {@link #exportAsTtl()}.
+     *
+     * @param vocabulary Vocabulary to export
+     * @see #exportAsTtl()
+     * @see #exportGlossaryWithReferences(Vocabulary, Collection)
+     */
+    public void exportGlossary(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        exportGlossaryInstance(vocabulary);
+        exportGlossaryTerms(vocabulary);
+    }
+
+    /**
      * Exports metadata of the glossary of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose glossary to export
      */
-    public void exportGlossaryInstance(Vocabulary vocabulary) {
+    private void exportGlossaryInstance(Vocabulary vocabulary) {
+        LOG.trace("Exporting glossary metadata of {}.", vocabulary);
         try (final RepositoryConnection conn = repository.getConnection()) {
             final GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(GLOSSARY_EXPORT_QUERY));
             gq.setBinding("vocabulary", vf.createIRI(vocabulary.getUri().toString()));
@@ -89,7 +109,8 @@ public class SKOSExporter {
      *
      * @param vocabulary Vocabulary to export
      */
-    public void exportGlossaryTerms(Vocabulary vocabulary) {
+    private void exportGlossaryTerms(Vocabulary vocabulary) {
+        LOG.trace("Exporting terms from {}.", vocabulary);
         try (final RepositoryConnection conn = repository.getConnection()) {
             final GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(TERMS_EXPORT_QUERY));
             gq.setBinding("vocabulary", vf.createIRI(vocabulary.getUri().toString()));
@@ -98,18 +119,33 @@ public class SKOSExporter {
     }
 
     /**
+     * Exports the glossary of the specified vocabulary and its terms.
+     * <p>
+     * In addition, terms from other vocabularies referenced via the any of the specified properties are exported as
+     * well, together with metadata of their respective glossaries.
+     *
+     * @param vocabulary Vocabulary to export
+     * @param properties RDF properties representing references to other terms to take into account when exporting
+     * @see #exportAsTtl()
+     */
+    public void exportGlossaryWithReferences(Vocabulary vocabulary, Collection<String> properties) {
+        Objects.requireNonNull(properties);
+        exportGlossary(vocabulary);
+        exportReferencedTerms(properties);
+        exportReferencedGlossaries();
+    }
+
+    /**
      * Exports terms referenced by terms from the previously exported glossary terms ({@link
      * #exportGlossaryTerms(Vocabulary)}) via one of the specified properties.
-     * <p>
-     * Note that this expects {@link #exportGlossaryTerms(Vocabulary)} to have been called prior to this method.
      *
      * @param properties SKOS properties representing reference to external terms, e.g., skos:exactMatch
      */
-    public void exportReferencedTerms(Collection<String> properties) {
-        Objects.requireNonNull(properties);
+    private void exportReferencedTerms(Collection<String> properties) {
         if (properties.isEmpty()) {
             return;
         }
+        LOG.trace("Exporting terms referenced via any of {}.", properties);
         try (final RepositoryConnection conn = repository.getConnection()) {
             final String queryString = Utils.loadQuery(TERMS_EXPORT_QUERY);
             properties.forEach(p -> {
@@ -132,13 +168,14 @@ public class SKOSExporter {
      * Exports metadata of glossaries containing the referenced external terms as discovered by {@link
      * #exportReferencedTerms(Collection)}.
      */
-    public void exportReferencedGlossaries() {
+    private void exportReferencedGlossaries() {
         final Set<IRI> glossariesToExport = model.stream().filter(s -> s.getPredicate().equals(SKOS.IN_SCHEME))
                                                  .map(s -> {
                                                      assert s.getObject().isIRI();
                                                      return (IRI) s.getObject();
                                                  }).filter(gIri -> !model.contains(gIri, RDF.TYPE, SKOS.CONCEPT_SCHEME))
                                                  .collect(Collectors.toSet());
+        LOG.trace("Exporting metadata of glossaries of referenced terms: {}.", glossariesToExport);
         try (final RepositoryConnection conn = repository.getConnection()) {
             final String queryString = Utils.loadQuery(GLOSSARY_EXPORT_QUERY);
             glossariesToExport.forEach(gIri -> {
