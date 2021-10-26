@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.document.html;
 
@@ -37,8 +34,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeTypeUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -64,7 +61,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     private final Configuration config;
 
     private Document document;
-    private Asset source;
+    private Asset<?> source;
 
     private Map<String, String> prefixes;
 
@@ -80,7 +77,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     @Override
-    public void parseContent(InputStream input, Asset source) {
+    public void parseContent(InputStream input, Asset<?> source) {
         try {
             this.source = source;
             this.document = Jsoup.parse(input, StandardCharsets.UTF_8.name(), "");
@@ -180,7 +177,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return result;
     }
 
-    private Optional<TermOccurrence> resolveAnnotation(List<Element> rdfaElem, Asset source) {
+    private Optional<TermOccurrence> resolveAnnotation(List<Element> rdfaElem, Asset<?> source) {
         assert !rdfaElem.isEmpty();
         final String termId = fullIri(rdfaElem.get(0).attr(Constants.RDFa.RESOURCE));
         if (termId.isEmpty()) {
@@ -208,7 +205,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     @Override
-    public boolean supports(Asset source) {
+    public boolean supports(Asset<?> source) {
         if (source instanceof Term) {
             return true;
         }
@@ -221,7 +218,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         }
         final Optional<String> probedContentType = documentManager.getContentType(sourceFile);
         return probedContentType.isPresent()
-                && (probedContentType.get().equals(MimeTypeUtils.TEXT_HTML_VALUE)
-                || probedContentType.get().equals("application/xhtml+xml"));
+                && (probedContentType.get().equals(MediaType.TEXT_HTML_VALUE)
+                || probedContentType.get().equals(MediaType.APPLICATION_XHTML_XML_VALUE));
     }
 }
