@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.service.business.AssetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,26 +43,27 @@ public class AssetController {
         this.assetService = assetService;
     }
 
-    @RequestMapping(value = "/last-edited", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/last-edited", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyModifiedAsset> getLastEdited(
             @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit,
             @RequestParam(name = "forCurrentUserOnly", required = false, defaultValue = "false") Boolean forCurrentUserOnly) {
         return forCurrentUserOnly ? assetService.findMyLastEdited(limit) : assetService.findLastEdited(limit);
     }
 
-    @RequestMapping(value = "/last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getLastCommented(
         @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
         return assetService.findLastCommented(limit);
     }
 
-    @RequestMapping(value = "/last-commented-in-reaction-to-mine", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/last-commented-in-reaction-to-mine",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getLastReactingCommentsToMine(
         @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
         return assetService.findLastCommentedInReactionToMine(limit);
     }
 
-    @RequestMapping(value = "/my-last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/my-last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getMyLastCommented(
         @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
         return assetService.findMyLastCommented(limit);

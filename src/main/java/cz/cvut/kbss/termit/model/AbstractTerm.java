@@ -102,7 +102,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString> implements 
     }
 
     public Boolean isDraft() {
-        return draft == null ? true : draft;
+        return draft == null || draft;
     }
 
     public void setDraft(Boolean draft) {
