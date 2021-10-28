@@ -42,16 +42,6 @@ _* Technology not used in [INBAS RT](https://github.com/kbss-cvut/reporting-tool
 
 ## Implementation Notes
 
-### Bean Discovery
-
-We are using `basePackageClasses` instead of `basePackages` in `ComponentScan`. This is more resilient to refactoring errors 
-because it uses classes instead of String-based package info. Thus, any errors are discovered during compilation.
-
-### REST Method Annotations
-
-Started to switch to HTTP method-specific annotation shortcuts, e.g., instead of `@RequestMapping(method=RequestMethod.GET)`,
-we should use `@GetMapping`. It should make the REST controller code a bit more concise.
-
 ### jsoup
 
 Had to switch from standard Java DOM implementation to **jsoup** because DOM had sometimes trouble parsing HTML documents (`meta` tags in header).
