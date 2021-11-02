@@ -222,8 +222,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
     @Test
     void removeAllRemovesSuggestedAndConfirmedOccurrences() {
-        final File file = new File();
-        file.setLabel(FILE_LABEL);
+        final File file = Generator.generateFileWithId(FILE_LABEL);
         final Map<Term, List<TermOccurrence>> allOccurrences = generateOccurrences(true, file);
         assertFalse(sut.findAllTargeting(file).isEmpty());
         transactional(() -> allOccurrences
@@ -317,5 +316,15 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                      .setParameter("x", occurrence.getUri())
                      .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
                      .getSingleResult());
+    }
+
+    @Test
+    void removeAllOrphansRemovesOccurrencesWithNonExistentTargetSource() {
+        final File file = Generator.generateFileWithId(FILE_LABEL);
+        generateOccurrences(true, file);
+        transactional(() -> em.remove(em.getReference(File.class, file.getUri())));
+        assertFalse(sut.findAllTargeting(file).isEmpty());
+        transactional(() -> sut.removeAllOrphans());
+        assertTrue(sut.findAllTargeting(file).isEmpty());
     }
 }
