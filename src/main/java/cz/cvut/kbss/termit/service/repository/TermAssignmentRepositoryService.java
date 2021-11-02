@@ -33,6 +33,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -248,5 +249,17 @@ public class TermAssignmentRepositoryService implements TermOccurrenceService {
         return termOccurrenceDao.getReference(id).orElseThrow(() ->
             NotFoundException.create(TermOccurrence.class.getSimpleName(), id)
         );
+    }
+
+    /**
+     * Cleans up possibly orphaned term occurrences.
+     *
+     * Such occurrences reference targets whose sources no longer exist in the repository.
+     */
+    @Scheduled(cron = "0 1 1 * * ?")
+    @Transactional
+    public void cleanupOrphans() {
+        LOG.debug("Executing orphaned term occurrences cleanup.");
+        termOccurrenceDao.removeAllOrphans();
     }
 }

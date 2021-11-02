@@ -21,11 +21,13 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
 @EnableMBeanExport
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @EnableAsync
+@EnableScheduling
 public class AppConfig implements AsyncConfigurer {
 
     @Override
