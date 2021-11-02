@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -132,8 +133,9 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         target.setSelectors(Collections.singleton(selector));
         final TermOccurrence occurrence = new TermFileOccurrence(tOne.getUri(), target);
         transactional(() -> {
-            em.persist(target);
-            em.persist(occurrence);
+            final Descriptor descriptor = new EntityDescriptor(occurrence.resolveContext());
+            em.persist(target, descriptor);
+            em.persist(occurrence, descriptor);
         });
 
         sut.remove(file);
@@ -159,10 +161,11 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         final Target target = new Target(file);
         final TermAssignment assignmentOne = new TermAssignment(tTwo.getUri(), target);
         transactional(() -> {
-            em.persist(occurrenceTarget);
+            final Descriptor descriptor = new EntityDescriptor(occurrence.resolveContext());
+            em.persist(occurrenceTarget, descriptor);
             em.persist(assignmentOne);
             em.persist(target);
-            em.persist(occurrence);
+            em.persist(occurrence, descriptor);
         });
 
         sut.remove(file);
