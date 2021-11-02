@@ -20,9 +20,6 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
-import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
-import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
@@ -33,9 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.Collections;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -110,16 +104,5 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         when(docFieldSpec.getJavaField()).thenReturn(File.getDocumentField());
         final Descriptor docDescriptor = result.getAttributeDescriptor(docFieldSpec);
         assertNotNull(docDescriptor);
-    }
-
-    @Test
-    void termOccurrenceDescriptorCreatesDescriptorBasedOnTargetSource() {
-        final TermOccurrence occurrence = new TermFileOccurrence(Generator.generateUri(),
-                new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
-        final Descriptor result = sut.termOccurrenceDescriptor(occurrence);
-        assertTrue(result.getSingleContext().isPresent());
-        final String strCtx = result.getSingleContext().get().toString();
-        assertThat(strCtx, startsWith(occurrence.getTarget().getSource().toString()));
-        assertThat(strCtx, endsWith(TermOccurrence.CONTEXT_SUFFIX));
     }
 }

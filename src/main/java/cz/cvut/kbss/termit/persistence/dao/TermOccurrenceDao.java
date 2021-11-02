@@ -16,13 +16,13 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
-import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermOccurrenceMapper;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.stereotype.Repository;
@@ -65,11 +65,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                     "BIND(EXISTS { ?occ a ?suggestedType . } as ?suggested)" +
                     "} GROUP BY ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition";
 
-    private final DescriptorFactory descriptorFactory;
-
-    public TermOccurrenceDao(EntityManager em, DescriptorFactory descriptorFactory) {
+    public TermOccurrenceDao(EntityManager em) {
         super(TermOccurrence.class, em);
-        this.descriptorFactory = descriptorFactory;
     }
 
     /**
@@ -136,7 +133,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
     public void persist(TermOccurrence entity) {
         Objects.requireNonNull(entity);
         try {
-            final Descriptor descriptor = descriptorFactory.termOccurrenceDescriptor(entity);
+            final Descriptor descriptor = new EntityDescriptor(entity.resolveContext());
             em.persist(entity, descriptor);
             // Ensure target is saved as well
             if (entity.getTarget().getUri() == null) {
@@ -183,6 +180,9 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      */
     public void removeAll(Asset<?> target) {
         Objects.requireNonNull(target);
-        removeAll(target, URI.create(Vocabulary.s_c_vyskyt_termu));
+
+        em.createNativeQuery("DROP GRAPH ?g")
+          .setParameter("g", TermOccurrence.resolveContext(target.getUri()))
+          .executeUpdate();
     }
 }

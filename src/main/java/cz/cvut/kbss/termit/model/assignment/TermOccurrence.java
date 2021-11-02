@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
+import java.util.Objects;
 
 @OWLClass(iri = Vocabulary.s_c_vyskyt_termu)
 public abstract class TermOccurrence extends TermAssignment {
@@ -50,5 +51,33 @@ public abstract class TermOccurrence extends TermAssignment {
     @Override
     public String toString() {
         return "TermOccurrence - " + super.toString();
+    }
+
+    /**
+     * Resolves identifier of the repository context in which this occurrence should be stored.
+     * <p>
+     * The context is based on the target source's identifier and {@link #CONTEXT_SUFFIX}.
+     *
+     * @return Repository context URI
+     * @see #resolveContext(URI)
+     */
+    public URI resolveContext() {
+        return resolveContext(target.getSource());
+    }
+
+    /**
+     * Resolves identifier of the repository context in which term occurrences targeting the specified source should be stored.
+     * <p>
+     * The context is based on the specified source and {@link #CONTEXT_SUFFIX}.
+     *
+     * @return Repository context URI
+     */
+    public static URI resolveContext(URI source) {
+        Objects.requireNonNull(source);
+        String strSource = source.toString();
+        if (!strSource.endsWith("/")) {
+            strSource += "/";
+        }
+        return URI.create(strSource + CONTEXT_SUFFIX);
     }
 }

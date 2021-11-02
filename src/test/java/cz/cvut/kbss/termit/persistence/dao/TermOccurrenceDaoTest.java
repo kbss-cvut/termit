@@ -15,6 +15,8 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -120,8 +122,9 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
             map.forEach((t, list) -> {
                 em.persist(t);
                 list.forEach(ta -> {
-                    em.persist(ta.getTarget());
-                    em.persist(ta);
+                    final Descriptor descriptor = new EntityDescriptor(ta.resolveContext());
+                    em.persist(ta.getTarget(), descriptor);
+                    em.persist(ta, descriptor);
                 });
             });
         });
@@ -311,8 +314,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertNotNull(sut.find(occurrence.getUri()));
         assertThat(sut.findAllTargeting(file), not(emptyCollectionOf(TermOccurrence.class)));
         assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence .} }", Boolean.class)
-                .setParameter("x", occurrence.getUri())
-                .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
-                .getSingleResult());
+                     .setParameter("x", occurrence.getUri())
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
+                     .getSingleResult());
     }
 }
