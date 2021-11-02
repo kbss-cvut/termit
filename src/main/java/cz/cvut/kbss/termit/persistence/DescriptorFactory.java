@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -265,5 +266,20 @@ public class DescriptorFactory {
         Objects.requireNonNull(term);
         assert term.getVocabulary() != null;
         return termDescriptor(term.getVocabulary());
+    }
+
+    /**
+     * Creates a JOPA descriptor for the specified term occurrence.
+     * <p>
+     * This descriptor's context is based on the specified occurrence's target source identifier (which is usually a file) to which
+     * {@link TermOccurrence#CONTEXT_SUFFIX} is appended.
+     *
+     * @param occurrence Occurrence for which to generate a descriptor
+     * @return Descriptor instance
+     */
+    public Descriptor termOccurrenceDescriptor(TermOccurrence occurrence) {
+        Objects.requireNonNull(occurrence);
+        final String baseIri = occurrence.getTarget().getSource().toString();
+        return new EntityDescriptor(URI.create(baseIri + (baseIri.endsWith("/") ? TermOccurrence.CONTEXT_SUFFIX : "/" + TermOccurrence.CONTEXT_SUFFIX)));
     }
 }

@@ -8,6 +8,11 @@ import java.net.URI;
 @OWLClass(iri = Vocabulary.s_c_vyskyt_termu)
 public abstract class TermOccurrence extends TermAssignment {
 
+    /**
+     * Suffix used to identify term occurrence contexts (named graphs) in the repository.
+     */
+    public static final String CONTEXT_SUFFIX = "occurrences";
+
     private transient Double score;
 
     public TermOccurrence() {
