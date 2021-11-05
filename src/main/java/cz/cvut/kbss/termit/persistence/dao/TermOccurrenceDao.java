@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -193,9 +194,9 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
     /**
      * Removes all term occurrence whose target points to a non-existent asset.
      * <p>
-     * This method exists mainly for legacy reasons - since occurrences are now stored in a particular context,
-     * their batch removal (e.g., on corresponding asset remove) is implemented by dropping the whole context. However,
-     * old occurrences were stored in the default context and thus the new removal logic does not affect them. This method
+     * This method exists mainly for legacy reasons - since occurrences are now stored in a particular context, their
+     * batch removal (e.g., on corresponding asset remove) is implemented by dropping the whole context. However, old
+     * occurrences were stored in the default context and thus the new removal logic does not affect them. This method
      * allows targeting such occurrences.
      */
     public void removeAllOrphans() {
@@ -203,11 +204,15 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                   "?t a ?target ;" +
                   "?hasSource ?source ." +
                   // If an asset does not have a label, it does not exist
-                  "FILTER NOT EXISTS { ?source ?hasLabel ?label . }" +
-                  "}", URI.class)
+                  "FILTER NOT EXISTS { " +
+                  "{ ?source ?hasLabel ?label . } " +
+                  "UNION" +
+                  "{ ?source ?hasTitle ?label . } " +
+                  "}}", URI.class)
           .setParameter("target", URI.create(Vocabulary.s_c_cil_vyskytu))
           .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
           .setParameter("hasLabel", URI.create(RDFS.LABEL))
+          .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
           .getResultStream().forEach(a -> {
               LOG.trace("Removing orphaned term occurrences targeting <{}>.", a);
               removeAll(a, URI.create(Vocabulary.s_c_vyskyt_termu));
