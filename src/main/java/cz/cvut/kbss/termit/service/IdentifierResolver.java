@@ -92,9 +92,10 @@ public class IdentifierResolver {
      */
     public static String normalize(String value) {
         Objects.requireNonNull(value);
-        final String normalized = value.toLowerCase().trim()
-                                       .replaceAll("[\\s/\\\\]", Character.toString(REPLACEMENT_CHARACTER));
-        return normalized.replaceAll("[(?&)]", "");
+        return value.toLowerCase()
+                    .trim()
+                    .replaceAll("[\\s/\\\\]", Character.toString(REPLACEMENT_CHARACTER))
+                    .replaceAll("[(?&),]", "");
     }
 
     /**

@@ -66,6 +66,12 @@ class IdentifierResolverTest {
     }
 
     @Test
+    void normalizeToAsciiRemovesComma() {
+        final String value = "Budova, Stavba";
+        assertEquals("budova-stavba", IdentifierResolver.normalizeToAscii(value));
+    }
+
+    @Test
     void normalizeReplacesForwardSlashesWithDashes() {
         final String value = "Slovník vyhlášky č. 500/2006 Sb.";
         assertEquals("slovník-vyhlášky-č.-500-2006-sb.", IdentifierResolver.normalize(value));
