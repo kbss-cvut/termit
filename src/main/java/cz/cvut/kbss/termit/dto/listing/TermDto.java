@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 /**
  * DTO for term listing.
  * <p>
- * Contains less data than a regular {@link cz.cvut.kbss.termit.model.Term}.
+ * Contains fewer data than a regular {@link cz.cvut.kbss.termit.model.Term}.
  */
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "subTerms"})
@@ -39,5 +39,9 @@ public class TermDto extends AbstractTerm {
 
     public void setParentTerms(Set<TermDto> parentTerms) {
         this.parentTerms = parentTerms;
+    }
+
+    public boolean hasParentTerms() {
+        return parentTerms != null && !parentTerms.isEmpty();
     }
 }

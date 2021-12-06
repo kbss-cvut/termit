@@ -662,17 +662,15 @@ class TermDaoTest extends BaseDaoTestRunner {
     }
 
     private void persistTerms(String lang, String... labels) {
-        transactional(() -> {
-            Arrays.stream(labels).forEach(label -> {
-                final Term parent = Generator.generateTermWithId();
-                parent.getLabel().set(lang, label);
-                parent.setGlossary(vocabulary.getGlossary().getUri());
-                vocabulary.getGlossary().addRootTerm(parent);
-                em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-                em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
-                addTermInVocabularyRelationship(parent, vocabulary.getUri());
-            });
-        });
+        transactional(() -> Arrays.stream(labels).forEach(label -> {
+            final Term parent = Generator.generateTermWithId();
+            parent.getLabel().set(lang, label);
+            parent.setGlossary(vocabulary.getGlossary().getUri());
+            vocabulary.getGlossary().addRootTerm(parent);
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
+            addTermInVocabularyRelationship(parent, vocabulary.getUri());
+        }));
     }
 
     @Test
@@ -1016,5 +1014,38 @@ class TermDaoTest extends BaseDaoTestRunner {
         final Optional<TermDto> toFind = result.stream().filter(dto -> term.getUri().equals(dto.getUri())).findFirst();
         assertTrue(toFind.isPresent());
         assertFalse(toFind.get().getSubTerms().isEmpty());
+    }
+
+    /**
+     * Bug #1634
+     */
+    @Test
+    void findAllRootsLoadsSubTermsForAncestorsOfIncludedTerms() {
+        final List<Term> rootTerms = generateTerms(10);
+        addTermsAndSave(rootTerms, vocabulary);
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
+        parent.setGlossary(vocabulary.getGlossary().getUri());
+        // Ensure it is not loaded among roots on the first page
+        term.getLabel().set(Environment.LANGUAGE, "zzzzzzzzz");
+        term.addParentTerm(parent);
+        transactional(() -> {
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(parent, descriptorFactory.termDescriptor(parent));
+            addTermInVocabularyRelationship(term, vocabulary.getUri());
+            addTermInVocabularyRelationship(parent, vocabulary.getUri());
+            insertNarrowerStatements(term);
+        });
+
+        final List<TermDto> result = sut.findAllRoots(vocabulary, PageRequest.of(0, rootTerms.size() / 2), Collections.singleton(term.getUri()));
+        final Optional<TermDto> toFind = result.stream().filter(dto -> term.getUri().equals(dto.getUri())).findFirst();
+        assertTrue(toFind.isPresent());
+        assertTrue(toFind.get().hasParentTerms());
+        toFind.get().getParentTerms().forEach(pt -> {
+            assertNotNull(pt.getSubTerms());
+            assertTrue(pt.getSubTerms().stream().anyMatch(ti -> ti.getUri().equals(term.getUri())));
+        });
     }
 }

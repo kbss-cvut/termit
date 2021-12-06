@@ -327,7 +327,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     /**
-     * Gets all unused (unassigned to, neither occuring in a resource) terms in the given vocabulary
+     * Gets all unused (unassigned to, neither occurring in a resource) terms in the given vocabulary
      *
      * @param vocabulary - IRI of the vocabulary in which the terms are
      * @return List of definitionally related terms of the specified term
