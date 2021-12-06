@@ -17,13 +17,12 @@
  */
 package cz.cvut.kbss.termit.model;
 
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Objects;
@@ -77,13 +76,5 @@ public class Glossary extends AbstractEntity {
         return "Glossary{" +
                 "term count=" + (rootTerms != null ? rootTerms.size() : 0) +
                 " " + super.toString() + "}";
-    }
-
-    public static Field getTermsField() {
-        try {
-            return Glossary.class.getDeclaredField("rootTerms");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"rootTerms\" field.", e);
-        }
     }
 }
