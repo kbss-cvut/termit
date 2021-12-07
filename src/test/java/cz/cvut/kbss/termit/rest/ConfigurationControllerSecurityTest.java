@@ -7,11 +7,14 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -39,6 +42,12 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
     @Autowired
     private MockMvc mockMvc;
 
+    @BeforeEach
+    void setUp() {
+        Environment.resetCurrentUser();
+    }
+
+    @WithMockUser
     @Test
     void getConfigurationReturnsFullConfigurationWhenUserIsAuthenticated() throws Exception {
         Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
@@ -63,6 +72,7 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
         return config;
     }
 
+    @WithAnonymousUser
     @Test
     void getConfigurationReturnsConfigurationWithoutRolesWhenUserIsNotAuthenticated() throws Exception {
         final ConfigurationDto config = generateConfiguration();
