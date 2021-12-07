@@ -65,6 +65,7 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
 
     @Test
     void getConfigurationReturnsConfigurationWithoutRolesWhenUserIsNotAuthenticated() throws Exception {
+        Environment.resetCurrentUser();
         final ConfigurationDto config = generateConfiguration();
         when(configurationProvider.getConfiguration()).thenReturn(config);
         final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
