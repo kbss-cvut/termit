@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -185,7 +186,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getByIdRetrievesTermFromService() throws Exception {
-        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
+        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm(), Collections.emptySet());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
         when(config.getNamespace().getTerm().getSeparator()).thenReturn("/pojem");
         when(idResolver.buildNamespace(VOCABULARY_URI, "/pojem")).thenReturn(NAMESPACE);
@@ -209,14 +210,16 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getSubTermsRetrievesSubTermsOfTermFromService() throws Exception {
-        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
+        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm(), Collections.emptySet());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
         when(config.getNamespace().getTerm().getSeparator()).thenReturn("/pojem");
         when(idResolver.buildNamespace(VOCABULARY_URI, "/pojem")).thenReturn(NAMESPACE);
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenReturn(term);
-        final List<ReadOnlyTerm> subTerms = Generator.generateTermsWithIds(5).stream().map(ReadOnlyTerm::new).collect(Collectors.toList());
+        final List<ReadOnlyTerm> subTerms = Generator.generateTermsWithIds(5).stream()
+                                                     .map(t -> new ReadOnlyTerm(t, Collections.emptySet()))
+                                                     .collect(Collectors.toList());
         when(termService.findSubTerms(term)).thenReturn(subTerms);
 
         final MvcResult mvcResult = mockMvc

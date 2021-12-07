@@ -5,14 +5,15 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.net.URI;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ReadOnlyTermTest {
 
     @Test
-    void constructorCopiesAllAttributesFromSpecifiedTerm() {
+    void constructorCopiesAllMappedAttributesFromSpecifiedTerm() {
         final Term term = Generator.generateTermWithId();
         term.setGlossary(Generator.generateUri());
         term.addType(Generator.generateUri().toString());
@@ -20,7 +21,7 @@ class ReadOnlyTermTest {
         final Term child = Generator.generateTermWithId();
         term.setSubTerms(Collections.singleton(new TermInfo(child)));
 
-        final ReadOnlyTerm result = new ReadOnlyTerm(term);
+        final ReadOnlyTerm result = new ReadOnlyTerm(term, Collections.emptySet());
         assertEquals(term.getUri(), result.getUri());
         assertEquals(term.getLabel(), result.getLabel());
         assertEquals(term.getAltLabels(), result.getAltLabels());
@@ -38,12 +39,35 @@ class ReadOnlyTermTest {
     }
 
     @Test
+    void constructorCopiesFilteredUnMappedAttributesFromSpecifiedTerm() {
+        final URI u1 = Generator.generateUri();
+        final URI u2 = Generator.generateUri();
+        final URI u3 = Generator.generateUri();
+
+        final Term term = Generator.generateTermWithId();
+        final Map<String,Set<String>> properties = new HashMap<>();
+        properties.put(u1.toString(),Collections.singleton("a"));
+        properties.put(u2.toString(),Collections.singleton("b"));
+
+        term.setProperties(properties);
+
+        final Set<String> whiteList = new HashSet<>();
+        whiteList.add(u2.toString());
+        whiteList.add(u3.toString());
+
+        final ReadOnlyTerm result = new ReadOnlyTerm(term, whiteList);
+        assertEquals(1, result.getProperties().size());
+        assertEquals(Collections.singleton(u2.toString()), result.getProperties().keySet());
+        assertEquals(Collections.singleton("b"), result.getProperties().get(u2.toString()));
+    }
+
+    @Test
     void constructorCopiesParentTermsAsReadonly() {
         final Term term = Generator.generateTermWithId();
         final Term parent = Generator.generateTermWithId();
         term.setParentTerms(Collections.singleton(parent));
 
-        final ReadOnlyTerm result = new ReadOnlyTerm(term);
-        assertEquals(Collections.singleton(new ReadOnlyTerm(parent)), result.getParentTerms());
+        final ReadOnlyTerm result = new ReadOnlyTerm(term, Collections.emptySet());
+        assertEquals(Collections.singleton(new ReadOnlyTerm(parent, Collections.emptySet())), result.getParentTerms());
     }
 }

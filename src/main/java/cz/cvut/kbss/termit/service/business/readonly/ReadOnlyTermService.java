@@ -6,14 +6,13 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,9 +20,12 @@ public class ReadOnlyTermService {
 
     private final TermService termService;
 
+    private Configuration configuration;
+
     @Autowired
-    public ReadOnlyTermService(TermService termService) {
+    public ReadOnlyTermService(final TermService termService, final Configuration configuration) {
         this.termService = termService;
+        this.configuration = configuration;
     }
 
     public Vocabulary findVocabularyRequired(URI vocabularyUri) {
@@ -51,7 +53,15 @@ public class ReadOnlyTermService {
     }
 
     public ReadOnlyTerm findRequired(URI termId) {
-        return new ReadOnlyTerm(termService.findRequired(termId));
+        return create(termService.findRequired(termId));
+    }
+
+    private ReadOnlyTerm create(final Term term) {
+        Set<String> properties = configuration.getPublicView().getWhiteListProperties();
+        if ( properties == null) {
+            properties = new HashSet<>();
+        }
+        return new ReadOnlyTerm(term, properties);
     }
 
     public List<ReadOnlyTerm> findSubTerms(ReadOnlyTerm parent) {
@@ -61,7 +71,7 @@ public class ReadOnlyTermService {
         if (parent.getSubTerms() != null) {
             arg.setSubTerms(parent.getSubTerms());
         }
-        return termService.findSubTerms(arg).stream().map(ReadOnlyTerm::new).collect(Collectors.toList());
+        return termService.findSubTerms(arg).stream().map(this::create).collect(Collectors.toList());
     }
 
     public List<Comment> getComments(Term term) {
