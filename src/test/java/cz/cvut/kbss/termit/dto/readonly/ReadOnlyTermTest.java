@@ -21,7 +21,7 @@ class ReadOnlyTermTest {
         final Term child = Generator.generateTermWithId();
         term.setSubTerms(Collections.singleton(new TermInfo(child)));
 
-        final ReadOnlyTerm result = new ReadOnlyTerm(term, Collections.emptySet());
+        final ReadOnlyTerm result = new ReadOnlyTerm(term);
         assertEquals(term.getUri(), result.getUri());
         assertEquals(term.getLabel(), result.getLabel());
         assertEquals(term.getAltLabels(), result.getAltLabels());
@@ -67,7 +67,7 @@ class ReadOnlyTermTest {
         final Term parent = Generator.generateTermWithId();
         term.setParentTerms(Collections.singleton(parent));
 
-        final ReadOnlyTerm result = new ReadOnlyTerm(term, Collections.emptySet());
-        assertEquals(Collections.singleton(new ReadOnlyTerm(parent, Collections.emptySet())), result.getParentTerms());
+        final ReadOnlyTerm result = new ReadOnlyTerm(term);
+        assertEquals(Collections.singleton(new ReadOnlyTerm(parent)), result.getParentTerms());
     }
 }

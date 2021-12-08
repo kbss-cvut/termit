@@ -7,11 +7,14 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -27,6 +30,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WithMockUser
 @WebMvcTest(ConfigurationController.class)
 @Import({TestRestSecurityConfig.class})
 public class ConfigurationControllerSecurityTest extends BaseControllerTestRunner {
@@ -38,6 +42,11 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
 
     @Autowired
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        Environment.resetCurrentUser();
+    }
 
     @Test
     void getConfigurationReturnsFullConfigurationWhenUserIsAuthenticated() throws Exception {
@@ -63,9 +72,9 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
         return config;
     }
 
+    @WithAnonymousUser
     @Test
     void getConfigurationReturnsConfigurationWithoutRolesWhenUserIsNotAuthenticated() throws Exception {
-        Environment.resetCurrentUser();
         final ConfigurationDto config = generateConfiguration();
         when(configurationProvider.getConfiguration()).thenReturn(config);
         final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();

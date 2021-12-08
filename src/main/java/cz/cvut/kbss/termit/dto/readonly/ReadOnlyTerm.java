@@ -52,7 +52,11 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     public ReadOnlyTerm() {
     }
 
-    public ReadOnlyTerm(final Term term, final Set<String> props) {
+    public ReadOnlyTerm(final Term term) {
+        this(term, Collections.emptySet());
+    }
+
+    public ReadOnlyTerm(final Term term, final Collection<String> propertiesToExport) {
         super(term);
         if (term.getAltLabels() != null) {
             this.altLabels = new HashSet<>(term.getAltLabels());
@@ -67,7 +71,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
             this.sources = new HashSet<>(term.getSources());
         }
         if (term.getParentTerms() != null) {
-            this.parentTerms = term.getParentTerms().stream().map(pTerm -> new ReadOnlyTerm(pTerm, props)).collect(Collectors.toSet());
+            this.parentTerms = term.getParentTerms().stream().map(pTerm -> new ReadOnlyTerm(pTerm, propertiesToExport)).collect(Collectors.toSet());
         }
         if (term.getRelated() != null) {
             this.related = new HashSet<>(term.getRelated());
@@ -81,7 +85,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         if (term.getProperties() != null) {
             this.properties = new HashMap<>();
             term.getProperties().keySet().stream()
-                .filter(props::contains)
+                .filter(propertiesToExport::contains)
                 .forEach( property -> this.properties.put(property, term.getProperties().get(property)));
         }
         if (term.getTypes() != null) {

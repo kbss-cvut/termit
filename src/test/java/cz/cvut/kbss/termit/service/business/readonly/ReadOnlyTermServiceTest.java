@@ -120,7 +120,7 @@ class ReadOnlyTermServiceTest {
 
         final ReadOnlyTerm result = sut.findRequired(term.getUri());
         assertNotNull(result);
-        assertEquals(new ReadOnlyTerm(term, Collections.emptySet()), result);
+        assertEquals(new ReadOnlyTerm(term), result);
         verify(termService).findRequired(term.getUri());
     }
 
@@ -133,8 +133,8 @@ class ReadOnlyTermServiceTest {
         term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
         when(termService.findSubTerms(any())).thenReturn(subTerms);
 
-        final List<ReadOnlyTerm> result = sut.findSubTerms(new ReadOnlyTerm(term, Collections.emptySet()));
-        assertEquals(subTerms.stream().map(t -> new ReadOnlyTerm(t, Collections.emptySet())).collect(Collectors.toList()), result);
+        final List<ReadOnlyTerm> result = sut.findSubTerms(new ReadOnlyTerm(term));
+        assertEquals(subTerms.stream().map(t -> new ReadOnlyTerm(t)).collect(Collectors.toList()), result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).findSubTerms(captor.capture());
         final Term arg = captor.getValue();

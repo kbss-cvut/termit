@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -57,10 +58,7 @@ public class ReadOnlyTermService {
     }
 
     private ReadOnlyTerm create(final Term term) {
-        Set<String> properties = configuration.getPublicView().getWhiteListProperties();
-        if ( properties == null) {
-            properties = new HashSet<>();
-        }
+        final Collection<String> properties = Utils.emptyIfNull(configuration.getPublicView().getWhiteListProperties());
         return new ReadOnlyTerm(term, properties);
     }
 

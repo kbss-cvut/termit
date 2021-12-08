@@ -186,7 +186,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getByIdRetrievesTermFromService() throws Exception {
-        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm(), Collections.emptySet());
+        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
         when(config.getNamespace().getTerm().getSeparator()).thenReturn("/pojem");
         when(idResolver.buildNamespace(VOCABULARY_URI, "/pojem")).thenReturn(NAMESPACE);
@@ -210,7 +210,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getSubTermsRetrievesSubTermsOfTermFromService() throws Exception {
-        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm(), Collections.emptySet());
+        final ReadOnlyTerm term = new ReadOnlyTerm(Generator.generateTerm());
         term.setUri(URI.create(NAMESPACE + TERM_NAME));
         when(config.getNamespace().getTerm().getSeparator()).thenReturn("/pojem");
         when(idResolver.buildNamespace(VOCABULARY_URI, "/pojem")).thenReturn(NAMESPACE);
@@ -218,7 +218,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenReturn(term);
         final List<ReadOnlyTerm> subTerms = Generator.generateTermsWithIds(5).stream()
-                                                     .map(t -> new ReadOnlyTerm(t, Collections.emptySet()))
+                                                     .map(t -> new ReadOnlyTerm(t))
                                                      .collect(Collectors.toList());
         when(termService.findSubTerms(term)).thenReturn(subTerms);
 
