@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -216,7 +217,9 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         when(idResolver.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(term.getUri());
         when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenReturn(term);
-        final List<ReadOnlyTerm> subTerms = Generator.generateTermsWithIds(5).stream().map(ReadOnlyTerm::new).collect(Collectors.toList());
+        final List<ReadOnlyTerm> subTerms = Generator.generateTermsWithIds(5).stream()
+                                                     .map(t -> new ReadOnlyTerm(t))
+                                                     .collect(Collectors.toList());
         when(termService.findSubTerms(term)).thenReturn(subTerms);
 
         final MvcResult mvcResult = mockMvc

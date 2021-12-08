@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Primary;
 
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Represents application-wide configuration.
@@ -40,6 +41,7 @@ public class Configuration {
     private Jwt jwt = new Jwt();
     private TextAnalysis textAnalysis = new TextAnalysis();
     private Glossary glossary = new Glossary();
+    private PublicView publicView = new PublicView();
 
     public Persistence getPersistence() {
         return persistence;
@@ -119,6 +121,14 @@ public class Configuration {
 
     public void setGlossary(Glossary glossary) {
         this.glossary = glossary;
+    }
+
+    public PublicView getPublicView() {
+        return publicView;
+    }
+
+    public void setPublicView(PublicView publicView) {
+        this.publicView = publicView;
     }
 
     @org.springframework.context.annotation.Configuration
@@ -483,6 +493,23 @@ public class Configuration {
 
         public void setFragment(String fragment) {
             this.fragment = fragment;
+        }
+    }
+
+    @org.springframework.context.annotation.Configuration
+    public static class PublicView {
+        /**
+         * Unmapped properties allowed to appear in the SKOS export.
+         */
+        @NotNull
+        private Set<String> whiteListProperties;
+
+        public Set<String> getWhiteListProperties() {
+            return whiteListProperties;
+        }
+
+        public void setWhiteListProperties(final Set<String> whiteListProperties) {
+            this.whiteListProperties = whiteListProperties;
         }
     }
 }

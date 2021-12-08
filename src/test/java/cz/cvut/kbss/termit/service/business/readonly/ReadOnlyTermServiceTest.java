@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -34,6 +35,9 @@ class ReadOnlyTermServiceTest {
 
     @Mock
     private TermService termService;
+
+    @Mock
+    private Configuration configuration;
 
     @InjectMocks
     private ReadOnlyTermService sut;
@@ -109,6 +113,8 @@ class ReadOnlyTermServiceTest {
 
     @Test
     void findRequiredRetrievesRequiredInstanceBySpecifiedIdentifierAndTransformsItToReadOnlyVersion() {
+        when(configuration.getPublicView()).thenReturn(new Configuration.PublicView());
+
         final Term term = Generator.generateTermWithId();
         when(termService.findRequired(any())).thenReturn(term);
 
@@ -120,13 +126,15 @@ class ReadOnlyTermServiceTest {
 
     @Test
     void findSubTermsRetrievesSubTermsOfSpecifiedTermFromServiceAndTransformsThemToReadOnlyVersion() {
+        when(configuration.getPublicView()).thenReturn(new Configuration.PublicView());
+
         final Term term = Generator.generateTermWithId();
         final List<Term> subTerms = Generator.generateTermsWithIds(3);
         term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
         when(termService.findSubTerms(any())).thenReturn(subTerms);
 
         final List<ReadOnlyTerm> result = sut.findSubTerms(new ReadOnlyTerm(term));
-        assertEquals(subTerms.stream().map(ReadOnlyTerm::new).collect(Collectors.toList()), result);
+        assertEquals(subTerms.stream().map(t -> new ReadOnlyTerm(t)).collect(Collectors.toList()), result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).findSubTerms(captor.capture());
         final Term arg = captor.getValue();

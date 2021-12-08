@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.dto.readonly;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.Properties;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
@@ -9,8 +10,7 @@ import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @OWLClass(iri = SKOS.CONCEPT)
@@ -43,13 +43,20 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     @OWLObjectProperty(iri = SKOS.RELATED_MATCH, fetch = FetchType.EAGER)
     private Set<TermInfo> relatedMatch;
 
+    @Properties
+    private Map<String,Set<String>> properties;
+
     @Types
     private Set<String> types;
 
     public ReadOnlyTerm() {
     }
 
-    public ReadOnlyTerm(Term term) {
+    public ReadOnlyTerm(final Term term) {
+        this(term, Collections.emptySet());
+    }
+
+    public ReadOnlyTerm(final Term term, final Collection<String> propertiesToExport) {
         super(term);
         if (term.getAltLabels() != null) {
             this.altLabels = new HashSet<>(term.getAltLabels());
@@ -64,7 +71,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
             this.sources = new HashSet<>(term.getSources());
         }
         if (term.getParentTerms() != null) {
-            this.parentTerms = term.getParentTerms().stream().map(ReadOnlyTerm::new).collect(Collectors.toSet());
+            this.parentTerms = term.getParentTerms().stream().map(pTerm -> new ReadOnlyTerm(pTerm, propertiesToExport)).collect(Collectors.toSet());
         }
         if (term.getRelated() != null) {
             this.related = new HashSet<>(term.getRelated());
@@ -75,11 +82,11 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         if (term.getExactMatchTerms() != null) {
             this.exactMatchTerms = new HashSet<>(term.getExactMatchTerms());
         }
-        if (term.getProperties() != null && term.getProperties().containsKey(SKOS.NOTATION)) {
-            final Set<String> set = term.getProperties().get(SKOS.NOTATION);
-            if (set.size() == 1) {
-                this.notation = set.iterator().next();
-            }
+        if (term.getProperties() != null) {
+            this.properties = new HashMap<>();
+            term.getProperties().keySet().stream()
+                .filter(propertiesToExport::contains)
+                .forEach( property -> this.properties.put(property, term.getProperties().get(property)));
         }
         if (term.getTypes() != null) {
             this.types = new HashSet<>(term.getTypes());
@@ -166,6 +173,14 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     @Override
     public void setTypes(Set<String> types) {
         this.types = types;
+    }
+
+    public Map<String, Set<String>> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(final Map<String, Set<String>> properties) {
+        this.properties = properties;
     }
 
     @Override

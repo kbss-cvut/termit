@@ -38,3 +38,5 @@ termit:
     admin:
         credentialsLocation: ${user.home}
         credentialsFile: .termit-admin
+    public:
+        whiteListProperties: http://www.w3.org/2004/02/skos/core#notation
