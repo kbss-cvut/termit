@@ -59,7 +59,7 @@ public class TermDaoExactMatchTermsTest extends BaseDaoTestRunner {
                 em.persist(t, descriptorFactory.termDescriptor(t));
                 Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
             });
-            generateRelationships(term, exactMatchTerms);
+            generateExactMatchRelationships(term, exactMatchTerms);
         });
 
         final Optional<Term> result = sut.find(term.getUri());
@@ -68,7 +68,7 @@ public class TermDaoExactMatchTermsTest extends BaseDaoTestRunner {
         exactMatchTerms.forEach(rt -> assertThat(result.get().getInverseExactMatchTerms(), hasItem(new TermInfo(rt))));
     }
 
-    private void generateRelationships(Term term, Collection<Term> related) {
+    private void generateExactMatchRelationships(Term term, Collection<Term> related) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
@@ -94,7 +94,7 @@ public class TermDaoExactMatchTermsTest extends BaseDaoTestRunner {
                 em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary()));
                 Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
             });
-            generateRelationships(term, inverseExactMatchTerms);
+            generateExactMatchRelationships(term, inverseExactMatchTerms);
         });
         term.setExactMatchTerms(exactMatchTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
         transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
