@@ -387,8 +387,23 @@ public class TermDao extends AssetDao<Term> {
     private List<TermDto> loadIncludedTerms(Collection<URI> includeTerms) {
         return includeTerms.stream().map(u -> em.find(TermDto.class, u))
                            .filter(Objects::nonNull)
-                           .peek(t -> t.setSubTerms(loadSubTerms(t)))
+                           .peek(this::recursivelyLoadParentTermSubTerms)
                            .collect(Collectors.toList());
+    }
+
+    /**
+     * Recursively loads subterms for the specified term and its parents (if they exist).
+     * <p>
+     * This implementation ensures that the term hierarchy can be traversed both ways for the specified term. This has
+     * to be done to allow the tree-select component on the frontend to work properly and display the terms.
+     *
+     * @param term The term to load subterms for
+     */
+    private void recursivelyLoadParentTermSubTerms(TermDto term) {
+        term.setSubTerms(loadSubTerms(term));
+        if (term.hasParentTerms()) {
+            term.getParentTerms().forEach(this::recursivelyLoadParentTermSubTerms);
+        }
     }
 
     /**

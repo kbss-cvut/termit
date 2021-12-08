@@ -59,7 +59,7 @@ public class TermDaoExactMatchTermsTest extends BaseDaoTestRunner {
                 em.persist(t, descriptorFactory.termDescriptor(t));
                 Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
             });
-            generateRelationships(term, exactMatchTerms, SKOS.EXACT_MATCH);
+            generateExactMatchRelationships(term, exactMatchTerms);
         });
 
         final Optional<Term> result = sut.find(term.getUri());
@@ -68,14 +68,14 @@ public class TermDaoExactMatchTermsTest extends BaseDaoTestRunner {
         exactMatchTerms.forEach(rt -> assertThat(result.get().getInverseExactMatchTerms(), hasItem(new TermInfo(rt))));
     }
 
-    private void generateRelationships(Term term, Collection<Term> related, String relationship) {
+    private void generateExactMatchRelationships(Term term, Collection<Term> related) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.begin();
             for (Term r : related) {
                 // Don't put it into any specific context to make it look like inference
-                conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(relationship), vf.createIRI(term.getUri().toString()));
+                conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(SKOS.EXACT_MATCH), vf.createIRI(term.getUri().toString()));
             }
             conn.commit();
         }
@@ -94,7 +94,7 @@ public class TermDaoExactMatchTermsTest extends BaseDaoTestRunner {
                 em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary()));
                 Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
             });
-            generateRelationships(term, inverseExactMatchTerms, SKOS.EXACT_MATCH);
+            generateExactMatchRelationships(term, inverseExactMatchTerms);
         });
         term.setExactMatchTerms(exactMatchTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
         transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
