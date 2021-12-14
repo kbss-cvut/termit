@@ -1048,4 +1048,18 @@ class TermDaoTest extends BaseDaoTestRunner {
             assertTrue(pt.getSubTerms().stream().anyMatch(ti -> ti.getUri().equals(term.getUri())));
         });
     }
+
+    /**
+     * Bug #1634
+     */
+    @Test
+    void findAllRootsEnsuresIncludedTermsAreNotDuplicatedInResult() {
+        final List<Term> rootTerms = generateTerms(10);
+        addTermsAndSave(rootTerms, vocabulary);
+        rootTerms.sort(Comparator.comparing(Term::getPrimaryLabel));
+        final Term toInclude = rootTerms.get(0);
+
+        final List<TermDto> result = sut.findAllRoots(vocabulary, PageRequest.of(0, rootTerms.size() / 2), Collections.singleton(toInclude.getUri()));
+        assertEquals(1, (int) result.stream().filter(t -> t.getUri().equals(toInclude.getUri())).count());
+    }
 }
