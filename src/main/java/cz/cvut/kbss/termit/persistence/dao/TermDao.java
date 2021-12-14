@@ -302,12 +302,14 @@ public class TermDao extends AssetDao<Term> {
                 "?hasLabel ?label ." +
                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
+                "FILTER (?term NOT IN (?included))" +
                 "}} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("vocabulary", vocabulary.getUri())
                          .setParameter("labelLang", config.getLanguage())
+                         .setParameter("included", includeTerms)
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
             result.addAll(loadIncludedTerms(includeTerms));
@@ -358,11 +360,13 @@ public class TermDao extends AssetDao<Term> {
                 "?hasLabel ?label ." +
                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
+                "FILTER (?term NOT IN (?included))" +
                 "} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("labelLang", config.getLanguage())
+                         .setParameter("included", includeTerms)
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
             result.addAll(loadIncludedTerms(includeTerms));
@@ -427,12 +431,14 @@ public class TermDao extends AssetDao<Term> {
                 "?vocabulary ?imports* ?parent ." +
                 "?parent ?hasGlossary/?hasTerm ?term ." +
                 "FILTER (lang(?label) = ?labelLang) ." +
+                "FILTER (?term NOT IN (?included))" +
                 "} ORDER BY " + orderSentence(config.getLanguage(), "?label"), TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, true);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("vocabulary", vocabulary.getUri())
                          .setParameter("labelLang", config.getLanguage())
+                         .setParameter("included", includeTerms)
                          .setFirstResult((int) pageSpec.getOffset())
                          .setMaxResults(pageSpec.getPageSize()));
             result.addAll(loadIncludedTerms(includeTerms));
