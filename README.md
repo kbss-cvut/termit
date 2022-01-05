@@ -12,9 +12,8 @@ An **asset** is an object of one of the main domain types managed by the system 
 
 ## Required Technologies
 
-- JDK 8 (preferably Oracle) or newer
+- JDK 8 or newer
 - Apache Maven 3.x
-- Apache Tomcat 9 or newer (required by Servlet API 4)
 
 
 ## System Architecture
@@ -31,7 +30,7 @@ This section briefly lists the main technologies and principles used (or planned
 - Jackson 2.12
 - [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson)*
 - [JOPA](https://github.com/kbss-cvut/jopa)
-- JUnit 5* (RT used 4), Mockito 2* (RT used 1)
+- JUnit 5* (RT used 4), Mockito 3* (RT used 1), Hamcrest 2* (RT used 1)
 - Servlet API 4* (RT used 3.0.1)
 - JSON Web Tokens* (CSRF protection not necessary for JWT)
 - SLF4J + Logback
