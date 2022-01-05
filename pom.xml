@@ -33,7 +33,7 @@
         <org.hibernate.validator.version>6.2.0.Final</org.hibernate.validator.version>
         <org.apache.tika.tika-core.version>1.26</org.apache.tika.tika-core.version>
         <cz.cvut.kbss.jopa.version>0.17.2</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.8.8</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jsonld.version>0.8.9</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.7</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
