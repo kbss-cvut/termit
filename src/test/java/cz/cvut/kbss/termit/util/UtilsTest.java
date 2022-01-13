@@ -19,7 +19,11 @@ package cz.cvut.kbss.termit.util;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -33,6 +37,7 @@ import org.mockito.Mockito;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -156,5 +161,24 @@ class UtilsTest {
                 Arguments.of(null, null, Collections.emptyList()),
                 Arguments.of(null, Collections.singletonList("a"), Collections.singletonList("a"))
         );
+    }
+
+    @Test
+    public void getLanguageTagsPerPropertiesReturnsCorrectLanguageTags() {
+        final Model model = new LinkedHashModel();
+        final ValueFactory f = SimpleValueFactory.getInstance();
+        final String namespace = "https://example.org/";
+        final String p1 = namespace + "p1";
+        final String p2 = namespace + "p2";
+        final IRI iriA = f.createIRI(namespace, "a");
+        final IRI iriP1 = f.createIRI(p1);
+        final IRI iriP2 = f.createIRI(p2);
+        model.add(iriA, iriP1, f.createLiteral("a label cs", "cs"));
+        model.add(iriA, iriP2, f.createLiteral("a label"));
+
+        final Set<String> expected = Stream.of("cs","").collect(Collectors.toSet());
+        final Set<String> actual = Utils.getLanguageTagsPerProperties(model, Stream.of(p1, p2).collect(Collectors.toSet()));
+
+        assertEquals(expected, actual);
     }
 }

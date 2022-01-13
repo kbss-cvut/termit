@@ -203,4 +203,19 @@ public class Utils {
         }
         return result;
     }
+
+    /**
+     * Lists all distinct language tags that occur in literals which are objects of the given properties.
+     *
+     * @param model the model to look into
+     * @param props set of property IRIs
+     * @return set of language tags
+     */
+    public static Set<String> getLanguageTagsPerProperties(final Model model, final Set<String> props) {
+        return model.stream()
+                    .filter(statement -> props.contains(statement.getPredicate().stringValue()))
+                    .filter(statement -> statement.getObject().isLiteral())
+                    .map(statement -> ((Literal) statement.getObject()).getLanguage().orElse(""))
+                    .collect(Collectors.toSet());
+    }
 }
