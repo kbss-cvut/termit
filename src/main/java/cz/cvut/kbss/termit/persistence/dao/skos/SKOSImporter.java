@@ -50,7 +50,7 @@ public class SKOSImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSImporter.class);
 
-    private final Set<String> multiLingualProperties = Stream.of(
+    private static final Set<String> multiLingualProperties = Stream.of(
             SKOS.PREF_LABEL.toString(),
             SKOS.ALT_LABEL.toString(),
             SKOS.HIDDEN_LABEL.toString(),
