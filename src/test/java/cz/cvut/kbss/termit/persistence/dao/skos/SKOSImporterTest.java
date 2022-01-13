@@ -139,7 +139,6 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             assertThrows(IllegalArgumentException.class, () -> sut.importVocabulary(false, VOCABULARY_IRI, Constants.Turtle.MEDIA_TYPE, persister));
         });
-
     }
 
     @Test
@@ -296,6 +295,16 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                 assertThat(terms, hasItem(vf
                     .createIRI("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/uživatel-termitu")));
             }
+        });
+    }
+
+    @Test
+    void importFailsIfAnEmptyLanguageTagIsProvidedForMultilingualProperties() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            assertThrows(IllegalArgumentException.class, () ->
+                    sut.importVocabulary(true, VOCABULARY_IRI, Constants.Turtle.MEDIA_TYPE, persister, Environment.loadFile("data/test-glossary-narrower.ttl"),
+                            Environment.loadFile("data/test-glossary-with-definition-with-empty-language-tag.ttl")));
         });
     }
 }

@@ -30,13 +30,12 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static cz.cvut.kbss.termit.util.Utils.getLanguageTagsPerProperties;
 import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 
 /**
@@ -50,6 +49,14 @@ import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
 public class SKOSImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSImporter.class);
+
+    private final Set<String> multiLingualProperties = Stream.of(
+            SKOS.PREF_LABEL.toString(),
+            SKOS.ALT_LABEL.toString(),
+            SKOS.HIDDEN_LABEL.toString(),
+            SKOS.SCOPE_NOTE.toString(),
+            SKOS.DEFINITION.toString()
+    ).collect(Collectors.toCollection(HashSet::new));
 
     private final Configuration config;
     private final VocabularyDao vocabularyDao;
@@ -90,6 +97,13 @@ public class SKOSImporter {
         }
         LOG.debug("Vocabulary import started.");
         parseDataFromStreams(mediaType, inputStreams);
+        LOG.debug("Checking that only language-tagged literals are provided.");
+
+        final Set<String> languageTags = getLanguageTagsPerProperties(model, multiLingualProperties);
+        if (languageTags.contains("")) {
+            throw new IllegalArgumentException("Each value of the properties must have a non-empty language tag: " + multiLingualProperties);
+        }
+
         glossaryIri = resolveGlossaryIriFromImportedData(model);
         LOG.trace("Importing glossary {}.", glossaryIri);
         insertTopConceptAssertions();
