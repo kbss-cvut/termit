@@ -11,16 +11,13 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.assignment.Target;
+import cz.cvut.kbss.termit.model.assignment.TermAssignment;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.model.selector.XPathSelector;
 import cz.cvut.kbss.termit.util.Vocabulary;
-
-import java.net.URI;
-
-import java.util.Arrays;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.repository.Repository;
@@ -29,8 +26,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -67,7 +65,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
     private Document getDocument(final File... files) {
         final Document document = Generator.generateDocumentWithId();
         document.setLabel("Doc");
-        Arrays.stream(files).forEach(f -> document.addFile(f));
+        Arrays.stream(files).forEach(document::addFile);
         return document;
     }
 
@@ -75,7 +73,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
     void getAssignmentsInfoByTermRetrievesAssignmentsOfSpecifiedTerm() {
         final Term term = Generator.generateTermWithId();
         final File file = Generator.generateFileWithId("test.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
         transactional(() -> {
             enableRdfsInference(em);
             em.persist(term);
@@ -117,7 +115,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         final File fOne = Generator.generateFileWithId("testOne.html");
         final File fTwo = Generator.generateFileWithId("testTwo.html");
-        final Document document = getDocument( fOne, fTwo );
+        final Document document = getDocument(fOne, fTwo);
         transactional(() -> {
             enableRdfsInference(em);
             em.persist(term);
@@ -146,7 +144,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         final File fOne = Generator.generateFileWithId("testOne.html");
         final File fTwo = Generator.generateFileWithId("testTwo.html");
-        final Document document = getDocument( fOne, fTwo );
+        final Document document = getDocument(fOne, fTwo);
         transactional(() -> {
             enableRdfsInference(em);
             em.persist(term);
@@ -169,7 +167,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
     void getAssignmentsInfoByTermRetrievesSeparateInstancesForSuggestedAndAssertedOccurrencesOfSameTerm() {
         final Term term = Generator.generateTermWithId();
         final File file = Generator.generateFileWithId("testOne.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
         transactional(() -> {
             enableRdfsInference(em);
             em.persist(term);
@@ -227,7 +225,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
     void findAllByResourceReturnsAllAssignmentsAndOccurrencesRelatedToSpecifiedResource() {
         final Term term = Generator.generateTermWithId();
         final File file = Generator.generateFileWithId("test.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
 
         final Target target = new Target();
         target.setSource(file.getUri());
@@ -247,8 +245,8 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
 
     private List<TermOccurrence> generateTermOccurrences(Term term, Asset<?> target, boolean suggested) {
         final List<TermOccurrence> occurrences = IntStream.range(0, Generator.randomInt(5, 10))
-                .mapToObj(i -> createOccurrence(term, target, suggested))
-                .collect(Collectors.toList());
+                                                          .mapToObj(i -> Generator.generateTermOccurrence(term, target, suggested))
+                                                          .collect(Collectors.toList());
         transactional(() -> occurrences.forEach(to -> {
             em.persist(to);
             em.persist(to.getTarget());
@@ -256,28 +254,12 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         return occurrences;
     }
 
-    private TermOccurrence createOccurrence(Term term, Asset<?> target, boolean suggested) {
-        final TermOccurrence occurrence;
-        if (target instanceof File) {
-            occurrence = new TermFileOccurrence(term.getUri(), new FileOccurrenceTarget((File) target));
-        } else {
-            assert target instanceof Term;
-            occurrence = new TermDefinitionalOccurrence(term.getUri(), new DefinitionalOccurrenceTarget((Term) target));
-        }
-        if (suggested) {
-            occurrence.addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
-        }
-        // Dummy selector
-        occurrence.getTarget().setSelectors(Collections.singleton(new XPathSelector("//div")));
-        return occurrence;
-    }
-
     @Test
     void getAssignmentsInfoByResourceRetrievesInformationAboutAssignmentsAndOccurrencesForSpecifiedResource() {
         final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         final File file = Generator.generateFileWithId("test.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
 
         generateAssignment(term, file, false);
         transactional(() -> {
@@ -296,8 +278,8 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
             assertEquals(term.getPrimaryLabel(), rta.getTermLabel());
         });
         final Optional<ResourceTermAssignments> occ = result.stream()
-                .filter(ResourceTermOccurrences.class::isInstance)
-                .findAny();
+                                                            .filter(ResourceTermOccurrences.class::isInstance)
+                                                            .findAny();
         assertTrue(occ.isPresent());
         assertEquals(occurrences.size(), ((ResourceTermOccurrences) occ.get()).getCount().intValue());
     }
@@ -307,7 +289,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         final File file = Generator.generateFileWithId("test.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
 
         generateAssignment(term, file, true);
         transactional(() -> {
@@ -328,8 +310,8 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
                     .or(hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
         });
         final Optional<ResourceTermAssignments> occ = result.stream()
-                .filter(rta -> rta instanceof ResourceTermOccurrences)
-                .findAny();
+                                                            .filter(rta -> rta instanceof ResourceTermOccurrences)
+                                                            .findAny();
         assertTrue(occ.isPresent());
         assertEquals(occurrences.size(), ((ResourceTermOccurrences) occ.get()).getCount().intValue());
     }
@@ -357,7 +339,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         final File file = Generator.generateFileWithId("test.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
         transactional(() -> {
             enableRdfsInference(em);
             em.persist(term);
@@ -387,7 +369,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         final File file = Generator.generateFileWithId("test.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
         transactional(() -> {
             enableRdfsInference(em);
             em.persist(term);
@@ -420,7 +402,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         final File file = Generator.generateFileWithId("test.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
         transactional(() -> {
             enableRdfsInference(em);
             em.persist(term);
@@ -443,7 +425,7 @@ class TermAssignmentDaoTest extends BaseDaoTestRunner {
         final Term targetTerm = Generator.generateTermWithId();
         targetTerm.setVocabulary(term.getVocabulary());
         final File file = Generator.generateFileWithId("test.html");
-        final Document document = getDocument( file );
+        final Document document = getDocument(file);
         transactional(() -> {
             enableRdfsInference(em);
             em.persist(term);

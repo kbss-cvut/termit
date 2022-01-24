@@ -4,6 +4,7 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.rest.BaseController;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -98,5 +99,29 @@ public class ReadOnlyTermController extends BaseController {
                                      @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
         return termService.getComments(termService.getRequiredReference(termUri));
+    }
+
+    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
+            MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public List<TermOccurrence> getDefinitionallyRelatedTermsOf(@PathVariable String vocabularyIdFragment,
+                                                                @PathVariable String termIdFragment,
+                                                                @RequestParam(name = Constants.QueryParams.NAMESPACE,
+                                                                              required = false)
+                                                                        Optional<String> namespace) {
+        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
+    }
+
+    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {
+            MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(@PathVariable String vocabularyIdFragment,
+                                                                       @PathVariable String termIdFragment,
+                                                                       @RequestParam(name = Constants.QueryParams.NAMESPACE,
+                                                                                     required = false)
+                                                                               Optional<String> namespace) {
+        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
     }
 }

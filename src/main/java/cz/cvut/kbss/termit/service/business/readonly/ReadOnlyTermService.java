@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -13,7 +14,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,7 +25,7 @@ public class ReadOnlyTermService {
 
     private final TermService termService;
 
-    private Configuration configuration;
+    private final Configuration configuration;
 
     @Autowired
     public ReadOnlyTermService(final TermService termService, final Configuration configuration) {
@@ -78,5 +82,25 @@ public class ReadOnlyTermService {
 
     public Term getRequiredReference(URI uri) {
         return termService.getRequiredReference(uri);
+    }
+
+    /**
+     * Gets occurrences of the specified term in other terms' definitions.
+     *
+     * @param instance Term whose definitional occurrences to search for
+     * @return List of definitional occurrences of the specified term
+     */
+    public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
+        return termService.getDefinitionallyRelatedOf(instance);
+    }
+
+    /**
+     * Gets occurrences of terms which appear in the specified term's definition.
+     *
+     * @param instance Term in whose definition to search for related terms
+     * @return List of term occurrences in the specified term's definition
+     */
+    public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
+        return termService.getDefinitionallyRelatedTargeting(instance);
     }
 }

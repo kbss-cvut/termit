@@ -411,20 +411,20 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Gets definitionally related terms of the specified term.
+     * Gets occurrences of terms which appear in the specified term's definition.
      *
-     * @param instance Term to search from
-     * @return List of definitionally related terms of the specified term
+     * @param instance Term in whose definition to search for related terms
+     * @return List of term occurrences in the specified term's definition
      */
     public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
         return repositoryService.getDefinitionallyRelatedTargeting(instance);
     }
 
     /**
-     * Gets All occurrences of the specified terms where it appears in other terms' definitions.
+     * Gets occurrences of the specified term in other terms' definitions.
      *
-     * @param instance Term to search for
-     * @return List of related terms to the specified term where this term appeared in their definitions
+     * @param instance Term whose definitional occurrences to search for
+     * @return List of definitional occurrences of the specified term
      */
     public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
         return repositoryService.getDefinitionallyRelatedOf(instance);
