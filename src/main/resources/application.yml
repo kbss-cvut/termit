@@ -33,7 +33,9 @@ javamelody:
         authorized-users: admin:kral0vnat3rm1t1st3
 termit:
     repository:
-        url: http://localhost:7200/repositories/termit
+        url: https://onto.fel.cvut.cz:7200/repositories/termit-dev
+        username: termit
+        password: vl8dcetermiti3t2
         # if empty, repository.url will be used
         publicUrl:
     persistence:
