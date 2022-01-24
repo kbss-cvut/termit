@@ -17,8 +17,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.*;
-import cz.cvut.kbss.termit.model.assignment.Target;
-import cz.cvut.kbss.termit.model.assignment.TermAssignment;
+import cz.cvut.kbss.termit.model.assignment.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
@@ -26,6 +25,7 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -404,5 +404,21 @@ public class Generator {
             c.setCreated(new Date());
         }
         return c;
+    }
+
+    public static TermOccurrence generateTermOccurrence(Term term, Asset<?> target, boolean suggested) {
+        final TermOccurrence occurrence;
+        if (target instanceof File) {
+            occurrence = new TermFileOccurrence(term.getUri(), new FileOccurrenceTarget((File) target));
+        } else {
+            assert target instanceof Term;
+            occurrence = new TermDefinitionalOccurrence(term.getUri(), new DefinitionalOccurrenceTarget((Term) target));
+        }
+        if (suggested) {
+            occurrence.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
+        }
+        // Dummy selector
+        occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test text")));
+        return occurrence;
     }
 }

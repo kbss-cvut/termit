@@ -1,11 +1,12 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
-import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -22,6 +23,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -134,7 +136,7 @@ class ReadOnlyTermServiceTest {
         when(termService.findSubTerms(any())).thenReturn(subTerms);
 
         final List<ReadOnlyTerm> result = sut.findSubTerms(new ReadOnlyTerm(term));
-        assertEquals(subTerms.stream().map(t -> new ReadOnlyTerm(t)).collect(Collectors.toList()), result);
+        assertEquals(subTerms.stream().map(ReadOnlyTerm::new).collect(Collectors.toList()), result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).findSubTerms(captor.capture());
         final Term arg = captor.getValue();
@@ -153,5 +155,37 @@ class ReadOnlyTermServiceTest {
         final List<Comment> result = sut.getComments(term);
         assertEquals(Collections.singletonList(comment), result);
         verify(termService).getComments(term);
+    }
+
+    @Test
+    void getDefinitionallyRelatedOfRetrievesDefinitionallyRelatedOccurrencesFromTermService() {
+        final Term term = Generator.generateTermWithId();
+        final List<TermOccurrence> occurrences = generateOccurrences(term, true);
+        when(termService.getDefinitionallyRelatedOf(term)).thenReturn(occurrences);
+        final List<TermOccurrence> result = sut.getDefinitionallyRelatedOf(term);
+        assertEquals(occurrences, result);
+        verify(termService).getDefinitionallyRelatedOf(term);
+    }
+
+    private static List<TermOccurrence> generateOccurrences(Term term, boolean of) {
+        return IntStream.range(0, 5)
+                        .mapToObj(i -> {
+                            final Term t = of ? term : Generator.generateTermWithId();
+                            final Term target = of ? Generator.generateTermWithId() : term;
+                            final TermOccurrence o = Generator.generateTermOccurrence(t, target, false);
+                            o.setUri(Generator.generateUri());
+                            return o;
+                        })
+                        .collect(Collectors.toList());
+    }
+
+    @Test
+    void getDefinitionallyRelatedTargetingRetrievesDefinitionallyRelatedOccurrencesFromTermService() {
+        final Term term = Generator.generateTermWithId();
+        final List<TermOccurrence> occurrences = generateOccurrences(term, false);
+        when(termService.getDefinitionallyRelatedTargeting(term)).thenReturn(occurrences);
+        final List<TermOccurrence> result = sut.getDefinitionallyRelatedTargeting(term);
+        assertEquals(occurrences, result);
+        verify(termService).getDefinitionallyRelatedTargeting(term);
     }
 }

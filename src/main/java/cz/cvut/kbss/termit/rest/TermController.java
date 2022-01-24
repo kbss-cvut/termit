@@ -411,12 +411,6 @@ public class TermController extends BaseController {
         return termService.getAssignmentInfo(termService.getRequiredReference(termUri));
     }
 
-
-    /**
-     * Gets definitionally related terms of the specified term.
-     *
-     * @return List of definitionally related terms of the specified term
-     */
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
@@ -429,11 +423,6 @@ public class TermController extends BaseController {
         return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
     }
 
-    /**
-     * Gets All occurrences of the specified terms where it appears in other terms' definitions.
-     *
-     * @return List of related terms to the specified term where this term appeared in their definitions
-     */
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})

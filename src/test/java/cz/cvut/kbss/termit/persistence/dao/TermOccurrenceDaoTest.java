@@ -268,12 +268,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     }
 
     private void generateDefinitionalOccurrence(Term of, Term in) {
-        final DefinitionalOccurrenceTarget target = new DefinitionalOccurrenceTarget(in);
-        target.setSelectors(Collections.singleton(new TextQuoteSelector("test")));
-        final TermOccurrence occurrence = new TermDefinitionalOccurrence(of.getUri(), target);
+        final TermOccurrence occurrence = Generator.generateTermOccurrence(of, in, false);
         transactional(() -> {
             em.persist(occurrence);
-            em.persist(target);
+            em.persist(occurrence.getTarget());
         });
     }
 
