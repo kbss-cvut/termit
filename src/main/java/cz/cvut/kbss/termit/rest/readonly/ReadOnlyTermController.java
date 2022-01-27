@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.rest.readonly;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
@@ -24,7 +25,7 @@ import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
 
 @RestController
 @PreAuthorize("permitAll()")
-@RequestMapping(PUBLIC_API_PATH + "/vocabularies")
+@RequestMapping(PUBLIC_API_PATH)
 public class ReadOnlyTermController extends BaseController {
 
     private final ReadOnlyTermService termService;
@@ -35,16 +36,16 @@ public class ReadOnlyTermController extends BaseController {
         this.termService = termService;
     }
 
-    @GetMapping(value = "/{vocabularyIdFragment}/terms",
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<?> getTerms(@PathVariable String vocabularyIdFragment,
-                                       @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-                                       @RequestParam(name = "searchString", required = false) String searchString,
-                                       @RequestParam(name = "includeImported", required = false) boolean includeImported) {
+                            @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+                            @RequestParam(name = "searchString", required = false) String searchString,
+                            @RequestParam(name = "includeImported", required = false) boolean includeImported) {
         final Vocabulary vocabulary = getVocabulary(vocabularyIdFragment, namespace);
         if (searchString != null) {
             return includeImported ? termService.findAllIncludingImported(searchString, vocabulary) :
-                   termService.findAll(searchString, vocabulary);
+                    termService.findAll(searchString, vocabulary);
         }
         return termService.findAll(vocabulary);
     }
@@ -54,20 +55,20 @@ public class ReadOnlyTermController extends BaseController {
         return termService.findVocabularyRequired(uri);
     }
 
-    @GetMapping(value = "/{vocabularyIdFragment}/terms/roots",
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/roots",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getAllRoots(@PathVariable String vocabularyIdFragment,
-                                          @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-                                          @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
-                                          @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
-                                          @RequestParam(name = "includeImported", required = false) boolean includeImported) {
+                                     @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+                                     @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+                                     @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
+                                     @RequestParam(name = "includeImported", required = false) boolean includeImported) {
         final Vocabulary vocabulary = getVocabulary(vocabularyIdFragment, namespace);
         final Pageable pageSpec = createPageRequest(pageSize, pageNo);
         return includeImported ? termService.findAllRootsIncludingImported(vocabulary, pageSpec) :
-               termService.findAllRoots(vocabulary, pageSpec);
+                termService.findAllRoots(vocabulary, pageSpec);
     }
 
-    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}",
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ReadOnlyTerm getById(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                 @PathVariable("termIdFragment") String termIdFragment,
@@ -83,7 +84,14 @@ public class ReadOnlyTermController extends BaseController {
                         config.getNamespace().getTerm().getSeparator()), termIdFragment);
     }
 
-    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
+    @GetMapping(value = "/terms/{termIdFragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ReadOnlyTerm getById(@PathVariable("termIdFragment") String termIdFragment,
+                                @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+        return termService.findRequired(termUri);
+    }
+
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<ReadOnlyTerm> getSubTerms(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                           @PathVariable("termIdFragment") String termIdFragment,
@@ -92,7 +100,7 @@ public class ReadOnlyTermController extends BaseController {
         return termService.findSubTerms(parent);
     }
 
-    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                      @PathVariable("termIdFragment") String termIdFragment,
@@ -101,7 +109,7 @@ public class ReadOnlyTermController extends BaseController {
         return termService.getComments(termService.getRequiredReference(termUri));
     }
 
-    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
     public List<TermOccurrence> getDefinitionallyRelatedTermsOf(@PathVariable String vocabularyIdFragment,
@@ -113,7 +121,7 @@ public class ReadOnlyTermController extends BaseController {
         return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
     }
 
-    @GetMapping(value = "/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
     public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(@PathVariable String vocabularyIdFragment,
