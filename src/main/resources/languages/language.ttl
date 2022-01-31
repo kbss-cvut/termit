@@ -38,11 +38,11 @@ ufo:event-type a a-popis-dat:term ;
 
 ufo:intrinsic-trope a a-popis-dat:term ;
     rdfs:label "Vlastnost"@cs,
-        "Intrinsic Trope"@en .
+        "Aspect"@en .
 
 ufo:intrinsic-trope-type a a-popis-dat:term ;
     rdfs:label "Typ vlastnosti"@cs,
-        "Intrinsic Trope Type"@en .
+        "Aspect Type"@en .
 
 ufo:object a a-popis-dat:term ;
     rdfs:label "Objekt"@cs,
@@ -55,8 +55,8 @@ ufo:object-type a a-popis-dat:term ;
 
 ufo:relator a a-popis-dat:term ;
     rdfs:label "Vztah"@cs,
-        "Relator"@en .
+        "Relation"@en .
 
 ufo:relator-type a a-popis-dat:term ;
     rdfs:label "Typ vztahu"@cs,
-        "Relator Type"@en .
+        "Relation Type"@en .
