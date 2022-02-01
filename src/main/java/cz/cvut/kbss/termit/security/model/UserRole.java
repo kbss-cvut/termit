@@ -104,6 +104,6 @@ public enum UserRole {
     }
 
     public Set<UserRole> getGranted() {
-        return grantedRoleNames; //.stream().map(UserRole::valueOf).collect(Collectors.toSet());
+        return grantedRoleNames;
     }
 }
