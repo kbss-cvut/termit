@@ -432,6 +432,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Sets the definition source of the specified term.
+     * <p>
+     * It removes the previously existing definition source if there was any.
      *
      * @param term             Term whose definition source is being specified
      * @param definitionSource Definition source representation
@@ -446,6 +448,23 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             termOccurrenceService.removeOccurrence(existingTerm.getDefinitionSource());
         }
         termOccurrenceService.persistOccurrence(definitionSource);
+    }
+
+    /**
+     * Removes the definition source of the specified term.
+     * <p>
+     * This involves deleting the {@link TermDefinitionSource} instance representing the definition source from the repository.
+     * <p>
+     * If the specified term has no definition source, nothing happens.
+     *
+     * @param term Term whose definition to remove
+     */
+    @Transactional
+    public void removeTermDefinitionSource(Term term) {
+        Objects.requireNonNull(term);
+        if (term.getDefinitionSource() != null) {
+            termOccurrenceService.removeOccurrence(term.getDefinitionSource());
+        }
     }
 
     /**

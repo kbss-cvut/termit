@@ -1055,4 +1055,18 @@ class TermControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(builder).andExpect(status().isOk());
         verify(termServiceMock).exportGlossaryWithReferences(vocabulary, properties, Turtle.MEDIA_TYPE);
     }
+
+    @Test
+    void removeTermDefinitionSourceInvokesServiceWithTermCorrespondingToSpecifiedIdentifier() throws Exception {
+        final URI termUri = URI.create(TERM_URI);
+        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termServiceMock.findRequired(URI.create(TERM_URI))).thenReturn(term);
+
+        mockMvc.perform(delete("/terms/" + TERM_NAME + "/definition-source").queryParam(QueryParams.NAMESPACE, NAMESPACE))
+               .andExpect(status().isNoContent());
+        verify(termServiceMock).findRequired(termUri);
+        verify(termServiceMock).removeTermDefinitionSource(term);
+    }
 }

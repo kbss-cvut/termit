@@ -455,4 +455,24 @@ class TermServiceTest {
         assertEquals(resource, result.get());
         verify(exporters).exportGlossaryWithReferences(vocabulary, properties, CsvUtils.MEDIA_TYPE);
     }
+
+    @Test
+    void removeTermDefinitionSourceRemovesOccurrenceRepresentingSourceOfDefinitionOfSpecifiedTerm() {
+        final Term term = generateTermWithId();
+        final TermDefinitionSource defSource = new TermDefinitionSource(term.getUri(),
+                new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
+        defSource.setUri(Generator.generateUri());
+        term.setDefinitionSource(defSource);
+
+        sut.removeTermDefinitionSource(term);
+        verify(termOccurrenceService).removeOccurrence(defSource);
+    }
+
+    @Test
+    void removeTermDefinitionSourceDoesNothingWhenDoesNotHaveDefinitionSource() {
+        final Term term = generateTermWithId();
+
+        sut.removeTermDefinitionSource(term);
+        verify(termOccurrenceService, never()).removeOccurrence(any());
+    }
 }

@@ -464,8 +464,19 @@ public class TermController extends BaseController {
         LOG.debug("Definition source of term {} set to {}.", termUri, definitionSource);
     }
 
+    @DeleteMapping(value = "/terms/{termIdFragment}/definition-source")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public void setTermDefinitionSource(@PathVariable String termIdFragment,
+                                        @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+        final Term term = termService.findRequired(termUri);
+        termService.removeTermDefinitionSource(term);
+        LOG.debug("Definition source of term {} removed.", term);
+    }
+
     /**
-     * Removes occurrence of a term in another term definition.
+     * Removes an occurrence of a term.
      */
     @DeleteMapping(value = "occurrence/{normalizedName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -478,7 +489,7 @@ public class TermController extends BaseController {
     }
 
     /**
-     * Approves occurrence of a term in another term definition.
+     * Approves an occurrence of a term.
      */
     @PutMapping(value = "occurrence/{normalizedName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
