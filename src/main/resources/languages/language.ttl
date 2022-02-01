@@ -55,8 +55,8 @@ ufo:object-type a a-popis-dat:term ;
 
 ufo:relator a a-popis-dat:term ;
     rdfs:label "Vztah"@cs,
-        "Relation"@en .
+        "Relator"@en .
 
 ufo:relator-type a a-popis-dat:term ;
     rdfs:label "Typ vztahu"@cs,
-        "Relation Type"@en .
+        "Relation"@en .
