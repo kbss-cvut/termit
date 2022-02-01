@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.model;
 
-import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;

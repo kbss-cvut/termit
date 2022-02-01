@@ -178,15 +178,14 @@ public class SKOSExporter {
         LOG.trace("Exporting metadata of glossaries of referenced terms: {}.", glossariesToExport);
         try (final RepositoryConnection conn = repository.getConnection()) {
             final String queryString = Utils.loadQuery(GLOSSARY_EXPORT_QUERY);
-            glossariesToExport.forEach(gIri -> {
-                conn.getStatements(null, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), gIri).stream()
-                    .forEach(s -> {
-                        final GraphQuery gq = conn.prepareGraphQuery(queryString);
-                        gq.setBinding("vocabulary", s.getSubject());
-                        evaluateAndAddToModel(gq);
-                        resolvePrefixes(gIri, conn);
-                    });
-            });
+            glossariesToExport.forEach(gIri -> conn.getStatements(null, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), gIri)
+                                                   .stream()
+                                                   .forEach(s -> {
+                                                       final GraphQuery gq = conn.prepareGraphQuery(queryString);
+                                                       gq.setBinding("vocabulary", s.getSubject());
+                                                       evaluateAndAddToModel(gq);
+                                                       resolvePrefixes(gIri, conn);
+                                                   }));
         }
     }
 
