@@ -7,7 +7,7 @@
     <parent>
         <groupId>cz.cvut.kbss</groupId>
         <artifactId>kbss-project-parent</artifactId>
-        <version>0.0.8</version>
+        <version>0.0.9</version>
     </parent>
 
     <artifactId>termit</artifactId>
@@ -26,11 +26,11 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <org.springframework.boot.version>2.5.4</org.springframework.boot.version>
-        <org.springframework.version>5.3.9</org.springframework.version>
-        <org.springframework.security.version>5.5.2</org.springframework.security.version>
-        <org.springframework.data.version>2.5.0</org.springframework.data.version>
-        <org.hibernate.validator.version>6.2.0.Final</org.hibernate.validator.version>
+        <org.springframework.boot.version>2.6.3</org.springframework.boot.version>
+        <org.springframework.version>5.3.15</org.springframework.version>
+        <org.springframework.security.version>5.6.1</org.springframework.security.version>
+        <org.springframework.data.version>2.6.1</org.springframework.data.version>
+        <org.hibernate.validator.version>6.2.2.Final</org.hibernate.validator.version>
         <org.apache.tika.tika-core.version>1.26</org.apache.tika.tika-core.version>
         <cz.cvut.kbss.jopa.version>0.17.2</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.8.9</cz.cvut.kbss.jsonld.version>
