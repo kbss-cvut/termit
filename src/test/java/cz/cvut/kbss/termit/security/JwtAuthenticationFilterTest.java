@@ -11,6 +11,7 @@
  */
 package cz.cvut.kbss.termit.security;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -20,11 +21,11 @@ import cz.cvut.kbss.termit.util.Configuration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +38,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.servlet.FilterChain;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @Tag("security")
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
@@ -67,7 +68,7 @@ class JwtAuthenticationFilterTest {
         this.user = Generator.generateUserAccount();
         this.mockRequest = new MockHttpServletRequest();
         this.mockResponse = new MockHttpServletResponse();
-        this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class), new JwtUtils(config));
+        this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class), new JwtUtils(Environment.getObjectMapper(), config));
     }
 
     @Test
@@ -79,8 +80,11 @@ class JwtAuthenticationFilterTest {
         assertNotNull(value);
         assertTrue(value.startsWith(SecurityConstants.JWT_TOKEN_PREFIX));
         final String jwtToken = value.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
-        final Jws<Claims> jwt = Jwts.parser().setSigningKey(config.getJwt().getSecretKey())
-                .parseClaimsJws(jwtToken);
+        final Jws<Claims> jwt = Jwts.parserBuilder()
+                                    .setSigningKey(Keys.hmacShaKeyFor(config.getJwt().getSecretKey()
+                                                                            .getBytes(StandardCharsets.UTF_8)))
+                                    .build()
+                                    .parseClaimsJws(jwtToken);
         assertFalse(jwt.getBody().isEmpty());
     }
 }

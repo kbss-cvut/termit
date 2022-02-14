@@ -26,7 +26,7 @@ import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -46,6 +46,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.servlet.FilterChain;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
@@ -85,13 +87,16 @@ class JwtAuthorizationFilterTest {
 
     private ObjectMapper objectMapper;
 
+    private Key signingKey;
+
     private JwtAuthorizationFilter sut;
 
     @BeforeEach
     void setUp() {
         this.user = Generator.generateUserAccount();
-        this.jwtUtilsSpy = spy(new JwtUtils(config));
         this.objectMapper = Environment.getObjectMapper();
+        this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+        this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
         this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, securityUtilsMock, detailsServiceMock,
                 objectMapper);
     }
@@ -118,7 +123,8 @@ class JwtAuthorizationFilterTest {
                    .setId(user.getUri().toString())
                    .setIssuedAt(new Date())
                    .setExpiration(new Date(System.currentTimeMillis() + 10000))
-                   .signWith(SignatureAlgorithm.HS512, config.getJwt().getSecretKey()).compact();
+                   .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM)
+                   .compact();
     }
 
     @Test
@@ -163,7 +169,7 @@ class JwtAuthorizationFilterTest {
                                  .setId(user.getUri().toString())
                                  .setIssuedAt(new Date())
                                  .setExpiration(new Date(System.currentTimeMillis() - 10000))
-                                 .signWith(SignatureAlgorithm.HS512, config.getJwt().getSecretKey()).compact();
+                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
@@ -202,7 +208,7 @@ class JwtAuthorizationFilterTest {
         final String token = Jwts.builder().setSubject(user.getUsername())
                                  .setIssuedAt(new Date())
                                  .setExpiration(new Date(System.currentTimeMillis() + 10000))
-                                 .signWith(SignatureAlgorithm.HS512, config.getJwt().getSecretKey()).compact();
+                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
@@ -218,7 +224,7 @@ class JwtAuthorizationFilterTest {
                                  .setId(":1235")    // Not valid URI
                                  .setIssuedAt(new Date())
                                  .setExpiration(new Date(System.currentTimeMillis() + 10000))
-                                 .signWith(SignatureAlgorithm.HS512, config.getJwt().getSecretKey()).compact();
+                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
@@ -232,7 +238,7 @@ class JwtAuthorizationFilterTest {
                                  .setId(Generator.generateUri().toString())
                                  .setIssuedAt(new Date())
                                  .setExpiration(new Date(System.currentTimeMillis() + 10000))
-                                 .signWith(SignatureAlgorithm.HS512, config.getJwt().getSecretKey()).compact();
+                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
         when(detailsServiceMock.loadUserByUsername(anyString())).thenThrow(UsernameNotFoundException.class);
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
@@ -253,7 +259,7 @@ class JwtAuthorizationFilterTest {
                                  .setId(user.getUri().toString())
                                  .setIssuedAt(new Date())
                                  .setExpiration(new Date(System.currentTimeMillis() - 10000))
-                                 .signWith(SignatureAlgorithm.HS512, config.getJwt().getSecretKey()).compact();
+                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         verify(chainMock).doFilter(mockRequest, mockResponse);

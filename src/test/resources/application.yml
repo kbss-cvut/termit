@@ -13,7 +13,7 @@ termit:
         driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
         language: en
     jwt:
-        secretKey: TermItSecretKey
+        secretKey: TermItSecretKeyExtendedToBeLongEnoughForJWT
     namespace:
         vocabulary: http://onto.fel.cvut.cz/ontologies/slovnik/
         user: http://onto.fel.cvut.cz/ontologies/uzivatel/
