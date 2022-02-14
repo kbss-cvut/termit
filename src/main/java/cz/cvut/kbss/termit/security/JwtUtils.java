@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.IncompleteJwtException;
 import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
@@ -22,23 +23,35 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.jackson.io.JacksonDeserializer;
+import io.jsonwebtoken.jackson.io.JacksonSerializer;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecurityException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 public class JwtUtils {
 
-    private final Configuration config;
+    static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
+
+    private final ObjectMapper objectMapper;
+
+    private final Key key;
 
     @Autowired
-    public JwtUtils(Configuration config) {
-        this.config = config;
+    public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
+        this.objectMapper = objectMapper;
+        this.key = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -54,7 +67,8 @@ public class JwtUtils {
                    .setIssuedAt(issued)
                    .setExpiration(new Date(issued.getTime() + SecurityConstants.SESSION_TIMEOUT))
                    .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
-                   .signWith(SignatureAlgorithm.HS512, getJwtSecretKey())
+                   .signWith(key, SIGNATURE_ALGORITHM)
+                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
                    .compact();
     }
 
@@ -88,11 +102,12 @@ public class JwtUtils {
 
     private Claims getClaimsFromToken(String token) {
         try {
-            return Jwts.parser().setSigningKey(getJwtSecretKey())
-                       .parseClaimsJws(token).getBody();
+            return Jwts.parserBuilder().setSigningKey(key)
+                       .deserializeJsonWith(new JacksonDeserializer<>(objectMapper))
+                       .build().parseClaimsJws(token).getBody();
         } catch (MalformedJwtException | UnsupportedJwtException e) {
             throw new JwtException("Unable to parse the specified JWT.", e);
-        } catch (SignatureException e) {
+        } catch (SecurityException e) {
             throw new JwtException("Invalid signature of the specified JWT.", e);
         } catch (ExpiredJwtException e) {
             throw new TokenExpiredException(e.getMessage());
@@ -136,10 +151,8 @@ public class JwtUtils {
         claims.setIssuedAt(issuedAt);
         claims.setExpiration(new Date(issuedAt.getTime() + SecurityConstants.SESSION_TIMEOUT));
         return Jwts.builder().setClaims(claims)
-                   .signWith(SignatureAlgorithm.HS512, getJwtSecretKey()).compact();
-    }
-
-    private String getJwtSecretKey() {
-        return config.getJwt().getSecretKey();
+                   .signWith(key, SIGNATURE_ALGORITHM)
+                   .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
+                   .compact();
     }
 }
