@@ -13,7 +13,7 @@ An **asset** is an object of one of the main domain types managed by the system 
 ## Required Technologies
 
 - JDK 8 or newer
-- Apache Maven 3.x
+- Apache Maven 3.6.x or newer
 
 
 ## System Architecture
@@ -27,7 +27,7 @@ Both projects are built separately and can run separately.
 This section briefly lists the main technologies and principles used (or planned to be used) in the application.
 
 - Spring Boot 2, Spring Framework 5, Spring Security, Spring Data (paging, filtering)
-- Jackson 2.12
+- Jackson 2.13
 - [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson)*
 - [JOPA](https://github.com/kbss-cvut/jopa)
 - JUnit 5* (RT used 4), Mockito 3* (RT used 1), Hamcrest 2* (RT used 1)
@@ -55,7 +55,7 @@ Use it to verify input data. See `User` and its validation in `BaseRepositorySer
 ### Storage
 
 TermIt is preconfigured to run against a local GraphDB repository at `http://locahost:7200/repositories/termit`.
-This can be changed by updating `config.properties`.
+This can be changed by updating `application.yml`.
 
 
 ### User vs UserAccount
