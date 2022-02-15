@@ -145,17 +145,19 @@ necessary to load the ontological models into the repository.
 
 6. Deploy TermIt. It will generate a default admin account, write its credentials to standard output and into a hidden file in the current user's home.
 
-For proper functionality of the text analysis service, [Annotace](https://github.com/kbss-cvut/annotace) has to be running and its URL configured in `config.properties`.
+For proper functionality of the text analysis service, [Annotace](https://github.com/kbss-cvut/annotace) has to be running and its URL configured in `application.yml`.
 
 
 #### Repository Credentials
 
 Note that if the repository server to which TermIt is connecting is secured (**strongly recommended**), it is necessary to put the repository user 
-username and password into `config.properties` so that TermIt persistence can access the repository. The configuration parameter are described in the `ConfigParam` class,
+username and password into `application.yml` so that TermIt persistence can access the repository. The configuration parameter are in `Configuration.Repository` class,
 but here's a quick example:
 
 ```
-repository.url=http://localhost:7200/repositories/termit
-repository.username=termit
-repository.password=supersecretpassword
+termit:
+    repository:
+        url: http://localhost:7200/repositories/termit
+        username: termit
+        password: supersecretpassword
 ```
