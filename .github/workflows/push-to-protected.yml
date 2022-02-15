@@ -6,9 +6,9 @@ name: CI
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ master, development ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, development ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -25,10 +25,7 @@ jobs:
       with:
         java-version: '11'
         distribution: 'adopt'
-    # Runs a single command using the runners shell
-    - name: Compile
-      run: mvn compile
 
     # Runs a set of commands using the runners shell
     - name: Test
-      run: mvn test
+      run: mvn -B test
