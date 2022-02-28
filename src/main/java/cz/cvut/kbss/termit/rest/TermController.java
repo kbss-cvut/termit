@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
@@ -384,31 +383,6 @@ public class TermController extends BaseController {
         termService.persistChild(newTerm, parent);
         LOG.debug("Child term {} of parent {} created.", newTerm, parent);
         return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), parentIdFragment)).build();
-    }
-
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/assignments",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<TermAssignments> getAssignmentInfo(@PathVariable String vocabularyIdFragment,
-                                                   @PathVariable String termIdFragment,
-                                                   @RequestParam(name = QueryParams.NAMESPACE, required = false)
-                                                           Optional<String> namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        return termService.getAssignmentInfo(termService.getRequiredReference(termUri));
-    }
-
-    /**
-     * Gets assignment info for the specified Term.
-     * <p>
-     * This is a convenience method to allow access without using the Term's parent Vocabulary.
-     *
-     * @see #getAssignmentInfo(String, String, Optional)
-     */
-    @GetMapping(value = "/terms/{termIdFragment}/assignments", produces = {MediaType.APPLICATION_JSON_VALUE,
-                                                                           JsonLd.MEDIA_TYPE})
-    public List<TermAssignments> getAssignmentInfo(@PathVariable("termIdFragment") String termIdFragment,
-                                                   @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        return termService.getAssignmentInfo(termService.getRequiredReference(termUri));
     }
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {

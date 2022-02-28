@@ -18,10 +18,8 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.assignment.TermAssignment;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -44,7 +42,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -242,24 +239,6 @@ public class ResourceController extends BaseController {
                          @RequestBody List<URI> termIds) {
         final Resource resource = getResource(normalizedName, namespace);
         resourceService.setTags(resource, termIds);
-    }
-
-    @GetMapping(value = "/{normalizedName}/assignments", produces = {MediaType.APPLICATION_JSON_VALUE,
-            JsonLd.MEDIA_TYPE})
-    public List<TermAssignment> getAssignments(@PathVariable String normalizedName,
-                                               @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
-        final Resource resource = resourceService.getRequiredReference(identifier);
-        return resourceService.findAssignments(resource);
-    }
-
-    @GetMapping(value = "/{normalizedName}/assignments/aggregated", produces = {MediaType.APPLICATION_JSON_VALUE,
-            JsonLd.MEDIA_TYPE})
-    public List<ResourceTermAssignments> getAssignmentInfo(@PathVariable String normalizedName,
-                                                           @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
-        final Resource resource = resourceService.getRequiredReference(identifier);
-        return resourceService.getAssignmentInfo(resource);
     }
 
     /**
