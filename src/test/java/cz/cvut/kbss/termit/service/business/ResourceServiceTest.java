@@ -11,7 +11,6 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
@@ -285,13 +284,6 @@ class ResourceServiceTest {
     }
 
     @Test
-    void findAssignmentsDelegatesCallToRepositoryService() {
-        final Resource resource = Generator.generateResourceWithId();
-        sut.findAssignments(resource);
-        verify(resourceRepositoryService).findAssignments(resource);
-    }
-
-    @Test
     void getReferenceDelegatesCallToRepositoryService() {
         final URI uri = Generator.generateUri();
         sut.getReference(uri);
@@ -444,17 +436,6 @@ class ResourceServiceTest {
         final Resource resource = Generator.generateResourceWithId();
         assertFalse(sut.hasContent(resource));
         verify(documentManager, never()).exists(any(File.class));
-    }
-
-    @Test
-    void getAssignmentInfoRetrievesAssignmentDataForResource() {
-        final Resource resource = Generator.generateResourceWithId();
-        final ResourceTermAssignments rta = new ResourceTermAssignments(Generator.generateUri(), "test",
-                Generator.generateUri(), resource.getUri(), false);
-        when(resourceRepositoryService.getAssignmentInfo(resource)).thenReturn(Collections.singletonList(rta));
-        final List<ResourceTermAssignments> result = sut.getAssignmentInfo(resource);
-        assertEquals(Collections.singletonList(rta), result);
-        verify(resourceRepositoryService).getAssignmentInfo(resource);
     }
 
     @Test

@@ -16,10 +16,8 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
-import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.assignment.TermAssignment;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
@@ -136,36 +134,6 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
      */
     public List<Term> findTags(Resource resource) {
         return resourceDao.findTerms(resource);
-    }
-
-    /**
-     * Gets term assignments related to the specified resource.
-     * <p>
-     * This includes both assignments and occurrences.
-     *
-     * @param resource Target resource
-     * @return List of term assignments and occurrences
-     */
-    public List<TermAssignment> findAssignments(Resource resource) {
-        return assignmentService.findAll(resource);
-    }
-
-    /**
-     * Gets aggregated information about Terms assigned to the specified Resource.
-     * <p>
-     * Since retrieving all the assignments and occurrences related to the specified Resource may
-     * be time consuming and
-     * is rarely required, this method provides aggregate information in that the returned
-     * instances contain only
-     * distinct Terms assigned to/occurring in a Resource together with information about how
-     * many times they occur and
-     * whether they are suggested or asserted.
-     *
-     * @param resource Resource to get assignment info for
-     * @return Aggregated assignment information for Resource
-     */
-    public List<ResourceTermAssignments> getAssignmentInfo(Resource resource) {
-        return assignmentService.getResourceAssignmentInfo(resource);
     }
 
     /**
