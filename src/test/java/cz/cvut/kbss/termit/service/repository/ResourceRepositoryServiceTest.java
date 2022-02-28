@@ -26,7 +26,6 @@ import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
-import cz.cvut.kbss.termit.model.assignment.Target;
 import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -115,7 +114,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void removeDeletesTermAssignmentsOccurrencesAndAllTargetsAssociatedWithResource() {
+    void removeDeletesTermOccurrencesAndAllTargetsAssociatedWithResource() {
         enableRdfsInference(em);
         final File file = new File();
         file.setUri(Generator.generateUri());
@@ -126,16 +125,13 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         final Selector selector = new TextQuoteSelector("test");
         occurrenceTarget.setSelectors(Collections.singleton(selector));
         final TermOccurrence occurrence = new TermFileOccurrence(tOne.getUri(), occurrenceTarget);
-        final Target target = new Target(file);
         transactional(() -> {
             final Descriptor descriptor = new EntityDescriptor(occurrence.resolveContext());
             em.persist(occurrenceTarget, descriptor);
-            em.persist(target);
             em.persist(occurrence, descriptor);
         });
 
         sut.remove(file);
-        verifyInstancesDoNotExist(Vocabulary.s_c_cil, em);
         verifyInstancesDoNotExist(Vocabulary.s_c_vyskyt_termu, em);
         verifyInstancesDoNotExist(Vocabulary.s_c_cil_vyskytu, em);
         verifyInstancesDoNotExist(Vocabulary.s_c_selektor_text_quote, em);
@@ -284,7 +280,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary
-            result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class, vocabulary.getUri(),
+                result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class, vocabulary.getUri(),
                 descriptorFactory.vocabularyDescriptor(vocabulary));
         assertEquals(1, result.getDocument().getFiles().size());
         assertTrue(result.getDocument().getFiles().contains(fileTwo));
@@ -313,7 +309,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
         transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
 
-        assertThat(em.find( Document.class, document.getUri(), d ), nullValue());
+        assertThat(em.find(Document.class, document.getUri(), d), nullValue());
     }
 
     @Test
@@ -334,6 +330,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
         transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
 
-        assertThat(em.find( Document.class, document.getUri(), d ), equalTo(document));
+        assertThat(em.find(Document.class, document.getUri(), d), equalTo(document));
     }
 }

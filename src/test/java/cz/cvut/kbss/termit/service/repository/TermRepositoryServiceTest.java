@@ -387,6 +387,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void getAssignmentsInfoRetrievesAssignmentData() {
+        // TODO Replace with term occurrences
         final Term t = Generator.generateTermWithId();
         t.setVocabulary(vocabulary.getUri());
 
