@@ -38,8 +38,6 @@ import org.springframework.transaction.TransactionSystemException;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -115,15 +113,6 @@ class ResourceServiceTest {
     }
 
     @Test
-    void setTagsUpdatesResourceTagsViaRepositoryService() {
-        final Resource resource = Generator.generateResourceWithId();
-        final Set<URI> termUris =
-                IntStream.range(0, 5).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
-        sut.setTags(resource, termUris);
-        verify(resourceRepositoryService).setTags(resource, termUris);
-    }
-
-    @Test
     void removeRemovesResourceViaRepositoryService() {
         final Resource resource = Generator.generateResourceWithId();
         when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
@@ -142,13 +131,6 @@ class ResourceServiceTest {
         sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
         verify(documentManager).remove(resource);
-    }
-
-    @Test
-    void findTagsLoadsResourceTagsFromRepositoryService() {
-        final Resource resource = Generator.generateResourceWithId();
-        sut.findTags(resource);
-        verify(resourceRepositoryService).findTags(resource);
     }
 
     @Test

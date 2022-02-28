@@ -24,7 +24,6 @@ import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
-import cz.cvut.kbss.termit.model.assignment.TermAssignment;
 import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -392,58 +391,6 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void generateAnnotationsCreatesTermAssignmentsForOccurrencesWithSufficientScore() throws Exception {
-        final InputStream content = loadFile("data/rdfa-simple.html");
-        generateFile();
-        sut.generateAnnotations(content, file);
-        final List<TermAssignment> result = getAssignments();
-        assertEquals(1, result.size());
-        assertEquals("http://onto.fel.cvut.cz/ontologies/mpp/domains/uzemni-plan",
-                result.get(0).getTerm().toString());
-    }
-
-    private List<TermAssignment> getAssignments() {
-        return em.createNativeQuery("SELECT ?x WHERE { " +
-                "?x a ?assignment ." +
-                "FILTER NOT EXISTS {" +
-                "  ?x a ?occurrence ." +
-                "}}", TermAssignment.class)
-                 .setParameter("assignment", URI.create(Vocabulary.s_c_prirazeni_termu))
-                 .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu)).getResultList();
-    }
-
-    @Test
-    void generateAnnotationsDoesNotCreateAssignmentsForOccurrencesWithInsufficientScore() throws Exception {
-        config.getTextAnalysis().setTermAssignmentMinScore(Double.toString(Double.MAX_VALUE));
-        final InputStream content = loadFile("data/rdfa-simple.html");
-        generateFile();
-        sut.generateAnnotations(content, file);
-        final List<TermAssignment> result = getAssignments();
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void generateAnnotationsCreatesSingleAssignmentForMultipleOccurrencesOfTerm() throws Exception {
-        final InputStream content = loadFile("data/rdfa-simple-multiple-occurrences.html");
-        generateFile();
-        sut.generateAnnotations(content, file);
-        final List<TermAssignment> result = getAssignments();
-        assertEquals(1, result.size());
-        assertEquals("http://onto.fel.cvut.cz/ontologies/mpp/domains/uzemni-plan",
-                result.get(0).getTerm().toString());
-    }
-
-    @Test
-    void generateAnnotationsCreatesAssignmentsWithTypeSuggestedForOccurrencesWithSufficientScore() throws Exception {
-        final InputStream content = loadFile("data/rdfa-simple.html");
-        generateFile();
-        sut.generateAnnotations(content, file);
-        final List<TermAssignment> result = getAssignments();
-        assertFalse(result.isEmpty());
-        result.forEach(ta -> assertTrue(ta.getTypes().contains(Vocabulary.s_c_navrzene_prirazeni_termu)));
-    }
-
-    @Test
     void repeatedAnnotationGenerationDoesNotIncreaseTotalNumberOfTermOccurrencesForResource() throws Exception {
         generateFile();
         sut.generateAnnotations(loadFile("data/rdfa-simple.html"), file);
@@ -486,7 +433,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void generateAnnotationsCreatesAnnotationsWithSuggestedStateForoccurrencesInTermDefinition() {
+    void generateAnnotationsCreatesAnnotationsWithSuggestedStateForOccurrencesInTermDefinition() {
         // This is the term in whose definition were discovered by text analysis is their target
         final Term source = Generator.generateTermWithId();
         sut.generateAnnotations(loadFile("data/rdfa-simple.html"), source);

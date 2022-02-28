@@ -17,6 +17,7 @@ import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.service.repository.TermOccurrenceService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;

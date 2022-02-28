@@ -25,7 +25,10 @@ import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.Target;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
@@ -44,7 +47,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -71,21 +73,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         this.user = Generator.generateUserWithId();
         transactional(() -> em.persist(user));
         Environment.setCurrentUser(user);
-    }
-
-    @Test
-    void findTermsReturnsEmptyListWhenNoTermsAreFoundForResource() {
-        final Resource resource = generateResource();
-
-        final List<Term> result = sut.findTags(resource);
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-    }
-
-    private Resource generateResource() {
-        final Resource resource = Generator.generateResourceWithId();
-        transactional(() -> em.persist(resource));
-        return resource;
     }
 
     private Term generateTermWithUriAndPersist() {

@@ -17,7 +17,6 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -66,7 +65,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ResourceControllerTest extends BaseControllerTestRunner {
 
     private static final String PATH = "/resources";
-    private static final String IRI_PARAM = "iri";
 
     private static final String RESOURCE_NAME = "test-resource";
     private static final String RESOURCE_NAMESPACE = Environment.BASE_URI + "/";
@@ -94,42 +92,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @AfterEach
     void tearDown() {
         Environment.resetCurrentUser();
-    }
-
-    @Test
-    void getTermsForNKODReturnsTermsAssignedToResourceWithSpecifiedIri() throws Exception {
-        final Resource resource = Generator.generateResourceWithId();
-        when(resourceServiceMock.getRequiredReference(resource.getUri())).thenReturn(resource);
-        final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
-                .collect(Collectors.toList());
-        when(resourceServiceMock.findTags(resource)).thenReturn(terms);
-
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/resource/terms").param(IRI_PARAM, resource.getUri().toString()))
-                .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
-        });
-        assertEquals(terms, result);
-        verify(resourceServiceMock).findTags(resource);
-    }
-
-    @Test
-    void getTermsReturnsTermsAssignedToResource() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setUri(RESOURCE_URI);
-        resource.setLabel(RESOURCE_NAME);
-        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.getRequiredReference(RESOURCE_URI)).thenReturn(resource);
-        final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
-                .collect(Collectors.toList());
-        when(resourceServiceMock.findTags(resource)).thenReturn(terms);
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/" + RESOURCE_NAME + "/terms").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
-        });
-        assertEquals(terms, result);
-        verify(resourceServiceMock).findTags(resource);
     }
 
     @Test
@@ -222,22 +184,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isConflict()).andReturn();
         final ErrorInfo errorInfo = readValue(mvcResult, ErrorInfo.class);
         assertThat(errorInfo.getMessage(), containsString("does not match the ID of the specified entity"));
-    }
-
-    @Test
-    void setTermsPassesNewTermUrisToService() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setLabel(RESOURCE_NAME);
-        resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME)).thenReturn(resource.getUri());
-        when(resourceServiceMock.findRequired(resource.getUri())).thenReturn(resource);
-        final List<URI> uris = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri())
-                .collect(Collectors.toList());
-        mockMvc.perform(put(PATH + "/" + RESOURCE_NAME + "/terms").content(toJson(uris))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-        verify(resourceServiceMock).findRequired(resource.getUri());
-        verify(resourceServiceMock).setTags(resource, uris);
     }
 
     @Test

@@ -16,7 +16,6 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -36,22 +35,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Validator;
-import java.net.URI;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
 @CacheConfig(cacheNames = "resources")
 @Service
 public class ResourceRepositoryService extends BaseAssetRepositoryService<Resource>
-    implements SupportsLastModification {
+        implements SupportsLastModification {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResourceRepositoryService.class);
 
     private final ResourceDao resourceDao;
     private final TermOccurrenceDao termOccurrenceDao;
-
-    private final TermAssignmentRepositoryService assignmentService;
 
     private final IdentifierResolver idResolver;
 
@@ -60,13 +55,11 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     @Autowired
     public ResourceRepositoryService(Validator validator, ResourceDao resourceDao,
                                      TermOccurrenceDao termOccurrenceDao,
-                                     TermAssignmentRepositoryService assignmentService,
                                      IdentifierResolver idResolver,
                                      Configuration config) {
         super(validator);
         this.resourceDao = resourceDao;
         this.termOccurrenceDao = termOccurrenceDao;
-        this.assignmentService = assignmentService;
         this.idResolver = idResolver;
         this.cfgNamespace = config.getNamespace();
     }
@@ -105,7 +98,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(
-                idResolver.generateIdentifier(cfgNamespace.getResource(), instance.getLabel()));
+                    idResolver.generateIdentifier(cfgNamespace.getResource(), instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
     }
@@ -126,33 +119,11 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         resourceDao.persist(resource, vocabulary);
     }
 
-    /**
-     * Gets terms the specified resource is annotated with.
-     *
-     * @param resource Annotated resource
-     * @return List of terms annotating the specified resource
-     */
-    public List<Term> findTags(Resource resource) {
-        return resourceDao.findTerms(resource);
-    }
-
-    /**
-     * Annotates a resource with vocabulary terms.
-     *
-     * @param resource Resource to be annotated
-     * @param iTerms   Terms to be used for annotation
-     */
-    @Transactional
-    public void setTags(Resource resource, final Collection<URI> iTerms) {
-        assignmentService.setOnResource(resource, iTerms);
-    }
-
     @Override
     protected void preRemove(Resource instance) {
         LOG.trace("Removing term occurrences in resource {} which is about to be removed.",
-            instance);
+                instance);
         termOccurrenceDao.removeAll(instance);
-        assignmentService.removeAll(instance);
         removeFromParentDocumentIfFile(instance);
     }
 

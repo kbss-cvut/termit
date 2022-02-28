@@ -1,17 +1,17 @@
 /**
  * TermIt
  * Copyright (C) 2019 Czech Technical University in Prague
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.exception.TermItException;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -81,7 +80,8 @@ public class ResourceController extends BaseController {
 
     @GetMapping(value = "/{normalizedName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Resource getResource(@PathVariable String normalizedName,
-                                @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                                @RequestParam(name = QueryParams.NAMESPACE,
+                                              required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
         return resourceService.findRequired(identifier);
     }
@@ -139,7 +139,8 @@ public class ResourceController extends BaseController {
 
     @RequestMapping(value = "/{normalizedName}/content", method = RequestMethod.HEAD)
     public ResponseEntity<Void> hasContent(@PathVariable String normalizedName,
-                                           @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                                           @RequestParam(name = QueryParams.NAMESPACE,
+                                                         required = false) Optional<String> namespace) {
         final Resource r = getResource(normalizedName, namespace);
         final boolean hasContent = resourceService.hasContent(r);
         if (!hasContent) {
@@ -152,7 +153,8 @@ public class ResourceController extends BaseController {
 
     @GetMapping(value = "/{normalizedName}/files", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<File> getFiles(@PathVariable String normalizedName,
-                               @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                               @RequestParam(name = QueryParams.NAMESPACE,
+                                             required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getResource()), normalizedName);
         return resourceService.getFiles(resourceService.getRequiredReference(identifier));
     }
@@ -164,7 +166,8 @@ public class ResourceController extends BaseController {
     @PostMapping(value = "/{normalizedName}/files", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> addFileToDocument(@PathVariable String normalizedName,
-                                                  @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+                                                  @RequestParam(name = QueryParams.NAMESPACE,
+                                                                required = false) Optional<String> namespace,
                                                   @RequestBody File file) {
         final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
         resourceService.addFileToDocument(resourceService.findRequired(identifier), file);
@@ -181,7 +184,8 @@ public class ResourceController extends BaseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeFileFromDocument(@PathVariable String resourceName,
-                                       @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+                                       @RequestParam(name = QueryParams.NAMESPACE,
+                                                     required = false) Optional<String> namespace,
                                        @PathVariable String fileName) {
         final URI fileIdentifier = resolveIdentifier(resourceNamespace(namespace), fileName);
         final File file = (File) resourceService.findRequired(fileIdentifier);
@@ -201,8 +205,10 @@ public class ResourceController extends BaseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void runTextAnalysis(@PathVariable String normalizedName,
-                                @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-                                @RequestParam(name = "vocabulary", required = false, defaultValue = "") Set<URI> vocabularies) {
+                                @RequestParam(name = QueryParams.NAMESPACE,
+                                              required = false) Optional<String> namespace,
+                                @RequestParam(name = "vocabulary", required = false,
+                                              defaultValue = "") Set<URI> vocabularies) {
         final Resource resource = getResource(normalizedName, namespace);
         resourceService.runTextAnalysis(resource, vocabularies);
         LOG.debug("Text analysis finished for resource {}.", resource);
@@ -217,28 +223,12 @@ public class ResourceController extends BaseController {
      * @return Text analysis record
      */
     @GetMapping(value = "/{normalizedName}/text-analysis/records/latest", produces = {MediaType.APPLICATION_JSON_VALUE,
-            JsonLd.MEDIA_TYPE})
+                                                                                      JsonLd.MEDIA_TYPE})
     public TextAnalysisRecord getLatestTextAnalysisRecord(@PathVariable String normalizedName,
-                                                          @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                                                          @RequestParam(name = QueryParams.NAMESPACE,
+                                                                        required = false) Optional<String> namespace) {
         final Resource resource = getResource(normalizedName, namespace);
         return resourceService.findLatestTextAnalysisRecord(resource);
-    }
-
-    @GetMapping(value = "/{normalizedName}/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getTerms(@PathVariable String normalizedName,
-                               @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
-        return resourceService.findTags(resourceService.getRequiredReference(identifier));
-    }
-
-    @PutMapping(value = "/{normalizedName}/terms", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void setTerms(@PathVariable String normalizedName,
-                         @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-                         @RequestBody List<URI> termIds) {
-        final Resource resource = getResource(normalizedName, namespace);
-        resourceService.setTags(resource, termIds);
     }
 
     /**
@@ -246,7 +236,8 @@ public class ResourceController extends BaseController {
      */
     @GetMapping(value = "/{fragment}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(@PathVariable String fragment,
-                                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                                                 @RequestParam(name = QueryParams.NAMESPACE,
+                                                               required = false) Optional<String> namespace) {
         final Resource resource = resourceService
                 .getRequiredReference(resolveIdentifier(resourceNamespace(namespace), fragment));
         return resourceService.getChanges(resource);
@@ -254,30 +245,21 @@ public class ResourceController extends BaseController {
 
     /**
      * Removes a resource.
-     * @see ResourceService#remove(Resource) for details.
      *
      * @param fragment  Normalized name used to identify the resource,
      * @param namespace Namespace used for resource identifier resolution. Optional, if not
      *                  specified, the configured namespace is used.
+     * @see ResourceService#remove(Resource) for details.
      */
     @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeResource(@PathVariable String fragment,
-                               @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                               @RequestParam(name = QueryParams.NAMESPACE,
+                                             required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(resourceNamespace(namespace), fragment);
         final Resource toRemove = resourceService.getRequiredReference(identifier);
         resourceService.remove(toRemove);
         LOG.debug("Resource {} removed.", toRemove);
-    }
-
-    //
-    // NKOD API
-    //
-
-    @PreAuthorize("permitAll()")
-    @GetMapping(value = "/resource/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getTerms(@RequestParam(name = "iri") URI resourceId) {
-        return resourceService.findTags(resourceService.getRequiredReference(resourceId));
     }
 }
