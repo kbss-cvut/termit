@@ -3,21 +3,20 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.occurrence.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.occurrence.TermOccurrences;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.occurrence.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.occurrence.TermDefinitionSource;
-import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
-import cz.cvut.kbss.termit.service.repository.TermOccurrenceService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -57,7 +56,7 @@ class TermServiceTest {
     private TextAnalysisService textAnalysisService;
 
     @Mock
-    private TermOccurrenceService termOccurrenceService;
+    private TermOccurrenceService termOccurrenceRepositoryService;
 
     @Mock
     private ChangeRecordService changeRecordService;
@@ -320,7 +319,7 @@ class TermServiceTest {
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
-        verify(termOccurrenceService).persistOccurrence(definitionSource);
+        verify(termOccurrenceRepositoryService).persistOccurrence(definitionSource);
     }
 
     @Test
@@ -335,8 +334,8 @@ class TermServiceTest {
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
-        verify(termOccurrenceService).removeOccurrence(existingSource);
-        verify(termOccurrenceService).persistOccurrence(definitionSource);
+        verify(termOccurrenceRepositoryService).removeOccurrence(existingSource);
+        verify(termOccurrenceRepositoryService).persistOccurrence(definitionSource);
     }
 
     @Test
@@ -466,7 +465,7 @@ class TermServiceTest {
         term.setDefinitionSource(defSource);
 
         sut.removeTermDefinitionSource(term);
-        verify(termOccurrenceService).removeOccurrence(defSource);
+        verify(termOccurrenceRepositoryService).removeOccurrence(defSource);
     }
 
     @Test
@@ -474,6 +473,6 @@ class TermServiceTest {
         final Term term = generateTermWithId();
 
         sut.removeTermDefinitionSource(term);
-        verify(termOccurrenceService, never()).removeOccurrence(any());
+        verify(termOccurrenceRepositoryService, never()).removeOccurrence(any());
     }
 }

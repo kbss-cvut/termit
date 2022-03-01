@@ -449,33 +449,6 @@ public class TermController extends BaseController {
         LOG.debug("Definition source of term {} removed.", term);
     }
 
-    /**
-     * Removes an occurrence of a term.
-     */
-    @DeleteMapping(value = "occurrence/{normalizedName}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void removeOccurrence(@PathVariable String normalizedName,
-                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
-        termService.removeOccurrence(termService.getRequiredOccurrenceReference(identifier));
-        LOG.debug("Occurrence with identifier {} removed.", identifier);
-    }
-
-    /**
-     * Approves an occurrence of a term.
-     */
-    @PutMapping(value = "occurrence/{normalizedName}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void approveOccurrence(@PathVariable String normalizedName,
-                                  @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
-
-        termService.approveOccurrence(identifier);
-        LOG.debug("Occurrence with identifier {} approved.", identifier);
-    }
-
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/history",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,

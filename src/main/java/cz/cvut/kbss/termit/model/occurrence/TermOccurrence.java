@@ -95,7 +95,10 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
 
     @Override
     public String toString() {
-        return "TermOccurrence - " + super.toString();
+        return "TermOccurrence{<" +
+                getUri() +
+                ">, term=<" + term +
+                ">, target=" + target + '}';
     }
 
     /**

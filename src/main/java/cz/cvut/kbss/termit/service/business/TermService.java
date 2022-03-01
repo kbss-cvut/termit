@@ -1,20 +1,19 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.occurrence.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.occurrence.TermOccurrences;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.occurrence.TermDefinitionSource;
-import cz.cvut.kbss.termit.model.occurrence.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.occurrence.TermDefinitionSource;
+import cz.cvut.kbss.termit.model.occurrence.TermOccurrence;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
-import cz.cvut.kbss.termit.service.repository.TermOccurrenceService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -469,27 +468,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Gets a reference to a Term occurrence with the specified identifier.
+     * Gets terms not occurring in any resources or other terms definitions.
      *
-     * @param id Term occurrence identifier
-     * @return Matching Term occurrence reference
-     */
-    public TermOccurrence getRequiredOccurrenceReference(URI id) {
-        return termOccurrenceService.getRequiredReference(id);
-    }
-
-    public void approveOccurrence(URI identifier) {
-        termOccurrenceService.approveOccurrence(identifier);
-    }
-
-    public void removeOccurrence(TermOccurrence occurrence) {
-        termOccurrenceService.removeOccurrence(occurrence);
-    }
-
-    /**
-     * Gets unused terms (in annotations/occurences).
-     *
-     * @return List of terms
+     * @return List of term identifiers
      */
     public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);

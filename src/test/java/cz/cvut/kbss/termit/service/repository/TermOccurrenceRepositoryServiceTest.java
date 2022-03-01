@@ -38,13 +38,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class TermOccurrenceServiceTest extends BaseServiceTestRunner {
+class TermOccurrenceRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private EntityManager em;
 
     @Autowired
-    private TermOccurrenceService sut;
+    private TermOccurrenceRepositoryService sut;
 
     private User user;
 

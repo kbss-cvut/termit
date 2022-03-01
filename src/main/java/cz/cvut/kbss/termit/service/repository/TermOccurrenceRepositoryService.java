@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.occurrence.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
+import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,50 +30,50 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.Objects;
-import java.util.Optional;
 
 import static cz.cvut.kbss.termit.util.Constants.SCHEDULING_PATTERN;
 
 @Service
-public class TermOccurrenceService {
+public class TermOccurrenceRepositoryService implements TermOccurrenceService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TermOccurrenceService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TermOccurrenceRepositoryService.class);
 
     private final TermOccurrenceDao termOccurrenceDao;
 
     @Autowired
-    public TermOccurrenceService(TermOccurrenceDao termOccurrenceDao) {
+    public TermOccurrenceRepositoryService(TermOccurrenceDao termOccurrenceDao) {
         this.termOccurrenceDao = termOccurrenceDao;
     }
 
+    @Override
+    public TermOccurrence getRequiredReference(URI id) {
+        return termOccurrenceDao.getReference(id).orElseThrow(() ->
+                NotFoundException.create(TermOccurrence.class.getSimpleName(), id)
+        );
+    }
+
     @Transactional
+    @Override
     public void persistOccurrence(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
         termOccurrenceDao.persist(occurrence);
     }
 
     @Transactional
-    public void approveOccurrence(URI identifier) {
-        Objects.requireNonNull(identifier);
-        LOG.trace("approve term occurrence with identifier {}", identifier);
-        Optional<TermOccurrence> occurrence = termOccurrenceDao.find(identifier);
-        occurrence.ifPresent(o -> {
-            o.removeType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
-            termOccurrenceDao.update(o);
-        });
+    @Override
+    public void approveOccurrence(TermOccurrence occurrence) {
+        Objects.requireNonNull(occurrence);
+        LOG.trace("Approving term occurrence {}", occurrence);
+        occurrence.removeType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
+        termOccurrenceDao.update(occurrence);
     }
 
     @Transactional
+    @Override
     public void removeOccurrence(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
-        LOG.trace("remove term occurrence with identifier {}", occurrence);
+        LOG.trace("Removing term occurrence {}.", occurrence);
         termOccurrenceDao.remove(occurrence);
-    }
-
-    public TermOccurrence getRequiredReference(URI id) {
-        return termOccurrenceDao.getReference(id).orElseThrow(() ->
-                NotFoundException.create(TermOccurrence.class.getSimpleName(), id)
-        );
     }
 
     /**
