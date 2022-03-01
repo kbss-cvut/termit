@@ -15,7 +15,9 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
@@ -1061,5 +1063,39 @@ class TermDaoTest extends BaseDaoTestRunner {
 
         final List<TermDto> result = sut.findAllRoots(vocabulary, PageRequest.of(0, rootTerms.size() / 2), Collections.singleton(toInclude.getUri()));
         assertEquals(1, (int) result.stream().filter(t -> t.getUri().equals(toInclude.getUri())).count());
+    }
+
+    @Test
+    void findAllUnusedReturnsUrisOfTermsWithoutOccurrences() {
+        cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term term1 = Generator.generateTermWithId();
+        term1.setVocabulary(vocabulary.getUri());
+        final Term term2 = Generator.generateTermWithId();
+        term2.setVocabulary(term1.getVocabulary());
+        final File file = Generator.generateFileWithId("test.html");
+        final Document document = getDocument(file);
+        final TermOccurrence to = Generator.generateTermOccurrence(term2, file, false);
+
+        transactional(() -> {
+            enableRdfsInference(em);
+            em.persist(vocabulary);
+            em.persist(file);
+            em.persist(document);
+            em.persist(to);
+            em.persist(to.getTarget());
+            em.persist(term1);
+            em.persist(term2);
+        });
+
+        final List<URI> result = sut.findAllUnused(vocabulary);
+        assertEquals(1, result.size());
+        assertEquals(term1.getUri(), result.get(0));
+    }
+
+    private Document getDocument(final File... files) {
+        final Document document = Generator.generateDocumentWithId();
+        document.setLabel("Doc");
+        Arrays.stream(files).forEach(document::addFile);
+        return document;
     }
 }
