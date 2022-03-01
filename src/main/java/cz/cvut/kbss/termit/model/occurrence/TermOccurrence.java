@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.model.assignment;
+package cz.cvut.kbss.termit.model.occurrence;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import cz.cvut.kbss.jopa.model.annotations.*;

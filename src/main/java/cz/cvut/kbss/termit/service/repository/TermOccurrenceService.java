@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.occurrence.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

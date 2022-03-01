@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.dto.assignment;
-
+package cz.cvut.kbss.termit.dto.occurrence;
 
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
@@ -25,53 +24,65 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import java.net.URI;
 import java.util.Objects;
 
+import static cz.cvut.kbss.termit.dto.occurrence.TermOccurrences.COUNT_PROPERTY;
+
 /**
  * Represents aggregated information about a Term occurring in a Resource.
  * <p>
- * It contains info about the Resource - identifier and label - and how many times the Term occurs in it.
+ * It contains info about the Term - identifier, label, vocabulary identifier - and how many times it occurs in the
+ * Resource.
  */
-@SparqlResultSetMapping(name = "TermOccurrences", classes = @ConstructorResult(
-        targetClass = TermOccurrences.class,
+@SparqlResultSetMapping(name = "ResourceTermOccurrences", classes = @ConstructorResult(
+        targetClass = ResourceTermOccurrences.class,
         variables = {
                 @VariableResult(name = "term", type = URI.class),
-                @VariableResult(name = "resource", type = URI.class),
                 @VariableResult(name = "label", type = String.class),
+                @VariableResult(name = "vocabulary", type = URI.class),
+                @VariableResult(name = "res", type = URI.class),
                 @VariableResult(name = "cnt", type = Integer.class),
-                @VariableResult(name = "type", type = String.class),
                 @VariableResult(name = "suggested", type = Boolean.class)
         }
 ))
-public class TermOccurrences extends AbstractTermOccurrenceInfo {
-
-    public static final String COUNT_PROPERTY = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/počet";
+public class ResourceTermOccurrences extends AbstractTermOccurrenceInfo {
 
     @OWLAnnotationProperty(iri = RDFS.LABEL)
-    private String resourceLabel;
+    private String termLabel;
+
+    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
+    private URI vocabulary;
 
     @OWLDataProperty(iri = COUNT_PROPERTY)
     private Integer count;
 
-    public TermOccurrences() {
+    public ResourceTermOccurrences() {
     }
 
-    public TermOccurrences(URI term, URI resource, String resourceLabel, Integer count, String type,
-                           Boolean suggested) {
+    public ResourceTermOccurrences(URI term, String termLabel, URI vocabulary, URI resource, Integer count,
+                                   Boolean suggested) {
         super(term, resource);
-        this.resourceLabel = resourceLabel;
+        this.termLabel = termLabel;
+        this.vocabulary = vocabulary;
         this.count = count;
-        addType(type);
         addType(Vocabulary.s_c_vyskyt_termu);
         if (suggested) {
             addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
         }
     }
 
-    public String getResourceLabel() {
-        return resourceLabel;
+    public String getTermLabel() {
+        return termLabel;
     }
 
-    public void setResourceLabel(String resourceLabel) {
-        this.resourceLabel = resourceLabel;
+    public void setTermLabel(String termLabel) {
+        this.termLabel = termLabel;
+    }
+
+    public URI getVocabulary() {
+        return vocabulary;
+    }
+
+    public void setVocabulary(URI vocabulary) {
+        this.vocabulary = vocabulary;
     }
 
     public Integer getCount() {
@@ -87,27 +98,26 @@ public class TermOccurrences extends AbstractTermOccurrenceInfo {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TermOccurrences)) {
+        if (!(o instanceof ResourceTermOccurrences)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        TermOccurrences that = (TermOccurrences) o;
-        return Objects.equals(resourceLabel, that.resourceLabel) && Objects.equals(count, that.count);
+        ResourceTermOccurrences that = (ResourceTermOccurrences) o;
+        return Objects.equals(termLabel, that.termLabel) && Objects.equals(vocabulary, that.vocabulary) && Objects.equals(count, that.count);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), resourceLabel, count);
+        return Objects.hash(super.hashCode(), termLabel, vocabulary, count);
     }
 
     @Override
     public String toString() {
-        return "TermOccurrences{" +
+        return "ResourceTermOccurrences{" +
                 super.toString() +
-                ", resourceLabel='" + resourceLabel +
-                "', count=" + count +
-                "}";
+                ", count=" + count +
+                '}';
     }
 }

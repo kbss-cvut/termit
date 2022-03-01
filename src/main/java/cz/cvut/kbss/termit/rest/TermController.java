@@ -6,8 +6,8 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
-import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.occurrence.TermDefinitionSource;
+import cz.cvut.kbss.termit.model.occurrence.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
@@ -306,7 +306,7 @@ public class TermController extends BaseController {
     }
 
     /**
-     * Returns terms not used in annotations/occurences of a resource for a given vocabulary
+     * Returns terms not occurring in any document content or definition.
      */
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/unused-terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
