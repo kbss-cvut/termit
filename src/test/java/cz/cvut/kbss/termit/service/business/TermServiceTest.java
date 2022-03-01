@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -133,14 +133,14 @@ class TermServiceTest {
     }
 
     @Test
-    void getAssignmentInfoRetrievesTermAssignmentInfoFromRepositoryService() {
+    void getOccurrenceInfoRetrievesTermOccurrenceInfoFromRepositoryService() {
         final Term term = generateTermWithId();
-        final List<TermAssignments> assignments = Collections
-                .singletonList(new TermAssignments(term.getUri(), Generator.generateUri(), "test", true));
-        when(termRepositoryService.getAssignmentsInfo(term)).thenReturn(assignments);
-        final List<TermAssignments> result = sut.getAssignmentInfo(term);
-        assertEquals(assignments, result);
-        verify(termRepositoryService).getAssignmentsInfo(term);
+        final List<TermOccurrences> occurrences = Collections
+                .singletonList(new TermOccurrences(term.getUri(), Generator.generateUri(), "test", 1, cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
+        when(termRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
+        final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
+        assertEquals(occurrences, result);
+        verify(termRepositoryService).getOccurrenceInfo(term);
     }
 
     @Test

@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
@@ -311,14 +311,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Gets aggregated info about assignments and occurrences of the specified Term.
+     * Gets aggregated info about occurrences of the specified Term.
      *
-     * @param term Term whose assignments and occurrences to retrieve
-     * @return List of term assignment describing instances
+     * @param term Term whose occurrences to retrieve
+     * @return List of term occurrences describing instances
      */
-    public List<TermAssignments> getAssignmentInfo(Term term) {
+    public List<TermOccurrences> getOccurrenceInfo(Term term) {
         Objects.requireNonNull(term);
-        return repositoryService.getAssignmentsInfo(term);
+        return repositoryService.getOccurrenceInfo(term);
     }
 
     /**
