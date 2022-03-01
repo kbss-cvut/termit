@@ -663,6 +663,17 @@ class TermDaoTest extends BaseDaoTestRunner {
         return parent;
     }
 
+    @Test
+    void findAllRootsOrdersResultsInLexicographicOrderForCzech() {
+        configuration.getPersistence().setLanguage("cs");
+        persistTerms("cs", "Německo", "Čína", "Španělsko", "Sýrie");
+        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        assertEquals(4, result.size());
+        assertEquals(Arrays
+                .asList("Čína", "Německo", "Sýrie", "Španělsko"), result.stream().map(r -> r.getLabel().get("cs"))
+                                                                        .collect(Collectors.toList()));
+    }
+
     private void persistTerms(String lang, String... labels) {
         transactional(() -> Arrays.stream(labels).forEach(label -> {
             final Term parent = Generator.generateTermWithId();
@@ -673,17 +684,6 @@ class TermDaoTest extends BaseDaoTestRunner {
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
             addTermInVocabularyRelationship(parent, vocabulary.getUri());
         }));
-    }
-
-    @Test
-    void findAllRootsOrdersResultsInLexicographicOrderForCzech() {
-        configuration.getPersistence().setLanguage("cs");
-        persistTerms("cs", "Německo", "Čína", "Španělsko", "Sýrie");
-        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
-        assertEquals(4, result.size());
-        assertEquals(Arrays
-                .asList("Čína", "Německo", "Sýrie", "Španělsko"), result.stream().map(r -> r.getLabel().get("cs"))
-                                                                        .collect(Collectors.toList()));
     }
 
     @Test

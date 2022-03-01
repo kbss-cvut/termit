@@ -363,7 +363,6 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
     private Document getDocument(final File... files) {
         final Document document = Generator.generateDocumentWithId();
-        document.setLabel("Doc");
         Arrays.stream(files).forEach(document::addFile);
         return document;
     }

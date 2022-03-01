@@ -148,6 +148,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
     public List<TermOccurrences> getOccurrenceInfo(Term term) {
         return em.createNativeQuery("SELECT ?term ?resource ?label (count(?x) as ?cnt) ?type ?suggested WHERE {" +
                                  "BIND (?t AS ?term)" +
+                                 "{" +
                                  "  ?x a ?suggestedOccurrence ." +
                                  "  BIND (true as ?suggested)" +
                                  "} UNION {" +

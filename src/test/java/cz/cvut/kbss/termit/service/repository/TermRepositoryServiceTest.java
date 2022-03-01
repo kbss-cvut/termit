@@ -26,11 +26,9 @@ import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.*;
-import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
-import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
@@ -393,9 +391,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         t.setVocabulary(vocabulary.getUri());
 
         final File file = Generator.generateFileWithId("test.html");
-        final TermOccurrence occurrence = new TermFileOccurrence(t.getUri(), new FileOccurrenceTarget(file));
-        occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+        final Document document = Generator.generateDocumentWithId();
+        document.addFile(file);
+        final TermOccurrence occurrence = Generator.generateTermOccurrence(t, file, false);
         transactional(() -> {
+            enableRdfsInference(em);
+            em.persist(document);
             em.persist(t);
             em.persist(file);
             em.persist(occurrence.getTarget());
@@ -405,8 +406,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final List<TermOccurrences> result = sut.getOccurrenceInfo(t);
         assertEquals(1, result.size());
         assertEquals(t.getUri(), result.get(0).getTerm());
-        assertEquals(file.getUri(), result.get(0).getResource());
-        assertEquals(file.getLabel(), result.get(0).getResourceLabel());
+        assertEquals(document.getUri(), result.get(0).getResource());
+        assertEquals(document.getLabel(), result.get(0).getResourceLabel());
     }
 
     @Test
