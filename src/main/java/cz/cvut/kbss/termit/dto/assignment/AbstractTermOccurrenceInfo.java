@@ -26,7 +26,7 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
 
-abstract class AbstractAssignmentsInfo implements HasTypes {
+abstract class AbstractTermOccurrenceInfo implements HasTypes {
 
     @OWLObjectProperty(iri = Vocabulary.s_p_je_prirazenim_termu)
     private URI term;
@@ -37,10 +37,10 @@ abstract class AbstractAssignmentsInfo implements HasTypes {
     @Types
     private Set<String> types;
 
-    public AbstractAssignmentsInfo() {
+    public AbstractTermOccurrenceInfo() {
     }
 
-    protected AbstractAssignmentsInfo(URI term, URI resource) {
+    protected AbstractTermOccurrenceInfo(URI term, URI resource) {
         this.term = term;
         this.resource = resource;
     }
@@ -76,10 +76,10 @@ abstract class AbstractAssignmentsInfo implements HasTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractAssignmentsInfo)) {
+        if (!(o instanceof AbstractTermOccurrenceInfo)) {
             return false;
         }
-        AbstractAssignmentsInfo that = (AbstractAssignmentsInfo) o;
+        AbstractTermOccurrenceInfo that = (AbstractTermOccurrenceInfo) o;
         return Objects.equals(term, that.term) &&
                 Objects.equals(resource, that.resource) &&
                 Objects.equals(types, that.types);

@@ -41,7 +41,7 @@ import java.util.Objects;
                 @VariableResult(name = "suggested", type = Boolean.class)
         }
 ))
-public class TermOccurrences extends AbstractAssignmentsInfo {
+public class TermOccurrences extends AbstractTermOccurrenceInfo {
 
     public static final String COUNT_PROPERTY = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/počet";
 
