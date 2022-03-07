@@ -50,7 +50,7 @@ import java.util.*;
  */
 @Service
 public class ResourceService
-        implements CrudService<Resource>, SupportsLastModification, ChangeRecordProvider<Resource>, ApplicationEventPublisherAware {
+        implements SupportsLastModification, ChangeRecordProvider<Resource>, ApplicationEventPublisherAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResourceService.class);
 
@@ -191,10 +191,10 @@ public class ResourceService
             final Vocabulary vocabulary = vocabularyService.getRequiredReference(doc.getVocabulary());
             repositoryService.persist(file, vocabulary);
         } else {
-            persist(file);
+            repositoryService.persist(file);
         }
         if (!getReference(document.getUri()).isPresent()) {
-            persist(document);
+            repositoryService.persist(document);
         } else {
             update(doc);
         }
@@ -273,44 +273,19 @@ public class ResourceService
                 () -> new NotFoundException("No text analysis record exists for " + resource));
     }
 
-    @Override
-    public List<Resource> findAll() {
-        return repositoryService.findAll();
-    }
-
-    @Override
-    public Optional<Resource> find(URI id) {
-        return repositoryService.find(id);
-    }
-
-    @Override
     public Resource findRequired(URI id) {
         return repositoryService.findRequired(id);
     }
 
-    @Override
     public Optional<Resource> getReference(URI id) {
         return repositoryService.getReference(id);
     }
 
-    @Override
     public Resource getRequiredReference(URI id) {
         return repositoryService.getRequiredReference(id);
     }
 
-    @Override
-    public boolean exists(URI id) {
-        return repositoryService.exists(id);
-    }
-
     @Transactional
-    @Override
-    public void persist(Resource instance) {
-        repositoryService.persist(instance);
-    }
-
-    @Transactional
-    @Override
     public Resource update(Resource instance) {
         final Optional<ApplicationEvent> evt = createFileOrDocumentLabelUpdateNotification(instance);
         final Resource result = repositoryService.update(instance);

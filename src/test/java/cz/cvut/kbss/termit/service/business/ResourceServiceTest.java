@@ -72,37 +72,10 @@ class ResourceServiceTest {
     }
 
     @Test
-    void findAllLoadsResourcesFromRepositoryService() {
-        sut.findAll();
-        verify(resourceRepositoryService).findAll();
-    }
-
-    @Test
-    void findLoadsResourceFromRepositoryService() {
-        final URI uri = Generator.generateUri();
-        sut.find(uri);
-        verify(resourceRepositoryService).find(uri);
-    }
-
-    @Test
     void findRequiredLoadsResourceFromRepositoryService() {
         final URI uri = Generator.generateUri();
         sut.findRequired(uri);
         verify(resourceRepositoryService).findRequired(uri);
-    }
-
-    @Test
-    void existsChecksForExistenceViaRepositoryService() {
-        final URI uri = Generator.generateUri();
-        sut.exists(uri);
-        verify(resourceRepositoryService).exists(uri);
-    }
-
-    @Test
-    void persistSavesResourceViaRepositoryService() {
-        final Resource resource = Generator.generateResourceWithId();
-        sut.persist(resource);
-        verify(resourceRepositoryService).persist(resource);
     }
 
     @Test
