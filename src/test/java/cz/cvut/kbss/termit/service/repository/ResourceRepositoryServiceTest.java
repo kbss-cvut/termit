@@ -17,13 +17,17 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
-import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.ValidationException;
-import cz.cvut.kbss.termit.model.*;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Model;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
@@ -42,7 +46,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -71,21 +74,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         Environment.setCurrentUser(user);
     }
 
-    @Test
-    void findTermsReturnsEmptyListWhenNoTermsAreFoundForResource() {
-        final Resource resource = generateResource();
-
-        final List<Term> result = sut.findTags(resource);
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-    }
-
-    private Resource generateResource() {
-        final Resource resource = Generator.generateResourceWithId();
-        transactional(() -> em.persist(resource));
-        return resource;
-    }
-
     private Term generateTermWithUriAndPersist() {
         final Term t = Generator.generateTerm();
         t.setUri(Generator.generateUri());
@@ -98,26 +86,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         final Resource resource = Generator.generateResourceWithId();
         resource.setLabel(null);
         assertThrows(ValidationException.class, () -> sut.persist(resource));
-    }
-
-    @Test
-    void removeDeletesTargetAndTermAssignmentsAssociatedWithResource() {
-        final Resource resource = generateResource();
-        final Term tOne = generateTermWithUriAndPersist();
-        final Term tTwo = generateTermWithUriAndPersist();
-        final Target target = new Target(resource);
-        final TermAssignment assignmentOne = new TermAssignment(tOne.getUri(), target);
-        final TermAssignment assignmentTwo = new TermAssignment(tTwo.getUri(), target);
-        transactional(() -> {
-            em.persist(target);
-            em.persist(assignmentOne);
-            em.persist(assignmentTwo);
-        });
-
-        sut.remove(resource);
-        assertNull(em.find(Resource.class, resource.getUri()));
-        verifyInstancesDoNotExist(Vocabulary.s_c_prirazeni_termu, em);
-        verifyInstancesDoNotExist(Vocabulary.s_c_cil, em);
     }
 
     @Test
@@ -146,7 +114,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void removeDeletesTermAssignmentsOccurrencesAndAllTargetsAssociatedWithResource() {
+    void removeDeletesTermOccurrencesAndAllTargetsAssociatedWithResource() {
         enableRdfsInference(em);
         final File file = new File();
         file.setUri(Generator.generateUri());
@@ -157,20 +125,13 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         final Selector selector = new TextQuoteSelector("test");
         occurrenceTarget.setSelectors(Collections.singleton(selector));
         final TermOccurrence occurrence = new TermFileOccurrence(tOne.getUri(), occurrenceTarget);
-        final Term tTwo = generateTermWithUriAndPersist();
-        final Target target = new Target(file);
-        final TermAssignment assignmentOne = new TermAssignment(tTwo.getUri(), target);
         transactional(() -> {
             final Descriptor descriptor = new EntityDescriptor(occurrence.resolveContext());
             em.persist(occurrenceTarget, descriptor);
-            em.persist(assignmentOne);
-            em.persist(target);
             em.persist(occurrence, descriptor);
         });
 
         sut.remove(file);
-        verifyInstancesDoNotExist(Vocabulary.s_c_prirazeni_termu, em);
-        verifyInstancesDoNotExist(Vocabulary.s_c_cil, em);
         verifyInstancesDoNotExist(Vocabulary.s_c_vyskyt_termu, em);
         verifyInstancesDoNotExist(Vocabulary.s_c_cil_vyskytu, em);
         verifyInstancesDoNotExist(Vocabulary.s_c_selektor_text_quote, em);
@@ -256,25 +217,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findAssignmentsReturnsAssignmentsRelatedToSpecifiedResource() {
-        final Resource resource = Generator.generateResourceWithId();
-        final Target target = new Target(resource);
-        final Term term = Generator.generateTermWithId();
-        final TermAssignment ta = new TermAssignment(term.getUri(), target);
-        transactional(() -> {
-            em.persist(target);
-            em.persist(resource);
-            em.persist(term);
-            em.persist(ta);
-        });
-
-        final List<TermAssignment> result = sut.findAssignments(resource);
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(ta.getUri(), result.get(0).getUri());
-    }
-
-    @Test
     void persistWithVocabularyPersistsInstanceIntoVocabularyContext() {
         final Document document = Generator.generateDocumentWithId();
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
@@ -338,31 +280,10 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         });
 
         final cz.cvut.kbss.termit.model.Vocabulary
-            result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class, vocabulary.getUri(),
+                result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class, vocabulary.getUri(),
                 descriptorFactory.vocabularyDescriptor(vocabulary));
         assertEquals(1, result.getDocument().getFiles().size());
         assertTrue(result.getDocument().getFiles().contains(fileTwo));
-    }
-
-    @Test
-    void getAssignmentInfoRetrievesAggregatedAssignmentDataForResource() {
-        final Resource resource = Generator.generateResourceWithId();
-        final Target target = new Target(resource);
-        final Term term = Generator.generateTermWithId();
-        term.setVocabulary(Generator.generateUri());
-        final TermAssignment ta = new TermAssignment(term.getUri(), target);
-        transactional(() -> {
-            em.persist(target);
-            em.persist(resource);
-            em.persist(term);
-            em.persist(ta);
-        });
-
-        final List<ResourceTermAssignments> result = sut.getAssignmentInfo(resource);
-        assertEquals(1, result.size());
-        assertEquals(term.getUri(), result.get(0).getTerm());
-        assertEquals(term.getPrimaryLabel(), result.get(0).getTermLabel());
-        assertEquals(resource.getUri(), result.get(0).getResource());
     }
 
     @Test
@@ -388,7 +309,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
         transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
 
-        assertThat(em.find( Document.class, document.getUri(), d ), nullValue());
+        assertThat(em.find(Document.class, document.getUri(), d), nullValue());
     }
 
     @Test
@@ -409,6 +330,6 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
         transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
 
-        assertThat(em.find( Document.class, document.getUri(), d ), equalTo(document));
+        assertThat(em.find(Document.class, document.getUri(), d), equalTo(document));
     }
 }

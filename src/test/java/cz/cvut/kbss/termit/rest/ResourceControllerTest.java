@@ -13,15 +13,11 @@ package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
-import cz.cvut.kbss.termit.model.assignment.Target;
-import cz.cvut.kbss.termit.model.assignment.TermAssignment;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -58,7 +54,8 @@ import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -68,7 +65,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ResourceControllerTest extends BaseControllerTestRunner {
 
     private static final String PATH = "/resources";
-    private static final String IRI_PARAM = "iri";
 
     private static final String RESOURCE_NAME = "test-resource";
     private static final String RESOURCE_NAMESPACE = Environment.BASE_URI + "/";
@@ -96,42 +92,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     @AfterEach
     void tearDown() {
         Environment.resetCurrentUser();
-    }
-
-    @Test
-    void getTermsForNKODReturnsTermsAssignedToResourceWithSpecifiedIri() throws Exception {
-        final Resource resource = Generator.generateResourceWithId();
-        when(resourceServiceMock.getRequiredReference(resource.getUri())).thenReturn(resource);
-        final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
-                .collect(Collectors.toList());
-        when(resourceServiceMock.findTags(resource)).thenReturn(terms);
-
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/resource/terms").param(IRI_PARAM, resource.getUri().toString()))
-                .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
-        });
-        assertEquals(terms, result);
-        verify(resourceServiceMock).findTags(resource);
-    }
-
-    @Test
-    void getTermsReturnsTermsAssignedToResource() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setUri(RESOURCE_URI);
-        resource.setLabel(RESOURCE_NAME);
-        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.getRequiredReference(RESOURCE_URI)).thenReturn(resource);
-        final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
-                .collect(Collectors.toList());
-        when(resourceServiceMock.findTags(resource)).thenReturn(terms);
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/" + RESOURCE_NAME + "/terms").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
-        });
-        assertEquals(terms, result);
-        verify(resourceServiceMock).findTags(resource);
     }
 
     @Test
@@ -224,22 +184,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isConflict()).andReturn();
         final ErrorInfo errorInfo = readValue(mvcResult, ErrorInfo.class);
         assertThat(errorInfo.getMessage(), containsString("does not match the ID of the specified entity"));
-    }
-
-    @Test
-    void setTermsPassesNewTermUrisToService() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setLabel(RESOURCE_NAME);
-        resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME)).thenReturn(resource.getUri());
-        when(resourceServiceMock.findRequired(resource.getUri())).thenReturn(resource);
-        final List<URI> uris = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri())
-                .collect(Collectors.toList());
-        mockMvc.perform(put(PATH + "/" + RESOURCE_NAME + "/terms").content(toJson(uris))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-        verify(resourceServiceMock).findRequired(resource.getUri());
-        verify(resourceServiceMock).setTags(resource, uris);
     }
 
     @Test
@@ -368,33 +312,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(resourceServiceMock.findRequired(uri)).thenReturn(resource);
         mockMvc.perform(get(PATH + "/" + normLabel).param(QueryParams.NAMESPACE, namespace)).andExpect(status().isOk());
         verify(resourceServiceMock).findRequired(uri);
-    }
-
-    @Test
-    void getAssignmentsReturnsTermAssignmentsRelatedToResource() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setUri(RESOURCE_URI);
-        resource.setLabel(RESOURCE_NAME);
-        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.getRequiredReference(RESOURCE_URI)).thenReturn(resource);
-        final List<TermAssignment> assignments = IntStream.range(0, 5).mapToObj(
-                i -> {
-                    final TermAssignment ta = new TermAssignment(Generator.generateUri(), new Target(resource));
-                    ta.setUri(Generator.generateUri());
-                    return ta;
-                }).collect(Collectors.toList());
-        when(resourceServiceMock.findAssignments(resource)).thenReturn(assignments);
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/" + RESOURCE_NAME + "/assignments")
-                        .param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(status().isOk()).andReturn();
-        final List<TermAssignment> result = readValue(mvcResult, new TypeReference<List<TermAssignment>>() {
-        });
-        assertEquals(assignments.size(), result.size());
-        for (TermAssignment ta : assignments) {
-            assertTrue(result.stream().anyMatch(a -> a.getUri().equals(ta.getUri())));
-        }
-        verify(resourceServiceMock).findAssignments(resource);
     }
 
     @Test
@@ -545,28 +462,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE));
 
         verify(resourceServiceMock).hasContent(file);
-    }
-
-    @Test
-    void getAssignmentInfoRetrievesAssignmentInfoFromService() throws Exception {
-        final Resource resource = new Resource();
-        resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.getRequiredReference(RESOURCE_URI)).thenReturn(resource);
-        final List<ResourceTermAssignments> assignmentInfo = Collections.singletonList(
-                new ResourceTermAssignments(Generator.generateUri(), "Test", Generator.generateUri(), RESOURCE_URI,
-                        false));
-        when(resourceServiceMock.getAssignmentInfo(resource)).thenReturn(assignmentInfo);
-
-        final MvcResult mvcResult = mockMvc.perform(
-                get(PATH + "/" + RESOURCE_NAME + "/assignments/aggregated")
-                        .param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(status().isOk()).andReturn();
-        final List<ResourceTermAssignments> result = readValue(mvcResult,
-                new TypeReference<List<ResourceTermAssignments>>() {
-                });
-        assertEquals(assignmentInfo, result);
-        verify(resourceServiceMock).getAssignmentInfo(resource);
     }
 
     @Test

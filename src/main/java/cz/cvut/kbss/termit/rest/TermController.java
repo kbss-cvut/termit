@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
@@ -307,7 +306,7 @@ public class TermController extends BaseController {
     }
 
     /**
-     * Returns terms not used in annotations/occurences of a resource for a given vocabulary
+     * Returns terms not occurring in any document content or definition.
      */
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/unused-terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -386,31 +385,6 @@ public class TermController extends BaseController {
         return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), parentIdFragment)).build();
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/assignments",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<TermAssignments> getAssignmentInfo(@PathVariable String vocabularyIdFragment,
-                                                   @PathVariable String termIdFragment,
-                                                   @RequestParam(name = QueryParams.NAMESPACE, required = false)
-                                                           Optional<String> namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        return termService.getAssignmentInfo(termService.getRequiredReference(termUri));
-    }
-
-    /**
-     * Gets assignment info for the specified Term.
-     * <p>
-     * This is a convenience method to allow access without using the Term's parent Vocabulary.
-     *
-     * @see #getAssignmentInfo(String, String, Optional)
-     */
-    @GetMapping(value = "/terms/{termIdFragment}/assignments", produces = {MediaType.APPLICATION_JSON_VALUE,
-                                                                           JsonLd.MEDIA_TYPE})
-    public List<TermAssignments> getAssignmentInfo(@PathVariable("termIdFragment") String termIdFragment,
-                                                   @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        return termService.getAssignmentInfo(termService.getRequiredReference(termUri));
-    }
-
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
@@ -473,33 +447,6 @@ public class TermController extends BaseController {
         final Term term = termService.findRequired(termUri);
         termService.removeTermDefinitionSource(term);
         LOG.debug("Definition source of term {} removed.", term);
-    }
-
-    /**
-     * Removes an occurrence of a term.
-     */
-    @DeleteMapping(value = "occurrence/{normalizedName}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void removeOccurrence(@PathVariable String normalizedName,
-                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
-        termService.removeOccurrence(termService.getRequiredOccurrenceReference(identifier));
-        LOG.debug("Occurrence with identifier {} removed.", identifier);
-    }
-
-    /**
-     * Approves an occurrence of a term.
-     */
-    @PutMapping(value = "occurrence/{normalizedName}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void approveOccurrence(@PathVariable String normalizedName,
-                                  @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
-
-        termService.approveOccurrence(identifier);
-        LOG.debug("Occurrence with identifier {} approved.", identifier);
     }
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/history",

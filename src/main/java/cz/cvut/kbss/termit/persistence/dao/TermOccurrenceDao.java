@@ -21,11 +21,13 @@ import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermOccurrenceMapper;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,8 +73,11 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                     "BIND(EXISTS { ?occ a ?suggestedType . } as ?suggested)" +
                     "} GROUP BY ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition";
 
-    public TermOccurrenceDao(EntityManager em) {
+    private final Configuration.Persistence config;
+
+    public TermOccurrenceDao(EntityManager em, Configuration config) {
         super(TermOccurrence.class, em);
+        this.config = config.getPersistence();
     }
 
     /**
@@ -132,6 +137,49 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                               .setParameter("definitionalOccurrence", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
                               .setParameter("suggestedType", URI.create(Vocabulary.s_c_navrzeny_vyskyt_termu));
         return new SparqlResultToTermOccurrenceMapper(target.getUri()).map(query.getResultList());
+    }
+
+    /**
+     * Gets aggregated information about occurrences of the specified {@link Term}.
+     *
+     * @param term Term whose occurrences to retrieve
+     * @return List of {@code TermOccurrences}
+     */
+    public List<TermOccurrences> getOccurrenceInfo(Term term) {
+        return em.createNativeQuery("SELECT ?term ?resource ?label (count(?x) as ?cnt) ?type ?suggested WHERE {" +
+                                 "BIND (?t AS ?term)" +
+                                 "{" +
+                                 "  ?x a ?suggestedOccurrence ." +
+                                 "  BIND (true as ?suggested)" +
+                                 "} UNION {" +
+                                 "  ?x a ?occurrence ." +
+                                 "  FILTER NOT EXISTS {" +
+                                 "    ?x a ?suggestedOccurrence ." +
+                                 "  }" +
+                                 "  BIND (false as ?suggested)" +
+                                 "} " +
+                                 "  ?x ?hasTerm ?term ;" +
+                                 "     ?hasTarget ?target . " +
+                                 "  { ?target ?hasSource ?resource . FILTER NOT EXISTS { ?resource a ?fileType . } } " +
+                                 "  UNION { ?target ?hasSource ?file . ?resource ?isDocumentOf ?file . } " +
+                                 "BIND (IF(EXISTS { ?resource a ?termType }, ?termDefOcc, ?fileOcc) as ?type)" +
+                                 "{ ?resource rdfs:label ?label . } UNION { ?resource ?hasTitle ?label . } " +
+                                 "FILTER langMatches(lang(?label), ?lang)" +
+                                 "} GROUP BY ?resource ?term ?label ?type ?suggested HAVING (?cnt > 0) ORDER BY ?label",
+                         "TermOccurrences")
+                 .setParameter("suggestedOccurrence", URI.create(Vocabulary.s_c_navrzeny_vyskyt_termu))
+                 .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
+                 .setParameter("hasTarget", URI.create(Vocabulary.s_p_ma_cil))
+                 .setParameter("hasSource", URI.create(Vocabulary.s_p_ma_zdroj))
+                 .setParameter("occurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
+                 .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
+                 .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
+                 .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
+                 .setParameter("lang", config.getLanguage())
+                 .setParameter("termType", URI.create(Vocabulary.s_c_term))
+                 .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
+                 .setParameter("fileOcc", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
+                 .setParameter("t", term.getUri()).getResultList();
     }
 
     @ModifiesData

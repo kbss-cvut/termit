@@ -18,7 +18,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -26,9 +26,9 @@ import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.*;
-import cz.cvut.kbss.termit.model.assignment.Target;
-import cz.cvut.kbss.termit.model.assignment.TermAssignment;
-import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.resource.Document;
+import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
@@ -386,26 +386,28 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void getAssignmentsInfoRetrievesAssignmentData() {
+    void getOccurrenceInfoRetrievesAggregatedOccurrenceData() {
         final Term t = Generator.generateTermWithId();
         t.setVocabulary(vocabulary.getUri());
 
-        final Resource resource = Generator.generateResourceWithId();
-        final TermAssignment ta = new TermAssignment();
-        ta.setTerm(t.getUri());
-        ta.setTarget(new Target(resource));
+        final File file = Generator.generateFileWithId("test.html");
+        final Document document = Generator.generateDocumentWithId();
+        document.addFile(file);
+        final TermOccurrence occurrence = Generator.generateTermOccurrence(t, file, false);
         transactional(() -> {
+            enableRdfsInference(em);
+            em.persist(document);
             em.persist(t);
-            em.persist(resource);
-            em.persist(ta.getTarget());
-            em.persist(ta);
+            em.persist(file);
+            em.persist(occurrence.getTarget());
+            em.persist(occurrence);
         });
 
-        final List<TermAssignments> result = sut.getAssignmentsInfo(t);
+        final List<TermOccurrences> result = sut.getOccurrenceInfo(t);
         assertEquals(1, result.size());
         assertEquals(t.getUri(), result.get(0).getTerm());
-        assertEquals(resource.getUri(), result.get(0).getResource());
-        assertEquals(resource.getLabel(), result.get(0).getResourceLabel());
+        assertEquals(document.getUri(), result.get(0).getResource());
+        assertEquals(document.getLabel(), result.get(0).getResourceLabel());
     }
 
     @Test

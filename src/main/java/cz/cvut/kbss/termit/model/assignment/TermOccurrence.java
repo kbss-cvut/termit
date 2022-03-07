@@ -1,18 +1,38 @@
 package cz.cvut.kbss.termit.model.assignment;
 
-import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.termit.model.AbstractEntity;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Set;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "javaClass")
 @OWLClass(iri = Vocabulary.s_c_vyskyt_termu)
-public abstract class TermOccurrence extends TermAssignment {
+public abstract class TermOccurrence extends AbstractEntity implements HasTypes {
 
     /**
      * Suffix used to identify term occurrence contexts (named graphs) in the repository.
      */
     public static final String CONTEXT_SUFFIX = "occurrences";
+
+    @ParticipationConstraints(nonEmpty = true)
+    @OWLObjectProperty(iri = Vocabulary.s_p_je_prirazenim_termu)
+    private URI term;
+
+    @ParticipationConstraints(nonEmpty = true)
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_cil, cascade = {CascadeType.MERGE}, fetch = FetchType.EAGER)
+    OccurrenceTarget target;
+
+    @OWLDataProperty(iri = DC.Terms.DESCRIPTION)
+    private String description;
+
+    @Types
+    private Set<String> types;
 
     private transient Double score;
 
@@ -20,17 +40,42 @@ public abstract class TermOccurrence extends TermAssignment {
     }
 
     public TermOccurrence(URI term, OccurrenceTarget target) {
-        super(term, target);
+        this.term = Objects.requireNonNull(term);
+        this.target = Objects.requireNonNull(target);
     }
 
-    @Override
+    public URI getTerm() {
+        return term;
+    }
+
+    public void setTerm(URI term) {
+        this.term = term;
+    }
+
     public OccurrenceTarget getTarget() {
-        assert target == null || target instanceof OccurrenceTarget;
-        return (OccurrenceTarget) target;
+        return target;
     }
 
     public void setTarget(OccurrenceTarget target) {
         this.target = target;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public Set<String> getTypes() {
+        return types;
+    }
+
+    @Override
+    public void setTypes(Set<String> types) {
+        this.types = types;
     }
 
     /**
@@ -50,7 +95,10 @@ public abstract class TermOccurrence extends TermAssignment {
 
     @Override
     public String toString() {
-        return "TermOccurrence - " + super.toString();
+        return "TermOccurrence{<" +
+                getUri() +
+                ">, term=<" + term +
+                ">, target=" + target + '}';
     }
 
     /**

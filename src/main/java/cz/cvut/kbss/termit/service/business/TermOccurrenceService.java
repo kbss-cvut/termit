@@ -4,36 +4,42 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 
 import java.net.URI;
 
+/**
+ * Business service for managing {@link TermOccurrence}s.
+ */
 public interface TermOccurrenceService {
+
+    /**
+     * Gets a reference to a {@link TermOccurrence} with the specified identifier.
+     * <p>
+     * The returned instance may be empty apart from its identifier.
+     *
+     * @param id Term occurrence identifier
+     * @return Matching term occurrence
+     * @throws cz.cvut.kbss.termit.exception.NotFoundException If there is no such term occurrence
+     */
+    TermOccurrence getRequiredReference(URI id);
 
     /**
      * Persists the specified term occurrence.
      *
-     * @param occurrence The occurrence to save
+     * @param occurrence Occurrence to persist
      */
-    void persistOccurrence(TermOccurrence occurrence);
+    void persist(TermOccurrence occurrence);
 
     /**
-     * Approves the (possibly) suggested term occurrence with the specified identifier.
+     * Approves the specified term occurrence.
      * <p>
-     * Note that it is possible that the occurrence does not need approving (it might have been created by the user).
-     * The gist is that after calling this method, the occurrence is not suggested.
+     * This removes the suggested classification of the occurrence if it were present.
      *
-     * @param identifier Identifier of the occurrence to approve
+     * @param occurrence Occurrence to approve
      */
-    void approveOccurrence(URI identifier);
+    void approve(TermOccurrence occurrence);
 
     /**
-     * Removes the given occurrence.
+     * Removes the specified term occurrence.
      *
-     * @param occurrence The occurrence to remove
+     * @param occurrence Occurrence to remove
      */
-    void removeOccurrence(TermOccurrence occurrence);
-
-    /**
-     * Gets reference to a term occurrence given its URI.
-     *
-     * @param uri The URI of the occurrence to remove
-     */
-    TermOccurrence getRequiredReference(URI uri);
+    void remove(TermOccurrence occurrence);
 }

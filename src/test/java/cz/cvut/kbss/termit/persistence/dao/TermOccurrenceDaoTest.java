@@ -15,16 +15,24 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.JOPAPersistenceProperties;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +40,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyCollectionOf;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TermOccurrenceDaoTest extends BaseDaoTestRunner {
@@ -324,5 +332,150 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertFalse(sut.findAllTargeting(file).isEmpty());
         transactional(() -> sut.removeAllOrphans());
         assertTrue(sut.findAllTargeting(file).isEmpty());
+    }
+
+    @Test
+    void getOccurrenceInfoByTermRetrievesAggregateTermOccurrences() {
+        final Term term = Generator.generateTermWithId();
+        final File fOne = Generator.generateFileWithId("testOne.html");
+        final File fTwo = Generator.generateFileWithId("testTwo.html");
+        final Document document = getDocument(fOne, fTwo);
+        transactional(() -> {
+            enableRdfsInference(em);
+            em.persist(term);
+            em.persist(fOne);
+            em.persist(fTwo);
+            em.persist(document);
+        });
+        final List<TermOccurrence> occurrencesOne = generateTermOccurrences(term, fOne, false);
+        final List<TermOccurrence> occurrencesTwo = generateTermOccurrences(term, fTwo, true);
+
+        final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
+        assertEquals(2, result.size());
+        for (TermOccurrences toi : result) {
+            if (toi.hasType(Vocabulary.s_c_navrzeny_vyskyt_termu)) {
+                assertEquals(occurrencesTwo.size(), toi.getCount().intValue());
+            } else {
+                assertEquals(occurrencesOne.size(), toi.getCount().intValue());
+            }
+        }
+    }
+
+    private Document getDocument(final File... files) {
+        final Document document = Generator.generateDocumentWithId();
+        Arrays.stream(files).forEach(document::addFile);
+        return document;
+    }
+
+    @Test
+    void getOccurrenceInfoByTermRetrievesTermOccurrencesAggregatedByDocument() {
+        final Term term = Generator.generateTermWithId();
+        final File fOne = Generator.generateFileWithId("testOne.html");
+        final File fTwo = Generator.generateFileWithId("testTwo.html");
+        final Document document = getDocument(fOne, fTwo);
+        transactional(() -> {
+            enableRdfsInference(em);
+            em.persist(term);
+            em.persist(fOne);
+            em.persist(fTwo);
+            em.persist(document);
+        });
+        final List<TermOccurrence> occurrencesOne = generateTermOccurrences(term, fOne, false);
+        final List<TermOccurrence> occurrencesTwo = generateTermOccurrences(term, fTwo, false);
+
+        final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
+        assertEquals(1, result.size());
+        final TermOccurrences toi = result.get(0);
+        assertEquals(occurrencesOne.size() + occurrencesTwo.size(), toi.getCount().intValue());
+    }
+
+    @Test
+    void getOccurrenceInfoByTermRetrievesSeparateInstancesForSuggestedAndAssertedOccurrencesOfSameTerm() {
+        final Term term = Generator.generateTermWithId();
+        final File file = Generator.generateFileWithId("testOne.html");
+        final Document document = getDocument(file);
+        transactional(() -> {
+            enableRdfsInference(em);
+            em.persist(term);
+            em.persist(file);
+            em.persist(document);
+        });
+        generateTermOccurrences(term, file, false);
+        generateTermOccurrences(term, file, true);
+
+        final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
+        assertEquals(2, result.size());
+        result.forEach(tai -> assertEquals(term.getUri(), tai.getTerm()));
+    }
+
+    private List<TermOccurrence> generateTermOccurrences(Term term, Asset<?> target, boolean suggested) {
+        final List<TermOccurrence> occurrences = IntStream.range(0, Generator.randomInt(5, 10))
+                                                          .mapToObj(i -> Generator.generateTermOccurrence(term, target, suggested))
+                                                          .collect(Collectors.toList());
+        transactional(() -> occurrences.forEach(to -> {
+            em.persist(to);
+            em.persist(to.getTarget());
+        }));
+        return occurrences;
+    }
+
+    private void saveAssetLabelInOtherLanguage(Asset<?> asset) {
+        assertEquals(Environment.LANGUAGE,
+                em.getEntityManagerFactory().getProperties().get(JOPAPersistenceProperties.LANG));
+        final Repository repo = em.unwrap(Repository.class);
+        final ValueFactory vf = repo.getValueFactory();
+        try (final RepositoryConnection conn = repo.getConnection()) {
+            conn.add(vf.createStatement(vf.createIRI(asset.getUri().toString()), RDFS.LABEL,
+                    vf.createLiteral("Czech label", "cs")));
+        }
+    }
+
+    @Test
+    void getOccurrenceInfoByTermReturnsOnlyAssignmentsForMatchingResourceLabelLanguage() {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(Generator.generateUri());
+        final File file = Generator.generateFileWithId("test.html");
+        final Document document = getDocument(file);
+        transactional(() -> {
+            enableRdfsInference(em);
+            em.persist(term);
+            em.persist(file);
+            em.persist(document);
+            saveAssetLabelInOtherLanguage(file);
+        });
+        generateTermOccurrences(term, file, false);
+
+        final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getOccurrenceInfoByTermReturnsDistinguishableFileAndDefinitionalOccurrences() {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(Generator.generateUri());
+        final Term targetTerm = Generator.generateTermWithId();
+        targetTerm.setVocabulary(term.getVocabulary());
+        final File file = Generator.generateFileWithId("test.html");
+        final Document document = getDocument(file);
+        transactional(() -> {
+            enableRdfsInference(em);
+            em.persist(term);
+            em.persist(targetTerm);
+            em.persist(file);
+            em.persist(document);
+        });
+        final List<TermOccurrence> fileOccurrences = generateTermOccurrences(term, file, true);
+        final List<TermOccurrence> defOccurrences = generateTermOccurrences(term, targetTerm, true);
+
+        final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
+        assertEquals(2, result.size());
+        for (TermOccurrences a : result) {
+            if (a.getTypes().contains(Vocabulary.s_c_souborovy_vyskyt_termu)) {
+                assertEquals(fileOccurrences.size(), a.getCount().intValue());
+            } else {
+                assertThat(a.getTypes(), hasItem(Vocabulary.s_c_definicni_vyskyt_termu));
+                assertEquals(defOccurrences.size(), a.getCount().intValue());
+            }
+        }
     }
 }

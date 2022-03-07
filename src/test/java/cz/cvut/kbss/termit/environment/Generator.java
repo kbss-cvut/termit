@@ -250,7 +250,7 @@ public class Generator {
 
     public static List<Term> generateTermsWithIds(int count) {
         return IntStream.range(0, count).mapToObj(i -> generateTermWithId())
-                .collect(Collectors.toList());
+                        .collect(Collectors.toList());
     }
 
     public static Resource generateResource() {
@@ -264,18 +264,6 @@ public class Generator {
         final Resource resource = generateResource();
         resource.setUri(Generator.generateUri());
         return resource;
-    }
-
-    public static Target generateTargetWithId() {
-        final Target target = new Target();
-        target.setUri(Generator.generateUri());
-        return target;
-    }
-
-    public static TermAssignment generateTermAssignmentWithId() {
-        final TermAssignment termAssignment = new TermAssignment();
-        termAssignment.setUri(Generator.generateUri());
-        return termAssignment;
     }
 
     public static Document generateDocumentWithId() {
@@ -324,8 +312,8 @@ public class Generator {
         final PersistChangeRecord persistRecord = generatePersistChange(asset);
         final List<AbstractChangeRecord> result =
                 IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset))
-                        .collect(
-                                Collectors.toList());
+                         .collect(
+                                 Collectors.toList());
         result.add(0, persistRecord);
         if (user != null) {
             result.forEach(r -> r.setAuthor(user));
@@ -335,13 +323,13 @@ public class Generator {
 
     public static List<cz.cvut.kbss.termit.model.validation.ValidationResult> generateValidationRecords() {
         return IntStream.range(0, 1)
-                .mapToObj(i ->
-                        new cz.cvut.kbss.termit.model.validation.ValidationResult()
-                                .setTermUri(URI.create("https://example.org/term-" + i))
-                                .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
-                                .setSeverity(URI.create(SH.Violation.toString()))
-                )
-                .collect(Collectors.toList());
+                        .mapToObj(i ->
+                                new cz.cvut.kbss.termit.model.validation.ValidationResult()
+                                        .setTermUri(URI.create("https://example.org/term-" + i))
+                                        .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
+                                        .setSeverity(URI.create(SH.Violation.toString()))
+                        )
+                        .collect(Collectors.toList());
     }
 
     /**
@@ -369,7 +357,7 @@ public class Generator {
      *
      * @return A new {@code Comment} instance
      */
-    public static Comment generateComment(User user, Asset asset) {
+    public static Comment generateComment(User user, Asset<?> asset) {
         final Comment comment = new Comment();
         comment.setAsset(asset.getUri());
         comment.setAuthor(user);

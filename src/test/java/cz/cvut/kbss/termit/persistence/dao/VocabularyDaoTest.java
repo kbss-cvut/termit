@@ -17,7 +17,6 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.*;
-import cz.cvut.kbss.termit.model.assignment.Target;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -359,6 +358,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         glossary.setUri(uri);
         transactional(() -> em.persist(glossary));
         final Optional<Glossary> result = sut.findGlossary(uri);
+        assertTrue(result.isPresent());
         assertEquals(uri, result.get().getUri());
     }
 

@@ -15,16 +15,13 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
-import cz.cvut.kbss.termit.dto.assignment.ResourceTermAssignments;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.assignment.TermAssignment;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -82,17 +79,6 @@ public class ResourceService
     }
 
     /**
-     * Sets terms with which the specified target resource is annotated.
-     *
-     * @param target   Target resource
-     * @param termUris Identifiers of terms annotating the resource
-     */
-    @Transactional
-    public void setTags(Resource target, Collection<URI> termUris) {
-        repositoryService.setTags(target, termUris);
-    }
-
-    /**
      * Removes resource with the specified identifier.
      * <p>
      * Resource removal also involves cleanup of annotations and term occurrences associated with it.
@@ -107,38 +93,6 @@ public class ResourceService
         final Resource actualToRemove = getRequiredReference(toRemove.getUri());
         documentManager.remove(actualToRemove);
         repositoryService.remove(actualToRemove);
-    }
-
-    /**
-     * Gets terms the specified resource is annotated with.
-     *
-     * @param resource Annotated resource
-     * @return List of terms annotating the specified resource
-     */
-    public List<Term> findTags(Resource resource) {
-        return repositoryService.findTags(resource);
-    }
-
-    /**
-     * Gets term assignments related to the specified resource.
-     * <p>
-     * This includes both assignments and occurrences.
-     *
-     * @param resource Target resource
-     * @return List of term assignments and occurrences
-     */
-    public List<TermAssignment> findAssignments(Resource resource) {
-        return repositoryService.findAssignments(resource);
-    }
-
-    /**
-     * Gets aggregate information about Term assignments/occurrences for the specified Resource.
-     *
-     * @param resource Resource to get assignments for
-     * @return Aggregate assignment data
-     */
-    public List<ResourceTermAssignments> getAssignmentInfo(Resource resource) {
-        return repositoryService.getAssignmentInfo(resource);
     }
 
     /**
@@ -239,7 +193,7 @@ public class ResourceService
         } else {
             persist(file);
         }
-        if ( !getReference(document.getUri()).isPresent() ) {
+        if (!getReference(document.getUri()).isPresent()) {
             persist(document);
         } else {
             update(doc);
@@ -249,7 +203,7 @@ public class ResourceService
     /**
      * Removes the file. The file is detached from the document and removed, together with its content.
      *
-     * @param file     The file to add and save
+     * @param file The file to add and save
      * @throws UnsupportedAssetOperationException If the specified resource is not a Document
      */
     @Transactional
@@ -260,7 +214,7 @@ public class ResourceService
             throw new InvalidParameterException("File was not attached to a document.");
         } else {
             doc.removeFile(file);
-            if ( repositoryService.getReference(doc.getUri()).isPresent() ) {
+            if (repositoryService.getReference(doc.getUri()).isPresent()) {
                 update(doc);
             }
         }
@@ -373,13 +327,13 @@ public class ResourceService
             final Resource original = findRequired(instance.getUri());
             if (!Objects.equals(original.getLabel(), instance.getLabel())) {
                 return Optional.of(new FileRenameEvent((File) instance, original.getLabel(),
-                    instance.getLabel()));
+                        instance.getLabel()));
             }
-        } else if (instance instanceof Document ) {
+        } else if (instance instanceof Document) {
             final Resource original = findRequired(instance.getUri());
             if (!Objects.equals(original.getLabel(), instance.getLabel())) {
                 return Optional.of(new DocumentRenameEvent((Document) instance, original.getLabel(),
-                    instance.getLabel()));
+                        instance.getLabel()));
             }
         }
         return Optional.empty();

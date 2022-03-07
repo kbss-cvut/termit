@@ -1,14 +1,14 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
-import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
@@ -310,14 +310,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Gets aggregated info about assignments and occurrences of the specified Term.
+     * Gets aggregated info about occurrences of the specified Term.
      *
-     * @param term Term whose assignments and occurrences to retrieve
-     * @return List of term assignment describing instances
+     * @param term Term whose occurrences to retrieve
+     * @return List of term occurrences describing instances
      */
-    public List<TermAssignments> getAssignmentInfo(Term term) {
+    public List<TermOccurrences> getOccurrenceInfo(Term term) {
         Objects.requireNonNull(term);
-        return repositoryService.getAssignmentsInfo(term);
+        return repositoryService.getOccurrenceInfo(term);
     }
 
     /**
@@ -445,9 +445,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         definitionSource.setTerm(term.getUri());
         final Term existingTerm = repositoryService.findRequired(term.getUri());
         if (existingTerm.getDefinitionSource() != null) {
-            termOccurrenceService.removeOccurrence(existingTerm.getDefinitionSource());
+            termOccurrenceService.remove(existingTerm.getDefinitionSource());
         }
-        termOccurrenceService.persistOccurrence(definitionSource);
+        termOccurrenceService.persist(definitionSource);
     }
 
     /**
@@ -463,32 +463,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void removeTermDefinitionSource(Term term) {
         Objects.requireNonNull(term);
         if (term.getDefinitionSource() != null) {
-            termOccurrenceService.removeOccurrence(term.getDefinitionSource());
+            termOccurrenceService.remove(term.getDefinitionSource());
         }
     }
 
     /**
-     * Gets a reference to a Term occurrence with the specified identifier.
+     * Gets terms not occurring in any resources or other terms definitions.
      *
-     * @param id Term occurrence identifier
-     * @return Matching Term occurrence reference
-     */
-    public TermOccurrence getRequiredOccurrenceReference(URI id) {
-        return termOccurrenceService.getRequiredReference(id);
-    }
-
-    public void approveOccurrence(URI identifier) {
-        termOccurrenceService.approveOccurrence(identifier);
-    }
-
-    public void removeOccurrence(TermOccurrence occurrence) {
-        termOccurrenceService.removeOccurrence(occurrence);
-    }
-
-    /**
-     * Gets unused terms (in annotations/occurences).
-     *
-     * @return List of terms
+     * @return List of term identifiers
      */
     public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);

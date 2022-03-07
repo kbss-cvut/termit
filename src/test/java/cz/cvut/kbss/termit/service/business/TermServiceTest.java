@@ -3,15 +3,15 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
-import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
@@ -56,7 +56,7 @@ class TermServiceTest {
     private TextAnalysisService textAnalysisService;
 
     @Mock
-    private TermOccurrenceService termOccurrenceService;
+    private TermOccurrenceService termOccurrenceRepositoryService;
 
     @Mock
     private ChangeRecordService changeRecordService;
@@ -132,14 +132,14 @@ class TermServiceTest {
     }
 
     @Test
-    void getAssignmentInfoRetrievesTermAssignmentInfoFromRepositoryService() {
+    void getOccurrenceInfoRetrievesTermOccurrenceInfoFromRepositoryService() {
         final Term term = generateTermWithId();
-        final List<TermAssignments> assignments = Collections
-                .singletonList(new TermAssignments(term.getUri(), Generator.generateUri(), "test", true));
-        when(termRepositoryService.getAssignmentsInfo(term)).thenReturn(assignments);
-        final List<TermAssignments> result = sut.getAssignmentInfo(term);
-        assertEquals(assignments, result);
-        verify(termRepositoryService).getAssignmentsInfo(term);
+        final List<TermOccurrences> occurrences = Collections
+                .singletonList(new TermOccurrences(term.getUri(), Generator.generateUri(), "test", 1, cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
+        when(termRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
+        final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
+        assertEquals(occurrences, result);
+        verify(termRepositoryService).getOccurrenceInfo(term);
     }
 
     @Test
@@ -319,7 +319,7 @@ class TermServiceTest {
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
-        verify(termOccurrenceService).persistOccurrence(definitionSource);
+        verify(termOccurrenceRepositoryService).persist(definitionSource);
     }
 
     @Test
@@ -334,8 +334,8 @@ class TermServiceTest {
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
-        verify(termOccurrenceService).removeOccurrence(existingSource);
-        verify(termOccurrenceService).persistOccurrence(definitionSource);
+        verify(termOccurrenceRepositoryService).remove(existingSource);
+        verify(termOccurrenceRepositoryService).persist(definitionSource);
     }
 
     @Test
@@ -465,7 +465,7 @@ class TermServiceTest {
         term.setDefinitionSource(defSource);
 
         sut.removeTermDefinitionSource(term);
-        verify(termOccurrenceService).removeOccurrence(defSource);
+        verify(termOccurrenceRepositoryService).remove(defSource);
     }
 
     @Test
@@ -473,6 +473,6 @@ class TermServiceTest {
         final Term term = generateTermWithId();
 
         sut.removeTermDefinitionSource(term);
-        verify(termOccurrenceService, never()).removeOccurrence(any());
+        verify(termOccurrenceRepositoryService, never()).remove(any());
     }
 }

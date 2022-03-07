@@ -18,12 +18,10 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -37,8 +35,6 @@ import org.springframework.stereotype.Repository;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
-
-import static cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper.getOwlClassForEntity;
 
 @Repository
 public class ResourceDao extends AssetDao<Resource> implements SupportsLastModification {
@@ -151,34 +147,6 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
                      .setParameter("hasFile", URI.create(Vocabulary.s_p_ma_soubor))
                      .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
                      .getResultList();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    /**
-     * Gets Terms the specified Resource is annotated with.
-     * <p>
-     * The terms are ordered by their name (ascending).
-     *
-     * @param resource Annotated resource
-     * @return List of terms annotating the specified resource
-     */
-    public List<Term> findTerms(Resource resource) {
-        Objects.requireNonNull(resource);
-        try {
-            return em.createNativeQuery("SELECT DISTINCT ?x WHERE {" +
-                    "?x a ?term ;" +
-                    "?hasLabel ?label ." +
-                    "?assignment ?is-assignment-of ?x ;" +
-                    "?has-target/?has-source ?resource ." +
-                    "} ORDER BY LCASE(?label)", Term.class)
-                     .setParameter("term", URI.create(getOwlClassForEntity(Term.class)))
-                     .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
-                     .setParameter("is-assignment-of", URI.create(Vocabulary.s_p_je_prirazenim_termu))
-                     .setParameter("has-target", URI.create(Vocabulary.s_p_ma_cil))
-                     .setParameter("has-source", URI.create(Vocabulary.s_p_ma_zdroj))
-                     .setParameter("resource", resource.getUri()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

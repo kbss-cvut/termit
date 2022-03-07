@@ -16,7 +16,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.DisabledOperationException;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
@@ -25,7 +25,6 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
-import cz.cvut.kbss.termit.persistence.dao.TermAssignmentDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -57,8 +56,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     private final OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover;
 
-    private final TermAssignmentDao termAssignmentDao;
-
     private final VocabularyRepositoryService vocabularyService;
 
     private final TermOccurrenceDao termOccurrenceDao;
@@ -66,14 +63,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver,
                                  Configuration config, TermDao termDao,
                                  OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
-                                 TermAssignmentDao termAssignmentDao, TermOccurrenceDao termOccurrenceDao,
+                                 TermOccurrenceDao termOccurrenceDao,
                                  VocabularyRepositoryService vocabularyService) {
         super(validator);
         this.idResolver = idResolver;
         this.config = config;
         this.termDao = termDao;
         this.orphanedRelationshipRemover = orphanedRelationshipRemover;
-        this.termAssignmentDao = termAssignmentDao;
         this.vocabularyService = vocabularyService;
         this.termOccurrenceDao = termOccurrenceDao;
     }
@@ -296,14 +292,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     /**
-     * Retrieves aggregated information about the specified Term's assignments to and occurrences in {@link
-     * cz.cvut.kbss.termit.model.resource.Resource}s.
+     * Retrieves aggregated information about the specified Term's occurrences in Resources and other Terms definitions.
      *
-     * @param instance Term whose assignment/occurrence data should be retrieved
-     * @return Aggregated Term assignment/occurrence data
+     * @param instance Term whose occurrence data should be retrieved
+     * @return Aggregated Term occurrence data
      */
-    public List<TermAssignments> getAssignmentsInfo(Term instance) {
-        return termAssignmentDao.getAssignmentInfo(instance);
+    public List<TermOccurrences> getOccurrenceInfo(Term instance) {
+        return termOccurrenceDao.getOccurrenceInfo(instance);
     }
 
     /**
@@ -344,12 +339,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      */
     public void remove(Term instance) {
 
-        final List<TermAssignments> ai = this.getAssignmentsInfo(instance);
+        final List<TermOccurrences> ai = this.getOccurrenceInfo(instance);
 
         if (!ai.isEmpty()) {
             throw new TermRemovalException(
                     "Cannot delete the term. It is used for annotating resources : " +
-                            ai.stream().map(TermAssignments::getResourceLabel).collect(
+                            ai.stream().map(TermOccurrences::getResourceLabel).collect(
                                     joining(",")));
         }
 

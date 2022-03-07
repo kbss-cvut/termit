@@ -5,7 +5,6 @@ import com.github.jsonldjava.utils.JsonUtils;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.assignment.TermAssignments;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -304,28 +303,6 @@ class TermControllerTest extends BaseControllerTestRunner {
         assertTrue(children.containsAll(result));
         verify(termServiceMock).findRequired(parent.getUri());
         verify(termServiceMock).findSubTerms(parent);
-    }
-
-    @Test
-    void getAssignmentInfoGetsTermAssignmentInfoFromService() throws Exception {
-        final Term term = Generator.generateTermWithId();
-        term.setLabel(MultilingualString.create(TERM_NAME, Environment.LANGUAGE));
-        when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        when(idResolverMock.buildNamespace(VOCABULARY_URI, config.getNamespace().getTerm().getSeparator()))
-                .thenReturn(VOCABULARY_URI);
-        when(termServiceMock.getRequiredReference(any())).thenReturn(term);
-        final TermAssignments tai = new TermAssignments(term.getUri(), Generator.generateUri(), "Test", false);
-        when(termServiceMock.getAssignmentInfo(term)).thenReturn(Collections.singletonList(tai));
-
-        final MvcResult mvcResult =
-                mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/assignments")).andExpect(
-                        status().isOk()).andReturn();
-        final List<TermAssignments> result = readValue(mvcResult, new TypeReference<List<TermAssignments>>() {
-        });
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(tai, result.get(0));
     }
 
     @Test
@@ -691,29 +668,6 @@ class TermControllerTest extends BaseControllerTestRunner {
                                                                   .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated()).andReturn();
         verifyLocationEquals("/terms/" + name, mvcResult);
-    }
-
-    @Test
-    void getAssignmentInfoStandaloneGetsTermAssignmentInfoFromService() throws Exception {
-        final URI termUri = URI.create(NAMESPACE + TERM_NAME);
-        final Term term = Generator.generateTerm();
-        term.setUri(termUri);
-        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        when(termServiceMock.getRequiredReference(any())).thenReturn(term);
-        final TermAssignments tai = new TermAssignments(term.getUri(), Generator.generateUri(), "Test", false);
-        when(termServiceMock.getAssignmentInfo(term)).thenReturn(Collections.singletonList(tai));
-
-        final MvcResult mvcResult =
-                mockMvc.perform(get("/terms/" + TERM_NAME + "/assignments").param(QueryParams.NAMESPACE, NAMESPACE))
-                       .andExpect(status().isOk()).andReturn();
-        final List<TermAssignments> result = readValue(mvcResult, new TypeReference<List<TermAssignments>>() {
-        });
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(tai, result.get(0));
-        verify(idResolverMock).resolveIdentifier(NAMESPACE, TERM_NAME);
-        verify(termServiceMock).getRequiredReference(termUri);
-        verify(termServiceMock).getAssignmentInfo(term);
     }
 
     @Test

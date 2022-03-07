@@ -587,4 +587,27 @@ public class TermDao extends AssetDao<Term> {
             throw new PersistenceException(e);
         }
     }
+
+    /**
+     * Gets identifiers of all terms in the specified vocabulary that have no occurrences (file or definitional).
+     *
+     * @param vocabulary Vocabulary whose terms to examine
+     * @return List of unused terms identifiers
+     */
+    public List<URI> findAllUnused(Vocabulary vocabulary) {
+        return em.createNativeQuery("SELECT DISTINCT ?term WHERE { "
+                                 + " ?term ?inVocabulary ?vocabulary . "
+                                 + " FILTER NOT EXISTS {?x ?hasTerm ?term ; "
+                                 + " ?hasTarget/?hasSource ?resource.}"
+                                 + "}",
+                         URI.class)
+                 .setParameter("vocabulary", vocabulary.getUri())
+                 .setParameter("inVocabulary",
+                         URI.create(
+                                 cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("hasTerm", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_prirazenim_termu))
+                 .setParameter("hasTarget", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_cil))
+                 .setParameter("hasSource", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zdroj))
+                 .getResultList();
+    }
 }
