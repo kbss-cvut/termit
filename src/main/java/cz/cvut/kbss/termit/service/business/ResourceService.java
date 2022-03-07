@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -56,7 +57,6 @@ public class ResourceService
 
     private final ResourceRepositoryService repositoryService;
 
-
     private final DocumentManager documentManager;
 
     private final TextAnalysisService textAnalysisService;
@@ -89,6 +89,9 @@ public class ResourceService
     @Transactional
     public void remove(Resource toRemove) {
         Objects.requireNonNull(toRemove);
+        if (toRemove instanceof Document && ((Document) toRemove).getFiles().size() > 0) {
+            throw new AssetRemovalException("Cannot remove non-empty document " + toRemove.getLabel() + "!");
+        }
         // We need the reference managed, so that its name is available to document manager
         final Resource actualToRemove = getRequiredReference(toRemove.getUri());
         documentManager.remove(actualToRemove);

@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
-import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
@@ -190,18 +190,18 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Override
     public void remove(Vocabulary instance) {
         if (instance.getDocument() != null) {
-            throw new VocabularyRemovalException("Removal of document vocabularies is not supported yet.");
+            throw new AssetRemovalException("Removal of document vocabularies is not supported yet.");
         }
 
         final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
         if (!vocabularies.isEmpty()) {
-            throw new VocabularyRemovalException(
+            throw new AssetRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
                             + vocabularies.stream().map(Vocabulary::getLabel).collect(Collectors.joining(", ")));
         }
 
         if (!termService.isEmpty(instance)) {
-            throw new VocabularyRemovalException("Vocabulary cannot be removed. It contains terms.");
+            throw new AssetRemovalException("Vocabulary cannot be removed. It contains terms.");
         }
 
         super.remove(instance);

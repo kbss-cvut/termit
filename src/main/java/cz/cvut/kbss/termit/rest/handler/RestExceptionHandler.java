@@ -166,8 +166,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> vocabularyRemovalException(HttpServletRequest request,
-                                                                VocabularyRemovalException e) {
+    public ResponseEntity<ErrorInfo> assetRemovalException(HttpServletRequest request, AssetRemovalException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
