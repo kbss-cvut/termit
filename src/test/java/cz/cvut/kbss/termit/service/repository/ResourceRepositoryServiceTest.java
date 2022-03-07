@@ -292,44 +292,4 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         assertThat(result, greaterThan(0L));
         assertThat(result, lessThanOrEqualTo(System.currentTimeMillis()));
     }
-
-    @Test
-    void rewireDocumentsOnVocabularyUpdatePutsOriginalDocumentIntoDefaultContext() {
-        final cz.cvut.kbss.termit.model.Vocabulary vOriginal = Generator.generateVocabularyWithId();
-        final Document document = Generator.generateDocumentWithId();
-        vOriginal.setDocument(document);
-
-        final Descriptor d = descriptorFactory.vocabularyDescriptor(vOriginal);
-
-        transactional(() -> em.persist(vOriginal, d));
-
-        final cz.cvut.kbss.termit.model.Vocabulary vUpdate = new cz.cvut.kbss.termit.model.Vocabulary();
-        vUpdate.setUri(vOriginal.getUri());
-        vUpdate.setDocument(null);
-
-        transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
-
-        assertThat(em.find(Document.class, document.getUri(), d), nullValue());
-    }
-
-    @Test
-    void rewireDocumentsOnVocabularyUpdatePutsUpdatedDocumentIntoVocabularyContext() {
-        final cz.cvut.kbss.termit.model.Vocabulary vOriginal = Generator.generateVocabularyWithId();
-        vOriginal.setDocument(null);
-
-        final Descriptor d = descriptorFactory.vocabularyDescriptor(vOriginal);
-        final Document document = Generator.generateDocumentWithId();
-        transactional(() -> {
-            em.persist(vOriginal, d);
-            em.persist(document);
-        });
-
-        final cz.cvut.kbss.termit.model.Vocabulary vUpdate = new cz.cvut.kbss.termit.model.Vocabulary();
-        vUpdate.setUri(vOriginal.getUri());
-        vUpdate.setDocument(document);
-
-        transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
-
-        assertThat(em.find(Document.class, document.getUri(), d), equalTo(document));
-    }
 }

@@ -50,8 +50,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final ChangeRecordService changeRecordService;
 
-    private final ResourceRepositoryService resourceService;
-
     private final Configuration.Namespace config;
 
     private final ApplicationContext context;
@@ -60,16 +58,13 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public VocabularyRepositoryService(ApplicationContext context, VocabularyDao vocabularyDao,
                                        IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
-                                       @Lazy TermService termService,
-                                       @Lazy ResourceRepositoryService resourceService,
-                                       final Configuration config) {
+                                       @Lazy TermService termService, final Configuration config) {
         super(validator);
         this.context = context;
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.termService = termService;
         this.changeRecordService = changeRecordService;
-        this.resourceService = resourceService;
         this.config = config.getNamespace();
     }
 
@@ -125,11 +120,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @CacheEvict(allEntries = true)
     @Override
     @Transactional
-    public Vocabulary update(Vocabulary vNew) {
-        final Vocabulary vOriginal = super.findRequired(vNew.getUri());
-        resourceService.rewireDocumentsOnVocabularyUpdate(vOriginal, vNew);
-        super.update(vNew);
-        return vNew;
+    public Vocabulary update(Vocabulary instance) {
+        return super.update(instance);
     }
 
     /**
@@ -198,16 +190,14 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Override
     public void remove(Vocabulary instance) {
         if (instance.getDocument() != null) {
-            throw new VocabularyRemovalException(
-                    "Removal of document vocabularies is not supported yet.");
+            throw new VocabularyRemovalException("Removal of document vocabularies is not supported yet.");
         }
 
         final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
         if (!vocabularies.isEmpty()) {
             throw new VocabularyRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
-                            + vocabularies.stream().map(Vocabulary::getLabel).collect(
-                            Collectors.joining(", ")));
+                            + vocabularies.stream().map(Vocabulary::getLabel).collect(Collectors.joining(", ")));
         }
 
         if (!termService.isEmpty(instance)) {

@@ -97,8 +97,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     protected void prePersist(Resource instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(
-                    idResolver.generateIdentifier(cfgNamespace.getResource(), instance.getLabel()));
+            instance.setUri(idResolver.generateIdentifier(cfgNamespace.getResource(), instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
     }
@@ -121,8 +120,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
 
     @Override
     protected void preRemove(Resource instance) {
-        LOG.trace("Removing term occurrences in resource {} which is about to be removed.",
-                instance);
+        LOG.trace("Removing term occurrences in resource {} which is about to be removed.", instance);
         termOccurrenceDao.removeAll(instance);
         removeFromParentDocumentIfFile(instance);
     }
@@ -146,34 +144,5 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     @Override
     public long getLastModified() {
         return resourceDao.getLastModified();
-    }
-
-    /**
-     * Moves the triples of the document from the original vocabulary to the default context and
-     * from the
-     * new vocabulary to the context of this vocabulary.
-     *
-     * @param vOriginal original version of the vocabulary (before update)
-     * @param vNew      new version of the vocabulary (after update)
-     */
-    public void rewireDocumentsOnVocabularyUpdate(final Vocabulary vOriginal,
-                                                  final Vocabulary vNew) {
-        final Document dOriginal = vOriginal.getDocument();
-        final Document dNew = vNew.getDocument();
-
-        if (Objects.equals(dOriginal, dNew)) {
-            return;
-        }
-
-        if (dOriginal != null) {
-            // rewire to default ctx
-            resourceDao.updateDocumentForVocabulary(dOriginal, dOriginal, null);
-        }
-
-        if (dNew != null) {
-            final Document dNewManaged = (Document) getRequiredReference(dNew.getUri());
-            // rewire to vocabulary ctx
-            resourceDao.updateDocumentForVocabulary(dNewManaged, dNew, vNew.getUri());
-        }
     }
 }
