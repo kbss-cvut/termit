@@ -67,7 +67,7 @@ class TermOccurrenceRepositoryServiceTest extends BaseServiceTestRunner {
                 new FileOccurrenceTarget(resource));
         definitionSource.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
 
-        transactional(() -> sut.persistOccurrence(definitionSource));
+        transactional(() -> sut.persist(definitionSource));
         final TermDefinitionSource result = em.find(TermDefinitionSource.class, definitionSource.getUri());
         assertNotNull(result);
         assertEquals(term.getUri(), result.getTerm());

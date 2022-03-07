@@ -40,7 +40,7 @@ public class TermOccurrenceController extends BaseController {
                                   @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
 
-        occurrenceService.approveOccurrence(occurrenceService.getRequiredReference(identifier));
+        occurrenceService.approve(occurrenceService.getRequiredReference(identifier));
         LOG.debug("Occurrence with identifier <{}> approved.", identifier);
     }
 
@@ -50,7 +50,7 @@ public class TermOccurrenceController extends BaseController {
     public void removeOccurrence(@PathVariable String normalizedName,
                                  @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, normalizedName);
-        occurrenceService.removeOccurrence(occurrenceService.getRequiredReference(identifier));
+        occurrenceService.remove(occurrenceService.getRequiredReference(identifier));
         LOG.debug("Occurrence with identifier <{}> removed.", identifier);
     }
 }

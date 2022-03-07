@@ -54,14 +54,14 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
 
     @Transactional
     @Override
-    public void persistOccurrence(TermOccurrence occurrence) {
+    public void persist(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
         termOccurrenceDao.persist(occurrence);
     }
 
     @Transactional
     @Override
-    public void approveOccurrence(TermOccurrence occurrence) {
+    public void approve(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
         LOG.trace("Approving term occurrence {}", occurrence);
         occurrence.removeType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
@@ -70,7 +70,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
 
     @Transactional
     @Override
-    public void removeOccurrence(TermOccurrence occurrence) {
+    public void remove(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
         LOG.trace("Removing term occurrence {}.", occurrence);
         termOccurrenceDao.remove(occurrence);

@@ -25,7 +25,7 @@ public interface TermOccurrenceService {
      *
      * @param occurrence Occurrence to persist
      */
-    void persistOccurrence(TermOccurrence occurrence);
+    void persist(TermOccurrence occurrence);
 
     /**
      * Approves the specified term occurrence.
@@ -34,12 +34,12 @@ public interface TermOccurrenceService {
      *
      * @param occurrence Occurrence to approve
      */
-    void approveOccurrence(TermOccurrence occurrence);
+    void approve(TermOccurrence occurrence);
 
     /**
      * Removes the specified term occurrence.
      *
      * @param occurrence Occurrence to remove
      */
-    void removeOccurrence(TermOccurrence occurrence);
+    void remove(TermOccurrence occurrence);
 }

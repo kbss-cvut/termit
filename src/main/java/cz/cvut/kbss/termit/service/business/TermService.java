@@ -445,9 +445,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         definitionSource.setTerm(term.getUri());
         final Term existingTerm = repositoryService.findRequired(term.getUri());
         if (existingTerm.getDefinitionSource() != null) {
-            termOccurrenceService.removeOccurrence(existingTerm.getDefinitionSource());
+            termOccurrenceService.remove(existingTerm.getDefinitionSource());
         }
-        termOccurrenceService.persistOccurrence(definitionSource);
+        termOccurrenceService.persist(definitionSource);
     }
 
     /**
@@ -463,7 +463,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void removeTermDefinitionSource(Term term) {
         Objects.requireNonNull(term);
         if (term.getDefinitionSource() != null) {
-            termOccurrenceService.removeOccurrence(term.getDefinitionSource());
+            termOccurrenceService.remove(term.getDefinitionSource());
         }
     }
 

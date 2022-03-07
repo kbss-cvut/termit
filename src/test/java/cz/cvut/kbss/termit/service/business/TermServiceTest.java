@@ -319,7 +319,7 @@ class TermServiceTest {
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
-        verify(termOccurrenceRepositoryService).persistOccurrence(definitionSource);
+        verify(termOccurrenceRepositoryService).persist(definitionSource);
     }
 
     @Test
@@ -334,8 +334,8 @@ class TermServiceTest {
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
-        verify(termOccurrenceRepositoryService).removeOccurrence(existingSource);
-        verify(termOccurrenceRepositoryService).persistOccurrence(definitionSource);
+        verify(termOccurrenceRepositoryService).remove(existingSource);
+        verify(termOccurrenceRepositoryService).persist(definitionSource);
     }
 
     @Test
@@ -465,7 +465,7 @@ class TermServiceTest {
         term.setDefinitionSource(defSource);
 
         sut.removeTermDefinitionSource(term);
-        verify(termOccurrenceRepositoryService).removeOccurrence(defSource);
+        verify(termOccurrenceRepositoryService).remove(defSource);
     }
 
     @Test
@@ -473,6 +473,6 @@ class TermServiceTest {
         final Term term = generateTermWithId();
 
         sut.removeTermDefinitionSource(term);
-        verify(termOccurrenceRepositoryService, never()).removeOccurrence(any());
+        verify(termOccurrenceRepositoryService, never()).remove(any());
     }
 }

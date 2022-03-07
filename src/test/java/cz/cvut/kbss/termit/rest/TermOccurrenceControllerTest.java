@@ -56,7 +56,7 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
                .andExpect(status().isNoContent());
         verify(occurrenceService).getRequiredReference(OCCURRENCE_URI);
-        verify(occurrenceService).approveOccurrence(to);
+        verify(occurrenceService).approve(to);
     }
 
     private TermOccurrence generateTermOccurrence() {
@@ -73,7 +73,7 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
         mockMvc.perform(put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
                .andExpect(status().isNotFound());
-        verify(occurrenceService, never()).approveOccurrence(any());
+        verify(occurrenceService, never()).approve(any());
     }
 
     @Test
@@ -84,6 +84,6 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(delete(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
                .andExpect(status().isNoContent());
         verify(occurrenceService).getRequiredReference(OCCURRENCE_URI);
-        verify(occurrenceService).removeOccurrence(to);
+        verify(occurrenceService).remove(to);
     }
 }
