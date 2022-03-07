@@ -43,7 +43,7 @@ import static cz.cvut.kbss.termit.dto.assignment.TermOccurrences.COUNT_PROPERTY;
                 @VariableResult(name = "suggested", type = Boolean.class)
         }
 ))
-public class ResourceTermOccurrences extends AbstractAssignmentInfo {
+public class ResourceTermOccurrences extends AbstractAssignmentsInfo {
 
     @OWLAnnotationProperty(iri = RDFS.LABEL)
     private String termLabel;

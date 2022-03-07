@@ -26,7 +26,7 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
 
-abstract class AbstractAssignmentInfo implements HasTypes {
+abstract class AbstractAssignmentsInfo implements HasTypes {
 
     @OWLObjectProperty(iri = Vocabulary.s_p_je_prirazenim_termu)
     private URI term;
@@ -37,10 +37,10 @@ abstract class AbstractAssignmentInfo implements HasTypes {
     @Types
     private Set<String> types;
 
-    public AbstractAssignmentInfo() {
+    public AbstractAssignmentsInfo() {
     }
 
-    protected AbstractAssignmentInfo(URI term, URI resource) {
+    protected AbstractAssignmentsInfo(URI term, URI resource) {
         this.term = term;
         this.resource = resource;
     }
@@ -76,10 +76,10 @@ abstract class AbstractAssignmentInfo implements HasTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractAssignmentInfo)) {
+        if (!(o instanceof AbstractAssignmentsInfo)) {
             return false;
         }
-        AbstractAssignmentInfo that = (AbstractAssignmentInfo) o;
+        AbstractAssignmentsInfo that = (AbstractAssignmentsInfo) o;
         return Objects.equals(term, that.term) &&
                 Objects.equals(resource, that.resource) &&
                 Objects.equals(types, that.types);
