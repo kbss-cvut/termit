@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.persistence.dao.util;
 
-import cz.cvut.kbss.termit.model.occurrence.*;
+import cz.cvut.kbss.termit.model.assignment.*;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.util.Vocabulary;

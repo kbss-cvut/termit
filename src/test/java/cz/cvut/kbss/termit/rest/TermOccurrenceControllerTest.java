@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.occurrence.TermOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
 import cz.cvut.kbss.termit.util.Configuration;

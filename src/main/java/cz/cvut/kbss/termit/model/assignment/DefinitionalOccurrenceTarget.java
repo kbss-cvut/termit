@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.model.occurrence;
+package cz.cvut.kbss.termit.model.assignment;
 
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.Term;

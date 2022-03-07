@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.model.occurrence.TermOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 
 import java.net.URI;
 

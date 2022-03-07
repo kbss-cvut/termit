@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.model.occurrence;
+package cz.cvut.kbss.termit.model.assignment;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import org.junit.jupiter.api.Test;

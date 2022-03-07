@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.dto.occurrence;
+package cz.cvut.kbss.termit.dto.assignment;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -25,19 +25,18 @@ import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
-class ResourceTermOccurrencesTest {
+class TermOccurrencesTest {
 
     @Test
     void constructorAddsOccurrenceType() {
         final URI termUri = Generator.generateUri();
-        final URI vocabularyUri = Generator.generateUri();
         final URI resourceUri = Generator.generateUri();
         final String label = "Test term";
         final int count = 117;
-        final ResourceTermOccurrences result = new ResourceTermOccurrences(termUri, label, vocabularyUri, resourceUri,
-                count, false);
+        final TermOccurrences result = new TermOccurrences(termUri, resourceUri, label, count,
+                Vocabulary.s_c_souborovy_vyskyt_termu, false);
         assertNotNull(result);
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_vyskyt_termu));
     }
@@ -45,12 +44,11 @@ class ResourceTermOccurrencesTest {
     @Test
     void constructorAddsSuggestedTypeWhenSuggestedIsTrue() {
         final URI termUri = Generator.generateUri();
-        final URI vocabularyUri = Generator.generateUri();
         final URI resourceUri = Generator.generateUri();
         final String label = "Test term";
         final int count = 117;
-        final ResourceTermOccurrences result = new ResourceTermOccurrences(termUri, label, vocabularyUri, resourceUri,
-                count, true);
+        final TermOccurrences result = new TermOccurrences(termUri, resourceUri, label, count,
+                Vocabulary.s_c_souborovy_vyskyt_termu, true);
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_vyskyt_termu));
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu));
     }
