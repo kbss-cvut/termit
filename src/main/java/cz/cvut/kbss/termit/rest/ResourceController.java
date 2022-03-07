@@ -38,7 +38,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -56,34 +55,9 @@ public class ResourceController extends BaseController {
     private final ResourceService resourceService;
 
     @Autowired
-    public ResourceController(IdentifierResolver idResolver, Configuration config,
-                              ResourceService resourceService) {
+    public ResourceController(IdentifierResolver idResolver, Configuration config, ResourceService resourceService) {
         super(idResolver, config);
         this.resourceService = resourceService;
-    }
-
-    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<List<Resource>> getAll(ServletWebRequest webRequest) {
-        if (webRequest.checkNotModified(resourceService.getLastModified())) {
-            return null;
-        }
-        return ResponseEntity.ok().lastModified(resourceService.getLastModified()).body(resourceService.findAll());
-    }
-
-    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createResource(@RequestBody Resource resource) {
-        resourceService.persist(resource);
-        LOG.debug("Resource {} created.", resource);
-        return ResponseEntity.created(generateLocation(resource.getUri(), config.getNamespace().getResource())).build();
-    }
-
-    @GetMapping(value = "/{normalizedName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Resource getResource(@PathVariable String normalizedName,
-                                @RequestParam(name = QueryParams.NAMESPACE,
-                                              required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
-        return resourceService.findRequired(identifier);
     }
 
     @PutMapping(value = "/{normalizedName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -118,6 +92,11 @@ public class ResourceController extends BaseController {
         } catch (IOException e) {
             throw new TermItException("Unable to load content of resource " + resource, e);
         }
+    }
+
+    private Resource getResource(String normalizedName, Optional<String> namespace) {
+        final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
+        return resourceService.findRequired(identifier);
     }
 
     @PutMapping(value = "/{normalizedName}/content")
@@ -241,25 +220,5 @@ public class ResourceController extends BaseController {
         final Resource resource = resourceService
                 .getRequiredReference(resolveIdentifier(resourceNamespace(namespace), fragment));
         return resourceService.getChanges(resource);
-    }
-
-    /**
-     * Removes a resource.
-     *
-     * @param fragment  Normalized name used to identify the resource,
-     * @param namespace Namespace used for resource identifier resolution. Optional, if not
-     *                  specified, the configured namespace is used.
-     * @see ResourceService#remove(Resource) for details.
-     */
-    @DeleteMapping(value = "/{fragment}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void removeResource(@PathVariable String fragment,
-                               @RequestParam(name = QueryParams.NAMESPACE,
-                                             required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(resourceNamespace(namespace), fragment);
-        final Resource toRemove = resourceService.getRequiredReference(identifier);
-        resourceService.remove(toRemove);
-        LOG.debug("Resource {} removed.", toRemove);
     }
 }

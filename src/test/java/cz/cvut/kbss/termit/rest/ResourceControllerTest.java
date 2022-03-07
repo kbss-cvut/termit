@@ -12,7 +12,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -33,7 +32,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,8 +44,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -95,72 +91,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getResourceRetrievesResourceByDefaultNamespaceAndSpecifiedNormalizedName() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setLabel(RESOURCE_NAME);
-        resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME))
-                .thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(resource);
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + RESOURCE_NAME)).andExpect(status().isOk())
-                .andReturn();
-        final Resource result = readValue(mvcResult, Resource.class);
-        assertEquals(resource, result);
-        verify(resourceServiceMock).findRequired(RESOURCE_URI);
-        verify(identifierResolverMock).resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME);
-    }
-
-    @Test
-    void getResourceUsesSpecifiedNamespaceForResourceRetrieval() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setLabel(RESOURCE_NAME);
-        resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(resource);
-        final MvcResult mvcResult =
-                mockMvc.perform(get(PATH + "/" + RESOURCE_NAME).param("namespace", RESOURCE_NAMESPACE))
-                        .andExpect(status().isOk())
-                        .andReturn();
-        final Resource result = readValue(mvcResult, Resource.class);
-        assertEquals(resource, result);
-        verify(resourceServiceMock).findRequired(RESOURCE_URI);
-        verify(identifierResolverMock).resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME);
-    }
-
-    @Test
-    void createResourcePassesNewResourceToService() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setLabel(RESOURCE_NAME);
-        resource.setUri(RESOURCE_URI);
-        mockMvc.perform(post(PATH).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated());
-        verify(resourceServiceMock).persist(resource);
-    }
-
-    @Test
-    void createResourceReturnsLocationHeaderOnSuccess() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setLabel(RESOURCE_NAME);
-        resource.setUri(RESOURCE_URI);
-        final MvcResult mvcResult = mockMvc
-                .perform(post(PATH).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON)).andReturn();
-        verifyLocationEquals(PATH + "/" + RESOURCE_NAME, mvcResult);
-    }
-
-    @Test
-    void createResourceReturnsLocationHeaderWithNamespaceParameterWhenItDiffersFromDefault() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setLabel(RESOURCE_NAME);
-        final String namespace = "http://onto.fel.cvut.cz/ontologies/test/termit/resources/";
-        resource.setUri(URI.create(namespace + RESOURCE_NAME));
-        final MvcResult mvcResult = mockMvc
-                .perform(post(PATH).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON)).andReturn();
-        verifyLocationEquals(PATH + "/" + RESOURCE_NAME, mvcResult);
-        final String location = mvcResult.getResponse().getHeader(HttpHeaders.LOCATION);
-        assertThat(location, containsString(QueryParams.NAMESPACE + "=" + namespace));
-    }
-
-    @Test
     void updateResourcePassesUpdateDataToService() throws Exception {
         final Resource resource = Generator.generateResource();
         resource.setLabel(RESOURCE_NAME);
@@ -184,45 +114,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isConflict()).andReturn();
         final ErrorInfo errorInfo = readValue(mvcResult, ErrorInfo.class);
         assertThat(errorInfo.getMessage(), containsString("does not match the ID of the specified entity"));
-    }
-
-    @Test
-    void getAllRetrievesResourcesFromUnderlyingService() throws Exception {
-        final List<Resource> resources = IntStream.range(0, 5).mapToObj(i -> Generator.generateResourceWithId())
-                .collect(Collectors.toList());
-        when(resourceServiceMock.findAll()).thenReturn(resources);
-        final MvcResult mvcResult = mockMvc.perform(get(PATH)).andReturn();
-        final List<Resource> result = readValue(mvcResult, new TypeReference<List<Resource>>() {
-        });
-        verify(resourceServiceMock).findAll();
-        assertEquals(resources, result);
-    }
-
-    @Test
-    void removeResourceRemovesResourceViaService() throws Exception {
-        final Resource resource = Generator.generateResource();
-        resource.setLabel(RESOURCE_NAME);
-        resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME)).thenReturn(resource.getUri());
-        when(resourceServiceMock.getRequiredReference(resource.getUri())).thenReturn(resource);
-        mockMvc.perform(delete(PATH + "/" + RESOURCE_NAME)).andExpect(status().isNoContent());
-        verify(resourceServiceMock).getRequiredReference(resource.getUri());
-        verify(resourceServiceMock).remove(resource);
-    }
-
-    @Test
-    void createResourceSupportsSubtypesOfResource() throws Exception {
-        final Document doc = new Document();
-        doc.setLabel(RESOURCE_NAME);
-        doc.setUri(RESOURCE_URI);
-        final File file = generateFile();
-        doc.setFiles(Collections.singleton(file));
-        mockMvc.perform(post(PATH).content(toJsonLd(doc)).contentType(JsonLd.MEDIA_TYPE))
-                .andExpect(status().isCreated());
-        final ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-        verify(resourceServiceMock).persist(captor.capture());
-        assertEquals(doc, captor.getValue());
-        assertEquals(doc.getFiles(), captor.getValue().getFiles());
     }
 
     private static File generateFile() {
@@ -299,19 +190,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isNoContent());
         verify(resourceServiceMock)
                 .runTextAnalysis(file, vocabularies.stream().map(URI::create).collect(Collectors.toSet()));
-    }
-
-    @Test
-    void getResourceSupportsUriWithFileExtension() throws Exception {
-        final String normLabel = "CZ-00025712-CUZK_RUIAN-CSV-ADR-OB_554782.xml";
-        final String namespace = "http://atom.cuzk.cz/RUIAN-CSV-ADR-OB/datasetFeeds/";
-        final URI uri = URI.create(namespace + normLabel);
-        final Resource resource = Generator.generateResource();
-        resource.setUri(uri);
-        when(identifierResolverMock.resolveIdentifier(namespace, normLabel)).thenReturn(uri);
-        when(resourceServiceMock.findRequired(uri)).thenReturn(resource);
-        mockMvc.perform(get(PATH + "/" + normLabel).param(QueryParams.NAMESPACE, namespace)).andExpect(status().isOk());
-        verify(resourceServiceMock).findRequired(uri);
     }
 
     @Test
@@ -485,50 +363,6 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getAllReturnsLastModifiedHeader() throws Exception {
-        final List<Resource> resources = IntStream.range(0, 5).mapToObj(i -> Generator.generateResourceWithId())
-                .collect(Collectors.toList());
-        when(resourceServiceMock.findAll()).thenReturn(resources);
-        final long lastModified = (System.currentTimeMillis() / 1000) * 1000;
-        when(resourceServiceMock.getLastModified()).thenReturn(lastModified);
-
-        final MvcResult mvcResult = mockMvc.perform(get(PATH)).andReturn();
-        final String lastModifiedHeader = mvcResult.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
-        assertNotNull(lastModifiedHeader);
-        ZonedDateTime zdt = ZonedDateTime.parse(lastModifiedHeader, DateTimeFormatter.RFC_1123_DATE_TIME);
-        assertEquals(lastModified, zdt.toInstant().toEpochMilli());
-    }
-
-    @Test
-    void getAllReturnsNotModifiedWhenLastModifiedDateIsBeforeIfModifiedSinceHeaderValue() throws Exception {
-        // Round to seconds
-        final long lastModified = (System.currentTimeMillis() - 60 * 1000);
-        when(resourceServiceMock.getLastModified()).thenReturn(lastModified);
-
-        mockMvc.perform(
-                get(PATH).header(HttpHeaders.IF_MODIFIED_SINCE,
-                        DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now())))
-                .andExpect(status().isNotModified());
-        verify(resourceServiceMock).getLastModified();
-        verify(resourceServiceMock, never()).findAll();
-    }
-
-    @Test
-    void createResourceReturnsCorrectLocationHeaderForIdentifierStartingWithConfiguredNamespace() throws Exception {
-        // This applies to all asset controllers
-        when(configMock.getNamespace().getResource()).thenReturn(RESOURCE_NAMESPACE);
-        final String newNamespace = RESOURCE_NAMESPACE + "added/";
-        final Resource resource = Generator.generateResource();
-        resource.setUri(URI.create(newNamespace + RESOURCE_NAME));
-        final MvcResult mvcResult = mockMvc
-                .perform(post(PATH).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON)).andReturn();
-        verifyLocationEquals(PATH + "/" + RESOURCE_NAME, mvcResult);
-        final String query = URI.create(mvcResult.getResponse().getHeader(HttpHeaders.LOCATION)).getQuery();
-        assertNotNull(query);
-        assertEquals(QueryParams.NAMESPACE + "=" + newNamespace, query);
-    }
-
-    @Test
     void getHistoryReturnsListOfChangeRecordsForSpecifiedVocabulary() throws Exception {
         final Resource resource = Generator.generateResourceWithId();
         resource.setUri(RESOURCE_URI);
@@ -546,27 +380,5 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         assertNotNull(result);
         assertEquals(records, result);
         verify(resourceServiceMock).getChanges(resource);
-    }
-
-    /**
-     * Bug #1028
-     */
-    @Test
-    void getByIdHandlesCircularReferenceBetweenDocumentAndFiles() throws Exception {
-        final Document document = Generator.generateDocumentWithId();
-        document.setUri(RESOURCE_URI);
-        final File file = Generator.generateFileWithId("test.html");
-        document.addFile(file);
-        file.setDocument(document);
-        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(document);
-
-        final MvcResult mvcResult = mockMvc.perform(
-                get(PATH + "/" + RESOURCE_NAME).param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
-                        .accept(MediaType.APPLICATION_JSON)).andReturn();
-        final Document result = readValue(mvcResult, Document.class);
-        assertNotNull(result);
-        assertEquals(1, result.getFiles().size());
-        assertEquals(file, result.getFile(file.getLabel()).get());
     }
 }
