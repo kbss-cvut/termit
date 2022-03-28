@@ -91,9 +91,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void removeDeletesOccurrenceTargetsAndTermOccurrencesAssociatedWithResource() {
         enableRdfsInference(em);
-        final File file = new File();
-        file.setUri(Generator.generateUri());
-        file.setLabel("test.txt");
+        final File file = Generator.generateFileWithId("test.txt");
         transactional(() -> em.persist(file));
         final Term tOne = generateTermWithUriAndPersist();
         final FileOccurrenceTarget target = new FileOccurrenceTarget(file);
@@ -116,9 +114,7 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void removeDeletesTermOccurrencesAndAllTargetsAssociatedWithResource() {
         enableRdfsInference(em);
-        final File file = new File();
-        file.setUri(Generator.generateUri());
-        file.setLabel("test.txt");
+        final File file = Generator.generateFileWithId("test.txt");
         transactional(() -> em.persist(file));
         final Term tOne = generateTermWithUriAndPersist();
         final FileOccurrenceTarget occurrenceTarget = new FileOccurrenceTarget(file);
@@ -139,16 +135,10 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void updateSupportsSubclassesOfResource() {
-        final Document doc = new Document();
-        doc.setLabel("test document");
-        doc.setUri(Generator.generateUri());
-        final File fileOne = new File();
-        fileOne.setUri(Generator.generateUri());
-        fileOne.setLabel("test.txt");
+        final Document doc = Generator.generateDocumentWithId();
+        final File fileOne = Generator.generateFileWithId("test.html");
         doc.addFile(fileOne);
-        final File fileTwo = new File();
-        fileTwo.setUri(Generator.generateUri());
-        fileTwo.setLabel("testTwo.html");
+        final File fileTwo = Generator.generateFileWithId("testTwo.html");
         transactional(() -> {
             // Ensure correct RDFS class hierarchy interpretation
             final Repository repository = em.unwrap(Repository.class);
@@ -196,12 +186,8 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void removeDeletesReferenceFromParentDocumentToRemovedFile() {
-        final File file = new File();
-        file.setUri(Generator.generateUri());
-        file.setLabel("test.txt");
-        final Document parent = new Document();
-        parent.setUri(Generator.generateUri());
-        parent.setLabel("Parent document");
+        final File file = Generator.generateFileWithId("test.html");
+        final Document parent = Generator.generateDocumentWithId();
         parent.addFile(file);
         file.setDocument(parent);   // Manually set the inferred attribute
         transactional(() -> {
@@ -291,45 +277,5 @@ class ResourceRepositoryServiceTest extends BaseServiceTestRunner {
         final long result = sut.getLastModified();
         assertThat(result, greaterThan(0L));
         assertThat(result, lessThanOrEqualTo(System.currentTimeMillis()));
-    }
-
-    @Test
-    void rewireDocumentsOnVocabularyUpdatePutsOriginalDocumentIntoDefaultContext() {
-        final cz.cvut.kbss.termit.model.Vocabulary vOriginal = Generator.generateVocabularyWithId();
-        final Document document = Generator.generateDocumentWithId();
-        vOriginal.setDocument(document);
-
-        final Descriptor d = descriptorFactory.vocabularyDescriptor(vOriginal);
-
-        transactional(() -> em.persist(vOriginal, d));
-
-        final cz.cvut.kbss.termit.model.Vocabulary vUpdate = new cz.cvut.kbss.termit.model.Vocabulary();
-        vUpdate.setUri(vOriginal.getUri());
-        vUpdate.setDocument(null);
-
-        transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
-
-        assertThat(em.find(Document.class, document.getUri(), d), nullValue());
-    }
-
-    @Test
-    void rewireDocumentsOnVocabularyUpdatePutsUpdatedDocumentIntoVocabularyContext() {
-        final cz.cvut.kbss.termit.model.Vocabulary vOriginal = Generator.generateVocabularyWithId();
-        vOriginal.setDocument(null);
-
-        final Descriptor d = descriptorFactory.vocabularyDescriptor(vOriginal);
-        final Document document = Generator.generateDocumentWithId();
-        transactional(() -> {
-            em.persist(vOriginal, d);
-            em.persist(document);
-        });
-
-        final cz.cvut.kbss.termit.model.Vocabulary vUpdate = new cz.cvut.kbss.termit.model.Vocabulary();
-        vUpdate.setUri(vOriginal.getUri());
-        vUpdate.setDocument(document);
-
-        transactional(() -> sut.rewireDocumentsOnVocabularyUpdate(vOriginal, vUpdate));
-
-        assertThat(em.find(Document.class, document.getUri(), d), equalTo(document));
     }
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
-import cz.cvut.kbss.termit.exception.VocabularyRemovalException;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -204,23 +204,18 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
-        mockMvc.perform(
-                       delete(PATH + "/" + fragment))
-               .andExpect(status().is2xxSuccessful()).andReturn();
+        mockMvc.perform(delete(PATH + "/" + fragment)).andExpect(status().is2xxSuccessful()).andReturn();
     }
 
     @Test
     void removeVocabularyReturns4xxForNotRemovableVocabulary() throws Exception {
-        Mockito.doThrow(
-                       new VocabularyRemovalException("Vocabulary cannot be removed. It contains terms."))
+        Mockito.doThrow(new AssetRemovalException("Vocabulary cannot be removed. It contains terms."))
                .when(serviceMock).remove(any());
 
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(Generator.generateUri());
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
-        mockMvc.perform(
-                       delete(PATH + "/" + fragment))
-               .andExpect(status().is4xxClientError()).andReturn();
+        mockMvc.perform(delete(PATH + "/" + fragment)).andExpect(status().is4xxClientError()).andReturn();
     }
 
     @Test

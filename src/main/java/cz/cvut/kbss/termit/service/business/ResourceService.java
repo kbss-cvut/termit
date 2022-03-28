@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -50,12 +51,11 @@ import java.util.*;
  */
 @Service
 public class ResourceService
-        implements CrudService<Resource>, SupportsLastModification, ChangeRecordProvider<Resource>, ApplicationEventPublisherAware {
+        implements SupportsLastModification, ChangeRecordProvider<Resource>, ApplicationEventPublisherAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResourceService.class);
 
     private final ResourceRepositoryService repositoryService;
-
 
     private final DocumentManager documentManager;
 
@@ -89,6 +89,9 @@ public class ResourceService
     @Transactional
     public void remove(Resource toRemove) {
         Objects.requireNonNull(toRemove);
+        if (toRemove instanceof Document && ((Document) toRemove).getFiles().size() > 0) {
+            throw new AssetRemovalException("Cannot remove non-empty document " + toRemove.getLabel() + "!");
+        }
         // We need the reference managed, so that its name is available to document manager
         final Resource actualToRemove = getRequiredReference(toRemove.getUri());
         documentManager.remove(actualToRemove);
@@ -191,10 +194,10 @@ public class ResourceService
             final Vocabulary vocabulary = vocabularyService.getRequiredReference(doc.getVocabulary());
             repositoryService.persist(file, vocabulary);
         } else {
-            persist(file);
+            repositoryService.persist(file);
         }
         if (!getReference(document.getUri()).isPresent()) {
-            persist(document);
+            repositoryService.persist(document);
         } else {
             update(doc);
         }
@@ -273,44 +276,19 @@ public class ResourceService
                 () -> new NotFoundException("No text analysis record exists for " + resource));
     }
 
-    @Override
-    public List<Resource> findAll() {
-        return repositoryService.findAll();
-    }
-
-    @Override
-    public Optional<Resource> find(URI id) {
-        return repositoryService.find(id);
-    }
-
-    @Override
     public Resource findRequired(URI id) {
         return repositoryService.findRequired(id);
     }
 
-    @Override
     public Optional<Resource> getReference(URI id) {
         return repositoryService.getReference(id);
     }
 
-    @Override
     public Resource getRequiredReference(URI id) {
         return repositoryService.getRequiredReference(id);
     }
 
-    @Override
-    public boolean exists(URI id) {
-        return repositoryService.exists(id);
-    }
-
     @Transactional
-    @Override
-    public void persist(Resource instance) {
-        repositoryService.persist(instance);
-    }
-
-    @Transactional
-    @Override
     public Resource update(Resource instance) {
         final Optional<ApplicationEvent> evt = createFileOrDocumentLabelUpdateNotification(instance);
         final Resource result = repositoryService.update(instance);

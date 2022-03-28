@@ -14,6 +14,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -72,37 +73,10 @@ class ResourceServiceTest {
     }
 
     @Test
-    void findAllLoadsResourcesFromRepositoryService() {
-        sut.findAll();
-        verify(resourceRepositoryService).findAll();
-    }
-
-    @Test
-    void findLoadsResourceFromRepositoryService() {
-        final URI uri = Generator.generateUri();
-        sut.find(uri);
-        verify(resourceRepositoryService).find(uri);
-    }
-
-    @Test
     void findRequiredLoadsResourceFromRepositoryService() {
         final URI uri = Generator.generateUri();
         sut.findRequired(uri);
         verify(resourceRepositoryService).findRequired(uri);
-    }
-
-    @Test
-    void existsChecksForExistenceViaRepositoryService() {
-        final URI uri = Generator.generateUri();
-        sut.exists(uri);
-        verify(resourceRepositoryService).exists(uri);
-    }
-
-    @Test
-    void persistSavesResourceViaRepositoryService() {
-        final Resource resource = Generator.generateResourceWithId();
-        sut.persist(resource);
-        verify(resourceRepositoryService).persist(resource);
     }
 
     @Test
@@ -490,5 +464,15 @@ class ResourceServiceTest {
         when(resourceRepositoryService.update(any())).thenThrow(TransactionSystemException.class);
         assertThrows(TransactionSystemException.class, () -> sut.update(file));
         verify(eventPublisher, never()).publishEvent(any(FileRenameEvent.class));
+    }
+
+    @Test
+    void removeThrowsAssetRemovalExceptionWhenNonEmptyDocumentIsRemoved() {
+        final File file = Generator.generateFileWithId("test.html");
+        final Document document = Generator.generateDocumentWithId();
+        document.addFile(file);
+
+        assertThrows(AssetRemovalException.class, () -> sut.remove(document));
+        verify(resourceRepositoryService, never()).remove(any());
     }
 }

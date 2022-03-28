@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.model.resource;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
@@ -28,6 +29,7 @@ import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.Objects;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
 @Audited
 @OWLClass(iri = Vocabulary.s_c_zdroj)
 @JsonLdAttributeOrder({"uri", "label", "description"})

@@ -18,11 +18,11 @@
 package cz.cvut.kbss.termit.exception;
 
 /**
- * Indicates that an error occurred in the vocabulary import relationship.
+ * Indicates that an invalid attempt to remove an asset occurred.
  */
-public class VocabularyRemovalException extends TermItException {
+public class AssetRemovalException extends TermItException {
 
-    public VocabularyRemovalException(String message) {
+    public AssetRemovalException(String message) {
         super(message);
     }
 }
