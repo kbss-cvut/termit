@@ -28,9 +28,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +35,6 @@ import javax.validation.Validator;
 import java.util.List;
 import java.util.Objects;
 
-@CacheConfig(cacheNames = "resources")
 @Service
 public class ResourceRepositoryService extends BaseAssetRepositoryService<Resource>
         implements SupportsLastModification {
@@ -69,25 +65,21 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
         return resourceDao;
     }
 
-    @Cacheable
     @Override
     public List<Resource> findAll() {
         return super.findAll();
     }
 
-    @CacheEvict(allEntries = true)
     @Override
     public void persist(Resource instance) {
         super.persist(instance);
     }
 
-    @CacheEvict(allEntries = true)
     @Override
     public Resource update(Resource instance) {
         return super.update(instance);
     }
 
-    @CacheEvict(allEntries = true)
     @Override
     public void remove(Resource instance) {
         super.remove(instance);
