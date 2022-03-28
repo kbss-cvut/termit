@@ -60,6 +60,14 @@ public class ResourceController extends BaseController {
         this.resourceService = resourceService;
     }
 
+    @GetMapping(value = "/{normalizedName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public Resource getResource(@PathVariable String normalizedName,
+                                @RequestParam(name = QueryParams.NAMESPACE,
+                                              required = false) Optional<String> namespace) {
+        final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
+        return resourceService.findRequired(identifier);
+    }
+
     @PutMapping(value = "/{normalizedName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
@@ -92,11 +100,6 @@ public class ResourceController extends BaseController {
         } catch (IOException e) {
             throw new TermItException("Unable to load content of resource " + resource, e);
         }
-    }
-
-    private Resource getResource(String normalizedName, Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(resourceNamespace(namespace), normalizedName);
-        return resourceService.findRequired(identifier);
     }
 
     @PutMapping(value = "/{normalizedName}/content")
