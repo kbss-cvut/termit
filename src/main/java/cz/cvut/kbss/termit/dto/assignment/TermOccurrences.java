@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.Objects;
 
@@ -36,7 +37,7 @@ import java.util.Objects;
                 @VariableResult(name = "term", type = URI.class),
                 @VariableResult(name = "resource", type = URI.class),
                 @VariableResult(name = "label", type = String.class),
-                @VariableResult(name = "cnt", type = Integer.class),
+                @VariableResult(name = "cnt", type = BigInteger.class),
                 @VariableResult(name = "type", type = String.class),
                 @VariableResult(name = "suggested", type = Boolean.class)
         }
@@ -54,11 +55,11 @@ public class TermOccurrences extends AbstractAssignmentsInfo {
     public TermOccurrences() {
     }
 
-    public TermOccurrences(URI term, URI resource, String resourceLabel, Integer count, String type,
+    public TermOccurrences(URI term, URI resource, String resourceLabel, BigInteger count, String type,
                            Boolean suggested) {
         super(term, resource);
         this.resourceLabel = resourceLabel;
-        this.count = count;
+        this.count = count.intValueExact();
         addType(type);
         addType(Vocabulary.s_c_vyskyt_termu);
         if (suggested) {
