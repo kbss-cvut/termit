@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,7 +35,7 @@ class TermOccurrencesTest {
         final URI termUri = Generator.generateUri();
         final URI resourceUri = Generator.generateUri();
         final String label = "Test term";
-        final int count = 117;
+        final BigInteger count = BigInteger.valueOf(Generator.randomInt(1, 1000));
         final TermOccurrences result = new TermOccurrences(termUri, resourceUri, label, count,
                 Vocabulary.s_c_souborovy_vyskyt_termu, false);
         assertNotNull(result);
@@ -46,7 +47,7 @@ class TermOccurrencesTest {
         final URI termUri = Generator.generateUri();
         final URI resourceUri = Generator.generateUri();
         final String label = "Test term";
-        final int count = 117;
+        final BigInteger count = BigInteger.valueOf(Generator.randomInt(1, 1000));
         final TermOccurrences result = new TermOccurrences(termUri, resourceUri, label, count,
                 Vocabulary.s_c_souborovy_vyskyt_termu, true);
         assertThat(result.getTypes(), hasItem(Vocabulary.s_c_vyskyt_termu));

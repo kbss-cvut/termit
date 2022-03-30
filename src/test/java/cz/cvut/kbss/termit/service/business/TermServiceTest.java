@@ -29,6 +29,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -135,7 +136,7 @@ class TermServiceTest {
     void getOccurrenceInfoRetrievesTermOccurrenceInfoFromRepositoryService() {
         final Term term = generateTermWithId();
         final List<TermOccurrences> occurrences = Collections
-                .singletonList(new TermOccurrences(term.getUri(), Generator.generateUri(), "test", 1, cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
+                .singletonList(new TermOccurrences(term.getUri(), Generator.generateUri(), "test", BigInteger.valueOf(125L), cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
         when(termRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(occurrences, result);
