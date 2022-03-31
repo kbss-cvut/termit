@@ -3,10 +3,11 @@ package cz.cvut.kbss.termit.model.comment;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 
@@ -33,10 +34,10 @@ public class Comment extends AbstractEntity {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
-    private Date created;
+    private Instant created;
 
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace)
-    private Date modified;
+    private Instant modified;
 
     @Inferred
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_reakci, fetch = FetchType.EAGER)
@@ -66,19 +67,19 @@ public class Comment extends AbstractEntity {
         this.author = author;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public Date getModified() {
+    public Instant getModified() {
         return modified;
     }
 
-    public void setModified(Date modified) {
+    public void setModified(Instant modified) {
         this.modified = modified;
     }
 
@@ -92,12 +93,12 @@ public class Comment extends AbstractEntity {
 
     @PrePersist
     public void prePersist() {
-        this.created = new Date();
+        this.created = Utils.timestamp();
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.modified = new Date();
+        this.modified = Utils.timestamp();
     }
 
     @Override

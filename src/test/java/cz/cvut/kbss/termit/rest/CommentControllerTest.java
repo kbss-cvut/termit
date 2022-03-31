@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,6 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.net.URI;
 import java.security.Principal;
-import java.util.Date;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -70,7 +70,7 @@ class CommentControllerTest extends BaseControllerTestRunner {
         final Comment comment = new Comment();
         comment.setContent("aaaa");
         comment.setAsset(Generator.generateUri());
-        comment.setCreated(new Date());
+        comment.setCreated(Utils.timestamp());
         comment.setUri(URI.create(NAMESPACE + NAME));
         return comment;
     }

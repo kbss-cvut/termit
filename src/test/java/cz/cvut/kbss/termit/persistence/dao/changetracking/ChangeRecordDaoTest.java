@@ -13,6 +13,7 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,7 +119,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     void findAllReturnsChangeRecordsOrderedByTimestampDescendingAndChangedAttributeId() {
         enableRdfsInference(em);
         final Term asset = Generator.generateTermWithId();
-        final Instant now = Instant.now();
+        final Instant now = Utils.timestamp();
         final UpdateChangeRecord rOne = generateUpdateRecord(now, asset.getUri());
         rOne.setChangedAttribute(URI.create(SKOS.PREF_LABEL));
         final UpdateChangeRecord rTwo = generateUpdateRecord(now, asset.getUri());
@@ -145,7 +146,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
     @Test
     void persistSavesChangeRecordWithLiteralValueChange() {
-        final UpdateChangeRecord record = generateUpdateRecord(Instant.now(), Generator.generateUri());
+        final UpdateChangeRecord record = generateUpdateRecord(Utils.timestamp(), Generator.generateUri());
         record.setOriginalValue(Collections.singleton("original value"));
         record.setNewValue(Collections.singleton("new value"));
         transactional(() -> sut.persist(record, vocabulary));
@@ -158,7 +159,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
     @Test
     void persistSavesRecordWithReferenceValueChange() {
-        final UpdateChangeRecord record = generateUpdateRecord(Instant.now(), Generator.generateUri());
+        final UpdateChangeRecord record = generateUpdateRecord(Utils.timestamp(), Generator.generateUri());
         record.setNewValue(Collections.singleton(Generator.generateUri()));
         transactional(() -> sut.persist(record, vocabulary));
 
@@ -171,7 +172,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void supportsWorkingWithMultilingualAttributes() {
         enableRdfsInference(em);
-        final UpdateChangeRecord record = generateUpdateRecord(Instant.now(), vocabulary.getUri());
+        final UpdateChangeRecord record = generateUpdateRecord(Utils.timestamp(), vocabulary.getUri());
         final MultilingualString original = MultilingualString.create("Test term", "en");
         final MultilingualString newValue = new MultilingualString(original.getValue());
         newValue.set("cs", "Testovací pojem");

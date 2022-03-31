@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -132,7 +132,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
     @Test
     void updateThrowsUnsupportedOperationExceptionWhenAttemptingToChangeCommentCreationDate() {
         final Comment comment = persistComment();
-        comment.setCreated(new Date(System.currentTimeMillis() - 100000));
+        comment.setCreated(Instant.ofEpochMilli(System.currentTimeMillis() - 100000));
 
         assertThrows(UnsupportedOperationException.class, () -> sut.update(comment));
     }
@@ -189,7 +189,6 @@ class CommentServiceTest extends BaseServiceTestRunner {
     }
 
     private boolean doesReactionExist(Comment comment, URI type) {
-        // TODO replace literal IRIs with constants once the comments model is settled
         return em.createNativeQuery("ASK WHERE {" +
                 "?x a ?type ;" +
                 "?hasAuthor ?author ;" +

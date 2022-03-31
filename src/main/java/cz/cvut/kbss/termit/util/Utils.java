@@ -7,6 +7,8 @@ import org.eclipse.rdf4j.model.util.Values;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -217,5 +219,13 @@ public class Utils {
                     .filter(statement -> statement.getObject().isLiteral())
                     .map(statement -> ((Literal) statement.getObject()).getLanguage().orElse(""))
                     .collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns a timestamp representing the current time instant, truncated to milliseconds for simpler manipulation.
+     * @return Current instant truncated to millis
+     */
+    public static Instant timestamp() {
+        return Instant.now().truncatedTo(ChronoUnit.MILLIS);
     }
 }
