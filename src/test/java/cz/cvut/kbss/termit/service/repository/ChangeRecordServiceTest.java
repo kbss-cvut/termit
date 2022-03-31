@@ -64,7 +64,7 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
             final UpdateChangeRecord r = new UpdateChangeRecord(asset);
             r.setChangedAttribute(URI.create(DC.Terms.TITLE));
             r.setAuthor(author);
-            r.setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000));
+            r.setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000L));
             return r;
         }).collect(Collectors.toList());
         transactional(() -> records.forEach(em::persist));

@@ -26,14 +26,13 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
+import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.topbraid.shacl.vocabulary.SH;
 
 import java.net.URI;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -283,7 +282,7 @@ public class Generator {
 
     public static PersistChangeRecord generatePersistChange(Asset<?> asset) {
         final PersistChangeRecord record = new PersistChangeRecord(asset);
-        record.setTimestamp(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+        record.setTimestamp(Utils.timestamp());
         if (Environment.getCurrentUser() != null) {
             record.setAuthor(Environment.getCurrentUser().toUser());
         }
@@ -299,7 +298,7 @@ public class Generator {
      */
     public static UpdateChangeRecord generateUpdateChange(Asset<?> asset) {
         final UpdateChangeRecord record = new UpdateChangeRecord(asset);
-        record.setTimestamp(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+        record.setTimestamp(Utils.timestamp());
         if (Environment.getCurrentUser() != null) {
             record.setAuthor(Environment.getCurrentUser().toUser());
         }
@@ -361,8 +360,8 @@ public class Generator {
         final Comment comment = new Comment();
         comment.setAsset(asset.getUri());
         comment.setAuthor(user);
-        comment.setCreated(new Date());
-        comment.setModified(new Date());
+        comment.setCreated(Utils.timestamp());
+        comment.setModified(Utils.timestamp());
         comment.setContent("Comment " + randomInt());
         comment.setUri(Generator.generateUri());
         return comment;
@@ -389,7 +388,7 @@ public class Generator {
         c.setContent("Comment " + Generator.randomInt());
         if (term != null) {
             c.setAsset(term.getUri());
-            c.setCreated(new Date());
+            c.setCreated(Utils.timestamp());
         }
         return c;
     }

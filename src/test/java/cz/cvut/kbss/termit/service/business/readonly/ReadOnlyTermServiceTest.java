@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -20,7 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -149,7 +149,7 @@ class ReadOnlyTermServiceTest {
         final Term term = Generator.generateTermWithId();
         final Comment comment = new Comment();
         comment.setAsset(term.getUri());
-        comment.setCreated(new Date());
+        comment.setCreated(Utils.timestamp());
         when(termService.getComments(term)).thenReturn(Collections.singletonList(comment));
 
         final List<Comment> result = sut.getComments(term);

@@ -34,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -158,14 +159,14 @@ class AssetServiceTest {
         verify(vocabularyService).findLastEditedBy(currentUser.toUser(), count);
     }
 
-    private List<RecentlyCommentedAsset> generateRecentlyCommentedAssets(int count) {
+    private List<RecentlyCommentedAsset> generateRecentlyCommentedAssets() {
         final List<RecentlyCommentedAsset> assets = new ArrayList<>();
         final User author = Generator.generateUserWithId();
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = Generator.generateTermWithId();
             Comment comment = Generator.generateComment(author, term);
             RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), null, SKOS.CONCEPT);
-            comment.setCreated(new Date(System.currentTimeMillis() - i * 1000));
+            comment.setCreated(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             comment.setAuthor(author);
             comment.setAsset(term.getUri());
             rca.setLastComment(comment);
@@ -179,7 +180,7 @@ class AssetServiceTest {
 
     @Test
     void findLastCommentedReturnsAssetsSortedByDateCommentCreatedDescending() {
-        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets(6);
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
         allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
         final List<RecentlyCommentedAsset> result = sut.findLastCommented(10);
         assertEquals(allExpected, result);
@@ -190,7 +191,7 @@ class AssetServiceTest {
         final UserAccount currentUser = Generator.generateUserAccount();
         when(securityUtils.getCurrentUser()).thenReturn(currentUser);
 
-        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets(6);
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
         allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
         final List<RecentlyCommentedAsset> result = sut.findMyLastCommented(10);
         assertEquals(allExpected, result);
@@ -201,7 +202,7 @@ class AssetServiceTest {
         final UserAccount currentUser = Generator.generateUserAccount();
         when(securityUtils.getCurrentUser()).thenReturn(currentUser);
 
-        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets(6);
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
         allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
         final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReactionToMine(10);
         assertEquals(allExpected, result);

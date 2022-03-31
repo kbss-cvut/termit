@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +40,7 @@ public class ChangeTracker {
         Objects.requireNonNull(added);
         final AbstractChangeRecord changeRecord = new PersistChangeRecord(added);
         changeRecord.setAuthor(SecurityUtils.currentUser().toUser());
-        changeRecord.setTimestamp(Instant.now());
+        changeRecord.setTimestamp(Utils.timestamp());
         changeRecordDao.persist(changeRecord, added);
     }
 
@@ -55,7 +56,7 @@ public class ChangeTracker {
     public void recordUpdateEvent(Asset<?> update, Asset<?> original) {
         Objects.requireNonNull(update);
         Objects.requireNonNull(original);
-        final Instant now = Instant.now();
+        final Instant now = Utils.timestamp();
         final User user = SecurityUtils.currentUser().toUser();
         changeCalculator.calculateChanges(update, original).forEach(ch -> {
             ch.setAuthor(user);
