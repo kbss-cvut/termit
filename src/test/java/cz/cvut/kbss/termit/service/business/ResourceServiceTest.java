@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -364,7 +365,7 @@ class ResourceServiceTest {
     @Test
     void findLatestTextAnalysisRecordRetrievesLatestTextAnalysisRecordForResource() {
         final File file = Generator.generateFileWithId("test.html");
-        final TextAnalysisRecord record = new TextAnalysisRecord(new Date(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
         when(textAnalysisService.findLatestAnalysisRecord(file)).thenReturn(Optional.of(record));
 
         final TextAnalysisRecord result = sut.findLatestTextAnalysisRecord(file);

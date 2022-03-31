@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +38,6 @@ import org.mockito.quality.Strictness;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -86,27 +86,27 @@ class AssetServiceTest {
             switch (i % 3) {
                 case 0:
                     final Resource resource = Generator.generateResourceWithId();
-                    rma = new RecentlyModifiedAsset(resource.getUri(), resource.getLabel(), new Date(), author.getUri(),
-                            null,
+                    rma = new RecentlyModifiedAsset(resource.getUri(), resource.getLabel(), Utils.timestamp(),
+                            author.getUri(), null,
                             cz.cvut.kbss.termit.util.Vocabulary.s_c_resource, Vocabulary.s_c_vytvoreni_entity);
                     resources.add(rma);
                     break;
                 case 1:
                     final Term term = Generator.generateTermWithId();
                     rma = new RecentlyModifiedAsset(term.getUri(), term.getLabel().get(Environment.LANGUAGE),
-                            new Date(), author.getUri(), null,
+                            Utils.timestamp(), author.getUri(), null,
                             SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity);
                     terms.add(rma);
                     break;
                 case 2:
                     final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
-                    rma = new RecentlyModifiedAsset(vocabulary.getUri(), vocabulary.getLabel(), new Date(),
+                    rma = new RecentlyModifiedAsset(vocabulary.getUri(), vocabulary.getLabel(), Utils.timestamp(),
                             author.getUri(), null,
                             Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
                     vocabularies.add(rma);
                     break;
             }
-            rma.setModified(new Date(System.currentTimeMillis() - i * 1000L));
+            rma.setModified(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             rma.setEditor(author);
             assets.add(rma);
         }
@@ -165,7 +165,8 @@ class AssetServiceTest {
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = Generator.generateTermWithId();
             Comment comment = Generator.generateComment(author, term);
-            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), null, SKOS.CONCEPT);
+            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), null,
+                    SKOS.CONCEPT);
             comment.setCreated(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             comment.setAuthor(author);
             comment.setAsset(term.getUri());
@@ -181,7 +182,8 @@ class AssetServiceTest {
     @Test
     void findLastCommentedReturnsAssetsSortedByDateCommentCreatedDescending() {
         final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
-        allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        allExpected.sort(
+                Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
         final List<RecentlyCommentedAsset> result = sut.findLastCommented(10);
         assertEquals(allExpected, result);
     }
@@ -192,7 +194,8 @@ class AssetServiceTest {
         when(securityUtils.getCurrentUser()).thenReturn(currentUser);
 
         final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
-        allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        allExpected.sort(
+                Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
         final List<RecentlyCommentedAsset> result = sut.findMyLastCommented(10);
         assertEquals(allExpected, result);
     }
@@ -203,7 +206,8 @@ class AssetServiceTest {
         when(securityUtils.getCurrentUser()).thenReturn(currentUser);
 
         final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
-        allExpected.sort(Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        allExpected.sort(
+                Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
         final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReactionToMine(10);
         assertEquals(allExpected, result);
     }

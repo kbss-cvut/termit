@@ -25,13 +25,14 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -60,9 +61,9 @@ class TextAnalysisRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findLatestGetsLatestTextAnalysisRecordForResource() {
         final URI vocabulary = Generator.generateUri();
-        final TextAnalysisRecord old = new TextAnalysisRecord(new Date(System.currentTimeMillis() - 10000), resource);
+        final TextAnalysisRecord old = new TextAnalysisRecord(Instant.ofEpochMilli(System.currentTimeMillis() - 10000), resource);
         old.setVocabularies(Collections.singleton(vocabulary));
-        final TextAnalysisRecord latest = new TextAnalysisRecord(new Date(), resource);
+        final TextAnalysisRecord latest = new TextAnalysisRecord(Utils.timestamp(), resource);
         latest.setVocabularies(Collections.singleton(vocabulary));
         transactional(() -> {
             sut.persist(old);

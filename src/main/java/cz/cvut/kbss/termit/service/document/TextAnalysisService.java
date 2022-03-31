@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,10 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class TextAnalysisService {
@@ -124,7 +128,7 @@ public class TextAnalysisService {
         LOG.trace("Creating record of text analysis event for file {}.", file);
         assert config.getVocabularyContexts() != null;
 
-        final TextAnalysisRecord record = new TextAnalysisRecord(new Date(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
         record.setVocabularies(new HashSet<>(config.getVocabularyContexts()));
         recordDao.persist(record);
     }

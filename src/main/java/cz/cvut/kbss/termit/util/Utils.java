@@ -158,7 +158,8 @@ public class Utils {
 
         for (final String s : conceptUris) {
             if (!s.startsWith(namespace)) {
-                throw new IllegalArgumentException("Not all Concept IRIs have the same namespace: " + conceptUri + " vs. " + namespace);
+                throw new IllegalArgumentException(
+                        "Not all Concept IRIs have the same namespace: " + conceptUri + " vs. " + namespace);
             }
         }
         return namespace;
@@ -223,6 +224,7 @@ public class Utils {
 
     /**
      * Returns a timestamp representing the current time instant, truncated to milliseconds for simpler manipulation.
+     *
      * @return Current instant truncated to millis
      */
     public static Instant timestamp() {

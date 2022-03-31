@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +38,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,7 +53,8 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDocumentManager.class);
 
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HHmmss_S");
+    private final DateTimeFormatter timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
+                                                                       .withZone(ZoneId.systemDefault());
 
     private final Configuration config;
 
@@ -77,8 +78,7 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private java.io.File resolveDocumentDirectory(Document document) {
         Objects.requireNonNull(document);
-        final String path =
-            config.getFile().getStorage() + java.io.File.separator + document.getDirectoryName();
+        final String path = config.getFile().getStorage() + java.io.File.separator + document.getDirectoryName();
         return new java.io.File(path);
     }
 
@@ -132,7 +132,7 @@ public class DefaultDocumentManager implements DocumentManager {
      */
     private String generateBackupFileName(File file) {
         final String origName = IdentifierResolver.sanitizeFileName(file.getLabel());
-        return origName + "~" + dateFormat.format(new Date());
+        return origName + "~" + timestampFormat.format(Utils.timestamp());
     }
 
     @Override
