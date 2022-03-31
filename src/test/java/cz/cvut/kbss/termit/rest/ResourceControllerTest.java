@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -299,8 +303,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final File file = generateFile();
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, FILE_NAME)).thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
-        final TextAnalysisRecord record = new TextAnalysisRecord(new Date((System.currentTimeMillis() / 1000) * 1000),
-                file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
         record.setVocabularies(Collections.singleton(Generator.generateUri()));
         when(resourceServiceMock.findLatestTextAnalysisRecord(file)).thenReturn(record);
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FILE_NAME + "/text-analysis/records/latest")

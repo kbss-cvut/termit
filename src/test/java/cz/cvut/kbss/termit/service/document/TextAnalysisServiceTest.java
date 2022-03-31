@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +52,6 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -284,7 +284,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
     @Test
     void findLatestAnalysisRecordFindsLatestTextAnalysisRecordForResource() {
-        final TextAnalysisRecord record = new TextAnalysisRecord(new Date(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
         record.setVocabularies(Collections.singleton(vocabulary.getUri()));
         when(textAnalysisRecordDao.findLatest(file)).thenReturn(Optional.of(record));
 

@@ -9,13 +9,14 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 
 @SparqlResultSetMapping(name = "RecentlyModifiedAsset", classes = {@ConstructorResult(targetClass = RecentlyModifiedAsset.class,
         variables = {
                 @VariableResult(name = "entity", type = URI.class),
                 @VariableResult(name = "label", type = String.class),
-                @VariableResult(name = "modified", type = Date.class),
+                @VariableResult(name = "modified", type = Instant.class),
                 @VariableResult(name = "modifiedBy", type = URI.class),
                 @VariableResult(name = "vocabulary", type = URI.class),
                 @VariableResult(name = "type", type = String.class),
@@ -30,7 +31,7 @@ public class RecentlyModifiedAsset implements Serializable {
     private String label;
 
     @OWLAnnotationProperty(iri = DC.Terms.MODIFIED)
-    private Date modified;
+    private Instant modified;
 
     @JsonIgnore
     private transient URI modifiedBy;
@@ -48,7 +49,7 @@ public class RecentlyModifiedAsset implements Serializable {
     public RecentlyModifiedAsset() {
     }
 
-    public RecentlyModifiedAsset(URI entity, String label, Date modified, URI modifiedBy, URI vocabulary, String type, String changeType) {
+    public RecentlyModifiedAsset(URI entity, String label, Instant modified, URI modifiedBy, URI vocabulary, String type, String changeType) {
         this.uri = entity;
         this.label = label;
         this.modified = modified;
@@ -73,11 +74,11 @@ public class RecentlyModifiedAsset implements Serializable {
         this.label = label;
     }
 
-    public Date getModified() {
+    public Instant getModified() {
         return modified;
     }
 
-    public void setModified(Date modified) {
+    public void setModified(Instant modified) {
         this.modified = modified;
     }
 

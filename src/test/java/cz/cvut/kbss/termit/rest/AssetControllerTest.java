@@ -18,6 +18,7 @@ import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.service.business.AssetService;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -71,7 +71,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
     private static List<RecentlyModifiedAsset> generateRecentlyModifiedAssetRecords() {
         final User user = Generator.generateUserWithId();
         return IntStream.range(0, 5).mapToObj(i -> new RecentlyModifiedAsset(Generator.generateUri(), "Test " + i,
-                new Date(), user.getUri(), null, Generator.randomBoolean() ?
+                                Utils.timestamp(), user.getUri(), null, Generator.randomBoolean() ?
                 Vocabulary.s_c_slovnik :
                 SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity))
                 .collect(Collectors.toList());

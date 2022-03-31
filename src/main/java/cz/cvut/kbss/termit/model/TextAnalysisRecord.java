@@ -25,7 +25,7 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 
@@ -34,7 +34,7 @@ public class TextAnalysisRecord extends AbstractEntity {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_vytvoreni)
-    private Date date;
+    private Instant date;
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_analyzovany_zdroj)
@@ -47,16 +47,16 @@ public class TextAnalysisRecord extends AbstractEntity {
     public TextAnalysisRecord() {
     }
 
-    public TextAnalysisRecord(Date date, Resource analyzedResource) {
+    public TextAnalysisRecord(Instant date, Resource analyzedResource) {
         this.date = date;
         this.analyzedResource = analyzedResource;
     }
 
-    public Date getDate() {
+    public Instant getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(Instant date) {
         this.date = date;
     }
 
