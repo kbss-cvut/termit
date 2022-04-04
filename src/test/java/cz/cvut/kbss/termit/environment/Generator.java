@@ -225,6 +225,9 @@ public class Generator {
                 .create("Normative definition of term " + term.getLabel().get(),
                         Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
+        if (Generator.randomBoolean()) {
+            term.setSources(Collections.singleton("PSP/c-1/p-2/b-c"));
+        }
         return term;
     }
 

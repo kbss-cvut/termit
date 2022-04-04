@@ -92,6 +92,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         clone.setLabel(new MultilingualString(original.getLabel().getValue()));
         clone.setAltLabels(original.getAltLabels());
         clone.setHiddenLabels(original.getHiddenLabels());
+        clone.setSources(original.getSources());
         clone.setDefinition(new MultilingualString(original.getDefinition().getValue()));
         clone.setDescription(original.getDescription());
         clone.setVocabulary(original.getVocabulary());
