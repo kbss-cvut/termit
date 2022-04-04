@@ -17,36 +17,45 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
-import cz.cvut.kbss.termit.environment.Environment;
+import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.service.export.ExcelVocabularyExporter.SHEET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
-class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
+@ExtendWith(MockitoExtension.class)
+class ExcelVocabularyExporterTest {
 
-    @Autowired
+    @Mock
+    private TermRepositoryService termService;
+
+    @InjectMocks
     private ExcelVocabularyExporter sut;
 
-    @BeforeEach
-    void setUp() {
-        super.setUp();
-    }
+    private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
     @Test
     void exportVocabularyGlossaryOutputsExcelWorkbookWithSingleSheet() throws Exception {
+        when(termService.findAllFull(vocabulary)).thenReturn(Collections.emptyList());
         final Resource result = sut.exportGlossary(vocabulary);
         assertNotNull(result);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
@@ -56,6 +65,9 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportVocabularyGlossaryOutputsHeaderRowWithColumnNamesIntoSheet() throws Exception {
+        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId()).collect(
+                Collectors.toList());
+        when(termService.findAllFull(vocabulary)).thenReturn(terms);
         final Resource result = sut.exportGlossary(vocabulary);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
@@ -69,7 +81,9 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportVocabularyGlossaryOutputsGlossaryTermsIntoSheet() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId()).collect(
+                Collectors.toList());
+        when(termService.findAllFull(vocabulary)).thenReturn(terms);
         final Resource result = sut.exportGlossary(vocabulary);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
@@ -80,23 +94,6 @@ class ExcelVocabularyExporterTest extends VocabularyExporterTestBase {
             final XSSFRow row = sheet.getRow(i);
             final String id = row.getCell(0).getStringCellValue();
             assertTrue(terms.stream().anyMatch(t -> t.getUri().toString().equals(id)));
-        }
-    }
-
-    @Test
-    void exportVocabularyGlossaryOutputsGlossaryTermsOrderedByLabel() throws Exception {
-        final List<Term> terms = generateTerms();
-        terms.sort(Comparator.comparing((Term t) -> t.getLabel().get(Environment.LANGUAGE)));
-        final Resource result = sut.exportGlossary(vocabulary);
-        final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
-        final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
-        assertNotNull(sheet);
-        // Plus header row
-        assertEquals(terms.size(), sheet.getLastRowNum());
-        for (int i = 1; i < sheet.getLastRowNum(); i++) {
-            final XSSFRow row = sheet.getRow(i);
-            final String id = row.getCell(0).getStringCellValue();
-            assertEquals(terms.get(i - 1).getUri().toString(), id);
         }
     }
 
