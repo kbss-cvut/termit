@@ -26,7 +26,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.persistence.dao.util.SimpleCache;
+import cz.cvut.kbss.termit.persistence.dao.util.Cache;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermInfoMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -43,13 +43,15 @@ public class TermDao extends AssetDao<Term> {
 
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
 
-    private final SimpleCache<URI, Set<TermInfo>> subTermsCache = new SimpleCache<>();
+    private final Cache<URI, Set<TermInfo>> subTermsCache;
 
     private final Comparator<TermInfo> termInfoComparator;
 
     @Autowired
-    public TermDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory) {
+    public TermDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
+                   Cache<URI, Set<TermInfo>> subTermsCache) {
         super(Term.class, em, config.getPersistence(), descriptorFactory);
+        this.subTermsCache = subTermsCache;
         this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(config.getPersistence().getLanguage()));
     }
 
