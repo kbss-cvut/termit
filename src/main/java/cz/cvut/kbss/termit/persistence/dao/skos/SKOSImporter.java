@@ -144,7 +144,7 @@ public class SKOSImporter {
         final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(vocabularyIri);
         if (possibleVocabulary.isPresent()) {
             Vocabulary vocabulary = possibleVocabulary.get();
-            termDao.findAll(vocabulary).forEach(t -> {
+            termDao.findAllFull(vocabulary).forEach(t -> {
                 if (t.getProperties() != null) {
                     t.getProperties().clear();
                 }

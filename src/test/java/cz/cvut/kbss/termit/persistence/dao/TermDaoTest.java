@@ -295,13 +295,13 @@ class TermDaoTest extends BaseDaoTestRunner {
 
 
     @Test
-    void findAllGetsAllTermsInVocabulary() {
+    void findAllFullGetsAllTermsInVocabulary() {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(terms, vocabulary);
 
-        final List<Term> result = sut.findAll(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary);
         assertEquals(terms.size(), result.size());
-        assertTrue(terms.containsAll(result));
+        assertThat(result, hasItems(terms.toArray(new Term[]{})));
     }
 
     @Test
@@ -317,11 +317,11 @@ class TermDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findAllReturnsAllTermsFromVocabularyOrderedByLabel() {
+    void findAllFullReturnsAllTermsFromVocabularyOrderedByLabel() {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(terms, vocabulary);
 
-        final List<Term> result = sut.findAll(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary);
         terms.sort(Comparator.comparing(Term::getPrimaryLabel));
         assertEquals(terms, result);
     }
@@ -424,7 +424,7 @@ class TermDaoTest extends BaseDaoTestRunner {
         addTermsAndSave(allTerms, vocabulary);
         transactional(() -> insertForeignLabel(foreignLabelTerm));
 
-        final List<Term> result = sut.findAll(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary);
         assertEquals(terms, result);
     }
 
@@ -637,7 +637,7 @@ class TermDaoTest extends BaseDaoTestRunner {
     void findAllLoadsSubTermsForResults() {
         final Term parent = persistParentWithChild();
 
-        final List<Term> result = sut.findAll(vocabulary);
+        final List<Term> result = sut.findAllFull(vocabulary);
         assertEquals(2, result.size());
         final Optional<Term> parentResult = result.stream().filter(t -> t.equals(parent)).findFirst();
         assertTrue(parentResult.isPresent());
@@ -1097,5 +1097,15 @@ class TermDaoTest extends BaseDaoTestRunner {
         document.setLabel("Doc");
         Arrays.stream(files).forEach(document::addFile);
         return document;
+    }
+
+    @Test
+    void findAllGetsAllTermsInVocabulary() {
+        final List<Term> terms = generateTerms(10);
+        addTermsAndSave(terms, vocabulary);
+
+        final List<TermDto> result = sut.findAll(vocabulary);
+        assertEquals(terms.size(), result.size());
+        assertThat(result, hasItems(toDtos(terms).toArray(new TermDto[]{})));
     }
 }

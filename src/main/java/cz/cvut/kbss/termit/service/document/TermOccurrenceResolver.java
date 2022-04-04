@@ -17,8 +17,8 @@
  */
 package cz.cvut.kbss.termit.service.document;
 
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.*;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -89,8 +89,8 @@ public abstract class TermOccurrenceResolver {
         if (source instanceof File) {
             final FileOccurrenceTarget target = new FileOccurrenceTarget((File) source);
             occurrence = new TermFileOccurrence(termUri, target);
-        } else if (source instanceof Term) {
-            final DefinitionalOccurrenceTarget target = new DefinitionalOccurrenceTarget((Term) source);
+        } else if (source instanceof AbstractTerm) {
+            final DefinitionalOccurrenceTarget target = new DefinitionalOccurrenceTarget((AbstractTerm) source);
             occurrence = new TermDefinitionalOccurrence(termUri, target);
         } else {
             throw new IllegalArgumentException("Unsupported term occurrence source " + source);

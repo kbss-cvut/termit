@@ -198,9 +198,9 @@ class TermServiceTest {
 
     @Test
     void findAllRetrievesAllTermsFromVocabularyUsingRepositoryService() {
-        final List<Term> terms = Collections.singletonList(Generator.generateTermWithId());
+        final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         when(termRepositoryService.findAll(vocabulary)).thenReturn(terms);
-        final List<Term> result = sut.findAll(vocabulary);
+        final List<TermDto> result = sut.findAll(vocabulary);
         assertEquals(terms, result);
         verify(termRepositoryService).findAll(vocabulary);
     }
