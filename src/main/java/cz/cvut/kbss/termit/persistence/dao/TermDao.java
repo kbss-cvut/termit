@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.util.SimpleCache;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermInfoMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -41,6 +42,8 @@ import java.util.stream.Collectors;
 public class TermDao extends AssetDao<Term> {
 
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
+
+    private final SimpleCache<URI, Set<TermInfo>> subTermsCache = new SimpleCache<>();
 
     private final Comparator<TermInfo> termInfoComparator;
 
@@ -59,7 +62,7 @@ public class TermDao extends AssetDao<Term> {
     public Optional<Term> find(URI id) {
         final Optional<Term> result = super.find(id);
         result.ifPresent(r -> {
-            r.setSubTerms(loadSubTerms(r));
+            r.setSubTerms(getSubTerms(r));
             r.setInverseRelated(loadInverseRelatedTerms(r));
             r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r));
             r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
@@ -255,7 +258,7 @@ public class TermDao extends AssetDao<Term> {
     }
 
     private <T extends AbstractTerm> List<T> executeQueryAndLoadSubTerms(TypedQuery<T> query) {
-        return query.getResultStream().peek(t -> t.setSubTerms(loadSubTerms(t))).collect(Collectors.toList());
+        return query.getResultStream().peek(t -> t.setSubTerms(getSubTerms(t))).collect(Collectors.toList());
     }
 
     /**
@@ -290,13 +293,21 @@ public class TermDao extends AssetDao<Term> {
     }
 
     /**
-     * Loads sub-term info for the specified parent term.
-     * <p>
-     * The sub-terms are set directly on the specified parent.
+     * Gets sub-term info for the specified parent term.
      *
      * @param parent Parent term
      */
-    private Set<TermInfo> loadSubTerms(HasIdentifier parent) {
+    private Set<TermInfo> getSubTerms(HasIdentifier parent) {
+        return subTermsCache.getOrCompute(parent.getUri(), this::loadSubTerms);
+    }
+
+    /**
+     * Actually loads sub-terms of a term with the specified identifiers.
+     *
+     * @param parentUri Parent term identifier
+     * @return Set of sub-terms, sorted by label
+     */
+    private Set<TermInfo> loadSubTerms(URI parentUri) {
         final List<?> subTerms = em.createNativeQuery("SELECT ?entity ?label ?vocabulary WHERE {" +
                                                               "?parent ?narrower ?entity ." +
                                                               "?entity a ?type ;" +
@@ -304,7 +315,7 @@ public class TermDao extends AssetDao<Term> {
                                                               "?inVocabulary ?vocabulary . } ORDER BY ?entity")
                                    .setParameter("type", typeUri)
                                    .setParameter("narrower", URI.create(SKOS.NARROWER))
-                                   .setParameter("parent", parent.getUri())
+                                   .setParameter("parent", parentUri)
                                    .setParameter("hasLabel", LABEL_PROP)
                                    .setParameter("inVocabulary", URI
                                            .create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
@@ -438,7 +449,7 @@ public class TermDao extends AssetDao<Term> {
      * @param term The term to load subterms for
      */
     private void recursivelyLoadParentTermSubTerms(TermDto term) {
-        term.setSubTerms(loadSubTerms(term));
+        term.setSubTerms(getSubTerms(term));
         if (term.hasParentTerms()) {
             term.getParentTerms().forEach(this::recursivelyLoadParentTermSubTerms);
         }
@@ -552,7 +563,7 @@ public class TermDao extends AssetDao<Term> {
     }
 
     private void loadParentSubTerms(TermDto parent) {
-        parent.setSubTerms(loadSubTerms(parent));
+        parent.setSubTerms(getSubTerms(parent));
         if (parent.getParentTerms() != null) {
             parent.getParentTerms().forEach(this::loadParentSubTerms);
         }
