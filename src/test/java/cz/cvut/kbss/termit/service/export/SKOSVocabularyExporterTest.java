@@ -1,9 +1,14 @@
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -25,10 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
@@ -37,9 +40,12 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
+class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
     private static final IRI[] REFERENCING_PROPERTIES = {SKOS.BROAD_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH};
+
+    @Autowired
+    private EntityManager em;
 
     @Autowired
     private DescriptorFactory descriptorFactory;
@@ -50,11 +56,20 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
     @Autowired
     private SKOSVocabularyExporter sut;
 
+    Vocabulary vocabulary;
+
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @BeforeEach
     void setUp() {
-        super.setUp();
+        this.vocabulary = Generator.generateVocabularyWithId();
+        final User author = Generator.generateUserWithId();
+        Environment.setCurrentUser(author);
+        transactional(() -> {
+            em.persist(author);
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(Generator.generatePersistChange(vocabulary));
+        });
     }
 
     @Test
@@ -149,7 +164,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryExportsTermsInVocabularyAsSKOSConceptsInScheme() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final TypeAwareResource result = sut.exportGlossary(vocabulary);
         final Model model = loadAsModel(result);
         for (Term t : terms) {
@@ -160,9 +175,25 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
         }
     }
 
+    List<Term> generateTerms(Vocabulary target) {
+        final List<Term> terms = new ArrayList<>(10);
+        for (int i = 0; i < Generator.randomInt(5, 10); i++) {
+            final Term term = Generator.generateTermWithId();
+            terms.add(term);
+            term.setGlossary(target.getGlossary().getUri());
+        }
+        target.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
+        transactional(() -> {
+            em.merge(target.getGlossary(), descriptorFactory.glossaryDescriptor(target));
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(target)));
+            terms.forEach(t -> Generator.addTermInVocabularyRelationship(t, target.getUri(), em));
+        });
+        return terms;
+    }
+
     @Test
     void exportGlossaryExportsTermsWithSKOSPropertiesAndDcSource() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term withAltLabels = terms.get(Generator.randomIndex(terms));
         insertAltLabels(withAltLabels);
         final TypeAwareResource result = sut.exportGlossary(vocabulary);
@@ -211,7 +242,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryExportsHierarchicalStructureOfTerms() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term withParent = terms.get(1);
         withParent.addParentTerm(terms.get(0));
         // This is normally inferred
@@ -236,7 +267,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryExportsRelatedTerms() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term withRelated = terms.get(0);
         final Term related = terms.get(terms.size() - 1);
         withRelated.setProperties(Collections
@@ -253,7 +284,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryExportsTermAsTopConceptIfParentIsInDifferentVocabulary() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term affectedTerm = terms.get(Generator.randomIndex(terms));
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         final Term parentFromAnother = Generator.generateTermWithId();
@@ -279,7 +310,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryExportsCustomTypeAsSuperType() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term typed = terms.get(Generator.randomIndex(terms));
         final String type = "http://onto.fel.cvut.cz/ontologies/ufo/object-type";
         typed.addType(type);
@@ -296,7 +327,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryExportsSuperClassesAsBroader() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term rdfsSubclass = terms.get(0);
         final String supertype = Generator.generateUri().toString();
         rdfsSubclass.setProperties(
@@ -314,7 +345,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryExportsPartOfAsBroader() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term partOf = terms.get(0);
         final Term hasPart = terms.get(1);
         hasPart.setProperties(
@@ -333,7 +364,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryExportsParticipationAsBroader() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term participant = terms.get(0);
         final Term parent = terms.get(1);
         parent.setProperties(
@@ -352,7 +383,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossarySkipsOwlConstructsUsedToClassifyTerms() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term withOwl = terms.get(Generator.randomIndex(terms));
         withOwl.addType(OWL.CLASS.stringValue());
         // This is normally inferred
@@ -367,7 +398,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossarySkipsOwlConstructsUsedAsTermSuperTypes() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Term withOwl = terms.get(Generator.randomIndex(terms));
         withOwl.setProperties(Collections
                 .singletonMap(RDFS.SUBCLASSOF.stringValue(), Collections.singleton(OWL.OBJECTPROPERTY.stringValue())));
@@ -384,7 +415,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryWithReferencesIncludesExternalTermsReferencedViaSpecifiedProperties() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary)));
         final List<Term> externalTerms = generateTerms(anotherVocabulary);
@@ -418,7 +449,7 @@ class SKOSVocabularyExporterTest extends VocabularyExporterTestBase {
 
     @Test
     void exportGlossaryWithReferencesExportsGlossariesOfReferencedTerms() throws Exception {
-        final List<Term> terms = generateTerms();
+        final List<Term> terms = generateTerms(vocabulary);
         final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary)));
         final List<Term> externalTerms = generateTerms(anotherVocabulary);
