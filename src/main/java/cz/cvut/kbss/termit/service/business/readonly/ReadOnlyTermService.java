@@ -38,7 +38,7 @@ public class ReadOnlyTermService {
     }
 
     public List<TermDto> findAll(Vocabulary vocabulary) {
-        return termService.findAll(vocabulary).stream().map(TermDto::new).collect(Collectors.toList());
+        return termService.findAll(vocabulary);
     }
 
     public List<TermDto> findAll(String searchString, Vocabulary vocabulary) {

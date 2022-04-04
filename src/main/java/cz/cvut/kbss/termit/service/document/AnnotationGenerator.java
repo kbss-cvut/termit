@@ -18,8 +18,8 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.OccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -140,7 +140,7 @@ public class AnnotationGenerator {
      * @param annotatedTerm Term whose definition was annotated
      */
     @Transactional
-    public void generateAnnotations(InputStream content, Term annotatedTerm) {
+    public void generateAnnotations(InputStream content, AbstractTerm annotatedTerm) {
         // We assume the content (text analysis output) is HTML-compatible
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();
         LOG.debug("Resolving annotations of the definition of Term {}.", annotatedTerm);

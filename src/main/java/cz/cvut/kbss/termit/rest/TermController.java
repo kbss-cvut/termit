@@ -65,9 +65,13 @@ public class TermController extends BaseController {
      * @param vocabularyIdFragment Vocabulary name
      * @param namespace            Vocabulary namespace. Optional
      * @param searchString         String to filter term labels by. Optional
-     * @param includeImported      Whether to include imported vocabularies when searching for terms. Does not apply to term export. Optional, defaults to false
-     * @param withReferences       Whether to include terms from other vocabularies referenced by terms from the vocabulary being exported. Relevant only for term export. Optional, defaults to false
-     * @param properties           A set of properties representing references to terms from other vocabularies to take into account in export. Relevant only for term export. Optional
+     * @param includeImported      Whether to include imported vocabularies when searching for terms. Does not apply to
+     *                             term export. Optional, defaults to false
+     * @param withReferences       Whether to include terms from other vocabularies referenced by terms from the
+     *                             vocabulary being exported. Relevant only for term export. Optional, defaults to
+     *                             false
+     * @param properties           A set of properties representing references to terms from other vocabularies to take
+     *                             into account in export. Relevant only for term export. Optional
      * @param acceptType           MIME type accepted by the client, relevant only for term export
      * @return List of terms of the specific vocabulary
      */
@@ -85,31 +89,35 @@ public class TermController extends BaseController {
                                     @RequestParam(name = "withReferences", required = false) boolean withReferences,
                                     @RequestParam(name = "property", required = false,
                                                   defaultValue = "[]") Set<String> properties,
-                                    @RequestHeader(value = HttpHeaders.ACCEPT, required = false) String acceptType) {
+                                    @RequestHeader(value = HttpHeaders.ACCEPT, required = false,
+                                                   defaultValue = MediaType.ALL_VALUE) String acceptType) {
         final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
             return ResponseEntity.ok(includeImported ?
-                    termService.findAllIncludingImported(searchString, vocabulary) :
-                    termService.findAll(searchString, vocabulary));
+                                     termService.findAllIncludingImported(searchString, vocabulary) :
+                                     termService.findAll(searchString, vocabulary));
         }
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, withReferences, properties, acceptType);
         return export.orElse(ResponseEntity
-                .ok(includeImported ? termService.findAllIncludingImported(vocabulary) :
-                        termService.findAll(vocabulary)));
+                                     .ok(includeImported ? termService.findAllIncludingImported(vocabulary) :
+                                         termService.findAll(vocabulary)));
     }
 
     private Optional<ResponseEntity<?>> exportTerms(Vocabulary vocabulary, boolean withReferences,
                                                     Collection<String> properties, String mediaType) {
         final Optional<TypeAwareResource> content = withReferences ?
-                termService.exportGlossaryWithReferences(vocabulary, properties, mediaType) : termService.exportGlossary(vocabulary, mediaType);
+                                                    termService.exportGlossaryWithReferences(vocabulary, properties,
+                                                                                             mediaType) :
+                                                    termService.exportGlossary(vocabulary, mediaType);
         return content.map(r -> {
             try {
                 return ResponseEntity.ok()
                                      .contentLength(r.contentLength())
                                      .contentType(MediaType.parseMediaType(mediaType))
                                      .header(HttpHeaders.CONTENT_DISPOSITION,
-                                             "attachment; filename=\"" + IdentifierResolver.extractIdentifierFragment(vocabulary.getUri()) +
+                                             "attachment; filename=\"" + IdentifierResolver.extractIdentifierFragment(
+                                                     vocabulary.getUri()) +
                                                      r.getFileExtension().orElse("") + "\"")
                                      .body(r);
             } catch (IOException e) {
@@ -178,9 +186,9 @@ public class TermController extends BaseController {
                                                    defaultValue = "") List<URI> includeTerms) {
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, vocabularyIdFragment));
         return includeImported ?
-                termService
-                        .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-                termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+               termService
+                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
+               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
     }
 
     /**
@@ -240,8 +248,10 @@ public class TermController extends BaseController {
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
         return idResolver.resolveIdentifier(idResolver
-                .buildNamespace(getVocabularyUri(namespace, vocabIdFragment).toString(),
-                        config.getNamespace().getTerm().getSeparator()), termIdFragment);
+                                                    .buildNamespace(
+                                                            getVocabularyUri(namespace, vocabIdFragment).toString(),
+                                                            config.getNamespace().getTerm().getSeparator()),
+                                            termIdFragment);
     }
 
     /**
@@ -423,7 +433,7 @@ public class TermController extends BaseController {
                                       @RequestParam(name = QueryParams.NAMESPACE, required = false)
                                               Optional<String> namespace) {
         termService.analyzeTermDefinition(getById(vocabularyIdFragment, termIdFragment, namespace),
-                getVocabularyUri(namespace, vocabularyIdFragment));
+                                          getVocabularyUri(namespace, vocabularyIdFragment));
     }
 
     @PutMapping(value = "/terms/{termIdFragment}/definition-source",
@@ -520,9 +530,13 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}", QueryParams.NAMESPACE,
-                        IdentifierResolver.extractIdentifierNamespace(comment.getUri()),
-                        IdentifierResolver.extractIdentifierFragment(comment.getUri()))).build();
+                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                                                                                QueryParams.NAMESPACE,
+                                                                                                IdentifierResolver.extractIdentifierNamespace(
+                                                                                                        comment.getUri()),
+                                                                                                IdentifierResolver.extractIdentifierFragment(
+                                                                                                        comment.getUri())))
+                             .build();
     }
 
     /**
@@ -542,9 +556,13 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}", QueryParams.NAMESPACE,
-                        IdentifierResolver.extractIdentifierNamespace(comment.getUri()),
-                        IdentifierResolver.extractIdentifierFragment(comment.getUri()))).build();
+                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                                                                                QueryParams.NAMESPACE,
+                                                                                                IdentifierResolver.extractIdentifierNamespace(
+                                                                                                        comment.getUri()),
+                                                                                                IdentifierResolver.extractIdentifierFragment(
+                                                                                                        comment.getUri())))
+                             .build();
     }
 
     /**

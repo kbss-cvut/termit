@@ -230,7 +230,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void getAllReturnsAllTermsFromVocabulary() throws Exception {
         when(idResolverMock.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME))
                 .thenReturn(URI.create(VOCABULARY_URI));
-        final List<Term> terms = Generator.generateTermsWithIds(5);
+        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termServiceMock.findAll(eq(vocabulary))).thenReturn(terms);
 
@@ -238,7 +238,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                                                    get(PATH + VOCABULARY_NAME + "/terms")
                                                            .param(QueryParams.NAMESPACE, Environment.BASE_URI))
                                            .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<List<TermDto>>() {
         });
         assertEquals(terms, result);
         verify(termServiceMock).findAll(vocabulary);

@@ -1,14 +1,15 @@
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
@@ -82,7 +83,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Attempts to export glossary terms including references to external terms from the specified vocabulary as the specified media type.
+     * Attempts to export glossary terms including references to external terms from the specified vocabulary as the
+     * specified media type.
      * <p>
      * If export into the specified media type is not supported, an empty {@link Optional} is returned.
      *
@@ -104,7 +106,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param vocabulary Vocabulary whose terms will be returned
      * @return Matching terms
      */
-    public List<Term> findAll(Vocabulary vocabulary) {
+    public List<TermDto> findAll(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return repositoryService.findAll(vocabulary);
     }
@@ -302,11 +304,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                              () -> new NotFoundException(
-                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
-                      .collect(Collectors.toList());
+               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                             () -> new NotFoundException(
+                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
+                     .collect(Collectors.toList());
     }
 
     /**
@@ -401,7 +403,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term              Term to analyze
      * @param vocabularyContext Identifier of the vocabulary used for analysis
      */
-    public void analyzeTermDefinition(Term term, URI vocabularyContext) {
+    public void analyzeTermDefinition(AbstractTerm term, URI vocabularyContext) {
         Objects.requireNonNull(term);
         if (term.getDefinition().isEmpty()) {
             return;
@@ -453,7 +455,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Removes the definition source of the specified term.
      * <p>
-     * This involves deleting the {@link TermDefinitionSource} instance representing the definition source from the repository.
+     * This involves deleting the {@link TermDefinitionSource} instance representing the definition source from the
+     * repository.
      * <p>
      * If the specified term has no definition source, nothing happens.
      *

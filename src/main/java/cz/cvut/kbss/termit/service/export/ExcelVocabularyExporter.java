@@ -62,7 +62,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         try (final XSSFWorkbook wb = new XSSFWorkbook()) {
             final Sheet sheet = wb.createSheet(SHEET_NAME);
             generateHeaderRow(sheet);
-            generateTermRows(termService.findAll(vocabulary), sheet);
+            generateTermRows(termService.findAllFull(vocabulary), sheet);
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             wb.write(bos);
             return new TypeAwareByteArrayResource(bos.toByteArray(), MEDIA_TYPE, FILE_EXTENSION);

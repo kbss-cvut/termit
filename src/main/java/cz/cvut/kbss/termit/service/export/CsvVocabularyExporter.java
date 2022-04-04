@@ -46,7 +46,7 @@ public class CsvVocabularyExporter implements VocabularyExporter {
     public TypeAwareResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final StringBuilder export = new StringBuilder(String.join(",", Term.EXPORT_COLUMNS));
-        final List<Term> terms = termService.findAll(vocabulary);
+        final List<Term> terms = termService.findAllFull(vocabulary);
         terms.forEach(t -> export.append('\n').append(t.toCsv()));
         return new TypeAwareByteArrayResource(export.toString().getBytes(), MEDIA_TYPE, FILE_EXTENSION);
     }

@@ -1,10 +1,10 @@
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
+import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -211,7 +211,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Async
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
-        List<Term> allTerms = termService.findAll(vocabulary);
+        final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
                 importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
         allTerms.stream().filter(t -> t.getDefinition() != null)
@@ -222,7 +222,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Async
     public void runTextAnalysisOnAllVocabularies() {
         vocabularyDao.findAll().forEach(v -> {
-            List<Term> terms = termService.findAll(v);
+            List<TermDto> terms = termService.findAll(v);
             terms.stream().filter(t -> t.getDefinition() != null)
                  .forEach(t -> termService.analyzeTermDefinition(t, v.getUri()));
         });

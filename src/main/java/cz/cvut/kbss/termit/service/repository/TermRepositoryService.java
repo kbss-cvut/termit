@@ -139,7 +139,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
 
     private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
         return idResolver.generateDerivedIdentifier(vocabularyUri, config.getNamespace().getTerm().getSeparator(),
-                multilingualString.get(config.getPersistence().getLanguage()));
+                                                    multilingualString.get(config.getPersistence().getLanguage()));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
@@ -172,10 +172,25 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * This returns all terms contained in a vocabulary's glossary.
      *
      * @param vocabulary Vocabulary whose terms should be returned
-     * @return List of terms ordered by label
+     * @return List of term DTOs ordered by label
+     * @see #findAllFull(Vocabulary)
      */
-    public List<Term> findAll(Vocabulary vocabulary) {
-        return termDao.findAll(vocabulary).stream().map(this::postLoad).collect(toList());
+    public List<TermDto> findAll(Vocabulary vocabulary) {
+        return termDao.findAll(vocabulary);
+    }
+
+    /**
+     * Gets all terms from a vocabulary, regardless of their position in the term hierarchy.
+     * <p>
+     * This returns the full versions of all terms (complete metadata) contained in a vocabulary's glossary and thus its
+     * performance may be worse. If complete metadata are not required, use {@link #findAll(Vocabulary)}.
+     *
+     * @param vocabulary Vocabulary whose terms should be returned
+     * @return List of full terms ordered by label
+     * @see #findAll(Vocabulary)
+     */
+    public List<Term> findAllFull(Vocabulary vocabulary) {
+        return termDao.findAllFull(vocabulary).stream().map(this::postLoad).collect(toList());
     }
 
     /**
@@ -292,7 +307,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     /**
-     * Retrieves aggregated information about the specified Term's occurrences in Resources and other Terms definitions.
+     * Retrieves aggregated information about the specified Term's occurrences in Resources and other Terms
+     * definitions.
      *
      * @param instance Term whose occurrence data should be retrieved
      * @return Aggregated Term occurrence data

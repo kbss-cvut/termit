@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.model.assignment;
 
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 /**
@@ -15,7 +15,7 @@ public class DefinitionalOccurrenceTarget extends OccurrenceTarget {
     public DefinitionalOccurrenceTarget() {
     }
 
-    public DefinitionalOccurrenceTarget(Term source) {
+    public DefinitionalOccurrenceTarget(AbstractTerm source) {
         super(source);
     }
 
