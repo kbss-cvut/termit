@@ -20,14 +20,14 @@ public class Utils {
     }
 
     /**
-     * Returns an empty collection if the specified collection is {@code null}. Otherwise, the collection itself is
+     * Returns an empty set if the specified set is {@code null}. Otherwise, the collection itself is
      * returned.
      *
-     * @param collection The collection to check
+     * @param set The collection to check
      * @return Non-null collection
      */
-    public static <T> Collection<T> emptyIfNull(Collection<T> collection) {
-        return collection == null ? Collections.emptySet() : collection;
+    public static <T> Set<T> emptyIfNull(Set<T> set) {
+        return set == null ? Collections.emptySet() : set;
     }
 
     /**

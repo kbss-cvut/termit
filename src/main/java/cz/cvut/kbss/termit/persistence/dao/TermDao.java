@@ -148,6 +148,7 @@ public class TermDao extends AssetDao<Term> {
             entity.setGlossary(vocabulary.getGlossary().getUri());
             entity.setVocabulary(null); // This is inferred
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
+            evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -165,10 +166,20 @@ public class TermDao extends AssetDao<Term> {
             em.getEntityManagerFactory().getCache().evict(TermDto.class, entity.getUri(), null);
             final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
             entity.setDefinitionSource(original.getDefinitionSource());
+            evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
             return em.merge(entity, descriptorFactory.termDescriptor(entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    private void evictCachedSubTerms(Set<? extends AbstractTerm> originalParents, Set<? extends AbstractTerm> newParents) {
+        final Set<AbstractTerm> originalCopy = new HashSet<>(Utils.emptyIfNull(originalParents));
+        final Set<AbstractTerm> newCopy = new HashSet<>(Utils.emptyIfNull(newParents));
+        originalCopy.removeAll(newCopy);
+        newCopy.removeAll(originalCopy);
+        originalCopy.forEach(t -> subTermsCache.evict(t.getUri()));
+        newCopy.forEach(t -> subTermsCache.evict(t.getUri()));
     }
 
     public List<TermDto> findAll(Vocabulary vocabulary) {
@@ -661,5 +672,11 @@ public class TermDao extends AssetDao<Term> {
                  .setParameter("hasTarget", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_cil))
                  .setParameter("hasSource", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zdroj))
                  .getResultList();
+    }
+
+    @Override
+    public void remove(Term entity) {
+        super.remove(entity);
+        evictCachedSubTerms(entity.getParentTerms(), Collections.emptySet());
     }
 }
