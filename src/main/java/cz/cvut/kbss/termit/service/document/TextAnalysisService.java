@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -151,7 +152,7 @@ public class TextAnalysisService {
      *
      * @param term Term whose definition is to be analyzed.
      */
-    public void analyzeTermDefinition(Term term, URI vocabularyContext) {
+    public void analyzeTermDefinition(AbstractTerm term, URI vocabularyContext) {
         Objects.requireNonNull(term);
         final String language = config.getPersistence().getLanguage();
         if (term.getDefinition() != null && term.getDefinition().contains(language)) {
@@ -163,7 +164,7 @@ public class TextAnalysisService {
         }
     }
 
-    private void invokeTextAnalysisOnTerm(Term term, TextAnalysisInput input) {
+    private void invokeTextAnalysisOnTerm(AbstractTerm term, TextAnalysisInput input) {
         try {
             final Resource result = invokeTextAnalysisService(input);
             try (final InputStream is = result.getInputStream()) {

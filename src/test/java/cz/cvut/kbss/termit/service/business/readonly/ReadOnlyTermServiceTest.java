@@ -55,13 +55,13 @@ class ReadOnlyTermServiceTest {
     }
 
     @Test
-    void findAllRetrievesAllTermsFromServiceAndTransformsThemToReadOnlyVersion() {
+    void findAllRetrievesAllTermsFromService() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final List<Term> terms = Generator.generateTermsWithIds(5);
+        final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termService.findAll(any(Vocabulary.class))).thenReturn(terms);
 
         final List<TermDto> result = sut.findAll(vocabulary);
-        assertEquals(termsToDtos(terms), result);
+        assertEquals(terms, result);
         verify(termService).findAll(vocabulary);
     }
 
