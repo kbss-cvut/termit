@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence;
 
@@ -22,11 +19,13 @@ import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.JOPAPersistenceProvider;
 import cz.cvut.kbss.ontodriver.config.OntoDriverProperties;
 import cz.cvut.kbss.ontodriver.sesame.config.SesameOntoDriverProperties;
+import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -42,7 +41,7 @@ import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.*;
 @Profile("!test")
 public class MainPersistenceFactory {
 
-    private cz.cvut.kbss.termit.util.Configuration configuration;
+    private final cz.cvut.kbss.termit.util.Configuration configuration;
 
     private EntityManagerFactory emf;
 
@@ -95,5 +94,10 @@ public class MainPersistenceFactory {
         map.put(SCAN_PACKAGE, "cz.cvut.kbss.termit");
         map.put(JPA_PERSISTENCE_PROVIDER, JOPAPersistenceProvider.class.getName());
         return map;
+    }
+
+    @EventListener
+    public void onEvictCache(EvictCacheEvent evt) {
+        emf.getCache().evictAll();
     }
 }
