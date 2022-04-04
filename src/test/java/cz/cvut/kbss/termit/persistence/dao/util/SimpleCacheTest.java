@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao.util;
 
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -98,7 +99,18 @@ class SimpleCacheTest {
         assertEquals(data, sut.getOrCompute(key, supplier));
         assertEquals(data, sut.getOrCompute(keyTwo, supplier));
         verify(supplier, times(2)).apply(key);
-        // Key two was not evicted
         verify(supplier, times(2)).apply(keyTwo);
+    }
+
+    @Test
+    void evictCacheEventEvictsWholeCache() {
+        final Set<TermInfo> data = generateData();
+        final URI key = Generator.generateUri();
+        when(supplier.apply(any(URI.class))).thenReturn(data);
+
+        assertEquals(data, sut.getOrCompute(key, supplier));
+        sut.onEvictCache(new EvictCacheEvent(this));
+        assertEquals(data, sut.getOrCompute(key, supplier));
+        verify(supplier, times(2)).apply(key);
     }
 }

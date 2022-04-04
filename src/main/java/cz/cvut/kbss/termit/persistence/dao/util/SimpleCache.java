@@ -1,9 +1,11 @@
 package cz.cvut.kbss.termit.persistence.dao.util;
 
+import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -37,5 +39,10 @@ public class SimpleCache<K, V> implements Cache<K, V> {
     @Override
     public void evictAll() {
         cache.clear();
+    }
+
+    @EventListener
+    public void onEvictCache(EvictCacheEvent evt) {
+        evictAll();
     }
 }
