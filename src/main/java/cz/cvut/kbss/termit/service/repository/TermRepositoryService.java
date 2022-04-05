@@ -175,6 +175,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of term DTOs ordered by label
      * @see #findAllFull(Vocabulary)
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAll(Vocabulary vocabulary) {
         return termDao.findAll(vocabulary);
     }
@@ -189,6 +190,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of full terms ordered by label
      * @see #findAll(Vocabulary)
      */
+    @Transactional(readOnly = true)
     public List<Term> findAllFull(Vocabulary vocabulary) {
         return termDao.findAllFull(vocabulary).stream().map(this::postLoad).collect(toList());
     }
@@ -212,6 +214,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @param vocabulary Base vocabulary for the vocabulary import closure
      * @return List of terms ordered by label
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAllIncludingImported(Vocabulary vocabulary) {
         return termDao.findAllIncludingImported(vocabulary);
     }
@@ -225,6 +228,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return Matching root terms
      * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAllRoots(Vocabulary vocabulary, Pageable pageSpec,
                                       Collection<URI> includeTerms) {
         return termDao.findAllRoots(vocabulary, pageSpec, includeTerms);
@@ -238,6 +242,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return Matching root terms
      * @see #findAllRootsIncludingImported(Vocabulary, Pageable, Collection)
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAllRoots(Pageable pageSpec,
                                       Collection<URI> includeTerms) {
         return termDao.findAllRoots(pageSpec, includeTerms);
@@ -256,6 +261,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return Matching root terms
      * @see #findAllRoots(Vocabulary, Pageable, Collection)
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAllRootsIncludingImported(Vocabulary vocabulary, Pageable pageSpec,
                                                        Collection<URI> includeTerms) {
         return termDao.findAllRootsIncludingImports(vocabulary, pageSpec, includeTerms);
@@ -268,6 +274,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @param vocabulary   Vocabulary whose terms should be returned
      * @return Matching terms
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAll(String searchString, Vocabulary vocabulary) {
         return termDao.findAll(searchString, vocabulary);
     }
@@ -278,6 +285,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @param searchString String to search by
      * @return List of terms ordered by label
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAll(String searchString) {
         return termDao.findAll(searchString);
     }
@@ -290,6 +298,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @param vocabulary   Vocabulary whose terms should be returned
      * @return Matching terms
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
         return termDao.findAllIncludingImported(searchString, vocabulary);
     }
@@ -302,6 +311,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @param language   Language to check the existence in
      * @return Whether term with {@code label} already exists in vocabulary
      */
+    @Transactional(readOnly = true)
     public boolean existsInVocabulary(String label, Vocabulary vocabulary, String language) {
         return termDao.existsInVocabulary(label, vocabulary, language);
     }
@@ -313,6 +323,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @param instance Term whose occurrence data should be retrieved
      * @return Aggregated Term occurrence data
      */
+    @Transactional(readOnly = true)
     public List<TermOccurrences> getOccurrenceInfo(Term instance) {
         return termOccurrenceDao.getOccurrenceInfo(instance);
     }
@@ -323,6 +334,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @param instance Term to search from
      * @return List of definitionally related terms of the specified term
      */
+    @Transactional(readOnly = true)
     public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
         return termOccurrenceDao.findAllTargeting(instance);
     }
@@ -333,6 +345,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @param instance Term to search from
      * @return List of definitionally related terms of the specified term
      */
+    @Transactional(readOnly = true)
     public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
         return termOccurrenceDao.findAllDefinitionalOf(instance);
     }
@@ -353,6 +366,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      *
      * @param instance the term to be deleted
      */
+    @Transactional
     public void remove(Term instance) {
 
         final List<TermOccurrences> ai = this.getOccurrenceInfo(instance);
