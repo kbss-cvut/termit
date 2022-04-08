@@ -285,6 +285,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
     @Test
     void calculateChangesReturnsChangeRecordWithOriginalAndNewValueOfPluralLiteralAttribute() {
         final Term original = Generator.generateTermWithId();
+        original.setSources(null);
         final Term changed = cloneOf(original);
         changed.setSources(IntStream.range(0, 5).mapToObj(i -> "http://source" + i).collect(Collectors.toSet()));
 
