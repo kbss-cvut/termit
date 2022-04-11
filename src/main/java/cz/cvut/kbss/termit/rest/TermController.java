@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
@@ -457,6 +458,18 @@ public class TermController extends BaseController {
         final Term term = termService.findRequired(termUri);
         termService.removeTermDefinitionSource(term);
         LOG.debug("Definition source of term {} removed.", term);
+    }
+
+    @PutMapping(value = "terms/{termIdFragment}/status", consumes = MediaType.ALL_VALUE)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public void updateStatus(@PathVariable String termIdFragment,
+                             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+                             @RequestBody String status) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+        final Term t = termService.getRequiredReference(termUri);
+        termService.setStatus(t, TermStatus.valueOf(status));
+        LOG.debug("Status of term {} set to '{}'.", t, status);
     }
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/history",
