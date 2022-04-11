@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -468,6 +469,21 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         if (term.getDefinitionSource() != null) {
             termOccurrenceService.remove(term.getDefinitionSource());
         }
+    }
+
+    /**
+     * Updates the specified term's status to the specified value.
+     *
+     * @param term   Term to update
+     * @param status New status
+     */
+    @Transactional
+    public void setStatus(Term term, TermStatus status) {
+        Objects.requireNonNull(term);
+        Objects.requireNonNull(status);
+        final Term toUpdate = repositoryService.findRequired(term.getUri());
+        toUpdate.setDraft(status == TermStatus.DRAFT);
+        repositoryService.update(toUpdate);
     }
 
     /**

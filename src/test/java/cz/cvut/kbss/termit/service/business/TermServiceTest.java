@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -34,8 +35,7 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -472,5 +472,23 @@ class TermServiceTest {
 
         sut.removeTermDefinitionSource(term);
         verify(termOccurrenceRepositoryService, never()).remove(any());
+    }
+
+    @Test
+    void setStatusToDraftSetsTermDraftFlagToTrueAndUpdatesIt() {
+        final Term term = generateTermWithId();
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+        sut.setStatus(term, TermStatus.DRAFT);
+        assertTrue(term.isDraft());
+        verify(termRepositoryService).update(term);
+    }
+
+    @Test
+    void setStatusToConfirmedSetsTermDraftFlagToFalseAndUpdatesIt() {
+        final Term term = generateTermWithId();
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+        sut.setStatus(term, TermStatus.CONFIRMED);
+        assertFalse(term.isDraft());
+        verify(termRepositoryService).update(term);
     }
 }
