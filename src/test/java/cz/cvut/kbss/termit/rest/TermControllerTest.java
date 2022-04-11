@@ -5,6 +5,7 @@ import com.github.jsonldjava.utils.JsonUtils;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -73,7 +74,8 @@ class TermControllerTest extends BaseControllerTestRunner {
     private static final String TERM_NAME = "locality";
     private static final String VOCABULARY_URI = Environment.BASE_URI + "/" + VOCABULARY_NAME;
     private static final String NAMESPACE = VOCABULARY_URI + "/pojem/";
-    private static final String TERM_URI = NAMESPACE + TERM_NAME;
+    private static final String STR_TERM_URI = NAMESPACE + TERM_NAME;
+    private static final URI TERM_URI = URI.create(STR_TERM_URI);
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Configuration config;
@@ -857,7 +859,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
                 .thenReturn(URI.create(VOCABULARY_URI));
         when(idResolverMock.buildNamespace(VOCABULARY_URI, s)).thenReturn(NAMESPACE);
-        final URI termUri = URI.create(TERM_URI);
+        final URI termUri = URI.create(STR_TERM_URI);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         return termUri;
     }
@@ -865,7 +867,7 @@ class TermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getCommentsStandaloneRetrievesCommentsForSpecifiedTerm() throws Exception {
-        final URI termUri = URI.create(TERM_URI);
+        final URI termUri = URI.create(STR_TERM_URI);
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
@@ -919,10 +921,7 @@ class TermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void addCommentStandaloneAddsSpecifiedCommentToSpecifiedTerm() throws Exception {
-        final URI termUri = URI.create(TERM_URI);
-        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        final Term term = Generator.generateTerm();
-        term.setUri(termUri);
+        final Term term = generateTermForStandalone();
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null);
         comment.setUri(Generator.generateUri());
@@ -935,12 +934,17 @@ class TermControllerTest extends BaseControllerTestRunner {
         verify(termServiceMock).addComment(comment, term);
     }
 
-    @Test
-    void addCommentStandaloneReturnsLocationHeaderWithGeneratedIdentifier() throws Exception {
-        final URI termUri = URI.create(TERM_URI);
+    private Term generateTermForStandalone() {
+        final URI termUri = URI.create(STR_TERM_URI);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
+        return term;
+    }
+
+    @Test
+    void addCommentStandaloneReturnsLocationHeaderWithGeneratedIdentifier() throws Exception {
+        final Term term = generateTermForStandalone();
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null);
         final String name = "comment-12345";
@@ -1012,15 +1016,25 @@ class TermControllerTest extends BaseControllerTestRunner {
 
     @Test
     void removeTermDefinitionSourceInvokesServiceWithTermCorrespondingToSpecifiedIdentifier() throws Exception {
-        final URI termUri = URI.create(TERM_URI);
-        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        final Term term = Generator.generateTerm();
-        term.setUri(termUri);
-        when(termServiceMock.findRequired(URI.create(TERM_URI))).thenReturn(term);
+        final Term term = generateTermForStandalone();
+        when(termServiceMock.findRequired(URI.create(STR_TERM_URI))).thenReturn(term);
 
         mockMvc.perform(delete("/terms/" + TERM_NAME + "/definition-source").queryParam(QueryParams.NAMESPACE, NAMESPACE))
                .andExpect(status().isNoContent());
-        verify(termServiceMock).findRequired(termUri);
+        verify(termServiceMock).findRequired(TERM_URI);
         verify(termServiceMock).removeTermDefinitionSource(term);
+    }
+
+    @Test
+    void updateStatusSetsTermStatusToSpecifiedValue() throws Exception {
+        final Term term = generateTermForStandalone();
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+
+        mockMvc.perform(put("/terms/" + TERM_NAME + "/status").queryParam(QueryParams.NAMESPACE, NAMESPACE)
+                                                              .content(TermStatus.DRAFT.toString())
+                                                              .contentType(MediaType.TEXT_PLAIN))
+               .andExpect(status().isNoContent());
+        verify(termServiceMock).getRequiredReference(TERM_URI);
+        verify(termServiceMock).setStatus(term, TermStatus.DRAFT);
     }
 }
