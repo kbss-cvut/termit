@@ -190,7 +190,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
      * @return List of full terms ordered by label
      * @see #findAll(Vocabulary)
      */
-    @Transactional(readOnly = true)
     public List<Term> findAllFull(Vocabulary vocabulary) {
         return termDao.findAllFull(vocabulary).stream().map(this::postLoad).collect(toList());
     }
