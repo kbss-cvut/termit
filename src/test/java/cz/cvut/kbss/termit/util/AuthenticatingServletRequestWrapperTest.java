@@ -17,6 +17,8 @@
  */
 package cz.cvut.kbss.termit.util;
 
+import cz.cvut.kbss.termit.security.JwtUtils;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet.AuthenticatingServletRequestWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -129,5 +132,16 @@ class AuthenticatingServletRequestWrapperTest {
         final Enumeration<String> result = sut.getHeaderNames();
         final List<String> resultAsString = Collections.list(result);
         assertFalse(resultAsString.contains(HttpHeaders.AUTHORIZATION));
+    }
+
+    @Test
+    void getHeaderNamesEnsuresExactlyOneAuthorizationHeaderNameIsReturnedWhenUsernameIsConfigured() {
+        mockRequest.addHeader(HttpHeaders.AUTHORIZATION.toLowerCase(), SecurityConstants.JWT_TOKEN_PREFIX + "fdafhepafieoandsflansdf");
+        final AuthenticatingServletRequestWrapper sut = new AuthenticatingServletRequestWrapper(mockRequest, USERNAME,
+                                                                                                PASSWORD);
+        final Enumeration<String> authHeader = sut.getHeaderNames();
+        final List<String> headerList = Collections.list(authHeader);
+        assertEquals(1, headerList.size());
+        assertThat(headerList.get(0), equalToIgnoringCase(HttpHeaders.AUTHORIZATION));
     }
 }
