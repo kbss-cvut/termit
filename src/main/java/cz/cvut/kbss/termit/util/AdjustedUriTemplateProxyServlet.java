@@ -98,7 +98,9 @@ public class AdjustedUriTemplateProxyServlet extends URITemplateProxyServlet {
         public Enumeration<String> getHeaderNames() {
             if (!username.isEmpty()) {
                 List<String> temp = Collections.list(super.getHeaderNames());
-                temp.add(HttpHeaders.AUTHORIZATION);
+                if (temp.stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+                    temp.add(HttpHeaders.AUTHORIZATION);
+                }
                 return Collections.enumeration(temp);
             }
             return super.getHeaderNames();
