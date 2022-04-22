@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -32,6 +33,7 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
+import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
+import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -320,7 +323,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         });
 
         assertTrue(sut.existsInVocabulary(t.getLabel().get(Environment.LANGUAGE), vocabulary,
-                Environment.LANGUAGE));
+                                          Environment.LANGUAGE));
     }
 
     @Test
@@ -430,7 +433,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.update(child);
 
         final Glossary result = em.find(Glossary.class, vocabulary.getGlossary().getUri(),
-                descriptorFactory.glossaryDescriptor(vocabulary));
+                                        descriptorFactory.glossaryDescriptor(vocabulary));
         assertTrue(result.getRootTerms().contains(parent.getUri()));
         assertFalse(result.getRootTerms().contains(child.getUri()));
     }
@@ -456,7 +459,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.update(child);
 
         final Glossary result = em.find(Glossary.class, vocabulary.getGlossary().getUri(),
-                descriptorFactory.glossaryDescriptor(vocabulary));
+                                        descriptorFactory.glossaryDescriptor(vocabulary));
         assertTrue(result.getRootTerms().contains(parent.getUri()));
         assertTrue(result.getRootTerms().contains(child.getUri()));
     }
@@ -536,7 +539,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertEquals(childTerm, result);
         assertEquals(childVocabulary.getGlossary().getUri(), childTerm.getGlossary());
         final Glossary childGlossary = em.find(Glossary.class, childVocabulary.getGlossary().getUri(),
-                descriptorFactory.glossaryDescriptor(childVocabulary));
+                                               descriptorFactory.glossaryDescriptor(childVocabulary));
         assertThat(childGlossary.getRootTerms(), hasItem(childTerm.getUri()));
     }
 
@@ -824,5 +827,53 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term result = em.find(Term.class, term.getUri());
         assertThat(result.getParentTerms(), hasItem(internalParent));
         assertThat(result.getExternalParentTerms(), hasItem(externalParent));
+    }
+
+    @Test
+    void setStatusToDraftSetsTermDraftFlagToTrueAndUpdatesIt() {
+        final Term term = generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
+        sut.setStatus(term, TermStatus.DRAFT);
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertNotNull(result);
+        assertTrue(result.isDraft());
+    }
+
+    @Test
+    void setStatusToConfirmedSetsTermDraftFlagToFalseAndUpdatesIt() {
+        final Term term = generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
+        sut.setStatus(term, TermStatus.CONFIRMED);
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertNotNull(result);
+        assertFalse(result.isDraft());
+    }
+
+    @Test
+    void setStatusDoesUpdateInCorrectContext() {
+        final Term term = generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setVocabulary(vocabulary.getUri());
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
+        sut.setStatus(term, TermStatus.DRAFT);
+
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection conn = repo.getConnection()) {
+                final ValueFactory vf = conn.getValueFactory();
+                assertTrue(conn.hasStatement(vf.createIRI(term.getUri().toString()), vf.createIRI(
+                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft), null, false,
+                                             vf.createIRI(vocabulary.getUri().toString())));
+                assertEquals(1,
+                             Iterations.asList(conn.getStatements(vf.createIRI(term.getUri().toString()), vf.createIRI(
+                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft), null)).size());
+            }
+        });
     }
 }
