@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.OWL;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -40,6 +41,7 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.IOException;
 import java.net.URI;
@@ -48,6 +50,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class DataDaoTest extends BaseDaoTestRunner {
 
     private static final String FIRST_NAME_LABEL = "First name";
@@ -108,7 +111,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void findReturnsEmptyOptionalWhenNoMatchingResourceIsFound() {
         generateProperties();
-        final Optional<RdfsResource> result = sut.find(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final Optional<RdfsResource> result = sut.find(URI.create(DC.Terms.MEDIA_TYPE));
         assertFalse(result.isPresent());
     }
 

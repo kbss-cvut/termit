@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -41,6 +42,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SKOSImporterTest extends BaseDaoTestRunner {
 
     private static final String VOCABULARY_IRI_S = "http://onto.fel.cvut.cz/ontologies/application/termit";
@@ -59,7 +61,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     @Autowired
     private ApplicationContext context;
 
-    private Consumer<cz.cvut.kbss.termit.model.Vocabulary> persister = (cz.cvut.kbss.termit.model.Vocabulary v) -> vocabularyDao.persist(v);
+    private final Consumer<cz.cvut.kbss.termit.model.Vocabulary> persister = (cz.cvut.kbss.termit.model.Vocabulary v) -> vocabularyDao.persist(v);
 
     private final ValueFactory vf = SimpleValueFactory.getInstance();
 
