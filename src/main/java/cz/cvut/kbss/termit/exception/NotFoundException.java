@@ -17,6 +17,8 @@
  */
 package cz.cvut.kbss.termit.exception;
 
+import java.util.Objects;
+
 /**
  * Indicates that a resource was not found.
  */
@@ -28,5 +30,10 @@ public class NotFoundException extends TermItException {
 
     public static NotFoundException create(String resourceName, Object identifier) {
         return new NotFoundException(resourceName + " identified by " + identifier + " not found.");
+    }
+
+    public static NotFoundException create(Class<?> resourceType, Object identifier) {
+        Objects.requireNonNull(resourceType);
+        return create(resourceType.getSimpleName(), identifier);
     }
 }
