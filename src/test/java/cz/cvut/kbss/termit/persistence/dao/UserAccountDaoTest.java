@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Comparator;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Tag("dao")
 class UserAccountDaoTest extends BaseDaoTestRunner {
 

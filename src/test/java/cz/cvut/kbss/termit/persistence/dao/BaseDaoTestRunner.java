@@ -29,7 +29,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @EnableConfigurationProperties(Configuration.class)
 @EnableSpringConfigured
 @ContextConfiguration(classes = {TestPersistenceConfig.class, TestPersistenceAspectsConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
 public abstract class BaseDaoTestRunner extends TransactionalTestRunner {
 }
