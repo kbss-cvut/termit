@@ -35,7 +35,8 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -475,20 +476,10 @@ class TermServiceTest {
     }
 
     @Test
-    void setStatusToDraftSetsTermDraftFlagToTrueAndUpdatesIt() {
+    void setStatusSetsStatusViaRepositoryService() {
         final Term term = generateTermWithId();
-        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
-        sut.setStatus(term, TermStatus.DRAFT);
-        assertTrue(term.isDraft());
-        verify(termRepositoryService).update(term);
-    }
 
-    @Test
-    void setStatusToConfirmedSetsTermDraftFlagToFalseAndUpdatesIt() {
-        final Term term = generateTermWithId();
-        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
-        sut.setStatus(term, TermStatus.CONFIRMED);
-        assertFalse(term.isDraft());
-        verify(termRepositoryService).update(term);
+        sut.setStatus(term, TermStatus.DRAFT);
+        verify(termRepositoryService).setStatus(term, TermStatus.DRAFT);
     }
 }
