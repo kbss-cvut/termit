@@ -128,8 +128,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
                                      .orElseThrow(() -> NotFoundException.create(Term.class, term.getUri()));
 
         termDao.detach(toUpdate);
-        toUpdate.setDraft(status == TermStatus.DRAFT);
-        termDao.update(toUpdate);
+        if (status == TermStatus.CONFIRMED) {
+            termDao.setAsConfirmed(toUpdate);
+        } else {
+            termDao.setAsDraft(toUpdate);
+        }
     }
 
     @Transactional
