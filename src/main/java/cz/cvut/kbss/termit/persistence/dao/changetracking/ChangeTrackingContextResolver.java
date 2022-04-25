@@ -47,8 +47,15 @@ public class ChangeTrackingContextResolver {
     }
 
     private URI resolveTermVocabulary(Term term) {
-        return em.createNativeQuery("SELECT ?v WHERE { ?v ?hasGlossary ?glossary . }", URI.class)
-                 .setParameter("hasGlossary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar))
-                 .setParameter("glossary", term.getGlossary()).getSingleResult();
+        if (term.getGlossary() != null) {
+            return em.createNativeQuery("SELECT ?v WHERE { ?v ?hasGlossary ?glossary . }", URI.class)
+                     .setParameter("hasGlossary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar))
+                     .setParameter("glossary", term.getGlossary()).getSingleResult();
+        } else {
+            return em.createNativeQuery("SELECT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
+                     .setParameter("inVocabulary",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("t", term).getSingleResult();
+        }
     }
 }
