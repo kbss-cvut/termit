@@ -188,8 +188,19 @@ public class TermDao extends AssetDao<Term> {
         // Evict possibly cached instance loaded from default context
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
-        final Term original = em.find(Term.class, term.getUri(), descriptorFactory.termDescriptor(term));
-        original.setDraft(draft);
+        em.createNativeQuery("DELETE {" +
+                                     "?t ?hasStatus ?oldDraft ." +
+                                     "} INSERT {" +
+                                     "GRAPH ?g {" +
+                                     "?t ?hasStatus ?newDraft ." +
+                                     "}} WHERE {" +
+                                     "OPTIONAL {?t ?hasStatus ?oldDraft .}" +
+                                     "GRAPH ?g {" +
+                                     "?t ?inScheme ?glossary ." +
+                                     "}}").setParameter("t", term)
+          .setParameter("hasStatus", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft))
+          .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
+          .setParameter("newDraft", draft).executeUpdate();
     }
 
     /**
