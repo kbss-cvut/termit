@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
@@ -118,7 +120,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             assertEquals(vocabulary.getUri(), chr.getChangedEntity());
             assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
             assertThat(((UpdateChangeRecord) chr).getChangedAttribute().toString(), anyOf(equalTo(DC.Terms.TITLE),
-                    equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)));
+                                                                                          equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)));
         });
     }
 
@@ -191,7 +193,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
         assertEquals(Collections.singleton(originalDefinition),
-                ((UpdateChangeRecord) result.get(0)).getOriginalValue());
+                     ((UpdateChangeRecord) result.get(0)).getOriginalValue());
         assertEquals(Collections.singleton(newDefinition), ((UpdateChangeRecord) result.get(0)).getNewValue());
     }
 
@@ -228,5 +230,25 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(file);
         assertEquals(0, result.size());
+    }
+
+    @Test
+    void updatingTermDraftStatusCreatesUpdateChangeRecord() {
+        enableRdfsInference(em);
+        enableRdfsInference(em);
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            term.setGlossary(vocabulary.getGlossary().getUri());
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+
+        termService.setStatus(term, TermStatus.CONFIRMED);
+        final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
+        assertEquals(1, result.size());
+        assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft),
+                     ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
     }
 }

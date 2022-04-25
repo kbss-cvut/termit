@@ -42,6 +42,11 @@ public class ChangeTrackingAspect {
     public void updateOperation() {
     }
 
+    @Pointcut(value = "execution(private void setTermDraftStatusTo(..)) && target(cz.cvut.kbss.termit.persistence.dao.TermDao)" +
+            "&& @args(cz.cvut.kbss.termit.model.changetracking.Audited, *)")
+    public void termDraftStatusUpdateOperation() {
+    }
+
     @After(value = "persistOperation() && args(asset)")
     public void recordAssetPersist(Asset<?> asset) {
         LOG.trace("Recording creation of asset {}.", asset);
@@ -58,5 +63,17 @@ public class ChangeTrackingAspect {
     public void recordAssetUpdate(Asset<?> asset) {
         LOG.trace("Recording update of asset {}.", asset);
         changeTracker.recordUpdateEvent(asset, helperDao.findStored(asset));
+    }
+
+    @After(value = "termDraftStatusUpdateOperation() && args(asset, draft)", argNames = "asset, draft")
+    public void recordTermDraftStatusUpdate(Term asset, Boolean draft) {
+        LOG.trace("Recording update of asset {}.", asset);
+        final Term original = new Term();
+        original.setUri(asset.getUri());
+        original.setDraft(!draft);
+        final Term update = new Term();
+        update.setUri(asset.getUri());
+        update.setDraft(draft);
+        changeTracker.recordUpdateEvent(update, original);
     }
 }
