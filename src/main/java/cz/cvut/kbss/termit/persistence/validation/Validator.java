@@ -62,17 +62,15 @@ public class Validator implements VocabularyContentValidator {
         return model;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<ValidationResult> validate(final Collection<URI> vocabularyIris) {
         LOG.debug("Validating {}", vocabularyIris);
         final com.github.sgov.server.Validator validator = new com.github.sgov.server.Validator();
         final Set<URL> rules = new HashSet<>();
+        rules.addAll(validator.getGlossaryRules());
         rules.addAll(
-                validator.getGlossaryRules());
-        rules.addAll(
-                // currently only using content rules, not OntoUml, as TermIt does not support adding
-                // OntoUml rules
+                // Currently, only using content rules, not OntoUml, as TermIt does not support adding OntoUml rules
                 validator.getModelRules().stream().filter(r ->
                         r.toString().contains("m1.ttl") || r.toString().contains("m2.ttl"))
                         .collect(Collectors.toList())
