@@ -103,27 +103,18 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final Map<Term, List<TermOccurrence>> map = new HashMap<>();
         map.put(tOne, new ArrayList<>());
         map.put(tTwo, new ArrayList<>());
+        // Ensure every file has an occurrence
+        for (File f : filesToProcess) {
+            final Term term = Generator.randomBoolean() ? tOne : tTwo;
+            final TermOccurrence to = generateTermOccurrence(suggested, f, term);
+            map.get(term).add(to);
+        }
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
-            final TermOccurrence to = new TermFileOccurrence();
-            if (suggested) {
-                to.addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
-            }
-            final FileOccurrenceTarget target = new FileOccurrenceTarget(filesToProcess.length > 1 ?
-                    filesToProcess[Generator
-                            .randomInt(0, filesToProcess.length)] :
-                    filesToProcess[0]);
-            final TextQuoteSelector selector = new TextQuoteSelector("test");
-            selector.setPrefix("this is a ");
-            selector.setSuffix(".");
-            target.setSelectors(Collections.singleton(selector));
-            to.setTarget(target);
-            if (Generator.randomBoolean()) {
-                to.setTerm(tOne.getUri());
-                map.get(tOne).add(to);
-            } else {
-                to.setTerm(tTwo.getUri());
-                map.get(tTwo).add(to);
-            }
+            final Term term = Generator.randomBoolean() ? tOne : tTwo;
+            final TermOccurrence to = generateTermOccurrence(suggested,
+                                                             filesToProcess[Generator.randomIndex(filesToProcess)],
+                                                             term);
+            map.get(term).add(to);
         }
         transactional(() -> {
             for (File f : filesToProcess) {
@@ -139,6 +130,21 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
             });
         });
         return map;
+    }
+
+    private TermOccurrence generateTermOccurrence(boolean suggested, File file, Term term) {
+        final TermOccurrence to = new TermFileOccurrence();
+        if (suggested) {
+            to.addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+        }
+        final FileOccurrenceTarget target = new FileOccurrenceTarget(file);
+        final TextQuoteSelector selector = new TextQuoteSelector("test");
+        selector.setPrefix("this is a ");
+        selector.setSuffix(".");
+        target.setSelectors(Collections.singleton(selector));
+        to.setTarget(target);
+        to.setTerm(term.getUri());
+        return to;
     }
 
     @Test
@@ -208,7 +214,9 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.removeSuggested(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
-                URI.create(Vocabulary.s_c_vyskyt_termu)).getSingleResult());
+                                                                                                       URI.create(
+                                                                                                               Vocabulary.s_c_vyskyt_termu))
+                      .getSingleResult());
     }
 
     @Test
@@ -243,7 +251,9 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.removeAll(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
-                URI.create(Vocabulary.s_c_vyskyt_termu)).getSingleResult());
+                                                                                                       URI.create(
+                                                                                                               Vocabulary.s_c_vyskyt_termu))
+                      .getSingleResult());
     }
 
     @Test
@@ -260,7 +270,9 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.removeAll(file));
 
         assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class).setParameter("target",
-                URI.create(Vocabulary.s_c_cil)).getSingleResult());
+                                                                                               URI.create(
+                                                                                                       Vocabulary.s_c_cil))
+                      .getSingleResult());
     }
 
     @Test
@@ -314,7 +326,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     void persistSavesTermOccurrenceWithTargetIntoGeneratedContext() {
         final File file = Generator.generateFileWithId(FILE_LABEL);
         transactional(() -> em.persist(file));
-        final TermOccurrence occurrence = new TermFileOccurrence(Generator.generateUri(), new FileOccurrenceTarget(file));
+        final TermOccurrence occurrence = new TermFileOccurrence(Generator.generateUri(),
+                                                                 new FileOccurrenceTarget(file));
         occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
 
         transactional(() -> sut.persist(occurrence));
@@ -412,7 +425,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
     private List<TermOccurrence> generateTermOccurrences(Term term, Asset<?> target, boolean suggested) {
         final List<TermOccurrence> occurrences = IntStream.range(0, Generator.randomInt(5, 10))
-                                                          .mapToObj(i -> Generator.generateTermOccurrence(term, target, suggested))
+                                                          .mapToObj(i -> Generator.generateTermOccurrence(term, target,
+                                                                                                          suggested))
                                                           .collect(Collectors.toList());
         transactional(() -> occurrences.forEach(to -> {
             em.persist(to);
@@ -423,12 +437,12 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
     private void saveAssetLabelInOtherLanguage(Asset<?> asset) {
         assertEquals(Environment.LANGUAGE,
-                em.getEntityManagerFactory().getProperties().get(JOPAPersistenceProperties.LANG));
+                     em.getEntityManagerFactory().getProperties().get(JOPAPersistenceProperties.LANG));
         final Repository repo = em.unwrap(Repository.class);
         final ValueFactory vf = repo.getValueFactory();
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.add(vf.createStatement(vf.createIRI(asset.getUri().toString()), RDFS.LABEL,
-                    vf.createLiteral("Czech label", "cs")));
+                                        vf.createLiteral("Czech label", "cs")));
         }
     }
 
