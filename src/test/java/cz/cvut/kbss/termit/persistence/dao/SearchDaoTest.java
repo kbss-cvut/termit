@@ -29,12 +29,12 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper.getOwlClassForEntity;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This class tests the default full text search functionality.
@@ -142,6 +142,28 @@ class SearchDaoTest extends BaseDaoTestRunner {
             } else {
                 assertTrue(matchingVocabularies.stream().anyMatch(v -> v.getUri().equals(item.getUri())));
             }
+        }
+    }
+
+    @Test
+    void defaultFullTextSearchIncludesDraftStatusInResult() {
+        final List<Term> terms = generateTerms();
+        transactional(() -> {
+            em.persist(vocabulary);
+            terms.forEach(t -> {
+                t.setDraft(Generator.randomBoolean());
+                em.persist(t);
+            });
+        });
+        final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
+                                               .collect(Collectors.toList());
+
+        final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
+        assertEquals(matching.size(), result.size());
+        for (FullTextSearchResult ftsResult : result) {
+            final Optional<Term> term = matching.stream().filter(t -> t.getUri().equals(ftsResult.getUri())).findFirst();
+            assertTrue(term.isPresent());
+            assertEquals(term.get().isDraft(), ftsResult.isDraft());
         }
     }
 }

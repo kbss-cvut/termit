@@ -9,11 +9,12 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX dc: <http://purl.org/dc/terms/>
 
-SELECT ?entity ?label ?type ?vocabularyUri ?snippetText ?snippetField WHERE {
+SELECT ?entity ?label ?vocabularyUri ?draft ?type ?snippetField ?snippetText WHERE {
     {
         ?entity a ?term ;
            skos:prefLabel ?label ;
            ?inVocabulary ?vocabularyUri .
+        OPTIONAL { ?entity ?isDraft ?draft . }
         BIND (?term as ?type) .
     } UNION {
         ?entity a ?vocabulary ;
