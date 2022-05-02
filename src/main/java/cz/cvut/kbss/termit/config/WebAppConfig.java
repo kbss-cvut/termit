@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.config;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import cz.cvut.kbss.jopa.model.MultilingualString;
@@ -87,6 +88,8 @@ public class WebAppConfig implements WebMvcConfigurer {
         objectMapper.addMixIn(UnitOfWorkImpl.class, ManageableIgnoreMixin.class);
         // JSR 310 (Java 8 DateTime API)
         objectMapper.registerModule(new JavaTimeModule());
+        // Serialize datetime as ISO strings
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         return objectMapper;
     }
 
@@ -126,7 +129,7 @@ public class WebAppConfig implements WebMvcConfigurer {
         p.setProperty("targetUri", config.getUrl());
         p.setProperty("log", "false");
         p.setProperty(ConfigParam.REPO_USERNAME.toString(), config.getUsername() != null ? config.getUsername() : "");
-        p.setProperty(ConfigParam.REPO_PASSWORD.toString(), config.getPassword()  != null ? config.getPassword() : "");
+        p.setProperty(ConfigParam.REPO_PASSWORD.toString(), config.getPassword() != null ? config.getPassword() : "");
         controller.setInitParameters(p);
         controller.afterPropertiesSet();
         return controller;
