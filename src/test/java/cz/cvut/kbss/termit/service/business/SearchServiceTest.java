@@ -1,10 +1,9 @@
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
-import org.apache.jena.vocabulary.SKOS;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,7 +16,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SearchServiceTest {
@@ -36,15 +36,15 @@ class SearchServiceTest {
                 Generator.generateUri(),
                 "test",
                 vocabulary,
-                SKOS.Concept.getURI(),
+                null,
+                SKOS.CONCEPT,
                 "test",
                 "test",
                 1.0);
         when(searchDao.fullTextSearch(searchString)).thenReturn(Collections.singletonList(ftsr));
-        final Vocabulary voc = new Vocabulary();
-        voc.setUri(Generator.generateUri());
         final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString,
-                Collections.singleton(Generator.generateUri())
+                                                                            Collections.singleton(
+                                                                                    Generator.generateUri())
         );
         assertTrue(result.isEmpty());
         verify(searchDao).fullTextSearch(searchString);
@@ -58,13 +58,14 @@ class SearchServiceTest {
                 Generator.generateUri(),
                 "test",
                 vocabulary,
-                SKOS.Concept.getURI(),
+                true,
+                SKOS.CONCEPT,
                 "test",
                 "test",
                 1.0);
         when(searchDao.fullTextSearch(searchString)).thenReturn(Collections.singletonList(ftsr));
         final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString,
-                Collections.singleton(vocabulary)
+                                                                            Collections.singleton(vocabulary)
         );
         assertEquals(Collections.singletonList(ftsr), result);
         verify(searchDao).fullTextSearch(searchString);

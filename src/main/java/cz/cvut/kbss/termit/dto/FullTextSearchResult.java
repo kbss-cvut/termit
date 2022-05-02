@@ -23,16 +23,20 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.Set;
 
-@SparqlResultSetMapping(name = "FullTextSearchResult", classes = {@ConstructorResult(targetClass = FullTextSearchResult.class,
-        variables = {
-                @VariableResult(name = "entity", type = URI.class),
-                @VariableResult(name = "label", type = String.class),
-                @VariableResult(name = "vocabularyUri", type = URI.class),
-                @VariableResult(name = "type", type = String.class),
-                @VariableResult(name = "snippetField", type = String.class),
-                @VariableResult(name = "snippetText", type = String.class),
-                @VariableResult(name = "score", type = Double.class)
-        })})
+@SparqlResultSetMapping(name = "FullTextSearchResult",
+                        classes = {@ConstructorResult(targetClass = FullTextSearchResult.class,
+                                                      variables = {
+                                                              @VariableResult(name = "entity", type = URI.class),
+                                                              @VariableResult(name = "label", type = String.class),
+                                                              @VariableResult(name = "vocabularyUri", type = URI.class),
+                                                              @VariableResult(name = "draft", type = Boolean.class),
+                                                              @VariableResult(name = "type", type = String.class),
+                                                              @VariableResult(name = "snippetField",
+                                                                              type = String.class),
+                                                              @VariableResult(name = "snippetText",
+                                                                              type = String.class),
+                                                              @VariableResult(name = "score", type = Double.class)
+                                                      })})
 public class FullTextSearchResult implements Serializable {
 
     @Id
@@ -54,17 +58,21 @@ public class FullTextSearchResult implements Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
+    @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
+    private Boolean draft;
+
     @Types
     private Set<String> types;
 
     public FullTextSearchResult() {
     }
 
-    public FullTextSearchResult(URI uri, String label, URI vocabulary, String type, String snippetField,
+    public FullTextSearchResult(URI uri, String label, URI vocabulary, Boolean draft, String type, String snippetField,
                                 String snippetText, Double score) {
         this.uri = uri;
         this.label = label;
         this.vocabulary = vocabulary;
+        this.draft = draft == null || draft;
         this.types = Collections.singleton(type);
         this.snippetField = snippetField;
         this.snippetText = snippetText;
@@ -93,6 +101,14 @@ public class FullTextSearchResult implements Serializable {
 
     public void setVocabulary(URI vocabulary) {
         this.vocabulary = vocabulary;
+    }
+
+    public Boolean isDraft() {
+        return draft;
+    }
+
+    public void setDraft(Boolean draft) {
+        this.draft = draft;
     }
 
     public Set<String> getTypes() {
@@ -140,3 +156,4 @@ public class FullTextSearchResult implements Serializable {
                 '}';
     }
 }
+
