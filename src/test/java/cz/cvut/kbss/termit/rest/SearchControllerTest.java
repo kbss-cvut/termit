@@ -1,13 +1,16 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
@@ -54,7 +57,9 @@ class SearchControllerTest extends BaseControllerTestRunner {
     @Test
     void fullTextSearchExecutesSearchOnService() throws Exception {
         final List<FullTextSearchResult> expected = Collections
-                .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", null, Vocabulary.s_c_term, "test", "test", 1.0));
+                .singletonList(
+                        new FullTextSearchResult(Generator.generateUri(), "test", null, null, Vocabulary.s_c_term,
+                                                 "test", "test", 1.0));
         when(searchServiceMock.fullTextSearch(any())).thenReturn(expected);
         final String searchString = "test";
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/fts").param("searchString", searchString))
@@ -72,12 +77,13 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void fullTextSearchOfTermsWithoutVocabularySpecificationExecutesSearchOnService() throws Exception {
         final URI vocabularyIri = URI.create("https://test.org/vocabulary");
         final List<FullTextSearchResult> expected = Collections
-                .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", vocabularyIri, Vocabulary.s_c_term, "test", "test", 1.0));
+                .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", vocabularyIri, null,
+                                                        Vocabulary.s_c_term, "test", "test", 1.0));
         when(searchServiceMock.fullTextSearchOfTerms(any(), any())).thenReturn(expected);
         final String searchString = "test";
         mockMvc.perform(get(PATH + "/fts/terms")
-                       .param("searchString", searchString)
-                       .param("vocabulary", vocabularyIri.toString()))
+                                .param("searchString", searchString)
+                                .param("vocabulary", vocabularyIri.toString()))
                .andExpect(status().isOk()).andReturn();
         verify(searchServiceMock).fullTextSearchOfTerms(searchString, Collections.singleton(vocabularyIri));
     }

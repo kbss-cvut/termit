@@ -1,8 +1,16 @@
 FROM maven:3-openjdk-11 as build
 
-COPY . /termit
 WORKDIR /termit
-RUN mvn package -B -P graphdb,standalone,no-cache
+
+COPY pom.xml pom.xml
+
+RUN mvn -B dependency:resolve
+
+COPY ontology ontology
+COPY profile profile
+COPY src src
+
+RUN mvn package -B -P graphdb,standalone -DskipTests=true
 
 FROM openjdk:11-jdk-oracle as runtime
 COPY --from=build  /termit/target/termit.jar termit.jar

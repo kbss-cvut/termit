@@ -7,8 +7,9 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dc: <http://purl.org/dc/terms/>
 
-SELECT DISTINCT ?entity ?label ?type ?vocabularyUri ?snippetField ?score WHERE {
+SELECT DISTINCT ?entity ?label ?vocabularyUri ?draft ?type ?snippetField ?snippetText ?score WHERE {
      ?search :query ?wildCardSearchString;
+            :snippet ?snippetText ;
             :score ?score;
             :snippet ?snippetField .
 
@@ -22,6 +23,9 @@ SELECT DISTINCT ?entity ?label ?type ?vocabularyUri ?snippetField ?score WHERE {
 
     OPTIONAL {
         ?entity ?inVocabulary ?vocabularyUri .
+    }
+    OPTIONAL {
+        ?entity ?isDraft ?draft .
     }
     FILTER (?type = ?term || ?type = ?vocabulary)
     FILTER (lang(?label) = ?langTag)
