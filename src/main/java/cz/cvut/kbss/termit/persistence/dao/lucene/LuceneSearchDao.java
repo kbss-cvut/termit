@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -55,6 +56,9 @@ public class LuceneSearchDao extends SearchDao {
     @Override
     public List<FullTextSearchResult> fullTextSearch(String searchString) {
         Objects.requireNonNull(searchString);
+        if (searchString.isBlank()) {
+            return Collections.emptyList();
+        }
         final String wildcardString = addWildcard(searchString);
         final String exactMatch = splitExactMatch(searchString);
         LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\".", searchString,

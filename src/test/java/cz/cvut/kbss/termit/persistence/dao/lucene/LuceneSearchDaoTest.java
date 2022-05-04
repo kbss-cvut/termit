@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao.lucene;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static cz.cvut.kbss.termit.persistence.dao.lucene.LuceneSearchDao.LUCENE_WILDCARD;
@@ -52,16 +54,20 @@ class LuceneSearchDaoTest {
 
     @BeforeEach
     void setUp() {
+        this.sut = new LuceneSearchDao(emMock, configMock);
+    }
+
+    private void mockSearchQuery() {
         when(emMock.createNativeQuery(any(), anyString())).thenReturn(queryMock);
         when(queryMock.setParameter(anyString(), any())).thenReturn(queryMock);
         when(queryMock.setParameter(anyString(), any(), any())).thenReturn(queryMock);
         when(queryMock.getResultList()).thenReturn(Collections.emptyList());
         when(configMock.getPersistence().getLanguage()).thenReturn("cs");
-        this.sut = new LuceneSearchDao(emMock, configMock);
     }
 
     @Test
     void fullTextSearchUsesOneTokenSearchStringAsDisjunctionOfExactAndWildcardMatch() {
+        mockSearchQuery();
         final String searchString = "test";
         sut.fullTextSearch(searchString);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -74,6 +80,7 @@ class LuceneSearchDaoTest {
 
     @Test
     void fullTextSearchUsesLastTokenInMultiTokenSearchStringAsDisjunctionOfExactAndWildcardMatch() {
+        mockSearchQuery();
         final String lastToken = "token";
         final String searchString = "termOne termTwo " + lastToken;
         sut.fullTextSearch(searchString);
@@ -87,6 +94,7 @@ class LuceneSearchDaoTest {
 
     @Test
     void fullTextSearchDoesNotAddWildcardIfLastTokenAlreadyEndsWithWildcard() {
+        mockSearchQuery();
         final String searchString = "test token*";
         sut.fullTextSearch(searchString);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -95,5 +103,12 @@ class LuceneSearchDaoTest {
                                                 .findAny();
         assertTrue(argument.isPresent());
         assertEquals(searchString, argument.get());
+    }
+
+    @Test
+    void fullTextSearchReturnsEmptyResultImmediatelyWhenSearchStringIsBlank() {
+        final List<FullTextSearchResult> result = sut.fullTextSearch("");
+        assertTrue(result.isEmpty());
+        verify(emMock, never()).createNativeQuery(anyString());
     }
 }
