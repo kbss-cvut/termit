@@ -27,6 +27,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,6 +64,9 @@ public class SearchDao {
      */
     public List<FullTextSearchResult> fullTextSearch(String searchString) {
         Objects.requireNonNull(searchString);
+        if (searchString.isBlank()) {
+            return Collections.emptyList();
+        }
         LOG.trace("Running full text search for search string \"{}\".", searchString);
         return (List<FullTextSearchResult>) em.createNativeQuery(ftsQuery, "FullTextSearchResult")
                                               .setParameter("term", URI.create(SKOS.CONCEPT))

@@ -63,11 +63,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Test
     void defaultFullTextSearchFindsTermsWithMatchingLabel() {
-        final List<Term> terms = generateTerms();
-        transactional(() -> {
-            em.persist(vocabulary);
-            terms.forEach(em::persist);
-        });
+        final List<Term> terms = generateAndPersistTerms();
         final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
                                                .collect(Collectors.toList());
 
@@ -77,6 +73,15 @@ class SearchDaoTest extends BaseDaoTestRunner {
             assertTrue(item.getTypes().contains(getOwlClassForEntity(Term.class)));
             assertTrue(matching.stream().anyMatch(t -> t.getUri().equals(item.getUri())));
         }
+    }
+
+    private List<Term> generateAndPersistTerms() {
+        final List<Term> terms = generateTerms();
+        transactional(() -> {
+            em.persist(vocabulary);
+            terms.forEach(em::persist);
+        });
+        return terms;
     }
 
     private List<Term> generateTerms() {
@@ -165,5 +170,12 @@ class SearchDaoTest extends BaseDaoTestRunner {
             assertTrue(term.isPresent());
             assertEquals(term.get().isDraft(), ftsResult.isDraft());
         }
+    }
+
+    @Test
+    void defaultFullTextSearchReturnsEmptyListForEmptyInputString() {
+        generateAndPersistTerms();
+        final List<FullTextSearchResult> result = sut.fullTextSearch("");
+        assertTrue(result.isEmpty());
     }
 }
