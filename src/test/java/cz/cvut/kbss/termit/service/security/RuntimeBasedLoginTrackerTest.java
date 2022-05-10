@@ -38,20 +38,22 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@Configuration
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {RuntimeBasedLoginTrackerTest.class})
+@ContextConfiguration(classes = {RuntimeBasedLoginTrackerTest.Config.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class RuntimeBasedLoginTrackerTest {
 
-    @Bean
-    public LoginTracker loginTracker() {
-        return new RuntimeBasedLoginTracker();
-    }
+    @Configuration
+    public static class Config {
+        @Bean
+        public LoginTracker loginTracker() {
+            return new RuntimeBasedLoginTracker();
+        }
 
-    @Bean
-    public LoginListener loginListener() {
-        return spy(new LoginListener());
+        @Bean
+        public LoginListener loginListener() {
+            return spy(new LoginListener());
+        }
     }
 
     @Autowired
