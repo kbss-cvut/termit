@@ -10,7 +10,7 @@ public class PersistChangeRecord extends AbstractChangeRecord {
     public PersistChangeRecord() {
     }
 
-    public PersistChangeRecord(Asset changedAsset) {
+    public PersistChangeRecord(Asset<?> changedAsset) {
         super(changedAsset);
     }
 

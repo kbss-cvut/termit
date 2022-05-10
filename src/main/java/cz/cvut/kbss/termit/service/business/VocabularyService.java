@@ -15,8 +15,8 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
+import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,7 +44,7 @@ public interface VocabularyService
      * <p>
      * The file could be a text file containing RDF.
      *
-     * @param rename true, if the IRIs should be modified in order to prevent clashes with existing data.
+     * @param rename        true, if the IRIs should be modified in order to prevent clashes with existing data.
      * @param vocabularyIri IRI of the vocabulary to be created.
      * @param file          File from which to import the vocabulary
      * @return The imported vocabulary metadata
@@ -52,12 +52,12 @@ public interface VocabularyService
     Vocabulary importVocabulary(boolean rename, URI vocabularyIri, MultipartFile file);
 
     /**
-     * Gets change records of the listed assets.
+     * Gets aggregated information about changes in the specified vocabulary.
      *
-     * @param asset Assets to find change records for
-     * @return List of change records, ordered by record timestamp in descending order
+     * @param vocabulary Vocabulary whose content changes to get
+     * @return List of aggregated change objects, ordered by date in descending order
      */
-    List<AbstractChangeRecord> getChangesOfContent(Vocabulary asset);
+    List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary);
 
     /**
      * Runs text analysis on the definitions of all terms in the specified vocabulary, including terms in the

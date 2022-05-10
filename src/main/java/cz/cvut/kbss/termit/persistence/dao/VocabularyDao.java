@@ -15,19 +15,18 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
+import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
-import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,24 +37,27 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastModification {
 
     private static final URI LABEL_PROPERTY = URI.create(DC.Terms.TITLE);
+    private static final String CONTENT_CHANGES_QUERY = "SELECT ?date (COUNT(DISTINCT(?t)) as ?cnt) WHERE { " +
+            "    ?ch a ?type ; " +
+            "        ?hasEntity ?t ; " +
+            "        ?hasTimestamp ?timestamp . " +
+            "    ?t ?inVocabulary ?vocabulary ." +
+            "    BIND (SUBSTR(STR(?timestamp), 1, 10) as ?date)\n" +
+            "} GROUP BY ?date ORDER BY ?date";
 
     private volatile long lastModified;
-
-    private final ChangeRecordDao changeRecordDao;
 
     private final ApplicationContext context;
 
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
-                         ChangeRecordDao changeRecordDao, ApplicationContext context) {
+                         ApplicationContext context) {
         super(Vocabulary.class, em, config.getPersistence(), descriptorFactory);
-        this.changeRecordDao = changeRecordDao;
         refreshLastModified();
         this.context = context;
     }
@@ -102,8 +104,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(entity);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
-                    "?x ?imports+ ?imported ." +
-                    "}", URI.class)
+                                                "?x ?imports+ ?imported ." +
+                                                "}", URI.class)
                      .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                      .setParameter("x", entity.getUri()).getResultList();
         } catch (RuntimeException e) {
@@ -121,8 +123,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?importing WHERE {" +
-                    "?importing ?imports ?imported ." +
-                    "}", Vocabulary.class)
+                                                "?importing ?imports ?imported ." +
+                                                "}", Vocabulary.class)
                      .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                      .setParameter("imported", vocabulary.getUri()).getResultList();
         } catch (RuntimeException e) {
@@ -191,20 +193,20 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(subjectVocabulary);
         Objects.requireNonNull(targetVocabulary);
         return em.createNativeQuery("ASK WHERE {" +
-                "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
-                "       ?hasParentTerm ?parent . " +
-                "    ?parent ?isTermFromVocabulary ?import . " +
-                "    {" +
-                "        SELECT ?import WHERE {" +
-                "           ?targetVocabulary ?importsVocabulary* ?import . " +
-                "} } }", Boolean.class)
+                                            "    ?t ?isTermFromVocabulary ?subjectVocabulary ; " +
+                                            "       ?hasParentTerm ?parent . " +
+                                            "    ?parent ?isTermFromVocabulary ?import . " +
+                                            "    {" +
+                                            "        SELECT ?import WHERE {" +
+                                            "           ?targetVocabulary ?importsVocabulary* ?import . " +
+                                            "} } }", Boolean.class)
                  .setParameter("isTermFromVocabulary",
-                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                  .setParameter("subjectVocabulary", subjectVocabulary)
                  .setParameter("hasParentTerm", URI.create(SKOS.BROADER))
                  .setParameter("targetVocabulary", targetVocabulary)
                  .setParameter("importsVocabulary",
-                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                  .getSingleResult();
     }
 
@@ -232,25 +234,37 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
     }
 
     /**
-     * Gets all changes of all of the terms in the specified vocabulary.
+     * Gets aggregated information about changes to the terms in the specified vocabulary.
      *
      * @param vocabulary Vocabulary to get changes for
-     * @return List of change records
+     * @return List of aggregated change information objects
      */
-    public List<AbstractChangeRecord> getChangesOfContent(Vocabulary vocabulary) {
+    public List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        final List<URI> terms = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                "GRAPH ?vocabulary { " +
-                "?term a ?type ;" +
-                "}" +
-                "?term ?inVocabulary ?vocabulary ." +
-                " }", URI.class).setParameter("type", URI.create(SKOS.CONCEPT))
-                                  .setParameter("vocabulary", vocabulary).getResultList();
-        return terms.stream().flatMap(tUri -> {
-            final Term t = new Term();
-            t.setUri(tUri);
-            return changeRecordDao.findAll(t).stream();
-        }).collect(Collectors.toList());
+        final List<AggregatedChangeInfo> persists = createContentChangesQuery(vocabulary)
+                .setParameter("type", URI.create(
+                        cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity)).getResultList();
+        persists.forEach(p -> p.setType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity));
+        final List<AggregatedChangeInfo> updates = createContentChangesQuery(vocabulary)
+                .setParameter("type", URI.create(
+                        cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity)).getResultList();
+        updates.forEach(u -> u.setType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity));
+        final List<AggregatedChangeInfo> result = new ArrayList<>(persists.size() + updates.size());
+        result.addAll(persists);
+        result.addAll(updates);
+        Collections.sort(result);
+        return result;
+    }
+
+    private Query createContentChangesQuery(Vocabulary vocabulary) {
+        return em.createNativeQuery(CONTENT_CHANGES_QUERY, "AggregatedChangeInfo")
+                 .setParameter("hasEntity",
+                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
+                 .setParameter("hasTimestamp", URI.create(
+                         cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
+                 .setParameter("inVocabulary",
+                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("vocabulary", vocabulary);
     }
 
     /**

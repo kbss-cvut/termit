@@ -1,11 +1,11 @@
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
-import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.exception.VocabularyImportException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -26,7 +26,9 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.math.BigInteger;
 import java.net.URI;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -36,7 +38,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.environment.Generator.generateTerm;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
@@ -119,7 +120,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final long lastModified = (System.currentTimeMillis() - 60 * 1000);
         when(serviceMock.getLastModified()).thenReturn(lastModified);
 
-        mockMvc.perform(get(PATH).header(HttpHeaders.IF_MODIFIED_SINCE, DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now())))
+        mockMvc.perform(get(PATH).header(HttpHeaders.IF_MODIFIED_SINCE,
+                                         DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now())))
                .andExpect(status().isNotModified());
         verify(serviceMock).getLastModified();
         verify(serviceMock, never()).findAll();
@@ -155,7 +157,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
         when(serviceMock.importVocabulary(anyBoolean(), any(), any())).thenReturn(vocabulary);
         final MockMultipartFile upload = new MockMultipartFile("file", "test-glossary.ttl",
-                Constants.Turtle.MEDIA_TYPE, Environment.loadFile("data/test-glossary.ttl"));
+                                                               Constants.Turtle.MEDIA_TYPE,
+                                                               Environment.loadFile("data/test-glossary.ttl"));
         final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/import").file(upload)
                                                                                .param("rename", "false"))
                                            .andExpect(status().isCreated())
@@ -257,7 +260,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final ErrorInfo errorInfo = readValue(mvcResult, ErrorInfo.class);
         assertNotNull(errorInfo);
         assertThat(errorInfo.getMessage(),
-                containsString("does not match the ID of the specified entity"));
+                   containsString("does not match the ID of the specified entity"));
         verify(serviceMock, never()).update(any());
     }
 
@@ -365,25 +368,31 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getHistoryOfContentReturnsListOfChangeRecordsForTermsInSpecifiedVocabulary()
+    void getHistoryOfContentReturnsListOfAggregatedChangeObjectsForTermsInSpecifiedVocabulary()
             throws Exception {
         final Vocabulary vocabulary = generateVocabulary();
         vocabulary.setUri(VOCABULARY_URI);
         when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
                 .thenReturn(VOCABULARY_URI);
         when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
-        final Term term = generateTerm();
-        final List<AbstractChangeRecord> records = Generator.generateChangeRecords(term, user);
-        when(serviceMock.getChangesOfContent(vocabulary)).thenReturn(records);
+        final List<AggregatedChangeInfo> changes = IntStream.range(0, 10).mapToObj(i -> {
+            final AggregatedChangeInfo ch = new AggregatedChangeInfo(LocalDate.now().minusDays(i).toString(),
+                                                                     new BigInteger(Integer.toString(
+                                                                             Generator.randomInt(1, 10))));
+            ch.setType(i % 2 == 0 ? cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity :
+                       cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity);
+            return ch;
+        }).collect(Collectors.toList());
+        when(serviceMock.getChangesOfContent(vocabulary)).thenReturn(changes);
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history-of-content"))
                        .andExpect(status().isOk())
                        .andReturn();
-        final List<AbstractChangeRecord> result =
-                readValue(mvcResult, new TypeReference<List<AbstractChangeRecord>>() {
+        final List<AggregatedChangeInfo> result =
+                readValue(mvcResult, new TypeReference<List<AggregatedChangeInfo>>() {
                 });
         assertNotNull(result);
-        assertEquals(records, result);
+        assertEquals(changes, result);
         verify(serviceMock).getChangesOfContent(vocabulary);
     }
 
@@ -406,7 +415,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 });
         assertNotNull(result);
         assertEquals(records.stream().map(ValidationResult::getId).collect(Collectors.toList()),
-                result.stream().map(ValidationResult::getId).collect(Collectors.toList()));
+                     result.stream().map(ValidationResult::getId).collect(Collectors.toList()));
         verify(serviceMock).validateContents(vocabulary);
     }
 }
