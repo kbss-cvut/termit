@@ -55,7 +55,7 @@ public interface VocabularyService
      * Gets aggregated information about changes in the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @return List of aggregated change objects, ordered by date in descending order
+     * @return List of aggregated change objects, ordered by date in ascending order
      */
     List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary);
 

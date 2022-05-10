@@ -46,8 +46,8 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
             "    ?ch a ?type ; " +
             "        ?hasEntity ?t ; " +
             "        ?hasTimestamp ?timestamp . " +
-            "    ?t ?inVocabulary ?vocabulary ." +
-            "    BIND (SUBSTR(STR(?timestamp), 1, 10) as ?date)\n" +
+            "    ?t ?inVocabulary ?vocabulary . " +
+            "    BIND (SUBSTR(STR(?timestamp), 1, 10) as ?date) " +
             "} GROUP BY ?date ORDER BY ?date";
 
     private volatile long lastModified;
@@ -244,11 +244,11 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         final List<AggregatedChangeInfo> persists = createContentChangesQuery(vocabulary)
                 .setParameter("type", URI.create(
                         cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity)).getResultList();
-        persists.forEach(p -> p.setType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity));
+        persists.forEach(p -> p.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity));
         final List<AggregatedChangeInfo> updates = createContentChangesQuery(vocabulary)
                 .setParameter("type", URI.create(
                         cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity)).getResultList();
-        updates.forEach(u -> u.setType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity));
+        updates.forEach(u -> u.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity));
         final List<AggregatedChangeInfo> result = new ArrayList<>(persists.size() + updates.size());
         result.addAll(persists);
         result.addAll(updates);

@@ -379,7 +379,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
             final AggregatedChangeInfo ch = new AggregatedChangeInfo(LocalDate.now().minusDays(i).toString(),
                                                                      new BigInteger(Integer.toString(
                                                                              Generator.randomInt(1, 10))));
-            ch.setType(i % 2 == 0 ? cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity :
+            ch.addType(i % 2 == 0 ? cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity :
                        cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity);
             return ch;
         }).collect(Collectors.toList());

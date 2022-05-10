@@ -344,7 +344,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void getChangesOfContentLoadsChangesOfTermsInVocabulary() {
+    void getChangesOfContentLoadsAggregatedChangesOfTermsInVocabulary() {
         enableRdfsInference(em);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term termOne = Generator.generateTermWithId();
@@ -381,12 +381,12 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                                                  (k, v) -> v == null ? 1 : 2));
 
         final List<AggregatedChangeInfo> result = sut.getChangesOfContent(vocabulary);
-        result.stream().filter(r -> r.getType().equals(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity))
+        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity))
               .forEach(r -> {
                   assertTrue(persists.containsKey(r.getDate()));
                   assertEquals(persists.get(r.getDate()), r.getCount());
               });
-        result.stream().filter(r -> r.getType().equals(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity))
+        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity))
               .forEach(r -> {
                   assertTrue(updates.containsKey(r.getDate()));
                   assertEquals(updates.get(r.getDate()), r.getCount());
