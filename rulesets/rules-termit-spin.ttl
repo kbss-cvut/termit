@@ -2,8 +2,6 @@
 @prefix sp: <http://spinrdf.org/sp#> .
 @prefix spin: <http://spinrdf.org/spin#> .
 @prefix pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
-@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
-@prefix activity: <https://www.w3.org/ns/activitystreams#> .
 
 # InverseOf between popisuje-dokument and má-dokumetový-slovník
 pdp:dokument a rdfs:Class ;
@@ -152,7 +150,9 @@ spin:rule [
 # inverse between CommentReaction.object and Comment
 spin:rule [
     a sp:Construct ;
-    sp:text """CONSTRUCT { ?this termit:má-reakci ?reaction . }
+    sp:text """PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
+               PREFIX activity: <https://www.w3.org/ns/activitystreams#>
+               CONSTRUCT { ?this termit:má-reakci ?reaction . }
                WHERE { ?reaction a termit:reakce ;
                              activity:object ?this . }"""
 ] .

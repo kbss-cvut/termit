@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -67,12 +68,14 @@ public class VocabularyController extends BaseController {
     public ResponseEntity<Void> createVocabulary(@RequestBody Vocabulary vocabulary) {
         vocabularyService.persist(vocabulary);
         LOG.debug("Vocabulary {} created.", vocabulary);
-        return ResponseEntity.created(generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary())).build();
+        return ResponseEntity.created(generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary()))
+                             .build();
     }
 
     @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Vocabulary getById(@PathVariable String fragment,
-                              @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                              @RequestParam(name = QueryParams.NAMESPACE,
+                                            required = false) Optional<String> namespace) {
         final URI id = resolveVocabularyUri(fragment, namespace);
         return vocabularyService.findRequired(id);
     }
@@ -91,7 +94,7 @@ public class VocabularyController extends BaseController {
     /**
      * Allows to import a vocabulary (or its  glossary) from the specified file.
      *
-     * @param file File containing data to import
+     * @param file   File containing data to import
      * @param rename true if the IRIs should be renamed
      */
     @PostMapping("/import")
@@ -108,15 +111,17 @@ public class VocabularyController extends BaseController {
     /**
      * Allows to import a SKOS glossary from the specified file.
      *
-     * @param fragment vocabulary name
+     * @param fragment  vocabulary name
      * @param namespace (optional) vocabulary namespace
-     * @param file File containing data to import
+     * @param file      File containing data to import
      */
     @PostMapping("/{fragment}/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(@PathVariable String fragment,
-                                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-                                                 @RequestParam(name = "rename", required = false, defaultValue = "false") boolean rename,
+                                                 @RequestParam(name = QueryParams.NAMESPACE,
+                                                               required = false) Optional<String> namespace,
+                                                 @RequestParam(name = "rename", required = false,
+                                                               defaultValue = "false") boolean rename,
                                                  @RequestParam(name = "file") MultipartFile file) {
         final URI vocabularyIri = resolveVocabularyUri(fragment, namespace);
         final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, vocabularyIri, file);
@@ -146,7 +151,7 @@ public class VocabularyController extends BaseController {
      */
     @GetMapping(value = "/{fragment}/history-of-content",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<AbstractChangeRecord> getHistoryOfContent(@PathVariable String fragment,
+    public List<AggregatedChangeInfo> getHistoryOfContent(@PathVariable String fragment,
                                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                                         required = false) Optional<String> namespace) {
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
@@ -157,7 +162,8 @@ public class VocabularyController extends BaseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void updateVocabulary(@PathVariable String fragment,
-                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+                                 @RequestParam(name = QueryParams.NAMESPACE,
+                                               required = false) Optional<String> namespace,
                                  @RequestBody Vocabulary update) {
         final URI vocabularyUri = resolveVocabularyUri(fragment, namespace);
         verifyRequestAndEntityIdentifier(update, vocabularyUri);
@@ -207,7 +213,8 @@ public class VocabularyController extends BaseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeVocabulary(@PathVariable String fragment,
-                                 @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                                 @RequestParam(name = QueryParams.NAMESPACE,
+                                               required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary toRemove = vocabularyService.getRequiredReference(identifier);
         vocabularyService.remove(toRemove);

@@ -1,23 +1,29 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
@@ -27,6 +33,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -182,7 +192,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         });
 
         final Glossary result = em.find(Glossary.class, vocabulary.getGlossary().getUri(),
-            descriptorFactory.glossaryDescriptor(vocabulary));
+                                        descriptorFactory.glossaryDescriptor(vocabulary));
         assertTrue(result.getRootTerms().contains(term.getUri()));
     }
 
@@ -267,7 +277,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary importedVocabularyTwo = Generator.generateVocabularyWithId();
         final Vocabulary transitiveVocabulary = Generator.generateVocabularyWithId();
         subjectVocabulary.setImportedVocabularies(
-            new HashSet<>(Arrays.asList(importedVocabularyOne.getUri(), importedVocabularyTwo.getUri())));
+                new HashSet<>(Arrays.asList(importedVocabularyOne.getUri(), importedVocabularyTwo.getUri())));
         importedVocabularyOne.setImportedVocabularies(Collections.singleton(transitiveVocabulary.getUri()));
         transactional(() -> {
             em.persist(subjectVocabulary, descriptorFactory.vocabularyDescriptor(subjectVocabulary));
@@ -334,23 +344,81 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void getChangesOfContentLoadsChangesOfTermsInVocabulary() {
+    void getChangesOfContentLoadsAggregatedChangesOfTermsInVocabulary() {
         enableRdfsInference(em);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Term term = Generator.generateTermWithId();
-        final List<AbstractChangeRecord> changes = Generator.generateChangeRecords(term, author);
+        final Term termOne = Generator.generateTermWithId();
+        final Term termTwo = Generator.generateTermWithId();
+        final List<AbstractChangeRecord> oneChanges = Generator.generateChangeRecords(termOne, author);
+        // Randomize the timestamp. We do not care about sequentiality of persist/update here
+        oneChanges.forEach(ch -> ch.setTimestamp(Instant.now().minus(Generator.randomInt(1, 10), ChronoUnit.DAYS)));
+        final List<AbstractChangeRecord> twoChanges = Generator.generateChangeRecords(termTwo, author);
+        twoChanges.forEach(ch -> ch.setTimestamp(Instant.now().minus(Generator.randomInt(1, 10), ChronoUnit.DAYS)));
         transactional(() -> {
-            vocabulary.getGlossary().addRootTerm(term);
+            vocabulary.getGlossary().addRootTerm(termOne);
+            vocabulary.getGlossary().addRootTerm(termTwo);
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            term.setGlossary(vocabulary.getGlossary().getUri());
-            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            changes.forEach(ch -> em.persist(ch));
+            termOne.setGlossary(vocabulary.getGlossary().getUri());
+            termTwo.setGlossary(vocabulary.getGlossary().getUri());
+            em.persist(termOne, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(termTwo, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(termOne, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(termTwo, vocabulary.getUri(), em);
+            oneChanges.forEach(ch -> em.persist(ch));
+            twoChanges.forEach(ch -> em.persist(ch));
         });
+        final Map<LocalDate, Integer> persists = resolveExpectedPersists(oneChanges, twoChanges);
+        final Map<LocalDate, Integer> updates = resolveExpectedUpdates(oneChanges, twoChanges);
 
-        final List<AbstractChangeRecord> result = sut.getChangesOfContent(vocabulary);
-        assertEquals(changes.size(), result.size());
-        assertTrue(changes.containsAll(result));
+        final List<AggregatedChangeInfo> result = sut.getChangesOfContent(vocabulary);
+        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity))
+              .forEach(r -> {
+                  assertTrue(persists.containsKey(r.getDate()));
+                  assertEquals(persists.get(r.getDate()), r.getCount());
+              });
+        result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity))
+              .forEach(r -> {
+                  assertTrue(updates.containsKey(r.getDate()));
+                  assertEquals(updates.get(r.getDate()), r.getCount());
+              });
+    }
+
+    private Map<LocalDate, Integer> resolveExpectedPersists(List<AbstractChangeRecord> oneChanges,
+                                                            List<AbstractChangeRecord> twoChanges) {
+        final Map<LocalDate, Integer> persists = new HashMap<>();
+        // Expect at most one persist record
+        removeDuplicateDailyRecords(oneChanges, PersistChangeRecord.class).stream().filter(ch -> ch instanceof PersistChangeRecord)
+                                               .forEach(ch -> persists.put(
+                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
+                                                       1));
+        removeDuplicateDailyRecords(twoChanges, PersistChangeRecord.class).stream().filter(ch -> ch instanceof PersistChangeRecord)
+                                               .forEach(ch -> persists.compute(
+                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
+                                                       (k, v) -> v == null ? 1 : 2));
+        return persists;
+    }
+
+    /**
+     * Ensures there is at most one change record per day.
+     */
+    private Collection<AbstractChangeRecord> removeDuplicateDailyRecords(Collection<AbstractChangeRecord> records, Class<? extends AbstractChangeRecord> type) {
+        final Map<LocalDate, AbstractChangeRecord> map = new HashMap<>();
+        records.stream().filter(type::isInstance).forEach(r -> map.put(LocalDate.ofInstant(r.getTimestamp(), ZoneId.systemDefault()), r));
+        return map.values();
+    }
+
+    private Map<LocalDate, Integer> resolveExpectedUpdates(List<AbstractChangeRecord> oneChanges,
+                                                           List<AbstractChangeRecord> twoChanges) {
+        final Map<LocalDate, Integer> updates = new HashMap<>();
+        removeDuplicateDailyRecords(oneChanges, UpdateChangeRecord.class).stream().filter(ch -> ch instanceof UpdateChangeRecord)
+                                               .forEach(ch -> updates.put(
+                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
+                                                       1));
+        removeDuplicateDailyRecords(twoChanges, UpdateChangeRecord.class).stream().filter(ch -> ch instanceof UpdateChangeRecord)
+                                               .forEach(ch -> updates.compute(
+                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
+                                                       (k, v) -> v == null ? 1 : 2));
+        return updates;
     }
 
     @Test
@@ -369,7 +437,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
                                           .collect(
-                                              Collectors.toList());
+                                                  Collectors.toList());
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> {

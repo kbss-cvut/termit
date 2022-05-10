@@ -314,8 +314,7 @@ public class Generator {
         final PersistChangeRecord persistRecord = generatePersistChange(asset);
         final List<AbstractChangeRecord> result =
                 IntStream.range(0, 5).mapToObj(i -> generateUpdateChange(asset))
-                         .collect(
-                                 Collectors.toList());
+                         .collect(Collectors.toList());
         result.add(0, persistRecord);
         if (user != null) {
             result.forEach(r -> r.setAuthor(user));

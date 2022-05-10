@@ -20,8 +20,7 @@ public class Utils {
     }
 
     /**
-     * Returns an empty set if the specified set is {@code null}. Otherwise, the collection itself is
-     * returned.
+     * Returns an empty set if the specified set is {@code null}. Otherwise, the collection itself is returned.
      *
      * @param set The collection to check
      * @return Non-null collection
@@ -229,5 +228,17 @@ public class Utils {
      */
     public static Instant timestamp() {
         return Instant.now().truncatedTo(ChronoUnit.MILLIS);
+    }
+
+    /**
+     * Trims the specified input string, if it is not {@code null}.
+     * <p>
+     * If it is, returns an empty string.
+     *
+     * @param input Input string, possibly {@code null}
+     * @return Trimmed input string, not {@code null}
+     */
+    public static String trim(String input) {
+        return input != null ? input.trim() : "";
     }
 }
