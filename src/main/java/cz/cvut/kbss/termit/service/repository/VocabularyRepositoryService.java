@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.VocabularyImportException;
@@ -154,9 +155,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return changeRecordService.getChanges(asset);
     }
 
+    @Transactional(readOnly = true)
     @Override
-    public List<AbstractChangeRecord> getChangesOfContent(Vocabulary asset) {
-        return vocabularyDao.getChangesOfContent(asset);
+    public List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary) {
+        return vocabularyDao.getChangesOfContent(vocabulary);
     }
 
     @CacheEvict(allEntries = true)

@@ -32,7 +32,7 @@
         <org.springframework.data.version>2.6.4</org.springframework.data.version>
         <org.hibernate.validator.version>6.2.3.Final</org.hibernate.validator.version>
         <org.apache.tika.tika-core.version>2.4.0</org.apache.tika.tika-core.version>
-        <cz.cvut.kbss.jopa.version>0.18.5</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>0.18.6</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.9.0</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.7</org.aspectj.version>
 

@@ -207,7 +207,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         final int count = 2;
         final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReaction(author, count);
         assertEquals(count, result.size());
-        result.stream().forEach(a ->
+        result.forEach(a ->
             assertNotNull(a.getMyLastComment())
         );
     }

@@ -17,9 +17,7 @@ package cz.cvut.kbss.termit.persistence;
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
-import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
-import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -123,9 +121,6 @@ public class DescriptorFactory {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         final Descriptor fileDescriptor = fileDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(fieldSpec(Document.class, "files"), fileDescriptor);
-        // Vocabulary field is inferred, so it cannot be in any specific context
-        descriptor.addAttributeDescriptor(fieldSpec(Document.class, "vocabulary"),
-                new FieldDescriptor((URI) null, fieldSpec(Document.class, "vocabulary")));
         return descriptor;
     }
 
@@ -229,24 +224,11 @@ public class DescriptorFactory {
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         final EntityDescriptor externalParentDescriptor = new EntityDescriptor();
-        // Vocabulary field is inferred, so it cannot be in any specific context
-        externalParentDescriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
-                new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "externalParentTerms"), externalParentDescriptor);
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), descriptor);
         final EntityDescriptor exactMatchTermsDescriptor = new EntityDescriptor();
-        exactMatchTermsDescriptor.addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"),
-                new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"), exactMatchTermsDescriptor);
-        // Definition source is inferred. That means it is in a special context in GraphDB. Therefore, we need to use
-        // the default context to prevent JOPA from thinking the value has changed on merge
-        descriptor.addAttributeContext(fieldSpec(Term.class, "definitionSource"), null);
-        // Vocabulary field is inferred, so it cannot be in any specific context
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "vocabulary"),
-                new FieldDescriptor((URI) null, fieldSpec(Term.class, "vocabulary")));
         final EntityDescriptor relatedDescriptor = new EntityDescriptor(vocabularyUri);
-        relatedDescriptor
-                .addAttributeDescriptor(fieldSpec(TermInfo.class, "vocabulary"), new FieldDescriptor((URI) null, fieldSpec(TermInfo.class, "vocabulary")));
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), relatedDescriptor);
         descriptor.addAttributeContext(fieldSpec(Term.class, "relatedMatch"), null);
         return descriptor;

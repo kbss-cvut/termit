@@ -178,6 +178,7 @@ public class Environment {
             conn.add(new URL("http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/model"), BASE_URI,
                     RDFFormat.TURTLE);
             conn.add(new File("ontology/termit-model.ttl"), BASE_URI, RDFFormat.TURTLE);
+            conn.add(new File("rulesets/rules-termit-spin.ttl"), BASE_URI, RDFFormat.TURTLE);
             conn.add(new URL("https://www.w3.org/TR/skos-reference/skos.rdf"), "", RDFFormat.RDFXML);
             conn.commit();
         } catch (IOException e) {
