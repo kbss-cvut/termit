@@ -4,21 +4,28 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Tracks changes to assets.
  */
 @Service
 public class ChangeTracker {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ChangeTracker.class);
 
     private final ChangeCalculator changeCalculator;
 
@@ -58,7 +65,12 @@ public class ChangeTracker {
         Objects.requireNonNull(original);
         final Instant now = Utils.timestamp();
         final User user = SecurityUtils.currentUser().toUser();
-        changeCalculator.calculateChanges(update, original).forEach(ch -> {
+        final Collection<UpdateChangeRecord> changes = changeCalculator.calculateChanges(update, original);
+        if (!changes.isEmpty()) {
+            LOG.trace("Found changes to attributes: " + changes.stream().map(ch -> ch.getChangedAttribute().toString())
+                                                               .collect(Collectors.joining(", ")));
+        }
+        changes.forEach(ch -> {
             ch.setAuthor(user);
             ch.setTimestamp(now);
             changeRecordDao.persist(ch, update);

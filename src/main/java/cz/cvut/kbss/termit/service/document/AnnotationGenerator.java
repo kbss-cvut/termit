@@ -89,7 +89,7 @@ public class AnnotationGenerator {
     }
 
     private void saveOccurrences(List<TermOccurrence> occurrences, Asset<?> source) {
-        LOG.trace("Saving term occurrences for file {}.", source);
+        LOG.trace("Saving term occurrences for asset {}.", source);
         final List<TermOccurrence> existing = termOccurrenceDao.findAllTargeting(source);
         occurrences.stream().filter(o -> isNew(o, existing))
                    .filter(o -> !o.getTerm().equals(source.getUri())).forEach(o -> {
@@ -143,10 +143,10 @@ public class AnnotationGenerator {
     public void generateAnnotations(InputStream content, AbstractTerm annotatedTerm) {
         // We assume the content (text analysis output) is HTML-compatible
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();
-        LOG.debug("Resolving annotations of the definition of Term {}.", annotatedTerm);
+        LOG.debug("Resolving annotations of the definition of {}.", annotatedTerm);
         occurrenceResolver.parseContent(content, annotatedTerm);
         final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
         saveOccurrences(occurrences, annotatedTerm);
-        LOG.trace("Finished generating annotations for the definition of Term {}.", annotatedTerm);
+        LOG.trace("Finished generating annotations for the definition of {}.", annotatedTerm);
     }
 }
