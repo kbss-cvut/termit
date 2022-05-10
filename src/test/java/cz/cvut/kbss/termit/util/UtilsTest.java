@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.util;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
@@ -39,7 +38,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -180,5 +178,16 @@ class UtilsTest {
         final Set<String> actual = Utils.getLanguageTagsPerProperties(model, Stream.of(p1, p2).collect(Collectors.toSet()));
 
         assertEquals(expected, actual);
+    }
+
+    @Test
+    void trimReturnsEmptyStringForNullInput() {
+        assertEquals("", Utils.trim(null));
+    }
+
+    @Test
+    void trimReturnsTrimmedInputStringForNonNullInput() {
+        final String input = "aaa bbb   ";
+        assertEquals(input.trim(), Utils.trim(input));
     }
 }
