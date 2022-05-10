@@ -367,18 +367,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             oneChanges.forEach(ch -> em.persist(ch));
             twoChanges.forEach(ch -> em.persist(ch));
         });
-        final Map<LocalDate, Integer> persists = new HashMap<>();
-        oneChanges.stream().filter(ch -> ch instanceof PersistChangeRecord)
-                  .forEach(ch -> persists.put(LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()), 1));
-        twoChanges.stream().filter(ch -> ch instanceof PersistChangeRecord)
-                  .forEach(ch -> persists.compute(LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
-                                                  (k, v) -> v == null ? 1 : 2));
-        final Map<LocalDate, Integer> updates = new HashMap<>();
-        oneChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord)
-                  .forEach(ch -> updates.put(LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()), 1));
-        twoChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord)
-                  .forEach(ch -> updates.compute(LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
-                                                 (k, v) -> v == null ? 1 : 2));
+        final Map<LocalDate, Integer> persists = resolveExpectedPersists(oneChanges, twoChanges);
+        final Map<LocalDate, Integer> updates = resolveExpectedUpdates(oneChanges, twoChanges);
 
         final List<AggregatedChangeInfo> result = sut.getChangesOfContent(vocabulary);
         result.stream().filter(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity))
@@ -391,6 +381,44 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                   assertTrue(updates.containsKey(r.getDate()));
                   assertEquals(updates.get(r.getDate()), r.getCount());
               });
+    }
+
+    private Map<LocalDate, Integer> resolveExpectedPersists(List<AbstractChangeRecord> oneChanges,
+                                                            List<AbstractChangeRecord> twoChanges) {
+        final Map<LocalDate, Integer> persists = new HashMap<>();
+        // Expect at most one persist record
+        removeDuplicateDailyRecords(oneChanges, PersistChangeRecord.class).stream().filter(ch -> ch instanceof PersistChangeRecord)
+                                               .forEach(ch -> persists.put(
+                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
+                                                       1));
+        removeDuplicateDailyRecords(twoChanges, PersistChangeRecord.class).stream().filter(ch -> ch instanceof PersistChangeRecord)
+                                               .forEach(ch -> persists.compute(
+                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
+                                                       (k, v) -> v == null ? 1 : 2));
+        return persists;
+    }
+
+    /**
+     * Ensures there is at most one change record per day.
+     */
+    private Collection<AbstractChangeRecord> removeDuplicateDailyRecords(Collection<AbstractChangeRecord> records, Class<? extends AbstractChangeRecord> type) {
+        final Map<LocalDate, AbstractChangeRecord> map = new HashMap<>();
+        records.stream().filter(type::isInstance).forEach(r -> map.put(LocalDate.ofInstant(r.getTimestamp(), ZoneId.systemDefault()), r));
+        return map.values();
+    }
+
+    private Map<LocalDate, Integer> resolveExpectedUpdates(List<AbstractChangeRecord> oneChanges,
+                                                           List<AbstractChangeRecord> twoChanges) {
+        final Map<LocalDate, Integer> updates = new HashMap<>();
+        removeDuplicateDailyRecords(oneChanges, UpdateChangeRecord.class).stream().filter(ch -> ch instanceof UpdateChangeRecord)
+                                               .forEach(ch -> updates.put(
+                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
+                                                       1));
+        removeDuplicateDailyRecords(twoChanges, UpdateChangeRecord.class).stream().filter(ch -> ch instanceof UpdateChangeRecord)
+                                               .forEach(ch -> updates.compute(
+                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
+                                                       (k, v) -> v == null ? 1 : 2));
+        return updates;
     }
 
     @Test
