@@ -159,7 +159,7 @@ class TermServiceTest {
     @Test
     void updateUsesRepositoryServiceToUpdateTerm() {
         final Term term = generateTermWithId();
-        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+        when(termRepositoryService.getRequiredReference(term.getUri())).thenReturn(term);
         sut.update(term);
         verify(termRepositoryService).update(term);
     }
@@ -293,7 +293,7 @@ class TermServiceTest {
         toUpdate.setUri(original.getUri());
         final String newDefinition = "This term has acquired a new definition";
         toUpdate.setVocabulary(vocabulary.getUri());
-        when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
+        when(termRepositoryService.getRequiredReference(toUpdate.getUri())).thenReturn(original);
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
         sut.update(toUpdate);
         verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
@@ -435,7 +435,7 @@ class TermServiceTest {
         update.setDefinition(new MultilingualString(original.getDefinition().getValue()));
         update.setDescription(new MultilingualString(original.getDescription().getValue()));
         update.setVocabulary(vocabulary.getUri());
-        when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
+        when(termRepositoryService.getRequiredReference(original.getUri())).thenReturn(original);
         when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
         update.getLabel().set(Environment.LANGUAGE, "updatedLabel");
 

@@ -374,13 +374,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     @Transactional
     public Term update(Term term) {
         Objects.requireNonNull(term);
-        final Term original = repositoryService.findRequired(term.getUri());
+        // Use only a reference to prevent consolidation of inferred attributes by TermRepositoryService.postLoad
+        // It messes up changes in the inferred attributes and orphan inference removal - see kbss-cvut/termit-ui#282
+        final Term original = repositoryService.getRequiredReference(term.getUri());
         if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
             analyzeTermDefinition(term, term.getVocabulary());
         }
+        final boolean labelChanged = !Objects.equals(original.getLabel(), term.getLabel());
         final Term result = repositoryService.update(term);
         // Ensure the change is merged into the repo before analyzing other terms
-        if (!Objects.equals(original.getLabel(), term.getLabel())) {
+        if (labelChanged) {
             vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(original.getVocabulary()));
         }
         return result;
