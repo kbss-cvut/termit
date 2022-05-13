@@ -876,4 +876,41 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             }
         });
     }
+
+    /**
+     * Bug kbss-cvut/termit-ui#282
+     */
+    @Test
+    void removingExactMatchFromInverseSideWorksInTransaction() {
+        enableRdfsInference(em);
+        final Term term = generateTermWithId();
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        term.setVocabulary(vocabulary.getUri());
+        final Term exactMatch = generateTermWithId();
+        exactMatch.setGlossary(childVocabulary.getGlossary().getUri());
+        exactMatch.setVocabulary(childVocabulary.getUri());
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(exactMatch, descriptorFactory.termDescriptor(exactMatch));
+        });
+        transactional(() -> {
+            term.addExactMatch(new TermInfo(exactMatch));
+            em.merge(term, descriptorFactory.termDescriptor(term));
+        });
+
+        transactional(() -> {
+            // This simulates what happens/should happen in TermService
+            final Term original = sut.getRequiredReference(exactMatch.getUri());
+            assertNotNull(original.getLabel());
+            assertNotNull(original.getDescription());
+            exactMatch.setExactMatchTerms(null);
+            sut.update(exactMatch);
+        });
+
+        final Term resultExactMatch = em.find(Term.class, exactMatch.getUri());
+        assertThat(resultExactMatch.getExactMatchTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+        assertThat(resultExactMatch.getInverseExactMatchTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+        final Term resultTerm = em.find(Term.class, term.getUri());
+        assertThat(resultTerm.getExactMatchTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+    }
 }
