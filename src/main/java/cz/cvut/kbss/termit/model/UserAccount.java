@@ -109,6 +109,7 @@ public class UserAccount extends AbstractUser {
      *
      * @return {@code true} if this account is of administrator type
      */
+    @JsonIgnore
     public boolean isAdmin() {
         return types != null && types.contains(Vocabulary.s_c_administrator_termitu);
     }

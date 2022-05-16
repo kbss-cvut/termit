@@ -482,4 +482,37 @@ class TermServiceTest {
         sut.setStatus(term, TermStatus.DRAFT);
         verify(termRepositoryService).setStatus(term, TermStatus.DRAFT);
     }
+
+    @Test
+    void findConsolidatesTermRelationships() {
+        final Term term = spy(generateTermWithId());
+        when(termRepositoryService.find(term.getUri())).thenReturn(Optional.of(term));
+
+        final Optional<Term> result = sut.find(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(term, result.get());
+        verify(term).consolidateInferred();
+        verify(term).consolidateParents();
+    }
+
+    @Test
+    void findConsolidatesParentTerms() {
+        final Term term = spy(generateTermWithId());
+        when(termRepositoryService.find(term.getUri())).thenReturn(Optional.of(term));
+
+        final Optional<Term> result = sut.find(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(term, result.get());
+    }
+
+    @Test
+    void findRequiredConsolidatesTermRelationships() {
+        final Term term = spy(generateTermWithId());
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+
+        final Term result = sut.findRequired(term.getUri());
+        assertEquals(term, result);
+        verify(term).consolidateInferred();
+        verify(term).consolidateParents();
+    }
 }

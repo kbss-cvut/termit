@@ -261,7 +261,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return Matching term wrapped in an {@code Optional}
      */
     public Optional<Term> find(URI id) {
-        return repositoryService.find(id);
+        final Optional<Term> result = repositoryService.find(id);
+        result.ifPresent(this::consolidateAttributes);
+        return result;
+    }
+
+    private void consolidateAttributes(Term term) {
+        term.consolidateInferred();
+        term.consolidateParents();
     }
 
     /**
@@ -272,7 +279,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @throws NotFoundException When no matching term is found
      */
     public Term findRequired(URI id) {
-        return repositoryService.findRequired(id);
+        final Term result = repositoryService.findRequired(id);
+        if (result != null) {
+            consolidateAttributes(result);
+        }
+        return result;
     }
 
     /**
