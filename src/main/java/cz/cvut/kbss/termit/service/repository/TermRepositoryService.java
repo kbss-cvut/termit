@@ -83,14 +83,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
     }
 
     @Override
-    protected Term postLoad(Term instance) {
-        final Term t = super.postLoad(instance);
-        t.consolidateInferred();
-        t.consolidateParents();
-        return t;
-    }
-
-    @Override
     public void persist(Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");

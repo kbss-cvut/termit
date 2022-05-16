@@ -159,7 +159,7 @@ class TermServiceTest {
     @Test
     void updateUsesRepositoryServiceToUpdateTerm() {
         final Term term = generateTermWithId();
-        when(termRepositoryService.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
         sut.update(term);
         verify(termRepositoryService).update(term);
     }
@@ -293,7 +293,7 @@ class TermServiceTest {
         toUpdate.setUri(original.getUri());
         final String newDefinition = "This term has acquired a new definition";
         toUpdate.setVocabulary(vocabulary.getUri());
-        when(termRepositoryService.getRequiredReference(toUpdate.getUri())).thenReturn(original);
+        when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
         sut.update(toUpdate);
         verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
@@ -435,7 +435,7 @@ class TermServiceTest {
         update.setDefinition(new MultilingualString(original.getDefinition().getValue()));
         update.setDescription(new MultilingualString(original.getDescription().getValue()));
         update.setVocabulary(vocabulary.getUri());
-        when(termRepositoryService.getRequiredReference(original.getUri())).thenReturn(original);
+        when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
         when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
         update.getLabel().set(Environment.LANGUAGE, "updatedLabel");
 
@@ -481,5 +481,38 @@ class TermServiceTest {
 
         sut.setStatus(term, TermStatus.DRAFT);
         verify(termRepositoryService).setStatus(term, TermStatus.DRAFT);
+    }
+
+    @Test
+    void findConsolidatesTermRelationships() {
+        final Term term = spy(generateTermWithId());
+        when(termRepositoryService.find(term.getUri())).thenReturn(Optional.of(term));
+
+        final Optional<Term> result = sut.find(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(term, result.get());
+        verify(term).consolidateInferred();
+        verify(term).consolidateParents();
+    }
+
+    @Test
+    void findConsolidatesParentTerms() {
+        final Term term = spy(generateTermWithId());
+        when(termRepositoryService.find(term.getUri())).thenReturn(Optional.of(term));
+
+        final Optional<Term> result = sut.find(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(term, result.get());
+    }
+
+    @Test
+    void findRequiredConsolidatesTermRelationships() {
+        final Term term = spy(generateTermWithId());
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+
+        final Term result = sut.findRequired(term.getUri());
+        assertEquals(term, result);
+        verify(term).consolidateInferred();
+        verify(term).consolidateParents();
     }
 }
