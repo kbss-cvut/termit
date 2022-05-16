@@ -261,7 +261,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return Matching term wrapped in an {@code Optional}
      */
     public Optional<Term> find(URI id) {
-        return repositoryService.find(id);
+        final Optional<Term> result = repositoryService.find(id);
+        result.ifPresent(this::consolidateAttributes);
+        return result;
+    }
+
+    private void consolidateAttributes(Term term) {
+        term.consolidateInferred();
+        term.consolidateParents();
     }
 
     /**
@@ -272,7 +279,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @throws NotFoundException When no matching term is found
      */
     public Term findRequired(URI id) {
-        return repositoryService.findRequired(id);
+        final Term result = repositoryService.findRequired(id);
+        if (result != null) {
+            consolidateAttributes(result);
+        }
+        return result;
     }
 
     /**
@@ -374,16 +385,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     @Transactional
     public Term update(Term term) {
         Objects.requireNonNull(term);
-        // Use only a reference to prevent consolidation of inferred attributes by TermRepositoryService.postLoad
-        // It messes up changes in the inferred attributes and orphan inference removal - see kbss-cvut/termit-ui#282
-        final Term original = repositoryService.getRequiredReference(term.getUri());
+        final Term original = repositoryService.findRequired(term.getUri());
         if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
             analyzeTermDefinition(term, term.getVocabulary());
         }
-        final boolean labelChanged = !Objects.equals(original.getLabel(), term.getLabel());
         final Term result = repositoryService.update(term);
         // Ensure the change is merged into the repo before analyzing other terms
-        if (labelChanged) {
+        if (!Objects.equals(original.getLabel(), term.getLabel())) {
             vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(original.getVocabulary()));
         }
         return result;

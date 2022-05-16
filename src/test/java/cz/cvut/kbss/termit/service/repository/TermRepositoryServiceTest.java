@@ -622,29 +622,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertNull(result);
     }
 
-    @Test
-    void findConsolidatesRelatedAndRelatedMatchTerms() {
-        final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        final Term related = Generator.generateTermWithId(vocabulary.getUri());
-        final Term inverseRelated = Generator.generateTermWithId(vocabulary.getUri());
-        term.setGlossary(vocabulary.getGlossary().getUri());
-        related.setGlossary(vocabulary.getGlossary().getUri());
-        term.addRelatedTerm(new TermInfo(related));
-        vocabulary.getGlossary().addRootTerm(term);
-        transactional(() -> {
-            em.persist(related, descriptorFactory.termDescriptor(vocabulary));
-            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            em.persist(inverseRelated, descriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(related, vocabulary.getUri(), em);
-            generateRelatedInverse(term, inverseRelated, SKOS.RELATED);
-        });
-
-        final Term result = sut.findRequired(term.getUri());
-        assertThat(result.getRelated(), hasItems(new TermInfo(related), new TermInfo(inverseRelated)));
-    }
-
     private void generateRelatedInverse(Term term, Term related, String property) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
@@ -742,25 +719,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.update(term);
         final Term inverseResult = em.find(Term.class, inverseExactMatch.getUri());
         assertThat(inverseResult.getExactMatchTerms(), anyOf(emptyCollectionOf(TermInfo.class), nullValue()));
-    }
-
-    @Test
-    void postLoadConsolidatesTermsParents() {
-        final Term term = Generator.generateTermWithId(childVocabulary.getUri());
-        term.setGlossary(childVocabulary.getGlossary().getUri());
-        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
-        parent.setGlossary(vocabulary.getGlossary().getUri());
-        term.addParentTerm(parent);
-        assertThat(term.getParentTerms(), not(hasItem(parent)));
-        transactional(() -> {
-            em.persist(term, descriptorFactory.termDescriptor(term));
-            em.persist(parent, descriptorFactory.termDescriptor(parent));
-            Generator.addTermInVocabularyRelationship(term, childVocabulary.getUri(), em);
-            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
-        });
-
-        final Term result = sut.findRequired(term.getUri());
-        assertThat(result.getParentTerms(), hasItem(parent));
     }
 
     @Test
@@ -899,10 +857,9 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         });
 
         transactional(() -> {
-            // This simulates what happens/should happen in TermService
-            final Term original = sut.getRequiredReference(exactMatch.getUri());
-            assertNotNull(original.getLabel());
-            assertNotNull(original.getDescription());
+            // This simulates what happens in TermService
+            final Term original = sut.findRequired(exactMatch.getUri());
+            assertFalse(original.getInverseExactMatchTerms().isEmpty());
             exactMatch.setExactMatchTerms(null);
             sut.update(exactMatch);
         });
