@@ -16,6 +16,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
@@ -52,7 +53,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final ChangeRecordService changeRecordService;
 
-    private final Configuration.Namespace config;
+    private final Configuration config;
 
     private final ApplicationContext context;
 
@@ -67,7 +68,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         this.idResolver = idResolver;
         this.termService = termService;
         this.changeRecordService = changeRecordService;
-        this.config = config.getNamespace();
+        this.config = config;
     }
 
     /**
@@ -98,18 +99,25 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     protected void prePersist(Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(idResolver.generateIdentifier(config.getVocabulary(),
-                    instance.getLabel()));
+            instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(),
+                                                          instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
-        if (instance.getGlossary() == null) {
-            instance.setGlossary(new Glossary());
-        }
-        if (instance.getModel() == null) {
-            instance.setModel(new Model());
-        }
+        initGlossaryAndModel(instance);
         if (instance.getDocument() != null) {
             instance.getDocument().setVocabulary(null);
+        }
+    }
+
+    private void initGlossaryAndModel(Vocabulary vocabulary) {
+        final String iriBase = vocabulary.getUri().toString();
+        if (vocabulary.getGlossary() == null) {
+            vocabulary.setGlossary(new Glossary());
+            vocabulary.getGlossary().setUri(idResolver.generateIdentifier(iriBase, config.getGlossary().getFragment()));
+        }
+        if (vocabulary.getModel() == null) {
+            vocabulary.setModel(new Model());
+            vocabulary.getModel().setUri(idResolver.generateIdentifier(iriBase, Constants.DEFAULT_MODEL_IRI_COMPONENT));
         }
     }
 
@@ -140,8 +148,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                 Collectors.toSet());
         if (!invalid.isEmpty()) {
             throw new VocabularyImportException("Cannot remove imports of vocabularies " + invalid +
-                    ", there are still relationships between terms.",
-                    "error.vocabulary.update.imports.danglingTermReferences");
+                                                        ", there are still relationships between terms.",
+                                                "error.vocabulary.update.imports.danglingTermReferences");
         }
     }
 
@@ -172,10 +180,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
             metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
             String contentType = new Tika().detect(file.getInputStream(), metadata);
             return getSKOSImporter().importVocabulary(rename,
-                    vocabularyIri,
-                    contentType,
-                    this::persist,
-                    file.getInputStream()
+                                                      vocabularyIri,
+                                                      contentType,
+                                                      this::persist,
+                                                      file.getInputStream()
             );
         } catch (VocabularyImportException e) {
             throw e;
