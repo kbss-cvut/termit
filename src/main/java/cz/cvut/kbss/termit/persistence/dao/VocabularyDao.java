@@ -156,6 +156,17 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         }
     }
 
+    @ModifiesData
+    @Override
+    public void remove(Vocabulary entity) {
+        Objects.requireNonNull(entity);
+        try {
+            find(entity.getUri()).ifPresent(em::remove);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     /**
      * Updates glossary contained in the specified vocabulary.
      * <p>

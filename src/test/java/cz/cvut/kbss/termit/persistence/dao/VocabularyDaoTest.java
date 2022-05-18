@@ -453,4 +453,15 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     void getTermCountReturnsZeroForUnknownVocabulary() {
         assertEquals(0, sut.getTermCount(Generator.generateVocabularyWithId()));
     }
+
+    @Test
+    void removeCascadesOperationToGlossaryAndModel() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
+        transactional(() -> em.persist(vocabulary, descriptor));
+
+        transactional(() -> sut.remove(vocabulary));
+        assertNull(em.find(Glossary.class, vocabulary.getGlossary().getUri()));
+        assertNull(em.find(Model.class, vocabulary.getModel().getUri()));
+    }
 }

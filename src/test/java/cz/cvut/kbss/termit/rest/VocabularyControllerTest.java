@@ -164,6 +164,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                                            .andExpect(status().isCreated())
                                            .andReturn();
         verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.LOCATION),
+                   containsString(QueryParams.NAMESPACE + "=" + NAMESPACE));
         verify(serviceMock).importVocabulary(false, upload);
     }
 
@@ -181,6 +183,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                                            .andExpect(status().isCreated())
                                            .andReturn();
         verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.LOCATION),
+                   containsString(QueryParams.NAMESPACE + "=" + NAMESPACE));
         verify(serviceMock).importVocabulary(vocabulary.getUri(), upload);
     }
 
@@ -239,13 +243,10 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void createVocabularyReturnsResponseWithLocationSpecifyingNamespaceWhenItIsDifferentFromConfiguredOne()
+    void createVocabularyReturnsAlwaysResponseWithLocationSpecifyingNamespace()
             throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(VOCABULARY_URI);
-        final String configuredNamespace =
-                "http://kbss.felk.cvut.cz/ontologies/termit/vocabularies/";
-        when(configMock.getNamespace().getVocabulary()).thenReturn(configuredNamespace);
         final MvcResult mvcResult = mockMvc.perform(
                                                    post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isCreated()).andReturn();
