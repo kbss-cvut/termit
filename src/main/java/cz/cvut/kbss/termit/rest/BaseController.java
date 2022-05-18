@@ -74,6 +74,10 @@ public class BaseController {
         return idResolver.resolveIdentifier(namespace, fragment);
     }
 
+    URI generateLocation(URI identifier) {
+        return generateLocation(identifier, null);
+    }
+
     URI generateLocation(URI identifier, String namespace) {
         if (Objects.equals(IdentifierResolver.extractIdentifierNamespace(identifier), namespace)) {
             return RestUtils.createLocationFromCurrentUriWithPath("/{name}",

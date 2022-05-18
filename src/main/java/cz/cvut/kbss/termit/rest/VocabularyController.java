@@ -68,8 +68,7 @@ public class VocabularyController extends BaseController {
     public ResponseEntity<Void> createVocabulary(@RequestBody Vocabulary vocabulary) {
         vocabularyService.persist(vocabulary);
         LOG.debug("Vocabulary {} created.", vocabulary);
-        return ResponseEntity.created(generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary()))
-                             .build();
+        return ResponseEntity.created(generateLocation(vocabulary.getUri())).build();
     }
 
     @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -103,7 +102,7 @@ public class VocabularyController extends BaseController {
                                                  @RequestParam(name = "rename") boolean rename) {
         final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
         LOG.debug("New vocabulary {} imported.", vocabulary);
-        final URI location = generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary());
+        final URI location = generateLocation(vocabulary.getUri());
         final String adjustedLocation = location.toString().replace("/import/", "/");
         return ResponseEntity.created(URI.create(adjustedLocation)).build();
     }
@@ -124,8 +123,8 @@ public class VocabularyController extends BaseController {
         final URI vocabularyIri = resolveVocabularyUri(fragment, namespace);
         final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
         LOG.debug("Vocabulary {} re-imported.", vocabulary);
-        String location = generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary()).toString();
-        location = location.substring(0, location.indexOf("/import"));
+        String location = generateLocation(vocabulary.getUri()).toString();
+        location = location.replace("/import/" + fragment, "");
         return ResponseEntity.created(URI.create(location)).build();
     }
 
