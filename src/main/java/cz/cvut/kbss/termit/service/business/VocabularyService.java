@@ -40,16 +40,29 @@ public interface VocabularyService
     Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity);
 
     /**
-     * Imports vocabulary from the specified file.
+     * Imports a new vocabulary from the specified file.
      * <p>
      * The file could be a text file containing RDF.
      *
-     * @param rename        true, if the IRIs should be modified in order to prevent clashes with existing data.
-     * @param vocabularyIri IRI of the vocabulary to be created.
+     * @param rename        true, if the IRIs should be modified in order to prevent clashes with existing data
      * @param file          File from which to import the vocabulary
      * @return The imported vocabulary metadata
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      */
-    Vocabulary importVocabulary(boolean rename, URI vocabularyIri, MultipartFile file);
+    Vocabulary importVocabulary(boolean rename, MultipartFile file);
+
+    /**
+     * Imports a vocabulary from the specified file.
+     * <p>
+     * The file could be a text file containing RDF.
+     * If a vocabulary with the specified identifier already exists, its content is overridden by the input data.
+     *
+     * @param vocabularyIri IRI of the vocabulary to be created
+     * @param file          File from which to import the vocabulary
+     * @return The imported vocabulary metadata
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
+     */
+    Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file);
 
     /**
      * Gets aggregated information about changes in the specified vocabulary.

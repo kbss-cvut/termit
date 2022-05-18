@@ -5,7 +5,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -155,7 +155,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     void createVocabularyRunsImportWhenFileIsUploaded() throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
-        when(serviceMock.importVocabulary(anyBoolean(), any(), any())).thenReturn(vocabulary);
+        when(serviceMock.importVocabulary(anyBoolean(), any())).thenReturn(vocabulary);
         final MockMultipartFile upload = new MockMultipartFile("file", "test-glossary.ttl",
                                                                Constants.Turtle.MEDIA_TYPE,
                                                                Environment.loadFile("data/test-glossary.ttl"));
@@ -164,7 +164,24 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                                            .andExpect(status().isCreated())
                                            .andReturn();
         verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
-        verify(serviceMock).importVocabulary(false, null, upload);
+        verify(serviceMock).importVocabulary(false, upload);
+    }
+
+    @Test
+    void reImportVocabularyRunsImportForUploadedFile() throws Exception {
+        when(configMock.getNamespace().getVocabulary()).thenReturn(NAMESPACE);
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
+        when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(vocabulary.getUri());
+        when(serviceMock.importVocabulary(any(URI.class), any())).thenReturn(vocabulary);
+        final MockMultipartFile upload = new MockMultipartFile("file", "test-glossary.ttl",
+                                                               Constants.Turtle.MEDIA_TYPE,
+                                                               Environment.loadFile("data/test-glossary.ttl"));
+        final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/" + FRAGMENT + "/import").file(upload))
+                                           .andExpect(status().isCreated())
+                                           .andReturn();
+        verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
+        verify(serviceMock).importVocabulary(vocabulary.getUri(), upload);
     }
 
     @Test
@@ -228,7 +245,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(VOCABULARY_URI);
         final String configuredNamespace =
                 "http://kbss.felk.cvut.cz/ontologies/termit/vocabularies/";
-        configMock.getNamespace().setVocabulary(configuredNamespace);
+        when(configMock.getNamespace().getVocabulary()).thenReturn(configuredNamespace);
         final MvcResult mvcResult = mockMvc.perform(
                                                    post(PATH).content(toJson(vocabulary)).contentType(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isCreated()).andReturn();

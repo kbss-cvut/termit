@@ -15,10 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.exception;
+package cz.cvut.kbss.termit.exception.importing;
+
+import cz.cvut.kbss.termit.exception.TermItException;
 
 /**
- * Indicates that an error occurred in the vocabulary import relationship.
+ * Indicates that an error occurred in the vocabulary import procedure.
  */
 public class VocabularyImportException extends TermItException {
 

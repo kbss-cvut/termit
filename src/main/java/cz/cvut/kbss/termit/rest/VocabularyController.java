@@ -101,7 +101,7 @@ public class VocabularyController extends BaseController {
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(@RequestParam(name = "file") MultipartFile file,
                                                  @RequestParam(name = "rename") boolean rename) {
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, null, file);
+        final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
         LOG.debug("New vocabulary {} imported.", vocabulary);
         final URI location = generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary());
         final String adjustedLocation = location.toString().replace("/import/", "/");
@@ -120,15 +120,13 @@ public class VocabularyController extends BaseController {
     public ResponseEntity<Void> createVocabulary(@PathVariable String fragment,
                                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                                required = false) Optional<String> namespace,
-                                                 @RequestParam(name = "rename", required = false,
-                                                               defaultValue = "false") boolean rename,
                                                  @RequestParam(name = "file") MultipartFile file) {
         final URI vocabularyIri = resolveVocabularyUri(fragment, namespace);
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, vocabularyIri, file);
+        final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
         LOG.debug("Vocabulary {} re-imported.", vocabulary);
-        final URI location = generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary());
-        final String adjustedLocation = location.toString().replace("/import/", "/");
-        return ResponseEntity.created(URI.create(adjustedLocation)).build();
+        String location = generateLocation(vocabulary.getUri(), config.getNamespace().getVocabulary()).toString();
+        location = location.substring(0, location.indexOf("/import"));
+        return ResponseEntity.created(URI.create(location)).build();
     }
 
     private URI resolveVocabularyUri(String fragment, Optional<String> namespace) {

@@ -21,7 +21,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ValidationException;
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -270,7 +270,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                 skos.getBytes(StandardCharsets.UTF_8)
         );
 
-        final Vocabulary v = sut.importVocabulary(true, null, mf);
+        final Vocabulary v = sut.importVocabulary(true, mf);
         assertEquals(v.getLabel(), "Test");
     }
 
@@ -290,7 +290,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                 skos.getBytes(StandardCharsets.UTF_8)
         );
 
-        final Vocabulary v = sut.importVocabulary(true, null, mf);
+        final Vocabulary v = sut.importVocabulary(true, mf);
         assertEquals(v.getLabel(), "Test");
     }
 
@@ -308,7 +308,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                     "text/turtle",
                     skos.getBytes(StandardCharsets.UTF_8)
             );
-            final Vocabulary v = sut.importVocabulary(false, null, mf);
+            final Vocabulary v = sut.importVocabulary(false, mf);
             assertEquals(v.getLabel(), "Test");
         });
     }
