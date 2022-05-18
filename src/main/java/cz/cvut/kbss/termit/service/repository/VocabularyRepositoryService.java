@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Validator;
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -172,19 +173,33 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @CacheEvict(allEntries = true)
     @Transactional
     @Override
-    public Vocabulary importVocabulary(boolean rename, URI vocabularyIri, MultipartFile file) {
+    public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
         Objects.requireNonNull(file);
         try {
-            Metadata metadata = new Metadata();
-            metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
-            metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
-            String contentType = new Tika().detect(file.getInputStream(), metadata);
-            return getSKOSImporter().importVocabulary(rename,
-                                                      vocabularyIri,
-                                                      contentType,
-                                                      this::persist,
-                                                      file.getInputStream()
-            );
+            String contentType = resolveContentType(file);
+            return getSKOSImporter().importVocabulary(rename, contentType, this::persist, file.getInputStream());
+        } catch (VocabularyImportException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage());
+        }
+    }
+
+    private String resolveContentType(MultipartFile file) throws IOException {
+        Metadata metadata = new Metadata();
+        metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
+        metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
+        return new Tika().detect(file.getInputStream(), metadata);
+    }
+
+    @CacheEvict(allEntries = true)
+    @Transactional
+    @Override
+    public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
+        Objects.requireNonNull(file);
+        try {
+            String contentType = resolveContentType(file);
+            return getSKOSImporter().importVocabulary(vocabularyIri, contentType, this::persist, file.getInputStream());
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
