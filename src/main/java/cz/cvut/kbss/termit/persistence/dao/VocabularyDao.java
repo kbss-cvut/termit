@@ -48,7 +48,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
             "        ?hasTimestamp ?timestamp . " +
             "    ?t ?inVocabulary ?vocabulary . " +
             "    BIND (SUBSTR(STR(?timestamp), 1, 10) as ?date) " +
-            "} GROUP BY ?date ORDER BY ?date";
+            "} GROUP BY ?date HAVING (?cnt > 0) ORDER BY ?date";
 
     private volatile long lastModified;
 
