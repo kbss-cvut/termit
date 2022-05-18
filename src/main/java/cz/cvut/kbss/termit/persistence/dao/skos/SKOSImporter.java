@@ -180,6 +180,8 @@ public class SKOSImporter {
                 if (t.getProperties() != null) {
                     t.getProperties().clear();
                 }
+                // Note that this causes repeated vocabulary validation, which is not very efficient
+                // Especially since we are going to remove the vocabulary anyway
                 termDao.remove(t);
                 vocabulary.getGlossary().removeRootTerm(t);
             });
