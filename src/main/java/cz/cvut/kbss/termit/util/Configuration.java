@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.util;
 
+import org.apache.poi.ss.formula.functions.Na;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
 
@@ -286,13 +287,13 @@ public class Configuration {
         /**
          * Separator of Term namespace from the parent Vocabulary identifier.
          * <p>
-         * Since Term identifier is given by the identifier of the Vocabulary it belongs to and its own normalized label,
-         * this separator is used to (optionally) configure the Term identifier namespace.
+         * Since Term identifier is given by the identifier of the Vocabulary it belongs to and its own normalized
+         * label, this separator is used to (optionally) configure the Term identifier namespace.
          * <p>
          * For example, if we have a Vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
          * and a Term with normalized label {@code inhabited-area}, the resulting IRI will be {@code
-         * http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where 'SEPARATOR' is
-         * the value of this configuration parameter.
+         * http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where 'SEPARATOR'
+         * is the value of this configuration parameter.
          */
         private NamespaceDetail term = new NamespaceDetail();
         /**
@@ -303,10 +304,19 @@ public class Configuration {
          * <p>
          * For example, if we have a Document with IRI {@code http://www.example.org/ontologies/resources/metropolitan-plan}
          * and a File with normalized label {@code main-file}, the resulting IRI will be {@code
-         * http://www.example.org/ontologies/resources/metropolitan-plan/SEPARATOR/main-file}, where 'SEPARATOR' is
-         * the value of this configuration parameter.
+         * http://www.example.org/ontologies/resources/metropolitan-plan/SEPARATOR/main-file}, where 'SEPARATOR' is the
+         * value of this configuration parameter.
          */
         private NamespaceDetail file = new NamespaceDetail();
+
+        /**
+         * Separator of snapshot timestamp and original asset identifier.
+         * <p>
+         * For example, if we have a Vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
+         * and the snapshot separator is configured to {@code version}, a snapshot will IRI will look something like
+         * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/version/20220530T202317Z}.
+         */
+        private NamespaceDetail snapshot = new NamespaceDetail();
 
         public String getVocabulary() {
             return vocabulary;
@@ -346,6 +356,14 @@ public class Configuration {
 
         public void setFile(NamespaceDetail file) {
             this.file = file;
+        }
+
+        public NamespaceDetail getSnapshot() {
+            return snapshot;
+        }
+
+        public void setSnapshot(NamespaceDetail snapshot) {
+            this.snapshot = snapshot;
         }
 
         public static class NamespaceDetail {
@@ -441,8 +459,8 @@ public class Configuration {
         /**
          * Minimal match score of a term occurrence for which a term assignment should be automatically generated.
          * <p>
-         * More specifically, when annotated file content is being processed, term occurrences with sufficient score will
-         * cause creation of corresponding term assignments to the file.
+         * More specifically, when annotated file content is being processed, term occurrences with sufficient score
+         * will cause creation of corresponding term assignments to the file.
          */
         @NotNull
         String termAssignmentMinScore;
@@ -482,7 +500,7 @@ public class Configuration {
     @ConfigurationProperties(prefix = "glossary")
     public static class Glossary {
         /**
-         * URL of the text analysis service.
+         * IRI path to append to vocabulary IRI to get glossary identifier.
          */
         @NotNull
         String fragment;
