@@ -329,11 +329,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void getTransitiveImportsReturnsEmptyCollectionWhenNoImportsAreFoundForVocabulary()
             throws Exception {
-        final Vocabulary vocabulary = generateVocabulary();
-        vocabulary.setUri(VOCABULARY_URI);
-        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
-                .thenReturn(VOCABULARY_URI);
-        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         when(serviceMock.getTransitivelyImportedVocabularies(vocabulary))
                 .thenReturn(Collections.emptySet());
 
@@ -365,11 +361,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getHistoryReturnsListOfChangeRecordsForSpecifiedVocabulary() throws Exception {
-        final Vocabulary vocabulary = generateVocabulary();
-        vocabulary.setUri(VOCABULARY_URI);
-        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
-                .thenReturn(VOCABULARY_URI);
-        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final List<AbstractChangeRecord> records =
                 Generator.generateChangeRecords(vocabulary, user);
         when(serviceMock.getChanges(vocabulary)).thenReturn(records);
@@ -388,11 +380,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void getHistoryOfContentReturnsListOfAggregatedChangeObjectsForTermsInSpecifiedVocabulary()
             throws Exception {
-        final Vocabulary vocabulary = generateVocabulary();
-        vocabulary.setUri(VOCABULARY_URI);
-        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
-                .thenReturn(VOCABULARY_URI);
-        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final List<AggregatedChangeInfo> changes = IntStream.range(0, 10).mapToObj(i -> {
             final AggregatedChangeInfo ch = new AggregatedChangeInfo(LocalDate.now().minusDays(i).toString(),
                                                                      new BigInteger(Integer.toString(
@@ -416,11 +404,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
     @Test
     void validateExecutesServiceValidate() throws Exception {
-        final Vocabulary vocabulary = generateVocabulary();
-        vocabulary.setUri(VOCABULARY_URI);
-        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
-                .thenReturn(VOCABULARY_URI);
-        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final List<ValidationResult> records = Generator.generateValidationRecords();
         when(serviceMock.validateContents(vocabulary)).thenReturn(records);
 
@@ -435,5 +419,23 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertEquals(records.stream().map(ValidationResult::getId).collect(Collectors.toList()),
                      result.stream().map(ValidationResult::getId).collect(Collectors.toList()));
         verify(serviceMock).validateContents(vocabulary);
+    }
+
+    private Vocabulary generateVocabularyAndInitReferenceResolution() {
+        final Vocabulary vocabulary = generateVocabulary();
+        vocabulary.setUri(VOCABULARY_URI);
+        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
+                .thenReturn(VOCABULARY_URI);
+        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        return vocabulary;
+    }
+
+    @Test
+    void createSnapshotCreatesSnapshotOfVocabularyWithSpecifiedIdentification() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        mockMvc.perform(post(PATH + "/" + FRAGMENT + "/versions"))
+               .andExpect(status().isCreated())
+               .andReturn();
+        verify(serviceMock).createSnapshot(vocabulary);
     }
 }

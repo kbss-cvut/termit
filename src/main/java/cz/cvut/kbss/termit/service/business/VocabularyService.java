@@ -44,8 +44,8 @@ public interface VocabularyService
      * <p>
      * The file could be a text file containing RDF.
      *
-     * @param rename        true, if the IRIs should be modified in order to prevent clashes with existing data
-     * @param file          File from which to import the vocabulary
+     * @param rename true, if the IRIs should be modified in order to prevent clashes with existing data
+     * @param file   File from which to import the vocabulary
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      */
@@ -54,8 +54,8 @@ public interface VocabularyService
     /**
      * Imports a vocabulary from the specified file.
      * <p>
-     * The file could be a text file containing RDF.
-     * If a vocabulary with the specified identifier already exists, its content is overridden by the input data.
+     * The file could be a text file containing RDF. If a vocabulary with the specified identifier already exists, its
+     * content is overridden by the input data.
      *
      * @param vocabularyIri IRI of the vocabulary to be created
      * @param file          File from which to import the vocabulary
@@ -86,19 +86,15 @@ public interface VocabularyService
     void runTextAnalysisOnAllVocabularies();
 
     /**
-     * Removes a vocabulary if:
-     * - it is not a document vocabulary, or
-     * - it is imported by another vocabulary, or
-     * - it contains terms.
+     * Removes a vocabulary if: - it is not a document vocabulary, or - it is imported by another vocabulary, or - it
+     * contains terms.
      *
      * @param asset Vocabulary to remove
      */
     void remove(Vocabulary asset);
 
     /**
-     * Validates a vocabulary:
-     * - it checks glossary rules,
-     * - it checks OntoUml constraints.
+     * Validates a vocabulary: - it checks glossary rules, - it checks OntoUml constraints.
      *
      * @param validate Vocabulary to validate
      */
@@ -113,4 +109,14 @@ public interface VocabularyService
      * @return Number of terms in the vocabulary, 0 for empty or unknown vocabulary
      */
     Integer getTermCount(Vocabulary vocabulary);
+
+    /**
+     * Creates a snapshot of the specified vocabulary.
+     * <p>
+     * The result is a read-only snapshot of the specified vocabulary, its content and any vocabularies it depends on or
+     * that depend on it.
+     *
+     * @param vocabulary Vocabulary to snapshot
+     */
+    void createSnapshot(Vocabulary vocabulary);
 }
