@@ -260,8 +260,7 @@ public class TermDao extends AssetDao<Term> {
         try {
             // Load terms one by one. This works around the issue of terms being loaded in the persistence context
             // as Term and TermInfo, which results in IndividualAlreadyManagedExceptions from JOPA
-            // The workaround relies on the fact that jopa-spring-transaction will create a new persistence context
-            // for each find call
+            // The workaround relies clearing the EntityManager after loading each term
             // The price for this solution is that this method performs very poorly for larger vocabularies (hundreds of terms)
             final List<URI> termIris = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                                                                     "GRAPH ?vocabulary { " +
@@ -279,7 +278,11 @@ public class TermDao extends AssetDao<Term> {
                                                        URI.create(
                                                                cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                                          .setParameter("labelLang", config.getLanguage()).getResultList();
-            return termIris.stream().map(ti -> find(ti).get()).collect(Collectors.toList());
+            return termIris.stream().map(ti -> {
+                final Term t = find(ti).get();
+                em.clear();
+                return t;
+            }).collect(Collectors.toList());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

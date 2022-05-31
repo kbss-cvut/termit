@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.exception;
+package cz.cvut.kbss.termit.exception.importing;
 
 /**
  * Indicates that the type of data provided for import cannot be used.

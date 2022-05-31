@@ -21,7 +21,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ValidationException;
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -30,6 +30,8 @@ import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,9 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
+
+    @Autowired
+    private Configuration config;
 
     @Autowired
     private DescriptorFactory descriptorFactory;
@@ -78,7 +83,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
         final PersistChangeRecord record = em
                 .createQuery("SELECT r FROM PersistChangeRecord r WHERE r.changedEntity = :vocabularyIri",
-                        PersistChangeRecord.class).setParameter("vocabularyIri", vocabulary.getUri()).getSingleResult();
+                             PersistChangeRecord.class).setParameter("vocabularyIri", vocabulary.getUri())
+                .getSingleResult();
         assertNotNull(record);
         assertEquals(user.toUser(), record.getAuthor());
         assertNotNull(record.getTimestamp());
@@ -221,7 +227,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         subjectVocabulary.setImportedVocabularies(Collections.emptySet());
         sut.update(subjectVocabulary);
         assertThat(em.find(Vocabulary.class, subjectVocabulary.getUri()).getImportedVocabularies(),
-                anyOf(nullValue(), IsEmptyCollection.empty()));
+                   anyOf(nullValue(), IsEmptyCollection.empty()));
     }
 
     @Test
@@ -264,7 +270,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                 skos.getBytes(StandardCharsets.UTF_8)
         );
 
-        final Vocabulary v = sut.importVocabulary(true, null, mf);
+        final Vocabulary v = sut.importVocabulary(true, mf);
         assertEquals(v.getLabel(), "Test");
     }
 
@@ -284,7 +290,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                 skos.getBytes(StandardCharsets.UTF_8)
         );
 
-        final Vocabulary v = sut.importVocabulary(true, null, mf);
+        final Vocabulary v = sut.importVocabulary(true, mf);
         assertEquals(v.getLabel(), "Test");
     }
 
@@ -302,7 +308,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                     "text/turtle",
                     skos.getBytes(StandardCharsets.UTF_8)
             );
-            final Vocabulary v = sut.importVocabulary(false, null, mf);
+            final Vocabulary v = sut.importVocabulary(false, mf);
             assertEquals(v.getLabel(), "Test");
         });
     }
@@ -317,5 +323,33 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         assertEquals(1, sut.getTermCount(vocabulary));
+    }
+
+    @Test
+    void persistGeneratesGlossaryIriBasedOnVocabularyIriAndConfiguredFragment() {
+        final String label = "Test vocabulary " + System.currentTimeMillis();
+        final Vocabulary vocabulary = new Vocabulary();
+        vocabulary.setLabel(label);
+        sut.persist(vocabulary);
+        assertNotNull(vocabulary.getUri());
+        assertNotNull(vocabulary.getGlossary());
+
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertEquals(vocabulary.getUri() + "/" + config.getGlossary().getFragment(),
+                     result.getGlossary().getUri().toString());
+    }
+
+    @Test
+    void persistGeneratesModelIriBasedOnVocabularyIri() {
+        final String label = "Test vocabulary " + System.currentTimeMillis();
+        final Vocabulary vocabulary = new Vocabulary();
+        vocabulary.setLabel(label);
+        sut.persist(vocabulary);
+        assertNotNull(vocabulary.getUri());
+        assertNotNull(vocabulary.getModel());
+
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertEquals(vocabulary.getUri() + "/" + Constants.DEFAULT_MODEL_IRI_COMPONENT,
+                     result.getModel().getUri().toString());
     }
 }

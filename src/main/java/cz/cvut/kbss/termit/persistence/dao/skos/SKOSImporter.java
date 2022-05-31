@@ -1,8 +1,9 @@
 package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.termit.exception.UnsupportedImportMediaTypeException;
-import cz.cvut.kbss.termit.exception.VocabularyImportException;
+import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
+import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
@@ -33,7 +34,6 @@ import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.util.Utils.getLanguageTagsPerProperties;
 import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
@@ -50,13 +50,13 @@ public class SKOSImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSImporter.class);
 
-    private static final Set<String> multiLingualProperties = Stream.of(
+    private static final Set<String> MULTILINGUAL_PROPERTIES = Set.of(
             SKOS.PREF_LABEL.toString(),
             SKOS.ALT_LABEL.toString(),
             SKOS.HIDDEN_LABEL.toString(),
             SKOS.SCOPE_NOTE.toString(),
             SKOS.DEFINITION.toString()
-    ).collect(Collectors.toCollection(HashSet::new));
+    );
 
     private final Configuration config;
     private final VocabularyDao vocabularyDao;
@@ -77,17 +77,45 @@ public class SKOSImporter {
     }
 
     /**
-     * Imports a SKOS vocabulary from file.
+     * Imports a new vocabulary from the specified streams representing the vocabulary in SKOS format.
      *
-     * @param rename        whether to rename IRIs in case a conflicting IRI is found.
-     * @param vocabularyIri (Optional) IRI of the vocabulary to import. If not supplied, the IRI is inferred from the
-     *                      data.
-     * @param mediaType     media type of the imported input streams
-     * @param persist       an implementation of the persist operation (e.g. as performed by a VocabularyService)
-     * @param inputStreams  input streams with the SKOS data
-     * @return imported vocabulary
+     * @param rename       Whether to change vocabulary, glossary and term IRIs in case of a conflict with existing
+     *                     data
+     * @param mediaType    Input data media type
+     * @param persist      Consumer of the imported vocabulary, used to save the imported data
+     * @param inputStreams Streams containing the imported SKOS data
+     * @return The imported vocabulary
+     * @throws VocabularyExistsException If a vocabulary/glossary with the same identifier already exists and {@code
+     *                                   rename} is set to {@code false}
+     * @throws IllegalArgumentException  Indicates invalid input data, e.g., no input streams, missing language tags
+     *                                   etc.
      */
-    public Vocabulary importVocabulary(final boolean rename,
+    public Vocabulary importVocabulary(boolean rename, String mediaType, final Consumer<Vocabulary> persist,
+                                       final InputStream... inputStreams) {
+        return importVocabulary(rename, null, mediaType, persist, inputStreams);
+    }
+
+    /**
+     * Imports a SKOS vocabulary from the specified streams, possibly replacing an existing one.
+     * <p>
+     * If the specified {@code vocabularyIri} identifies an existing vocabulary, its content is replaced with the
+     * imported data.
+     *
+     * @param vocabularyIri Target vocabulary identifier
+     * @param mediaType     Input data media type
+     * @param persist       Consumer of the imported vocabulary, used to save the imported data
+     * @param inputStreams  Streams containing the imported SKOS data
+     * @return The imported vocabulary
+     * @throws IllegalArgumentException Indicates invalid input data, e.g., no input streams, missing language tags
+     *                                  etc.
+     */
+    public Vocabulary importVocabulary(URI vocabularyIri, String mediaType, final Consumer<Vocabulary> persist,
+                                       final InputStream... inputStreams) {
+        Objects.requireNonNull(vocabularyIri);
+        return importVocabulary(false, vocabularyIri, mediaType, persist, inputStreams);
+    }
+
+    private Vocabulary importVocabulary(final boolean rename,
                                        final URI vocabularyIri,
                                        final String mediaType,
                                        final Consumer<Vocabulary> persist,
@@ -99,9 +127,10 @@ public class SKOSImporter {
         parseDataFromStreams(mediaType, inputStreams);
         LOG.debug("Checking that only language-tagged literals are provided.");
 
-        final Set<String> languageTags = getLanguageTagsPerProperties(model, multiLingualProperties);
+        final Set<String> languageTags = getLanguageTagsPerProperties(model, MULTILINGUAL_PROPERTIES);
         if (languageTags.contains("")) {
-            throw new IllegalArgumentException("Each value of the properties must have a non-empty language tag: " + multiLingualProperties);
+            throw new IllegalArgumentException(
+                    "Each value of the properties must have a non-empty language tag: " + MULTILINGUAL_PROPERTIES);
         }
 
         glossaryIri = resolveGlossaryIriFromImportedData(model);
@@ -110,25 +139,17 @@ public class SKOSImporter {
 
         final String vocabularyIriFromData = resolveVocabularyIriFromImportedData();
         if (vocabularyIri != null && !vocabularyIri.toString().equals(vocabularyIriFromData)) {
-            throw new IllegalArgumentException("Cannot import a vocabulary into an existing one with different identifier.");
+            throw new IllegalArgumentException(
+                    "Cannot import a vocabulary into an existing one with different identifier.");
         }
 
         final Vocabulary vocabulary = createVocabulary(rename, vocabularyIri, vocabularyIriFromData);
         ensureConceptIrisAreCompatibleWithTermIt();
 
-        LOG.trace("New vocabulary {} with a new glossary {}.", vocabulary.getUri(), vocabulary.getGlossary().getUri());
-
-        final Optional<Glossary> glossary = vocabularyDao.findGlossary(vocabulary.getGlossary().getUri());
-        if (glossary.isPresent()) {
-            throw new IllegalArgumentException("The glossary '" + vocabulary.getGlossary()
-                                                                            .getUri() + "' already exists.");
-        }
-
         if (vocabularyIri == null) {
-            final Optional<Vocabulary> possiblyVocabulary = vocabularyDao.find(vocabulary.getUri());
-            if (possiblyVocabulary.isPresent()) {
-                throw new IllegalArgumentException("The vocabulary IRI '" + vocabulary.getUri() + "' already exists.");
-            }
+            LOG.trace("New vocabulary {} with a new glossary {}.", vocabulary.getUri(),
+                      vocabulary.getGlossary().getUri());
+            ensureUniqueness(vocabulary);
         } else {
             clearVocabulary(vocabularyIri);
         }
@@ -140,6 +161,17 @@ public class SKOSImporter {
         return vocabulary;
     }
 
+    private void ensureUniqueness(Vocabulary vocabulary) {
+        if (vocabularyDao.exists(vocabulary.getUri())) {
+            throw new VocabularyExistsException("The vocabulary IRI '" + vocabulary.getUri() + "' already exists.");
+        }
+        final Optional<Glossary> existingGlossary = vocabularyDao.findGlossary(vocabulary.getGlossary().getUri());
+        if (existingGlossary.isPresent()) {
+            throw new VocabularyExistsException("The glossary '" + vocabulary.getGlossary()
+                                                                             .getUri() + "' already exists.");
+        }
+    }
+
     private void clearVocabulary(final URI vocabularyIri) {
         final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(vocabularyIri);
         if (possibleVocabulary.isPresent()) {
@@ -148,6 +180,8 @@ public class SKOSImporter {
                 if (t.getProperties() != null) {
                     t.getProperties().clear();
                 }
+                // Note that this causes repeated vocabulary validation, which is not very efficient
+                // Especially since we are going to remove the vocabulary anyway
                 termDao.remove(t);
                 vocabulary.getGlossary().removeRootTerm(t);
             });
@@ -258,7 +292,8 @@ public class SKOSImporter {
         labels.stream().filter(s -> {
             assert s.getObject() instanceof Literal;
             return Objects.equals(config.getPersistence().getLanguage(),
-                    ((Literal) s.getObject()).getLanguage().orElse(config.getPersistence().getLanguage()));
+                                  ((Literal) s.getObject()).getLanguage()
+                                                           .orElse(config.getPersistence().getLanguage()));
         }).findAny().ifPresent(s -> vocabulary.setLabel(s.getObject().stringValue()));
     }
 
@@ -267,10 +302,8 @@ public class SKOSImporter {
         if (vocabularyIri == null) {
             newVocabularyIri = URI.create(getFreshVocabularyIri(rename, vocabularyIriFromData));
         } else {
+            assert vocabularyIri.toString().equals(vocabularyIriFromData);
             newVocabularyIri = vocabularyIri;
-            if (rename) {
-                Utils.changeNamespace(vocabularyIriFromData, newVocabularyIri.toString(), model);
-            }
         }
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(newVocabularyIri);
@@ -292,7 +325,6 @@ public class SKOSImporter {
                 Utils.changeNamespace(newVocabularyIriBase, newVocabularyIri, model);
             }
         }
-
         return newVocabularyIri;
     }
 
@@ -305,7 +337,6 @@ public class SKOSImporter {
                 Utils.changeIri(origGlossary, newGlossaryIri, model);
             }
         }
-
         return newGlossaryIri;
     }
 }

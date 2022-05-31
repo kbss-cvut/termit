@@ -48,7 +48,7 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
             "        ?hasTimestamp ?timestamp . " +
             "    ?t ?inVocabulary ?vocabulary . " +
             "    BIND (SUBSTR(STR(?timestamp), 1, 10) as ?date) " +
-            "} GROUP BY ?date ORDER BY ?date";
+            "} GROUP BY ?date HAVING (?cnt > 0) ORDER BY ?date";
 
     private volatile long lastModified;
 
@@ -151,6 +151,17 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(entity);
         try {
             em.persist(entity, descriptorFactory.vocabularyDescriptor(entity));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @ModifiesData
+    @Override
+    public void remove(Vocabulary entity) {
+        Objects.requireNonNull(entity);
+        try {
+            find(entity.getUri()).ifPresent(em::remove);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
