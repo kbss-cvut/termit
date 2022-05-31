@@ -153,9 +153,10 @@ public class IdentifierResolver {
     /**
      * Generates term identifier of a dependent asset, appending a normalized string consisting of the specified
      * components to a namespace which is derived from baseUri by appending namespace separator defined by
-     * namespaceSeparatorConfig.
+     * namespaceSeparator.
      *
-     * @param baseUri Configuration parameter for namespace
+     * @param baseUri Base identifier namespace
+     * @param namespaceSeparator Separator to add to {@code baseUri} before {@code label}
      * @param label   Components to normalize and add to the identifier
      * @return Generated identifier
      */
