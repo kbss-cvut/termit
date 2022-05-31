@@ -263,4 +263,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Integer getTermCount(Vocabulary vocabulary) {
         return vocabularyDao.getTermCount(vocabulary);
     }
+
+    @Override
+    public void createSnapshot(Vocabulary vocabulary) {
+        // TODO
+    }
 }
