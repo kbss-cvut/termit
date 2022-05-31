@@ -235,4 +235,16 @@ public class VocabularyController extends BaseController {
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         return vocabularyService.validateContents(vocabulary);
     }
+
+    @PostMapping(value = "/{fragment}/versions")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public ResponseEntity<Void> createSnapshot(@PathVariable String fragment,
+                                               @RequestParam(name = QueryParams.NAMESPACE,
+                                                             required = false) Optional<String> namespace) {
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        vocabularyService.createSnapshot(vocabulary);
+        LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
+        return ResponseEntity.created(generateLocation(vocabulary.getUri())).build();
+    }
 }
