@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
@@ -319,6 +320,29 @@ public class VocabularyDao extends AssetDao<Vocabulary>
 
     @Override
     public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
-        return null;
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(at);
+        try {
+            return em.createNativeQuery("SELECT ?s WHERE { " +
+                                                "?s a ?type ; " +
+                                                "a ?vocabularySnapshot ; " +
+                                                "?versionOf ?vocabulary ; " +
+                                                "?hasCreated ?created . " +
+                                                "FILTER (?created > ?at) " +
+                                                "} ORDER BY ASC(?created) LIMIT 1", Vocabulary.class)
+                     .setParameter("type", typeUri)
+                     .setParameter("vocabularySnapshot",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
+                     .setParameter("hasCreated",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
+                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
+                     .setParameter("at", at)
+                     .setParameter("vocabulary", vocabulary).getSingleResult();
+        } catch (NoResultException e) {
+            // Not expected to return null here, but prevent the get warning
+            return find(vocabulary.getUri()).orElse(null);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 }

@@ -530,4 +530,42 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         });
         return stub;
     }
+
+    @Test
+    void findVersionValidAtReturnsSnapshotValidAtSpecifiedInstant() {
+        enableRdfsInference(em);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
+        transactional(() -> em.persist(vocabulary, descriptor));
+        Vocabulary expected = null;
+        Instant validAt = null;
+        Instant timestamp;
+        for (int i = 0; i < 5; i++) {
+            timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minus((i + 1) * 2L, ChronoUnit.DAYS);
+            final Vocabulary v = generateSnapshotStub(vocabulary, timestamp);
+            if (i == 3) {
+                expected = v;
+                validAt = timestamp.minus(1, ChronoUnit.HOURS);
+            }
+        }
+
+        final Vocabulary result = sut.findVersionValidAt(vocabulary, validAt);
+        assertNotNull(result);
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void findVersionValidAtReturnsCurrentVocabularyVersionWhenNoSnapshotAtSpecifiedInstantExists() {
+        enableRdfsInference(em);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
+        transactional(() -> em.persist(vocabulary, descriptor));
+        IntStream.range(0, 5).forEach(i -> {
+            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minus((i + 1) * 2L, ChronoUnit.HOURS);
+            generateSnapshotStub(vocabulary, timestamp);
+        });
+
+        final Vocabulary result = sut.findVersionValidAt(vocabulary, Instant.now().minus(1, ChronoUnit.HOURS));
+        assertEquals(vocabulary, result);
+    }
 }
