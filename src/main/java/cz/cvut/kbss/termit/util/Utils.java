@@ -6,6 +6,7 @@ import org.eclipse.rdf4j.model.util.Statements;
 import org.eclipse.rdf4j.model.util.Values;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -240,5 +241,15 @@ public class Utils {
      */
     public static String trim(String input) {
         return input != null ? input.trim() : "";
+    }
+
+    /**
+     * Wraps the specified URI in {@code <} and {@code >} to provide constant {@link Object#toString()} behavior.
+     *
+     * @param uri URI to stringify
+     * @return URI wrapped in less that and more than signs
+     */
+    public static String uriToString(URI uri) {
+        return "<" + uri + ">";
     }
 }

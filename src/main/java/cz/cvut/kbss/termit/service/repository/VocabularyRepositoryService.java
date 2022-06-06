@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -37,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.validation.Validator;
 import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -267,5 +269,17 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Override
     public void createSnapshot(Vocabulary vocabulary) {
         // TODO
+    }
+
+    @Override
+    public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
+        // TODO
+        return null;
+    }
+
+    @Override
+    public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
+        // TODO
+        return null;
     }
 }
