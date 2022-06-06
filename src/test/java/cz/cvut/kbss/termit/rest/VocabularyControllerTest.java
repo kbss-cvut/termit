@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
@@ -28,16 +29,16 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigInteger;
 import java.net.URI;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
@@ -437,5 +438,60 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                .andExpect(status().isCreated())
                .andReturn();
         verify(serviceMock).createSnapshot(vocabulary);
+    }
+
+    @Test
+    void getSnapshotsReturnsListOfVocabularySnapshotsWhenFilterInstantIsNotProvided() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final List<Snapshot> snapshots = IntStream.range(0, 5).mapToObj(i -> {
+            final Snapshot snapshot = new Snapshot();
+            snapshot.setUri(Generator.generateUri());
+            snapshot.setCreated(Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(i, ChronoUnit.DAYS));
+            snapshot.setVersionOf(vocabulary.getUri());
+            // TODO Add vocabulary-snapshot to types
+            return snapshot;
+        }).collect(Collectors.toList());
+        when(serviceMock.findSnapshots(vocabulary)).thenReturn(snapshots);
+
+        final MvcResult mvcResult = mockMvc.perform(
+                                                   get(PATH + "/" + FRAGMENT + "/versions").accept(MediaType.APPLICATION_JSON_VALUE))
+                                           .andExpect(status().isOk())
+                                           .andReturn();
+        final List<Snapshot> result = readValue(mvcResult, new TypeReference<List<Snapshot>>() {
+        });
+        assertThat(result, containsSameEntities(snapshots));
+        verify(serviceMock).findSnapshots(vocabulary);
+        verify(serviceMock, never()).findVersionValidAt(any(), any());
+    }
+
+    @Test
+    void getSnapshotsReturnsVocabularySnapshotValidAtSpecifiedInstant() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final Vocabulary snapshot = new Vocabulary();
+        final Instant instant = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        snapshot.setUri(URI.create(vocabulary.getUri().toString() + "/version/" + instant));
+        snapshot.setLabel(FRAGMENT + " - Snapshot");
+        when(serviceMock.findVersionValidAt(eq(vocabulary), any(Instant.class))).thenReturn(snapshot);
+
+        final MvcResult mvcResult = mockMvc.perform(
+                                                   get(PATH + "/" + FRAGMENT + "/versions")
+                                                           .param("at", instant.toString())
+                                                           .accept(MediaType.APPLICATION_JSON_VALUE))
+                                           .andExpect(status().isOk())
+                                           .andReturn();
+        final Vocabulary result = readValue(mvcResult, Vocabulary.class);
+        assertEquals(snapshot, result);
+        verify(serviceMock).findVersionValidAt(vocabulary, instant);
+        verify(serviceMock, never()).findSnapshots(any());
+    }
+
+    @Test
+    void getSnapshotsThrowsBadRequestWhenAtIsNotValidInstantString() throws Exception {
+        generateVocabularyAndInitReferenceResolution();
+        final Instant instant = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        mockMvc.perform(get(PATH + "/" + FRAGMENT + "/versions").param("at", Date.from(instant).toString()))
+               .andExpect(status().isBadRequest());
+        verify(serviceMock, never()).findVersionValidAt(any(), any());
+        verify(serviceMock, never()).findSnapshots(any());
     }
 }

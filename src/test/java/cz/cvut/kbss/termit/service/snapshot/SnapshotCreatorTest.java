@@ -33,7 +33,7 @@ class SnapshotCreatorTest {
         final Configuration configuration = new Configuration();
         configuration.setNamespace(ns);
 
-        this.sut = new SnapshotCreator<>(new IdentifierResolver(), configuration) {
+        this.sut = new SnapshotCreator<Vocabulary>(new IdentifierResolver(), configuration) {
 
             @Override
             public Vocabulary createSnapshot(Vocabulary asset) {

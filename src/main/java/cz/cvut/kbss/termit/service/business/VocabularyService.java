@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
@@ -29,7 +30,7 @@ import java.util.List;
  * Interface of business logic concerning vocabularies.
  */
 public interface VocabularyService
-        extends CrudService<Vocabulary>, ChangeRecordProvider<Vocabulary>, SupportsLastModification {
+        extends CrudService<Vocabulary>, ChangeRecordProvider<Vocabulary>, SnapshotProvider<Vocabulary>, SupportsLastModification {
 
     /**
      * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
