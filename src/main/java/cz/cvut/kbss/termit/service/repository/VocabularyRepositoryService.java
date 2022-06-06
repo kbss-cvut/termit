@@ -273,8 +273,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Override
     public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
-        // TODO
-        return null;
+        return vocabularyDao.findSnapshots(vocabulary);
     }
 
     @Override
