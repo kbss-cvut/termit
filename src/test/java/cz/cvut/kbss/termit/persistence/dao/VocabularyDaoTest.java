@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
@@ -27,6 +28,11 @@ import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +47,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
@@ -387,37 +394,47 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                                                             List<AbstractChangeRecord> twoChanges) {
         final Map<LocalDate, Integer> persists = new HashMap<>();
         // Expect at most one persist record
-        removeDuplicateDailyRecords(oneChanges, PersistChangeRecord.class).stream().filter(ch -> ch instanceof PersistChangeRecord)
-                                               .forEach(ch -> persists.put(
-                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
-                                                       1));
-        removeDuplicateDailyRecords(twoChanges, PersistChangeRecord.class).stream().filter(ch -> ch instanceof PersistChangeRecord)
-                                               .forEach(ch -> persists.compute(
-                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
-                                                       (k, v) -> v == null ? 1 : 2));
+        removeDuplicateDailyRecords(oneChanges, PersistChangeRecord.class).stream()
+                                                                          .filter(ch -> ch instanceof PersistChangeRecord)
+                                                                          .forEach(ch -> persists.put(
+                                                                                  LocalDate.ofInstant(ch.getTimestamp(),
+                                                                                                      ZoneId.systemDefault()),
+                                                                                  1));
+        removeDuplicateDailyRecords(twoChanges, PersistChangeRecord.class).stream()
+                                                                          .filter(ch -> ch instanceof PersistChangeRecord)
+                                                                          .forEach(ch -> persists.compute(
+                                                                                  LocalDate.ofInstant(ch.getTimestamp(),
+                                                                                                      ZoneId.systemDefault()),
+                                                                                  (k, v) -> v == null ? 1 : 2));
         return persists;
     }
 
     /**
      * Ensures there is at most one change record per day.
      */
-    private Collection<AbstractChangeRecord> removeDuplicateDailyRecords(Collection<AbstractChangeRecord> records, Class<? extends AbstractChangeRecord> type) {
+    private Collection<AbstractChangeRecord> removeDuplicateDailyRecords(Collection<AbstractChangeRecord> records,
+                                                                         Class<? extends AbstractChangeRecord> type) {
         final Map<LocalDate, AbstractChangeRecord> map = new HashMap<>();
-        records.stream().filter(type::isInstance).forEach(r -> map.put(LocalDate.ofInstant(r.getTimestamp(), ZoneId.systemDefault()), r));
+        records.stream().filter(type::isInstance)
+               .forEach(r -> map.put(LocalDate.ofInstant(r.getTimestamp(), ZoneId.systemDefault()), r));
         return map.values();
     }
 
     private Map<LocalDate, Integer> resolveExpectedUpdates(List<AbstractChangeRecord> oneChanges,
                                                            List<AbstractChangeRecord> twoChanges) {
         final Map<LocalDate, Integer> updates = new HashMap<>();
-        removeDuplicateDailyRecords(oneChanges, UpdateChangeRecord.class).stream().filter(ch -> ch instanceof UpdateChangeRecord)
-                                               .forEach(ch -> updates.put(
-                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
-                                                       1));
-        removeDuplicateDailyRecords(twoChanges, UpdateChangeRecord.class).stream().filter(ch -> ch instanceof UpdateChangeRecord)
-                                               .forEach(ch -> updates.compute(
-                                                       LocalDate.ofInstant(ch.getTimestamp(), ZoneId.systemDefault()),
-                                                       (k, v) -> v == null ? 1 : 2));
+        removeDuplicateDailyRecords(oneChanges, UpdateChangeRecord.class).stream()
+                                                                         .filter(ch -> ch instanceof UpdateChangeRecord)
+                                                                         .forEach(ch -> updates.put(
+                                                                                 LocalDate.ofInstant(ch.getTimestamp(),
+                                                                                                     ZoneId.systemDefault()),
+                                                                                 1));
+        removeDuplicateDailyRecords(twoChanges, UpdateChangeRecord.class).stream()
+                                                                         .filter(ch -> ch instanceof UpdateChangeRecord)
+                                                                         .forEach(ch -> updates.compute(
+                                                                                 LocalDate.ofInstant(ch.getTimestamp(),
+                                                                                                     ZoneId.systemDefault()),
+                                                                                 (k, v) -> v == null ? 1 : 2));
         return updates;
     }
 
@@ -463,5 +480,54 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.remove(vocabulary));
         assertNull(em.find(Glossary.class, vocabulary.getGlossary().getUri()));
         assertNull(em.find(Model.class, vocabulary.getModel().getUri()));
+    }
+
+    @Test
+    void findSnapshotsRetrievesSnapshotsOfSpecifiedVocabularyOrderedByCreationDateDescending() {
+        enableRdfsInference(em);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
+        transactional(() -> em.persist(vocabulary, descriptor));
+        final List<Vocabulary> snapshots = IntStream.range(0, 5).mapToObj(i -> {
+            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minusSeconds(i * 2L);
+            return generateSnapshotStub(vocabulary, timestamp);
+        }).collect(Collectors.toList());
+
+        final List<Snapshot> result = sut.findSnapshots(vocabulary);
+        assertEquals(result.size(), snapshots.size());
+        assertThat(result, containsSameEntities(snapshots));
+    }
+
+    private Vocabulary generateSnapshotStub(Vocabulary vocabulary, Instant timestamp) {
+        final String strTimestamp = timestamp.toString().replace(":", "");
+        final Vocabulary stub = new Vocabulary();
+        stub.setUri(URI.create(vocabulary.getUri().toString() + "/version/" + strTimestamp));
+        final Glossary glossaryStub = new Glossary();
+        glossaryStub.setUri(URI.create(vocabulary.getGlossary().getUri().toString() + "/version/" + strTimestamp));
+        stub.setGlossary(glossaryStub);
+        final Model modelStub = new Model();
+        modelStub.setUri(URI.create(vocabulary.getModel().getUri().toString() + "/version/" + strTimestamp));
+        stub.setModel(modelStub);
+        stub.setLabel(vocabulary.getLabel());
+        stub.setDescription(vocabulary.getDescription());
+        transactional(() -> {
+            final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(stub);
+            em.persist(stub, descriptor);
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection connection = repo.getConnection()) {
+                final ValueFactory vf = connection.getValueFactory();
+                final IRI stubIri = vf.createIRI(stub.getUri().toString());
+                connection.begin();
+                connection.add(stubIri, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_slovniku),
+                               vf.createIRI(vocabulary.getUri().toString()), stubIri);
+                connection.add(stubIri,
+                               vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze),
+                               vf.createLiteral(Date.from(timestamp)), stubIri);
+                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku),
+                               stubIri);
+                connection.commit();
+            }
+        });
+        return stub;
     }
 }
