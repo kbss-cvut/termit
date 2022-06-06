@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
@@ -28,6 +29,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -36,10 +38,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 
 @Repository
-public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastModification {
+public class VocabularyDao extends AssetDao<Vocabulary>
+        implements SnapshotProvider<Vocabulary>, SupportsLastModification {
 
     private static final URI LABEL_PROPERTY = URI.create(DC.Terms.TITLE);
     private static final String CONTENT_CHANGES_QUERY = "SELECT ?date (COUNT(DISTINCT(?t)) as ?cnt) WHERE { " +
@@ -288,5 +292,33 @@ public class VocabularyDao extends AssetDao<Vocabulary> implements SupportsLastM
         Objects.requireNonNull(vocabulary);
         return em.createQuery("SELECT DISTINCT COUNT(t) FROM Term t WHERE t.vocabulary = :vocabulary", Integer.class)
                  .setParameter("vocabulary", vocabulary).getSingleResult();
+    }
+
+    @Override
+    public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            return em.createNativeQuery("SELECT ?s ?timestamp ?asset ?type WHERE { " +
+                                                "?s a ?vocabularySnapshot ; " +
+                                                "?hasCreated ?created ; " +
+                                                "?versionOf ?vocabulary . " +
+                                                "BIND (?vocabulary as ?asset) . " +
+                                                "BIND (?vocabularySnapshot as ?type) . " +
+                                                "} ORDER BY DESC(?created)",
+                                        "Snapshot")
+                     .setParameter("vocabularySnapshot",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
+                     .setParameter("hasCreated",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
+                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
+                     .setParameter("vocabulary", vocabulary).getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
+        return null;
     }
 }
