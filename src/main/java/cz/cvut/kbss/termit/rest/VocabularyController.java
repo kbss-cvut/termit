@@ -36,6 +36,8 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -236,7 +238,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.validateContents(vocabulary);
     }
 
-    @PostMapping(value = "/{fragment}/versions")
+    @PostMapping("/{fragment}/versions")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createSnapshot(@PathVariable String fragment,
                                                @RequestParam(name = QueryParams.NAMESPACE,
@@ -246,5 +248,23 @@ public class VocabularyController extends BaseController {
         vocabularyService.createSnapshot(vocabulary);
         LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
         return ResponseEntity.created(generateLocation(vocabulary.getUri())).build();
+    }
+
+    @GetMapping("/{fragment}/versions")
+    public ResponseEntity<?> getSnapshots(@PathVariable String fragment,
+                                          @RequestParam(name = QueryParams.NAMESPACE,
+                                                        required = false) Optional<String> namespace,
+                                          @RequestParam(name = "at", required = false) Optional<String> at) {
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        if (at.isPresent()) {
+            try {
+                final Instant instant = Instant.parse(at.get());
+                return ResponseEntity.ok(vocabularyService.findVersionValidAt(vocabulary, instant));
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest().body(at.get() + " is not a valid ISO-formatted timestamp.");
+            }
+        }
+        return ResponseEntity.ok(vocabularyService.findSnapshots(vocabulary));
     }
 }
