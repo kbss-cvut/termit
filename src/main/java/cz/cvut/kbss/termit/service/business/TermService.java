@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -17,6 +18,7 @@ import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,7 +37,7 @@ import java.util.stream.Collectors;
  * Service for term-related business logic.
  */
 @Service
-public class TermService implements RudService<Term>, ChangeRecordProvider<Term> {
+public class TermService implements RudService<Term>, ChangeRecordProvider<Term>, SnapshotProvider<Term> {
 
     private static final Logger LOG = LoggerFactory.getLogger(TermService.class);
 
@@ -529,5 +532,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(comment);
         Objects.requireNonNull(target);
         commentService.addToAsset(comment, target);
+    }
+
+    @Override
+    public List<Snapshot> findSnapshots(Term asset) {
+        return repositoryService.findSnapshots(asset);
+    }
+
+    @Override
+    public Term findVersionValidAt(Term asset, Instant at) {
+        return repositoryService.findVersionValidAt(asset, at);
     }
 }
