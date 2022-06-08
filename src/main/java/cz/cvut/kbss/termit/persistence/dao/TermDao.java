@@ -235,6 +235,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                             "?term a ?type ;" +
                                                                             "?hasLabel ?label ;" +
                                                                             "FILTER (lang(?label) = ?labelLang) ." +
+                                                                            "FILTER NOT EXISTS { ?term a ?snapshot . }" +
                                                                             "}" +
                                                                             "?term ?inVocabulary ?vocabulary ." +
                                                                             " } ORDER BY " + orderSentence(
@@ -242,6 +243,8 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                  .setParameter("type", typeUri)
                                                  .setParameter("vocabulary", vocabulary)
                                                  .setParameter("hasLabel", LABEL_PROP)
+                                                 .setParameter("snapshot", URI.create(
+                                                         cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
                                                  .setParameter("inVocabulary",
                                                                URI.create(
                                                                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
@@ -460,11 +463,12 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
     public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
         Objects.requireNonNull(pageSpec);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                                 "?term a ?type ;" +
-                                                                 "?hasLabel ?label ." +
-                                                                 "?vocabulary ?hasGlossary/?hasTerm ?term ." +
-                                                                 "FILTER (lang(?label) = ?labelLang) ." +
-                                                                 "FILTER (?term NOT IN (?included))" +
+                                                                 "?term a ?type ; " +
+                                                                 "?hasLabel ?label . " +
+                                                                 "?vocabulary ?hasGlossary/?hasTerm ?term . " +
+                                                                 "FILTER (lang(?label) = ?labelLang) . " +
+                                                                 "FILTER (?term NOT IN (?included)) . " +
+                                                                 "FILTER NOT EXISTS {?term a ?snapshot .} " +
                                                                  "} ORDER BY " + orderSentence(config.getLanguage(),
                                                                                                "?label"),
                                                          TermDto.class);
@@ -473,6 +477,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("labelLang", config.getLanguage())
                          .setParameter("included", includeTerms)
+                         .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset()));
             result.addAll(loadIncludedTerms(includeTerms));
@@ -606,14 +611,18 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                        "      ?hasLabel ?label ; " +
                                                                        "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
                                                                        "}" +
-                                                                       "?term ?inVocabulary ?vocabulary ." +
+                                                                       "?term ?inVocabulary ?vocabulary . " +
+                                                                       "FILTER NOT EXISTS {?term a ?snapshot . }" +
                                                                        "} ORDER BY " + orderSentence(
                                                     config.getLanguage(), "?label"), TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                            .setParameter("snapshot", URI.create(
+                                                    cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
                                             .setParameter("searchString", searchString, config.getLanguage());
+
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
