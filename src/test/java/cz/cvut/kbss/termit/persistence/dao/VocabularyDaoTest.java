@@ -569,4 +569,16 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary result = sut.findVersionValidAt(vocabulary, Instant.now().minus(1, ChronoUnit.HOURS));
         assertEquals(vocabulary, result);
     }
+
+    @Test
+    void findAllDoesNotIncludeSnapshotsInResult() {
+        enableRdfsInference(em);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
+        transactional(() -> em.persist(vocabulary, descriptor));
+        generateSnapshotStub(vocabulary, Instant.now().truncatedTo(ChronoUnit.SECONDS));
+
+        final List<Vocabulary> result = sut.findAll();
+        assertEquals(Collections.singletonList(vocabulary), result);
+    }
 }

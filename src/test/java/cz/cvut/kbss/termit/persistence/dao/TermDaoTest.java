@@ -1,12 +1,10 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
-import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -28,7 +26,6 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -39,13 +36,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -1169,86 +1163,5 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<TermDto> roots = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, roots.size());
         assertThat(roots.get(0).getSubTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
-    }
-
-    @Test
-    void findSnapshotsRetrievesSnapshotsOfSpecifiedTermOrderedByCreationDateDescending() {
-        enableRdfsInference(em);
-        final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(vocabulary)));
-        final List<Term> snapshots = IntStream.range(0, 5).mapToObj(i -> {
-            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minusSeconds(i * 2L);
-            return generateSnapshotStub(term, timestamp);
-        }).collect(Collectors.toList());
-
-        final List<Snapshot> result = sut.findSnapshots(term);
-        assertEquals(result.size(), snapshots.size());
-        assertThat(result, containsSameEntities(snapshots));
-    }
-
-    private Term generateSnapshotStub(Term term, Instant timestamp) {
-        final String strTimestamp = timestamp.toString().replace(":", "");
-        final Term stub = new Term();
-        stub.setUri(URI.create(term.getUri().toString() + "/version/" + strTimestamp));
-        stub.setLabel(new MultilingualString(term.getLabel().getValue()));
-        stub.setDefinition(new MultilingualString(term.getDefinition().getValue()));
-        stub.setDescription(new MultilingualString(term.getDescription().getValue()));
-        transactional(() -> {
-            final Descriptor descriptor = descriptorFactory.termDescriptor(
-                    URI.create(vocabulary.getUri().toString() + "/version/" + strTimestamp));
-            em.persist(stub, descriptor);
-            final Repository repo = em.unwrap(Repository.class);
-            try (final RepositoryConnection connection = repo.getConnection()) {
-                final ValueFactory vf = connection.getValueFactory();
-                final IRI stubIri = vf.createIRI(stub.getUri().toString());
-                connection.begin();
-                connection.add(stubIri, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_pojmu),
-                               vf.createIRI(term.getUri().toString()), stubIri);
-                connection.add(stubIri,
-                               vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze),
-                               vf.createLiteral(Date.from(timestamp)), stubIri);
-                connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu),
-                               stubIri);
-                connection.commit();
-            }
-        });
-        return stub;
-    }
-
-    @Test
-    void findVersionValidAtReturnsSnapshotValidAtSpecifiedInstant() {
-        enableRdfsInference(em);
-        final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
-        Term expected = null;
-        Instant validAt = null;
-        Instant timestamp;
-        for (int i = 0; i < 5; i++) {
-            timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minus((i + 1) * 2L, ChronoUnit.DAYS);
-            final Term v = generateSnapshotStub(term, timestamp);
-            if (i == 3) {
-                expected = v;
-                validAt = timestamp.minus(1, ChronoUnit.HOURS);
-            }
-        }
-
-        final Term result = sut.findVersionValidAt(term, validAt);
-        assertNotNull(result);
-        assertEquals(expected, result);
-    }
-
-    @Test
-    void findVersionValidAtReturnsCurrentVocabularyVersionWhenNoSnapshotAtSpecifiedInstantExists() {
-        enableRdfsInference(em);
-        final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
-        IntStream.range(0, 5).forEach(i -> {
-            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-                                             .minus((i + 1) * 2L, ChronoUnit.HOURS);
-            generateSnapshotStub(term, timestamp);
-        });
-
-        final Term result = sut.findVersionValidAt(term, Instant.now().minus(1, ChronoUnit.HOURS));
-        assertEquals(term, result);
     }
 }
