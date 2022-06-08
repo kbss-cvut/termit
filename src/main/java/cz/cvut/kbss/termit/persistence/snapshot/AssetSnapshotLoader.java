@@ -34,7 +34,7 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
     public List<Snapshot> findSnapshots(T asset) {
         Objects.requireNonNull(asset);
         try {
-            return em.createNativeQuery("SELECT ?s ?timestamp ?asset ?type WHERE { " +
+            return em.createNativeQuery("SELECT ?s ?created ?asset ?type WHERE { " +
                                                 "?s a ?snapshotType ; " +
                                                 "?hasCreated ?created ; " +
                                                 "?versionOf ?source . " +
