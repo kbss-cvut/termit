@@ -74,9 +74,19 @@ public class VocabularyDao extends AssetDao<Vocabulary>
 
     @Override
     public List<Vocabulary> findAll() {
-        final List<Vocabulary> result = super.findAll();
-        result.sort(Comparator.comparing(Vocabulary::getLabel));
-        return result;
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?v a ?type ;" +
+                                                "?hasTitle ?title ." +
+                                                "FILTER NOT EXISTS {" +
+                                                "?v a ?snapshot ." +
+                                                "}} ORDER BY ?title", type)
+                     .setParameter("type", typeUri)
+                     .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
+                     .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
+                     .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
