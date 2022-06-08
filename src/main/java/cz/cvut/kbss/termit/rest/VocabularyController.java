@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
@@ -37,7 +38,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -258,12 +258,8 @@ public class VocabularyController extends BaseController {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         if (at.isPresent()) {
-            try {
-                final Instant instant = Instant.parse(at.get());
-                return ResponseEntity.ok(vocabularyService.findVersionValidAt(vocabulary, instant));
-            } catch (DateTimeParseException e) {
-                return ResponseEntity.badRequest().body(at.get() + " is not a valid ISO-formatted timestamp.");
-            }
+            final Instant instant = RestUtils.parseTimestamp(at.get());
+            return ResponseEntity.ok(vocabularyService.findVersionValidAt(vocabulary, instant));
         }
         return ResponseEntity.ok(vocabularyService.findSnapshots(vocabulary));
     }
