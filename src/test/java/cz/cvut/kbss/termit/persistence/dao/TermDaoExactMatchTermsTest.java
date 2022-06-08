@@ -28,24 +28,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class TermDaoExactMatchTermsTest extends BaseDaoTestRunner {
-
-    @Autowired
-    private EntityManager em;
-
-    @Autowired
-    private DescriptorFactory descriptorFactory;
-
-    @Autowired
-    private TermDao sut;
-
-    private Vocabulary vocabulary;
+public class TermDaoExactMatchTermsTest extends BaseTermDaoTestRunner {
 
     @BeforeEach
     void setUp() {
-        this.vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
+        super.setUp();
     }
 
     @Test
