@@ -561,7 +561,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
         transactional(() -> em.persist(vocabulary, descriptor));
         IntStream.range(0, 5).forEach(i -> {
-            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minus((i + 1) * 2L, ChronoUnit.HOURS);
+            final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+                                             .minus((i + 1) * 2L, ChronoUnit.HOURS);
             generateSnapshotStub(vocabulary, timestamp);
         });
 
