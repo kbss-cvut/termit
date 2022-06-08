@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
@@ -30,6 +31,7 @@ import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -40,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Validator;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -49,7 +52,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 @Service
-public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
+public class TermRepositoryService extends BaseAssetRepositoryService<Term> implements SnapshotProvider<Term> {
 
     private final IdentifierResolver idResolver;
 
@@ -413,5 +416,15 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> {
         }
 
         super.remove(instance);
+    }
+
+    @Override
+    public List<Snapshot> findSnapshots(Term asset) {
+        return termDao.findSnapshots(asset);
+    }
+
+    @Override
+    public Term findVersionValidAt(Term asset, Instant at) {
+        return termDao.findVersionValidAt(asset, at);
     }
 }

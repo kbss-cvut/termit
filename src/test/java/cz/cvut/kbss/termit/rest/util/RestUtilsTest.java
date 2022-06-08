@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest.util;
 
@@ -21,14 +18,18 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.Cookie;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,7 +41,7 @@ class RestUtilsTest {
     @Test
     void createLocationHeaderFromCurrentUriWithPathAddsPathWithVariableReplacementsToRequestUri() {
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
-                "/vocabularies");
+                                                                              "/vocabularies");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
         final String id = "117";
 
@@ -51,7 +52,7 @@ class RestUtilsTest {
     @Test
     void createLocationHeaderFromCurrentUriWithQueryParamAddsQueryParameterWithValueToRequestUri() {
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
-                "/vocabularies");
+                                                                              "/vocabularies");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
         final URI id = Generator.generateUri();
 
@@ -62,7 +63,7 @@ class RestUtilsTest {
     @Test
     void getCookieExtractsCookieValueFromRequest() {
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
-                "/vocabularies");
+                                                                              "/vocabularies");
         mockRequest.setCookies(new Cookie(SecurityConstants.REMEMBER_ME_COOKIE_NAME, Boolean.TRUE.toString()));
 
         final Optional<String> result = RestUtils.getCookie(mockRequest, SecurityConstants.REMEMBER_ME_COOKIE_NAME);
@@ -73,7 +74,7 @@ class RestUtilsTest {
     @Test
     void getCookieReturnsEmptyOptionalWhenCookieIsNotFound() {
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
-                "/vocabularies");
+                                                                              "/vocabularies");
         mockRequest.setCookies(new Cookie(SecurityConstants.REMEMBER_ME_COOKIE_NAME, Boolean.TRUE.toString()));
 
         final Optional<String> result = RestUtils.getCookie(mockRequest, "unknown-cookie");
@@ -89,7 +90,7 @@ class RestUtilsTest {
     @Test
     void createLocationHeaderFromCurrentUriWithPathAndQueryCreatesLocationHeader() {
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
-                "/vocabularies");
+                                                                              "/vocabularies");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
         final String name = "metropolitan-plan";
         final String param = "namespace";
@@ -101,12 +102,34 @@ class RestUtilsTest {
     @Test
     void createLocationHeaderFromCurrentContextWithPathAndQueryCreatesLocationHeader() {
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
-                "/vocabularies");
+                                                                              "/vocabularies");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
         final String name = "metropolitan-plan";
         final String param = "namespace";
         final String paramValue = "http://onto.fel.cvut.cz/ontologies/termit/vocabularies/";
-        final URI result = RestUtils.createLocationFromCurrentContextWithPathAndQuery("/{name}", param, paramValue, name);
+        final URI result = RestUtils.createLocationFromCurrentContextWithPathAndQuery("/{name}", param, paramValue,
+                                                                                      name);
         assertThat(result.toString(), endsWith("/" + name + "?" + param + "=" + paramValue));
+    }
+
+    @Test
+    void parseTimestampReturnsInstantParsedFromSpecifiedString() {
+        final Instant instant = Instant.now();
+        assertEquals(instant, RestUtils.parseTimestamp(instant.toString()));
+    }
+
+    @Test
+    void parseTimestampThrowsResponseStatusExceptionWithStatus400ForUnparseableString() {
+        final Date date = new Date();
+        final ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                                                        () -> RestUtils.parseTimestamp(date.toString()));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+    }
+
+    @Test
+    void parseTimestampThrowsResponseStatusExceptionWithStatus400ForNullArgument() {
+        final ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                                                        () -> RestUtils.parseTimestamp(null));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
 }

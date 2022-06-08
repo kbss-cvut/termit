@@ -15,14 +15,19 @@
 package cz.cvut.kbss.termit.rest.util;
 
 import cz.cvut.kbss.termit.exception.TermItException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Null;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -152,5 +157,23 @@ public class RestUtils {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Parses the specified string as {@link Instant}.
+     * <p>
+     * It expects the string to be in the ISO format at UTC, compatible with {@link Instant} string representation.
+     *
+     * @param strTimestamp String representing the instant
+     * @return Parsed instant
+     * @throws ResponseStatusException with status 400 in case the string is not parseable
+     */
+    public static Instant parseTimestamp(String strTimestamp) {
+        try {
+            return Instant.parse(strTimestamp);
+        } catch (DateTimeParseException | NullPointerException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                              "Value '" + strTimestamp + "' is not a valid timestamp in ISO format.");
+        }
     }
 }

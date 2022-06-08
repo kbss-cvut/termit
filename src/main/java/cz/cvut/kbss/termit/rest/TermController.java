@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -576,6 +577,18 @@ public class TermController extends BaseController {
                                                                                                 IdentifierResolver.extractIdentifierFragment(
                                                                                                         comment.getUri())))
                              .build();
+    }
+
+    @GetMapping("/terms/{termIdFragment}/versions")
+    public ResponseEntity<?> getSnapshots(@PathVariable String termIdFragment,
+                                          @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+                                          @RequestParam(name = "at", required = false) Optional<String> at) {
+        final Term term = termService.getRequiredReference(idResolver.resolveIdentifier(namespace, termIdFragment));
+        if (at.isPresent()) {
+            final Instant instant = RestUtils.parseTimestamp(at.get());
+            return ResponseEntity.ok(termService.findVersionValidAt(term, instant));
+        }
+        return ResponseEntity.ok(termService.findSnapshots(term));
     }
 
     /**
