@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -28,6 +29,8 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.util.Cache;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermInfoMapper;
+import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +38,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
-public class TermDao extends AssetDao<Term> {
+public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
 
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
 
@@ -722,5 +726,20 @@ public class TermDao extends AssetDao<Term> {
     public void remove(Term entity) {
         super.remove(entity);
         evictCachedSubTerms(entity.getParentTerms(), Collections.emptySet());
+    }
+
+    @Override
+    public List<Snapshot> findSnapshots(Term asset) {
+        return new AssetSnapshotLoader<Term>(em, typeUri, URI.create(
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu)).findSnapshots(asset);
+    }
+
+    @Override
+    public Term findVersionValidAt(Term asset, Instant at) {
+        return new AssetSnapshotLoader<Term>(em, typeUri, URI.create(
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
+                .findVersionValidAt(asset, at)
+                // Do not expect null to happen, but put it here to prevent the warning on Optional.get
+                .orElseGet(() -> find(asset.getUri()).orElse(null));
     }
 }

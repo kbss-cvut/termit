@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Loads asset snapshots from the repository.
+ *
+ * @param <T> Asset type
+ */
 public class AssetSnapshotLoader<T extends Asset<?>> {
 
     private final EntityManager em;
