@@ -271,14 +271,15 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         // TODO
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
         return vocabularyDao.findSnapshots(vocabulary);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
-        // TODO
-        return null;
+        return vocabularyDao.findVersionValidAt(vocabulary, at);
     }
 }
