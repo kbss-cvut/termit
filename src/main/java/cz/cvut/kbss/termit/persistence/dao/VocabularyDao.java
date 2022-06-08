@@ -14,7 +14,6 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
-import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
@@ -29,6 +28,7 @@ import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -297,52 +297,16 @@ public class VocabularyDao extends AssetDao<Vocabulary>
 
     @Override
     public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        try {
-            return em.createNativeQuery("SELECT ?s ?timestamp ?asset ?type WHERE { " +
-                                                "?s a ?vocabularySnapshot ; " +
-                                                "?hasCreated ?created ; " +
-                                                "?versionOf ?vocabulary . " +
-                                                "BIND (?vocabulary as ?asset) . " +
-                                                "BIND (?vocabularySnapshot as ?type) . " +
-                                                "} ORDER BY DESC(?created)",
-                                        "Snapshot")
-                     .setParameter("vocabularySnapshot",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
-                     .setParameter("hasCreated",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
-                     .setParameter("vocabulary", vocabulary).getResultList();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
+        return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku)).findSnapshots(vocabulary);
     }
 
     @Override
     public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
-        Objects.requireNonNull(vocabulary);
-        Objects.requireNonNull(at);
-        try {
-            return em.createNativeQuery("SELECT ?s WHERE { " +
-                                                "?s a ?type ; " +
-                                                "a ?vocabularySnapshot ; " +
-                                                "?versionOf ?vocabulary ; " +
-                                                "?hasCreated ?created . " +
-                                                "FILTER (?created > ?at) " +
-                                                "} ORDER BY ASC(?created) LIMIT 1", Vocabulary.class)
-                     .setParameter("type", typeUri)
-                     .setParameter("vocabularySnapshot",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
-                     .setParameter("hasCreated",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze))
-                     .setParameter("versionOf", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi))
-                     .setParameter("at", at)
-                     .setParameter("vocabulary", vocabulary).getSingleResult();
-        } catch (NoResultException e) {
-            // Not expected to return null here, but prevent the get warning
-            return find(vocabulary.getUri()).orElse(null);
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
+        return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
+                .findVersionValidAt(vocabulary, at)
+                // Do not expect null to happen, but put it here to prevent the warning on Optional.get
+                .orElseGet(() -> find(vocabulary.getUri()).orElse(null));
     }
 }
