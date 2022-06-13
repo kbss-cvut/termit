@@ -1,0 +1,38 @@
+PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+INSERT {
+    GRAPH ?vocabularySnapshot {
+    ?vocabularySnapshot a pdp:verze-slovníku ;
+              pdp:je-verzí-slovníku ?vocabulary ;
+              pdp:má-datum-a-čas-vytvoření-verze ?created ;
+              pdp:má-glosář ?glossarySnapshot ;
+              pdp:má-model ?modelSnapshot ;
+              ?y ?z .
+    ?glossarySnapshot a pdp:glosář ;
+                      a pdp:verze-glosáře ;
+                      a skos:ConceptScheme ;
+              skos:hasTopConcept ?topConceptSnapshot ;
+              pdp:je-verzí-glosáře ?glossary ;
+              pdp:má-datum-a-čas-vytvoření-verze ?created .
+    ?modelSnapshot a pdp:model ;
+                      a pdp:verze-modelu ;
+              pdp:je-verzí-modelu ?model ;
+              pdp:má-datum-a-čas-vytvoření-verze ?created .
+    }
+} WHERE {
+    GRAPH ?vocabulary {
+    ?vocabulary a pdp:slovník ;
+                pdp:má-glosář ?glossary ;
+                pdp:má-model ?model ;
+                ?y ?z .
+        OPTIONAL {
+            ?glossary skos:hasTopConcept ?topConcept .
+        }
+    }
+    BIND (IRI(CONCAT(str(?vocabulary), ?suffix)) as ?vocabularySnapshot)
+    BIND (IRI(CONCAT(str(?glossary), ?suffix)) as ?glossarySnapshot)
+    BIND (IRI(CONCAT(str(?model), ?suffix)) as ?modelSnapshot)
+    BIND (IRI(CONCAT(str(?topConcept), ?suffix)) as ?topConceptSnapshot)
+    FILTER (?y NOT IN (pdp:má-glosář, pdp:má-model))
+}
