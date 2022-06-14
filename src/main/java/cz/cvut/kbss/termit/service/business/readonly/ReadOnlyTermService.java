@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -7,6 +8,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -21,7 +24,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-public class ReadOnlyTermService {
+public class ReadOnlyTermService implements SnapshotProvider<ReadOnlyTerm> {
 
     private final TermService termService;
 
@@ -68,8 +71,7 @@ public class ReadOnlyTermService {
 
     public List<ReadOnlyTerm> findSubTerms(ReadOnlyTerm parent) {
         Objects.requireNonNull(parent);
-        final Term arg = new Term();
-        arg.setUri(parent.getUri());
+        final Term arg = new Term(parent.getUri());
         if (parent.getSubTerms() != null) {
             arg.setSubTerms(parent.getSubTerms());
         }
@@ -102,5 +104,19 @@ public class ReadOnlyTermService {
      */
     public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
         return termService.getDefinitionallyRelatedTargeting(instance);
+    }
+
+    @Override
+    public List<Snapshot> findSnapshots(ReadOnlyTerm asset) {
+        Objects.requireNonNull(asset);
+        final Term arg = new Term(asset.getUri());
+        return termService.findSnapshots(arg);
+    }
+
+    @Override
+    public ReadOnlyTerm findVersionValidAt(ReadOnlyTerm asset, Instant at) {
+        Objects.requireNonNull(asset);
+        final Term arg = new Term(asset.getUri());
+        return new ReadOnlyTerm(termService.findVersionValidAt(arg, at));
     }
 }
