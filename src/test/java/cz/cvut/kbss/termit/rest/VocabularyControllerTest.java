@@ -434,21 +434,31 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void createSnapshotCreatesSnapshotOfVocabularyWithSpecifiedIdentification() throws Exception {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
+        when(serviceMock.createSnapshot(any())).thenReturn(snapshot);
         mockMvc.perform(post(PATH + "/" + FRAGMENT + "/versions"))
-               .andExpect(status().isCreated())
-               .andReturn();
+               .andExpect(status().isCreated());
         verify(serviceMock).createSnapshot(vocabulary);
+    }
+
+    @Test
+    void createSnapshotReturnsLocationHeaderWithSnapshotApiPath() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
+        when(serviceMock.createSnapshot(any())).thenReturn(snapshot);
+        final MvcResult mvcResult = mockMvc.perform(post(PATH + "/" + FRAGMENT + "/versions"))
+                                           .andExpect(status().isCreated())
+                                           .andReturn();
+        verifyLocationEquals(PATH + "/" + IdentifierResolver.extractIdentifierFragment(snapshot.getUri()), mvcResult);
     }
 
     @Test
     void getSnapshotsReturnsListOfVocabularySnapshotsWhenFilterInstantIsNotProvided() throws Exception {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final List<Snapshot> snapshots = IntStream.range(0, 5).mapToObj(i -> {
-            final Snapshot snapshot = new Snapshot();
+            final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
             snapshot.setUri(Generator.generateUri());
             snapshot.setCreated(Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(i, ChronoUnit.DAYS));
-            snapshot.setVersionOf(vocabulary.getUri());
-            // TODO Add vocabulary-snapshot to types
             return snapshot;
         }).collect(Collectors.toList());
         when(serviceMock.findSnapshots(vocabulary)).thenReturn(snapshots);

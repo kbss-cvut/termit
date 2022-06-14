@@ -104,6 +104,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
             final Snapshot result = sut.createSnapshot(vocabulary);
             assertNotNull(result);
             assertEquals(vocabulary.getUri(), result.getVersionOf());
+            assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku));
         });
         final Vocabulary result = findRequiredSnapshot(vocabulary);
         assertEquals(vocabulary.getLabel(), result.getLabel());
@@ -126,11 +127,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
     void createSnapshotEnsuresRootTermsAreAccessibleFromGlossarySnapshot() {
         final Vocabulary vocabulary = generateVocabularyWithTerm(true);
 
-        transactional(() -> {
-            final Snapshot result = sut.createSnapshot(vocabulary);
-            assertNotNull(result);
-            assertEquals(vocabulary.getUri(), result.getVersionOf());
-        });
+        transactional(() -> sut.createSnapshot(vocabulary));
         final Vocabulary result = findRequiredSnapshot(vocabulary);
         assertEquals(1, result.getGlossary().getRootTerms().size());
     }
@@ -140,17 +137,14 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = generateVocabularyWithTerm(true);
         final Term term = vocabularyTerms.get(vocabulary);
 
-        transactional(() -> {
-            final Snapshot result = sut.createSnapshot(vocabulary);
-            assertNotNull(result);
-            assertEquals(vocabulary.getUri(), result.getVersionOf());
-        });
+        transactional(() -> sut.createSnapshot(vocabulary));
         final Vocabulary vocabularyResult = findRequiredSnapshot(vocabulary);
         final Term result = findRequiredSnapshot(term);
         assertEquals(term.getLabel(), result.getLabel());
         assertEquals(term.getDefinition(), result.getDefinition());
         assertEquals(term.getDescription(), result.getDescription());
         assertEquals(vocabularyResult.getGlossary().getUri(), result.getGlossary());
+        assertThat(result.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu));
     }
 
     private Term findRequiredSnapshot(HasIdentifier term) {
