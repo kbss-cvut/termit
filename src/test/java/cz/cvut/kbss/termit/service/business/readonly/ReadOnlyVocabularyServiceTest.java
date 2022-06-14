@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyVocabulary;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +38,7 @@ class ReadOnlyVocabularyServiceTest {
     @Test
     void findAllReturnsAllVocabulariesTransformedToReadOnlyVersions() {
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                .collect(Collectors.toList());
+                                                       .collect(Collectors.toList());
         when(vocabularyService.findAll()).thenReturn(vocabularies);
 
         final List<ReadOnlyVocabulary> result = sut.findAll();
@@ -63,7 +65,8 @@ class ReadOnlyVocabularyServiceTest {
     @Test
     void getTransitivelyImportedVocabulariesRetrievesImportedVocabulariesFromVocabularyService() {
         final ReadOnlyVocabulary voc = new ReadOnlyVocabulary(Generator.generateVocabularyWithId());
-        final Set<URI> imports = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri()).collect(Collectors.toSet());
+        final Set<URI> imports = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri())
+                                          .collect(Collectors.toSet());
         when(vocabularyService.getTransitivelyImportedVocabularies(any())).thenReturn(imports);
 
         final Collection<URI> result = sut.getTransitivelyImportedVocabularies(voc);
@@ -71,5 +74,31 @@ class ReadOnlyVocabularyServiceTest {
         final ArgumentCaptor<Vocabulary> captor = ArgumentCaptor.forClass(Vocabulary.class);
         verify(vocabularyService).getTransitivelyImportedVocabularies(captor.capture());
         assertEquals(voc.getUri(), captor.getValue().getUri());
+    }
+
+    @Test
+    void findSnapshotsRetrievesSnapshotsOfSpecifiedVocabulary() {
+        final Vocabulary v = Generator.generateVocabularyWithId();
+        final ReadOnlyVocabulary voc = new ReadOnlyVocabulary(v);
+        final List<Snapshot> snapshots = IntStream.range(0, 3).mapToObj(i -> Generator.generateSnapshot(v))
+                                                  .collect(Collectors.toList());
+        when(vocabularyService.findSnapshots(v)).thenReturn(snapshots);
+
+        final List<Snapshot> result = sut.findSnapshots(voc);
+        assertEquals(snapshots, result);
+        verify(vocabularyService).findSnapshots(v);
+    }
+
+    @Test
+    void findVersionValidAtRetrievesVocabularyVersionsValidAtSpecifiedTimestamp() {
+        final Vocabulary v = Generator.generateVocabularyWithId();
+        final ReadOnlyVocabulary voc = new ReadOnlyVocabulary(v);
+        final Vocabulary version = Generator.generateVocabularyWithId();
+        final Instant timestamp = Instant.now();
+        when(vocabularyService.findVersionValidAt(v, timestamp)).thenReturn(version);
+
+        final ReadOnlyVocabulary result = sut.findVersionValidAt(voc, timestamp);
+        assertEquals(new ReadOnlyVocabulary(version), result);
+        verify(vocabularyService).findVersionValidAt(v, timestamp);
     }
 }

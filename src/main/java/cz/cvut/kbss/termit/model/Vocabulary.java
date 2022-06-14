@@ -60,6 +60,13 @@ public class Vocabulary extends Asset<String> implements Serializable {
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<String>> properties;
 
+    public Vocabulary() {
+    }
+
+    public Vocabulary(URI uri) {
+        setUri(uri);
+    }
+
     @Override
     public String getLabel() {
         return label;
