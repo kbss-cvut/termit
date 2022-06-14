@@ -3,15 +3,18 @@ package cz.cvut.kbss.termit.rest.readonly;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyVocabulary;
 import cz.cvut.kbss.termit.rest.BaseController;
+import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyVocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -38,8 +41,10 @@ public class ReadOnlyVocabularyController extends BaseController {
 
     @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ReadOnlyVocabulary getById(@PathVariable String fragment,
-                                      @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        return vocabularyService.findRequired(resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment));
+                                      @RequestParam(name = Constants.QueryParams.NAMESPACE,
+                                                    required = false) Optional<String> namespace) {
+        return vocabularyService.findRequired(
+                resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment));
     }
 
     /**
@@ -47,8 +52,22 @@ public class ReadOnlyVocabularyController extends BaseController {
      */
     @GetMapping(value = "/{fragment}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Collection<URI> getTransitiveImports(@PathVariable String fragment,
-                                                @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+                                                @RequestParam(name = Constants.QueryParams.NAMESPACE,
+                                                              required = false) Optional<String> namespace) {
         final ReadOnlyVocabulary vocabulary = getById(fragment, namespace);
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
+    }
+
+    @GetMapping(value = "/{fragment}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<?> getSnapshots(@PathVariable String fragment,
+                                          @RequestParam(name = Constants.QueryParams.NAMESPACE,
+                                                        required = false) Optional<String> namespace,
+                                          @RequestParam(name = "at", required = false) Optional<String> at) {
+        final ReadOnlyVocabulary vocabulary = getById(fragment, namespace);
+        if (at.isPresent()) {
+            final Instant instant = RestUtils.parseTimestamp(at.get());
+            return ResponseEntity.ok(vocabularyService.findVersionValidAt(vocabulary, instant));
+        }
+        return ResponseEntity.ok(vocabularyService.findSnapshots(vocabulary));
     }
 }

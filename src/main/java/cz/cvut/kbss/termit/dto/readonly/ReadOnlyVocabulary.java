@@ -1,7 +1,11 @@
 package cz.cvut.kbss.termit.dto.readonly;
 
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -11,11 +15,10 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_slovnik)
-public class ReadOnlyVocabulary implements HasIdentifier, Serializable {
+import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
-    @Id
-    private URI uri;
+@OWLClass(iri = Vocabulary.s_c_slovnik)
+public class ReadOnlyVocabulary extends Asset<String> implements HasIdentifier, Serializable {
 
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
     private String label;
@@ -31,22 +34,12 @@ public class ReadOnlyVocabulary implements HasIdentifier, Serializable {
 
     public ReadOnlyVocabulary(cz.cvut.kbss.termit.model.Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        this.uri = vocabulary.getUri();
+        setUri(vocabulary.getUri());
         this.label = vocabulary.getLabel();
         this.description = vocabulary.getDescription();
         if (vocabulary.getImportedVocabularies() != null) {
             this.importedVocabularies = new HashSet<>(vocabulary.getImportedVocabularies());
         }
-    }
-
-    @Override
-    public URI getUri() {
-        return uri;
-    }
-
-    @Override
-    public void setUri(URI uri) {
-        this.uri = uri;
     }
 
     public String getLabel() {
@@ -82,19 +75,19 @@ public class ReadOnlyVocabulary implements HasIdentifier, Serializable {
             return false;
         }
         ReadOnlyVocabulary that = (ReadOnlyVocabulary) o;
-        return Objects.equals(uri, that.uri);
+        return Objects.equals(getUri(), that.getUri());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uri);
+        return Objects.hash(getUri());
     }
 
     @Override
     public String toString() {
         return "ReadOnlyVocabulary{" + label +
-                " <" + uri +
-                ">, importedVocabularies=" + importedVocabularies +
+                " " + uriToString(getUri()) +
+                ", importedVocabularies=" + importedVocabularies +
                 '}';
     }
 }
