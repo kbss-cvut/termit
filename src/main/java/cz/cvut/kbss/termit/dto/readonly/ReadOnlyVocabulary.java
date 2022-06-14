@@ -30,6 +30,7 @@ public class ReadOnlyVocabulary extends Asset<String> implements HasIdentifier, 
     private Set<URI> importedVocabularies;
 
     public ReadOnlyVocabulary() {
+        // Public no-arg constructor for marshalling support
     }
 
     public ReadOnlyVocabulary(cz.cvut.kbss.termit.model.Vocabulary vocabulary) {

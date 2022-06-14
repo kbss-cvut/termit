@@ -50,6 +50,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     private Set<String> types;
 
     public ReadOnlyTerm() {
+        // Public no-arg constructor for marshalling support
     }
 
     public ReadOnlyTerm(final Term term) {

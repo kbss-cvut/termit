@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.util.CollectionUtils;
 
+import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,10 +35,10 @@ public class Term extends AbstractTerm implements HasTypes {
      * Names of columns used in term export.
      * <p>
      */
-    public static final List<String> EXPORT_COLUMNS = Collections
-            .unmodifiableList(
-                    Arrays.asList("IRI", "Label", "Alternative Labels", "Hidden Labels", "Definition", "Description",
-                            "Types", "Sources", "Parent Terms", "SubTerms", "Related Terms", "Related Match Terms", "Exact Match Terms", "Draft"));
+    public static final List<String> EXPORT_COLUMNS = List.of("IRI", "Label", "Alternative Labels", "Hidden Labels",
+                                                              "Definition", "Description", "Types", "Sources",
+                                                              "Parent Terms", "SubTerms", "Related Terms",
+                                                              "Related Match Terms", "Exact Match Terms", "Draft");
 
     @Autowired
     @Transient
@@ -106,6 +107,12 @@ public class Term extends AbstractTerm implements HasTypes {
     @Types
     private Set<String> types;
 
+    public Term() {
+    }
+
+    public Term(URI uri) {
+        setUri(uri);
+    }
 
     /**
      * Sets label in the application-configured language.
