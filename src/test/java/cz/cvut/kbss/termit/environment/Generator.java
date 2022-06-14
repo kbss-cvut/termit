@@ -1,13 +1,16 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 package cz.cvut.kbss.termit.environment;
@@ -15,6 +18,7 @@ package cz.cvut.kbss.termit.environment;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.assignment.*;
@@ -33,6 +37,8 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.topbraid.shacl.vocabulary.SH;
 
 import java.net.URI;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -72,8 +78,7 @@ public class Generator {
     /**
      * Generates a (pseudo) random integer.
      * <p>
-     * This version has no bounds (aside from the integer range), so the returned number may be
-     * negative or zero.
+     * This version has no bounds (aside from the integer range), so the returned number may be negative or zero.
      *
      * @return Randomly generated integer
      * @see #randomInt(int, int)
@@ -138,8 +143,7 @@ public class Generator {
     /**
      * Creates a random instance of {@link User} with a generated identifier.
      * <p>
-     * The presence of identifier is the only difference between this method and
-     * {@link #generateUser()}.
+     * The presence of identifier is the only difference between this method and {@link #generateUser()}.
      *
      * @return New {@code User} instance
      */
@@ -150,8 +154,7 @@ public class Generator {
     }
 
     /**
-     * Generates a random {@link UserAccount} instance, initialized with first name, last name,
-     * username and
+     * Generates a random {@link UserAccount} instance, initialized with first name, last name, username and
      * identifier.
      *
      * @return A new {@code UserAccount} instance
@@ -166,8 +169,7 @@ public class Generator {
     }
 
     /**
-     * Generates a random {@link UserAccount} instance, initialized with first name, last name,
-     * username, password and
+     * Generates a random {@link UserAccount} instance, initialized with first name, last name, username, password and
      * identifier.
      *
      * @return A new {@code UserAccount} instance
@@ -180,8 +182,7 @@ public class Generator {
     }
 
     /**
-     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty
-     * glossary and a model.
+     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary and a model.
      *
      * @return New {@code Vocabulary} instance
      */
@@ -222,8 +223,8 @@ public class Generator {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Environment.LANGUAGE));
         term.setDefinition(MultilingualString
-                .create("Normative definition of term " + term.getLabel().get(),
-                        Environment.LANGUAGE));
+                                   .create("Normative definition of term " + term.getLabel().get(),
+                                           Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
         if (Generator.randomBoolean()) {
             term.setSources(Collections.singleton("PSP/c-1/p-2/b-c"));
@@ -293,8 +294,7 @@ public class Generator {
     }
 
     /**
-     * Generates a change record indicating change of the specified asset's label from nothing to
-     * the current value.
+     * Generates a change record indicating change of the specified asset's label from nothing to the current value.
      *
      * @param asset Changed asset
      * @return Change record
@@ -325,17 +325,16 @@ public class Generator {
     public static List<cz.cvut.kbss.termit.model.validation.ValidationResult> generateValidationRecords() {
         return IntStream.range(0, 1)
                         .mapToObj(i ->
-                                new cz.cvut.kbss.termit.model.validation.ValidationResult()
-                                        .setTermUri(URI.create("https://example.org/term-" + i))
-                                        .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
-                                        .setSeverity(URI.create(SH.Violation.toString()))
+                                          new cz.cvut.kbss.termit.model.validation.ValidationResult()
+                                                  .setTermUri(URI.create("https://example.org/term-" + i))
+                                                  .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
+                                                  .setSeverity(URI.create(SH.Violation.toString()))
                         )
                         .collect(Collectors.toList());
     }
 
     /**
-     * Simulates inference of the "je-pojmem-ze-slovniku" relationship between a term and its
-     * vocabulary.
+     * Simulates inference of the "je-pojmem-ze-slovniku" relationship between a term and its vocabulary.
      *
      * @param term          Term in vocabulary
      * @param vocabularyIri Vocabulary identifier
@@ -347,14 +346,14 @@ public class Generator {
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(term.getUri().toString()),
-                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                    vf.createIRI(vocabularyIri.toString()));
+                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                     vf.createIRI(vocabularyIri.toString()));
         }
     }
 
     /**
-     * Generates a random {@link cz.cvut.kbss.termit.model.comment.Comment} instance, initialized
-     * with the term it is connected to.
+     * Generates a random {@link cz.cvut.kbss.termit.model.comment.Comment} instance, initialized with the term it is
+     * connected to.
      *
      * @return A new {@code Comment} instance
      */
@@ -409,5 +408,13 @@ public class Generator {
         // Dummy selector
         occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test text")));
         return occurrence;
+    }
+
+    public static Snapshot generateSnapshot(Vocabulary vocabulary) {
+        final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        final URI uri = URI.create(
+                vocabulary.getUri().toString() + "/version/" + timestamp.toString().replace(":", "").replace(" ", ""));
+        return new Snapshot(uri, timestamp, vocabulary.getUri(),
+                            cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
     }
 }
