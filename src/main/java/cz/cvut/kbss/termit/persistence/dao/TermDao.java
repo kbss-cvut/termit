@@ -235,7 +235,6 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                             "?term a ?type ;" +
                                                                             "?hasLabel ?label ;" +
                                                                             "FILTER (lang(?label) = ?labelLang) ." +
-                                                                            "FILTER NOT EXISTS { ?term a ?snapshot . }" +
                                                                             "}" +
                                                                             "?term ?inVocabulary ?vocabulary ." +
                                                                             " } ORDER BY " + orderSentence(
@@ -243,8 +242,6 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                  .setParameter("type", typeUri)
                                                  .setParameter("vocabulary", vocabulary)
                                                  .setParameter("hasLabel", LABEL_PROP)
-                                                 .setParameter("snapshot", URI.create(
-                                                         cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
                                                  .setParameter("inVocabulary",
                                                                URI.create(
                                                                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))

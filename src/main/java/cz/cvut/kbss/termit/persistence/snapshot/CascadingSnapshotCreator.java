@@ -19,6 +19,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static cz.cvut.kbss.termit.util.Utils.uriToString;
+
 /**
  * {@link SnapshotCreator} implementation that cascades the operation.
  * <p>
@@ -55,17 +57,20 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
     @Override
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        LOG.debug("Creating snapshot of {}.", vocabulary);
+        LOG.info("Creating snapshot of {}.", vocabulary);
         final List<URI> toSnapshot = resolveVocabulariesToSnapshot(vocabulary);
         toSnapshot.forEach(v -> {
             snapshotVocabulary(v);
             snapshotTerms(v);
         });
-        final Snapshot snapshot = new Snapshot(URI.create(vocabulary.getUri().toString() + getSnapshotSuffix()), timestamp,
-                            vocabulary.getUri(),
-                            cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+        final Snapshot snapshot = new Snapshot(snapshotUri(vocabulary.getUri()), timestamp, vocabulary.getUri(),
+                                               cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
         LOG.debug("Snapshot created: {}", snapshot);
         return snapshot;
+    }
+
+    private URI snapshotUri(URI source) {
+        return URI.create(source.toString() + getSnapshotSuffix());
     }
 
     private List<URI> resolveVocabulariesToSnapshot(Vocabulary root) {
@@ -98,6 +103,8 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
     }
 
     private void snapshotVocabulary(URI vocabulary) {
+        LOG.trace("Creating snapshot of vocabulary {} with identifier {}.", uriToString(vocabulary),
+                  uriToString(snapshotUri(vocabulary)));
         em.createNativeQuery(snapshotVocabularyQuery).setParameter("vocabulary", vocabulary)
           .setParameter("suffix", getSnapshotSuffix())
           .setParameter("created", timestamp)

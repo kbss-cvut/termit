@@ -579,7 +579,8 @@ public class TermController extends BaseController {
                              .build();
     }
 
-    @GetMapping("/terms/{termIdFragment}/versions")
+    @GetMapping(value = "/terms/{termIdFragment}/versions",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(@PathVariable String termIdFragment,
                                           @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                                           @RequestParam(name = "at", required = false) Optional<String> at) {

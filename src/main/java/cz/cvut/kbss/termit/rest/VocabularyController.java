@@ -253,7 +253,7 @@ public class VocabularyController extends BaseController {
                 locationWithout(generateLocation(snapshot.getUri()), "/" + fragment + "/versions")).build();
     }
 
-    @GetMapping("/{fragment}/versions")
+    @GetMapping(value = "/{fragment}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(@PathVariable String fragment,
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace,
