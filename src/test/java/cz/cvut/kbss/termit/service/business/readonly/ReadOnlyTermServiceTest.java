@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -187,5 +189,31 @@ class ReadOnlyTermServiceTest {
         final List<TermOccurrence> result = sut.getDefinitionallyRelatedTargeting(term);
         assertEquals(occurrences, result);
         verify(termService).getDefinitionallyRelatedTargeting(term);
+    }
+
+    @Test
+    void findSnapshotsRetrievesSnapshotsOfSpecifiedTerm() {
+        final Term term = Generator.generateTermWithId();
+        final ReadOnlyTerm asset = new ReadOnlyTerm(term);
+        final List<Snapshot> snapshots = IntStream.range(0, 3).mapToObj(i -> Generator.generateSnapshot(term))
+                                                  .collect(Collectors.toList());
+        when(termService.findSnapshots(term)).thenReturn(snapshots);
+
+        final List<Snapshot> result = sut.findSnapshots(asset);
+        assertEquals(snapshots, result);
+        verify(termService).findSnapshots(term);
+    }
+
+    @Test
+    void findVersionValidAtRetrievesTermVersionsValidAtSpecifiedTimestamp() {
+        final Term term = Generator.generateTermWithId();
+        final ReadOnlyTerm asset = new ReadOnlyTerm(term);
+        final Term version = Generator.generateTermWithId();
+        final Instant timestamp = Instant.now();
+        when(termService.findVersionValidAt(term, timestamp)).thenReturn(version);
+
+        final ReadOnlyTerm result = sut.findVersionValidAt(asset, timestamp);
+        assertEquals(new ReadOnlyTerm(version), result);
+        verify(termService).findVersionValidAt(term, timestamp);
     }
 }

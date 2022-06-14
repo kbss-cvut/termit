@@ -410,11 +410,18 @@ public class Generator {
         return occurrence;
     }
 
-    public static Snapshot generateSnapshot(Vocabulary vocabulary) {
+    public static Snapshot generateSnapshot(Asset<?> asset) {
         final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         final URI uri = URI.create(
-                vocabulary.getUri().toString() + "/version/" + timestamp.toString().replace(":", "").replace(" ", ""));
-        return new Snapshot(uri, timestamp, vocabulary.getUri(),
-                            cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+                asset.getUri().toString() + "/version/" + timestamp.toString().replace(":", "").replace(" ", ""));
+        final String type;
+        if (asset instanceof Vocabulary) {
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku;
+        } else if (asset instanceof AbstractTerm) {
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu;
+        } else {
+            type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_objektu;
+        }
+        return new Snapshot(uri, timestamp, asset.getUri(), type);
     }
 }
