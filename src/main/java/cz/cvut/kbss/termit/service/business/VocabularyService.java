@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
@@ -119,5 +120,5 @@ public interface VocabularyService
      *
      * @param vocabulary Vocabulary to snapshot
      */
-    void createSnapshot(Vocabulary vocabulary);
+    Snapshot createSnapshot(Vocabulary vocabulary);
 }

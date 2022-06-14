@@ -13,6 +13,7 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
+import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
@@ -267,8 +268,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    public void createSnapshot(Vocabulary vocabulary) {
-        // TODO
+    public Snapshot createSnapshot(Vocabulary vocabulary) {
+        return getSnapshotCreator().createSnapshot(vocabulary);
+    }
+
+    private SnapshotCreator getSnapshotCreator() {
+        return context.getBean(SnapshotCreator.class);
     }
 
     @Transactional(readOnly = true)

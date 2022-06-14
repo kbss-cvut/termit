@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
@@ -351,5 +352,17 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertEquals(vocabulary.getUri() + "/" + Constants.DEFAULT_MODEL_IRI_COMPONENT,
                      result.getModel().getUri().toString());
+    }
+
+    @Test
+    void createSnapshotCreatesSnapshotOfSpecifiedVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+
+        final Snapshot snapshot = sut.createSnapshot(vocabulary);
+        assertNotNull(snapshot);
+        assertEquals(vocabulary.getUri(), snapshot.getVersionOf());
+        final Vocabulary result = em.find(Vocabulary.class, snapshot.getUri());
+        assertNotNull(result);
     }
 }

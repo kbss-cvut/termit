@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -104,9 +105,11 @@ public class VocabularyController extends BaseController {
                                                  @RequestParam(name = "rename") boolean rename) {
         final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
         LOG.debug("New vocabulary {} imported.", vocabulary);
-        final URI location = generateLocation(vocabulary.getUri());
-        final String adjustedLocation = location.toString().replace("/import/", "/");
-        return ResponseEntity.created(URI.create(adjustedLocation)).build();
+        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+    }
+
+    URI locationWithout(URI location, String toRemove) {
+        return URI.create(location.toString().replace(toRemove, ""));
     }
 
     /**
@@ -125,9 +128,8 @@ public class VocabularyController extends BaseController {
         final URI vocabularyIri = resolveVocabularyUri(fragment, namespace);
         final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
         LOG.debug("Vocabulary {} re-imported.", vocabulary);
-        String location = generateLocation(vocabulary.getUri()).toString();
-        location = location.replace("/import/" + fragment, "");
-        return ResponseEntity.created(URI.create(location)).build();
+        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import/" + fragment))
+                             .build();
     }
 
     private URI resolveVocabularyUri(String fragment, Optional<String> namespace) {
@@ -245,9 +247,10 @@ public class VocabularyController extends BaseController {
                                                              required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
-        vocabularyService.createSnapshot(vocabulary);
+        final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
         LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
-        return ResponseEntity.created(generateLocation(vocabulary.getUri())).build();
+        return ResponseEntity.created(
+                locationWithout(generateLocation(snapshot.getUri()), "/" + fragment + "/versions")).build();
     }
 
     @GetMapping("/{fragment}/versions")
