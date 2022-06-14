@@ -13,7 +13,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,33 +55,40 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
     @Override
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
+        LOG.debug("Creating snapshot of {}.", vocabulary);
         final List<URI> toSnapshot = resolveVocabulariesToSnapshot(vocabulary);
         toSnapshot.forEach(v -> {
             snapshotVocabulary(v);
+            snapshotTerms(v);
         });
-        return null;
+        final Snapshot snapshot = new Snapshot(URI.create(vocabulary.getUri().toString() + getSnapshotSuffix()), timestamp,
+                            vocabulary.getUri(),
+                            cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+        LOG.debug("Snapshot created: {}", snapshot);
+        return snapshot;
     }
 
     private List<URI> resolveVocabulariesToSnapshot(Vocabulary root) {
         LOG.trace("Resolving vocabularies to snapshot, starting from {}.", root);
         final List<URI> toSnapshot = new ArrayList<>();
         toSnapshot.add(root.getUri());
-        // Using old-school iteration to prevent concurrent modification issues
+        // Using old-school iteration to prevent concurrent modification issues when adding items to list under iteration
         for (int i = 0; i < toSnapshot.size(); i++) {
             final List<URI> toAdd = em.createNativeQuery("SELECT DISTINCT ?v WHERE {\n" +
-                                                           "    ?t a ?term ;\n" +
-                                                           "       ?inVocabulary ?vocabulary ;\n" +
-                                                           "       ?y ?z .\n" +
-                                                           "    ?z a ?term ;\n" +
-                                                           "       ?inVocabulary ?v .\n" +
-                                                           "    FILTER (?v != ?vocabulary)\n" +
-                                                           "    FILTER (?y IN (?cascadingRelationships))\n" +
-                                                           "}", URI.class)
-                                .setParameter("term", URI.create(SKOS.CONCEPT))
-                                .setParameter("inVocabulary",
-                                              URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                .setParameter("vocabulary", toSnapshot.get(i))
-                                .setParameter("cascadingRelationships", CASCADE_RELATIONSHIPS).getResultList();
+                                                                 "    ?t a ?term ;\n" +
+                                                                 "       ?inVocabulary ?vocabulary ;\n" +
+                                                                 "       ?y ?z .\n" +
+                                                                 "    ?z a ?term ;\n" +
+                                                                 "       ?inVocabulary ?v .\n" +
+                                                                 "    FILTER (?v != ?vocabulary)\n" +
+                                                                 "    FILTER (?y IN (?cascadingRelationships))\n" +
+                                                                 "}", URI.class)
+                                      .setParameter("term", URI.create(SKOS.CONCEPT))
+                                      .setParameter("inVocabulary",
+                                                    URI.create(
+                                                            cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                      .setParameter("vocabulary", toSnapshot.get(i))
+                                      .setParameter("cascadingRelationships", CASCADE_RELATIONSHIPS).getResultList();
             // Not very fast with lists, but we do not expect the list to be large
             toAdd.removeAll(toSnapshot);
             toSnapshot.addAll(toAdd);
@@ -90,8 +99,15 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
 
     private void snapshotVocabulary(URI vocabulary) {
         em.createNativeQuery(snapshotVocabularyQuery).setParameter("vocabulary", vocabulary)
-                .setParameter("suffix", getSnapshotSuffix())
-                .setParameter("created", timestamp)
-                .executeUpdate();
+          .setParameter("suffix", getSnapshotSuffix())
+          .setParameter("created", timestamp)
+          .executeUpdate();
+    }
+
+    private void snapshotTerms(URI vocabulary) {
+        em.createNativeQuery(snapshotTermQuery).setParameter("vocabulary", vocabulary)
+          .setParameter("suffix", getSnapshotSuffix())
+          .setParameter("created", timestamp)
+          .executeUpdate();
     }
 }
