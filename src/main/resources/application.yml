@@ -49,6 +49,8 @@ termit:
             separator: /pojem
         file:
             separator: /soubor
+        snapshot:
+            separator: /verze
     file:
         storage: /tmp/termit
     textAnalysis:
