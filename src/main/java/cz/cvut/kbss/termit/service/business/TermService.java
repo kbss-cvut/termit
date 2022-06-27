@@ -513,13 +513,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Gets comments related to the specified term.
+     * Gets comments related to the specified term created in the specified time interval.
      *
      * @param term Term to get comments for
+     * @param from Retrieval interval start
+     * @param to Retrieval interval end
      * @return List of comments
      */
-    public List<Comment> getComments(Term term) {
-        return commentService.findAll(term);
+    public List<Comment> getComments(Term term, Instant from, Instant to) {
+        return commentService.findAll(term, from, to);
     }
 
     /**

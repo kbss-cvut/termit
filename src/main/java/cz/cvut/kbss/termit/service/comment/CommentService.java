@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,6 +43,18 @@ public class CommentService {
      */
     public List<Comment> findAll(Asset<?> asset) {
         return dao.findAll(asset);
+    }
+
+    /**
+     * Gets all comments from the specified asset created in the specified time interval.
+     *
+     * @param asset Target of the comments
+     * @param from  Retrieval interval start
+     * @param to    Retrieval interval end
+     * @return List of comments, ordered by date of creation.
+     */
+    public List<Comment> findAll(Asset<?> asset, Instant from, Instant to) {
+        return dao.findAll(asset, from, to);
     }
 
     /**

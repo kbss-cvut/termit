@@ -17,6 +17,8 @@ package cz.cvut.kbss.termit.util;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
+
 /**
  * Application-wide constants.
  */
@@ -75,6 +77,13 @@ public class Constants {
      * Indicates that the scheduled actions should be executed at 1:10 every day.
      */
     public static final String SCHEDULING_PATTERN = "0 1 1 * * ?";
+
+    /**
+     * Instant representing the Unix epoch.
+     * <p>
+     * Useful as a default minimum value for timestamp-based calculations.
+     */
+    public static final Instant EPOCH_TIMESTAMP = Instant.EPOCH;
 
     private Constants() {
         throw new AssertionError();
