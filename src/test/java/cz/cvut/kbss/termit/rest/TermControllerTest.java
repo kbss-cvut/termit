@@ -23,13 +23,10 @@ import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
-import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.*;
 import cz.cvut.kbss.termit.util.Constants.Excel;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.Constants.Turtle;
-import cz.cvut.kbss.termit.util.CsvUtils;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,6 +61,7 @@ import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE;
 import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE_SIZE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -844,20 +842,43 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getCommentsRetrievesCommentsForSpecifiedTerm() throws Exception {
+    void getCommentsRetrievesCommentsForSpecifiedTermUsingDefaultTimeInterval() throws Exception {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
-        when(termServiceMock.getComments(term)).thenReturn(comments);
+        when(termServiceMock.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments"))
                                            .andExpect(status().isOk()).andReturn();
         final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
         });
         assertEquals(comments, result);
-        verify(termServiceMock).getComments(term);
+        final ArgumentCaptor<Instant> toCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(termServiceMock).getComments(eq(term), eq(Constants.EPOCH_TIMESTAMP), toCaptor.capture());
+        assertThat(Utils.timestamp().getEpochSecond() - toCaptor.getValue().getEpochSecond(), lessThan(10L));
+    }
+
+    @Test
+    void getCommentsRetrievesCommentsInSpecifiedTimeInterval() throws Exception {
+        final URI termUri = initTermUriResolution();
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        final List<Comment> comments = generateComments(term);
+        when(termServiceMock.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
+        final Instant from = Utils.timestamp().minus(Generator.randomInt(50, 100), ChronoUnit.DAYS);
+        final Instant to = Utils.timestamp().minus(Generator.randomInt(0, 30), ChronoUnit.DAYS);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments")
+                                                            .param("from", from.toString())
+                                                            .param("to", to.toString()))
+                                           .andExpect(status().isOk()).andReturn();
+        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        });
+        assertEquals(comments, result);
+        verify(termServiceMock).getComments(term, from, to);
     }
 
     private URI initTermUriResolutionForStandalone() {
@@ -870,16 +891,15 @@ class TermControllerTest extends BaseControllerTestRunner {
         return termUri;
     }
 
-
     @Test
-    void getCommentsStandaloneRetrievesCommentsForSpecifiedTerm() throws Exception {
+    void getCommentsStandaloneRetrievesCommentsForSpecifiedTermUsingDefaultTimeInterval() throws Exception {
         final URI termUri = URI.create(STR_TERM_URI);
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
-        when(termServiceMock.getComments(term)).thenReturn(comments);
+        when(termServiceMock.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
 
         final MvcResult mvcResult = mockMvc
                 .perform(get("/terms/" + TERM_NAME + "/comments").param(QueryParams.NAMESPACE, NAMESPACE))
@@ -887,7 +907,33 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
         });
         assertEquals(comments, result);
-        verify(termServiceMock).getComments(term);
+        final ArgumentCaptor<Instant> toCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(termServiceMock).getComments(eq(term), eq(Constants.EPOCH_TIMESTAMP), toCaptor.capture());
+        assertThat(Utils.timestamp().getEpochSecond() - toCaptor.getValue().getEpochSecond(), lessThan(10L));
+    }
+
+    @Test
+    void getCommentsStandaloneRetrievesCommentsForSpecifiedTimeInterval() throws Exception {
+        final URI termUri = URI.create(STR_TERM_URI);
+        final Term term = Generator.generateTerm();
+        term.setUri(termUri);
+        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
+        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        final List<Comment> comments = generateComments(term);
+        when(termServiceMock.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
+        final Instant from = Utils.timestamp().minus(Generator.randomInt(50, 100), ChronoUnit.DAYS);
+        final Instant to = Utils.timestamp().minus(Generator.randomInt(0, 30), ChronoUnit.DAYS);
+
+        final MvcResult mvcResult = mockMvc
+                .perform(get("/terms/" + TERM_NAME + "/comments")
+                                 .param("from", from.toString())
+                                 .param("to", to.toString())
+                                 .param(QueryParams.NAMESPACE, NAMESPACE))
+                .andExpect(status().isOk()).andReturn();
+        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        });
+        assertEquals(comments, result);
+        verify(termServiceMock).getComments(term, from, to);
     }
 
     @Test
@@ -1059,7 +1105,7 @@ class TermControllerTest extends BaseControllerTestRunner {
             snapshot.setUri(Generator.generateUri());
             snapshot.setCreated(Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(i, ChronoUnit.DAYS));
             snapshot.setVersionOf(term.getUri());
-            // TODO Add term-snapshot to types
+            snapshot.setTypes(Collections.singleton(Vocabulary.s_c_verze_pojmu));
             return snapshot;
         }).collect(Collectors.toList());
         when(termServiceMock.findSnapshots(term)).thenReturn(snapshots);

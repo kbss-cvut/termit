@@ -12,6 +12,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyTermService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -115,10 +116,14 @@ public class ReadOnlyTermController extends BaseController {
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                      @PathVariable("termIdFragment") String termIdFragment,
+                                     @RequestParam(name = "from", required = false) Optional<String> from,
+                                     @RequestParam(name = "to", required = false) Optional<String> to,
                                      @RequestParam(name = Constants.QueryParams.NAMESPACE,
                                                    required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        return termService.getComments(termService.getRequiredReference(termUri));
+        return termService.getComments(termService.getRequiredReference(termUri),
+                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {

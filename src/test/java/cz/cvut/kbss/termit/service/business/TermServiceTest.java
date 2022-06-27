@@ -364,11 +364,13 @@ class TermServiceTest {
         final Comment comment = new Comment();
         comment.setAsset(term.getUri());
         comment.setCreated(Utils.timestamp());
-        when(commentService.findAll(term)).thenReturn(Collections.singletonList(comment));
+        when(commentService.findAll(eq(term), any(Instant.class), any(Instant.class))).thenReturn(Collections.singletonList(comment));
 
-        final List<Comment> result = sut.getComments(term);
+        final Instant from = Constants.EPOCH_TIMESTAMP;
+        final Instant to = Utils.timestamp();
+        final List<Comment> result = sut.getComments(term, from, to);
         assertEquals(Collections.singletonList(comment), result);
-        verify(commentService).findAll(term);
+        verify(commentService).findAll(term, from, to);
     }
 
     @Test

@@ -10,6 +10,8 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -18,10 +20,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CommentDaoTest extends BaseDaoTestRunner {
@@ -75,9 +82,10 @@ class CommentDaoTest extends BaseDaoTestRunner {
         final EntityDescriptor descriptor = new EntityDescriptor(
                 URI.create(configuration.getComments().getContext()));
         descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("author"),
-                new EntityDescriptor((URI) null));
+                                          new EntityDescriptor((URI) null));
         descriptor.addAttributeDescriptor(em.getMetamodel().entity(Comment.class).getAttribute("reactions"),
-                new FieldDescriptor((URI) null, em.getMetamodel().entity(Comment.class).getAttribute("reactions")));
+                                          new FieldDescriptor((URI) null, em.getMetamodel().entity(Comment.class)
+                                                                            .getAttribute("reactions")));
         return descriptor;
     }
 
@@ -147,7 +155,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(comment, descriptor);
             final CommentReaction reaction = new CommentReaction(author, comment);
-            reaction.addType("https://www.w3.org/ns/activitystreams#Like");
+            reaction.addType(Vocabulary.s_c_Like);
             em.persist(reaction, new EntityDescriptor(URI.create(configuration.getComments().getContext())));
             generateCommentReactionReference(reaction);
         });
@@ -162,8 +170,32 @@ class CommentDaoTest extends BaseDaoTestRunner {
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(reaction.getObject().toString()),
-                    vf.createIRI("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/má-reakci"),
-                    vf.createIRI(reaction.getUri().toString()));
+                     vf.createIRI(Vocabulary.s_p_ma_reakci),
+                     vf.createIRI(reaction.getUri().toString()));
         }
+    }
+
+    @Test
+    void findAllByAssetAndTimeIntervalRetrievesCommentsCreatedInSpecifiedTimePeriod() {
+        final Term term = Generator.generateTermWithId();
+
+        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).collect(
+                Collectors.toList());
+        final EntityDescriptor descriptor = createDescriptor();
+        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
+        transactional(() -> {
+            for (int i = 0; i < comments.size(); i++) {
+                final Comment c = comments.get(i);
+                c.setCreated(Utils.timestamp().minus(i, ChronoUnit.DAYS));
+                em.merge(c, descriptor);
+            }
+        });
+        final Instant from = Utils.timestamp().minus(comments.size() / 2, ChronoUnit.DAYS);
+        final Instant to = Utils.timestamp().minus(1, ChronoUnit.DAYS);
+
+        final List<Comment> result = sut.findAll(term, from, to);
+        assertFalse(result.isEmpty());
+        result.forEach(c -> assertAll(() -> assertThat(c.getCreated(), greaterThanOrEqualTo(from)),
+                                      () -> assertThat(c.getCreated(), lessThan(to))));
     }
 }
