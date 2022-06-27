@@ -10,11 +10,14 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,7 +50,8 @@ public class CommentDao {
         descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
         // Reaction are inferred, therefore possibly in the 'implicit' context (GraphDB)
         descriptor.addAttributeDescriptor(descriptorFactory.fieldSpec(Comment.class, "reactions"),
-                new FieldDescriptor((URI) null, descriptorFactory.fieldSpec(Comment.class, "reactions")));
+                                          new FieldDescriptor((URI) null,
+                                                              descriptorFactory.fieldSpec(Comment.class, "reactions")));
         return descriptor;
     }
 
@@ -55,14 +59,32 @@ public class CommentDao {
      * Finds all comments related to the specified asset.
      *
      * @param asset Asset whose comments to retrieve
-     * @return List of comments, sorted by date of creation (from oldest to newest)
+     * @return List of matching comments, sorted by date of creation (from oldest to newest)
      */
     public List<Comment> findAll(Asset<?> asset) {
+        return findAll(asset, Constants.EPOCH_TIMESTAMP, Utils.timestamp());
+    }
+
+    /**
+     * Finds all comments related to the specified asset created in the specified time interval.
+     *
+     * @param asset Asset whose comments to retrieve
+     * @param from  Start timestamp of the time interval for comments retrieval
+     * @param to    End timestamp of the time interval for comments retrieval
+     * @return List of matching comments, sorted by date of creation (from oldest to newest)
+     */
+    public List<Comment> findAll(Asset<?> asset, Instant from, Instant to) {
         Objects.requireNonNull(asset);
+        Objects.requireNonNull(from);
+        Objects.requireNonNull(to);
         try {
-            return em.createQuery("SELECT c FROM Comment c WHERE c.asset = :asset ORDER BY c.created", Comment.class)
-                    .setParameter("asset", asset.getUri())
-                    .setDescriptor(loadingDescriptor).getResultList();
+            return em.createQuery(
+                             "SELECT c FROM Comment c WHERE c.asset = :asset AND c.created >= :from AND c.created < :to ORDER BY c.created",
+                             Comment.class)
+                     .setParameter("asset", asset.getUri())
+                     .setParameter("from", from)
+                     .setParameter("to", to)
+                     .setDescriptor(loadingDescriptor).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -156,8 +178,7 @@ public class CommentDao {
     }
 
     /**
-     * Finds the specified number of most recently added/edited comments by the specified author
-     * and reactions on them.
+     * Finds the specified number of most recently added/edited comments by the specified author and reactions on them.
      *
      * @param author Author of the modifications
      * @param limit  Number of assets to load

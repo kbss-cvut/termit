@@ -78,8 +78,16 @@ public class ReadOnlyTermService implements SnapshotProvider<ReadOnlyTerm> {
         return termService.findSubTerms(arg).stream().map(this::create).collect(Collectors.toList());
     }
 
-    public List<Comment> getComments(Term term) {
-        return termService.getComments(term);
+    /**
+     * Gets comments related to the specified term created in the specified time interval.
+     *
+     * @param term Term to get comments for
+     * @param from Retrieval interval start
+     * @param to Retrieval interval end
+     * @return List of comments
+     */
+    public List<Comment> getComments(Term term, Instant from, Instant to) {
+        return termService.getComments(term, from, to);
     }
 
     public Term getRequiredReference(URI uri) {

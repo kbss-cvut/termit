@@ -11,6 +11,7 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -152,11 +153,13 @@ class ReadOnlyTermServiceTest {
         final Comment comment = new Comment();
         comment.setAsset(term.getUri());
         comment.setCreated(Utils.timestamp());
-        when(termService.getComments(term)).thenReturn(Collections.singletonList(comment));
+        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(Collections.singletonList(comment));
+        final Instant from = Constants.EPOCH_TIMESTAMP;
+        final Instant to = Utils.timestamp();
 
-        final List<Comment> result = sut.getComments(term);
+        final List<Comment> result = sut.getComments(term, from, to);
         assertEquals(Collections.singletonList(comment), result);
-        verify(termService).getComments(term);
+        verify(termService).getComments(term, from, to);
     }
 
     @Test

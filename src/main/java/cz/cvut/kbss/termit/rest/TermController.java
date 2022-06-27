@@ -15,13 +15,10 @@ import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
-import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.*;
 import cz.cvut.kbss.termit.util.Constants.Excel;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.Constants.Turtle;
-import cz.cvut.kbss.termit.util.CsvUtils;
-import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -508,25 +505,33 @@ public class TermController extends BaseController {
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
                                      @PathVariable("termIdFragment") String termIdFragment,
+                                     @RequestParam(name = "from", required = false) Optional<String> from,
+                                     @RequestParam(name = "to", required = false) Optional<String> to,
                                      @RequestParam(name = QueryParams.NAMESPACE,
                                                    required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        return termService.getComments(termService.getRequiredReference(termUri));
+        return termService.getComments(termService.getRequiredReference(termUri),
+                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
     /**
      * Gets comments for the specified term.
      * <p>
-     * This is a convenience method to allow access without using the Term's parent Vocabulary.
+     * This is method allows access without using the Term's Vocabulary.
      *
-     * @see #getComments(String, String, Optional)
+     * @see #getComments(String, String, Optional, Optional, Optional)
      */
     @GetMapping(value = "/terms/{termIdFragment}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("termIdFragment") String termIdFragment,
-                                     @RequestParam(name = QueryParams.NAMESPACE, required = false) String namespace) {
+                                     @RequestParam(name = "from", required = false) Optional<String> from,
+                                     @RequestParam(name = "to", required = false) Optional<String> to,
+                                     @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        return termService.getComments(termService.getRequiredReference(termUri));
+        return termService.getComments(termService.getRequiredReference(termUri),
+                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
     /**
