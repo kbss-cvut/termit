@@ -5,6 +5,8 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.util.Configuration;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -15,6 +17,14 @@ import java.time.temporal.ChronoUnit;
  * A new instance should be created every time snapshot operation is triggered by the client.
  */
 public abstract class SnapshotCreator {
+
+    /**
+     * Formatter for the timestamp inserted into the snapshot suffix.
+     *
+     * @see #getSnapshotSuffix()
+     */
+    protected static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX")
+                                                                                    .withZone(ZoneId.of("UTC"));
 
     protected final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
@@ -40,9 +50,7 @@ public abstract class SnapshotCreator {
      * @return Snapshot suffix
      */
     protected String getSnapshotSuffix() {
-        final String strTimestamp = timestamp.truncatedTo(ChronoUnit.SECONDS)
-                                             .toString().replace(":", "")
-                                             .replace(" ", "");
+        final String strTimestamp = TIMESTAMP_FORMATTER.format(timestamp);
         return snapshotSeparator.getSeparator() + "/" + strTimestamp;
     }
 }
