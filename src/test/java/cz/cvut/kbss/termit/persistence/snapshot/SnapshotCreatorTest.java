@@ -6,8 +6,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
@@ -40,6 +38,7 @@ class SnapshotCreatorTest {
     void getSnapshotSuffixUsesConfiguredSeparatorAndCurrentTimestampToGenerateSnapshotIdentifier() {
         final String result = sut.getSnapshotSuffix();
         assertThat(result, startsWith(SNAPSHOT_SEPARATOR + "/"));
-        assertThat(result, containsString(LocalDate.now().toString()));
+        assertThat(result, containsString(sut.timestamp.toString().replace("-", "")
+                                                       .replace(":", "")));
     }
 }
