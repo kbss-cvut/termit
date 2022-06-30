@@ -15,8 +15,10 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
@@ -39,13 +41,16 @@ public class SearchDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(SearchDao.class);
 
+    private final Configuration.Persistence config;
+
     protected String ftsQuery;
 
     protected final EntityManager em;
 
     @Autowired
-    public SearchDao(EntityManager em) {
+    public SearchDao(EntityManager em, Configuration config) {
         this.em = em;
+        this.config = config.getPersistence();
     }
 
     @PostConstruct
@@ -54,13 +59,16 @@ public class SearchDao {
     }
 
     /**
-     * Finds terms and vocabularies which match the specified search string.
+     * Finds terms and vocabularies that match the specified search string.
      * <p>
      * The search functionality depends on the underlying repository and the index it uses. But basically the search
-     * looks for match in asset label, comment and SKOS definition.
+     * looks for match in asset label, comment and SKOS definition (if exists).
+     *
+     * Note that this version of the search excludes asset snapshots from the results.
      *
      * @param searchString The string to search by
      * @return List of matching results
+     * @see #fullTextSearchIncludingSnapshots(String)
      */
     public List<FullTextSearchResult> fullTextSearch(String searchString) {
         Objects.requireNonNull(searchString);
@@ -68,12 +76,45 @@ public class SearchDao {
             return Collections.emptyList();
         }
         LOG.trace("Running full text search for search string \"{}\".", searchString);
-        return (List<FullTextSearchResult>) em.createNativeQuery(ftsQuery, "FullTextSearchResult")
-                                              .setParameter("term", URI.create(SKOS.CONCEPT))
-                                              .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                                              .setParameter("inVocabulary",
-                                                            URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                              .setParameter("isDraft", URI.create(Vocabulary.s_p_je_draft))
-                                              .setParameter("searchString", searchString, null).getResultList();
+        return (List<FullTextSearchResult>) setCommonQueryParams(
+                em.createNativeQuery(ftsQuery, "FullTextSearchResult"), searchString)
+                .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
+                .getResultList();
+    }
+
+    /**
+     * Finds terms and vocabularies that match the specified search string.
+     * <p>
+     * The search functionality depends on the underlying repository and the index it uses. But basically the search
+     * looks for match in asset label, comment and SKOS definition (if exists).
+     *
+     * Note that this version of the search includes asset snapshots.
+     *
+     * @param searchString The string to search by
+     * @return List of matching results
+     * @see #fullTextSearchIncludingSnapshots(String)
+     */
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(String searchString) {
+        Objects.requireNonNull(searchString);
+        if (searchString.isBlank()) {
+            return Collections.emptyList();
+        }
+        LOG.trace("Running full text search (including snapshots) for search string \"{}\".", searchString);
+        return (List<FullTextSearchResult>) setCommonQueryParams(
+                em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"), searchString).getResultList();
+    }
+
+    protected Query setCommonQueryParams(Query q, String searchString) {
+        return q.setParameter("term", URI.create(SKOS.CONCEPT))
+                .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                .setParameter("inVocabulary",
+                              URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("isDraft", URI.create(Vocabulary.s_p_je_draft))
+                .setParameter("langTag", config.getLanguage(), null)
+                .setParameter("searchString", searchString, null);
+    }
+
+    protected String queryIncludingSnapshots() {
+        return ftsQuery.replace("FILTER NOT EXISTS { ?entity a ?snapshot . }", "");
     }
 }

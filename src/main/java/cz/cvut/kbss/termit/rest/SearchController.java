@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,6 +55,6 @@ public class SearchController extends BaseController {
     public List<FullTextSearchResult> fullTextSearchTerms(
             @RequestParam(name = "searchString") String searchString,
             @RequestParam(name = "vocabulary", required = false) Set<URI> vocabularies) {
-        return searchService.fullTextSearchOfTerms(searchString, vocabularies);
+        return searchService.fullTextSearchOfTerms(searchString, Utils.emptyIfNull(vocabularies));
     }
 }

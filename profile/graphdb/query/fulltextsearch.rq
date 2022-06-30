@@ -36,6 +36,7 @@ SELECT DISTINCT ?entity ?label ?vocabularyUri ?draft ?type ?snippetField ?snippe
         ?entity ?isDraft ?draft .
     }
     FILTER (?type = ?term || ?type = ?vocabulary)
+    FILTER NOT EXISTS { ?entity a ?snapshot . }
     FILTER (lang(?label) = ?langTag)
     BIND(IF(lcase(str(?snippetText)) = lcase(str(?splitExactMatch)), ?initScore * 2, IF(CONTAINS(lcase(str(?snippetText)), ?searchString), IF(?snippetField = "label", ?initScore * 1.5, ?initScore), ?initScore)) as ?exactMatchScore)
     BIND(IF(?snippetField = "label", ?exactMatchScore * 2, IF(?snippetField = "definition", ?exactMatchScore * 1.2, ?exactMatchScore)) as ?score)
