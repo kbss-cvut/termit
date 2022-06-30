@@ -41,13 +41,11 @@ class SearchServiceTest {
                 "test",
                 "test",
                 1.0);
-        when(searchDao.fullTextSearch(searchString)).thenReturn(Collections.singletonList(ftsr));
-        final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString,
-                                                                            Collections.singleton(
-                                                                                    Generator.generateUri())
-        );
+        when(searchDao.fullTextSearchIncludingSnapshots(searchString)).thenReturn(Collections.singletonList(ftsr));
+        final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString, Collections.singleton(
+                Generator.generateUri()));
         assertTrue(result.isEmpty());
-        verify(searchDao).fullTextSearch(searchString);
+        verify(searchDao).fullTextSearchIncludingSnapshots(searchString);
     }
 
     @Test
@@ -63,11 +61,10 @@ class SearchServiceTest {
                 "test",
                 "test",
                 1.0);
-        when(searchDao.fullTextSearch(searchString)).thenReturn(Collections.singletonList(ftsr));
+        when(searchDao.fullTextSearchIncludingSnapshots(searchString)).thenReturn(Collections.singletonList(ftsr));
         final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString,
-                                                                            Collections.singleton(vocabulary)
-        );
+                                                                            Collections.singleton(vocabulary));
         assertEquals(Collections.singletonList(ftsr), result);
-        verify(searchDao).fullTextSearch(searchString);
+        verify(searchDao).fullTextSearchIncludingSnapshots(searchString);
     }
 }

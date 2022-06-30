@@ -15,11 +15,9 @@
 package cz.cvut.kbss.termit.persistence.dao.lucene;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +44,8 @@ public class LuceneSearchDao extends SearchDao {
 
     static final char LUCENE_WILDCARD = '*';
 
-    private final Persistence config;
-
     public LuceneSearchDao(EntityManager em, Configuration config) {
-        super(em);
-        this.config = config.getPersistence();
+        super(em, config);
     }
 
     @Override
@@ -63,17 +58,12 @@ public class LuceneSearchDao extends SearchDao {
         final String exactMatch = splitExactMatch(searchString);
         LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\".", searchString,
                   wildcardString);
-        return (List<FullTextSearchResult>) em.createNativeQuery(ftsQuery, "FullTextSearchResult")
-                                              .setParameter("term", URI.create(SKOS.CONCEPT))
-                                              .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                                              .setParameter("inVocabulary",
-                                                            URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                              .setParameter("isDraft", URI.create(Vocabulary.s_p_je_draft))
-                                              .setParameter("searchString", searchString, null)
-                                              .setParameter("wildCardSearchString", wildcardString, null)
-                                              .setParameter("splitExactMatch", exactMatch, null)
-                                              .setParameter("langTag", config.getLanguage(), null)
-                                              .getResultList();
+        return (List<FullTextSearchResult>) setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"),
+                                                                 searchString)
+                .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
+                .setParameter("wildCardSearchString", wildcardString, null)
+                .setParameter("splitExactMatch", exactMatch, null)
+                .getResultList();
     }
 
     private static String addWildcard(String searchString) {
@@ -91,5 +81,23 @@ public class LuceneSearchDao extends SearchDao {
         final String[] split = searchString.trim().split("\\s+");
         String s = "<em>";
         return s.concat(String.join("</em> <em>", split)).concat("</em>");
+    }
+
+    @Override
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(String searchString) {
+        Objects.requireNonNull(searchString);
+        if (searchString.isBlank()) {
+            return Collections.emptyList();
+        }
+        final String wildcardString = addWildcard(searchString);
+        final String exactMatch = splitExactMatch(searchString);
+        LOG.trace(
+                "Running full text search (including snapshots) for search string \"{}\", using wildcard variant \"{}\".",
+                searchString, wildcardString);
+        return (List<FullTextSearchResult>) setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"),
+                                                                 searchString)
+                .setParameter("wildCardSearchString", wildcardString, null)
+                .setParameter("splitExactMatch", exactMatch, null)
+                .getResultList();
     }
 }

@@ -21,6 +21,11 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,8 +119,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     private List<Vocabulary> generateVocabularies() {
         final List<Vocabulary> vocabularies = IntStream.range(0, 10).mapToObj(i -> Generator.generateVocabulary())
-                                                       .collect(
-                                                               Collectors.toList());
+                                                       .collect(Collectors.toList());
         vocabularies.forEach(v -> {
             v.setUri(Generator.generateUri());
             if (Generator.randomBoolean()) {
@@ -166,7 +170,8 @@ class SearchDaoTest extends BaseDaoTestRunner {
         final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
         assertEquals(matching.size(), result.size());
         for (FullTextSearchResult ftsResult : result) {
-            final Optional<Term> term = matching.stream().filter(t -> t.getUri().equals(ftsResult.getUri())).findFirst();
+            final Optional<Term> term = matching.stream().filter(t -> t.getUri().equals(ftsResult.getUri()))
+                                                .findFirst();
             assertTrue(term.isPresent());
             assertEquals(term.get().isDraft(), ftsResult.isDraft());
         }
@@ -177,5 +182,32 @@ class SearchDaoTest extends BaseDaoTestRunner {
         generateAndPersistTerms();
         final List<FullTextSearchResult> result = sut.fullTextSearch("");
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void defaultFullTextSearchSkipsSnapshots() {
+        final String matchingLabel = "Matching";
+        final Vocabulary v = Generator.generateVocabularyWithId();
+        v.setLabel(matchingLabel + " 0");
+        final Vocabulary snapshot = Generator.generateVocabularyWithId();
+        snapshot.setLabel(matchingLabel + " 1");
+        transactional(() -> {
+            em.persist(v);
+            em.persist(snapshot);
+            insertSnapshotType(snapshot);
+        });
+
+        final List<FullTextSearchResult> result = sut.fullTextSearch(matchingLabel);
+        assertEquals(1, result.size());
+        assertEquals(v.getUri(), result.get(0).getUri());
+    }
+
+    private void insertSnapshotType(HasIdentifier asset) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (final RepositoryConnection connection = repo.getConnection()) {
+            final ValueFactory vf = connection.getValueFactory();
+            connection.add(vf.createIRI(asset.getUri().toString()), RDF.TYPE, vf.createIRI(
+                    cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_objektu));
+        }
     }
 }

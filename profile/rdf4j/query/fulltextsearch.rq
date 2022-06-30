@@ -28,6 +28,7 @@ SELECT DISTINCT ?entity ?label ?vocabularyUri ?draft ?type ?snippetField ?snippe
         ?entity ?isDraft ?draft .
     }
     FILTER (?type = ?term || ?type = ?vocabulary)
+    FILTER NOT EXISTS { ?entity a ?snapshot . }
     FILTER (lang(?label) = ?langTag)
     BIND(?wildCardSearchString as ?temp)
 }
