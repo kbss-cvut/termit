@@ -94,8 +94,7 @@ public class LuceneSearchDao extends SearchDao {
         LOG.trace(
                 "Running full text search (including snapshots) for search string \"{}\", using wildcard variant \"{}\".",
                 searchString, wildcardString);
-        return (List<FullTextSearchResult>) setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"),
-                                                                 searchString)
+        return (List<FullTextSearchResult>) setCommonQueryParams(em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"), searchString)
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
                 .getResultList();

@@ -115,6 +115,7 @@ public class SearchDao {
     }
 
     protected String queryIncludingSnapshots() {
+        // This string has to match the filter string in the query
         return ftsQuery.replace("FILTER NOT EXISTS { ?entity a ?snapshot . }", "");
     }
 }
