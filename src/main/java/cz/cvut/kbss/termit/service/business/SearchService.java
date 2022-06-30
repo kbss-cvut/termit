@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
@@ -25,9 +22,9 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class SearchService {
@@ -57,11 +54,11 @@ public class SearchService {
      * @return Matching terms
      */
     public List<FullTextSearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies) {
-        Stream<FullTextSearchResult> result = searchDao.fullTextSearch(searchString).stream();
-        result = result.filter(r -> r.getTypes().contains(SKOS.CONCEPT));
-        if (vocabularies != null) {
-            result = result.filter(r -> vocabularies.contains(r.getVocabulary()));
-        }
-        return result.collect(Collectors.toList());
+        Objects.requireNonNull(vocabularies);
+        // Search including snapshots, as the selected vocabularies may be snapshots
+        return searchDao.fullTextSearchIncludingSnapshots(searchString).stream()
+                        .filter(r -> r.getTypes().contains(SKOS.CONCEPT))
+                        .filter(r -> vocabularies.contains(r.getVocabulary()))
+                        .collect(Collectors.toList());
     }
 }

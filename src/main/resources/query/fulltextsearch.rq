@@ -24,4 +24,6 @@ SELECT ?entity ?label ?vocabularyUri ?draft ?type ?snippetField ?snippetText WHE
     BIND (?label as ?snippetText) .
     BIND (str("label") as ?snippetField) .
     FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .
+    FILTER (lang(?label) = ?langTag)
+    FILTER NOT EXISTS { ?entity a ?snapshot . }
 } ORDER BY ?label
