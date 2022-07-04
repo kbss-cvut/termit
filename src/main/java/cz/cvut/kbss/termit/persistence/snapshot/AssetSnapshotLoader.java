@@ -61,8 +61,8 @@ public class AssetSnapshotLoader<T extends Asset<?>> {
                                                             "a ?snapshotType ; " +
                                                             "?versionOf ?asset ; " +
                                                             "?hasCreated ?created . " +
-                                                            "FILTER (?created > ?at) " +
-                                                            "} ORDER BY ASC(?created) LIMIT 1",
+                                                            "FILTER (?created <= ?at) " +
+                                                            "} ORDER BY DESC(?created) LIMIT 1",
                                                     (Class<T>) asset.getClass())
                                  .setParameter("type", assetType)
                                  .setParameter("snapshotType", snapshotType)

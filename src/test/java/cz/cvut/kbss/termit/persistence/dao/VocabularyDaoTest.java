@@ -545,7 +545,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             final Vocabulary v = generateSnapshotStub(vocabulary, timestamp);
             if (i == 3) {
                 expected = v;
-                validAt = timestamp.minus(1, ChronoUnit.HOURS);
+                validAt = timestamp.plus(1, ChronoUnit.HOURS);
             }
         }
 
@@ -566,7 +566,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             generateSnapshotStub(vocabulary, timestamp);
         });
 
-        final Vocabulary result = sut.findVersionValidAt(vocabulary, Instant.now().minus(1, ChronoUnit.HOURS));
+        final Vocabulary result = sut.findVersionValidAt(vocabulary, Instant.now().minus(1, ChronoUnit.DAYS));
         assertEquals(vocabulary, result);
     }
 

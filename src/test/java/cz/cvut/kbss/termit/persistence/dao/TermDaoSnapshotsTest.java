@@ -88,7 +88,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
     }
 
     @Test
-    void findVersionValidAtReturnsSnapshotValidAtSpecifiedInstant() {
+    void findVersionValidAtReturnsLatestSnapshotCreatedBeforeSpecifiedInstant() {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
@@ -100,7 +100,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
             final Term v = generateSnapshotStub(term, timestamp);
             if (i == 3) {
                 expected = v;
-                validAt = timestamp.minus(1, ChronoUnit.HOURS);
+                validAt = timestamp.plus(1, ChronoUnit.HOURS);
             }
         }
 
@@ -110,7 +110,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
     }
 
     @Test
-    void findVersionValidAtReturnsCurrentVocabularyVersionWhenNoSnapshotAtSpecifiedInstantExists() {
+    void findVersionValidAtReturnsCurrentTermVersionWhenNoSnapshotAtSpecifiedInstantExists() {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
@@ -120,7 +120,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
             generateSnapshotStub(term, timestamp);
         });
 
-        final Term result = sut.findVersionValidAt(term, Instant.now().minus(1, ChronoUnit.HOURS));
+        final Term result = sut.findVersionValidAt(term, Instant.now().minus(1, ChronoUnit.DAYS));
         assertEquals(term, result);
     }
 
