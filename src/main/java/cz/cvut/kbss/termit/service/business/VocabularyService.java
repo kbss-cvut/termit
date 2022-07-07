@@ -20,10 +20,10 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
-import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,7 +31,7 @@ import java.util.List;
  * Interface of business logic concerning vocabularies.
  */
 public interface VocabularyService
-        extends CrudService<Vocabulary>, ChangeRecordProvider<Vocabulary>, SnapshotProvider<Vocabulary>, SupportsLastModification {
+        extends CrudService<Vocabulary>, ChangeRecordProvider<Vocabulary>, SupportsLastModification {
 
     /**
      * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
@@ -121,4 +121,26 @@ public interface VocabularyService
      * @param vocabulary Vocabulary to snapshot
      */
     Snapshot createSnapshot(Vocabulary vocabulary);
+
+    /**
+     * Finds snapshots of the specified asset.
+     * <p>
+     * Note that the list does not contain the currently active version of the asset, as it is not considered a
+     * snapshot.
+     *
+     * @param asset Asset whose snapshots to find
+     * @return List of snapshots, sorted by date of creation (latest first)
+     */
+    List<Snapshot> findSnapshots(Vocabulary asset);
+
+    /**
+     * Finds a version of the specified asset valid at the specified instant.
+     * <p>
+     * The result may be the current version, in case there is no snapshot matching the instant.
+     *
+     * @param asset Asset whose version to get
+     * @param at    Instant at which the asset should be returned
+     * @return Version of the asset valid at the specified instant
+     */
+    Vocabulary findVersionValidAt(Vocabulary asset, Instant at);
 }

@@ -19,6 +19,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -43,6 +44,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -364,5 +367,14 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         assertEquals(vocabulary.getUri(), snapshot.getVersionOf());
         final Vocabulary result = em.find(Vocabulary.class, snapshot.getUri());
         assertNotNull(result);
+    }
+
+    @Test
+    void findVersionValidAtThrowsNotFoundExceptionWhenNoValidSnapshotExists() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+
+        final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(1, ChronoUnit.DAYS);
+        assertThrows(NotFoundException.class, () -> sut.findVersionValidAt(vocabulary, timestamp));
     }
 }

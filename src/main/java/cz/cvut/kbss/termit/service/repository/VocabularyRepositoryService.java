@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
@@ -277,14 +278,13 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Transactional(readOnly = true)
-    @Override
     public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
         return vocabularyDao.findSnapshots(vocabulary);
     }
 
     @Transactional(readOnly = true)
-    @Override
     public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
-        return vocabularyDao.findVersionValidAt(vocabulary, at);
+        return vocabularyDao.findVersionValidAt(vocabulary, at)
+                            .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
     }
 }

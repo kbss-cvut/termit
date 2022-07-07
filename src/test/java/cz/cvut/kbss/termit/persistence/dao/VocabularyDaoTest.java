@@ -549,13 +549,13 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             }
         }
 
-        final Vocabulary result = sut.findVersionValidAt(vocabulary, validAt);
-        assertNotNull(result);
-        assertEquals(expected, result);
+        final Optional<Vocabulary> result = sut.findVersionValidAt(vocabulary, validAt);
+        assertTrue(result.isPresent());
+        assertEquals(expected, result.get());
     }
 
     @Test
-    void findVersionValidAtReturnsCurrentVocabularyVersionWhenNoSnapshotAtSpecifiedInstantExists() {
+    void findVersionValidAtReturnsNullWhenNoSnapshotAtSpecifiedInstantExists() {
         enableRdfsInference(em);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(vocabulary);
@@ -566,8 +566,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             generateSnapshotStub(vocabulary, timestamp);
         });
 
-        final Vocabulary result = sut.findVersionValidAt(vocabulary, Instant.now().minus(1, ChronoUnit.DAYS));
-        assertEquals(vocabulary, result);
+        final Optional<Vocabulary> result = sut.findVersionValidAt(vocabulary, Instant.now().minus(1, ChronoUnit.DAYS));
+        assertNotNull(result);
+        assertFalse(result.isPresent());
     }
 
     @Test

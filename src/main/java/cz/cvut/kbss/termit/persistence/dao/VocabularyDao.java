@@ -312,11 +312,9 @@ public class VocabularyDao extends AssetDao<Vocabulary>
     }
 
     @Override
-    public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
+    public Optional<Vocabulary> findVersionValidAt(Vocabulary vocabulary, Instant at) {
         return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
-                .findVersionValidAt(vocabulary, at)
-                // Do not expect null to happen, but put it here to prevent the warning on Optional.get
-                .orElseGet(() -> find(vocabulary.getUri()).orElse(null));
+                .findVersionValidAt(vocabulary, at);
     }
 }
