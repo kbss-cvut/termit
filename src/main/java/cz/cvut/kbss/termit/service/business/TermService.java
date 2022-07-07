@@ -18,7 +18,6 @@ import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.slf4j.Logger;
@@ -37,7 +36,7 @@ import java.util.stream.Collectors;
  * Service for term-related business logic.
  */
 @Service
-public class TermService implements RudService<Term>, ChangeRecordProvider<Term>, SnapshotProvider<Term> {
+public class TermService implements RudService<Term>, ChangeRecordProvider<Term> {
 
     private static final Logger LOG = LoggerFactory.getLogger(TermService.class);
 
@@ -536,13 +535,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         commentService.addToAsset(comment, target);
     }
 
-    @Override
     public List<Snapshot> findSnapshots(Term asset) {
         return repositoryService.findSnapshots(asset);
     }
 
-    @Override
     public Term findVersionValidAt(Term asset, Instant at) {
-        return repositoryService.findVersionValidAt(asset, at);
+        return repositoryService.findVersionValidAt(asset, at).orElseThrow(
+                () -> new NotFoundException("No version valid at " + at + " exists."));
     }
 }

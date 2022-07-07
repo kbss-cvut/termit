@@ -5,6 +5,7 @@ import cz.cvut.kbss.termit.model.Asset;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Interface for accessing asset snapshots.
@@ -33,5 +34,5 @@ public interface SnapshotProvider<T extends Asset<?>> {
      * @param at    Instant at which the asset should be returned
      * @return Version of the asset valid at the specified instant
      */
-    T findVersionValidAt(T asset, Instant at);
+    Optional<T> findVersionValidAt(T asset, Instant at);
 }

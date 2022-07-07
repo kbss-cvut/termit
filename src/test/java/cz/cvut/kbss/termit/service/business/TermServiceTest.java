@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
@@ -36,8 +37,7 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -543,8 +543,18 @@ class TermServiceTest {
     void findVersionValidAtRetrievesValidVersionFromRepositoryService() {
         final Term term = generateTermWithId();
         final Instant instant = Instant.now();
+        when(termRepositoryService.findVersionValidAt(term, instant)).thenReturn(Optional.of(term));
 
         sut.findVersionValidAt(term, instant);
         verify(termRepositoryService).findVersionValidAt(term, instant);
+    }
+
+    @Test
+    void findVersionValidAtThrowsNotFoundExceptionWhenNoValidVersionExists() {
+        final Term term = generateTermWithId();
+        final Instant instant = Instant.now();
+        when(termRepositoryService.findVersionValidAt(term, instant)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> sut.findVersionValidAt(term, instant));
     }
 }

@@ -741,11 +741,9 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
     }
 
     @Override
-    public Term findVersionValidAt(Term asset, Instant at) {
+    public Optional<Term> findVersionValidAt(Term asset, Instant at) {
         return new AssetSnapshotLoader<Term>(em, typeUri, URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
-                .findVersionValidAt(asset, at)
-                // Do not expect null to happen, but put it here to prevent the warning on Optional.get
-                .orElseGet(() -> find(asset.getUri()).orElse(null));
+                .findVersionValidAt(asset, at);
     }
 }

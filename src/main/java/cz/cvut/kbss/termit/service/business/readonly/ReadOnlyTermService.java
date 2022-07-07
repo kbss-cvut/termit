@@ -8,7 +8,6 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
-import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-public class ReadOnlyTermService implements SnapshotProvider<ReadOnlyTerm> {
+public class ReadOnlyTermService {
 
     private final TermService termService;
 
@@ -83,7 +82,7 @@ public class ReadOnlyTermService implements SnapshotProvider<ReadOnlyTerm> {
      *
      * @param term Term to get comments for
      * @param from Retrieval interval start
-     * @param to Retrieval interval end
+     * @param to   Retrieval interval end
      * @return List of comments
      */
     public List<Comment> getComments(Term term, Instant from, Instant to) {
@@ -114,14 +113,12 @@ public class ReadOnlyTermService implements SnapshotProvider<ReadOnlyTerm> {
         return termService.getDefinitionallyRelatedTargeting(instance);
     }
 
-    @Override
     public List<Snapshot> findSnapshots(ReadOnlyTerm asset) {
         Objects.requireNonNull(asset);
         final Term arg = new Term(asset.getUri());
         return termService.findSnapshots(arg);
     }
 
-    @Override
     public ReadOnlyTerm findVersionValidAt(ReadOnlyTerm asset, Instant at) {
         Objects.requireNonNull(asset);
         final Term arg = new Term(asset.getUri());
