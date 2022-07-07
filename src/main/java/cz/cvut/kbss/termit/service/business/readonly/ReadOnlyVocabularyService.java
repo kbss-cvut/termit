@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyVocabulary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-public class ReadOnlyVocabularyService {
+public class ReadOnlyVocabularyService implements SnapshotProvider<ReadOnlyVocabulary> {
 
     private final VocabularyService vocabularyService;
 

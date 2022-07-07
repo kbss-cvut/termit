@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * Service for term-related business logic.
  */
 @Service
-public class TermService implements RudService<Term>, ChangeRecordProvider<Term> {
+public class TermService implements RudService<Term>, ChangeRecordProvider<Term>, SnapshotProvider<Term> {
 
     private static final Logger LOG = LoggerFactory.getLogger(TermService.class);
 
@@ -534,10 +534,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(comment);
         Objects.requireNonNull(target);
         commentService.addToAsset(comment, target);
-    }
-
-    public List<Snapshot> findSnapshots(Term asset) {
-        return repositoryService.findSnapshots(asset);
     }
 
     public Term findVersionValidAt(Term asset, Instant at) {
