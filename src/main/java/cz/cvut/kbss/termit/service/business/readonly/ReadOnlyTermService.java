@@ -8,7 +8,6 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
-import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-public class ReadOnlyTermService implements SnapshotProvider<ReadOnlyTerm> {
+public class ReadOnlyTermService {
 
     private final TermService termService;
 
