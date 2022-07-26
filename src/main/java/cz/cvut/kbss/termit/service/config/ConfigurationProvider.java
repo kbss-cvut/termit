@@ -3,7 +3,6 @@ package cz.cvut.kbss.termit.service.config;
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +17,7 @@ import java.util.HashSet;
 @Service
 public class ConfigurationProvider {
 
-    private final Persistence persistenceConfig;
+    private final Configuration config;
 
     private final UserRoleRepositoryService service;
 
@@ -27,7 +26,7 @@ public class ConfigurationProvider {
 
     @Autowired
     public ConfigurationProvider(Configuration config, UserRoleRepositoryService service) {
-        this.persistenceConfig = config.getPersistence();
+        this.config = config;
         this.service = service;
     }
 
@@ -39,9 +38,10 @@ public class ConfigurationProvider {
     public ConfigurationDto getConfiguration() {
         final ConfigurationDto result = new ConfigurationDto();
         result.setId(URI.create(Vocabulary.s_c_konfigurace + "/default"));
-        result.setLanguage(persistenceConfig.getLanguage());
+        result.setLanguage(config.getPersistence().getLanguage());
         result.setRoles(new HashSet<>(service.findAll()));
         result.setMaxFileUploadSize(maxFileUploadSize);
+        result.setVersionSeparator(config.getNamespace().getSnapshot().getSeparator());
         return result;
     }
 }

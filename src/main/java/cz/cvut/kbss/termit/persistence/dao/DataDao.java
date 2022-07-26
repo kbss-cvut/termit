@@ -24,9 +24,9 @@ import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import cz.cvut.kbss.termit.util.Constants.Turtle;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -66,11 +66,11 @@ public class DataDao {
      */
     public List<RdfsResource> findAllProperties() {
         return em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
-                "BIND (?property as ?type)" +
-                "?x a ?type ." +
-                "OPTIONAL { ?x ?has-label ?label . }" +
-                "OPTIONAL { ?x ?has-comment ?comment . }" +
-                "}", "RdfsResource")
+                         "BIND (?property as ?type)" +
+                         "?x a ?type ." +
+                         "OPTIONAL { ?x ?has-label ?label . }" +
+                         "OPTIONAL { ?x ?has-comment ?comment . }" +
+                         "}", "RdfsResource")
                  .setParameter("property", URI.create(RDF.PROPERTY))
                  .setParameter("has-label", RDFS_LABEL)
                  .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList();
@@ -102,11 +102,11 @@ public class DataDao {
     public Optional<RdfsResource> find(URI id) {
         Objects.requireNonNull(id);
         final List<RdfsResource> resources = em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
-                "BIND (?id AS ?x)" +
-                "?x a ?type ." +
-                "OPTIONAL { ?x ?has-label ?label .}" +
-                "OPTIONAL { ?x ?has-comment ?comment . }" +
-                "}", "RdfsResource").setParameter("id", id)
+                                                       "BIND (?id AS ?x)" +
+                                                       "?x a ?type ." +
+                                                       "OPTIONAL { ?x ?has-label ?label .}" +
+                                                       "OPTIONAL { ?x ?has-comment ?comment . }" +
+                                                       "}", "RdfsResource").setParameter("id", id)
                                                .setParameter("has-label", RDFS_LABEL)
                                                .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList();
         if (resources.isEmpty()) {
@@ -127,13 +127,16 @@ public class DataDao {
      */
     public Optional<String> getLabel(URI id) {
         Objects.requireNonNull(id);
+        if (!id.isAbsolute()) {
+            return Optional.of(id.toString());
+        }
         try {
             return Optional.of(em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
-                    "{?x ?has-label ?label .}" +
-                    "UNION" +
-                    "{?x ?has-title ?label .}" +
-                    "BIND (str(?label) as ?strippedLabel )." +
-                    "FILTER (LANGMATCHES(LANG(?label), ?tag) || lang(?label) = \"\") }", String.class)
+                                         "{?x ?has-label ?label .}" +
+                                         "UNION" +
+                                         "{?x ?has-title ?label .}" +
+                                         "BIND (str(?label) as ?strippedLabel )." +
+                                         "FILTER (LANGMATCHES(LANG(?label), ?tag) || lang(?label) = \"\") }", String.class)
                                  .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
                                  .setParameter("has-title", URI.create(DC.Terms.TITLE))
                                  .setParameter("tag", config.getLanguage(), null).getSingleResult());
