@@ -584,4 +584,13 @@ class TermTest {
         final String[] exactMatchIris = resultExactMatch.split(";");
         assertEquals(asserted.size() + inverse.size(), exactMatchIris.length);
     }
+
+    @Test
+    void isSnapshotReturnsTrueWhenInstanceHasSnapshotType() {
+        final Term original = Generator.generateTermWithId();
+        final Term snapshot = Generator.generateTermWithId();
+        snapshot.addType(Vocabulary.s_c_verze_pojmu);
+        assertFalse(original.isSnapshot());
+        assertTrue(snapshot.isSnapshot());
+    }
 }

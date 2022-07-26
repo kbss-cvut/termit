@@ -9,12 +9,14 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
+import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @OWLClass(iri = SKOS.CONCEPT)
-public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
+public class ReadOnlyTerm extends AbstractTerm implements HasTypes, SupportsSnapshots {
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<MultilingualString> altLabels;
@@ -191,5 +193,10 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
                 " <" + getUri() + '>' +
                 ", types=" + types +
                 '}';
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return hasType(Vocabulary.s_c_verze_pojmu);
     }
 }

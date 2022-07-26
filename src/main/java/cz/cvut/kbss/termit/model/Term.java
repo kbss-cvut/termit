@@ -11,6 +11,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Utils;
@@ -29,16 +30,16 @@ import java.util.stream.Collectors;
 @Audited
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
-public class Term extends AbstractTerm implements HasTypes {
+public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
 
     /**
      * Names of columns used in term export.
      * <p>
      */
     public static final List<String> EXPORT_COLUMNS = List.of("IRI", "Label", "Alternative Labels", "Hidden Labels",
-                                                              "Definition", "Description", "Types", "Sources",
-                                                              "Parent Terms", "SubTerms", "Related Terms",
-                                                              "Related Match Terms", "Exact Match Terms", "Draft");
+            "Definition", "Description", "Types", "Sources",
+            "Parent Terms", "SubTerms", "Related Terms",
+            "Related Match Terms", "Exact Match Terms", "Draft");
 
     @Autowired
     @Transient
@@ -490,6 +491,11 @@ public class Term extends AbstractTerm implements HasTypes {
         }
         this.parentTerms = parents;
         this.externalParentTerms = externalParents;
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return hasType(Vocabulary.s_c_verze_pojmu);
     }
 
     @Override
