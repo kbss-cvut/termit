@@ -122,6 +122,6 @@ public class ReadOnlyTermService {
     public ReadOnlyTerm findVersionValidAt(ReadOnlyTerm asset, Instant at) {
         Objects.requireNonNull(asset);
         final Term arg = new Term(asset.getUri());
-        return new ReadOnlyTerm(termService.findVersionValidAt(arg, at));
+        return create(termService.findVersionValidAt(arg, at));
     }
 }
