@@ -37,6 +37,8 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -556,5 +558,19 @@ class TermServiceTest {
         when(termRepositoryService.findVersionValidAt(term, instant)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> sut.findVersionValidAt(term, instant));
+    }
+
+    @Test
+    void findVersionValidAtConsolidatesAttributeOnLoadedInstance() {
+        final Term term = generateTermWithId();
+        final Instant instant = Instant.now();
+        final TermInfo related = Generator.generateTermInfoWithId();
+        final TermInfo inverseRelated = Generator.generateTermInfoWithId();
+        term.addRelatedTerm((related));
+        term.setInverseRelated(Collections.singleton(inverseRelated));
+        when(termRepositoryService.findVersionValidAt(term, instant)).thenReturn(Optional.of(term));
+
+        final Term result = sut.findVersionValidAt(term, instant);
+        assertThat(result.getRelated(), hasItems(related, inverseRelated));
     }
 }
