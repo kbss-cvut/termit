@@ -223,8 +223,8 @@ public class Generator {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Environment.LANGUAGE));
         term.setDefinition(MultilingualString
-                                   .create("Normative definition of term " + term.getLabel().get(),
-                                           Environment.LANGUAGE));
+                .create("Normative definition of term " + term.getLabel().get(),
+                        Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
         if (Generator.randomBoolean()) {
             term.setSources(Collections.singleton("PSP/c-1/p-2/b-c"));
@@ -325,10 +325,10 @@ public class Generator {
     public static List<cz.cvut.kbss.termit.model.validation.ValidationResult> generateValidationRecords() {
         return IntStream.range(0, 1)
                         .mapToObj(i ->
-                                          new cz.cvut.kbss.termit.model.validation.ValidationResult()
-                                                  .setTermUri(URI.create("https://example.org/term-" + i))
-                                                  .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
-                                                  .setSeverity(URI.create(SH.Violation.toString()))
+                                new cz.cvut.kbss.termit.model.validation.ValidationResult()
+                                        .setTermUri(URI.create("https://example.org/term-" + i))
+                                        .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
+                                        .setSeverity(URI.create(SH.Violation.toString()))
                         )
                         .collect(Collectors.toList());
     }
@@ -346,8 +346,8 @@ public class Generator {
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(term.getUri().toString()),
-                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                     vf.createIRI(vocabularyIri.toString()));
+                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                    vf.createIRI(vocabularyIri.toString()));
         }
     }
 
@@ -423,5 +423,20 @@ public class Generator {
             type = cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_objektu;
         }
         return new Snapshot(uri, timestamp, asset.getUri(), type);
+    }
+
+    public static void simulateInferredSkosRelationship(AbstractTerm source, Collection<? extends AbstractTerm> related,
+                                                        String relationship, EntityManager em) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (final RepositoryConnection conn = repo.getConnection()) {
+            final ValueFactory vf = conn.getValueFactory();
+            conn.begin();
+            for (AbstractTerm r : related) {
+                // Don't put it into any specific context to make it look like inference
+                conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(relationship),
+                        vf.createIRI(source.getUri().toString()));
+            }
+            conn.commit();
+        }
     }
 }

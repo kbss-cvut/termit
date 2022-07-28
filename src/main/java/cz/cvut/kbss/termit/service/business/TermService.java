@@ -318,11 +318,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                             () -> new NotFoundException(
-                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
-                     .collect(Collectors.toList());
+                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                              () -> new NotFoundException(
+                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
+                      .collect(Collectors.toList());
     }
 
     /**
@@ -516,7 +516,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param term Term to get comments for
      * @param from Retrieval interval start
-     * @param to Retrieval interval end
+     * @param to   Retrieval interval end
      * @return List of comments
      */
     public List<Comment> getComments(Term term, Instant from, Instant to) {
@@ -540,7 +540,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     public Term findVersionValidAt(Term asset, Instant at) {
-        return repositoryService.findVersionValidAt(asset, at).orElseThrow(
-                () -> new NotFoundException("No version valid at " + at + " exists."));
+        return repositoryService.findVersionValidAt(asset, at).map(t -> {
+            consolidateAttributes(t);
+            return t;
+        }).orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
     }
 }
