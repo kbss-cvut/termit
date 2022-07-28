@@ -105,9 +105,6 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<String>> properties;
 
-    @Types
-    private Set<String> types;
-
     public Term() {
     }
 
@@ -296,16 +293,6 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         this.definitionSource = definitionSource;
     }
 
-    @Override
-    public Set<String> getTypes() {
-        return types;
-    }
-
-    @Override
-    public void setTypes(Set<String> types) {
-        this.types = types;
-    }
-
     public Map<String, Set<String>> getProperties() {
         return properties;
     }
@@ -328,7 +315,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         exportMulti(sb, hiddenLabels, Term::exportMultilingualString);
         sb.append(',').append(exportMultilingualString(getDefinition()));
         sb.append(',').append(exportMultilingualString(description));
-        exportMulti(sb, types, String::toString);
+        exportMulti(sb, getTypes(), String::toString);
         exportMulti(sb, sources, String::toString);
         exportMulti(sb, parentTerms, pt -> pt.getUri().toString());
         exportMulti(sb, getSubTerms(), Term::termInfoStringIri);
@@ -388,7 +375,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         if (description != null) {
             row.createCell(5).setCellValue(description.toString());
         }
-        row.createCell(6).setCellValue(exportCollection(Utils.emptyIfNull(types)));
+        row.createCell(6).setCellValue(exportCollection(Utils.emptyIfNull(getTypes())));
         row.createCell(7).setCellValue(exportCollection(Utils.emptyIfNull(sources)));
         row.createCell(8)
            .setCellValue(exportCollection(Utils.emptyIfNull(parentTerms).stream().map(pt -> pt.getUri().toString())
@@ -494,16 +481,11 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     }
 
     @Override
-    public boolean isSnapshot() {
-        return hasType(Vocabulary.s_c_verze_pojmu);
-    }
-
-    @Override
     public String toString() {
         return "Term{" +
                 getLabel() +
                 " <" + getUri() + '>' +
-                ", types=" + types +
+                ", types=" + getTypes() +
                 '}';
     }
 }
