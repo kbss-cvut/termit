@@ -584,17 +584,32 @@ public class TermController extends BaseController {
                              .build();
     }
 
+    @GetMapping(value = "vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/versions",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<?> getSnapshots(@PathVariable String vocabularyIdFragment,
+                                          @PathVariable String termIdFragment,
+                                          @RequestParam(name = QueryParams.NAMESPACE,
+                                                        required = false) Optional<String> namespace,
+                                          @RequestParam(name = "at", required = false) Optional<String> at) {
+        final Term term = termService.getRequiredReference(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
+        return getTermSnapshots(at, term);
+    }
+
+    private ResponseEntity<?> getTermSnapshots(Optional<String> at, Term term) {
+        if (at.isPresent()) {
+            final Instant instant = RestUtils.parseTimestamp(at.get());
+            return ResponseEntity.ok(termService.findVersionValidAt(term, instant));
+        }
+        return ResponseEntity.ok(termService.findSnapshots(term));
+    }
+
     @GetMapping(value = "/terms/{termIdFragment}/versions",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(@PathVariable String termIdFragment,
                                           @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
         final Term term = termService.getRequiredReference(idResolver.resolveIdentifier(namespace, termIdFragment));
-        if (at.isPresent()) {
-            final Instant instant = RestUtils.parseTimestamp(at.get());
-            return ResponseEntity.ok(termService.findVersionValidAt(term, instant));
-        }
-        return ResponseEntity.ok(termService.findSnapshots(term));
+        return getTermSnapshots(at, term);
     }
 
     /**
