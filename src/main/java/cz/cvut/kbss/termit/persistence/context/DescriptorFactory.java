@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see
  * <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.persistence;
+package cz.cvut.kbss.termit.persistence.context;
 
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
