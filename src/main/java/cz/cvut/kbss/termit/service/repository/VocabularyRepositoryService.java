@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -31,6 +32,8 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -46,7 +49,8 @@ import java.util.stream.Collectors;
 
 @CacheConfig(cacheNames = "vocabularies")
 @Service
-public class VocabularyRepositoryService extends BaseAssetRepositoryService<Vocabulary> implements VocabularyService {
+public class VocabularyRepositoryService extends BaseAssetRepositoryService<Vocabulary>
+        implements ApplicationEventPublisherAware, VocabularyService {
 
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyRepositoryService.class);
 
@@ -61,6 +65,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     private final Configuration config;
 
     private final ApplicationContext context;
+
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public VocabularyRepositoryService(ApplicationContext context, VocabularyDao vocabularyDao,
@@ -124,6 +130,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
             vocabulary.setModel(new Model());
             vocabulary.getModel().setUri(idResolver.generateIdentifier(iriBase, Constants.DEFAULT_MODEL_IRI_COMPONENT));
         }
+    }
+
+    @Override
+    protected void postPersist(Vocabulary instance) {
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(instance));
     }
 
     @Override
@@ -270,7 +281,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @Override
     public Snapshot createSnapshot(Vocabulary vocabulary) {
-        return getSnapshotCreator().createSnapshot(vocabulary);
+        final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
+        return s;
     }
 
     private SnapshotCreator getSnapshotCreator() {
@@ -286,5 +299,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
         return vocabularyDao.findVersionValidAt(vocabulary, at)
                             .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
+    }
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 }
