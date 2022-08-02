@@ -29,16 +29,14 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  */
 @Component
 @Profile("!no-cache")
-public class CachingVocabularyContextMapper implements VocabularyContextMapper {
+public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CachingVocabularyContextMapper.class);
-
-    private final EntityManager em;
 
     private Map<URI, List<URI>> contexts;
 
     public CachingVocabularyContextMapper(EntityManager em) {
-        this.em = em;
+        super(em);
     }
 
     /**
