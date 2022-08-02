@@ -20,6 +20,8 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  * <p>
  * This incurs a performance penalty of executing a simple query, but does not suffer from potentially stale cache
  * data.
+ *
+ * Note that only <i>canonical</i> versions of vocabularies are considered for context resolution.
  */
 @Component
 @Profile("no-cache")
@@ -37,9 +39,13 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
     public URI getVocabularyContext(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         try {
-            return em.createNativeQuery("SELECT ?g WHERE { GRAPH ?g { ?vocabulary a ?type . } }", URI.class)
+            return em.createNativeQuery("SELECT ?g WHERE { " +
+                                                "GRAPH ?g { ?vocabulary a ?type . " +
+                                                "FILTER NOT EXISTS { ?vocabulary ?basedOnVersion ?canonical . } " +
+                                                "}}", URI.class)
                      .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
                      .setParameter("vocabulary", vocabularyUri)
+                     .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
                      .getSingleResult();
         } catch (NoResultException e) {
             LOG.debug("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",

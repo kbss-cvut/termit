@@ -24,6 +24,8 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  * Caching implementation of the {@link VocabularyContextMapper}.
  * <p>
  * Context map is loaded on startup and reloaded every time a vocabulary is created.
+ *
+ * Note that only <i>canonical</i> versions of vocabularies are considered for context resolution.
  */
 @Component
 @Profile("!no-cache")
@@ -45,8 +47,13 @@ public class CachingVocabularyContextMapper implements VocabularyContextMapper {
     @EventListener(value = {VocabularyCreatedEvent.class, EvictCacheEvent.class, ContextRefreshedEvent.class})
     public void load() {
         this.contexts = new HashMap<>();
-        em.createNativeQuery("SELECT ?v ?g WHERE { GRAPH ?g { ?v a ?type . } }")
+        em.createNativeQuery("SELECT ?v ?g WHERE { " +
+                                     "GRAPH ?g { " +
+                                     "?v a ?type . " +
+                                     "FILTER NOT EXISTS { ?vocabulary ?basedOnVersion ?canonical . } " +
+                                     "}}")
           .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
+          .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
           .getResultStream().forEach(row -> {
               assert row instanceof Object[];
               assert ((Object[]) row).length == 2;
