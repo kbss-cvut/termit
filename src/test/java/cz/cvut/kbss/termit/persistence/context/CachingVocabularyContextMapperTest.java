@@ -5,7 +5,6 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
-import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -81,5 +81,18 @@ class CachingVocabularyContextMapperTest extends BaseDaoTestRunner {
         assertEquals(newVocabulary.getUri(), sut.getVocabularyContext(newVocabulary));
         sut.load(); // Event handler
         assertEquals(context, sut.getVocabularyContext(newVocabulary));
+    }
+
+    @Test
+    void getVocabularyContextReturnsCanonicalContextWhenAnotherInstanceIsBasedOnIt() {
+        final Vocabulary v = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(v, new EntityDescriptor(v.getUri())));
+        v.setProperties(Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_vychazi_z_verze,
+                                                 Collections.singleton(v.getUri().toString())));
+        final URI workingVersionCtx = Generator.generateUri();
+        transactional(() -> em.persist(v, new EntityDescriptor(workingVersionCtx)));
+        sut.load();
+
+        assertEquals(v.getUri(), sut.getVocabularyContext(v.getUri()));
     }
 }

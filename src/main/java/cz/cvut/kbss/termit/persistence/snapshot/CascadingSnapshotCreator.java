@@ -93,7 +93,7 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
                                                    .setParameter("vocabulary", toSnapshot.get(i))
                                                    .setParameter("cascadingRelationships", CASCADE_RELATIONSHIPS)
                                                    .getResultList());
-            // Explicitly imported vocabularies (it is likely it they were already added due to term relationships, but just
+            // Explicitly imported vocabularies (it is likely they were already added due to term relationships, but just
             // to be sure)
             toAdd.addAll(em.createNativeQuery("SELECT DISTINCT ?imported WHERE { ?v ?imports ?imported . }", URI.class)
                            .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
