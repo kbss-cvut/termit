@@ -7,8 +7,10 @@ import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -23,6 +25,8 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  * <p>
  * Context map is loaded on startup and reloaded every time a vocabulary is created.
  */
+@Component
+@Profile("!no-cache")
 public class CachingVocabularyContextMapper implements VocabularyContextMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CachingVocabularyContextMapper.class);
@@ -41,7 +45,7 @@ public class CachingVocabularyContextMapper implements VocabularyContextMapper {
     @EventListener(value = {VocabularyCreatedEvent.class, EvictCacheEvent.class, ContextRefreshedEvent.class})
     public void load() {
         this.contexts = new HashMap<>();
-        em.createNativeQuery("SELECT ?v ?g WHERE { GRAPH ?g { ?v a ?type . } } ORDER BY ?v")
+        em.createNativeQuery("SELECT ?v ?g WHERE { GRAPH ?g { ?v a ?type . } }")
           .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
           .getResultStream().forEach(row -> {
               assert row instanceof Object[];
