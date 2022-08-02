@@ -14,7 +14,6 @@
  */
 package cz.cvut.kbss.termit.util;
 
-import org.apache.poi.ss.formula.functions.Na;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
 
@@ -43,6 +42,7 @@ public class Configuration {
     private TextAnalysis textAnalysis = new TextAnalysis();
     private Glossary glossary = new Glossary();
     private PublicView publicView = new PublicView();
+    private Workspace workspace = new Workspace();
 
     public Persistence getPersistence() {
         return persistence;
@@ -130,6 +130,14 @@ public class Configuration {
 
     public void setPublicView(PublicView publicView) {
         this.publicView = publicView;
+    }
+
+    public Workspace getWorkspace() {
+        return workspace;
+    }
+
+    public void setWorkspace(Workspace workspace) {
+        this.workspace = workspace;
     }
 
     @org.springframework.context.annotation.Configuration
@@ -528,6 +536,21 @@ public class Configuration {
 
         public void setWhiteListProperties(final Set<String> whiteListProperties) {
             this.whiteListProperties = whiteListProperties;
+        }
+    }
+
+    @org.springframework.context.annotation.Configuration
+    public static class Workspace {
+
+        @NotNull
+        private boolean allVocabulariesEditable = true;
+
+        public boolean isAllVocabulariesEditable() {
+            return allVocabulariesEditable;
+        }
+
+        public void setAllVocabulariesEditable(boolean allVocabulariesEditable) {
+            this.allVocabulariesEditable = allVocabulariesEditable;
         }
     }
 }
