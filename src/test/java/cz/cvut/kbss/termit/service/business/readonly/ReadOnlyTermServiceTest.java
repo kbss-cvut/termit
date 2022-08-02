@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -24,11 +25,15 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
@@ -209,6 +214,7 @@ class ReadOnlyTermServiceTest {
 
     @Test
     void findVersionValidAtRetrievesTermVersionsValidAtSpecifiedTimestamp() {
+        when(configuration.getPublicView()).thenReturn(new Configuration.PublicView());
         final Term term = Generator.generateTermWithId();
         final ReadOnlyTerm asset = new ReadOnlyTerm(term);
         final Term version = Generator.generateTermWithId();
@@ -218,5 +224,24 @@ class ReadOnlyTermServiceTest {
         final ReadOnlyTerm result = sut.findVersionValidAt(asset, timestamp);
         assertEquals(new ReadOnlyTerm(version), result);
         verify(termService).findVersionValidAt(term, timestamp);
+    }
+
+    @Test
+    void findVersionAtReturnsReadOnlyTermWithWhitelistedProperties() {
+        final Term term = Generator.generateTermWithId();
+        term.setProperties(new HashMap<>());
+        term.getProperties().put(DC.Terms.REFERENCES, Collections.singleton(Generator.generateUri().toString()));
+        // This one is not whitelisted, so it will not be exported
+        term.getProperties().put(DC.Elements.DATE, Collections.singleton(Instant.now().toString()));
+        final Configuration.PublicView whitelistedProps = new Configuration.PublicView();
+        whitelistedProps.setWhiteListProperties(Collections.singleton(DC.Terms.REFERENCES));
+        when(configuration.getPublicView()).thenReturn(whitelistedProps);
+        final Instant timestamp = Instant.now();
+        when(termService.findVersionValidAt(term, timestamp)).thenReturn(term);
+
+        final ReadOnlyTerm result = sut.findVersionValidAt(new ReadOnlyTerm(term), timestamp);
+        assertThat(result.getProperties(), hasEntry(DC.Terms.REFERENCES, term.getProperties()
+                                                                             .get(DC.Terms.REFERENCES)));
+        assertThat(result.getProperties(), not(hasEntry(DC.Elements.DATE, term.getProperties().get(DC.Elements.DATE))));
     }
 }

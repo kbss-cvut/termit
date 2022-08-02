@@ -5,9 +5,6 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Utils;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.repository.Repository;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,17 +45,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
     }
 
     private void generateRelatedRelationships(Term term, Collection<Term> related, String relationship) {
-        final Repository repo = em.unwrap(Repository.class);
-        try (final RepositoryConnection conn = repo.getConnection()) {
-            final ValueFactory vf = conn.getValueFactory();
-            conn.begin();
-            for (Term r : related) {
-                // Don't put it into any specific context to make it look like inference
-                conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(relationship),
-                         vf.createIRI(term.getUri().toString()));
-            }
-            conn.commit();
-        }
+        Generator.simulateInferredSkosRelationship(term, related, relationship, em);
     }
 
     @Test
