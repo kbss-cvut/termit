@@ -23,7 +23,7 @@ INSERT {
               pdp:má-datum-a-čas-vytvoření-verze ?created .
     }
 } WHERE {
-    GRAPH ?vocabulary {
+    GRAPH ?context {
     ?vocabulary a pdp:slovník ;
                 pdp:má-glosář ?glossary ;
                 pdp:má-model ?model ;
