@@ -1,9 +1,14 @@
 package cz.cvut.kbss.termit.service.workspace;
 
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
+import cz.cvut.kbss.termit.workspace.EditableVocabularies;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Manages workspace.
@@ -13,6 +18,17 @@ import java.util.Collection;
  */
 @Service
 public class WorkspaceService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(WorkspaceService.class);
+
+    private final VocabularyContextMapper contextMapper;
+
+    private final EditableVocabularies vocabularies;
+
+    public WorkspaceService(VocabularyContextMapper contextMapper, EditableVocabularies vocabularies) {
+        this.contextMapper = contextMapper;
+        this.vocabularies = vocabularies;
+    }
 
     /**
      * Opens the specified set of repository contexts for editing.
@@ -31,6 +47,7 @@ public class WorkspaceService {
      * @param contexts Contexts to open for editing
      */
     public void openForEditing(Collection<URI> contexts) {
-
+        Objects.requireNonNull(contexts);
+        // TODO Foreach context: Resolve vocabulary from context and register
     }
 }

@@ -12,9 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DefaultVocabularyContextMapperTest extends BaseDaoTestRunner {
 
@@ -62,5 +62,34 @@ class DefaultVocabularyContextMapperTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(v, new EntityDescriptor(workingVersionCtx)));
 
         assertEquals(v.getUri(), sut.getVocabularyContext(v.getUri()));
+    }
+
+    @Test
+    void getVocabularyInContextReturnsIdentifierOfVocabularyStoredInSpecifiedContext() {
+        final URI context = Generator.generateUri();
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary, new EntityDescriptor(context)));
+
+        final Optional<URI> result = sut.getVocabularyInContext(context);
+        assertTrue(result.isPresent());
+        assertEquals(vocabulary.getUri(), result.get());
+    }
+
+    @Test
+    void getVocabularyContextReturnsEmptyOptionalWhenSpecifiedContextDoesNotExistOrDoesNotContainVocabulary() {
+        final Optional<URI> result = sut.getVocabularyInContext(Generator.generateUri());
+        assertNotNull(result);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void getVocabularyContextThrowsAmbiguousVocabularyContextExceptionWhenContextContainsMultipleVocabularies() {
+        final URI context = Generator.generateUri();
+        final Vocabulary vOne = Generator.generateVocabularyWithId();
+        final Vocabulary vTwo = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vOne, new EntityDescriptor(context)));
+        transactional(() -> em.persist(vTwo, new EntityDescriptor(context)));
+
+        assertThrows(AmbiguousVocabularyContextException.class, () -> sut.getVocabularyInContext(context));
     }
 }
