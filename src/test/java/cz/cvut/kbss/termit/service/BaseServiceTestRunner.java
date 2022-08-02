@@ -13,8 +13,6 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.TransactionalTestRunner;
-import cz.cvut.kbss.termit.environment.config.TestConfig;
-import cz.cvut.kbss.termit.environment.config.TestPersistenceAspectsConfig;
 import cz.cvut.kbss.termit.environment.config.TestPersistenceConfig;
 import cz.cvut.kbss.termit.environment.config.TestServiceConfig;
 import cz.cvut.kbss.termit.util.Configuration;
