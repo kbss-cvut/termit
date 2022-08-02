@@ -52,9 +52,10 @@ class CachingVocabularyContextMapperTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void getVocabularyContextThrowsNotFoundExceptionWhenNoContextForSpecifiedVocabularyExists() {
+    void getVocabularyContextReturnsVocabularyIriWhenNoContextForSpecifiedVocabularyExists() {
         sut.load();
-        assertThrows(NotFoundException.class, () -> sut.getVocabularyContext(Generator.generateUri()));
+        final URI vocabularyUri = Generator.generateUri();
+        assertEquals(vocabularyUri, sut.getVocabularyContext(vocabularyUri));
     }
 
     @Test
@@ -73,10 +74,12 @@ class CachingVocabularyContextMapperTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(v, new EntityDescriptor(v.getUri())));
         sut.load();
         final Vocabulary newVocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(newVocabulary, new EntityDescriptor(newVocabulary.getUri())));
+        final URI context = Generator.generateUri();
+        transactional(() -> em.persist(newVocabulary, new EntityDescriptor(context)));
 
-        assertThrows(NotFoundException.class, () -> sut.getVocabularyContext(newVocabulary));
-        sut.load(); // Event handler
+        // No mapping -> return vocabulary IRI
         assertEquals(newVocabulary.getUri(), sut.getVocabularyContext(newVocabulary));
+        sut.load(); // Event handler
+        assertEquals(context, sut.getVocabularyContext(newVocabulary));
     }
 }

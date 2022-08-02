@@ -11,9 +11,13 @@
  */
 package cz.cvut.kbss.termit.environment.config;
 
+import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.config.PersistenceConfig;
 import cz.cvut.kbss.termit.environment.TestPersistenceFactory;
+import cz.cvut.kbss.termit.persistence.context.CachingVocabularyContextMapper;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
@@ -25,4 +29,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @ComponentScan(basePackages = "cz.cvut.kbss.termit.persistence")
 @EnableTransactionManagement
 public class TestPersistenceConfig {
+
+    @Bean
+    public VocabularyContextMapper vocabularyContextMapper(EntityManager em) {
+        return new CachingVocabularyContextMapper(em);
+    }
 }

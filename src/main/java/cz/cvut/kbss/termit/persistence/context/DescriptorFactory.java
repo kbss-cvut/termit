@@ -37,9 +37,12 @@ public class DescriptorFactory {
 
     private final EntityManagerFactory emf;
 
+    private final VocabularyContextMapper contextMapper;
+
     @Autowired
-    public DescriptorFactory(EntityManagerFactory emf) {
+    public DescriptorFactory(EntityManagerFactory emf, VocabularyContextMapper contextMapper) {
         this.emf = emf;
+        this.contextMapper = contextMapper;
     }
 
     /**
@@ -58,9 +61,9 @@ public class DescriptorFactory {
         return vocabularyDescriptor(vocabulary.getUri());
     }
 
-    private static EntityDescriptor assetDescriptor(URI vocabularyUri) {
+    private EntityDescriptor assetDescriptor(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
-        return new EntityDescriptor(vocabularyUri);
+        return new EntityDescriptor(contextMapper.getVocabularyContext(vocabularyUri));
     }
 
     public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attribute) {
