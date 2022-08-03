@@ -6,12 +6,14 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AmbiguousVocabularyContextException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,12 +58,21 @@ class DefaultVocabularyContextMapperTest extends BaseDaoTestRunner {
     void getVocabularyContextReturnsCanonicalContextWhenAnotherInstanceIsBasedOnIt() {
         final Vocabulary v = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(v, new EntityDescriptor(v.getUri())));
-        v.setProperties(Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_vychazi_z_verze,
-                                                 Collections.singleton(v.getUri().toString())));
         final URI workingVersionCtx = Generator.generateUri();
-        transactional(() -> em.persist(v, new EntityDescriptor(workingVersionCtx)));
+        transactional(() -> {
+            em.persist(v, new EntityDescriptor(workingVersionCtx));
+            generateCanonicalContextReference(workingVersionCtx, v.getUri(), em);
+        });
 
         assertEquals(v.getUri(), sut.getVocabularyContext(v.getUri()));
+    }
+
+    static void generateCanonicalContextReference(URI context, URI canonical, EntityManager em) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (final RepositoryConnection con = repo.getConnection()) {
+            final ValueFactory vf = con.getValueFactory();
+            con.add(vf.createIRI(context.toString()), vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_vychazi_z_verze), vf.createIRI(canonical.toString()), vf.createIRI(context.toString()));
+        }
     }
 
     @Test
