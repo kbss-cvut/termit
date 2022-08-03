@@ -50,9 +50,24 @@ public class EditableVocabularies implements Serializable {
         editableVocabularies.clear();
     }
 
+    /**
+     * Checks whether the specified vocabulary is editable.
+     * <p>
+     * A vocabulary is editable either if all vocabularies are editable (configured via {@link
+     * cz.cvut.kbss.termit.util.Configuration.Workspace}) or when this instance contains a reference to a context
+     * containing a working copy of the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary to check
+     * @return {@code true} when vocabulary is editable, {@code false otherwise}
+     */
     public boolean isEditable(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        return allVocabulariesEditable || editableVocabularies.containsKey(vocabulary.getUri());
+        return isEditable(vocabulary.getUri());
+    }
+
+    public boolean isEditable(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        return allVocabulariesEditable || editableVocabularies.containsKey(vocabularyUri);
     }
 
     public Optional<URI> getVocabularyContext(Vocabulary vocabulary) {
