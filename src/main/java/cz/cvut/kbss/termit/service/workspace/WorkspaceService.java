@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
@@ -47,12 +48,24 @@ public class WorkspaceService {
      * Note that it is expected that the contexts already exist, it is not the responsibility of TermIt to create them
      * or populate them with any seed data.
      *
+     * If contexts were previously open for editing during a session, they are cleared and only the specified are open.
+     *
      * @param contexts Contexts to open for editing
      */
     public void openForEditing(Collection<URI> contexts) {
         Objects.requireNonNull(contexts);
         LOG.debug("Opening the following vocabulary contexts for editing: {}", contexts);
+        vocabularies.clear();
         contexts.forEach(ctx -> vocabularies.registerEditableVocabulary(contextMapper.getVocabularyInContext(ctx)
                                                                                      .orElseThrow(() -> new NotFoundException("No vocabulary found in context " + uriToString(ctx))), ctx));
+    }
+
+    /**
+     * Gets the currently registered editable contexts.
+     *
+     * @return Set of context identifiers
+     */
+    public Set<URI> getCurrentlyEditedContexts() {
+        return vocabularies.getRegisteredContexts();
     }
 }

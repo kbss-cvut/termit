@@ -6,15 +6,17 @@ import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,6 +53,19 @@ class WorkspaceServiceTest {
         final URI emptyCtx = Generator.generateUri();
         when(contextMapper.getVocabularyInContext(emptyCtx)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> sut.openForEditing(Collections.singleton(emptyCtx)));
+        assertThrows(NotFoundException.class, () -> sut.openForEditing(Set.of(emptyCtx)));
+    }
+
+    @Test
+    void openForEditingClearsExistingEditedVocabularies() {
+        final URI ctx = Generator.generateUri();
+        final URI vocabulary = Generator.generateUri();
+        when(contextMapper.getVocabularyInContext(ctx)).thenReturn(Optional.of(vocabulary));
+
+
+        sut.openForEditing(Set.of(ctx));
+        final InOrder inOrder = Mockito.inOrder(editableVocabularies);
+        inOrder.verify(editableVocabularies).clear();
+        inOrder.verify(editableVocabularies).registerEditableVocabulary(vocabulary, ctx);
     }
 }
