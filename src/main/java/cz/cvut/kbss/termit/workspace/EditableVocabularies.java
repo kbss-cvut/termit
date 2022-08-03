@@ -50,7 +50,12 @@ public class EditableVocabularies implements Serializable {
 
     public Optional<URI> getVocabularyContext(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        return Optional.ofNullable(editableVocabularies.get(vocabulary.getUri()));
+        return getVocabularyContext(vocabulary.getUri());
+    }
+
+    public Optional<URI> getVocabularyContext(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        return Optional.ofNullable(editableVocabularies.get(vocabularyUri));
     }
 
     /**
