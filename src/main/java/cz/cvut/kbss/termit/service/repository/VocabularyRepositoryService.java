@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -62,6 +63,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final ChangeRecordService changeRecordService;
 
+    private final EditableVocabularies editableVocabularies;
+
     private final Configuration config;
 
     private final ApplicationContext context;
@@ -72,13 +75,15 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public VocabularyRepositoryService(ApplicationContext context, VocabularyDao vocabularyDao,
                                        IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
-                                       @Lazy TermService termService, final Configuration config) {
+                                       @Lazy TermService termService,
+                                       EditableVocabularies editableVocabularies, Configuration config) {
         super(validator);
         this.context = context;
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.termService = termService;
         this.changeRecordService = changeRecordService;
+        this.editableVocabularies = editableVocabularies;
         this.config = config;
     }
 
@@ -94,10 +99,26 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao;
     }
 
-    @Cacheable
+    // Cache only if all vocabularies are editable
+    @Cacheable(condition = "@configuration.workspace.allVocabulariesEditable")
     @Override
     public List<Vocabulary> findAll() {
-        return super.findAll();
+        final List<Vocabulary> result = super.findAll();
+        if (!config.getWorkspace().isAllVocabulariesEditable()) {
+            result.stream().filter(editableVocabularies::isEditable)
+                  .forEach(v -> v.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni));
+        }
+        return result;
+    }
+
+    @Override
+    public Optional<Vocabulary> find(URI id) {
+        return super.find(id).map(v -> {
+            if (!editableVocabularies.isEditable(v)) {
+                v.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+            }
+            return v;
+        });
     }
 
     @CacheEvict(allEntries = true)
@@ -111,7 +132,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(),
-                                                          instance.getLabel()));
+                    instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
@@ -164,8 +185,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                 Collectors.toSet());
         if (!invalid.isEmpty()) {
             throw new VocabularyImportException("Cannot remove imports of vocabularies " + invalid +
-                                                        ", there are still relationships between terms.",
-                                                "error.vocabulary.update.imports.danglingTermReferences");
+                    ", there are still relationships between terms.",
+                    "error.vocabulary.update.imports.danglingTermReferences");
         }
     }
 

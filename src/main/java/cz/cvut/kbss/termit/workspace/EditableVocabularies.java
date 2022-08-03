@@ -45,7 +45,7 @@ public class EditableVocabularies implements Serializable {
 
     public boolean isEditable(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        return editableVocabularies.containsKey(vocabulary.getUri()) || allVocabulariesEditable;
+        return allVocabulariesEditable || editableVocabularies.containsKey(vocabulary.getUri());
     }
 
     public Optional<URI> getVocabularyContext(Vocabulary vocabulary) {
