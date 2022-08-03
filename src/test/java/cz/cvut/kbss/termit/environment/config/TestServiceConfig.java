@@ -17,6 +17,8 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.service.document.html.DummySelectorGenerator;
 import cz.cvut.kbss.termit.service.document.html.HtmlSelectorGenerators;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.aspectj.lang.Aspects;
 import org.jsoup.nodes.Element;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -95,5 +97,10 @@ public class TestServiceConfig {
     @Primary
     public ApplicationEventPublisher eventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public EditableVocabularies editableVocabularies(Configuration config) {
+        return new EditableVocabularies(config);
     }
 }

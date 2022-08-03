@@ -20,11 +20,6 @@ package cz.cvut.kbss.termit.security;
 public class SecurityConstants {
 
     /**
-     * Cookie used for the remember-me function
-     */
-    public static final String REMEMBER_ME_COOKIE_NAME = "remember-me";
-
-    /**
      * Username parameter for the login form
      */
     public static final String USERNAME_PARAM = "username";

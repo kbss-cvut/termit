@@ -7,19 +7,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class EditableVocabulariesTest {
 
-    private final Configuration.Workspace workspaceConfig = new Configuration.Workspace();
+    private Configuration configuration;
 
     private EditableVocabularies sut;
 
     @BeforeEach
     void setUp() {
-        final Configuration configuration = new Configuration();
-        configuration.setWorkspace(workspaceConfig);
+        this.configuration = new Configuration();
         this.sut = new EditableVocabularies(configuration);
     }
 
@@ -34,7 +35,8 @@ class EditableVocabulariesTest {
 
     @Test
     void isEditableReturnsTrueForUnregisteredVocabularyWhenAllVocabulariesAreEditable() {
-        workspaceConfig.setAllVocabulariesEditable(true);
+        configuration.getWorkspace().setAllVocabulariesEditable(true);
+        this.sut = new EditableVocabularies(configuration);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
         assertTrue(sut.isEditable(vocabulary));
@@ -42,9 +44,21 @@ class EditableVocabulariesTest {
 
     @Test
     void isEditableReturnsFalseForUnregisteredVocabularyWhenAllVocabulariesAreNotEditable() {
-        workspaceConfig.setAllVocabulariesEditable(false);
+        configuration.getWorkspace().setAllVocabulariesEditable(false);
+        this.sut = new EditableVocabularies(configuration);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
         assertFalse(sut.isEditable(vocabulary));
+    }
+
+    @Test
+    void clearRemovesPreviouslyRegisteredContexts() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final URI context = Generator.generateUri();
+        sut.registerEditableVocabulary(vocabulary.getUri(), context);
+
+        assertEquals(Set.of(context), sut.getRegisteredContexts());
+        sut.clear();
+        assertTrue(sut.getRegisteredContexts().isEmpty());
     }
 }

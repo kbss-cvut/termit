@@ -3,7 +3,6 @@ package cz.cvut.kbss.termit.workspace;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.context.annotation.SessionScope;
 
 import java.io.Serializable;
@@ -11,7 +10,7 @@ import java.net.URI;
 import java.util.*;
 
 @Component
-@RequestScope
+@SessionScope
 public class EditableVocabularies implements Serializable {
 
     private final boolean allVocabulariesEditable;
@@ -27,13 +26,21 @@ public class EditableVocabularies implements Serializable {
 
     /**
      * Registers an editable copy of the vocabulary with the specified identifier to the specified repository context.
+     *
      * @param vocabularyUri Vocabulary identifier
-     * @param contextUri Identifier of the context in which the editable data are
+     * @param contextUri    Identifier of the context in which the editable data are
      */
     public void registerEditableVocabulary(URI vocabularyUri, URI contextUri) {
         Objects.requireNonNull(vocabularyUri);
         Objects.requireNonNull(contextUri);
         editableVocabularies.put(vocabularyUri, contextUri);
+    }
+
+    /**
+     * Clears the registered contexts.
+     */
+    public void clear() {
+        editableVocabularies.clear();
     }
 
     public boolean isEditable(Vocabulary vocabulary) {

@@ -90,8 +90,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils,
                             userDetailsService,
                             objectMapper)).sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and();
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 
     private JwtAuthenticationFilter authenticationFilter() throws Exception {

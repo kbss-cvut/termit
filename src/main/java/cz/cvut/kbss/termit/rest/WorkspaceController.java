@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Set;
 
 @RestController
 @RequestMapping(WorkspaceController.PATH)
@@ -28,5 +29,11 @@ public class WorkspaceController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void openForEditing(@RequestBody Collection<URI> contexts) {
         workspaceService.openForEditing(contexts);
+    }
+
+    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
+    public Set<URI> getCurrentWorkspace() {
+        return workspaceService.getCurrentlyEditedContexts();
     }
 }
