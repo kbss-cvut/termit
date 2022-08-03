@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.workspace;
 
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.slf4j.Logger;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Objects;
+
+import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 /**
  * Manages workspace.
@@ -48,6 +51,8 @@ public class WorkspaceService {
      */
     public void openForEditing(Collection<URI> contexts) {
         Objects.requireNonNull(contexts);
-        // TODO Foreach context: Resolve vocabulary from context and register
+        LOG.debug("Opening the following vocabulary contexts for editing: {}", contexts);
+        contexts.forEach(ctx -> vocabularies.registerEditableVocabulary(contextMapper.getVocabularyInContext(ctx)
+                                                                                     .orElseThrow(() -> new NotFoundException("No vocabulary found in context " + uriToString(ctx))), ctx));
     }
 }

@@ -3,19 +3,18 @@ package cz.cvut.kbss.termit.workspace;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.context.annotation.SessionScope;
 
+import java.io.Serializable;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Component
-@SessionScope
-public class EditableVocabularies {
+@RequestScope
+public class EditableVocabularies implements Serializable {
 
-    private final Configuration.Workspace workspaceConfig;
+    private final boolean allVocabulariesEditable;
 
     /**
      * Mapping of editable vocabulary identifiers to contexts in which the editable version is stored.
@@ -23,7 +22,7 @@ public class EditableVocabularies {
     private final Map<URI, URI> editableVocabularies = new HashMap<>();
 
     public EditableVocabularies(Configuration configuration) {
-        this.workspaceConfig = configuration.getWorkspace();
+        this.allVocabulariesEditable = configuration.getWorkspace().isAllVocabulariesEditable();
     }
 
     /**
@@ -39,11 +38,20 @@ public class EditableVocabularies {
 
     public boolean isEditable(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        return editableVocabularies.containsKey(vocabulary.getUri()) || workspaceConfig.isAllVocabulariesEditable();
+        return editableVocabularies.containsKey(vocabulary.getUri()) || allVocabulariesEditable;
     }
 
     public Optional<URI> getVocabularyContext(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return Optional.ofNullable(editableVocabularies.get(vocabulary.getUri()));
+    }
+
+    /**
+     * Gets a set of contexts containing the registered editable vocabularies.
+     *
+     * @return Set of context identifiers
+     */
+    public Set<URI> getRegisteredContexts() {
+        return new HashSet<>(editableVocabularies.values());
     }
 }
