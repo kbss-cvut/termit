@@ -46,10 +46,10 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
     public void load() {
         this.contexts = new HashMap<>();
         em.createNativeQuery("SELECT ?v ?g WHERE { " +
-                                     "GRAPH ?g { " +
-                                     "?v a ?type . " +
-                                     "FILTER NOT EXISTS { ?vocabulary ?basedOnVersion ?canonical . } " +
-                                     "}}")
+                  "GRAPH ?g { " +
+                  "?v a ?type . " +
+                  "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
+                  "}}")
           .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
           .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
           .getResultStream().forEach(row -> {

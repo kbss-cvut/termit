@@ -41,9 +41,9 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
         Objects.requireNonNull(vocabularyUri);
         try {
             return em.createNativeQuery("SELECT ?g WHERE { " +
-                                                "GRAPH ?g { ?vocabulary a ?type . " +
-                                                "FILTER NOT EXISTS { ?vocabulary ?basedOnVersion ?canonical . } " +
-                                                "}}", URI.class)
+                             "GRAPH ?g { ?vocabulary a ?type . " +
+                             "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
+                             "}}", URI.class)
                      .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
                      .setParameter("vocabulary", vocabularyUri)
                      .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
