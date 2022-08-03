@@ -2,6 +2,8 @@ package cz.cvut.kbss.termit.workspace;
 
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.util.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.SessionScope;
 
@@ -9,9 +11,13 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.*;
 
+import static cz.cvut.kbss.termit.util.Utils.uriToString;
+
 @Component
 @SessionScope
 public class EditableVocabularies implements Serializable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(EditableVocabularies.class);
 
     private final boolean allVocabulariesEditable;
 
@@ -33,6 +39,7 @@ public class EditableVocabularies implements Serializable {
     public void registerEditableVocabulary(URI vocabularyUri, URI contextUri) {
         Objects.requireNonNull(vocabularyUri);
         Objects.requireNonNull(contextUri);
+        LOG.debug("Registering working context {} for vocabulary {}.", uriToString(contextUri), uriToString(vocabularyUri));
         editableVocabularies.put(vocabularyUri, contextUri);
     }
 

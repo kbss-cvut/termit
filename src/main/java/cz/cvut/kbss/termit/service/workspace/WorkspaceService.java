@@ -47,7 +47,7 @@ public class WorkspaceService {
      * <p>
      * Note that it is expected that the contexts already exist, it is not the responsibility of TermIt to create them
      * or populate them with any seed data.
-     *
+     * <p>
      * If contexts were previously open for editing during a session, they are cleared and only the specified are open.
      *
      * @param contexts Contexts to open for editing

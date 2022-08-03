@@ -1,15 +1,11 @@
 package cz.cvut.kbss.termit.persistence.context;
 
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Optional;
-
-import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 /**
  * {@link VocabularyContextMapper} implementation based on editable vocabularies.
@@ -20,8 +16,6 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
 @Component
 @Primary
 public class WorkspaceVocabularyContextMapper implements VocabularyContextMapper {
-
-    private static final Logger LOG = LoggerFactory.getLogger(WorkspaceVocabularyContextMapper.class);
 
     private final VocabularyContextMapper delegatee;
 
@@ -36,11 +30,7 @@ public class WorkspaceVocabularyContextMapper implements VocabularyContextMapper
     @Override
     public URI getVocabularyContext(URI vocabularyUri) {
         return editableVocabularies.getVocabularyContext(vocabularyUri)
-                                   // Abusing Optional.map to peek on the wrapped instance and log
-                                   .map(ctx -> {
-                                       LOG.trace("Overriding canonical context of vocabulary {} with edited context {}.", uriToString(vocabularyUri), uriToString(ctx));
-                                       return ctx;
-                                   }).orElseGet(() -> delegatee.getVocabularyContext(vocabularyUri));
+                                   .orElseGet(() -> delegatee.getVocabularyContext(vocabularyUri));
     }
 
     @Override
