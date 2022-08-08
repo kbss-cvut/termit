@@ -37,6 +37,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -123,6 +124,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @CacheEvict(allEntries = true)
     @Override
+    @Transactional
     public void persist(Vocabulary instance) {
         super.persist(instance);
     }
@@ -164,6 +166,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         verifyVocabularyImports(instance);
     }
 
+    @PreAuthorize("@authorizationService.canEdit(#instance)")
     @CacheEvict(allEntries = true)
     @Override
     @Transactional
@@ -248,6 +251,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getLastModified();
     }
 
+    @PreAuthorize("@authorizationService.canEdit(#instance)")
     @CacheEvict(allEntries = true)
     @Override
     public void remove(Vocabulary instance) {
@@ -269,6 +273,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         super.remove(instance);
     }
 
+    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
     @Override
     @Async
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
@@ -300,6 +305,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getTermCount(vocabulary);
     }
 
+    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
     @Override
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);

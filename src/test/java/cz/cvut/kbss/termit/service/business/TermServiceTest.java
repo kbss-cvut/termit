@@ -322,7 +322,6 @@ class TermServiceTest {
         final Term term = Generator.generateTermWithId();
         final TermDefinitionSource definitionSource = new TermDefinitionSource();
         definitionSource.setTarget(new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
-        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
@@ -339,7 +338,6 @@ class TermServiceTest {
         term.setDefinitionSource(existingSource);
         final TermDefinitionSource definitionSource = new TermDefinitionSource();
         definitionSource.setTarget(new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
-        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
@@ -366,7 +364,8 @@ class TermServiceTest {
         final Comment comment = new Comment();
         comment.setAsset(term.getUri());
         comment.setCreated(Utils.timestamp());
-        when(commentService.findAll(eq(term), any(Instant.class), any(Instant.class))).thenReturn(Collections.singletonList(comment));
+        when(commentService.findAll(eq(term), any(Instant.class), any(Instant.class))).thenReturn(
+                Collections.singletonList(comment));
 
         final Instant from = Constants.EPOCH_TIMESTAMP;
         final Instant to = Utils.timestamp();

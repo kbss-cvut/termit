@@ -763,7 +763,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        when(termServiceMock.getRequiredReference(termUri)).thenReturn(term);
+        when(termServiceMock.findRequired(termUri)).thenReturn(term);
         final TermDefinitionSource source = new TermDefinitionSource();
         final File file = Generator.generateFileWithId("test.html");
         source.setTarget(new FileOccurrenceTarget(file));
@@ -1086,13 +1086,13 @@ class TermControllerTest extends BaseControllerTestRunner {
     @Test
     void updateStatusSetsTermStatusToSpecifiedValue() throws Exception {
         final Term term = generateTermForStandalone();
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
 
         mockMvc.perform(put("/terms/" + TERM_NAME + "/status").queryParam(QueryParams.NAMESPACE, NAMESPACE)
                                                               .content(TermStatus.DRAFT.toString())
                                                               .contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
-        verify(termServiceMock).getRequiredReference(TERM_URI);
+        verify(termServiceMock).findRequired(TERM_URI);
         verify(termServiceMock).setStatus(term, TermStatus.DRAFT);
     }
 
