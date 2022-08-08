@@ -116,14 +116,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
     public void setStatus(Term term, TermStatus status) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(status);
-        final Term toUpdate = termDao.find(term.getUri())
-                                     .orElseThrow(() -> NotFoundException.create(Term.class, term.getUri()));
-
-        termDao.detach(toUpdate);
         if (status == TermStatus.CONFIRMED) {
-            termDao.setAsConfirmed(toUpdate);
+            termDao.setAsConfirmed(term);
         } else {
-            termDao.setAsDraft(toUpdate);
+            termDao.setAsDraft(term);
         }
     }
 
