@@ -50,8 +50,8 @@ public class VocabularyRepositoryServiceWorkspaceTest {
         when(dao.findAll()).thenReturn(vocabularies);
         final Set<Vocabulary> readOnly = vocabularies.stream().filter(v -> Generator.randomBoolean())
                                                      .collect(Collectors.toSet());
-        when(editableVocabularies.isEditable(any(Vocabulary.class))).thenReturn(false);
-        readOnly.forEach(v -> when(editableVocabularies.isEditable(v)).thenReturn(true));
+        when(editableVocabularies.isEditable(any(Vocabulary.class))).thenReturn(true);
+        readOnly.forEach(v -> when(editableVocabularies.isEditable(v)).thenReturn(false));
 
         final List<Vocabulary> result = sut.findAll();
         result.stream().filter(readOnly::contains)
@@ -60,6 +60,7 @@ public class VocabularyRepositoryServiceWorkspaceTest {
 
     @Test
     void findAddsReadOnlyTypeToNotEditedVocabulary() {
+        configuration.getWorkspace().setAllVocabulariesEditable(false);
         final Vocabulary editable = Generator.generateVocabularyWithId();
         final Vocabulary readOnly = Generator.generateVocabularyWithId();
         when(dao.find(editable.getUri())).thenReturn(Optional.of(editable));

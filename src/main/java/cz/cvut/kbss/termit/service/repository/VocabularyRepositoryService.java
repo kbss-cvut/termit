@@ -104,22 +104,16 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Cacheable(condition = "@configuration.workspace.allVocabulariesEditable")
     @Override
     public List<Vocabulary> findAll() {
-        final List<Vocabulary> result = super.findAll();
-        if (!config.getWorkspace().isAllVocabulariesEditable()) {
-            result.stream().filter(editableVocabularies::isEditable)
-                  .forEach(v -> v.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni));
-        }
-        return result;
+        return super.findAll();
     }
 
     @Override
-    public Optional<Vocabulary> find(URI id) {
-        return super.find(id).map(v -> {
-            if (!editableVocabularies.isEditable(v)) {
-                v.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
-            }
-            return v;
-        });
+    protected Vocabulary postLoad(Vocabulary instance) {
+        super.postLoad(instance);
+        if (!config.getWorkspace().isAllVocabulariesEditable() && !editableVocabularies.isEditable(instance)) {
+            instance.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+        }
+        return instance;
     }
 
     @CacheEvict(allEntries = true)
