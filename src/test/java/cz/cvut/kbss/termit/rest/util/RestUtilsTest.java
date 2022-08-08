@@ -15,7 +15,6 @@
 package cz.cvut.kbss.termit.rest.util;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
