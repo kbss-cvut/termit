@@ -1,20 +1,19 @@
 package cz.cvut.kbss.termit.dto.readonly;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.model.annotations.Properties;
+import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.util.HasTypes;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @OWLClass(iri = SKOS.CONCEPT)
-public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
+public class ReadOnlyTerm extends AbstractTerm {
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<MultilingualString> altLabels;
@@ -44,10 +43,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
     private Set<TermInfo> relatedMatch;
 
     @Properties
-    private Map<String,Set<String>> properties;
-
-    @Types
-    private Set<String> types;
+    private Map<String, Set<String>> properties;
 
     public ReadOnlyTerm() {
         // Public no-arg constructor for marshalling support
@@ -72,7 +68,8 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
             this.sources = new HashSet<>(term.getSources());
         }
         if (term.getParentTerms() != null) {
-            this.parentTerms = term.getParentTerms().stream().map(pTerm -> new ReadOnlyTerm(pTerm, propertiesToExport)).collect(Collectors.toSet());
+            this.parentTerms = term.getParentTerms().stream().map(pTerm -> new ReadOnlyTerm(pTerm, propertiesToExport))
+                                   .collect(Collectors.toSet());
         }
         if (term.getRelated() != null) {
             this.related = new HashSet<>(term.getRelated());
@@ -87,10 +84,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
             this.properties = new HashMap<>();
             term.getProperties().keySet().stream()
                 .filter(propertiesToExport::contains)
-                .forEach( property -> this.properties.put(property, term.getProperties().get(property)));
-        }
-        if (term.getTypes() != null) {
-            this.types = new HashSet<>(term.getTypes());
+                .forEach(property -> this.properties.put(property, term.getProperties().get(property)));
         }
     }
 
@@ -166,16 +160,6 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         this.notation = notation;
     }
 
-    @Override
-    public Set<String> getTypes() {
-        return types;
-    }
-
-    @Override
-    public void setTypes(Set<String> types) {
-        this.types = types;
-    }
-
     public Map<String, Set<String>> getProperties() {
         return properties;
     }
@@ -189,7 +173,7 @@ public class ReadOnlyTerm extends AbstractTerm implements HasTypes {
         return "ReadOnlyTerm{" +
                 getLabel() +
                 " <" + getUri() + '>' +
-                ", types=" + types +
+                ", types=" + getTypes() +
                 '}';
     }
 }

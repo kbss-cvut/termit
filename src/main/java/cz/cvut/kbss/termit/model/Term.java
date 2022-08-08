@@ -11,6 +11,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Utils;
@@ -29,16 +30,16 @@ import java.util.stream.Collectors;
 @Audited
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
-public class Term extends AbstractTerm implements HasTypes {
+public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
 
     /**
      * Names of columns used in term export.
      * <p>
      */
     public static final List<String> EXPORT_COLUMNS = List.of("IRI", "Label", "Alternative Labels", "Hidden Labels",
-                                                              "Definition", "Description", "Types", "Sources",
-                                                              "Parent Terms", "SubTerms", "Related Terms",
-                                                              "Related Match Terms", "Exact Match Terms", "Draft");
+            "Definition", "Description", "Types", "Sources",
+            "Parent Terms", "SubTerms", "Related Terms",
+            "Related Match Terms", "Exact Match Terms", "Draft");
 
     @Autowired
     @Transient
@@ -103,9 +104,6 @@ public class Term extends AbstractTerm implements HasTypes {
 
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<String>> properties;
-
-    @Types
-    private Set<String> types;
 
     public Term() {
     }
@@ -295,16 +293,6 @@ public class Term extends AbstractTerm implements HasTypes {
         this.definitionSource = definitionSource;
     }
 
-    @Override
-    public Set<String> getTypes() {
-        return types;
-    }
-
-    @Override
-    public void setTypes(Set<String> types) {
-        this.types = types;
-    }
-
     public Map<String, Set<String>> getProperties() {
         return properties;
     }
@@ -327,7 +315,7 @@ public class Term extends AbstractTerm implements HasTypes {
         exportMulti(sb, hiddenLabels, Term::exportMultilingualString);
         sb.append(',').append(exportMultilingualString(getDefinition()));
         sb.append(',').append(exportMultilingualString(description));
-        exportMulti(sb, types, String::toString);
+        exportMulti(sb, getTypes(), String::toString);
         exportMulti(sb, sources, String::toString);
         exportMulti(sb, parentTerms, pt -> pt.getUri().toString());
         exportMulti(sb, getSubTerms(), Term::termInfoStringIri);
@@ -387,7 +375,7 @@ public class Term extends AbstractTerm implements HasTypes {
         if (description != null) {
             row.createCell(5).setCellValue(description.toString());
         }
-        row.createCell(6).setCellValue(exportCollection(Utils.emptyIfNull(types)));
+        row.createCell(6).setCellValue(exportCollection(Utils.emptyIfNull(getTypes())));
         row.createCell(7).setCellValue(exportCollection(Utils.emptyIfNull(sources)));
         row.createCell(8)
            .setCellValue(exportCollection(Utils.emptyIfNull(parentTerms).stream().map(pt -> pt.getUri().toString())
@@ -497,7 +485,7 @@ public class Term extends AbstractTerm implements HasTypes {
         return "Term{" +
                 getLabel() +
                 " <" + getUri() + '>' +
-                ", types=" + types +
+                ", types=" + getTypes() +
                 '}';
     }
 }
