@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.net.URI;
 
 import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

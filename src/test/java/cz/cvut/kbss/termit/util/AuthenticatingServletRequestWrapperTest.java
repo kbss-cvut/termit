@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.util;
 
-import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet.AuthenticatingServletRequestWrapper;
 import org.junit.jupiter.api.BeforeEach;
