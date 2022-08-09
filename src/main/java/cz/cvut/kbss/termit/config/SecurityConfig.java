@@ -90,16 +90,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .and().exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             .and().cors().configurationSource(corsConfigurationSource()).and().csrf().disable()
             .addFilter(authenticationFilter())
-            .addFilter(
-                    new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils,
-                            userDetailsService,
-                            objectMapper)).sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+            .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils, userDetailsService,
+                                                  objectMapper));
     }
 
     private JwtAuthenticationFilter authenticationFilter() throws Exception {
         final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager(),
-                jwtUtils);
+                                                                                         jwtUtils);
         authenticationFilter.setFilterProcessesUrl(SecurityConstants.SECURITY_CHECK_URI);
         authenticationFilter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
         authenticationFilter.setAuthenticationFailureHandler(authenticationFailureHandler);
