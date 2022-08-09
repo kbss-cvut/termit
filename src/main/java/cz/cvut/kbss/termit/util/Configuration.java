@@ -43,6 +43,7 @@ public class Configuration {
     private Glossary glossary = new Glossary();
     private PublicView publicView = new PublicView();
     private Workspace workspace = new Workspace();
+    private Cors cors = new Cors();
 
     public Persistence getPersistence() {
         return persistence;
@@ -138,6 +139,14 @@ public class Configuration {
 
     public void setWorkspace(Workspace workspace) {
         this.workspace = workspace;
+    }
+
+    public Cors getCors() {
+        return cors;
+    }
+
+    public void setCors(Cors cors) {
+        this.cors = cors;
     }
 
     @org.springframework.context.annotation.Configuration
@@ -551,6 +560,20 @@ public class Configuration {
 
         public void setAllVocabulariesEditable(boolean allVocabulariesEditable) {
             this.allVocabulariesEditable = allVocabulariesEditable;
+        }
+    }
+
+    @org.springframework.context.annotation.Configuration
+    public static class Cors {
+        @NotNull
+        private String allowedOrigins = "http://localhost:3000";
+
+        public String getAllowedOrigins() {
+            return allowedOrigins;
+        }
+
+        public void setAllowedOrigin(String allowedOrigins) {
+            this.allowedOrigins = allowedOrigins;
         }
     }
 }
