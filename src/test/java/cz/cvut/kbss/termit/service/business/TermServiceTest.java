@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
@@ -66,8 +67,8 @@ class TermServiceTest {
     @Mock
     private CommentService commentService;
 
-    @Mock
-    private Configuration configuration;
+    @Spy
+    private Configuration configuration = new Configuration();
 
     @InjectMocks
     private TermService sut;
@@ -180,9 +181,7 @@ class TermServiceTest {
     @Test
     void findSubTermsLoadsChildTermsOfTermUsingRepositoryService() {
         final Term parent = generateTermWithId();
-        final Configuration.Persistence p = new Configuration.Persistence();
-        p.setLanguage("en");
-        when(configuration.getPersistence()).thenReturn(p);
+        configuration.getPersistence().setLanguage("en");
         final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
             final Term child = generateTermWithId();
             when(termRepositoryService.find(child.getUri())).thenReturn(Optional.of(child));
@@ -386,9 +385,7 @@ class TermServiceTest {
     @Test
     void findSubTermsReturnsSubTermsSortedByLabel() {
         final Term parent = generateTermWithId();
-        final Configuration.Persistence p = new Configuration.Persistence();
-        p.setLanguage("en");
-        when(configuration.getPersistence()).thenReturn(p);
+        configuration.getPersistence().setLanguage("en");
 
         final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
             final Term child = generateTermWithId();

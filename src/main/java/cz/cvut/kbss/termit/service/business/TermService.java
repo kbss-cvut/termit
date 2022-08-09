@@ -283,9 +283,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     public Term findRequired(URI id) {
         final Term result = repositoryService.findRequired(id);
-        if (result != null) {
-            consolidateAttributes(result);
-        }
+        assert result != null;
+        consolidateAttributes(result);
         return result;
     }
 
