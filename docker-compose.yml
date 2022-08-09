@@ -7,7 +7,7 @@ services:
       - termit-storage:/tmp/termit
     restart: always
     environment:
-      REPOSITORY_URL: https://localhost:7200/repositories/termit
+      TERMIT_REPOSITORY_URL: https://localhost:7200/repositories/termit
       DEBUG: "true"
     ports:
       - 8080:8080
