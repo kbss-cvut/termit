@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
@@ -66,8 +67,8 @@ class TermServiceTest {
     @Mock
     private CommentService commentService;
 
-    @Mock
-    private Configuration configuration;
+    @Spy
+    private Configuration configuration = new Configuration();
 
     @InjectMocks
     private TermService sut;
@@ -180,9 +181,7 @@ class TermServiceTest {
     @Test
     void findSubTermsLoadsChildTermsOfTermUsingRepositoryService() {
         final Term parent = generateTermWithId();
-        final Configuration.Persistence p = new Configuration.Persistence();
-        p.setLanguage("en");
-        when(configuration.getPersistence()).thenReturn(p);
+        configuration.getPersistence().setLanguage("en");
         final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
             final Term child = generateTermWithId();
             when(termRepositoryService.find(child.getUri())).thenReturn(Optional.of(child));
@@ -322,7 +321,6 @@ class TermServiceTest {
         final Term term = Generator.generateTermWithId();
         final TermDefinitionSource definitionSource = new TermDefinitionSource();
         definitionSource.setTarget(new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
-        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
@@ -339,7 +337,6 @@ class TermServiceTest {
         term.setDefinitionSource(existingSource);
         final TermDefinitionSource definitionSource = new TermDefinitionSource();
         definitionSource.setTarget(new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
-        when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
@@ -366,7 +363,8 @@ class TermServiceTest {
         final Comment comment = new Comment();
         comment.setAsset(term.getUri());
         comment.setCreated(Utils.timestamp());
-        when(commentService.findAll(eq(term), any(Instant.class), any(Instant.class))).thenReturn(Collections.singletonList(comment));
+        when(commentService.findAll(eq(term), any(Instant.class), any(Instant.class))).thenReturn(
+                Collections.singletonList(comment));
 
         final Instant from = Constants.EPOCH_TIMESTAMP;
         final Instant to = Utils.timestamp();
@@ -387,9 +385,7 @@ class TermServiceTest {
     @Test
     void findSubTermsReturnsSubTermsSortedByLabel() {
         final Term parent = generateTermWithId();
-        final Configuration.Persistence p = new Configuration.Persistence();
-        p.setLanguage("en");
-        when(configuration.getPersistence()).thenReturn(p);
+        configuration.getPersistence().setLanguage("en");
 
         final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
             final Term child = generateTermWithId();

@@ -6,7 +6,7 @@ This guide provides information on how to build and deploy TermIt.
 
 ### System Requirements
 
-* JDK 8 or newer (tested up to JDK 11 LTS)
+* JDK 11 or newer (tested up to JDK 11 LTS)
 * Apache Maven 3.5.x or newer
 
 
@@ -31,7 +31,10 @@ Maven profiles `standalone` (active by default) and `war` can be used to activat
 
 The rest of the configuration is done in the `application.yml` file in `src/main/resources`.
 
-Most of the parameters there should be self-explanatory or have documentation in the `ConfigParam` class.
+Most of the parameters there should be self-explanatory or have documentation in the `Configuration` class. 
+
+Note that for proper functionality of the frontend, `termit.cors.allowedOrigins` must be set to the host and port from which the 
+`termi-ui` accesses TermIt backend. This parameter defaults to `http://localhost:3000` but that is usable only for local development.
 
 There is one parameter not used by the application itself, but by Spring - `spring.profiles.active`. There are several Spring profiles currently used
 by the application:
@@ -71,7 +74,7 @@ or configure it permanently by setting the `MAVEN_OPTS` variable in System Setti
 
 ### System Requirements
 
-* JDK or later (tested with JDK 11)
+* JDK 11 or later (tested with JDK 11)
 * Apache Tomcat 8.5 or later (9.x is recommended) or any Servlet API 4-compatible application server
 
 ### Setup

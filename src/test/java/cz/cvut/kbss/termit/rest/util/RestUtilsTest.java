@@ -15,7 +15,6 @@
 package cz.cvut.kbss.termit.rest.util;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
@@ -65,11 +64,12 @@ class RestUtilsTest {
 
     @Test
     void getCookieExtractsCookieValueFromRequest() {
+        final String cookieName = "test-cookie";
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
-                                                                              "/vocabularies");
-        mockRequest.setCookies(new Cookie(SecurityConstants.REMEMBER_ME_COOKIE_NAME, Boolean.TRUE.toString()));
+                "/vocabularies");
+        mockRequest.setCookies(new Cookie(cookieName, Boolean.TRUE.toString()));
 
-        final Optional<String> result = RestUtils.getCookie(mockRequest, SecurityConstants.REMEMBER_ME_COOKIE_NAME);
+        final Optional<String> result = RestUtils.getCookie(mockRequest, cookieName);
         assertTrue(result.isPresent());
         assertTrue(Boolean.parseBoolean(result.get()));
     }
@@ -78,7 +78,7 @@ class RestUtilsTest {
     void getCookieReturnsEmptyOptionalWhenCookieIsNotFound() {
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
                                                                               "/vocabularies");
-        mockRequest.setCookies(new Cookie(SecurityConstants.REMEMBER_ME_COOKIE_NAME, Boolean.TRUE.toString()));
+        mockRequest.setCookies(new Cookie("test-cookie", Boolean.TRUE.toString()));
 
         final Optional<String> result = RestUtils.getCookie(mockRequest, "unknown-cookie");
         assertFalse(result.isPresent());

@@ -41,8 +41,6 @@ public class AuthenticationSuccess extends SimpleUrlAuthenticationSuccessHandler
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationSuccess.class);
 
-    static final String OAUTH2_TOKEN_PARAM = "token";
-
     private final ObjectMapper mapper;
 
     @Autowired

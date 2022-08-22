@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -87,10 +86,11 @@ class CachingVocabularyContextMapperTest extends BaseDaoTestRunner {
     void getVocabularyContextReturnsCanonicalContextWhenAnotherInstanceIsBasedOnIt() {
         final Vocabulary v = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(v, new EntityDescriptor(v.getUri())));
-        v.setProperties(Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_vychazi_z_verze,
-                                                 Collections.singleton(v.getUri().toString())));
         final URI workingVersionCtx = Generator.generateUri();
-        transactional(() -> em.persist(v, new EntityDescriptor(workingVersionCtx)));
+        transactional(() -> {
+            em.persist(v, new EntityDescriptor(workingVersionCtx));
+            DefaultVocabularyContextMapperTest.generateCanonicalContextReference(workingVersionCtx, v.getUri(), em);
+        });
         sut.load();
 
         assertEquals(v.getUri(), sut.getVocabularyContext(v.getUri()));

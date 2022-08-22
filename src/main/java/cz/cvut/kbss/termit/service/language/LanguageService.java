@@ -31,7 +31,7 @@ import java.util.List;
  */
 public abstract class LanguageService {
 
-    protected ClassPathResource resource;
+    protected final ClassPathResource resource;
 
     public LanguageService(ClassPathResource languageTtlUrl) {
         this.resource = languageTtlUrl;

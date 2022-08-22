@@ -35,7 +35,7 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount> {
 
     private final PasswordEncoder passwordEncoder;
 
-    private Configuration.Namespace cfgNamespace;
+    private final Configuration.Namespace cfgNamespace;
 
     @Autowired
     public UserRepositoryService(UserAccountDao userAccountDao, IdentifierResolver idResolver,

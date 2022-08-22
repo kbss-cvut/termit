@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Maps vocabularies to repository contexts in which they are stored.
@@ -33,4 +34,12 @@ public interface VocabularyContextMapper {
      *                                                                           vocabulary are found
      */
     URI getVocabularyContext(URI vocabularyUri);
+
+    /**
+     * Resolves identifier of the vocabulary stored in the specified repository context.
+     *
+     * @param contextUri Context identifier
+     * @return Optional vocabulary identifier
+     */
+    Optional<URI> getVocabularyInContext(URI contextUri);
 }

@@ -300,7 +300,7 @@ public class TermController extends BaseController {
      *
      * @param vocabularyIdFragment vocabulary name
      * @param termIdFragment       term id fragment
-     * @param namespace            (optional) vocabulary nanespace
+     * @param namespace            (optional) vocabulary namespace
      * @see TermService#remove(Term)  for details.
      */
     @DeleteMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}")
@@ -443,15 +443,15 @@ public class TermController extends BaseController {
                                         @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                                         @RequestBody TermDefinitionSource definitionSource) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        termService.setTermDefinitionSource(termService.getRequiredReference(termUri), definitionSource);
+        termService.setTermDefinitionSource(termService.findRequired(termUri), definitionSource);
         LOG.debug("Definition source of term {} set to {}.", termUri, definitionSource);
     }
 
     @DeleteMapping(value = "/terms/{termIdFragment}/definition-source")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void setTermDefinitionSource(@PathVariable String termIdFragment,
-                                        @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+    public void removeTermDefinitionSource(@PathVariable String termIdFragment,
+                                           @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         final Term term = termService.findRequired(termUri);
         termService.removeTermDefinitionSource(term);
@@ -465,7 +465,7 @@ public class TermController extends BaseController {
                              @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                              @RequestBody String status) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        final Term t = termService.getRequiredReference(termUri);
+        final Term t = termService.findRequired(termUri);
         termService.setStatus(t, TermStatus.valueOf(status));
         LOG.debug("Status of term {} set to '{}'.", t, status);
     }

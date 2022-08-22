@@ -478,3 +478,12 @@ termit-pojem:má-oddělovač-verze
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Has version separator"@en , "Má oddělovač verze"@cs .
+
+termit-pojem:pouze-pro-čtení
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Read-only"@en , "Pouze pro čtení"@cs .

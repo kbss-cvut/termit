@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
@@ -20,7 +21,7 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  * <p>
  * This incurs a performance penalty of executing a simple query, but does not suffer from potentially stale cache
  * data.
- *
+ * <p>
  * Note that only <i>canonical</i> versions of vocabularies are considered for context resolution.
  */
 @Component
@@ -29,7 +30,7 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultVocabularyContextMapper.class);
 
-    private final EntityManager em;
+    protected final EntityManager em;
 
     public DefaultVocabularyContextMapper(EntityManager em) {
         this.em = em;
@@ -40,9 +41,9 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
         Objects.requireNonNull(vocabularyUri);
         try {
             return em.createNativeQuery("SELECT ?g WHERE { " +
-                                                "GRAPH ?g { ?vocabulary a ?type . " +
-                                                "FILTER NOT EXISTS { ?vocabulary ?basedOnVersion ?canonical . } " +
-                                                "}}", URI.class)
+                             "GRAPH ?g { ?vocabulary a ?type . " +
+                             "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
+                             "}}", URI.class)
                      .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
                      .setParameter("vocabulary", vocabularyUri)
                      .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
@@ -54,6 +55,22 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
         } catch (NoUniqueResultException e) {
             throw new AmbiguousVocabularyContextException(
                     "Multiple repository contexts found for vocabulary " + uriToString(vocabularyUri));
+        }
+    }
+
+    @Override
+    public Optional<URI> getVocabularyInContext(URI contextUri) {
+        Objects.requireNonNull(contextUri);
+        try {
+            return Optional.of(em.createNativeQuery("SELECT ?v WHERE { GRAPH ?g { ?v a ?type . } }", URI.class)
+                                 .setParameter("g", contextUri)
+                                 .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
+                                 .getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        } catch (NoUniqueResultException e) {
+            throw new AmbiguousVocabularyContextException(
+                    "Multiple vocabularies found in context " + uriToString(contextUri));
         }
     }
 }

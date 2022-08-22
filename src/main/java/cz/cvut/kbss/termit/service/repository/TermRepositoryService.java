@@ -21,7 +21,6 @@ import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.DisabledOperationException;
-import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
@@ -116,14 +115,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
     public void setStatus(Term term, TermStatus status) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(status);
-        final Term toUpdate = termDao.find(term.getUri())
-                                     .orElseThrow(() -> NotFoundException.create(Term.class, term.getUri()));
-
-        termDao.detach(toUpdate);
         if (status == TermStatus.CONFIRMED) {
-            termDao.setAsConfirmed(toUpdate);
+            termDao.setAsConfirmed(term);
         } else {
-            termDao.setAsDraft(toUpdate);
+            termDao.setAsDraft(term);
         }
     }
 

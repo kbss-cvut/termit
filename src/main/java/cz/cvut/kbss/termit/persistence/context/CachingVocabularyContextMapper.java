@@ -29,16 +29,14 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  */
 @Component
 @Profile("!no-cache")
-public class CachingVocabularyContextMapper implements VocabularyContextMapper {
+public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CachingVocabularyContextMapper.class);
-
-    private final EntityManager em;
 
     private Map<URI, List<URI>> contexts;
 
     public CachingVocabularyContextMapper(EntityManager em) {
-        this.em = em;
+        super(em);
     }
 
     /**
@@ -48,10 +46,10 @@ public class CachingVocabularyContextMapper implements VocabularyContextMapper {
     public void load() {
         this.contexts = new HashMap<>();
         em.createNativeQuery("SELECT ?v ?g WHERE { " +
-                                     "GRAPH ?g { " +
-                                     "?v a ?type . " +
-                                     "FILTER NOT EXISTS { ?vocabulary ?basedOnVersion ?canonical . } " +
-                                     "}}")
+                  "GRAPH ?g { " +
+                  "?v a ?type . " +
+                  "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
+                  "}}")
           .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
           .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
           .getResultStream().forEach(row -> {
