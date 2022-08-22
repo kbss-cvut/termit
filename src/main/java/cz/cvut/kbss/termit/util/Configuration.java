@@ -572,7 +572,7 @@ public class Configuration {
             return allowedOrigins;
         }
 
-        public void setAllowedOrigin(String allowedOrigins) {
+        public void setAllowedOrigins(String allowedOrigins) {
             this.allowedOrigins = allowedOrigins;
         }
     }
