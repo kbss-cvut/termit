@@ -406,6 +406,16 @@ public class TermController extends BaseController {
         return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
     }
 
+    @GetMapping(value = "/terms/{termIdFragment}/def-related-target", produces = {
+            MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(@PathVariable String termIdFragment,
+                                                                       @RequestParam(
+                                                                               name = QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+        return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
+    }
+
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
@@ -415,6 +425,16 @@ public class TermController extends BaseController {
                                                                               required = false)
                                                                         Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
+    }
+
+    @GetMapping(value = "/terms/{termIdFragment}/def-related-of", produces = {
+            MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public List<TermOccurrence> getDefinitionallyRelatedTermsOf(@PathVariable String termIdFragment,
+                                                                @RequestParam(name = QueryParams.NAMESPACE)
+                                                                        String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
     }
 
