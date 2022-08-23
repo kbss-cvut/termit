@@ -97,22 +97,16 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
     }
 
     private Set<TermInfo> loadTermInfo(Term term, String property, Collection<TermInfo> exclude) {
-        final List<?> inverse = em.createNativeQuery("SELECT ?inverse ?label ?vocabulary WHERE {" +
-                                                             "?inverse ?property ?term ;" +
-                                                             "a ?type ;" +
-                                                             "?hasLabel ?label ;" +
-                                                             "?inVocabulary ?vocabulary . " +
-                                                             "FILTER (?inverse NOT IN (?exclude))" +
-                                                             "} ORDER BY ?inverse")
-                                  .setParameter("property", URI.create(property))
-                                  .setParameter("term", term)
-                                  .setParameter("type", typeUri)
-                                  .setParameter("hasLabel", labelProperty())
-                                  .setParameter("inVocabulary", URI
-                                          .create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                  .setParameter("exclude", exclude)
-                                  .getResultList();
-        final List<TermInfo> result = new SparqlResultToTermInfoMapper().map(inverse);
+        final List<TermInfo> result = em.createNativeQuery("SELECT ?inverse WHERE {" +
+                                                                   "?inverse ?property ?term ;" +
+                                                                   "a ?type ." +
+                                                                   "FILTER (?inverse NOT IN (?exclude))" +
+                                                                   "} ORDER BY ?inverse", TermInfo.class)
+                                        .setParameter("property", URI.create(property))
+                                        .setParameter("term", term)
+                                        .setParameter("type", typeUri)
+                                        .setParameter("exclude", exclude)
+                                        .getResultList();
         result.sort(termInfoComparator);
         return new LinkedHashSet<>(result);
     }
