@@ -29,7 +29,6 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.util.Cache;
-import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermInfoMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -376,21 +375,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
      * @return Set of sub-terms, sorted by label
      */
     private Set<TermInfo> loadSubTerms(URI parentUri) {
-        final List<?> subTerms = em.createNativeQuery("SELECT ?entity ?label ?vocabulary WHERE {" +
-                                                              "?parent ?narrower ?entity ." +
-                                                              "?entity a ?type ;" +
-                                                              "?hasLabel ?label ;" +
-                                                              "?inVocabulary ?vocabulary . } ORDER BY ?entity")
-                                   .setParameter("type", typeUri)
-                                   .setParameter("narrower", URI.create(SKOS.NARROWER))
-                                   .setParameter("parent", parentUri)
-                                   .setParameter("hasLabel", LABEL_PROP)
-                                   .setParameter("inVocabulary", URI
-                                           .create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                   .getResultList();
-        final List<TermInfo> result = new SparqlResultToTermInfoMapper().map(subTerms);
-        result.sort(termInfoComparator);
-        return new LinkedHashSet<>(result);
+        return loadTermInfo(new Term(parentUri), SKOS.BROADER, Collections.emptySet());
     }
 
     /**
