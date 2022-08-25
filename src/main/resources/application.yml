@@ -30,7 +30,7 @@ spring:
         jcache:
             config: classpath:ehcache.xml
     profiles:
-        active: '@spring.profiles.active@'
+        active: @spring.profiles.active@
 
 
 javamelody:
