@@ -30,7 +30,9 @@ spring:
         jcache:
             config: classpath:ehcache.xml
     profiles:
-        active: @spring.profiles.active@
+        active: '@spring.profiles.active@'
+
+
 javamelody:
     init-parameters:
         authorized-users: admin:kral0vnat3rm1t1st3

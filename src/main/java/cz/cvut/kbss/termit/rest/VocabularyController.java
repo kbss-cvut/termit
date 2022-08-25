@@ -58,6 +58,7 @@ public class VocabularyController extends BaseController {
         this.vocabularyService = vocabularyService;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<List<Vocabulary>> getAll(ServletWebRequest webRequest) {
         if (webRequest.checkNotModified(vocabularyService.getLastModified())) {
@@ -74,6 +75,7 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.created(generateLocation(vocabulary.getUri())).build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Vocabulary getById(@PathVariable String fragment,
                               @RequestParam(name = QueryParams.NAMESPACE,
@@ -85,6 +87,7 @@ public class VocabularyController extends BaseController {
     /**
      * Gets imports (including transitive) of vocabulary with the specified identification
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{fragment}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Collection<URI> getTransitiveImports(@PathVariable String fragment,
                                                 @RequestParam(name = QueryParams.NAMESPACE,
@@ -139,6 +142,7 @@ public class VocabularyController extends BaseController {
     /**
      * Gets the change history of a vocabulary with the specified identification
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{fragment}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(@PathVariable String fragment,
                                                  @RequestParam(name = QueryParams.NAMESPACE,
@@ -150,6 +154,7 @@ public class VocabularyController extends BaseController {
     /**
      * Gets the change history of a vocabulary content with the specified identification
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{fragment}/history-of-content",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AggregatedChangeInfo> getHistoryOfContent(@PathVariable String fragment,
@@ -253,6 +258,7 @@ public class VocabularyController extends BaseController {
                 locationWithout(generateLocation(snapshot.getUri()), "/" + fragment + "/versions")).build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{fragment}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(@PathVariable String fragment,
                                           @RequestParam(name = QueryParams.NAMESPACE,

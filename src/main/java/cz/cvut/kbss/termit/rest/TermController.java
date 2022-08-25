@@ -74,6 +74,7 @@ public class TermController extends BaseController {
      * @param acceptType           MIME type accepted by the client, relevant only for term export
      * @return List of terms of the specific vocabulary
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE,
                             JsonLd.MEDIA_TYPE,
@@ -173,6 +174,7 @@ public class TermController extends BaseController {
      *                             root terms. Optional, defaults to {@code false}
      * @return List of root terms of the specific vocabulary
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/roots",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getAllRoots(@PathVariable String vocabularyIdFragment,
@@ -222,6 +224,7 @@ public class TermController extends BaseController {
      * @return Matching term
      * @throws NotFoundException If term does not exist
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Term getById(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
@@ -238,6 +241,7 @@ public class TermController extends BaseController {
      *
      * @see #getById(String, String)
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/terms/{termIdFragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Term getById(@PathVariable("termIdFragment") String termIdFragment,
                         @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
@@ -317,6 +321,7 @@ public class TermController extends BaseController {
     /**
      * Returns terms not occurring in any document content or definition.
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/unused-terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<URI> getUnusedTermsInVocabulary(
@@ -326,6 +331,7 @@ public class TermController extends BaseController {
         return termService.getUnusedTermsInVocabulary(getVocabulary(getVocabularyUri(namespace, vocabularyIdFragment)));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Term> getSubTerms(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
@@ -339,6 +345,7 @@ public class TermController extends BaseController {
     /**
      * A convenience endpoint for getting subterms of a Term without using its Vocabulary.
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/terms/{termIdFragment}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Term> getSubTerms(@PathVariable("termIdFragment") String termIdFragment,
@@ -394,6 +401,7 @@ public class TermController extends BaseController {
         return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), parentIdFragment)).build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
@@ -406,6 +414,7 @@ public class TermController extends BaseController {
         return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
@@ -470,6 +479,7 @@ public class TermController extends BaseController {
         LOG.debug("Status of term {} set to '{}'.", t, status);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/history",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
@@ -487,6 +497,7 @@ public class TermController extends BaseController {
      *
      * @see #getHistory(String, String, Optional)
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/terms/{termIdFragment}/history",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(@PathVariable("termIdFragment") String termIdFragment,
@@ -501,6 +512,7 @@ public class TermController extends BaseController {
      *
      * @return List of comments
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
@@ -522,6 +534,7 @@ public class TermController extends BaseController {
      *
      * @see #getComments(String, String, Optional, Optional, Optional)
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/terms/{termIdFragment}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("termIdFragment") String termIdFragment,
@@ -537,6 +550,7 @@ public class TermController extends BaseController {
     /**
      * Adds the specified comment to the specified term.
      */
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
                  consumes = {MediaType.APPLICATION_JSON_VALUE,
                              JsonLd.MEDIA_TYPE})
@@ -565,6 +579,7 @@ public class TermController extends BaseController {
      *
      * @see #addComment(String, String, Optional, Comment)
      */
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(value = "/terms/{termIdFragment}/comments", consumes = {MediaType.APPLICATION_JSON_VALUE,
                                                                          JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> addComment(@PathVariable("termIdFragment") String termIdFragment,
@@ -584,6 +599,7 @@ public class TermController extends BaseController {
                              .build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/versions",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(@PathVariable String vocabularyIdFragment,
@@ -623,6 +639,7 @@ public class TermController extends BaseController {
      * @param includeTerms List of terms to include in the results. Optional
      * @return List of root terms across all vocabularies
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/terms/roots",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getAllRoots(
@@ -638,6 +655,7 @@ public class TermController extends BaseController {
      * @param searchString String to filter term labels by.
      * @return List of terms of the specific vocabulary.
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getAll(@RequestParam String searchString) {
