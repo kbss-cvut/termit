@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.termit.config.Profiles;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
@@ -26,6 +27,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -44,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(UserController.class)
 @Import({TestRestSecurityConfig.class})
+@ActiveProfiles(Profiles.JWT_AUTH)
 class UserControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String BASE_URL = REST_MAPPING_PATH + "/users";

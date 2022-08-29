@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AdminBasedRegistrationController.class)
 @Import({TestRestSecurityConfig.class})
-@ActiveProfiles("admin-registration-only")
+@ActiveProfiles(profiles = {"admin-registration-only","jwtauth"})
 class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
 
     private static final String PATH = REST_MAPPING_PATH + "/users";

@@ -26,7 +26,7 @@ public class ConfigurationController {
         this.configProvider = configProvider;
     }
 
-    @PreAuthorize("isAuthenticated()")
+
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ConfigurationDto getConfiguration(Authentication auth) {
         final ConfigurationDto result = configProvider.getConfiguration();
