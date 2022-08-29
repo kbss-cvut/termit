@@ -56,7 +56,7 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
               assert row instanceof Object[];
               assert ((Object[]) row).length == 2;
               final Object[] bindingSet = (Object[]) row;
-              final List<URI> ctx = contexts.computeIfAbsent((URI) bindingSet[0], (k) -> new ArrayList<>());
+              final List<URI> ctx = contexts.computeIfAbsent((URI) bindingSet[0], k -> new ArrayList<>());
               ctx.add((URI) bindingSet[1]);
           });
     }
@@ -67,6 +67,7 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
      * @param vocabularyUri Vocabulary identifier
      * @return Repository context identifier
      */
+    @Override
     public URI getVocabularyContext(URI vocabularyUri) {
         if (!contexts.containsKey(vocabularyUri)) {
             LOG.debug("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",

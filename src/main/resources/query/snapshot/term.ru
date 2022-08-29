@@ -15,10 +15,10 @@ INSERT {
                ?y ?z .
     }
 } WHERE {
+    ?t pdp:je-pojmem-ze-slovníku ?vocabulary .
     GRAPH ?context {
     ?t a skos:Concept ;
        skos:inScheme ?glossary ;
-       pdp:je-pojmem-ze-slovníku ?vocabulary ;
        ?y ?z .
        OPTIONAL {
            ?t skos:broader ?broader .
