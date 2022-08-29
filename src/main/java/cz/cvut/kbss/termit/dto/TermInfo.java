@@ -20,11 +20,15 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents basic data about a {@link Term}.
@@ -32,7 +36,7 @@ import java.util.Objects;
  * This is not a full blown entity and should not be used to modify data.
  */
 @OWLClass(iri = SKOS.CONCEPT)
-public class TermInfo implements Serializable, HasIdentifier {
+public class TermInfo implements Serializable, HasIdentifier, HasTypes {
 
     @Id
     private URI uri;
@@ -44,6 +48,9 @@ public class TermInfo implements Serializable, HasIdentifier {
     @Inferred
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
+
+    @Types
+    private Set<String> types;
 
     public TermInfo() {
     }
@@ -66,6 +73,7 @@ public class TermInfo implements Serializable, HasIdentifier {
         assert other.getLabel() != null;
         this.label = new MultilingualString(other.getLabel().getValue());
         this.vocabulary = other.getVocabulary();
+        this.types = new HashSet<>(Utils.emptyIfNull(other.getTypes()));
     }
 
     @Override
@@ -92,6 +100,16 @@ public class TermInfo implements Serializable, HasIdentifier {
 
     public void setVocabulary(URI vocabulary) {
         this.vocabulary = vocabulary;
+    }
+
+    @Override
+    public Set<String> getTypes() {
+        return types;
+    }
+
+    @Override
+    public void setTypes(Set<String> types) {
+        this.types = types;
     }
 
     @Override
