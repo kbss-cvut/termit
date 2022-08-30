@@ -118,7 +118,7 @@ public class AssetService {
         return result.subList(0, Math.min(result.size(), limit));
     }
 
-    private void ensureValidLimitForLastEdited(int limit) {
+    private static void ensureValidLimitForLastEdited(int limit) {
         if (limit < 0) {
             throw new IllegalArgumentException("Maximum for recently edited assets must not be less than 0.");
         }
@@ -150,7 +150,7 @@ public class AssetService {
         return result.subList(0, Math.min(result.size(), limit));
     }
 
-    private void ensureValidLimitForLastCommented(int limit) {
+    private static void ensureValidLimitForLastCommented(int limit) {
         if (limit < 0) {
             throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
         }

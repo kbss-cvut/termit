@@ -117,7 +117,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      * @param request Request to allow/not allow throw
      * @return Whether to allow the specified request through
      */
-    private boolean shouldAllowThroughUnauthenticated(HttpServletRequest request) {
+    private static boolean shouldAllowThroughUnauthenticated(HttpServletRequest request) {
         return request.getRequestURI().contains(REST_MAPPING_PATH + ConfigurationController.PATH);
     }
 
