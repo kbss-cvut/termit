@@ -389,7 +389,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
         }
     }
 
-    private String orderSentence(String lang, String var) {
+    private static String orderSentence(String lang, String var) {
         if ("cs".equals(lang)) {
             return
                     r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
@@ -411,7 +411,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
         return "lcase(" + var + ")";
     }
 
-    private String r(String string, String from, String to) {
+    private static String r(String string, String from, String to) {
         return "replace(" + string + ", " + from + ", " + to + ")";
     }
 

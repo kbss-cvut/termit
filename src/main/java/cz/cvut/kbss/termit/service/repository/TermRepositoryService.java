@@ -368,6 +368,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
      * @param instance the term to be deleted
      */
     @Transactional
+    @Override
     public void remove(Term instance) {
 
         final List<TermOccurrences> ai = this.getOccurrenceInfo(instance);

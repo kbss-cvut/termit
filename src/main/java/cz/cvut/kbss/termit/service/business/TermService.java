@@ -254,11 +254,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     public Optional<Term> find(URI id) {
         final Optional<Term> result = repositoryService.find(id);
-        result.ifPresent(this::consolidateAttributes);
+        result.ifPresent(TermService::consolidateAttributes);
         return result;
     }
 
-    private void consolidateAttributes(Term term) {
+    private static void consolidateAttributes(Term term) {
         term.consolidateInferred();
         term.consolidateParents();
     }

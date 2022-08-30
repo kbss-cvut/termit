@@ -220,7 +220,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    private String resolveContentType(MultipartFile file) throws IOException {
+    private static String resolveContentType(MultipartFile file) throws IOException {
         Metadata metadata = new Metadata();
         metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
         metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
