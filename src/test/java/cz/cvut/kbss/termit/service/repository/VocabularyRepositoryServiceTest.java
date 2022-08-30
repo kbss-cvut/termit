@@ -20,10 +20,7 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
-import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.ResourceExistsException;
-import cz.cvut.kbss.termit.exception.TermItException;
-import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.exception.*;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -412,5 +409,15 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(1, ChronoUnit.DAYS);
         assertThrows(NotFoundException.class, () -> sut.findVersionValidAt(vocabulary, timestamp));
+    }
+
+    @Test
+    void updateOfSnapshotThrowsSnapshotNotEditableException() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+
+        vocabulary.setLabel("Updated label");
+        assertThrows(SnapshotNotEditableException.class, () -> sut.update(vocabulary));
     }
 }

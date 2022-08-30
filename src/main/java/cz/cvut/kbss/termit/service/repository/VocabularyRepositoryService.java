@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
@@ -128,7 +129,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(),
-                    instance.getLabel()));
+                                                          instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
@@ -157,7 +158,33 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Override
     protected void preUpdate(Vocabulary instance) {
         super.preUpdate(instance);
-        verifyVocabularyImports(instance);
+        final Vocabulary original = findRequired(instance.getUri());
+        verifyVocabularyImports(instance, original);
+        verifySnapshotNotModified(original);
+    }
+
+    /**
+     * Ensures that possible vocabulary import removals are not prevented by existing inter-vocabulary term
+     * relationships (terms from the updated vocabulary having parents from vocabularies whose import has been
+     * removed).
+     */
+    private void verifyVocabularyImports(Vocabulary update, Vocabulary original) {
+        final Set<URI> removedImports = new HashSet<>(Utils.emptyIfNull(original.getImportedVocabularies()));
+        removedImports.removeAll(Utils.emptyIfNull(update.getImportedVocabularies()));
+        final Set<URI> invalid = removedImports.stream().filter(ri -> vocabularyDao
+                .hasInterVocabularyTermRelationships(update.getUri(), ri)).collect(
+                Collectors.toSet());
+        if (!invalid.isEmpty()) {
+            throw new VocabularyImportException("Cannot remove imports of vocabularies " + invalid +
+                                                        ", there are still relationships between terms.",
+                                                "error.vocabulary.update.imports.danglingTermReferences");
+        }
+    }
+
+    private void verifySnapshotNotModified(Vocabulary vocabulary) {
+        if (vocabulary.isSnapshot()) {
+            throw SnapshotNotEditableException.create(vocabulary);
+        }
     }
 
     @PreAuthorize("@authorizationService.canEdit(#instance)")
@@ -166,25 +193,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Transactional
     public Vocabulary update(Vocabulary instance) {
         return super.update(instance);
-    }
-
-    /**
-     * Ensures that possible vocabulary import removals are not prevented by existing inter-vocabulary term
-     * relationships (terms from the updated vocabulary having parents from vocabularies whose import has been
-     * removed).
-     */
-    private void verifyVocabularyImports(Vocabulary update) {
-        final Vocabulary original = findRequired(update.getUri());
-        final Set<URI> removedImports = new HashSet<>(Utils.emptyIfNull(original.getImportedVocabularies()));
-        removedImports.removeAll(Utils.emptyIfNull(update.getImportedVocabularies()));
-        final Set<URI> invalid = removedImports.stream().filter(ri -> vocabularyDao
-                .hasInterVocabularyTermRelationships(update.getUri(), ri)).collect(
-                Collectors.toSet());
-        if (!invalid.isEmpty()) {
-            throw new VocabularyImportException("Cannot remove imports of vocabularies " + invalid +
-                    ", there are still relationships between terms.",
-                    "error.vocabulary.update.imports.danglingTermReferences");
-        }
     }
 
     @Override
@@ -272,6 +280,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Async
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
+        verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
                 importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
