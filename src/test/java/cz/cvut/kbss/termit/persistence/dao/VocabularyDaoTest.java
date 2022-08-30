@@ -582,4 +582,25 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final List<Vocabulary> result = sut.findAll();
         assertEquals(Collections.singletonList(vocabulary), result);
     }
+
+    @Test
+    void isEmptyReturnsTrueForEmptyVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+        assertTrue(sut.isEmpty(vocabulary));
+    }
+
+    @Test
+    void isEmptyReturnsFalseForNonemptyVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = Collections.singletonList(Generator.generateTermWithId(vocabulary.getUri()));
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            terms.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(t));
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
+            });
+        });
+        assertFalse(sut.isEmpty(vocabulary));
+    }
 }

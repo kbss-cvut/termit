@@ -261,8 +261,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
                             + vocabularies.stream().map(Vocabulary::getLabel).collect(Collectors.joining(", ")));
         }
-        // TODO Remove TermService.isEmpty, implement it here
-        if (!termService.isEmpty(instance)) {
+        if (!vocabularyDao.isEmpty(instance)) {
             throw new AssetRemovalException("Vocabulary cannot be removed. It contains terms.");
         }
 

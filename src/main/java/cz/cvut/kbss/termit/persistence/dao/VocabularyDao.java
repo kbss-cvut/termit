@@ -305,6 +305,29 @@ public class VocabularyDao extends AssetDao<Vocabulary>
                  .setParameter("vocabulary", vocabulary).getSingleResult();
     }
 
+    /**
+     * Returns true if the specified vocabulary does not contain any terms.
+     *
+     * @param vocabulary Vocabulary to check for existence of terms
+     * @return true, if the vocabulary contains no terms, false otherwise
+     */
+    public boolean isEmpty(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            return !em.createNativeQuery("ASK WHERE {" +
+                                                 "?term a ?type ;" +
+                                                 "?inVocabulary ?vocabulary ." +
+                                                 " }", Boolean.class)
+                      .setParameter("type", URI.create(SKOS.CONCEPT))
+                      .setParameter("vocabulary", vocabulary)
+                      .setParameter("inVocabulary",
+                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                      .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     @Override
     public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
         return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(

@@ -187,17 +187,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Finds out whether the given vocabulary contains any terms or not.
-     *
-     * @param vocabulary vocabulary under consideration
-     * @return true if the vocabulary contains no terms, false otherwise
-     */
-    public boolean isEmpty(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        return repositoryService.isEmpty(vocabulary);
-    }
-
-    /**
      * Finds all terms which match the specified search string in the specified vocabulary.
      *
      * @param searchString Search string
@@ -318,11 +307,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                              () -> new NotFoundException(
-                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
-                      .collect(Collectors.toList());
+               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                             () -> new NotFoundException(
+                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
+                     .collect(Collectors.toList());
     }
 
     /**

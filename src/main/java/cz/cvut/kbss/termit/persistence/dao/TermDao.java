@@ -297,33 +297,6 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
         }
     }
 
-    /**
-     * Returns true if the vocabulary does not contain any terms.
-     *
-     * @param vocabulary Vocabulary to check for existence of terms
-     * @return true, if the vocabulary contains no terms, false otherwise
-     */
-    public boolean isEmpty(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        try {
-            return !em.createNativeQuery("ASK WHERE {" +
-                                                 "GRAPH ?context { " +
-                                                 "?term a ?type ;" +
-                                                 "}" +
-                                                 "?term ?inVocabulary ?vocabulary ." +
-                                                 " }", Boolean.class)
-                      .setParameter("type", typeUri)
-                      .setParameter("context", context(vocabulary))
-                      .setParameter("vocabulary", vocabulary.getUri())
-                      .setParameter("inVocabulary",
-                                    URI.create(
-                                            cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                      .getSingleResult();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
     private <T extends AbstractTerm> List<T> executeQueryAndLoadSubTerms(TypedQuery<T> query) {
         return query.getResultStream().peek(t -> t.setSubTerms(getSubTerms(t))).collect(Collectors.toList());
     }

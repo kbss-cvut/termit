@@ -207,16 +207,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
     }
 
     /**
-     * Checks whether the vocabulary contains any terms or not.
-     *
-     * @param vocabulary Base vocabulary for the vocabulary import closure
-     * @return true if the vocabulary is empty
-     */
-    public boolean isEmpty(Vocabulary vocabulary) {
-        return termDao.isEmpty(vocabulary);
-    }
-
-    /**
      * Gets all terms from the specified vocabulary and its imports (transitive), regardless of their position in the
      * term hierarchy.
      * <p>
