@@ -6,7 +6,6 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
@@ -20,6 +19,7 @@ import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.security.AuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -160,7 +160,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         super.preUpdate(instance);
         final Vocabulary original = findRequired(instance.getUri());
         verifyVocabularyImports(instance, original);
-        verifySnapshotNotModified(original);
+        AuthorizationService.verifySnapshotNotModified(original);
     }
 
     /**
@@ -178,12 +178,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
             throw new VocabularyImportException("Cannot remove imports of vocabularies " + invalid +
                                                         ", there are still relationships between terms.",
                                                 "error.vocabulary.update.imports.danglingTermReferences");
-        }
-    }
-
-    private void verifySnapshotNotModified(Vocabulary vocabulary) {
-        if (vocabulary.isSnapshot()) {
-            throw SnapshotNotEditableException.create(vocabulary);
         }
     }
 
@@ -267,7 +261,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
                             + vocabularies.stream().map(Vocabulary::getLabel).collect(Collectors.joining(", ")));
         }
-
+        // TODO Remove TermService.isEmpty, implement it here
         if (!termService.isEmpty(instance)) {
             throw new AssetRemovalException("Vocabulary cannot be removed. It contains terms.");
         }
@@ -280,7 +274,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Async
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
-        verifySnapshotNotModified(vocabulary);
+        AuthorizationService.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
                 importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));

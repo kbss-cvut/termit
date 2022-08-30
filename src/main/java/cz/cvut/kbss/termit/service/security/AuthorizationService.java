@@ -1,8 +1,10 @@
 package cz.cvut.kbss.termit.service.security;
 
+import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.springframework.stereotype.Service;
 
@@ -56,5 +58,19 @@ public class AuthorizationService {
         Objects.requireNonNull(term);
         Objects.requireNonNull(term.getVocabulary());
         return isUserAtLeastEditor() && editableVocabularies.isEditable(term.getVocabulary());
+    }
+
+    /**
+     * Checks that the specified asset being modified is not a snapshot.
+     * <p>
+     * If it is, a {@link SnapshotNotEditableException} is thrown.
+     *
+     * @param asset Asset to check for being a snapshot
+     * @throws SnapshotNotEditableException If the specified asset is a snapshot
+     */
+    public static void verifySnapshotNotModified(SupportsSnapshots asset) {
+        if (asset.isSnapshot()) {
+            throw SnapshotNotEditableException.create(asset);
+        }
     }
 }

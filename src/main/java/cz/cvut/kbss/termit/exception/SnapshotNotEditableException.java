@@ -1,7 +1,8 @@
 package cz.cvut.kbss.termit.exception;
 
-import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
+
+import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 /**
  * Indicates that an attempt to update a snapshot has been made.
@@ -14,8 +15,7 @@ public class SnapshotNotEditableException extends TermItException {
         super(message);
     }
 
-    public static SnapshotNotEditableException create(Asset<?> asset) {
-        return new SnapshotNotEditableException(
-                Utils.uriToString(asset.getUri()) + " is a snapshot and cannot be modified.");
+    public static SnapshotNotEditableException create(HasIdentifier asset) {
+        return new SnapshotNotEditableException(uriToString(asset.getUri()) + " is a snapshot and cannot be modified.");
     }
 }
