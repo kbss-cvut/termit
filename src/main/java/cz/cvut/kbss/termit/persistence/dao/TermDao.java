@@ -298,7 +298,16 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
     }
 
     private <T extends AbstractTerm> List<T> executeQueryAndLoadSubTerms(TypedQuery<T> query) {
-        return query.getResultStream().peek(t -> t.setSubTerms(getSubTerms(t))).collect(Collectors.toList());
+        // Clear the persistence context after executing the query and before loading subterms for each of the results
+        // This should prevent frequent IndividualAlreadyManagerExceptions thrown by the UoW
+        // These exception are caused by the UoW containing the individuals typically as TermDtos (results of the query)
+        // and JOPA then attempting to load them as TermInfo because they are children of some other term already managed
+        // This strategy is obviously not very efficient in terms of performance but until JOPA supports read-only
+        // transactions, this is probably the only way to prevent the aforementioned exceptions from appearing
+        final List<T> result = query.getResultList();
+        em.clear();
+        result.forEach(t -> t.setSubTerms(getSubTerms(t)));
+        return result;
     }
 
     /**
