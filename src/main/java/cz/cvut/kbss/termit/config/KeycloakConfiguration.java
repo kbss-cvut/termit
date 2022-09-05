@@ -1,11 +1,11 @@
 package cz.cvut.kbss.termit.config;
 
 import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
-@Profile(Profiles.KEYCLOAK_AUTH)
+@ConditionalOnProperty(prefix = "keycloak", name = "auth-server-url")
 @Configuration
 public class KeycloakConfiguration {
 

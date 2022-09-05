@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.config.Profiles;
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -16,7 +15,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -35,7 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 @WebMvcTest(ConfigurationController.class)
 @Import({TestRestSecurityConfig.class})
-@ActiveProfiles(Profiles.JWT_AUTH)
 public class ConfigurationControllerSecurityTest extends BaseControllerTestRunner {
 
     private static final String PATH = REST_MAPPING_PATH + "/configuration";
