@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@ConditionalOnProperty(prefix = "keycloak", name = "auth-server-url")
+@ConditionalOnProperty(prefix = "keycloak", name = "enabled", havingValue = "true")
 @Configuration
 public class KeycloakConfiguration {
 
