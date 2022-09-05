@@ -38,6 +38,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.Collections;
+
 @Profile(Profiles.JWT_AUTH)
 @Configuration
 @EnableWebSecurity
@@ -104,10 +105,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
+        return createCorsConfiguration(config.getCors());
+    }
+
+    protected static CorsConfigurationSource createCorsConfiguration(
+            cz.cvut.kbss.termit.util.Configuration.Cors corsConfig) {
         // Since we are using cookie-based sessions, we have to specify the URL of the clients (CORS allowed origins)
         final CorsConfiguration corsConfiguration = new CorsConfiguration().applyPermitDefaultValues();
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-        corsConfiguration.setAllowedOrigins(Arrays.asList(config.getCors().getAllowedOrigins().split(",")));
+        corsConfiguration.setAllowedOrigins(Arrays.asList(corsConfig.getAllowedOrigins().split(",")));
         corsConfiguration.addExposedHeader(HttpHeaders.AUTHORIZATION);
         corsConfiguration.addExposedHeader(HttpHeaders.LOCATION);
         corsConfiguration.addExposedHeader(HttpHeaders.CONTENT_DISPOSITION);
