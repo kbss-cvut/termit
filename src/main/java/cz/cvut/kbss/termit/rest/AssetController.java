@@ -43,7 +43,6 @@ public class AssetController {
         this.assetService = assetService;
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/last-edited", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyModifiedAsset> getLastEdited(
             @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit,
@@ -51,14 +50,12 @@ public class AssetController {
         return forCurrentUserOnly ? assetService.findMyLastEdited(limit) : assetService.findLastEdited(limit);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getLastCommented(
         @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
         return assetService.findLastCommented(limit);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/last-commented-in-reaction-to-mine",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getLastReactingCommentsToMine(
@@ -66,7 +63,6 @@ public class AssetController {
         return assetService.findLastCommentedInReactionToMine(limit);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/my-last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getMyLastCommented(
         @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {

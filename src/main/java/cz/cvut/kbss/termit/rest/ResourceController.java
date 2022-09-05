@@ -60,7 +60,6 @@ public class ResourceController extends BaseController {
         this.resourceService = resourceService;
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{normalizedName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Resource getResource(@PathVariable String normalizedName,
                                 @RequestParam(name = QueryParams.NAMESPACE,
@@ -81,7 +80,6 @@ public class ResourceController extends BaseController {
         LOG.debug("Resource {} updated.", resource);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{normalizedName}/content")
     public ResponseEntity<org.springframework.core.io.Resource> getContent(
             @PathVariable String normalizedName,
@@ -121,7 +119,6 @@ public class ResourceController extends BaseController {
         LOG.debug("Content saved for resource {}.", resource);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/{normalizedName}/content", method = RequestMethod.HEAD)
     public ResponseEntity<Void> hasContent(@PathVariable String normalizedName,
                                            @RequestParam(name = QueryParams.NAMESPACE,
@@ -136,7 +133,6 @@ public class ResourceController extends BaseController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{normalizedName}/files", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<File> getFiles(@PathVariable String normalizedName,
                                @RequestParam(name = QueryParams.NAMESPACE,
@@ -208,7 +204,6 @@ public class ResourceController extends BaseController {
      *                       configured namespace is used
      * @return Text analysis record
      */
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{normalizedName}/text-analysis/records/latest", produces = {MediaType.APPLICATION_JSON_VALUE,
                                                                                       JsonLd.MEDIA_TYPE})
     public TextAnalysisRecord getLatestTextAnalysisRecord(@PathVariable String normalizedName,
@@ -221,7 +216,6 @@ public class ResourceController extends BaseController {
     /**
      * Gets the change history of a vocabulary with the specified identification
      */
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{fragment}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(@PathVariable String fragment,
                                                  @RequestParam(name = QueryParams.NAMESPACE,

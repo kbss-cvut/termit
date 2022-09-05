@@ -49,7 +49,6 @@ public class DataController {
         this.dataService = dataService;
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/properties", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getProperties() {
         return dataService.findAllProperties();
@@ -69,13 +68,11 @@ public class DataController {
      * @param id Resource identifier
      * @return Metadata
      */
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/resource", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public RdfsResource getById(@RequestParam("iri") URI id) {
         return dataService.find(id).orElseThrow(() -> NotFoundException.create("Resource", id));
     }
 
-    @PreAuthorize("permitAll()")
     @GetMapping(value = "/label")
     public String getLabel(@RequestParam("iri") URI id) {
         return dataService.getLabel(id).orElseThrow(

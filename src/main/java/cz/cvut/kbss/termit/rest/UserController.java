@@ -55,14 +55,11 @@ public class UserController extends BaseController {
         return userService.findAll();
     }
 
-
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/current", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public UserAccount getCurrent() {
         return userService.getCurrent();
     }
 
-    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping(value = "/current", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public void updateCurrent(@RequestBody UserUpdateDto update) {

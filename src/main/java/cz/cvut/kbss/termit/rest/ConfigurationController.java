@@ -5,7 +5,6 @@ import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,7 +24,6 @@ public class ConfigurationController {
     public ConfigurationController(ConfigurationProvider configProvider) {
         this.configProvider = configProvider;
     }
-
 
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ConfigurationDto getConfiguration(Authentication auth) {

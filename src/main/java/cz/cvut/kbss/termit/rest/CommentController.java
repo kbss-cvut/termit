@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,14 +31,12 @@ public class CommentController extends BaseController {
         this.commentService = commentService;
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{idFragment}", produces = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     public Comment getById(@PathVariable String idFragment,
                            @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
         return commentService.findRequired(idResolver.resolveIdentifier(namespace, idFragment));
     }
 
-    @PreAuthorize("isAuthenticated()")
     @PutMapping(value = "/{idFragment}", consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void update(@PathVariable String idFragment,
@@ -50,7 +47,6 @@ public class CommentController extends BaseController {
         LOG.debug("Comment {} successfully updated.", update);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{idFragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void remove(@PathVariable String idFragment,
@@ -60,7 +56,6 @@ public class CommentController extends BaseController {
         LOG.debug("Comment {} successfully removed.", toRemove);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @PostMapping(value = "/{idFragment}/reactions")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addReaction(@PathVariable String idFragment,
@@ -71,7 +66,6 @@ public class CommentController extends BaseController {
         LOG.trace("User reacted with {} to comment {}.", type, comment);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @DeleteMapping(value = "/{idFragment}/reactions")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeReactionTo(@PathVariable String idFragment,
@@ -81,7 +75,6 @@ public class CommentController extends BaseController {
         LOG.trace("Reaction on comment {} removed.", comment);
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/last-edited-by-me", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getLastEditedByMe(
         @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_LIMIT) int limit) {
