@@ -92,10 +92,19 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
      * @param term Term to load related terms for
      */
     private Set<TermInfo> loadInverseRelatedTerms(Term term) {
-        return loadTermInfo(term, SKOS.RELATED, Utils.joinCollections(term.getRelated(), term.getRelatedMatch()));
+        return loadInverseTermInfo(term, SKOS.RELATED,
+                                   Utils.joinCollections(term.getRelated(), term.getRelatedMatch()));
     }
 
-    private Set<TermInfo> loadTermInfo(Term term, String property, Collection<TermInfo> exclude) {
+    /**
+     * Loads information about terms that have the specified term as object of assertion of the specified property.
+     *
+     * @param term     Assertion object
+     * @param property Property
+     * @param exclude  Terms to exclude from the result
+     * @return Set of matching terms
+     */
+    private Set<TermInfo> loadInverseTermInfo(HasIdentifier term, String property, Collection<TermInfo> exclude) {
         final List<TermInfo> result = em.createNativeQuery("SELECT ?inverse WHERE {" +
                                                                    "?inverse ?property ?term ;" +
                                                                    "a ?type ." +
@@ -116,7 +125,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
      * @param term Term to load related terms for
      */
     private Set<TermInfo> loadInverseRelatedMatchTerms(Term term) {
-        return loadTermInfo(term, SKOS.RELATED_MATCH, term.getRelatedMatch() != null ? term
+        return loadInverseTermInfo(term, SKOS.RELATED_MATCH, term.getRelatedMatch() != null ? term
                 .getRelatedMatch() : Collections.emptySet());
     }
 
@@ -126,7 +135,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
      * @param term Term to load related terms for
      */
     private Set<TermInfo> loadInverseExactMatchTerms(Term term) {
-        return loadTermInfo(term, SKOS.EXACT_MATCH, term.getExactMatchTerms() != null ? term
+        return loadInverseTermInfo(term, SKOS.EXACT_MATCH, term.getExactMatchTerms() != null ? term
                 .getExactMatchTerms() : Collections.emptySet());
     }
 
@@ -236,8 +245,8 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                             "FILTER (lang(?label) = ?labelLang) ." +
                                                                             "}" +
                                                                             "?term ?inVocabulary ?vocabulary ." +
-                                                                            " } ORDER BY " + orderSentence(
-                                                         config.getLanguage(), "?label"), TermDto.class)
+                                                                            " } ORDER BY " + orderSentence("?label"),
+                                                                    TermDto.class)
                                                  .setParameter("context", context(vocabulary))
                                                  .setParameter("type", typeUri)
                                                  .setParameter("vocabulary", vocabulary)
@@ -268,7 +277,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
         try {
             // Load terms one by one. This works around the issue of terms being loaded in the persistence context
             // as Term and TermInfo, which results in IndividualAlreadyManagedExceptions from JOPA
-            // The workaround relies clearing the EntityManager after loading each term
+            // The workaround relies on clearing the EntityManager after loading each term
             // The price for this solution is that this method performs very poorly for larger vocabularies (hundreds of terms)
             final List<URI> termIris = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                                                                     "GRAPH ?context { " +
@@ -277,8 +286,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                     "FILTER (lang(?label) = ?labelLang) ." +
                                                                     "}" +
                                                                     "?term ?inVocabulary ?vocabulary ." +
-                                                                    " } ORDER BY " + orderSentence(config.getLanguage(),
-                                                                                                   "?label"), URI.class)
+                                                                    " } ORDER BY " + orderSentence("?label"), URI.class)
                                          .setParameter("type", typeUri)
                                          .setParameter("context", context(vocabulary))
                                          .setParameter("vocabulary", vocabulary.getUri())
@@ -300,7 +308,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
     private <T extends AbstractTerm> List<T> executeQueryAndLoadSubTerms(TypedQuery<T> query) {
         // Clear the persistence context after executing the query and before loading subterms for each of the results
         // This should prevent frequent IndividualAlreadyManagerExceptions thrown by the UoW
-        // These exception are caused by the UoW containing the individuals typically as TermDtos (results of the query)
+        // These exceptions are caused by the UoW containing the individuals typically as TermDtos (results of the query)
         // and JOPA then attempting to load them as TermInfo because they are children of some other term already managed
         // This strategy is obviously not very efficient in terms of performance but until JOPA supports read-only
         // transactions, this is probably the only way to prevent the aforementioned exceptions from appearing
@@ -308,6 +316,16 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
         em.clear();
         result.forEach(t -> t.setSubTerms(getSubTerms(t)));
         return result;
+    }
+
+    /**
+     * Gets sub-term info for the specified parent term.
+     *
+     * @param parent Parent term
+     */
+    private Set<TermInfo> getSubTerms(HasIdentifier parent) {
+        return subTermsCache.getOrCompute(parent.getUri(),
+                                          (k) -> loadInverseTermInfo(parent, SKOS.BROADER, Collections.emptySet()));
     }
 
     /**
@@ -326,8 +344,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                  "?inVocabulary ?parent ." +
                                                                  "?vocabulary ?imports* ?parent ." +
                                                                  "FILTER (lang(?label) = ?labelLang) ." +
-                                                                 "} ORDER BY " + orderSentence(config.getLanguage(),
-                                                                                               "?label"), TermDto.class)
+                                                                 "} ORDER BY " + orderSentence("?label"), TermDto.class)
                                       .setParameter("type", typeUri)
                                       .setParameter("hasLabel", LABEL_PROP)
                                       .setParameter("inVocabulary",
@@ -339,25 +356,6 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                       .setParameter("vocabulary", vocabulary)
                                       .setParameter("labelLang", config.getLanguage());
         return executeQueryAndLoadSubTerms(query);
-    }
-
-    /**
-     * Gets sub-term info for the specified parent term.
-     *
-     * @param parent Parent term
-     */
-    private Set<TermInfo> getSubTerms(HasIdentifier parent) {
-        return subTermsCache.getOrCompute(parent.getUri(), this::loadSubTerms);
-    }
-
-    /**
-     * Actually loads sub-terms of a term with the specified identifiers.
-     *
-     * @param parentUri Parent term identifier
-     * @return Set of sub-terms, sorted by label
-     */
-    private Set<TermInfo> loadSubTerms(URI parentUri) {
-        return loadTermInfo(new Term(parentUri), SKOS.BROADER, Collections.emptySet());
     }
 
     /**
@@ -379,8 +377,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                  "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                                                                  "FILTER (lang(?label) = ?labelLang) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
-                                                                 "}} ORDER BY " + orderSentence(config.getLanguage(),
-                                                                                                "?label"),
+                                                                 "}} ORDER BY " + orderSentence("?label"),
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
@@ -398,8 +395,8 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
         }
     }
 
-    private static String orderSentence(String lang, String var) {
-        if ("cs".equals(lang)) {
+    private String orderSentence(String var) {
+        if (Objects.equals(config.getLanguage(), "cs")) {
             return
                     r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
                                                 "'á'", "'azz'"),
@@ -441,8 +438,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                  "FILTER (lang(?label) = ?labelLang) . " +
                                                                  "FILTER (?term NOT IN (?included)) . " +
                                                                  "FILTER NOT EXISTS {?term a ?snapshot .} " +
-                                                                 "} ORDER BY " + orderSentence(config.getLanguage(),
-                                                                                               "?label"),
+                                                                 "} ORDER BY " + orderSentence("?label"),
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
@@ -472,10 +468,19 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
     }
 
     private List<TermDto> loadIncludedTerms(Collection<URI> includeTerms) {
-        return includeTerms.stream().map(u -> em.find(TermDto.class, u))
-                           .filter(Objects::nonNull)
-                           .peek(this::recursivelyLoadParentTermSubTerms)
-                           .collect(Collectors.toList());
+        // Clear the persistence context after executing the query and before loading included terms
+        // This should prevent frequent IndividualAlreadyManagerExceptions thrown by the UoW
+        // These exceptions are caused by the UoW containing the individuals typically as TermDtos (results of the query)
+        // and JOPA then attempting to load them as TermInfo because they are children of some other term already managed
+        // This strategy is obviously not very efficient in terms of performance but until JOPA supports read-only
+        // transactions, this is probably the only way to prevent the aforementioned exceptions from appearing
+        em.clear();
+        final List<TermDto> result = includeTerms.stream().map(u -> em.find(TermDto.class, u))
+                                                 .filter(Objects::nonNull)
+                                                 .collect(Collectors.toList());
+        em.clear();
+        result.forEach(this::recursivelyLoadParentTermSubTerms);
+        return result;
     }
 
     /**
@@ -515,8 +520,7 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                  "?parent ?hasGlossary/?hasTerm ?term ." +
                                                                  "FILTER (lang(?label) = ?labelLang) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
-                                                                 "} ORDER BY " + orderSentence(config.getLanguage(),
-                                                                                               "?label"),
+                                                                 "} ORDER BY " + orderSentence("?label"),
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, true);
         try {
@@ -552,8 +556,8 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                        "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
                                                                        "}" +
                                                                        "?term ?inVocabulary ?vocabulary ." +
-                                                                       "} ORDER BY " + orderSentence(
-                                                    config.getLanguage(), "?label"), TermDto.class)
+                                                                       "} ORDER BY " + orderSentence("?label"),
+                                                               TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("context", context(vocabulary))
                                             .setParameter("hasLabel", LABEL_PROP)
@@ -585,8 +589,8 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                        "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
                                                                        "?term ?inVocabulary ?vocabulary . " +
                                                                        "FILTER NOT EXISTS {?term a ?snapshot . }" +
-                                                                       "} ORDER BY " + orderSentence(
-                                                    config.getLanguage(), "?label"), TermDto.class)
+                                                                       "} ORDER BY " + orderSentence("?label"),
+                                                               TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
@@ -629,8 +633,8 @@ public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
                                                                        "      ?hasLabel ?label ;\n" +
                                                                        "      ?inVocabulary ?vocabulary ." +
                                                                        "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .\n" +
-                                                                       "} ORDER BY " + orderSentence(
-                                                    config.getLanguage(), "?label"), TermDto.class)
+                                                                       "} ORDER BY " + orderSentence("?label"),
+                                                               TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", URI.create(
