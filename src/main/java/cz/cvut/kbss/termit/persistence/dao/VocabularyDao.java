@@ -348,6 +348,8 @@ public class VocabularyDao extends AssetDao<Vocabulary>
      * contains being in one of the specified relationships with a term from another vocabulary.
      * <p>
      * This mapping is cascaded until no more related vocabulary are found.
+     * <p>
+     * Note that the result contains also the identifier of the specified vocabulary.
      *
      * @param rootVocabulary    Identifier of the vocabulary to start from
      * @param termRelationships Inter-term relationships to be taken into account
