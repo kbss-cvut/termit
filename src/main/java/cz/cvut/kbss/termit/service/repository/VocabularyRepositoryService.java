@@ -329,12 +329,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                             .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
     }
 
-    @Transactional
-    @Override
-    public void removeSnapshot(Snapshot snapshot) {
-        // TODO
-    }
-
     @Override
     public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;

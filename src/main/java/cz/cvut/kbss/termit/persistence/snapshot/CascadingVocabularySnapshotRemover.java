@@ -3,10 +3,12 @@ package cz.cvut.kbss.termit.persistence.snapshot;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -28,6 +30,7 @@ public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
     @Override
     public void removeSnapshot(Snapshot snapshot) {
         Objects.requireNonNull(snapshot);
+        ensureAssetType(snapshot);
         final Vocabulary toRemove = vocabularyDao.getReference(snapshot.getUri()).orElseThrow(
                 () -> NotFoundException.create(Vocabulary.class, snapshot.getUri()));
         if (!toRemove.isSnapshot()) {
@@ -39,6 +42,12 @@ public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
             final URI ctx = resolveSnapshotContext(snapshotUri);
             clearContext(ctx);
         });
+    }
+
+    private void ensureAssetType(Snapshot snapshot) {
+        if (!Utils.emptyIfNull(snapshot.getTypes()).contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku)) {
+            throw new UnsupportedAssetOperationException("Only removal of vocabulary snapshots is supported.");
+        }
     }
 
     private URI resolveSnapshotContext(URI snapshot) {

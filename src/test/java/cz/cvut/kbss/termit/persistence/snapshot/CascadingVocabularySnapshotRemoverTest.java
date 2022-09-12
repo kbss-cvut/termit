@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -103,5 +104,12 @@ class CascadingVocabularySnapshotRemoverTest extends BaseDaoTestRunner {
                                                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
         transactional(
                 () -> assertThrows(UnsupportedOperationException.class, () -> sut.removeSnapshot(toRemove)));
+    }
+
+    @Test
+    void removeSnapshotThrowsUnsupportedAssetOperationExceptionWhenProvidedSnapshotIsNotVocabulary() {
+        final Snapshot toRemove = Generator.generateSnapshot(Generator.generateTermWithId());
+        transactional(
+                () -> assertThrows(UnsupportedAssetOperationException.class, () -> sut.removeSnapshot(toRemove)));
     }
 }

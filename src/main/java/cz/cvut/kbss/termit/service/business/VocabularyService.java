@@ -135,16 +135,6 @@ public interface VocabularyService
     Snapshot createSnapshot(Vocabulary vocabulary);
 
     /**
-     * Removes the specified snapshot and all the related snapshots as well.
-     * <p>
-     * This is basically an inverse operation to {@link #createSnapshot(Vocabulary)} - it removes the specified
-     * snapshot, its contents, and any snapshots of vocabularies related to it.
-     *
-     * @param snapshot Snapshot to remove
-     */
-    void removeSnapshot(Snapshot snapshot);
-
-    /**
      * Finds snapshots of the specified asset.
      * <p>
      * Note that the list does not contain the currently active version of the asset, as it is not considered a
