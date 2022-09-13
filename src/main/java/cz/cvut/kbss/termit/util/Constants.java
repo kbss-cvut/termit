@@ -14,12 +14,17 @@
  */
 package cz.cvut.kbss.termit.util;
 
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Application-wide constants.
@@ -94,6 +99,13 @@ public class Constants {
      */
     public static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX")
                                                                                  .withZone(ZoneId.of("UTC"));
+
+    /**
+     * SKOS relationships between concepts from different concept schemes (glossaries).
+     */
+    public static final Set<URI> SKOS_CONCEPT_MATCH_RELATIONSHIPS = Stream.of(
+            SKOS.BROAD_MATCH, SKOS.NARROW_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH
+    ).map(URI::create).collect(Collectors.toSet());
 
     private Constants() {
         throw new AssertionError();

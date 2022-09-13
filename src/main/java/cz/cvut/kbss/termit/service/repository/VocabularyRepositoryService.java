@@ -195,6 +195,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
+    public Set<URI> getRelatedVocabularies(Vocabulary entity) {
+        return vocabularyDao.getRelatedVocabularies(entity, Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS);
+    }
+
+    @Override
     public List<AbstractChangeRecord> getChanges(Vocabulary asset) {
         return changeRecordService.getChanges(asset);
     }
