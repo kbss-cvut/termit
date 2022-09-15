@@ -141,7 +141,7 @@ public class CommentDao {
     public void remove(Comment comment) {
         Objects.requireNonNull(comment);
         try {
-            em.remove(em.getReference(Comment.class, comment.getUri()));
+            find(comment.getUri()).ifPresent(em::remove);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
