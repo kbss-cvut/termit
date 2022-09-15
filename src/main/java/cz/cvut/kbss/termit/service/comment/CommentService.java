@@ -9,8 +9,10 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
 import cz.cvut.kbss.termit.persistence.dao.comment.CommentDao;
 import cz.cvut.kbss.termit.persistence.dao.comment.CommentReactionDao;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,6 +118,7 @@ public class CommentService {
      * @param comment Comment to remove
      */
     @Transactional
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "') || @securityUtils.currentUser() == #comment.author")
     public void remove(Comment comment) {
         Objects.requireNonNull(comment);
         dao.remove(comment);
