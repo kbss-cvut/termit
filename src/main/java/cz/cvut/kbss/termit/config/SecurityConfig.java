@@ -19,7 +19,10 @@ import cz.cvut.kbss.termit.security.*;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -29,19 +32,22 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.Collections;
 
+@ConditionalOnProperty(prefix = "keycloak", name = "enabled", havingValue = "false", matchIfMissing = true)
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final AuthenticationProvider authenticationProvider;
 
@@ -57,13 +63,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final ObjectMapper objectMapper;
 
+    private final cz.cvut.kbss.termit.util.Configuration config;
+
     @Autowired
     public SecurityConfig(AuthenticationProvider authenticationProvider,
                           AuthenticationSuccess authenticationSuccessHandler,
                           AuthenticationFailureHandler authenticationFailureHandler,
                           JwtUtils jwtUtils, SecurityUtils securityUtils,
                           TermItUserDetailsService userDetailsService,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper, cz.cvut.kbss.termit.util.Configuration config) {
         this.authenticationProvider = authenticationProvider;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
@@ -71,6 +79,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.securityUtils = securityUtils;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
+        this.config = config;
     }
 
     @Override
@@ -80,23 +89,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        LOG.debug("Using internal security mechanisms.");
         http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf()
             .disable()
             .authorizeRequests().antMatchers("/**").permitAll()
             .and().exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             .and().cors().configurationSource(corsConfigurationSource()).and().csrf().disable()
             .addFilter(authenticationFilter())
-            .addFilter(
-                    new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils,
-                            userDetailsService,
-                            objectMapper)).sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and();
+            .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils, userDetailsService,
+                                                  objectMapper));
     }
 
     private JwtAuthenticationFilter authenticationFilter() throws Exception {
         final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager(),
-                jwtUtils);
+                                                                                         jwtUtils);
         authenticationFilter.setFilterProcessesUrl(SecurityConstants.SECURITY_CHECK_URI);
         authenticationFilter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
         authenticationFilter.setAuthenticationFailureHandler(authenticationFailureHandler);
@@ -104,16 +110,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
-        // We're allowing all methods from all origins so that the application API is usable also by other clients
-        // than just the UI.
-        // This behavior can be restricted later.
+        return createCorsConfiguration(config.getCors());
+    }
+
+    protected static CorsConfigurationSource createCorsConfiguration(
+            cz.cvut.kbss.termit.util.Configuration.Cors corsConfig) {
+        // Since we are using cookie-based sessions, we have to specify the URL of the clients (CORS allowed origins)
         final CorsConfiguration corsConfiguration = new CorsConfiguration().applyPermitDefaultValues();
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-        corsConfiguration.setAllowedOrigins(Collections.singletonList("*"));
+        corsConfiguration.setAllowedOrigins(Arrays.asList(corsConfig.getAllowedOrigins().split(",")));
         corsConfiguration.addExposedHeader(HttpHeaders.AUTHORIZATION);
         corsConfiguration.addExposedHeader(HttpHeaders.LOCATION);
         corsConfiguration.addExposedHeader(HttpHeaders.CONTENT_DISPOSITION);
         corsConfiguration.addExposedHeader(Constants.X_TOTAL_COUNT_HEADER);
+        corsConfiguration.setAllowCredentials(true);
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;

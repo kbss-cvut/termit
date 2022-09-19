@@ -73,7 +73,6 @@ public class DataController {
         return dataService.find(id).orElseThrow(() -> NotFoundException.create("Resource", id));
     }
 
-    @PreAuthorize("permitAll()")
     @GetMapping(value = "/label")
     public String getLabel(@RequestParam("iri") URI id) {
         return dataService.getLabel(id).orElseThrow(

@@ -6,6 +6,8 @@ spring:
         exclude: net.bull.javamelody.JavaMelodyAutoConfiguration
     main:
         allow-bean-definition-overriding: true
+keycloak:
+    enabled: false
 termit:
     repository:
         url: mem:termit

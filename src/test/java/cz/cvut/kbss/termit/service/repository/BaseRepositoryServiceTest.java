@@ -89,6 +89,17 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void persistExecutesPostPersistMethodAfterPersistOnDao() {
+        final UserAccount user = Generator.generateUserAccountWithPassword();
+        final BaseRepositoryServiceImpl sut = spy(new BaseRepositoryServiceImpl(userAccountDaoMock, validator));
+
+        sut.persist(user);
+        final InOrder inOrder = Mockito.inOrder(sut, userAccountDaoMock);
+        inOrder.verify(userAccountDaoMock).persist(user);
+        inOrder.verify(sut).postPersist(user);
+    }
+
+    @Test
     void updateExecutesTransactionalUpdate() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         transactional(() -> userAccountDao.persist(user));

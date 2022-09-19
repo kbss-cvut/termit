@@ -119,8 +119,6 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
     @Test
     void analyzeFileInvokesTextAnalysisServiceWithDocumentContent() {
-        final TextAnalysisInput input = new TextAnalysisInput();
-        input.setContent(CONTENT);
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
                 .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));

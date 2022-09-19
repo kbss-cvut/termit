@@ -300,7 +300,7 @@ public class TermController extends BaseController {
      *
      * @param vocabularyIdFragment vocabulary name
      * @param termIdFragment       term id fragment
-     * @param namespace            (optional) vocabulary nanespace
+     * @param namespace            (optional) vocabulary namespace
      * @see TermService#remove(Term)  for details.
      */
     @DeleteMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}")
@@ -406,6 +406,16 @@ public class TermController extends BaseController {
         return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
     }
 
+    @GetMapping(value = "/terms/{termIdFragment}/def-related-target", produces = {
+            MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(@PathVariable String termIdFragment,
+                                                                       @RequestParam(
+                                                                               name = QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+        return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
+    }
+
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
@@ -415,6 +425,16 @@ public class TermController extends BaseController {
                                                                               required = false)
                                                                         Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+        return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
+    }
+
+    @GetMapping(value = "/terms/{termIdFragment}/def-related-of", produces = {
+            MediaType.APPLICATION_JSON_VALUE,
+            JsonLd.MEDIA_TYPE})
+    public List<TermOccurrence> getDefinitionallyRelatedTermsOf(@PathVariable String termIdFragment,
+                                                                @RequestParam(name = QueryParams.NAMESPACE)
+                                                                        String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
     }
 
@@ -443,15 +463,15 @@ public class TermController extends BaseController {
                                         @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                                         @RequestBody TermDefinitionSource definitionSource) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        termService.setTermDefinitionSource(termService.getRequiredReference(termUri), definitionSource);
+        termService.setTermDefinitionSource(termService.findRequired(termUri), definitionSource);
         LOG.debug("Definition source of term {} set to {}.", termUri, definitionSource);
     }
 
     @DeleteMapping(value = "/terms/{termIdFragment}/definition-source")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void setTermDefinitionSource(@PathVariable String termIdFragment,
-                                        @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+    public void removeTermDefinitionSource(@PathVariable String termIdFragment,
+                                           @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         final Term term = termService.findRequired(termUri);
         termService.removeTermDefinitionSource(term);
@@ -465,7 +485,7 @@ public class TermController extends BaseController {
                              @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                              @RequestBody String status) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        final Term t = termService.getRequiredReference(termUri);
+        final Term t = termService.findRequired(termUri);
         termService.setStatus(t, TermStatus.valueOf(status));
         LOG.debug("Status of term {} set to '{}'.", t, status);
     }
@@ -584,17 +604,32 @@ public class TermController extends BaseController {
                              .build();
     }
 
+    @GetMapping(value = "vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/versions",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<?> getSnapshots(@PathVariable String vocabularyIdFragment,
+                                          @PathVariable String termIdFragment,
+                                          @RequestParam(name = QueryParams.NAMESPACE,
+                                                        required = false) Optional<String> namespace,
+                                          @RequestParam(name = "at", required = false) Optional<String> at) {
+        final Term term = termService.getRequiredReference(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
+        return getTermSnapshots(at, term);
+    }
+
+    private ResponseEntity<?> getTermSnapshots(Optional<String> at, Term term) {
+        if (at.isPresent()) {
+            final Instant instant = RestUtils.parseTimestamp(at.get());
+            return ResponseEntity.ok(termService.findVersionValidAt(term, instant));
+        }
+        return ResponseEntity.ok(termService.findSnapshots(term));
+    }
+
     @GetMapping(value = "/terms/{termIdFragment}/versions",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(@PathVariable String termIdFragment,
                                           @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
         final Term term = termService.getRequiredReference(idResolver.resolveIdentifier(namespace, termIdFragment));
-        if (at.isPresent()) {
-            final Instant instant = RestUtils.parseTimestamp(at.get());
-            return ResponseEntity.ok(termService.findVersionValidAt(term, instant));
-        }
-        return ResponseEntity.ok(termService.findSnapshots(term));
+        return getTermSnapshots(at, term);
     }
 
     /**

@@ -15,7 +15,8 @@ INSERT {
                ?y ?z .
     }
 } WHERE {
-    GRAPH ?vocabulary {
+    ?t pdp:je-pojmem-ze-slovníku ?vocabulary .
+    GRAPH ?context {
     ?t a skos:Concept ;
        skos:inScheme ?glossary ;
        ?y ?z .

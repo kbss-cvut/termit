@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -581,5 +581,26 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         final List<Vocabulary> result = sut.findAll();
         assertEquals(Collections.singletonList(vocabulary), result);
+    }
+
+    @Test
+    void isEmptyReturnsTrueForEmptyVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+        assertTrue(sut.isEmpty(vocabulary));
+    }
+
+    @Test
+    void isEmptyReturnsFalseForNonemptyVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = Collections.singletonList(Generator.generateTermWithId(vocabulary.getUri()));
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            terms.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(t));
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
+            });
+        });
+        assertFalse(sut.isEmpty(vocabulary));
     }
 }

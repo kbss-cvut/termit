@@ -23,6 +23,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -197,5 +198,29 @@ class CommentDaoTest extends BaseDaoTestRunner {
         assertFalse(result.isEmpty());
         result.forEach(c -> assertAll(() -> assertThat(c.getCreated(), greaterThanOrEqualTo(from)),
                                       () -> assertThat(c.getCreated(), lessThan(to))));
+    }
+
+    @Test
+    void removeCascadesRemovalToReactions() {
+        final URI assetUri = Generator.generateUri();
+        final Comment comment = generateComment(assetUri);
+        final EntityDescriptor descriptor = createDescriptor();
+        transactional(() -> {
+            em.persist(comment, descriptor);
+            final CommentReaction reaction = new CommentReaction(author, comment);
+            reaction.addType(Vocabulary.s_c_Like);
+            em.persist(reaction, new EntityDescriptor(URI.create(configuration.getComments().getContext())));
+            generateCommentReactionReference(reaction);
+        });
+
+        transactional(() -> {
+            final Optional<Comment> toRemove = sut.find(comment.getUri());
+            assertTrue(toRemove.isPresent());
+            sut.remove(toRemove.get());
+        });
+
+        assertFalse(em.createNativeQuery("ASK WHERE { ?x ?reactsTo ?comment }", Boolean.class)
+                            .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
+                            .setParameter("comment", comment).getSingleResult());
     }
 }

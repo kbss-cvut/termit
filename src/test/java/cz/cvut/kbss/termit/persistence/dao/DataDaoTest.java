@@ -152,6 +152,12 @@ class DataDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void getLabelReturnsStringArgumentIfItIsNotAbsoluteUri() {
+        final String value = "test";
+        assertEquals(Optional.of(value), sut.getLabel(URI.create(value)));
+    }
+
+    @Test
     void getLabelReturnsEmptyOptionalForIdentifierWithMultipleLabels() {
         enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
         final Term term = Generator.generateTermWithId();

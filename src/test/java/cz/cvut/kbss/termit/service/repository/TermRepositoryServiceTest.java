@@ -30,7 +30,7 @@ import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.common.iteration.Iterations;
@@ -324,24 +324,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         assertTrue(sut.existsInVocabulary(t.getLabel().get(Environment.LANGUAGE), vocabulary,
                                           Environment.LANGUAGE));
-    }
-
-    @Test
-    void isEmptyReturnsTrueForEmptyVocabulary() {
-        assertTrue(sut.isEmpty(vocabulary));
-    }
-
-    @Test
-    void isEmptyReturnsFalseForNonemptyVocabulary() {
-        final Term t = Generator.generateTermWithId();
-        transactional(() -> {
-            t.setVocabulary(vocabulary.getUri());
-            vocabulary.getGlossary().addRootTerm(t);
-            em.persist(t, descriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-        });
-
-        assertFalse(sut.isEmpty(vocabulary));
     }
 
     @Test

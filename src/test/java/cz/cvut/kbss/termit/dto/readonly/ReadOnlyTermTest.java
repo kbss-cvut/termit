@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.dto.readonly;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -69,5 +70,14 @@ class ReadOnlyTermTest {
 
         final ReadOnlyTerm result = new ReadOnlyTerm(term);
         assertEquals(Collections.singleton(new ReadOnlyTerm(parent)), result.getParentTerms());
+    }
+
+    @Test
+    void isSnapshotReturnsTrueWhenInstanceHasSnapshotType() {
+        final ReadOnlyTerm original = new ReadOnlyTerm(Generator.generateTermWithId());
+        final ReadOnlyTerm snapshot = new ReadOnlyTerm(Generator.generateTermWithId());
+        snapshot.addType(Vocabulary.s_c_verze_pojmu);
+        assertFalse(original.isSnapshot());
+        assertTrue(snapshot.isSnapshot());
     }
 }

@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -18,9 +19,11 @@ import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.security.AuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -31,8 +34,11 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,7 +52,8 @@ import java.util.stream.Collectors;
 
 @CacheConfig(cacheNames = "vocabularies")
 @Service
-public class VocabularyRepositoryService extends BaseAssetRepositoryService<Vocabulary> implements VocabularyService {
+public class VocabularyRepositoryService extends BaseAssetRepositoryService<Vocabulary>
+        implements ApplicationEventPublisherAware, VocabularyService {
 
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyRepositoryService.class);
 
@@ -58,21 +65,27 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final ChangeRecordService changeRecordService;
 
+    private final EditableVocabularies editableVocabularies;
+
     private final Configuration config;
 
     private final ApplicationContext context;
+
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public VocabularyRepositoryService(ApplicationContext context, VocabularyDao vocabularyDao,
                                        IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
-                                       @Lazy TermService termService, final Configuration config) {
+                                       @Lazy TermService termService,
+                                       EditableVocabularies editableVocabularies, Configuration config) {
         super(validator);
         this.context = context;
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.termService = termService;
         this.changeRecordService = changeRecordService;
+        this.editableVocabularies = editableVocabularies;
         this.config = config;
     }
 
@@ -88,14 +101,25 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao;
     }
 
-    @Cacheable
+    // Cache only if all vocabularies are editable
+    @Cacheable(condition = "@configuration.workspace.allVocabulariesEditable")
     @Override
     public List<Vocabulary> findAll() {
         return super.findAll();
     }
 
+    @Override
+    protected Vocabulary postLoad(Vocabulary instance) {
+        super.postLoad(instance);
+        if (!config.getWorkspace().isAllVocabulariesEditable() && !editableVocabularies.isEditable(instance)) {
+            instance.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+        }
+        return instance;
+    }
+
     @CacheEvict(allEntries = true)
     @Override
+    @Transactional
     public void persist(Vocabulary instance) {
         super.persist(instance);
     }
@@ -127,16 +151,16 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    protected void preUpdate(Vocabulary instance) {
-        super.preUpdate(instance);
-        verifyVocabularyImports(instance);
+    protected void postPersist(Vocabulary instance) {
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(instance));
     }
 
-    @CacheEvict(allEntries = true)
     @Override
-    @Transactional
-    public Vocabulary update(Vocabulary instance) {
-        return super.update(instance);
+    protected void preUpdate(Vocabulary instance) {
+        super.preUpdate(instance);
+        final Vocabulary original = findRequired(instance.getUri());
+        verifyVocabularyImports(instance, original);
+        AuthorizationService.verifySnapshotNotModified(original);
     }
 
     /**
@@ -144,8 +168,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * relationships (terms from the updated vocabulary having parents from vocabularies whose import has been
      * removed).
      */
-    private void verifyVocabularyImports(Vocabulary update) {
-        final Vocabulary original = findRequired(update.getUri());
+    private void verifyVocabularyImports(Vocabulary update, Vocabulary original) {
         final Set<URI> removedImports = new HashSet<>(Utils.emptyIfNull(original.getImportedVocabularies()));
         removedImports.removeAll(Utils.emptyIfNull(update.getImportedVocabularies()));
         final Set<URI> invalid = removedImports.stream().filter(ri -> vocabularyDao
@@ -158,9 +181,22 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
+    @PreAuthorize("@authorizationService.canEdit(#instance)")
+    @CacheEvict(allEntries = true)
+    @Override
+    @Transactional
+    public Vocabulary update(Vocabulary instance) {
+        return super.update(instance);
+    }
+
     @Override
     public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
         return vocabularyDao.getTransitivelyImportedVocabularies(entity);
+    }
+
+    @Override
+    public Set<URI> getRelatedVocabularies(Vocabulary entity) {
+        return vocabularyDao.getRelatedVocabularies(entity, Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS);
     }
 
     @Override
@@ -189,7 +225,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    private String resolveContentType(MultipartFile file) throws IOException {
+    private static String resolveContentType(MultipartFile file) throws IOException {
         Metadata metadata = new Metadata();
         metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
         metadata.add(Metadata.CONTENT_TYPE, file.getContentType());
@@ -216,6 +252,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getLastModified();
     }
 
+    @PreAuthorize("@authorizationService.canEdit(#instance)")
     @CacheEvict(allEntries = true)
     @Override
     public void remove(Vocabulary instance) {
@@ -229,18 +266,19 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
                             + vocabularies.stream().map(Vocabulary::getLabel).collect(Collectors.joining(", ")));
         }
-
-        if (!termService.isEmpty(instance)) {
+        if (!vocabularyDao.isEmpty(instance)) {
             throw new AssetRemovalException("Vocabulary cannot be removed. It contains terms.");
         }
 
         super.remove(instance);
     }
 
+    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
     @Override
     @Async
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
+        AuthorizationService.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
                 importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
@@ -268,9 +306,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getTermCount(vocabulary);
     }
 
+    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
     @Override
     public Snapshot createSnapshot(Vocabulary vocabulary) {
-        return getSnapshotCreator().createSnapshot(vocabulary);
+        final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
+        return s;
     }
 
     private SnapshotCreator getSnapshotCreator() {
@@ -286,5 +327,10 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
         return vocabularyDao.findVersionValidAt(vocabulary, at)
                             .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
+    }
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 }

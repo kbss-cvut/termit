@@ -58,8 +58,7 @@ public class LuceneSearchDao extends SearchDao {
         final String exactMatch = splitExactMatch(searchString);
         LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\".", searchString,
                   wildcardString);
-        return (List<FullTextSearchResult>) setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"),
-                                                                 searchString)
+        return setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"), searchString)
                 .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
@@ -94,7 +93,8 @@ public class LuceneSearchDao extends SearchDao {
         LOG.trace(
                 "Running full text search (including snapshots) for search string \"{}\", using wildcard variant \"{}\".",
                 searchString, wildcardString);
-        return (List<FullTextSearchResult>) setCommonQueryParams(em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"), searchString)
+        return setCommonQueryParams(em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"),
+                                    searchString)
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
                 .getResultList();

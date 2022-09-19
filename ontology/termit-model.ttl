@@ -180,7 +180,7 @@ termit:model  a         owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slovn
                 "termit-pojem" ;
         <http://purl.org/vocab/vann/preferredNamespaceUri>
                 "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/" ;
-        owl:imports     <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/model> , termit:glosář ;
+        owl:imports     <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/model> , <https://slovník.gov.cz/datový/pracovní-prostor/model> , termit:glosář ;
         owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/model/verze/1.1.2> .
 
 termit-pojem:selektor-css
@@ -260,3 +260,10 @@ termit-pojem:má-můj-poslední-komentář
 termit-pojem:má-maximální-velikost-souboru
         a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:má-oddělovač-verze
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+termit-pojem:pouze-pro-čtení
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class .

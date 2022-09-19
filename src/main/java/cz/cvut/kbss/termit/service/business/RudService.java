@@ -73,7 +73,6 @@ public interface RudService<T> {
      * Removes the specified item.
      *
      * @param instance item to remove
-     * @return The updated item
      */
     void remove(T instance);
 }

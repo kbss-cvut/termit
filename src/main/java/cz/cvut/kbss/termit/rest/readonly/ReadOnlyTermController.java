@@ -49,7 +49,7 @@ public class ReadOnlyTermController extends BaseController {
         final Vocabulary vocabulary = getVocabulary(vocabularyIdFragment, namespace);
         if (searchString != null) {
             return includeImported ? termService.findAllIncludingImported(searchString, vocabulary) :
-                    termService.findAll(searchString, vocabulary);
+                   termService.findAll(searchString, vocabulary);
         }
         return termService.findAll(vocabulary);
     }
@@ -72,7 +72,7 @@ public class ReadOnlyTermController extends BaseController {
         final Vocabulary vocabulary = getVocabulary(vocabularyIdFragment, namespace);
         final Pageable pageSpec = createPageRequest(pageSize, pageNo);
         return includeImported ? termService.findAllRootsIncludingImported(vocabulary, pageSpec) :
-                termService.findAllRoots(vocabulary, pageSpec);
+               termService.findAllRoots(vocabulary, pageSpec);
     }
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}",
@@ -87,12 +87,12 @@ public class ReadOnlyTermController extends BaseController {
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
         return idResolver.resolveIdentifier(idResolver
-                        .buildNamespace(
-                                resolveIdentifier(namespace.orElse(
-                                                config.getNamespace().getVocabulary()),
-                                        vocabIdFragment).toString(),
-                                config.getNamespace().getTerm().getSeparator()),
-                termIdFragment);
+                                                    .buildNamespace(
+                                                            resolveIdentifier(namespace.orElse(
+                                                                                      config.getNamespace().getVocabulary()),
+                                                                              vocabIdFragment).toString(),
+                                                            config.getNamespace().getTerm().getSeparator()),
+                                            termIdFragment);
     }
 
     @GetMapping(value = "/terms/{termIdFragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -122,8 +122,8 @@ public class ReadOnlyTermController extends BaseController {
                                                    required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
         return termService.getComments(termService.getRequiredReference(termUri),
-                from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
-                to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
+                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
@@ -159,8 +159,27 @@ public class ReadOnlyTermController extends BaseController {
                                      @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         return termService.getComments(termService.getRequiredReference(termUri),
-                from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
-                to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
+                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
+    }
+
+    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/versions",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<?> getSnapshots(@PathVariable String vocabularyIdFragment,
+                                          @PathVariable String termIdFragment,
+                                          @RequestParam(name = Constants.QueryParams.NAMESPACE,
+                                                        required = false) Optional<String> namespace,
+                                          @RequestParam(name = "at", required = false) Optional<String> at) {
+        final ReadOnlyTerm term = getById(vocabularyIdFragment, termIdFragment, namespace);
+        return getTermSnapshots(at, term);
+    }
+
+    private ResponseEntity<?> getTermSnapshots(Optional<String> at, ReadOnlyTerm term) {
+        if (at.isPresent()) {
+            final Instant instant = RestUtils.parseTimestamp(at.get());
+            return ResponseEntity.ok(termService.findVersionValidAt(term, instant));
+        }
+        return ResponseEntity.ok(termService.findSnapshots(term));
     }
 
     @GetMapping(value = "/terms/{termIdFragment}/versions",
@@ -169,10 +188,6 @@ public class ReadOnlyTermController extends BaseController {
                                           @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace,
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
         final ReadOnlyTerm term = getById(termIdFragment, namespace);
-        if (at.isPresent()) {
-            final Instant instant = RestUtils.parseTimestamp(at.get());
-            return ResponseEntity.ok(termService.findVersionValidAt(term, instant));
-        }
-        return ResponseEntity.ok(termService.findSnapshots(term));
+        return getTermSnapshots(at, term);
     }
 }

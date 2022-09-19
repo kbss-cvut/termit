@@ -15,7 +15,8 @@
 package cz.cvut.kbss.termit.rest.util;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
 
@@ -62,11 +64,12 @@ class RestUtilsTest {
 
     @Test
     void getCookieExtractsCookieValueFromRequest() {
+        final String cookieName = "test-cookie";
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
-                                                                              "/vocabularies");
-        mockRequest.setCookies(new Cookie(SecurityConstants.REMEMBER_ME_COOKIE_NAME, Boolean.TRUE.toString()));
+                "/vocabularies");
+        mockRequest.setCookies(new Cookie(cookieName, Boolean.TRUE.toString()));
 
-        final Optional<String> result = RestUtils.getCookie(mockRequest, SecurityConstants.REMEMBER_ME_COOKIE_NAME);
+        final Optional<String> result = RestUtils.getCookie(mockRequest, cookieName);
         assertTrue(result.isPresent());
         assertTrue(Boolean.parseBoolean(result.get()));
     }
@@ -75,7 +78,7 @@ class RestUtilsTest {
     void getCookieReturnsEmptyOptionalWhenCookieIsNotFound() {
         final MockHttpServletRequest mockRequest = new MockHttpServletRequest(HttpMethod.GET.toString(),
                                                                               "/vocabularies");
-        mockRequest.setCookies(new Cookie(SecurityConstants.REMEMBER_ME_COOKIE_NAME, Boolean.TRUE.toString()));
+        mockRequest.setCookies(new Cookie("test-cookie", Boolean.TRUE.toString()));
 
         final Optional<String> result = RestUtils.getCookie(mockRequest, "unknown-cookie");
         assertFalse(result.isPresent());
@@ -114,7 +117,7 @@ class RestUtilsTest {
 
     @Test
     void parseTimestampReturnsInstantParsedFromSpecifiedString() {
-        final Instant instant = Instant.now();
+        final Instant instant = Utils.timestamp();
         assertEquals(instant, RestUtils.parseTimestamp(instant.toString()));
     }
 
@@ -131,5 +134,12 @@ class RestUtilsTest {
         final ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                                                         () -> RestUtils.parseTimestamp(null));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+    }
+
+    @Test
+    void parseTimestampSupportsInstantFormattedWithoutSeparatorDashesAndColons() {
+        final Instant instant = Utils.timestamp().truncatedTo(ChronoUnit.SECONDS);
+        final String timestamp = Constants.TIMESTAMP_FORMATTER.format(instant);
+        assertEquals(instant, RestUtils.parseTimestamp(timestamp));
     }
 }
