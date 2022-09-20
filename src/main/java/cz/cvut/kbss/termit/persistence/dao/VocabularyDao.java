@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
-import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
@@ -305,6 +305,29 @@ public class VocabularyDao extends AssetDao<Vocabulary>
                  .setParameter("vocabulary", vocabulary).getSingleResult();
     }
 
+    /**
+     * Returns true if the specified vocabulary does not contain any terms.
+     *
+     * @param vocabulary Vocabulary to check for existence of terms
+     * @return true, if the vocabulary contains no terms, false otherwise
+     */
+    public boolean isEmpty(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            return !em.createNativeQuery("ASK WHERE {" +
+                                                 "?term a ?type ;" +
+                                                 "?inVocabulary ?vocabulary ." +
+                                                 " }", Boolean.class)
+                      .setParameter("type", URI.create(SKOS.CONCEPT))
+                      .setParameter("vocabulary", vocabulary)
+                      .setParameter("inVocabulary",
+                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                      .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     @Override
     public List<Snapshot> findSnapshots(Vocabulary vocabulary) {
         return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(
@@ -316,5 +339,55 @@ public class VocabularyDao extends AssetDao<Vocabulary>
         return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
                 .findVersionValidAt(vocabulary, at);
+    }
+
+    /**
+     * Gets a set of identifiers of vocabularies that are related to the specified root vocabulary.
+     * <p>
+     * The relatedness is given by either a vocabulary explicitly importing another vocabulary or by any of the terms it
+     * contains being in one of the specified relationships with a term from another vocabulary.
+     * <p>
+     * This mapping is cascaded until no more related vocabulary are found.
+     * <p>
+     * Note that the result contains also the identifier of the specified vocabulary.
+     *
+     * @param rootVocabulary    Identifier of the vocabulary to start from
+     * @param termRelationships Inter-term relationships to be taken into account
+     * @return A set of related vocabulary identifiers
+     */
+    public Set<URI> getRelatedVocabularies(Vocabulary rootVocabulary, Collection<URI> termRelationships) {
+        Objects.requireNonNull(rootVocabulary);
+        Objects.requireNonNull(termRelationships);
+
+        final List<URI> result = new ArrayList<>();
+        result.add(rootVocabulary.getUri());
+        // Using old-school iteration to prevent concurrent modification issues when adding items to list under iteration
+        for (int i = 0; i < result.size(); i++) {
+            final Set<URI> toAdd = new HashSet<>(em.createNativeQuery("SELECT DISTINCT ?v WHERE {\n" +
+                                                                              "    ?t a ?term ;\n" +
+                                                                              "       ?inVocabulary ?vocabulary ;\n" +
+                                                                              "       ?y ?z .\n" +
+                                                                              "    ?z a ?term ;\n" +
+                                                                              "       ?inVocabulary ?v .\n" +
+                                                                              "    FILTER (?v != ?vocabulary)\n" +
+                                                                              "    FILTER (?y IN (?cascadingRelationships))\n" +
+                                                                              "}", URI.class)
+                                                   .setParameter("term", URI.create(SKOS.CONCEPT))
+                                                   .setParameter("inVocabulary",
+                                                                 URI.create(
+                                                                         cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                                   .setParameter("vocabulary", result.get(i))
+                                                   .setParameter("cascadingRelationships", termRelationships)
+                                                   .getResultList());
+            // Explicitly imported vocabularies (it is likely they were already added due to term relationships, but just
+            // to be sure)
+            toAdd.addAll(em.createNativeQuery("SELECT DISTINCT ?imported WHERE { ?v ?imports ?imported . }", URI.class)
+                           .setParameter("imports",
+                                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
+                           .setParameter("v", result.get(i)).getResultList());
+            result.forEach(toAdd::remove);
+            result.addAll(toAdd);
+        }
+        return new HashSet<>(result);
     }
 }

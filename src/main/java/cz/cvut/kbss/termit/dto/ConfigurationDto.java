@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.util.Vocabulary;
+
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Set;
@@ -25,6 +26,9 @@ public class ConfigurationDto implements Serializable {
 
     @OWLDataProperty(iri = Vocabulary.s_p_ma_maximalni_velikost_souboru)
     private String maxFileUploadSize;
+
+    @OWLDataProperty(iri = Vocabulary.s_p_ma_oddelovac_verze)
+    private String versionSeparator;
 
     public String getLanguage() {
         return language;
@@ -56,5 +60,13 @@ public class ConfigurationDto implements Serializable {
 
     public void setMaxFileUploadSize(String maxFileUploadSize) {
         this.maxFileUploadSize = maxFileUploadSize;
+    }
+
+    public String getVersionSeparator() {
+        return versionSeparator;
+    }
+
+    public void setVersionSeparator(String versionSeparator) {
+        this.versionSeparator = versionSeparator;
     }
 }

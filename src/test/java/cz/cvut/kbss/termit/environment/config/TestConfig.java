@@ -26,8 +26,6 @@ public class TestConfig {
     @Autowired
     private Configuration configuration;
 
-//    @Bean
-//    @Primary
     public Configuration configuration() {
         return configuration;
     }

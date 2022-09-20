@@ -224,7 +224,7 @@ public class SKOSImporter {
         }
     }
 
-    private IRI resolveGlossaryIriFromImportedData(final Model model) {
+    private static IRI resolveGlossaryIriFromImportedData(final Model model) {
         final Model glossaryRes = model.filter(null, RDF.TYPE, SKOS.CONCEPT_SCHEME);
         if (glossaryRes.size() == 1) {
             final Resource glossary = glossaryRes.iterator().next().getSubject();

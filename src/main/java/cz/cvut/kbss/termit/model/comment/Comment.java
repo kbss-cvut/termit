@@ -40,7 +40,7 @@ public class Comment extends AbstractEntity {
     private Instant modified;
 
     @Inferred
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_reakci, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_reakci, cascade = {CascadeType.REMOVE}, fetch = FetchType.EAGER)
     private Set<CommentReaction> reactions;
 
     public URI getAsset() {

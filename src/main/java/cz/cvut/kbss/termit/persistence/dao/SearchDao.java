@@ -63,7 +63,7 @@ public class SearchDao {
      * <p>
      * The search functionality depends on the underlying repository and the index it uses. But basically the search
      * looks for match in asset label, comment and SKOS definition (if exists).
-     *
+     * <p>
      * Note that this version of the search excludes asset snapshots from the results.
      *
      * @param searchString The string to search by
@@ -76,8 +76,7 @@ public class SearchDao {
             return Collections.emptyList();
         }
         LOG.trace("Running full text search for search string \"{}\".", searchString);
-        return (List<FullTextSearchResult>) setCommonQueryParams(
-                em.createNativeQuery(ftsQuery, "FullTextSearchResult"), searchString)
+        return setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"), searchString)
                 .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
                 .getResultList();
     }
@@ -87,7 +86,7 @@ public class SearchDao {
      * <p>
      * The search functionality depends on the underlying repository and the index it uses. But basically the search
      * looks for match in asset label, comment and SKOS definition (if exists).
-     *
+     * <p>
      * Note that this version of the search includes asset snapshots.
      *
      * @param searchString The string to search by
@@ -100,8 +99,8 @@ public class SearchDao {
             return Collections.emptyList();
         }
         LOG.trace("Running full text search (including snapshots) for search string \"{}\".", searchString);
-        return (List<FullTextSearchResult>) setCommonQueryParams(
-                em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"), searchString).getResultList();
+        return setCommonQueryParams(em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"),
+                                    searchString).getResultList();
     }
 
     protected Query setCommonQueryParams(Query q, String searchString) {

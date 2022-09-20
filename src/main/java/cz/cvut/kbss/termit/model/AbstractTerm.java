@@ -4,18 +4,22 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @MappedSuperclass
-public abstract class AbstractTerm extends Asset<MultilingualString> implements Serializable {
+public abstract class AbstractTerm extends Asset<MultilingualString>
+        implements HasTypes, SupportsSnapshots, Serializable {
 
     @PrimaryNotBlank
     @ParticipationConstraints(nonEmpty = true)
@@ -39,6 +43,9 @@ public abstract class AbstractTerm extends Asset<MultilingualString> implements 
     @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
     private Boolean draft;
 
+    @Types
+    private Set<String> types;
+
     public AbstractTerm() {
     }
 
@@ -55,7 +62,11 @@ public abstract class AbstractTerm extends Asset<MultilingualString> implements 
         this.glossary = other.glossary;
         this.vocabulary = other.vocabulary;
         if (other.getSubTerms() != null) {
-            this.subTerms = other.getSubTerms().stream().map(TermInfo::new).collect(Collectors.toCollection(LinkedHashSet::new));
+            this.subTerms = other.getSubTerms().stream().map(TermInfo::new)
+                                 .collect(Collectors.toCollection(LinkedHashSet::new));
+        }
+        if (other.getTypes() != null) {
+            this.types = new HashSet<>(other.getTypes());
         }
     }
 
@@ -107,6 +118,21 @@ public abstract class AbstractTerm extends Asset<MultilingualString> implements 
 
     public void setDraft(Boolean draft) {
         this.draft = draft;
+    }
+
+    @Override
+    public Set<String> getTypes() {
+        return types;
+    }
+
+    @Override
+    public void setTypes(Set<String> types) {
+        this.types = types;
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return hasType(Vocabulary.s_c_verze_pojmu);
     }
 
     @Override

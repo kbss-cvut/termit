@@ -8,7 +8,7 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
-import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -141,7 +141,7 @@ public class CommentDao {
     public void remove(Comment comment) {
         Objects.requireNonNull(comment);
         try {
-            em.remove(em.getReference(Comment.class, comment.getUri()));
+            find(comment.getUri()).ifPresent(em::remove);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

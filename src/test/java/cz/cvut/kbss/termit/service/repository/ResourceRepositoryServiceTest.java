@@ -33,7 +33,7 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
-import cz.cvut.kbss.termit.persistence.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;

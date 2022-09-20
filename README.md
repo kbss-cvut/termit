@@ -23,6 +23,8 @@ The system is split into two projects, [__TermIt__](https://github.com/kbss-cvut
 UI__](https://github.com/kbss-cvut/termit-ui) represents the frontend. Both projects are built separately and can run
 separately.
 
+See the [docs folder](doc/index.md) for additional information on implementation, setup, configuration and the architectural decisions record.
+
 
 ## Technologies
 

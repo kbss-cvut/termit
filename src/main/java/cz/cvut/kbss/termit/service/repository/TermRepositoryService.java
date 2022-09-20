@@ -21,7 +21,6 @@ import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.DisabledOperationException;
-import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermRemovalException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
@@ -31,6 +30,7 @@ import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.security.AuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
@@ -93,6 +93,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
+        AuthorizationService.verifySnapshotNotModified(original);
         termDao.detach(original);
         final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
         differentiator.differentiateRelatedTerms(instance, original);
@@ -116,14 +117,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
     public void setStatus(Term term, TermStatus status) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(status);
-        final Term toUpdate = termDao.find(term.getUri())
-                                     .orElseThrow(() -> NotFoundException.create(Term.class, term.getUri()));
-
-        termDao.detach(toUpdate);
+        AuthorizationService.verifySnapshotNotModified(term);
         if (status == TermStatus.CONFIRMED) {
-            termDao.setAsConfirmed(toUpdate);
+            termDao.setAsConfirmed(term);
         } else {
-            termDao.setAsDraft(toUpdate);
+            termDao.setAsDraft(term);
         }
     }
 
@@ -161,6 +159,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
 
     @Transactional
     public void addChildTerm(Term instance, Term parentTerm) {
+        Objects.requireNonNull(instance);
+        Objects.requireNonNull(parentTerm);
+
+        AuthorizationService.verifySnapshotNotModified(parentTerm);
         final URI vocabularyIri =
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
         prepareTermForPersist(instance, vocabularyIri);
@@ -202,16 +204,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
      */
     public List<Term> findAllFull(Vocabulary vocabulary) {
         return termDao.findAllFull(vocabulary).stream().map(this::postLoad).collect(toList());
-    }
-
-    /**
-     * Checks whether the vocabulary contains any terms or not.
-     *
-     * @param vocabulary Base vocabulary for the vocabulary import closure
-     * @return true if the vocabulary is empty
-     */
-    public boolean isEmpty(Vocabulary vocabulary) {
-        return termDao.isEmpty(vocabulary);
     }
 
     /**
@@ -376,6 +368,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
      * @param instance the term to be deleted
      */
     @Transactional
+    @Override
     public void remove(Term instance) {
 
         final List<TermOccurrences> ai = this.getOccurrenceInfo(instance);

@@ -93,6 +93,14 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
 
+    @GetMapping(value = "/{fragment}/related", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public Collection<URI> getRelated(@PathVariable String fragment,
+                                      @RequestParam(name = QueryParams.NAMESPACE,
+                                                    required = false) Optional<String> namespace) {
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
+        return vocabularyService.getRelatedVocabularies(vocabulary);
+    }
+
     /**
      * Allows to import a vocabulary (or its  glossary) from the specified file.
      *

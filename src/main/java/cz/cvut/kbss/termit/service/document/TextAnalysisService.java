@@ -17,7 +17,6 @@ package cz.cvut.kbss.termit.service.document;
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;

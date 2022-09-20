@@ -15,13 +15,13 @@
 package cz.cvut.kbss.termit.rest.util;
 
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.util.Constants;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Null;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -170,10 +170,18 @@ public class RestUtils {
      */
     public static Instant parseTimestamp(String strTimestamp) {
         try {
-            return Instant.parse(strTimestamp);
+            return parseTimestampWithException(strTimestamp);
         } catch (DateTimeParseException | NullPointerException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                               "Value '" + strTimestamp + "' is not a valid timestamp in ISO format.");
+        }
+    }
+
+    private static Instant parseTimestampWithException(String strTimestamp) {
+        try {
+            return Instant.parse(strTimestamp);
+        } catch (DateTimeParseException e) {
+            return Constants.TIMESTAMP_FORMATTER.parse(strTimestamp, Instant::from);
         }
     }
 }

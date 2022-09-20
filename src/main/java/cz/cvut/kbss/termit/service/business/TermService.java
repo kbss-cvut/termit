@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -186,17 +187,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Finds out whether the given vocabulary contains any terms or not.
-     *
-     * @param vocabulary vocabulary under consideration
-     * @return true if the vocabulary contains no terms, false otherwise
-     */
-    public boolean isEmpty(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        return repositoryService.isEmpty(vocabulary);
-    }
-
-    /**
      * Finds all terms which match the specified search string in the specified vocabulary.
      *
      * @param searchString Search string
@@ -264,11 +254,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     public Optional<Term> find(URI id) {
         final Optional<Term> result = repositoryService.find(id);
-        result.ifPresent(this::consolidateAttributes);
+        result.ifPresent(TermService::consolidateAttributes);
         return result;
     }
 
-    private void consolidateAttributes(Term term) {
+    private static void consolidateAttributes(Term term) {
         term.consolidateInferred();
         term.consolidateParents();
     }
@@ -282,9 +272,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     public Term findRequired(URI id) {
         final Term result = repositoryService.findRequired(id);
-        if (result != null) {
-            consolidateAttributes(result);
-        }
+        assert result != null;
+        consolidateAttributes(result);
         return result;
     }
 
@@ -318,11 +307,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                              () -> new NotFoundException(
-                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
-                      .collect(Collectors.toList());
+               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                             () -> new NotFoundException(
+                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
+                     .collect(Collectors.toList());
     }
 
     /**
@@ -356,6 +345,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term  Term to persist
      * @param owner Vocabulary to add the term to
      */
+    @PreAuthorize("@authorizationService.canEdit(#owner)")
     public void persistRoot(Term term, Vocabulary owner) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(owner);
@@ -370,6 +360,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param child  The child to persist
      * @param parent Existing parent term
      */
+    @PreAuthorize("@authorizationService.canEdit(#parent)")
     public void persistChild(Term child, Term parent) {
         Objects.requireNonNull(child);
         Objects.requireNonNull(parent);
@@ -384,6 +375,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term Term update data
      * @return The updated term
      */
+    @PreAuthorize("@authorizationService.canEdit(#term)")
     @Transactional
     public Term update(Term term) {
         Objects.requireNonNull(term);
@@ -404,6 +396,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param term Term to remove
      */
+    @PreAuthorize("@authorizationService.canEdit(#term)")
     public void remove(Term term) {
         Objects.requireNonNull(term);
         repositoryService.remove(term);
@@ -455,14 +448,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term             Term whose definition source is being specified
      * @param definitionSource Definition source representation
      */
+    @PreAuthorize("@authorizationService.canEdit(#term)")
     @Transactional
     public void setTermDefinitionSource(Term term, TermDefinitionSource definitionSource) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(definitionSource);
         definitionSource.setTerm(term.getUri());
-        final Term existingTerm = repositoryService.findRequired(term.getUri());
-        if (existingTerm.getDefinitionSource() != null) {
-            termOccurrenceService.remove(existingTerm.getDefinitionSource());
+        if (term.getDefinitionSource() != null) {
+            termOccurrenceService.remove(term.getDefinitionSource());
         }
         termOccurrenceService.persist(definitionSource);
     }
@@ -477,6 +470,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param term Term whose definition to remove
      */
+    @PreAuthorize("@authorizationService.canEdit(#term)")
     @Transactional
     public void removeTermDefinitionSource(Term term) {
         Objects.requireNonNull(term);
@@ -491,6 +485,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term   Term to update
      * @param status New status
      */
+    @PreAuthorize("@authorizationService.canEdit(#term)")
+    @Transactional
     public void setStatus(Term term, TermStatus status) {
         repositoryService.setStatus(term, status);
     }

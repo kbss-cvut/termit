@@ -18,6 +18,11 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Configuration;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
@@ -40,10 +45,17 @@ public class SecurityUtils {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final IdentifierResolver idResolver;
+
+    private final Configuration.Namespace configuration;
+
     @Autowired
-    public SecurityUtils(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    public SecurityUtils(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder,
+                         IdentifierResolver idResolver, Configuration configuration) {
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
+        this.idResolver = idResolver;
+        this.configuration = configuration.getNamespace();
         // Ensures security context is propagated to additionally spun threads, e.g., used by @Async methods
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
     }
@@ -68,7 +80,27 @@ public class SecurityUtils {
      * @return Current user
      */
     public UserAccount getCurrentUser() {
-        return currentUser();
+        final SecurityContext context = SecurityContextHolder.getContext();
+        assert context != null && context.getAuthentication().isAuthenticated();
+        if (context.getAuthentication().getPrincipal() instanceof KeycloakPrincipal) {
+            return resolveAccountFromKeycloakPrincipal(context);
+        } else {
+            return currentUser();
+        }
+    }
+
+    private UserAccount resolveAccountFromKeycloakPrincipal(SecurityContext context) {
+        final KeycloakPrincipal<?> principal = (KeycloakPrincipal<?>) context.getAuthentication().getPrincipal();
+        final AccessToken keycloakToken = principal.getKeycloakSecurityContext().getToken();
+        final UserAccount account = new UserAccount();
+        account.setFirstName(keycloakToken.getGivenName());
+        account.setLastName(keycloakToken.getFamilyName());
+        account.setUsername(keycloakToken.getPreferredUsername());
+        context.getAuthentication().getAuthorities().stream().filter(ga -> UserRole.doesRoleExist(ga.getAuthority()))
+               .map(ga -> UserRole.fromRoleName(ga.getAuthority()))
+               .filter(r -> !r.getType().isEmpty()).forEach(r -> account.addType(r.getType()));
+        account.setUri(idResolver.generateIdentifier(configuration.getUser(), keycloakToken.getSubject()));
+        return account;
     }
 
     /**

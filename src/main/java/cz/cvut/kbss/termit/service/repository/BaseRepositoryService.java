@@ -140,7 +140,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier> {
     private Class<T> resolveGenericType() {
         // Adapted from https://gist.github.com/yunspace/930d4d40a787a1f6a7d1
         final List<ResolvedType> typeParameters =
-            new TypeResolver().resolve(this.getClass()).typeParametersFor(BaseRepositoryService.class);
+                new TypeResolver().resolve(this.getClass()).typeParametersFor(BaseRepositoryService.class);
         assert typeParameters.size() == 1;
         return (Class<T>) typeParameters.get(0).getErasedType();
     }
@@ -165,6 +165,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier> {
         Objects.requireNonNull(instance);
         prePersist(instance);
         getPrimaryDao().persist(instance);
+        postPersist(instance);
     }
 
     /**
@@ -176,6 +177,15 @@ public abstract class BaseRepositoryService<T extends HasIdentifier> {
      */
     protected void prePersist(@NonNull T instance) {
         validate(instance);
+    }
+
+    /**
+     * Override this method to plug custom behavior into the transactional cycle of {@link #persist(HasIdentifier)}.
+     *
+     * @param instance The persisted instance, not {@code null}
+     */
+    protected void postPersist(@NonNull T instance) {
+        // Do nothing
     }
 
     /**

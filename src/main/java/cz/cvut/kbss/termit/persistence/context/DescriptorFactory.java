@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see
  * <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.persistence;
+package cz.cvut.kbss.termit.persistence.context;
 
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
@@ -37,9 +37,12 @@ public class DescriptorFactory {
 
     private final EntityManagerFactory emf;
 
+    private final VocabularyContextMapper contextMapper;
+
     @Autowired
-    public DescriptorFactory(EntityManagerFactory emf) {
+    public DescriptorFactory(EntityManagerFactory emf, VocabularyContextMapper contextMapper) {
         this.emf = emf;
+        this.contextMapper = contextMapper;
     }
 
     /**
@@ -58,9 +61,9 @@ public class DescriptorFactory {
         return vocabularyDescriptor(vocabulary.getUri());
     }
 
-    private static EntityDescriptor assetDescriptor(URI vocabularyUri) {
+    private EntityDescriptor assetDescriptor(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
-        return new EntityDescriptor(vocabularyUri);
+        return new EntityDescriptor(contextMapper.getVocabularyContext(vocabularyUri));
     }
 
     public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attribute) {

@@ -19,6 +19,8 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.resource.Document;
+import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
@@ -31,7 +33,7 @@ import java.util.stream.Collectors;
 @Audited
 @OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)
 @JsonLdAttributeOrder({"uri", "label", "description"})
-public class Vocabulary extends Asset<String> implements Serializable {
+public class Vocabulary extends Asset<String> implements HasTypes, SupportsSnapshots, Serializable {
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
@@ -41,17 +43,20 @@ public class Vocabulary extends Asset<String> implements Serializable {
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private String description;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument, cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument, cascade = {CascadeType.PERSIST},
+                       fetch = FetchType.EAGER)
     private Document document;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar, cascade = { CascadeType.PERSIST, CascadeType.REMOVE },
-            fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar,
+                       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+                       fetch = FetchType.EAGER)
     private Glossary glossary;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_model, cascade = { CascadeType.PERSIST, CascadeType.REMOVE },
-            fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_model,
+                       cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+                       fetch = FetchType.EAGER)
     private Model model;
 
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
@@ -59,6 +64,9 @@ public class Vocabulary extends Asset<String> implements Serializable {
 
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<String>> properties;
+
+    @Types
+    private Set<String> types;
 
     public Vocabulary() {
     }
@@ -126,6 +134,21 @@ public class Vocabulary extends Asset<String> implements Serializable {
     }
 
     @Override
+    public Set<String> getTypes() {
+        return types;
+    }
+
+    @Override
+    public void setTypes(Set<String> types) {
+        this.types = types;
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -149,8 +172,8 @@ public class Vocabulary extends Asset<String> implements Serializable {
                 " <" + getUri() + '>' +
                 ", glossary=" + glossary +
                 (importedVocabularies != null ?
-                 ", importedVocabularies = [" + importedVocabularies.stream().map(p -> "<" + p + ">").collect(
-                         Collectors.joining(", ")) + "]" : "") +
+                        ", importedVocabularies = [" + importedVocabularies.stream().map(p -> "<" + p + ">").collect(
+                                Collectors.joining(", ")) + "]" : "") +
                 '}';
     }
 }

@@ -6,7 +6,7 @@ This guide provides information on how to build and deploy TermIt.
 
 ### System Requirements
 
-* JDK 8 or newer (tested up to JDK 11 LTS)
+* JDK 11 or newer (tested up to JDK 11 LTS)
 * Apache Maven 3.5.x or newer
 
 
@@ -31,7 +31,10 @@ Maven profiles `standalone` (active by default) and `war` can be used to activat
 
 The rest of the configuration is done in the `application.yml` file in `src/main/resources`.
 
-Most of the parameters there should be self-explanatory or have documentation in the `ConfigParam` class.
+Most of the parameters there should be self-explanatory or have documentation in the `Configuration` class. 
+
+Note that for proper functionality of the frontend, `termit.cors.allowedOrigins` must be set to the host and port from which the 
+`termi-ui` accesses TermIt backend. This parameter defaults to `http://localhost:3000` but that is usable only for local development.
 
 There is one parameter not used by the application itself, but by Spring - `spring.profiles.active`. There are several Spring profiles currently used
 by the application:
@@ -67,16 +70,19 @@ This configuration can be done, for example, via the `MAVEN_OPTS` environmental 
 or configure it permanently by setting the `MAVEN_OPTS` variable in System Settings.
 
 
-## Deployment (WAR)
+## Deployment
 
 ### System Requirements
 
-* JDK or later (tested with JDK 11)
-* Apache Tomcat 8.5 or later (9.x is recommended) or any Servlet API 4-compatible application server
+* JDK 11 or later (tested with JDK 11)
+* (WAR) Apache Tomcat 8.5 or 9.x (recommended) or any Servlet API 4-compatible application server
+  * _For deployment of a WAR build artifact._
+  * Do not use Apache Tomcat 10.x, it is based on the new Jakarta EE and TermIt would not work on it due to package namespace issues (`javax` -> `jakarta`)
 
 ### Setup
 
-Application deployment is simple - just deploy the WAR file created by Maven to the application server.
+Application deployment is simple - just deploy the WAR file (in case of the `war` Maven build profile) to an 
+application server or run the JAR file (in case of the `standalone` Maven build profile).
 
 What is important is the correct setup of the repository. We will describe two options:
 
@@ -161,3 +167,15 @@ termit:
         username: termit
         password: supersecretpassword
 ```
+
+### Authentication
+
+TermIt can operate in two authentication modes:
+
+1. Internal authentication means
+2. [Keycloak](https://www.keycloak.org/) -based
+
+By default, Keycloak is disabled (see `keycloak.enabled` in `application.yml`). To enable it, set `keycloak.enabled` to `true` and
+provide additional required Keycloak parameters - see the [Keycloak Spring Boot integration docs](https://www.keycloak.org/docs/latest/securing_apps/#_spring_boot_adapter).
+TermIt will automatically configure its security (it is using Spring's [`ConditionalOnProperty`](https://www.baeldung.com/spring-conditionalonproperty))
+accordingly.

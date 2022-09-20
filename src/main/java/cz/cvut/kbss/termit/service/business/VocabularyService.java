@@ -26,6 +26,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Interface of business logic concerning vocabularies.
@@ -40,6 +41,17 @@ public interface VocabularyService
      * @return Collection of (transitively) imported vocabularies
      */
     Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity);
+
+    /**
+     * Gets identifiers of all vocabularies whose terms are in a SKOS relationship with the specified vocabulary or are
+     * explicitly imported by it.
+     * <p>
+     * This includes transitively related.
+     *
+     * @param entity Base vocabulary whose related vocabularies to return
+     * @return Set of vocabulary identifiers
+     */
+    Set<URI> getRelatedVocabularies(Vocabulary entity);
 
     /**
      * Imports a new vocabulary from the specified file.

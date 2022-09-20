@@ -195,4 +195,12 @@ public class RestExceptionHandler {
                 e.getMessage(),
                 "error.file.maxUploadSizeExceeded", request.getRequestURI()), HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> snapshotNotEditableException(HttpServletRequest request,
+                                                                  SnapshotNotEditableException e) {
+        logException(e);
+        return new ResponseEntity<>(ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()),
+                                    HttpStatus.CONFLICT);
+    }
 }
