@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class VocabularyDao extends AssetDao<Vocabulary>
@@ -79,11 +80,11 @@ public class VocabularyDao extends AssetDao<Vocabulary>
                                                 "?hasTitle ?title ." +
                                                 "FILTER NOT EXISTS {" +
                                                 "?v a ?snapshot ." +
-                                                "}} ORDER BY ?title", type)
+                                                "}} ORDER BY ?title", URI.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
                      .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
-                     .getResultList();
+                     .getResultStream().map(this::find).flatMap(Optional::stream).collect(Collectors.toList());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
