@@ -20,6 +20,8 @@ import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import javax.validation.Validator;
 import java.util.List;
@@ -75,11 +77,11 @@ public abstract class BaseAssetRepositoryService<T extends Asset<?>> extends Bas
      * <p>
      * The returned assets are sorted by commented date in descending order.
      *
-     * @param limit Maximum number of assets returned
+     * @param pageSpec Specification of the size and number of page to return
      * @return List of most recently commented assets
      */
-    public List<RecentlyCommentedAsset> findLastCommented(int limit) {
-        return getPrimaryDao().findLastCommented(limit);
+    public Page<RecentlyCommentedAsset> findLastCommented(Pageable pageSpec) {
+        return getPrimaryDao().findLastCommented(pageSpec);
     }
 
     /**
@@ -87,11 +89,11 @@ public abstract class BaseAssetRepositoryService<T extends Asset<?>> extends Bas
      * <p>
      * The returned assets are sorted by commented date in descending order.
      *
-     * @param limit Maximum number of assets returned
+     * @param pageSpec Specification of the size and number of page to return
      * @return List of most recently commented assets
      */
-    public List<RecentlyCommentedAsset> findLastCommentedInReaction(User me, int limit) {
-        return getPrimaryDao().findLastCommentedInReaction(me, limit);
+    public Page<RecentlyCommentedAsset> findLastCommentedInReaction(User me, Pageable pageSpec) {
+        return getPrimaryDao().findLastCommentedInReaction(me, pageSpec);
     }
 
     /**
@@ -99,10 +101,10 @@ public abstract class BaseAssetRepositoryService<T extends Asset<?>> extends Bas
      * <p>
      * The returned assets are sorted by commented date in descending order.
      *
-     * @param limit Maximum number of assets returned
+     * @param pageSpec Specification of the page to return
      * @return List of most recently commented assets
      */
-    public List<RecentlyCommentedAsset> findMyLastCommented(User me, int limit) {
-        return getPrimaryDao().findMyLastCommented(me, limit);
+    public Page<RecentlyCommentedAsset> findMyLastCommented(User me, Pageable pageSpec) {
+        return getPrimaryDao().findMyLastCommented(me, pageSpec);
     }
 }

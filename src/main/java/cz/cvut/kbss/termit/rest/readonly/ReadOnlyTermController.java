@@ -70,7 +70,7 @@ public class ReadOnlyTermController extends BaseController {
                                      @RequestParam(name = "includeImported",
                                                    required = false) boolean includeImported) {
         final Vocabulary vocabulary = getVocabulary(vocabularyIdFragment, namespace);
-        final Pageable pageSpec = createPageRequest(pageSize, pageNo);
+        final Pageable pageSpec = RestUtils.createPageRequest(pageSize, pageNo);
         return includeImported ? termService.findAllRootsIncludingImported(vocabulary, pageSpec) :
                termService.findAllRoots(vocabulary, pageSpec);
     }

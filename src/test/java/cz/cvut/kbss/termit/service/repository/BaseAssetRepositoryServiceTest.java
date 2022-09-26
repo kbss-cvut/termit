@@ -45,6 +45,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
@@ -146,8 +148,8 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         em.getEntityManagerFactory().getCache().evictAll();
 
         final int count = 2;
-        final List<RecentlyCommentedAsset> result = sut.findLastCommented(count);
-        assertEquals(count, result.size());
+        final Page<RecentlyCommentedAsset> result = sut.findLastCommented(PageRequest.of(0, count));
+        assertEquals(count, result.getNumberOfElements());
     }
 
     @Test
@@ -172,8 +174,8 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         em.getEntityManagerFactory().getCache().evictAll();
 
         final int count = 2;
-        final List<RecentlyCommentedAsset> result = sut.findMyLastCommented(author, count);
-        assertEquals(count, result.size());
+        final Page<RecentlyCommentedAsset> result = sut.findMyLastCommented(author, PageRequest.of(0, count));
+        assertEquals(count, result.getNumberOfElements());
     }
 
     @Test
@@ -205,8 +207,8 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         em.getEntityManagerFactory().getCache().evictAll();
 
         final int count = 2;
-        final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReaction(author, count);
-        assertEquals(count, result.size());
+        final Page<RecentlyCommentedAsset> result = sut.findLastCommentedInReaction(author, PageRequest.of(0, count));
+        assertEquals(count, result.getNumberOfElements());
         result.forEach(a ->
             assertNotNull(a.getMyLastComment())
         );
