@@ -22,6 +22,8 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -67,13 +69,11 @@ public class AssetService {
     /**
      * Finds the specified number of most recently commented assets.
      *
-     * @param limit Maximum number of assets to retrieve
+     * @param pageSpec Specification of the result to return
      * @return List of recently commented assets
      */
-    public List<RecentlyCommentedAsset> findLastCommented(int limit) {
-        ensureValidLimitForLastCommented(limit);
-        final List<RecentlyCommentedAsset> result = termRepositoryService.findLastCommented(limit);
-        return result.subList(0, Math.min(result.size(), limit));
+    public Page<RecentlyCommentedAsset> findLastCommented(Pageable pageSpec) {
+        return termRepositoryService.findLastCommented(pageSpec);
     }
 
     private static List<RecentlyModifiedAsset> mergeAssets(List<RecentlyModifiedAsset> listOne,
@@ -127,32 +127,22 @@ public class AssetService {
     /**
      * Finds the specified number of assets last commented in reaction to the current user' comments.
      *
-     * @param limit Maximum number of assets to retrieve
+     * @param pageSpec Specification of the size and number of page to return
      * @return List of recently commented assets
      */
-    public List<RecentlyCommentedAsset> findLastCommentedInReactionToMine(int limit) {
-        ensureValidLimitForLastCommented(limit);
+    public Page<RecentlyCommentedAsset> findLastCommentedInReactionToMine(Pageable pageSpec) {
         final User me = securityUtils.getCurrentUser().toUser();
-        final List<RecentlyCommentedAsset> result = termRepositoryService.findLastCommentedInReaction(me, limit);
-        return result.subList(0, Math.min(result.size(), limit));
+        return termRepositoryService.findLastCommentedInReaction(me, pageSpec);
     }
 
     /**
      * Finds the specified number of my assets last commented.
      *
-     * @param limit Maximum number of assets to retrieve
+     * @param pageSpec Specification of the page to return
      * @return List of recently commented assets
      */
-    public List<RecentlyCommentedAsset> findMyLastCommented(int limit) {
-        ensureValidLimitForLastCommented(limit);
+    public Page<RecentlyCommentedAsset> findMyLastCommented(Pageable pageSpec) {
         final User me = securityUtils.getCurrentUser().toUser();
-        final List<RecentlyCommentedAsset> result = termRepositoryService.findMyLastCommented(me, limit);
-        return result.subList(0, Math.min(result.size(), limit));
-    }
-
-    private static void ensureValidLimitForLastCommented(int limit) {
-        if (limit < 0) {
-            throw new IllegalArgumentException("Maximum for recently commented assets must not be less than 0.");
-        }
+        return termRepositoryService.findMyLastCommented(me, pageSpec);
     }
 }

@@ -24,6 +24,9 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.util.Configuration.Persistence;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
 import java.util.List;
@@ -177,12 +180,12 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
     /**
      * Finds unique last commented assets.
      *
-     * @param limit max number of entities
-     * @return list
+     * @param pageSpec Specification of the page to return
+     * @return Page with commented assets
      */
-    public List<RecentlyCommentedAsset> findLastCommented(int limit) {
+    public Page<RecentlyCommentedAsset> findLastCommented(Pageable pageSpec) {
         try {
-            return (List<RecentlyCommentedAsset>) em
+            return new PageImpl<>((List<RecentlyCommentedAsset>) em
                 .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?myLastCommentUri ?type"
                     + " WHERE { ?lastCommentUri a ?commentType ;"
                     + "           ?hasEntity ?entity ."
@@ -202,16 +205,15 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
                 .setParameter("cls", typeUri)
                 .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                 .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
-                .setParameter("hasModifiedTime",
-                    URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                .setParameter("hasCreatedTime",
-                    URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                .setMaxResults(limit).getResultStream()
+                .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setFirstResult((int) pageSpec.getOffset())
+                .setMaxResults(pageSpec.getPageSize()).getResultStream()
                 .map(r -> {
                         final RecentlyCommentedAsset a = (RecentlyCommentedAsset) r;
                         return a.setLastComment(em.find(Comment.class, a.getLastCommentUri()));
                     }
-                ).collect(Collectors.toList());
+                ).collect(Collectors.toList()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -219,12 +221,13 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
 
     /**
      * Finds unique last commented entities.
-     * @param limit max number of entities
+     *
+     * @param pageSpec Specification of the page to return
      * @return list
      */
-    public List<RecentlyCommentedAsset> findLastCommentedInReaction(User author, int limit) {
+    public Page<RecentlyCommentedAsset> findLastCommentedInReaction(User author, Pageable pageSpec) {
         try {
-            return (List<RecentlyCommentedAsset>) em
+            return new PageImpl<>((List<RecentlyCommentedAsset>) em
                 .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?myLastCommentUri ?type"
                     + " WHERE { ?lastCommentUri a ?commentType ;"
                     + "           ?hasEntity ?entity ."
@@ -259,19 +262,18 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
                 .setParameter("cls", typeUri)
                 .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                 .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
-                .setParameter("hasModifiedTime",
-                    URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                .setParameter("hasCreatedTime",
-                    URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                 .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_creator))
                 .setParameter("author", author)
-                .setMaxResults(limit).getResultStream()
+                .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())
+                .getResultStream()
                 .map(r -> {
                         final RecentlyCommentedAsset a = (RecentlyCommentedAsset) r;
                         return a.setLastComment(em.find(Comment.class, a.getLastCommentUri()))
                             .setMyLastComment(em.find(Comment.class, a.getMyLastCommentUri()));
                     }
-                ).collect(Collectors.toList());
+                ).collect(Collectors.toList()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -279,12 +281,12 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
 
     /**
      * Finds unique last commented entities.
-     * @param limit max number of entities
+     * @param pageSpec Specification of the page to return
      * @return list
      */
-    public List<RecentlyCommentedAsset> findMyLastCommented(User author, int limit) {
+    public Page<RecentlyCommentedAsset> findMyLastCommented(User author, Pageable pageSpec) {
         try {
-            return (List<RecentlyCommentedAsset>) em
+            return new PageImpl<>((List<RecentlyCommentedAsset>) em
                 .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?myLastCommentUri ?type"
                     + " WHERE { ?lastCommentUri a ?commentType ;"
                     + "           ?hasEntity ?entity ."
@@ -309,16 +311,15 @@ public abstract class AssetDao<T extends Asset<?>> extends BaseDao<T> {
                 .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
                 .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                 .setParameter("author", author)
-                .setParameter("hasModifiedTime",
-                    URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
-                .setParameter("hasCreatedTime",
-                    URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                .setMaxResults(limit).getResultStream()
+                .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())
+                .getResultStream()
                 .map(r -> {
                         final RecentlyCommentedAsset a = (RecentlyCommentedAsset) r;
                         return a.setLastComment(em.find(Comment.class, a.getLastCommentUri()));
                     }
-                ).collect(Collectors.toList());
+                ).collect(Collectors.toList()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

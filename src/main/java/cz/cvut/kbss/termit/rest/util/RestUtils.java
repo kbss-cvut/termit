@@ -16,6 +16,8 @@ package cz.cvut.kbss.termit.rest.util;
 
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Constants;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -30,6 +32,9 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.Optional;
+
+import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SIZE;
+import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SPEC;
 
 /**
  * Utility functions for request processing.
@@ -183,5 +188,21 @@ public class RestUtils {
         } catch (DateTimeParseException e) {
             return Constants.TIMESTAMP_FORMATTER.parse(strTimestamp, Instant::from);
         }
+    }
+
+    /**
+     * Creates a page request from the specified parameters.
+     * <p>
+     * Both parameters are optional and default values will be used if either parameter is not specified.
+     *
+     * @param size Page size
+     * @param page Page number
+     * @return Page specification
+     * @see Constants#DEFAULT_PAGE_SPEC
+     */
+    public static Pageable createPageRequest(Integer size, Integer page) {
+        final int pageSize = size != null ? size : DEFAULT_PAGE_SIZE;
+        final int pageNo = page != null ? page : DEFAULT_PAGE_SPEC.getPageNumber();
+        return PageRequest.of(pageNo, pageSize);
     }
 }
