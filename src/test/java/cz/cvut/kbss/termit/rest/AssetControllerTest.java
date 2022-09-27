@@ -42,9 +42,9 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.rest.AssetController.DEFAULT_PAGE;
 import static cz.cvut.kbss.termit.rest.AssetController.DEFAULT_PAGE_SIZE;
+import static java.lang.Integer.parseInt;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -69,13 +69,13 @@ class AssetControllerTest extends BaseControllerTestRunner {
     @Test
     void getLastEditedRetrievesLastEditedAssetsFromService() throws Exception {
         final List<RecentlyModifiedAsset> assets = generateRecentlyModifiedAssetRecords();
-        when(assetService.findLastEdited(anyInt())).thenReturn(assets);
+        when(assetService.findLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/last-edited")).andExpect(status().isOk()).andReturn();
         final List<RecentlyModifiedAsset> result = readValue(mvcResult,
                                                              new TypeReference<List<RecentlyModifiedAsset>>() {
                                                              });
         assertEquals(assets, result);
-        verify(assetService).findLastEdited(Integer.parseInt(AssetController.DEFAULT_PAGE_SIZE));
+        verify(assetService).findLastEdited(PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     private static List<RecentlyModifiedAsset> generateRecentlyModifiedAssetRecords() {
@@ -90,20 +90,24 @@ class AssetControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getLastEditedUsesQueryParameterToSpecifyMaximumNumberOfReturnedResults() throws Exception {
-        when(assetService.findLastEdited(anyInt())).thenReturn(Collections.emptyList());
-        final int limit = 10;
-        mockMvc.perform(get(PATH + "/last-edited").param("limit", Integer.toString(limit))).andExpect(status().isOk());
-        verify(assetService).findLastEdited(limit);
+    void getLastEditedUsesQueryParameterToSpecifyPageOfReturnedResults() throws Exception {
+        when(assetService.findLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(Collections.emptyList()));
+        final int pageSize = 10;
+        final int pageNo = Generator.randomInt(0, 5);
+        mockMvc.perform(get(PATH + "/last-edited")
+                                .param(Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize))
+                                .param(Constants.QueryParams.PAGE, Integer.toString(pageNo)))
+               .andExpect(status().isOk());
+        verify(assetService).findLastEdited(PageRequest.of(pageNo, pageSize));
     }
 
     @Test
     void getLastEditedRetrievesCurrentUsersLastEditedWhenMineParameterIsSpecified() throws Exception {
         final List<RecentlyModifiedAsset> assets = generateRecentlyModifiedAssetRecords();
-        when(assetService.findMyLastEdited(anyInt())).thenReturn(assets);
+        when(assetService.findMyLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-edited").param("forCurrentUserOnly", Boolean.TRUE.toString()))
                .andExpect(status().isOk());
-        verify(assetService).findMyLastEdited(Integer.parseInt(AssetController.DEFAULT_PAGE_SIZE));
+        verify(assetService).findMyLastEdited(PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     private static List<RecentlyCommentedAsset> generateRecentlyCommentedAssetRecords() {
@@ -120,7 +124,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
         when(assetService.findLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-commented")).andExpect(status().isOk());
         verify(assetService).findLastCommented(
-                PageRequest.of(Integer.parseInt(DEFAULT_PAGE), Integer.parseInt(DEFAULT_PAGE_SIZE)));
+                PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     @Test
@@ -141,7 +145,7 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
         when(assetService.findMyLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/my-last-commented")).andExpect(status().isOk());
-        verify(assetService).findMyLastCommented(PageRequest.of(Integer.parseInt(DEFAULT_PAGE), Integer.parseInt(DEFAULT_PAGE_SIZE)));
+        verify(assetService).findMyLastCommented(PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     @Test
@@ -162,7 +166,8 @@ class AssetControllerTest extends BaseControllerTestRunner {
         final List<RecentlyCommentedAsset> assets = generateRecentlyCommentedAssetRecords();
         when(assetService.findLastCommentedInReactionToMine(any(Pageable.class))).thenReturn(new PageImpl<>(assets));
         mockMvc.perform(get(PATH + "/last-commented-in-reaction-to-mine")).andExpect(status().isOk());
-        verify(assetService).findLastCommentedInReactionToMine(PageRequest.of(Integer.parseInt(DEFAULT_PAGE), Integer.parseInt(DEFAULT_PAGE_SIZE)));
+        verify(assetService).findLastCommentedInReactionToMine(
+                PageRequest.of(parseInt(DEFAULT_PAGE), parseInt(DEFAULT_PAGE_SIZE)));
     }
 
     @Test

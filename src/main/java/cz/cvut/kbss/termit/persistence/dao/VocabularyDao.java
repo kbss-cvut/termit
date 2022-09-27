@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
-public class VocabularyDao extends AssetDao<Vocabulary>
+public class VocabularyDao extends BaseAssetDao<Vocabulary>
         implements SnapshotProvider<Vocabulary>, SupportsLastModification {
 
     private static final URI LABEL_PROPERTY = URI.create(DC.Terms.TITLE);

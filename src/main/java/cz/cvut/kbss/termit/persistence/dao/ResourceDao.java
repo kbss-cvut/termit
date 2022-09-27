@@ -21,7 +21,6 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
-import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
@@ -36,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Repository
-public class ResourceDao extends AssetDao<Resource> implements SupportsLastModification {
+public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastModification {
 
     private static final URI LABEL_PROPERTY = URI.create(DC.Terms.TITLE);
 
@@ -149,42 +148,6 @@ public class ResourceDao extends AssetDao<Resource> implements SupportsLastModif
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
-    }
-
-    @Override
-    List<URI> findUniqueLastModifiedEntities(int limit) {
-        // Must ensure vocabularies (which are technically also resources) are not included
-        return em.createNativeQuery("SELECT DISTINCT ?entity WHERE {" +
-                "?x a ?change ;" +
-                "?hasModificationDate ?modified ;" +
-                "?hasModifiedEntity ?entity ." +
-                "?entity a ?type ." +
-                "FILTER NOT EXISTS { ?entity a ?vocabulary . }" +
-                "} ORDER BY DESC(?modified)", URI.class).setParameter("change", URI.create(Vocabulary.s_c_zmena))
-                 .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                 .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                 .setParameter("type", typeUri)
-                 .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                 .setMaxResults(limit).getResultList();
-    }
-
-    @Override
-    List<URI> findUniqueLastModifiedEntitiesBy(User author, int limit) {
-        return em.createNativeQuery("SELECT DISTINCT ?entity WHERE {" +
-                "?x a ?change ;" +
-                "?hasModificationDate ?modified ;" +
-                "?hasEditor ?author ;" +
-                "?hasModifiedEntity ?entity ." +
-                "?entity a ?type ." +
-                "FILTER NOT EXISTS { ?entity a ?vocabulary . }" +
-                "} ORDER BY DESC(?modified)", URI.class).setParameter("change", URI.create(Vocabulary.s_c_zmena))
-                 .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                 .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
-                 .setParameter("author", author)
-                 .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                 .setParameter("type", typeUri)
-                 .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                 .setMaxResults(limit).getResultList();
     }
 
     @Override

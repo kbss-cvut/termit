@@ -11,15 +11,9 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
-import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -32,14 +26,6 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import java.net.URI;
-import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import javax.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +35,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+
+import javax.validation.Validator;
+import java.net.URI;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
@@ -84,52 +80,10 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         Environment.setCurrentUser(author);
     }
 
-    @Test
-    void findRecentlyEditedLoadsRecentlyEditedItems() {
-        enableRdfsInference(em);
-        final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                .collect(Collectors.toList());
-        transactional(() -> vocabularies.forEach(em::persist));
-        final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                .collect(Collectors.toList());
-        setCreated(persistRecords);
-        transactional(() -> persistRecords.forEach(em::persist));
-
-        em.getEntityManagerFactory().getCache().evictAll();
-
-        final int count = 2;
-        final List<RecentlyModifiedAsset> result = sut.findLastEdited(count);
-        persistRecords.sort(Comparator.comparing(AbstractChangeRecord::getTimestamp).reversed());
-        assertEquals(count, result.size());
-        assertEquals(persistRecords.subList(0, count).stream().map(AbstractChangeRecord::getChangedEntity)
-                        .collect(Collectors.toList()),
-                result.stream().map(RecentlyModifiedAsset::getUri).collect(Collectors.toList()));
-    }
-
     private void setCreated(List<? extends AbstractChangeRecord> changeRecords) {
         for (int i = 0; i < changeRecords.size(); i++) {
             changeRecords.get(i).setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - (long) i * 3600 * 1000));
         }
-    }
-
-    @Test
-    void findRecentlyEditedPerUserLoadsRecentlyEditedItemsPerUser() {
-        enableRdfsInference(em);
-        final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                .collect(Collectors.toList());
-        transactional(() -> vocabularies.forEach(em::persist));
-        final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
-                .collect(Collectors.toList());
-        setCreated(persistRecords);
-        transactional(() -> persistRecords.forEach(em::persist));
-        em.getEntityManagerFactory().getCache().evictAll();
-
-        final int count = 2;
-        final List<RecentlyModifiedAsset> result = sut.findLastEditedBy(persistRecords.get(0).getAuthor(), count);
-        assertEquals(count, result.size());
-        assertEquals(persistRecords.subList(0, count).stream().map(AbstractChangeRecord::getChangedEntity)
-                        .collect(Collectors.toList()),
-                result.stream().map(RecentlyModifiedAsset::getUri).collect(Collectors.toList()));
     }
 
     @Test
