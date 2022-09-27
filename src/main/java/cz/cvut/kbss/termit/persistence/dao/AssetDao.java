@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
@@ -15,7 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Repository
@@ -89,34 +92,26 @@ public class AssetDao {
 
     List<URI> findUniqueLastModifiedEntities(Pageable pageSpec, User author) {
         final int offset = (int) pageSpec.getOffset();
-        final Set<URI> result = new LinkedHashSet<>(pageSpec.getPageSize());
-        int round = 0;
-        List<Object> queryResult;
-        do {
-            final Query query = em.createNativeQuery("SELECT ?entity ?modified WHERE {" +
-                                                             "?x a ?change ;" +
-                                                             "?hasModificationDate ?modified ;" +
-                                                             "?hasEditor ?author ;" +
-                                                             "?hasModifiedEntity ?entity ." +
-                                                             "} ORDER BY DESC(?modified)")
-                                  .setParameter("change", URI.create(Vocabulary.s_c_zmena))
-                                  .setParameter("hasModificationDate",
-                                                URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                                  .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                                  .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
-                                  .setFirstResult(offset + round * pageSpec.getPageSize())
-                                  .setMaxResults(pageSpec.getPageSize());
-            if (author != null) {
-                query.setParameter("author", author);
-            }
-            queryResult = query.getResultList();
-            queryResult.forEach((Object r) -> {
-                final Object[] row = (Object[]) r;
-                result.add((URI) row[0]);
-            });
-            round++;
-        } while (result.size() < pageSpec.getPageSize() && !queryResult.isEmpty());
-        return new ArrayList<>(result).subList(0, Math.min(pageSpec.getPageSize(), result.size()));
+        final TypedQuery<URI> query = em.createNativeQuery("SELECT DISTINCT ?entity WHERE {" +
+                                                                   "?x ?hasModifiedEntity ?entity . " +
+                                                                   "{ SELECT ?x WHERE { " +
+                                                                   "?x a ?change ; " +
+                                                                   "?hasModificationDate ?modified ; " +
+                                                                   "?hasEditor ?author . " +
+                                                                   "} ORDER BY DESC(?modified) } " +
+                                                                   "}", URI.class)
+                                        .setParameter("change", URI.create(Vocabulary.s_c_zmena))
+                                        .setParameter("hasModificationDate",
+                                                      URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
+                                        .setParameter("hasModifiedEntity",
+                                                      URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
+                                        .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
+                                        .setFirstResult(offset)
+                                        .setMaxResults(pageSpec.getPageSize());
+        if (author != null) {
+            query.setParameter("author", author);
+        }
+        return query.getResultList();
     }
 
     /**
