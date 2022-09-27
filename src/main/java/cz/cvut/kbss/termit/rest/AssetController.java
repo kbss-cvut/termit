@@ -50,10 +50,15 @@ public class AssetController {
 
     @GetMapping(value = "/last-edited", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyModifiedAsset> getLastEdited(
-            @RequestParam(name = "limit", required = false, defaultValue = DEFAULT_PAGE_SIZE) int limit,
+            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false,
+                          defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
+            @RequestParam(name = Constants.QueryParams.PAGE, required = false,
+                          defaultValue = DEFAULT_PAGE) Integer pageNo,
             @RequestParam(name = "forCurrentUserOnly", required = false,
                           defaultValue = "false") Boolean forCurrentUserOnly) {
-        return forCurrentUserOnly ? assetService.findMyLastEdited(limit) : assetService.findLastEdited(limit);
+        final Pageable pageReq = createPageRequest(pageSize, pageNo);
+        return forCurrentUserOnly ? assetService.findMyLastEdited(pageReq).getContent() :
+               assetService.findLastEdited(pageReq).getContent();
     }
 
     @GetMapping(value = "/last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})

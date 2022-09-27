@@ -26,7 +26,7 @@ import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
-import cz.cvut.kbss.termit.persistence.dao.AssetDao;
+import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -78,7 +78,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
     }
 
     @Override
-    protected AssetDao<Term> getPrimaryDao() {
+    protected BaseAssetDao<Term> getPrimaryDao() {
         return termDao;
     }
 

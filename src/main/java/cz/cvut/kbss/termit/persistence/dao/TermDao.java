@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
-public class TermDao extends AssetDao<Term> implements SnapshotProvider<Term> {
+public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term> {
 
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
 

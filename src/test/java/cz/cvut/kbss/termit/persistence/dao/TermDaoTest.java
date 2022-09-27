@@ -4,7 +4,6 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -15,7 +14,6 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
-import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
@@ -804,25 +802,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                                               Collections.singleton(childTermInParentVoc.getUri()));
         assertFalse(results.isEmpty());
         assertThat(results, hasItem(new TermDto(childTermInParentVoc)));
-    }
-
-    @Test
-    void findLastEditedLoadsVocabularyForTerms() {
-        enableRdfsInference(em);
-        final Term term = Generator.generateTermWithId();
-        term.setGlossary(vocabulary.getGlossary().getUri());
-        final PersistChangeRecord persistRecord = Generator.generatePersistChange(term);
-        persistRecord.setAuthor(Generator.generateUserWithId());
-        transactional(() -> {
-            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            em.persist(persistRecord.getAuthor());
-            em.persist(persistRecord);
-        });
-
-        final List<RecentlyModifiedAsset> result = sut.findLastEdited(1);
-        assertFalse(result.isEmpty());
-        assertEquals(term.getUri(), result.get(0).getUri());
-        assertEquals(vocabulary.getUri(), result.get(0).getVocabulary());
     }
 
     @Test

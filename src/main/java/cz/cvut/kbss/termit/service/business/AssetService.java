@@ -17,111 +17,56 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Service
 public class AssetService {
 
-    private final ResourceRepositoryService resourceRepositoryService;
-
     private final TermRepositoryService termRepositoryService;
 
-    private final VocabularyRepositoryService vocabularyRepositoryService;
-
-    private final SecurityUtils securityUtils;
+    private final AssetDao assetDao;
 
     @Autowired
-    public AssetService(ResourceRepositoryService resourceRepositoryService,
-                        TermRepositoryService termRepositoryService,
-                        VocabularyRepositoryService vocabularyRepositoryService,
-                        SecurityUtils securityUtils) {
-        this.resourceRepositoryService = resourceRepositoryService;
+    public AssetService(TermRepositoryService termRepositoryService, AssetDao assetDao) {
         this.termRepositoryService = termRepositoryService;
-        this.vocabularyRepositoryService = vocabularyRepositoryService;
-        this.securityUtils = securityUtils;
+        this.assetDao = assetDao;
     }
 
     /**
      * Finds the specified number of most recently added/edited assets.
      *
-     * @param limit Maximum number of assets to retrieve
-     * @return List of recently added/edited assets
+     * @param pageSpec Specification of the page to load
+     * @return Page of recently added/edited assets
      */
-    public List<RecentlyModifiedAsset> findLastEdited(int limit) {
-        ensureValidLimitForLastEdited(limit);
-        final List<RecentlyModifiedAsset> resources = resourceRepositoryService.findLastEdited(limit);
-        final List<RecentlyModifiedAsset> terms = termRepositoryService.findLastEdited(limit);
-        final List<RecentlyModifiedAsset> vocabularies = vocabularyRepositoryService.findLastEdited(limit);
-        final List<RecentlyModifiedAsset> result = mergeAssets(mergeAssets(resources, terms), vocabularies);
-        return result.subList(0, Math.min(result.size(), limit));
+    public Page<RecentlyModifiedAsset> findLastEdited(Pageable pageSpec) {
+        return assetDao.findLastEdited(pageSpec);
     }
 
     /**
      * Finds the specified number of most recently commented assets.
      *
      * @param pageSpec Specification of the result to return
-     * @return List of recently commented assets
+     * @return Page of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findLastCommented(Pageable pageSpec) {
         return termRepositoryService.findLastCommented(pageSpec);
     }
 
-    private static List<RecentlyModifiedAsset> mergeAssets(List<RecentlyModifiedAsset> listOne,
-                                                           List<RecentlyModifiedAsset> listTwo) {
-        int oneIndex = 0;
-        int twoIndex = 0;
-        final List<RecentlyModifiedAsset> result = new ArrayList<>(listOne.size() + listTwo.size());
-        while (oneIndex < listOne.size() && twoIndex < listTwo.size()) {
-            if (listOne.get(oneIndex).getModified()
-                       .compareTo(listTwo.get(twoIndex).getModified()) >= 0) {
-                result.add(listOne.get(oneIndex));
-                oneIndex++;
-            } else {
-                result.add(listTwo.get(twoIndex));
-                twoIndex++;
-            }
-        }
-        addRest(result, listOne, oneIndex);
-        addRest(result, listTwo, twoIndex);
-        return result;
-    }
-
-    private static void addRest(List<RecentlyModifiedAsset> target, List<RecentlyModifiedAsset> source, int index) {
-        while (index < source.size()) {
-            target.add(source.get(index++));
-        }
-    }
-
     /**
      * Finds the specified number of the current user's most recently added/edited assets.
      *
-     * @param limit Maximum number of assets to retrieve
-     * @return List of recently added/edited assets
+     * @param pageSpec Specification of the page to load
+     * @return Page of recently added/edited assets
      */
-    public List<RecentlyModifiedAsset> findMyLastEdited(int limit) {
-        ensureValidLimitForLastEdited(limit);
-        final User me = securityUtils.getCurrentUser().toUser();
-        final List<RecentlyModifiedAsset> resources = resourceRepositoryService.findLastEditedBy(me, limit);
-        final List<RecentlyModifiedAsset> terms = termRepositoryService.findLastEditedBy(me, limit);
-        final List<RecentlyModifiedAsset> vocabularies = vocabularyRepositoryService.findLastEditedBy(me, limit);
-        final List<RecentlyModifiedAsset> result = mergeAssets(mergeAssets(resources, terms), vocabularies);
-        return result.subList(0, Math.min(result.size(), limit));
-    }
-
-    private static void ensureValidLimitForLastEdited(int limit) {
-        if (limit < 0) {
-            throw new IllegalArgumentException("Maximum for recently edited assets must not be less than 0.");
-        }
+    public Page<RecentlyModifiedAsset> findMyLastEdited(Pageable pageSpec) {
+        final User me = SecurityUtils.currentUser().toUser();
+        return assetDao.findLastEditedBy(me, pageSpec);
     }
 
     /**
@@ -131,7 +76,7 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findLastCommentedInReactionToMine(Pageable pageSpec) {
-        final User me = securityUtils.getCurrentUser().toUser();
+        final User me = SecurityUtils.currentUser().toUser();
         return termRepositoryService.findLastCommentedInReaction(me, pageSpec);
     }
 
@@ -142,7 +87,7 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findMyLastCommented(Pageable pageSpec) {
-        final User me = securityUtils.getCurrentUser().toUser();
+        final User me = SecurityUtils.currentUser().toUser();
         return termRepositoryService.findMyLastCommented(me, pageSpec);
     }
 }
