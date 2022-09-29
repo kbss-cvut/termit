@@ -39,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -275,6 +276,7 @@ class JwtAuthorizationFilterTest {
 
     @Test
     void doFilterInternalRegistersLastSeenForRequestToCurrentUser() throws Exception {
+        mockRequest.setMethod(HttpMethod.GET.name());
         when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         generateJwtIntoRequest();
         mockRequest.setRequestURI(REST_MAPPING_PATH + UserController.PATH + UserController.CURRENT_USER_PATH);
@@ -286,6 +288,7 @@ class JwtAuthorizationFilterTest {
 
     @Test
     void doFilterInternalRegistersLastSeenForRequestToCurrentUserWithExpiredToken() throws Exception {
+        mockRequest.setMethod(HttpMethod.GET.name());
         mockRequest.setRequestURI(REST_MAPPING_PATH + UserController.PATH + UserController.CURRENT_USER_PATH);
         final Instant issued = JwtUtils.issueTimestamp().minusSeconds(10000L);
         final String token = Jwts.builder().setSubject(user.getUsername())
