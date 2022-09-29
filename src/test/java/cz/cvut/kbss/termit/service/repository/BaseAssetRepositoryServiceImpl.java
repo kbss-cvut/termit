@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.persistence.dao.AssetDao;
+import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class BaseAssetRepositoryServiceImpl extends BaseAssetRepositoryService<V
     }
 
     @Override
-    protected AssetDao<Vocabulary> getPrimaryDao() {
+    protected BaseAssetDao<Vocabulary> getPrimaryDao() {
         return dao;
     }
 }

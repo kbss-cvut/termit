@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.CurrentUserDto;
 import cz.cvut.kbss.termit.event.LoginAttemptsThresholdExceeded;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -24,6 +25,7 @@ import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
+import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
@@ -50,14 +52,16 @@ public class UserService {
 
     private final UserRoleRepositoryService userRoleRepositoryService;
 
+    private final LastSeenTracker lastSeenTracker;
+
     private final SecurityUtils securityUtils;
 
     @Autowired
-    public UserService(UserRepositoryService repositoryService,
-                       UserRoleRepositoryService userRoleRepositoryService,
-                       SecurityUtils securityUtils) {
+    public UserService(UserRepositoryService repositoryService, UserRoleRepositoryService userRoleRepositoryService,
+                       LastSeenTracker lastSeenTracker, SecurityUtils securityUtils) {
         this.repositoryService = repositoryService;
         this.userRoleRepositoryService = userRoleRepositoryService;
+        this.lastSeenTracker = lastSeenTracker;
         this.securityUtils = securityUtils;
     }
 
@@ -96,10 +100,11 @@ public class UserService {
      *
      * @return Currently logged in user's account
      */
-    public UserAccount getCurrent() {
+    public CurrentUserDto getCurrent() {
         final UserAccount account = securityUtils.getCurrentUser();
-        account.erasePassword();
-        return account;
+        final CurrentUserDto result = new CurrentUserDto(account);
+        lastSeenTracker.getlastSeen(account.getUri()).ifPresent(result::setLastSeen);
+        return result;
     }
 
     /**

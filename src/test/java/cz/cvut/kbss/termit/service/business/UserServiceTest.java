@@ -1,16 +1,20 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.CurrentUserDto;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.LoginAttemptsThresholdExceeded;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
@@ -21,7 +25,9 @@ import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
+import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +35,11 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,6 +55,9 @@ class UserServiceTest {
 
     @Mock
     private UserRoleRepositoryService roleServiceMock;
+
+    @Mock
+    private LastSeenTracker lastSeenTrackerMock;
 
     @Mock
     private SecurityUtils securityUtilsMock;
@@ -225,17 +236,20 @@ class UserServiceTest {
     void getCurrentRetrievesCurrentlyLoggedInUserAccount() {
         final UserAccount account = Generator.generateUserAccount();
         when(securityUtilsMock.getCurrentUser()).thenReturn(account);
-        final UserAccount result = sut.getCurrent();
-        assertEquals(account, result);
+        final CurrentUserDto result = sut.getCurrent();
+        assertEquals(new CurrentUserDto(account), result);
     }
 
     @Test
-    void getCurrentReturnsCurrentUserAccountWithoutPassword() {
+    void getCurrentRetrievesCurrentUserWithLastSeenTimestamp() {
         final UserAccount account = Generator.generateUserAccount();
-        account.setPassword("12345");
         when(securityUtilsMock.getCurrentUser()).thenReturn(account);
-        final UserAccount result = sut.getCurrent();
-        assertNull(result.getPassword());
+        final Instant lastSeen = Utils.timestamp();
+        when(lastSeenTrackerMock.getlastSeen(account.getUri())).thenReturn(Optional.of(lastSeen));
+
+        final CurrentUserDto result = sut.getCurrent();
+        assertEquals(lastSeen, result.getLastSeen());
+        verify(lastSeenTrackerMock).getlastSeen(account.getUri());
     }
 
     @Test
@@ -310,7 +324,7 @@ class UserServiceTest {
         when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
 
         assertThrows(UnsupportedOperationException.class,
-                () -> sut.changeRole(ua, Vocabulary.s_c_administrator_termitu));
+                     () -> sut.changeRole(ua, Vocabulary.s_c_administrator_termitu));
     }
 
     @Test

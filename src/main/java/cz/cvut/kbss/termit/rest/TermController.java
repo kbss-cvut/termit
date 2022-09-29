@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
+
 @RestController
 @RequestMapping("/")
 public class TermController extends BaseController {
