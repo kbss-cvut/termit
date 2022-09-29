@@ -1,13 +1,16 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.security;
 
@@ -17,7 +20,6 @@ import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -69,8 +71,8 @@ class JwtAuthenticationFilterTest {
         this.user = Generator.generateUserAccount();
         this.mockRequest = new MockHttpServletRequest();
         this.mockResponse = new MockHttpServletResponse();
-        this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class), new JwtUtils(Environment.getObjectMapper(),
-                                                                                               new LastSeenTracker(), config));
+        this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class),
+                                               new JwtUtils(Environment.getObjectMapper(), config));
     }
 
     @Test
