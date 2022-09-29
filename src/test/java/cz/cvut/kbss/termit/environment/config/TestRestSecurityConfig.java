@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.security.AuthenticationFailure;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.JwtUtils;
+import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -39,8 +40,9 @@ public class TestRestSecurityConfig {
 
     @Bean
     public JwtUtils jwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper,
+                             LastSeenTracker lastSeenTracker,
                              cz.cvut.kbss.termit.util.Configuration configuration) {
-        return new JwtUtils(objectMapper, configuration);
+        return new JwtUtils(objectMapper, lastSeenTracker, configuration);
     }
 
     @Bean
@@ -66,5 +68,10 @@ public class TestRestSecurityConfig {
     @Bean
     public TermItUserDetailsService userDetailsService() {
         return mock(TermItUserDetailsService.class);
+    }
+
+    @Bean
+    public LastSeenTracker lastSeenTracker() {
+        return new LastSeenTracker();
     }
 }

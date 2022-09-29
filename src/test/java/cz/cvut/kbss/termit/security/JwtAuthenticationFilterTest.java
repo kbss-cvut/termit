@@ -17,6 +17,7 @@ import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -68,7 +69,8 @@ class JwtAuthenticationFilterTest {
         this.user = Generator.generateUserAccount();
         this.mockRequest = new MockHttpServletRequest();
         this.mockResponse = new MockHttpServletResponse();
-        this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class), new JwtUtils(Environment.getObjectMapper(), config));
+        this.sut = new JwtAuthenticationFilter(mock(AuthenticationManager.class), new JwtUtils(Environment.getObjectMapper(),
+                                                                                               new LastSeenTracker(), config));
     }
 
     @Test

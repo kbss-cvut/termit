@@ -20,7 +20,9 @@ import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.AbstractUser;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -38,6 +40,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,6 +61,8 @@ class JwtUtilsTest {
     @Autowired
     private Configuration config;
 
+    private LastSeenTracker lastSeenTracker;
+
     private UserAccount user;
 
     private Key key;
@@ -66,7 +72,8 @@ class JwtUtilsTest {
     @BeforeEach
     void setUp() {
         this.user = Generator.generateUserAccount();
-        this.sut = new JwtUtils(Environment.getObjectMapper(), config);
+        this.lastSeenTracker = new LastSeenTracker();
+        this.sut = new JwtUtils(Environment.getObjectMapper(), lastSeenTracker, config);
         this.key = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
@@ -234,5 +241,34 @@ class JwtUtilsTest {
                                  .compact();
 
         assertThrows(JwtException.class, () -> sut.extractUserInfo(token));
+    }
+
+    @Test
+    void extractUserInfoUpdatesLastSeenTimestampWithTokenIssueTimestamp() {
+        final Instant issuedAt = Utils.timestamp().truncatedTo(ChronoUnit.SECONDS).minusSeconds(1000L);
+        final String token = Jwts.builder().setSubject(user.getUsername())
+                                 .setId(user.getUri().toString())
+                                 .setIssuedAt(Date.from(issuedAt))
+                                 .setExpiration(
+                                         new Date(System.currentTimeMillis() + SecurityConstants.SESSION_TIMEOUT))
+                                 .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
+
+        sut.extractUserInfo(token);
+        assertTrue(lastSeenTracker.getlastSeen(user.getUri()).isPresent());
+        assertEquals(issuedAt, lastSeenTracker.getlastSeen(user.getUri()).get());
+    }
+
+    @Test
+    void extractUserInfoFromExpiredTokenUpdatesLastSeenTimestampWithTokenIssueTimestamp() {
+        final Instant issuedAt = Utils.timestamp().truncatedTo(ChronoUnit.SECONDS).minusSeconds(1000L);
+        final String token = Jwts.builder().setId(user.getUri().toString())
+                                 .setSubject(user.getUsername())
+                                 .setIssuedAt(Date.from(issuedAt))
+                                 .setExpiration(Date.from(Instant.now().minusSeconds(10)))
+                                 .signWith(key, JwtUtils.SIGNATURE_ALGORITHM).compact();
+
+        assertThrows(TokenExpiredException.class, () -> sut.extractUserInfo(token));
+        assertTrue(lastSeenTracker.getlastSeen(user.getUri()).isPresent());
+        assertEquals(issuedAt, lastSeenTracker.getlastSeen(user.getUri()).get());
     }
 }

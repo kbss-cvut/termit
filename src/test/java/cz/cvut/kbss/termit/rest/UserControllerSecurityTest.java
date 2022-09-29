@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.termit.dto.CurrentUserDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
@@ -70,11 +71,11 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
     void getCurrentReturnsCurrentlyLoggedInUser() throws Exception {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         Environment.setCurrentUser(user);
-        when(userService.getCurrent()).thenReturn(user);
+        when(userService.getCurrent()).thenReturn(new CurrentUserDto(user));
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL + "/current").accept(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isOk()).andReturn();
-        final UserAccount result = readValue(mvcResult, UserAccount.class);
-        assertEquals(user, result);
+        final CurrentUserDto result = readValue(mvcResult, CurrentUserDto.class);
+        assertEquals(new CurrentUserDto(user), result);
     }
 
     @Test
@@ -84,8 +85,8 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
         final UserAccount toUnlock = Generator.generateUserAccountWithPassword();
 
         mockMvc.perform(
-                delete(BASE_URL + "/" + extractIdentifierFragment(toUnlock.getUri()) + "/lock")
-                        .content(toUnlock.getPassword()))
+                       delete(BASE_URL + "/" + extractIdentifierFragment(toUnlock.getUri()) + "/lock")
+                               .content(toUnlock.getPassword()))
                .andExpect(status().isForbidden());
         verify(userService, never()).unlock(any(), any());
     }

@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -94,6 +95,16 @@ public abstract class AbstractUser implements HasIdentifier, HasTypes, Serializa
     @Override
     public void setTypes(Set<String> types) {
         this.types = types;
+    }
+
+    public void copyAttributes(AbstractUser target) {
+        target.setUri(uri);
+        target.setFirstName(firstName);
+        target.setLastName(lastName);
+        target.setUsername(username);
+        if (types != null) {
+            target.setTypes(new HashSet<>(types));
+        }
     }
 
     @Override
