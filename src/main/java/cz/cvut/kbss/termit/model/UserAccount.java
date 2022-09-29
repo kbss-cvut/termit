@@ -22,8 +22,6 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.util.HashSet;
-
 @OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
 public class UserAccount extends AbstractUser {
 
@@ -123,16 +121,6 @@ public class UserAccount extends AbstractUser {
         final User user = new User();
         copyAttributes(user);
         return user;
-    }
-
-    protected void copyAttributes(AbstractUser target) {
-        target.setUri(uri);
-        target.setFirstName(firstName);
-        target.setLastName(lastName);
-        target.setUsername(username);
-        if (types != null) {
-            target.setTypes(new HashSet<>(types));
-        }
     }
 
     /**

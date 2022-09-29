@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.AbstractUser;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.jackson.io.JacksonDeserializer;
@@ -36,6 +37,8 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,11 +49,15 @@ public class JwtUtils {
 
     private final ObjectMapper objectMapper;
 
+    private final LastSeenTracker lastSeenTracker;
+
     private final Key key;
 
     @Autowired
-    public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
+    public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, LastSeenTracker lastSeenTracker,
+                    Configuration config) {
         this.objectMapper = objectMapper;
+        this.lastSeenTracker = lastSeenTracker;
         this.key = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
@@ -61,15 +68,20 @@ public class JwtUtils {
      * @return Generated JWT hash
      */
     public String generateToken(AbstractUser user, Collection<? extends GrantedAuthority> authorities) {
-        final Date issued = new Date();
+        final Instant issued = issueTimestamp();
         return Jwts.builder().setSubject(user.getUsername())
                    .setId(user.getUri().toString())
-                   .setIssuedAt(issued)
-                   .setExpiration(new Date(issued.getTime() + SecurityConstants.SESSION_TIMEOUT))
+                   .setIssuedAt(Date.from(issued))
+                   .setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
                    .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
                    .signWith(key, SIGNATURE_ALGORITHM)
                    .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
                    .compact();
+    }
+
+    private static Instant issueTimestamp() {
+        // Truncate timestamp to seconds, it would get truncated on serialization/deserialization anyway
+        return Instant.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
     private static String mapAuthoritiesToClaim(Collection<? extends GrantedAuthority> authorities) {
@@ -94,6 +106,7 @@ public class JwtUtils {
             user.setUri(URI.create(claims.getId()));
             user.setUsername(claims.getSubject());
             final String roles = claims.get(SecurityConstants.JWT_ROLE_CLAIM, String.class);
+            lastSeenTracker.updateLastSeen(user.getUri(), claims.getIssuedAt().toInstant());
             return new TermItUserDetails(user, mapClaimToAuthorities(roles));
         } catch (IllegalArgumentException e) {
             throw new JwtException("Unable to parse user identifier from the specified JWT.", e);
@@ -110,6 +123,7 @@ public class JwtUtils {
         } catch (SecurityException e) {
             throw new JwtException("Invalid signature of the specified JWT.", e);
         } catch (ExpiredJwtException e) {
+            lastSeenTracker.updateLastSeen(URI.create(e.getClaims().getId()), e.getClaims().getIssuedAt().toInstant());
             throw new TokenExpiredException(e.getMessage());
         }
     }
@@ -147,9 +161,9 @@ public class JwtUtils {
     public String refreshToken(String token) {
         Objects.requireNonNull(token);
         final Claims claims = getClaimsFromToken(token);
-        final Date issuedAt = new Date();
-        claims.setIssuedAt(issuedAt);
-        claims.setExpiration(new Date(issuedAt.getTime() + SecurityConstants.SESSION_TIMEOUT));
+        final Instant issued = issueTimestamp();
+        claims.setIssuedAt(Date.from(issued));
+        claims.setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)));
         return Jwts.builder().setClaims(claims)
                    .signWith(key, SIGNATURE_ALGORITHM)
                    .serializeToJsonWith(new JacksonSerializer<>(objectMapper))

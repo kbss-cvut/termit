@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.rest.ConfigurationController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -96,7 +97,7 @@ class JwtAuthorizationFilterTest {
         this.user = Generator.generateUserAccount();
         this.objectMapper = Environment.getObjectMapper();
         this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
-        this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
+        this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, new LastSeenTracker(), config));
         this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, securityUtilsMock, detailsServiceMock,
                 objectMapper);
     }
