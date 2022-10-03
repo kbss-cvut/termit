@@ -576,4 +576,44 @@ public class Configuration {
             this.allowedOrigins = allowedOrigins;
         }
     }
+
+    @org.springframework.context.annotation.Configuration
+    public static class Schedule {
+
+        private Cron cron = new Cron();
+
+        public Cron getCron() {
+            return cron;
+        }
+
+        public void setCron(Cron cron) {
+            this.cron = cron;
+        }
+
+        public static class Cron {
+
+            private Notification notification = new Notification();
+
+            public Notification getNotification() {
+                return notification;
+            }
+
+            public void setNotification(Notification notification) {
+                this.notification = notification;
+            }
+
+            public static class Notification {
+
+                private String comments;
+
+                public String getComments() {
+                    return comments;
+                }
+
+                public void setComments(String comments) {
+                    this.comments = comments;
+                }
+            }
+        }
+    }
 }
