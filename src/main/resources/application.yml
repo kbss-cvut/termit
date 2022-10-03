@@ -29,6 +29,13 @@ spring:
     cache:
         jcache:
             config: classpath:ehcache.xml
+    mail:
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true
     profiles:
         active: @spring.profiles.active@
 javamelody:
