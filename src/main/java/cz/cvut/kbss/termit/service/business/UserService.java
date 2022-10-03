@@ -14,7 +14,6 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.CurrentUserDto;
 import cz.cvut.kbss.termit.event.LoginAttemptsThresholdExceeded;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -25,8 +24,8 @@ import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
-import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,16 +51,13 @@ public class UserService {
 
     private final UserRoleRepositoryService userRoleRepositoryService;
 
-    private final LastSeenTracker lastSeenTracker;
-
     private final SecurityUtils securityUtils;
 
     @Autowired
     public UserService(UserRepositoryService repositoryService, UserRoleRepositoryService userRoleRepositoryService,
-                       LastSeenTracker lastSeenTracker, SecurityUtils securityUtils) {
+                       SecurityUtils securityUtils) {
         this.repositoryService = repositoryService;
         this.userRoleRepositoryService = userRoleRepositoryService;
-        this.lastSeenTracker = lastSeenTracker;
         this.securityUtils = securityUtils;
     }
 
@@ -96,15 +92,25 @@ public class UserService {
     }
 
     /**
-     * Retrieves currently logged in user.
+     * Retrieves currently logged-in user.
      *
-     * @return Currently logged in user's account
+     * It also updates last seen timestamp of the current user. While this is a side effect in a get method, it is a simpler
+     * solution that emitting some kind of event and using that.
+     *
+     * @return Currently logged-in user's account
      */
-    public CurrentUserDto getCurrent() {
+    @Transactional
+    public UserAccount getCurrent() {
         final UserAccount account = securityUtils.getCurrentUser();
-        final CurrentUserDto result = new CurrentUserDto(account);
-        lastSeenTracker.getlastSeen(account.getUri()).ifPresent(result::setLastSeen);
-        return result;
+        updateLastSeen(account.copy());
+        account.erasePassword();
+        return account;
+    }
+
+    private void updateLastSeen(UserAccount account) {
+        account.setLastSeen(Utils.timestamp());
+        LOG.trace("Updating last seen timestamp of user {}.", account);
+        repositoryService.update(account);
     }
 
     /**

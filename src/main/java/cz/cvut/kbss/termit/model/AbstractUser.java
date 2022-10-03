@@ -97,7 +97,7 @@ public abstract class AbstractUser implements HasIdentifier, HasTypes, Serializa
         this.types = types;
     }
 
-    public void copyAttributes(AbstractUser target) {
+    protected void copyAttributes(AbstractUser target) {
         target.setUri(uri);
         target.setFirstName(firstName);
         target.setLastName(lastName);
