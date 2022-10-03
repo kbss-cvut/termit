@@ -102,8 +102,8 @@ public class UserService {
     @Transactional
     public UserAccount getCurrent() {
         final UserAccount account = securityUtils.getCurrentUser();
-        updateLastSeen(account.copy());
         account.erasePassword();
+        updateLastSeen(account.copy());
         return account;
     }
 
