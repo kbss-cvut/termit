@@ -20,10 +20,8 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.rest.ConfigurationController;
-import cz.cvut.kbss.termit.rest.UserController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -39,7 +37,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -85,9 +82,6 @@ class JwtAuthorizationFilterTest {
     private TermItUserDetailsService detailsServiceMock;
 
     @Mock
-    private LastSeenTracker lastSeenTrackerMock;
-
-    @Mock
     private SecurityUtils securityUtilsMock;
 
     private JwtUtils jwtUtilsSpy;
@@ -107,7 +101,7 @@ class JwtAuthorizationFilterTest {
         this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
         this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
         this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, securityUtilsMock, detailsServiceMock,
-                                              objectMapper, lastSeenTrackerMock);
+                                              objectMapper);
     }
 
     @Test
@@ -272,33 +266,5 @@ class JwtAuthorizationFilterTest {
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         verify(chainMock).doFilter(mockRequest, mockResponse);
-    }
-
-    @Test
-    void doFilterInternalRegistersLastSeenForRequestToCurrentUser() throws Exception {
-        mockRequest.setMethod(HttpMethod.GET.name());
-        when(detailsServiceMock.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
-        generateJwtIntoRequest();
-        mockRequest.setRequestURI(REST_MAPPING_PATH + UserController.PATH + UserController.CURRENT_USER_PATH);
-
-        sut.doFilterInternal(mockRequest, mockResponse, chainMock);
-        verify(chainMock).doFilter(mockRequest, mockResponse);
-        verify(lastSeenTrackerMock).updateLastSeen(user.getUri(), tokenIssued);
-    }
-
-    @Test
-    void doFilterInternalRegistersLastSeenForRequestToCurrentUserWithExpiredToken() throws Exception {
-        mockRequest.setMethod(HttpMethod.GET.name());
-        mockRequest.setRequestURI(REST_MAPPING_PATH + UserController.PATH + UserController.CURRENT_USER_PATH);
-        final Instant issued = JwtUtils.issueTimestamp().minusSeconds(10000L);
-        final String token = Jwts.builder().setSubject(user.getUsername())
-                                 .setId(user.getUri().toString())
-                                 .setIssuedAt(Date.from(issued))
-                                 .setExpiration(Date.from(issued.plusMillis(1000L)))
-                                 .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM).compact();
-        mockRequest.addHeader(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + token);
-        sut.doFilterInternal(mockRequest, mockResponse, chainMock);
-        assertEquals(HttpStatus.UNAUTHORIZED.value(), mockResponse.getStatus());
-        verify(lastSeenTrackerMock).updateLastSeen(user.getUri(), issued);
     }
 }

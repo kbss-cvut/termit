@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
@@ -52,11 +49,9 @@ public class UserAccountDao extends BaseDao<UserAccount> {
     public Optional<UserAccount> findByUsername(String username) {
         Objects.requireNonNull(username);
         try {
-            return Optional
-                    .of(em.createNativeQuery("SELECT ?x WHERE { ?x a ?type ; ?hasUsername ?username . }", type)
-                            .setParameter("type", typeUri)
-                            .setParameter("hasUsername", URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
-                            .setParameter("username", username, config.getLanguage()).getSingleResult());
+            return Optional.of(
+                    em.createQuery("SELECT u FROM " + type.getSimpleName() + " u WHERE u.username = :username", type)
+                      .setParameter("username", username, config.getLanguage()).getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         } catch (RuntimeException e) {
@@ -73,23 +68,23 @@ public class UserAccountDao extends BaseDao<UserAccount> {
     public boolean exists(String username) {
         Objects.requireNonNull(username);
         return em.createNativeQuery("ASK WHERE { ?x a ?type ; ?hasUsername ?username . }", Boolean.class)
-                .setParameter("type", typeUri)
-                .setParameter("hasUsername", URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
-                .setParameter("username", username, config.getLanguage()).getSingleResult();
+                 .setParameter("type", typeUri)
+                 .setParameter("hasUsername", URI.create(Vocabulary.s_p_ma_uzivatelske_jmeno))
+                 .setParameter("username", username, config.getLanguage()).getSingleResult();
     }
 
     @Override
     public List<UserAccount> findAll() {
         try {
             return em.createNativeQuery("SELECT ?x WHERE {" +
-                    "?x a ?type ;" +
-                    "?hasLastName ?lastName ;" +
-                    "?hasFirstName ?firstName ." +
-                    "} ORDER BY ?lastName ?firstName", type)
-                    .setParameter("type", typeUri)
-                    .setParameter("hasLastName", URI.create(Vocabulary.s_p_ma_prijmeni))
-                    .setParameter("hasFirstName", URI.create(Vocabulary.s_p_ma_krestni_jmeno))
-                    .getResultList();
+                                                "?x a ?type ;" +
+                                                "?hasLastName ?lastName ;" +
+                                                "?hasFirstName ?firstName ." +
+                                                "} ORDER BY ?lastName ?firstName", type)
+                     .setParameter("type", typeUri)
+                     .setParameter("hasLastName", URI.create(Vocabulary.s_p_ma_prijmeni))
+                     .setParameter("hasFirstName", URI.create(Vocabulary.s_p_ma_krestni_jmeno))
+                     .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -97,11 +92,13 @@ public class UserAccountDao extends BaseDao<UserAccount> {
 
     /**
      * Checks whether an admin account exist in the repository.
+     *
      * @return {@code true} if there is an admin account (at least one), {@code false} otherwise
      */
     public boolean doesAdminExist() {
         try {
-            return em.createNativeQuery("ASK { ?x a ?adminType . }", Boolean.class).setParameter("adminType", URI.create(Vocabulary.s_c_administrator_termitu)).getSingleResult();
+            return em.createNativeQuery("ASK { ?x a ?adminType . }", Boolean.class)
+                     .setParameter("adminType", URI.create(Vocabulary.s_c_administrator_termitu)).getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

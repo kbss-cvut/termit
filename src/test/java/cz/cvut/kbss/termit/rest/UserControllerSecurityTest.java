@@ -14,7 +14,6 @@
  */
 package cz.cvut.kbss.termit.rest;
 
-import cz.cvut.kbss.termit.dto.CurrentUserDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
@@ -71,11 +70,11 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
     void getCurrentReturnsCurrentlyLoggedInUser() throws Exception {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         Environment.setCurrentUser(user);
-        when(userService.getCurrent()).thenReturn(new CurrentUserDto(user));
+        when(userService.getCurrent()).thenReturn(user);
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL + "/current").accept(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isOk()).andReturn();
-        final CurrentUserDto result = readValue(mvcResult, CurrentUserDto.class);
-        assertEquals(new CurrentUserDto(user), result);
+        final UserAccount result = readValue(mvcResult, UserAccount.class);
+        assertEquals(user, result);
     }
 
     @Test

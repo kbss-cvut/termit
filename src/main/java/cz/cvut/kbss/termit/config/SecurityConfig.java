@@ -16,7 +16,6 @@ package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.security.*;
-import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
@@ -64,8 +63,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final ObjectMapper objectMapper;
 
-    private final LastSeenTracker lastSeenTracker;
-
     private final cz.cvut.kbss.termit.util.Configuration config;
 
     @Autowired
@@ -74,8 +71,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                           AuthenticationFailureHandler authenticationFailureHandler,
                           JwtUtils jwtUtils, SecurityUtils securityUtils,
                           TermItUserDetailsService userDetailsService,
-                          ObjectMapper objectMapper, LastSeenTracker lastSeenTracker,
-                          cz.cvut.kbss.termit.util.Configuration config) {
+                          ObjectMapper objectMapper, cz.cvut.kbss.termit.util.Configuration config) {
         this.authenticationProvider = authenticationProvider;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
@@ -83,7 +79,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.securityUtils = securityUtils;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
-        this.lastSeenTracker = lastSeenTracker;
         this.config = config;
     }
 
@@ -102,7 +97,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .and().cors().configurationSource(corsConfigurationSource()).and().csrf().disable()
             .addFilter(authenticationFilter())
             .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils, userDetailsService,
-                                                  objectMapper, lastSeenTracker));
+                                                  objectMapper));
     }
 
     private JwtAuthenticationFilter authenticationFilter() throws Exception {
