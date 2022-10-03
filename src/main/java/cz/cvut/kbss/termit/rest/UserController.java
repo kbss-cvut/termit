@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.CurrentUserDto;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -60,7 +59,7 @@ public class UserController extends BaseController {
     }
 
     @GetMapping(value = CURRENT_USER_PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public CurrentUserDto getCurrent() {
+    public UserAccount getCurrent() {
         return userService.getCurrent();
     }
 

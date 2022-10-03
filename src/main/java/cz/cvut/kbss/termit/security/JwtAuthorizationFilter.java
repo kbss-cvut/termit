@@ -16,16 +16,12 @@ package cz.cvut.kbss.termit.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.JwtException;
-import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.rest.ConfigurationController;
-import cz.cvut.kbss.termit.rest.UserController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
@@ -64,17 +60,14 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private final ObjectMapper objectMapper;
 
-    private final LastSeenTracker lastSeenTracker;
-
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils,
                                   SecurityUtils securityUtils, TermItUserDetailsService userDetailsService,
-                                  ObjectMapper objectMapper, LastSeenTracker lastSeenTracker) {
+                                  ObjectMapper objectMapper) {
         super(authenticationManager);
         this.jwtUtils = jwtUtils;
         this.securityUtils = securityUtils;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
-        this.lastSeenTracker = lastSeenTracker;
     }
 
     @Override
@@ -91,13 +84,9 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             final TermItUserDetails existingDetails = userDetailsService.loadUserByUsername(userDetails.getUsername());
             SecurityUtils.verifyAccountStatus(existingDetails.getUser());
             securityUtils.setCurrentUser(existingDetails);
-            trackLastSeen(request, authToken);
             refreshToken(authToken, response);
             chain.doFilter(request, response);
         } catch (JwtException e) {
-            if (e instanceof TokenExpiredException) {
-                trackLastSeen(request, authToken);
-            }
             if (shouldAllowThroughUnauthenticated(request)) {
                 chain.doFilter(request, response);
             } else {
@@ -105,22 +94,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             }
         } catch (DisabledException | LockedException | UsernameNotFoundException e) {
             unauthorizedRequest(request, response, e);
-        }
-    }
-
-    /**
-     * Tracks datetime of last access of user to the application API.
-     * <p>
-     * However, only requests to get the current user are tracked so that only the first time a user opens TermIt in a
-     * session is tracked.
-     *
-     * @param request   HTTP request
-     * @param authToken Authentication to use as base for activity tracking
-     */
-    private void trackLastSeen(HttpServletRequest request, String authToken) {
-        if (HttpMethod.GET.matches(request.getMethod()) && request.getRequestURI().endsWith(
-                UserController.PATH + UserController.CURRENT_USER_PATH)) {
-            lastSeenTracker.updateLastSeen(jwtUtils.getUserUri(authToken), jwtUtils.getTokenIssueTimestamp(authToken));
         }
     }
 

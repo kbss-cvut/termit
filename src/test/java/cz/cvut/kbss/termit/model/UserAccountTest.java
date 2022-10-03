@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -106,5 +107,17 @@ class UserAccountTest {
         assertFalse(sut.isAdmin());
         sut.addType(Vocabulary.s_c_administrator_termitu);
         assertTrue(sut.isAdmin());
+    }
+
+    @Test
+    void copyCopiesAllAttributesToResult() {
+        sut.setLastSeen(Utils.timestamp());
+        final UserAccount result = sut.copy();
+        assertEquals(sut.getUri(), result.getUri());
+        assertEquals(sut.getUsername(), result.getUsername());
+        assertEquals(sut.getFirstName(), result.getFirstName());
+        assertEquals(sut.getLastName(), result.getLastName());
+        assertEquals(sut.getPassword(), result.getPassword());
+        assertEquals(sut.getLastSeen(), result.getLastSeen());
     }
 }

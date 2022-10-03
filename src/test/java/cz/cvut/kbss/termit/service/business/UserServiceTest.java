@@ -14,7 +14,6 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
-import cz.cvut.kbss.termit.dto.CurrentUserDto;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.LoginAttemptsThresholdExceeded;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
@@ -25,9 +24,7 @@ import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
-import cz.cvut.kbss.termit.service.security.LastSeenTracker;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,11 +32,9 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -55,9 +50,6 @@ class UserServiceTest {
 
     @Mock
     private UserRoleRepositoryService roleServiceMock;
-
-    @Mock
-    private LastSeenTracker lastSeenTrackerMock;
 
     @Mock
     private SecurityUtils securityUtilsMock;
@@ -236,20 +228,29 @@ class UserServiceTest {
     void getCurrentRetrievesCurrentlyLoggedInUserAccount() {
         final UserAccount account = Generator.generateUserAccount();
         when(securityUtilsMock.getCurrentUser()).thenReturn(account);
-        final CurrentUserDto result = sut.getCurrent();
-        assertEquals(new CurrentUserDto(account), result);
+        final UserAccount result = sut.getCurrent();
+        assertEquals(account, result);
     }
 
     @Test
-    void getCurrentRetrievesCurrentUserWithLastSeenTimestamp() {
+    void getCurrentReturnsCurrentUserAccountWithoutPassword() {
+        final UserAccount account = Generator.generateUserAccount();
+        account.setPassword("12345");
+        when(securityUtilsMock.getCurrentUser()).thenReturn(account);
+        final UserAccount result = sut.getCurrent();
+        assertNull(result.getPassword());
+    }
+
+    @Test
+    void getCurrentUpdatesLastSeenTimestampOfCurrentUser() {
         final UserAccount account = Generator.generateUserAccount();
         when(securityUtilsMock.getCurrentUser()).thenReturn(account);
-        final Instant lastSeen = Utils.timestamp();
-        when(lastSeenTrackerMock.getlastSeen(account.getUri())).thenReturn(Optional.of(lastSeen));
-
-        final CurrentUserDto result = sut.getCurrent();
-        assertEquals(lastSeen, result.getLastSeen());
-        verify(lastSeenTrackerMock).getlastSeen(account.getUri());
+        assertNull(account.getLastSeen());
+        sut.getCurrent();
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(repositoryServiceMock).update(captor.capture());
+        assertEquals(account.getUri(), captor.getValue().getUri());
+        assertNotNull(captor.getValue().getLastSeen());
     }
 
     @Test
