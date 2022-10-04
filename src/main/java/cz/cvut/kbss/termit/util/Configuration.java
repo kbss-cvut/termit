@@ -44,6 +44,7 @@ public class Configuration {
     private PublicView publicView = new PublicView();
     private Workspace workspace = new Workspace();
     private Cors cors = new Cors();
+    private Schedule schedule = new Schedule();
 
     public Persistence getPersistence() {
         return persistence;
@@ -147,6 +148,14 @@ public class Configuration {
 
     public void setCors(Cors cors) {
         this.cors = cors;
+    }
+
+    public Schedule getSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(Schedule schedule) {
+        this.schedule = schedule;
     }
 
     @org.springframework.context.annotation.Configuration
