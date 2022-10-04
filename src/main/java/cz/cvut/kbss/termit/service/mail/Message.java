@@ -44,11 +44,15 @@ public class Message {
     /**
      * Creates a {@link MessageBuilder} initialized with the specified recipient.
      *
-     * @param recipient Message recipient
+     * @param recipient Message recipient(s)
      * @return MessageBuilder instance
      */
-    public static MessageBuilder to(String recipient) {
-        return new MessageBuilder().recipient(recipient);
+    public static MessageBuilder to(String... recipient) {
+        final MessageBuilder builder = new MessageBuilder();
+        for (String r : recipient) {
+            builder.recipient(r);
+        }
+        return builder;
     }
 
     @Override

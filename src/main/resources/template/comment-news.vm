@@ -1,0 +1,47 @@
+<html lang="cs">
+<body>
+Dobrý den,
+
+<p>
+    V období od ${from} do ${to} byly v TermItu vytvořeny nebo upraveny komentáře u těchto pojmů:
+</p>
+
+<ul>
+    #foreach( $asset in ${assets} )
+        <li>${asset.primaryLabel}</li>
+    #end
+</ul>
+<br/>
+
+Tabulka níže obsahuje příslušné komentáře.
+
+<table border="0" cellspacing="0" width="800">
+    <thead>
+        <tr>
+            <th width="100">Operace</th>
+            <th width="200">Autor</th>
+            <th width="200">Datum a čas</th>
+            <th width="300">Text komentáře</th>
+        </tr>
+    </thead>
+    #foreach( $comment in ${comments} )
+        <tr>
+            <td>${comment.operation}</td>
+            <td>${comment.author}</td>
+            <td>${comment.lastModified}</td>
+            <td style="white-space: pre-line;">${comment.content}</td>
+        </tr>
+    #end
+</table>
+
+<br/>
+
+S pozdravem,<br/>
+TermIt Postman
+<br/>
+<p>
+    -------------------------------------------------------------------------------<br/>
+    Toto je automatická zpráva. Prosím, neodpovídejte na ni.
+</p>
+</body>
+</html>
