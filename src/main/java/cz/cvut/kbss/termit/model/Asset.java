@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -44,4 +45,9 @@ public abstract class Asset<T> implements HasIdentifier {
     public abstract T getLabel();
 
     public abstract void setLabel(T label);
+
+    @JsonIgnore
+    public String getPrimaryLabel() {
+        return getLabel().toString();
+    }
 }

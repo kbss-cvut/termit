@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.service.notification;
 
-import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.service.mail.Message;
+import cz.cvut.kbss.termit.service.mail.Postman;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,32 +10,33 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class NotificationService {
 
     private final Configuration.Schedule scheduleConfig;
 
-    private final CommentChangeResolver commentChangeResolver;
+    private final CommentChangeNotifier commentChangeNotifier;
 
-    public NotificationService(Configuration config, CommentChangeResolver commentChangeResolver) {
+    private final Postman postman;
+
+    public NotificationService(Configuration config, CommentChangeNotifier commentChangeNotifier, Postman postman) {
         this.scheduleConfig = config.getSchedule();
-        this.commentChangeResolver = commentChangeResolver;
+        this.commentChangeNotifier = commentChangeNotifier;
+        this.postman = postman;
     }
 
     /**
      * Notifies selected users of comments created since last notification.
-     *
+     * <p>
      * Scheduling is done via configured CRON expression.
      */
     @Scheduled(cron = "${termit.schedule.cron.notification.comments}")
-    public void notifyOfNewComments() {
+    public void notifyOfCommentChanges() {
         final Instant now = Utils.timestamp();
         final Instant previous = resolvePreviousRun(now, scheduleConfig.getCron().getNotification().getComments());
-        final Map<Asset<?>, List<Comment>> comments = commentChangeResolver.resolveComments(previous, now);
-        // TODO
+        final Message changeNotificationMessage = commentChangeNotifier.createCommentChangesMessage(previous, now);
+        postman.sendMessage(changeNotificationMessage);
     }
 
     private static Instant resolvePreviousRun(Instant now, String cronExpression) {
