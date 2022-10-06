@@ -613,7 +613,11 @@ public class Configuration {
 
             public static class Notification {
 
-                private String comments;
+                /**
+                 * CRON expression configuring when to send notifications of changes in comments to admins and
+                 * vocabulary authors. Defaults to '-' which disables this functionality.
+                 */
+                private String comments = "-";
 
                 public String getComments() {
                     return comments;
