@@ -8,8 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.time.Instant;
+import java.time.*;
 
 @Service
 public class NotificationService {
@@ -41,7 +40,12 @@ public class NotificationService {
 
     private static Instant resolvePreviousRun(Instant now, String cronExpression) {
         final CronExpression expr = CronExpression.parse(cronExpression);
-        final Instant next = expr.next(now);
+        final OffsetDateTime nextDatetime = expr.next(OffsetDateTime.ofInstant(now, ZoneId.systemDefault()));
+        if (nextDatetime == null) {
+            throw new IllegalArgumentException(
+                    "Invalid scheduling CRON expression " + expr + ". Unable to determine next run.");
+        }
+        final Instant next = nextDatetime.toInstant();
         final Duration interval = Duration.between(now, next);
         return now.minus(interval);
     }
