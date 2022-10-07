@@ -191,4 +191,15 @@ class AssetDaoTest extends BaseDaoTestRunner {
         assertEquals(term.getUri(), result.getContent().get(0).getUri());
         assertEquals(vocabulary.getUri(), result.getContent().get(0).getVocabulary());
     }
+
+    @Test
+    void findLastEditedSkipsRecordsOfDeletedAssets() {
+        enableRdfsInference(em);
+        final PersistChangeRecord record = Generator.generatePersistChange(new Vocabulary(Generator.generateUri()));
+        transactional(() -> em.persist(record));
+
+        final Pageable pageSpec = PageRequest.of(0, 10);
+        final Page<RecentlyModifiedAsset> result = sut.findLastEdited(pageSpec);
+        assertTrue(result.stream().noneMatch(rma -> rma.getUri().equals(record.getChangedEntity())));
+    }
 }
