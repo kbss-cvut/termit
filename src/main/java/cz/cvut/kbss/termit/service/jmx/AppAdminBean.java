@@ -17,6 +17,8 @@ package cz.cvut.kbss.termit.service.jmx;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.service.mail.Message;
+import cz.cvut.kbss.termit.service.mail.Postman;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +38,12 @@ public class AppAdminBean {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    private final Postman postman;
+
     @Autowired
-    public AppAdminBean(ApplicationEventPublisher eventPublisher) {
+    public AppAdminBean(ApplicationEventPublisher eventPublisher, Postman postman) {
         this.eventPublisher = eventPublisher;
+        this.postman = postman;
     }
 
     @CacheEvict(allEntries = true, cacheNames = {"vocabularies"})
@@ -49,5 +54,12 @@ public class AppAdminBean {
         LOG.info("Refreshing last modified timestamps...");
         eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
         eventPublisher.publishEvent(new VocabularyContentModified(this));
+    }
+
+    @ManagedOperation(description = "Sends test email to the specified address.")
+    public void sendTermEmail(String address) {
+        final Message message = Message.to(address).subject("TermIt Test Email")
+                                       .content("This is a test message from TermIt.").build();
+        postman.sendMessage(message);
     }
 }

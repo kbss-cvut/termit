@@ -44,6 +44,7 @@ public class Configuration {
     private PublicView publicView = new PublicView();
     private Workspace workspace = new Workspace();
     private Cors cors = new Cors();
+    private Schedule schedule = new Schedule();
 
     public Persistence getPersistence() {
         return persistence;
@@ -147,6 +148,14 @@ public class Configuration {
 
     public void setCors(Cors cors) {
         this.cors = cors;
+    }
+
+    public Schedule getSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(Schedule schedule) {
+        this.schedule = schedule;
     }
 
     @org.springframework.context.annotation.Configuration
@@ -574,6 +583,50 @@ public class Configuration {
 
         public void setAllowedOrigins(String allowedOrigins) {
             this.allowedOrigins = allowedOrigins;
+        }
+    }
+
+    @org.springframework.context.annotation.Configuration
+    public static class Schedule {
+
+        private Cron cron = new Cron();
+
+        public Cron getCron() {
+            return cron;
+        }
+
+        public void setCron(Cron cron) {
+            this.cron = cron;
+        }
+
+        public static class Cron {
+
+            private Notification notification = new Notification();
+
+            public Notification getNotification() {
+                return notification;
+            }
+
+            public void setNotification(Notification notification) {
+                this.notification = notification;
+            }
+
+            public static class Notification {
+
+                /**
+                 * CRON expression configuring when to send notifications of changes in comments to admins and
+                 * vocabulary authors. Defaults to '-' which disables this functionality.
+                 */
+                private String comments = "-";
+
+                public String getComments() {
+                    return comments;
+                }
+
+                public void setComments(String comments) {
+                    this.comments = comments;
+                }
+            }
         }
     }
 }

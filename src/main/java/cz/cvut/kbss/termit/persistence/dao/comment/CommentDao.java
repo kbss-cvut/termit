@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.descriptors.FieldDescriptor;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -66,25 +67,39 @@ public class CommentDao {
     }
 
     /**
-     * Finds all comments related to the specified asset created in the specified time interval.
+     * Finds all comments related to the specified asset created or edited in the specified time interval.
+     * <p>
+     * All the parameters are optional.
      *
-     * @param asset Asset whose comments to retrieve
-     * @param from  Start timestamp of the time interval for comments retrieval
-     * @param to    End timestamp of the time interval for comments retrieval
+     * @param asset Asset whose comments to retrieve, optional
+     * @param from  Start timestamp of the time interval for comments retrieval. Optional, if not provided, Unix epoch
+     *              is used
+     * @param to    End timestamp of the time interval for comments retrieval. Optional, if not provided, current date
+     *              and time is used
      * @return List of matching comments, sorted by date of creation (from oldest to newest)
      */
     public List<Comment> findAll(Asset<?> asset, Instant from, Instant to) {
-        Objects.requireNonNull(asset);
-        Objects.requireNonNull(from);
-        Objects.requireNonNull(to);
         try {
-            return em.createQuery(
-                             "SELECT c FROM Comment c WHERE c.asset = :asset AND c.created >= :from AND c.created < :to ORDER BY c.created",
-                             Comment.class)
-                     .setParameter("asset", asset.getUri())
-                     .setParameter("from", from)
-                     .setParameter("to", to)
-                     .setDescriptor(loadingDescriptor).getResultList();
+            final TypedQuery<Comment> query = em.createNativeQuery("SELECT DISTINCT ?c WHERE {" +
+                                                                           "?c a ?type ; " +
+                                                                           "?hasTopic ?asset . " +
+                                                                           " { " +
+                                                                           "?c ?hasCreated ?mod . " +
+                                                                           "FILTER (?mod >= ?from && ?mod < ?to) " +
+                                                                           "} UNION { " +
+                                                                           "?c ?hasModified ?mod . " +
+                                                                           "FILTER (?mod >= ?from && ?mod < ?to) " +
+                                                                           "} } ORDER BY ?mod", Comment.class)
+                    .setParameter("type", URI.create(Vocabulary.s_c_Comment))
+                    .setParameter("hasTopic", URI.create(Vocabulary.s_p_topic))
+                    .setParameter("hasCreated", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                    .setParameter("hasModified", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace));
+            if (asset != null) {
+                query.setParameter("asset", asset);
+            }
+            return query.setParameter("from", from != null ? from : Constants.EPOCH_TIMESTAMP)
+                        .setParameter("to", to != null ? to : Utils.timestamp())
+                        .setDescriptor(loadingDescriptor).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
