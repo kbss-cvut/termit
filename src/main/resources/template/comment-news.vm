@@ -11,9 +11,10 @@ Dobrý den,
         <li>${asset.primaryLabel}</li>
     #end
 </ul>
-<br/>
 
+<p>
 Tabulka níže obsahuje příslušné komentáře.
+</p>
 
 <table border="0" cellspacing="0" width="800">
     <thead>
