@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.mail;
 import cz.cvut.kbss.termit.exception.PostmanException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -20,7 +21,7 @@ public class Postman {
 
     private static final Logger LOG = LoggerFactory.getLogger(Postman.class);
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:#{null}}")
     private String senderUsername;
 
     /**
@@ -30,7 +31,7 @@ public class Postman {
 
     private final JavaMailSender mailSender;
 
-    public Postman(JavaMailSender mailSender) {
+    public Postman(@Autowired(required = false) JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
@@ -40,6 +41,10 @@ public class Postman {
      * @param message Mail specification
      */
     public void sendMessage(Message message) {
+        if (mailSender == null) {
+            LOG.warn("Mail server not configured. Cannot send message {}.", message);
+            return;
+        }
         Objects.requireNonNull(message);
         try {
             LOG.debug("Sending mail: {}", message);
