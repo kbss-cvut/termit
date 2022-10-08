@@ -22,4 +22,10 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 @OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
 public class User extends AbstractUser {
+
+    public UserAccount toUserAccount() {
+        final UserAccount account = new UserAccount();
+        copyAttributes(account);
+        return account;
+    }
 }

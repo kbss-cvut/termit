@@ -8,17 +8,23 @@ import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.MessageComposer;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 public class CommentChangeNotifier {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CommentChangeNotifier.class);
 
     static final String COMMENT_CHANGES_TEMPLATE = "comment-news.vm";
 
@@ -73,10 +79,12 @@ public class CommentChangeNotifier {
      * @return Map of assets to comments created or edited in the specified interval
      */
     Map<Asset<?>, List<Comment>> findChangedComments(Instant from, Instant to) {
+        LOG.debug("Resolving changed comments in time interval <{}, {}>", from, to);
         final List<Comment> comments = commentService.findAll(null, from, to);
         final Map<URI, List<Comment>> reducer = mapCommentsByAsset(comments);
         final Map<Asset<?>, List<Comment>> result = new HashMap<>();
         reducer.forEach((assetUri, lst) -> loadAsset(assetUri).ifPresent(a -> result.put(a, lst)));
+        LOG.trace("Found comment changes (comments added or updated) for {} assets.", result.size());
         return result;
     }
 
@@ -105,20 +113,25 @@ public class CommentChangeNotifier {
      * @return Relevant recipients
      */
     List<User> resolveNotificationRecipients(Map<Asset<?>, List<Comment>> commentChanges) {
-        final Set<User> admins = userService.findAll().stream().filter(UserAccount::isAdmin).map(UserAccount::toUser)
-                                            .collect(Collectors.toSet());
+        LOG.debug("Gathering notification recipients.");
+        final Set<UserAccount> admins = userService.findAll().stream().filter(UserAccount::isAdmin)
+                                                   .collect(Collectors.toSet());
         admins.addAll(resolveTermVocabularyAuthors(commentChanges));
-        return new ArrayList<>(admins);
+        LOG.trace(
+                "Found the following potential recipients: {}. Filtering out inactive users and invalid email addresses.",
+                admins.stream().map(AbstractUser::getUsername).collect(Collectors.toList()));
+        return admins.stream().filter(u -> u.isEnabled() && Utils.isValidEmail(u.getUsername()))
+                     .map(UserAccount::toUser).collect(Collectors.toList());
     }
 
-    private Set<User> resolveTermVocabularyAuthors(Map<Asset<?>, List<Comment>> commentChanges) {
+    private Set<UserAccount> resolveTermVocabularyAuthors(Map<Asset<?>, List<Comment>> commentChanges) {
         final Set<URI> vocabularyUris = commentChanges.keySet().stream().filter(a -> a instanceof Term)
                                                       .map(a -> ((Term) a).getVocabulary()).collect(Collectors.toSet());
         return vocabularyUris.stream().map(vUri -> changeRecordService.getAuthors(new Vocabulary(vUri)))
-                             .flatMap(Collection::stream).collect(Collectors.toSet());
+                             .flatMap(Collection::stream).map(User::toUserAccount).collect(Collectors.toSet());
     }
 
-    static class CommentForMessage {
+    public static class CommentForMessage {
         private final OperationType operation;
         private final String author;
         private final Instant lastModified;
@@ -131,7 +144,8 @@ public class CommentChangeNotifier {
         CommentForMessage(Comment comment) {
             this.operation = comment.getModified() != null ? OperationType.UPDATE : OperationType.CREATE;
             this.author = comment.getAuthor().getFullName();
-            this.lastModified = comment.getModified() != null ? comment.getModified() : comment.getCreated();
+            this.lastModified = (comment.getModified() != null ? comment.getModified() :
+                                 comment.getCreated()).truncatedTo(ChronoUnit.SECONDS);
             this.content = comment.getContent();
         }
 

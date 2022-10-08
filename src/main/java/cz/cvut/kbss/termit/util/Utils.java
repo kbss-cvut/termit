@@ -12,9 +12,15 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Utils {
+
+    /**
+     * Email validation regexp by OWASP.
+     */
+    private static final String EMAIL_REGEXP = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,15}$";
 
     private Utils() {
         throw new AssertionError();
@@ -251,5 +257,14 @@ public class Utils {
      */
     public static String uriToString(URI uri) {
         return "<" + uri + ">";
+    }
+
+    /**
+     * Checks if the specified string is a valid email address.
+     * @param str String to validate
+     * @return {@code true} if the specified string is a valid email, {@code false} otherwise
+     */
+    public static boolean isValidEmail(String str) {
+        return str != null && Pattern.compile(EMAIL_REGEXP).matcher(str).matches();
     }
 }

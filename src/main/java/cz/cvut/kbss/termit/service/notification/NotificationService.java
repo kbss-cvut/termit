@@ -4,6 +4,8 @@ import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.Postman;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,8 @@ import java.time.*;
 
 @Service
 public class NotificationService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(NotificationService.class);
 
     private final Configuration.Schedule scheduleConfig;
 
@@ -32,6 +36,7 @@ public class NotificationService {
      */
     @Scheduled(cron = "${termit.schedule.cron.notification.comments}")
     public void notifyOfCommentChanges() {
+        LOG.debug("Running comment change notification.");
         final Instant now = Utils.timestamp();
         final Instant previous = resolvePreviousRun(now, scheduleConfig.getCron().getNotification().getComments());
         final Message changeNotificationMessage = commentChangeNotifier.createCommentChangesMessage(previous, now);
