@@ -122,7 +122,7 @@ class CommentChangeNotifierTest {
         comment.setModified(null);
         final CommentChangeNotifier.CommentForMessage sut = new CommentChangeNotifier.CommentForMessage(comment);
         assertEquals(CommentChangeNotifier.CommentForMessage.OperationType.CREATE, sut.getOperation());
-        assertEquals(comment.getCreated(), sut.getLastModified());
+        assertEquals(comment.getCreated().truncatedTo(ChronoUnit.SECONDS), sut.getLastModified());
     }
 
     @Test
@@ -133,7 +133,7 @@ class CommentChangeNotifierTest {
         assertNotNull(comment.getCreated());
         final CommentChangeNotifier.CommentForMessage sut = new CommentChangeNotifier.CommentForMessage(comment);
         assertEquals(CommentChangeNotifier.CommentForMessage.OperationType.UPDATE, sut.getOperation());
-        assertEquals(comment.getModified(), sut.getLastModified());
+        assertEquals(comment.getModified().truncatedTo(ChronoUnit.SECONDS), sut.getLastModified());
     }
 
     @Test
