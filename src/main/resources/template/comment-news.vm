@@ -8,7 +8,7 @@ Dobrý den,
 
 <ul>
     #foreach( $asset in ${assets} )
-        <li>${asset.primaryLabel}</li>
+        <li><a href="${asset.link}">${asset.label}</a></li>
     #end
 </ul>
 
