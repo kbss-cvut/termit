@@ -39,7 +39,7 @@ public class ChangeRecordDao {
         final EntityDescriptor descriptor = new EntityDescriptor(
                 contextResolver.resolveChangeTrackingContext(changedAsset));
         descriptor.addAttributeDescriptor(em.getMetamodel().entity(AbstractChangeRecord.class).getAttribute("author"),
-                                          new EntityDescriptor());
+                new EntityDescriptor());
         descriptor.setLanguage(null);
         try {
             em.persist(record, descriptor);
@@ -60,11 +60,11 @@ public class ChangeRecordDao {
             final Descriptor descriptor = new EntityDescriptor();
             descriptor.setLanguage(null);
             return em.createNativeQuery("SELECT ?r WHERE {" +
-                                                "?r a ?changeRecord ;" +
-                                                "?relatesTo ?asset ;" +
-                                                "?hasTime ?timestamp ." +
-                                                "OPTIONAL { ?r ?hasChangedAttribute ?attribute . }" +
-                                                "} ORDER BY DESC(?timestamp) ?attribute", AbstractChangeRecord.class)
+                             "?r a ?changeRecord ;" +
+                             "?relatesTo ?asset ;" +
+                             "?hasTime ?timestamp ." +
+                             "OPTIONAL { ?r ?hasChangedAttribute ?attribute . }" +
+                             "} ORDER BY DESC(?timestamp) ?attribute", AbstractChangeRecord.class)
                      .setParameter("changeRecord", URI.create(Vocabulary.s_c_zmena))
                      .setParameter("relatesTo", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                      .setParameter("hasChangedAttribute", URI.create(Vocabulary.s_p_ma_zmeneny_atribut))
@@ -85,10 +85,13 @@ public class ChangeRecordDao {
     public Set<User> getAuthors(Asset<?> asset) {
         Objects.requireNonNull(asset);
         try {
-            return new HashSet<>(em.createNativeQuery("SELECT ?a WHERE { " +
-                                                              "?r a ?persistRecord ; " +
-                                                              "?hasAuthor ?a . }", User.class)
+            return new HashSet<>(em.createNativeQuery("SELECT ?author WHERE {" +
+                                           "?x a ?persistRecord ;" +
+                                           "?hasChangedEntity ?asset ;" +
+                                           "?hasAuthor ?author }", User.class)
                                    .setParameter("persistRecord", URI.create(Vocabulary.s_c_vytvoreni_entity))
+                                   .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
+                                   .setParameter("asset", asset)
                                    .setParameter("hasAuthor", URI.create(Vocabulary.s_p_ma_editora))
                                    .getResultList());
         } catch (RuntimeException e) {
