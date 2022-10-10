@@ -31,6 +31,10 @@ import java.util.Set;
 @ConfigurationProperties("termit")
 @Primary
 public class Configuration {
+    /**
+     * TermIt frontend URL.
+     */
+    private String url = "http://localhost:3000/#";
     private Persistence persistence = new Persistence();
     private Repository repository = new Repository();
     private ChangeTracking changetracking = new ChangeTracking();
@@ -45,6 +49,14 @@ public class Configuration {
     private Workspace workspace = new Workspace();
     private Cors cors = new Cors();
     private Schedule schedule = new Schedule();
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
     public Persistence getPersistence() {
         return persistence;
