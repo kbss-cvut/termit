@@ -76,7 +76,7 @@ public class CommentChangeNotifier {
         return Message.to(resolveNotificationRecipients(comments).stream().map(
                               AbstractUser::getUsername).toArray(String[]::new))
                       .content(messageComposer.composeMessage(COMMENT_CHANGES_TEMPLATE, variables))
-                      .subject("TermIt Overview").build();
+                      .subject("TermIt News").build();
     }
 
     /**
