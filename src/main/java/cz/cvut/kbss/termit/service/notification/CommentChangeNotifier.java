@@ -156,6 +156,23 @@ public class CommentChangeNotifier {
         public String getLink() {
             return link;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            AssetForMessage that = (AssetForMessage) o;
+            return label.equals(that.label) && link.equals(that.link);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(label, link);
+        }
     }
 
     public static class CommentForMessage {
