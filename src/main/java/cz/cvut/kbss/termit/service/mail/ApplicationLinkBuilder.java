@@ -31,7 +31,8 @@ public class ApplicationLinkBuilder {
      */
     public String linkTo(Asset<?> asset) {
         Objects.requireNonNull(asset);
-        final Map<String, Collection<String>> params = Collections.singletonMap(FrontendPaths.ACTIVE_TAB_PARAM, Collections.singleton(FrontendPaths.COMMENTS_TAB));
+        final Map<String, Collection<String>> params = Collections.singletonMap(FrontendPaths.ACTIVE_TAB_PARAM,
+                                                                                Collections.singleton(FrontendPaths.COMMENTS_TAB));
         return new AssetLink(baseUrl).createLink(asset, params);
     }
 }

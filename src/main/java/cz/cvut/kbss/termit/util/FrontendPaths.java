@@ -18,7 +18,7 @@ public class FrontendPaths {
      *     <li>vocabularyNamespace</li>
      * </ul>
      */
-    public static final String TERM_PATH = "/vocabularies/{vocabularyName}/terms/{termName}?namespace={vocabularyNamespace}";
+    public static final String TERM_PATH = "/vocabularies/{vocabularyName}/terms/{termName}";
 
     /**
      * Query parameter indicating the tab to open in the asset detail UI.
@@ -39,7 +39,7 @@ public class FrontendPaths {
      *      <li>vocabularyNamespace</li>
      * </ul>
      */
-    public static final String VOCABULARY_PATH = "/vocabularies/{vocabularyName}?namespace={vocabularyNamespace}";
+    public static final String VOCABULARY_PATH = "/vocabularies/{vocabularyName}";
 
     private FrontendPaths() {
         throw new AssertionError();
