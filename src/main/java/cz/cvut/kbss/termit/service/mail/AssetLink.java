@@ -6,20 +6,27 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.FrontendPaths;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Creates links to asset detail view in the frontend.
+ * <p>
+ * Note that it is assumed that the frontend uses fragment-based navigation.
+ */
 class AssetLink implements AssetVisitor {
 
     private final String baseUrl;
-    private UriComponentsBuilder builder;
-    private UriComponents result;
+    private Map<String, Collection<String>> params;
+    private UriComponents assetPath;
 
     protected AssetLink(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -28,22 +35,33 @@ class AssetLink implements AssetVisitor {
     public String createLink(Asset<?> asset, Map<String, Collection<String>> params) {
         Objects.requireNonNull(asset);
         Objects.requireNonNull(params);
-        this.builder = ServletUriComponentsBuilder.fromHttpUrl(baseUrl);
-        params.forEach(builder::queryParam);
+        this.params = new HashMap<>(params);
         asset.accept(this);
-        return result.toString();
+        // We need to ensure that fragment is before query params, so first build the fragment with query params,
+        // then build the whole URL
+        return ServletUriComponentsBuilder.fromHttpUrl(baseUrl).fragment(assetPath.toUriString()).toUriString();
     }
 
     @Override
     public void visitTerm(AbstractTerm term) {
-        this.result = builder.path(FrontendPaths.TERM_PATH)
-                             .buildAndExpand(IdentifierResolver.extractIdentifierFragment(term.getVocabulary()), IdentifierResolver.extractIdentifierFragment(term.getUri()), IdentifierResolver.extractIdentifierNamespace(term.getVocabulary()));
+        final UriComponentsBuilder builder = ServletUriComponentsBuilder.fromPath(FrontendPaths.TERM_PATH)
+                                                                        .queryParam(Constants.QueryParams.NAMESPACE,
+                                                                                    IdentifierResolver.extractIdentifierNamespace(
+                                                                                            term.getVocabulary()));
+        params.forEach(builder::queryParam);
+        this.assetPath = builder.buildAndExpand(IdentifierResolver.extractIdentifierFragment(term.getVocabulary()),
+                                                IdentifierResolver.extractIdentifierFragment(term.getUri()));
     }
 
     @Override
     public void visitVocabulary(Vocabulary vocabulary) {
-        this.result = builder.path(FrontendPaths.VOCABULARY_PATH)
-                             .buildAndExpand(IdentifierResolver.extractIdentifierFragment(vocabulary.getUri()), IdentifierResolver.extractIdentifierNamespace(vocabulary.getUri()));
+        final UriComponentsBuilder builder = ServletUriComponentsBuilder.fromPath(FrontendPaths.VOCABULARY_PATH)
+                                                                        .queryParam(Constants.QueryParams.NAMESPACE,
+                                                                                    IdentifierResolver.extractIdentifierNamespace(
+                                                                                            vocabulary.getUri()));
+        params.forEach(builder::queryParam);
+        this.assetPath = builder.buildAndExpand(IdentifierResolver.extractIdentifierFragment(
+                vocabulary.getUri()));
     }
 
     @Override
