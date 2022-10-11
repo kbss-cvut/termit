@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
+import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import javax.validation.constraints.NotBlank;
@@ -59,6 +60,11 @@ public class Resource extends Asset<String> implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public void accept(AssetVisitor visitor) {
+        visitor.visitResources(this);
     }
 
     @Override

@@ -9,9 +9,11 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.UserService;
 import cz.cvut.kbss.termit.service.comment.CommentService;
+import cz.cvut.kbss.termit.service.mail.ApplicationLinkBuilder;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.MessageComposer;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -56,6 +59,9 @@ class CommentChangeNotifierTest {
 
     @Mock
     private MessageComposer messageComposer;
+
+    @Mock
+    private ApplicationLinkBuilder linkBuilder;
 
     @InjectMocks
     private CommentChangeNotifier sut;
@@ -137,17 +143,23 @@ class CommentChangeNotifierTest {
     }
 
     @Test
-    void createCommentChangesMessageComposesMessageUsingResolvedCommentsToResolvedRecipients() {
+    void createCommentChangesMessageComposesMessageUsingResolvedCommentsToResolvedRecipients() throws Exception {
         final Instant from = Utils.timestamp().minus(7, ChronoUnit.DAYS);
         final Instant to = Utils.timestamp();
         final UserAccount author = Generator.generateUserAccount();
         when(userService.findAll()).thenReturn(Collections.singletonList(author));
         final Term term = Generator.generateTermWithId(Generator.generateUri());
+        // Simulate autowired configuration
+        final Field configField = Term.class.getDeclaredField("config");
+        configField.setAccessible(true);
+        configField.set(term, new Configuration());
         final Comment comment = Generator.generateComment(author.toUser(), term);
         when(termService.find(term.getUri())).thenReturn(Optional.of(term));
         when(changeRecordService.getAuthors(any())).thenReturn(Collections.singleton(author.toUser()));
         when(commentService.findAll(any(), any(Instant.class), any(Instant.class))).thenReturn(
                 Collections.singletonList(comment));
+        final String link = "http://localhost/termit";
+        when(linkBuilder.linkTo(term)).thenReturn(link);
         when(messageComposer.composeMessage(any(), anyMap())).thenReturn("Test message content");
 
         final Message result = sut.createCommentChangesMessage(from, to);
@@ -159,7 +171,8 @@ class CommentChangeNotifierTest {
         final Map<String, Object> variables = captor.getValue();
         assertEquals(LocalDate.ofInstant(from, ZoneId.systemDefault()), variables.get("from"));
         assertEquals(LocalDate.ofInstant(to, ZoneId.systemDefault()), variables.get("to"));
-        assertEquals(Collections.singleton(term), variables.get("assets"));
+        assertEquals(Collections.singletonList(new CommentChangeNotifier.AssetForMessage(term.getPrimaryLabel(), link)),
+                     variables.get("assets"));
         assertEquals(Collections.singletonList(new CommentChangeNotifier.CommentForMessage(comment)),
                      variables.get("comments"));
     }

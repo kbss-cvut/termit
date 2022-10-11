@@ -8,26 +8,32 @@ Dobrý den,
 
 <ul>
     #foreach( $asset in ${assets} )
-        <li>${asset.primaryLabel}</li>
+        <li><a href="${asset.link}">${asset.label}</a></li>
     #end
 </ul>
 
 <p>
-Tabulka níže obsahuje příslušné komentáře.
+    Tabulka níže obsahuje příslušné komentáře.
 </p>
 
 <table border="0" cellspacing="0" width="800">
     <thead>
-        <tr>
-            <th width="100">Operace</th>
-            <th width="200">Autor</th>
-            <th width="200">Datum a čas</th>
-            <th width="300">Text komentáře</th>
-        </tr>
+    <tr>
+        <th width="100">Operace</th>
+        <th width="200">Autor</th>
+        <th width="200">Datum a čas</th>
+        <th width="300">Text komentáře</th>
+    </tr>
     </thead>
     #foreach( $comment in ${comments} )
         <tr>
-            <td>${comment.operation}</td>
+            <td>
+                #if (${comment.operation} == "CREATE")
+                    Vytvořeno
+                #elseif (${comment.operation} == "UPDATE")
+                    Upraveno
+                #end
+            </td>
             <td>${comment.author}</td>
             <td>${comment.lastModified}</td>
             <td style="white-space: pre-line;">${comment.content}</td>

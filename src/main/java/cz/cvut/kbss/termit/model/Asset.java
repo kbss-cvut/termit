@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
+import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.validation.WithoutQueryParameters;
 
@@ -49,5 +50,9 @@ public abstract class Asset<T> implements HasIdentifier {
     @JsonIgnore
     public String getPrimaryLabel() {
         return getLabel().toString();
+    }
+
+    public void accept(AssetVisitor visitor) {
+        // Do nothing by default. Relevant subclasses should provide code invoking the visitor
     }
 }

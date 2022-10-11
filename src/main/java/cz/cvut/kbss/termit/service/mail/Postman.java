@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -61,7 +62,7 @@ public class Postman {
             mailSender.send(mail);
 
             LOG.trace("Mail successfully sent.");
-        } catch (MessagingException | UnsupportedEncodingException e) {
+        } catch (MailException | MessagingException | UnsupportedEncodingException e) {
             LOG.error("Unable to send message.", e);
             throw new PostmanException("Unable to send message.", e);
         }

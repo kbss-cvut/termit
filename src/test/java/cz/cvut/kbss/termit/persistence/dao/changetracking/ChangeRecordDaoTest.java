@@ -216,6 +216,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final Term asset = Generator.generateTermWithId(vocabulary.getUri());
         final AbstractChangeRecord persistRecord = generatePersistRecord(Utils.timestamp(), asset.getUri());
         final User editor = Generator.generateUserWithId();
+        final AbstractChangeRecord anotherPersistRecord = generatePersistRecord(Utils.timestamp(), Generator.generateUri());
+        anotherPersistRecord.setAuthor(editor);
         final AbstractChangeRecord updateRecord = generateUpdateRecord(Utils.timestamp(), asset.getUri());
         updateRecord.setAuthor(editor);
         transactional(() -> {
@@ -223,6 +225,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
             em.persist(editor);
             final Descriptor descriptor = persistDescriptor(vocabulary.getUri());
             em.persist(persistRecord, descriptor);
+            em.persist(anotherPersistRecord, descriptor);
             em.persist(updateRecord, descriptor);
         });
 

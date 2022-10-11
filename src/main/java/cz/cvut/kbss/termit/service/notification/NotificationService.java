@@ -34,7 +34,7 @@ public class NotificationService {
      * <p>
      * Scheduling is done via configured CRON expression.
      */
-    @Scheduled(cron = "${termit.schedule.cron.notification.comments}")
+    @Scheduled(cron = "${termit.schedule.cron.notification.comments:-}")
     public void notifyOfCommentChanges() {
         LOG.debug("Running comment change notification.");
         final Instant now = Utils.timestamp();
