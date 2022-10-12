@@ -25,6 +25,9 @@ public class Postman {
     @Value("${spring.mail.username:#{null}}")
     private String senderUsername;
 
+    @Value("${termit.mail.sender:#{null}}")
+    private String sender;
+
     /**
      * Name used as sender of the emails.
      */
@@ -52,7 +55,7 @@ public class Postman {
 
             final MimeMessage mail = mailSender.createMimeMessage();
             final MimeMessageHelper helper = new MimeMessageHelper(mail, true);
-            helper.setFrom(new InternetAddress(senderUsername, FROM_NICKNAME, StandardCharsets.UTF_8.toString()));
+            helper.setFrom(new InternetAddress(sender != null ? sender : senderUsername, FROM_NICKNAME, StandardCharsets.UTF_8.toString()));
             helper.setTo(message.getRecipients().toArray(new String[]{}));
             helper.setSubject(message.getSubject());
             helper.setText(message.getContent(), true);
