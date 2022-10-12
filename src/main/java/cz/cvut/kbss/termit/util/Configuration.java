@@ -49,6 +49,7 @@ public class Configuration {
     private Workspace workspace = new Workspace();
     private Cors cors = new Cors();
     private Schedule schedule = new Schedule();
+    private Mail mail = new Mail();
 
     public String getUrl() {
         return url;
@@ -168,6 +169,14 @@ public class Configuration {
 
     public void setSchedule(Schedule schedule) {
         this.schedule = schedule;
+    }
+
+    public Mail getMail() {
+        return mail;
+    }
+
+    public void setMail(Mail mail) {
+        this.mail = mail;
     }
 
     @org.springframework.context.annotation.Configuration
@@ -639,6 +648,20 @@ public class Configuration {
                     this.comments = comments;
                 }
             }
+        }
+    }
+
+    @org.springframework.context.annotation.Configuration
+    public static class Mail {
+
+        private String sender;
+
+        public String getSender() {
+            return sender;
+        }
+
+        public void setSender(String sender) {
+            this.sender = sender;
         }
     }
 }
