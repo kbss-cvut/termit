@@ -9,7 +9,6 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.UserService;
 import cz.cvut.kbss.termit.service.comment.CommentService;
-import cz.cvut.kbss.termit.service.mail.ApplicationLinkBuilder;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.MessageComposer;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
@@ -61,7 +60,7 @@ class CommentChangeNotifierTest {
     private MessageComposer messageComposer;
 
     @Mock
-    private ApplicationLinkBuilder linkBuilder;
+    private MessageAssetFactory messageAssetFactory;
 
     @InjectMocks
     private CommentChangeNotifier sut;
@@ -159,7 +158,7 @@ class CommentChangeNotifierTest {
         when(commentService.findAll(any(), any(Instant.class), any(Instant.class))).thenReturn(
                 Collections.singletonList(comment));
         final String link = "http://localhost/termit";
-        when(linkBuilder.linkTo(term)).thenReturn(link);
+        when(messageAssetFactory.create(term)).thenReturn(new MessageAssetFactory.MessageAsset(term.getPrimaryLabel(), link));
         when(messageComposer.composeMessage(any(), anyMap())).thenReturn("Test message content");
 
         final Message result = sut.createCommentChangesMessage(from, to);
@@ -171,7 +170,7 @@ class CommentChangeNotifierTest {
         final Map<String, Object> variables = captor.getValue();
         assertEquals(LocalDate.ofInstant(from, ZoneId.systemDefault()), variables.get("from"));
         assertEquals(LocalDate.ofInstant(to, ZoneId.systemDefault()), variables.get("to"));
-        assertEquals(Collections.singletonList(new CommentChangeNotifier.AssetForMessage(term.getPrimaryLabel(), link)),
+        assertEquals(Collections.singletonList(new MessageAssetFactory.MessageAsset(term.getPrimaryLabel(), link)),
                      variables.get("assets"));
         assertEquals(Collections.singletonList(new CommentChangeNotifier.CommentForMessage(comment)),
                      variables.get("comments"));

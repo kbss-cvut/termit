@@ -5,7 +5,6 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.UserService;
 import cz.cvut.kbss.termit.service.comment.CommentService;
-import cz.cvut.kbss.termit.service.mail.ApplicationLinkBuilder;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.MessageComposer;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
@@ -37,18 +36,18 @@ public class CommentChangeNotifier {
 
     private final ChangeRecordService changeRecordService;
 
-    private final ApplicationLinkBuilder linkBuilder;
+    private final MessageAssetFactory messageAssetFactory;
 
     private final MessageComposer messageComposer;
 
     public CommentChangeNotifier(CommentService commentService, TermService termService, UserService userService,
-                                 ChangeRecordService changeRecordService, ApplicationLinkBuilder linkBuilder,
-                                 MessageComposer messageComposer) {
+                                 ChangeRecordService changeRecordService,
+                                 MessageAssetFactory messageAssetFactory, MessageComposer messageComposer) {
         this.commentService = commentService;
         this.termService = termService;
         this.userService = userService;
         this.changeRecordService = changeRecordService;
-        this.linkBuilder = linkBuilder;
+        this.messageAssetFactory = messageAssetFactory;
         this.messageComposer = messageComposer;
     }
 
@@ -66,8 +65,8 @@ public class CommentChangeNotifier {
         variables.put("from", LocalDate.ofInstant(from, ZoneId.systemDefault()));
         variables.put("to", LocalDate.ofInstant(to, ZoneId.systemDefault()));
         variables.put("assets", comments.keySet().stream()
-                                        .map(a -> new AssetForMessage(a.getPrimaryLabel(), linkBuilder.linkTo(a)))
-                                        .sorted(Comparator.comparing(AssetForMessage::getLabel))
+                                        .map(messageAssetFactory::create)
+                                        .sorted(Comparator.comparing(MessageAssetFactory.MessageAsset::getLabel))
                                         .collect(Collectors.toList()));
         variables.put("comments",
                 comments.values().stream()
@@ -137,42 +136,6 @@ public class CommentChangeNotifier {
                                                       .map(a -> ((Term) a).getVocabulary()).collect(Collectors.toSet());
         return vocabularyUris.stream().map(vUri -> changeRecordService.getAuthors(new Vocabulary(vUri)))
                              .flatMap(Collection::stream).map(User::toUserAccount).collect(Collectors.toSet());
-    }
-
-    public static class AssetForMessage {
-
-        private final String label;
-        private final String link;
-
-        AssetForMessage(String label, String link) {
-            this.label = label;
-            this.link = link;
-        }
-
-        public String getLabel() {
-            return label;
-        }
-
-        public String getLink() {
-            return link;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            AssetForMessage that = (AssetForMessage) o;
-            return label.equals(that.label) && link.equals(that.link);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(label, link);
-        }
     }
 
     public static class CommentForMessage {
