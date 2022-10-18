@@ -47,7 +47,6 @@ public class DescriptorFactory {
 
     private final VocabularyContextMapper contextMapper;
 
-    // TODO Circular reference, thing about breaking the cycle
     private final VocabularyDao vocabularyDao;
 
     @Autowired

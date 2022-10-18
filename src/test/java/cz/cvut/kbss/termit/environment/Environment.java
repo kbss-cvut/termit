@@ -189,4 +189,13 @@ public class Environment {
     public static List<TermDto> termsToDtos(List<Term> terms) {
         return terms.stream().map(TermDto::new).collect(Collectors.toList());
     }
+
+    public static cz.cvut.kbss.termit.model.Vocabulary cloneVocabulary(cz.cvut.kbss.termit.model.Vocabulary original) {
+        final cz.cvut.kbss.termit.model.Vocabulary clone = Generator.generateVocabulary();
+        clone.setUri(original.getUri());
+        clone.setLabel(original.getLabel());
+        clone.getGlossary().setUri(original.getGlossary().getUri());
+        clone.getModel().setUri(original.getModel().getUri());
+        return clone;
+    }
 }

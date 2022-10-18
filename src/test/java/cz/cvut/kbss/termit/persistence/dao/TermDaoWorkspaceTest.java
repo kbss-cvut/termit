@@ -43,7 +43,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         final URI workingCtx = Generator.generateUri();
         final Term canonical = Generator.generateTermWithId(vocabulary.getUri());
         canonical.setGlossary(vocabulary.getGlossary().getUri());
-        final Vocabulary workingVoc = cloneVocabulary(vocabulary);
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
         final Term workingCopy = cloneTerm(canonical);
         workingCopy.getLabel().set(Environment.LANGUAGE, "Different label");
         workingCopy.setGlossary(workingVoc.getGlossary().getUri());
@@ -67,15 +67,6 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         assertThat(result.get().getParentTerms(), hasItem(workingCopy));
     }
 
-    private Vocabulary cloneVocabulary(Vocabulary original) {
-        final Vocabulary clone = Generator.generateVocabulary();
-        clone.setUri(original.getUri());
-        clone.setLabel(original.getLabel());
-        clone.getGlossary().setUri(original.getGlossary().getUri());
-        clone.getModel().setUri(original.getModel().getUri());
-        return clone;
-    }
-
     private Term cloneTerm(Term original) {
         final Term clone = new Term(original.getUri());
         clone.setLabel(new MultilingualString(original.getLabel().getValue()));
@@ -91,7 +82,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         final URI workingCtx = Generator.generateUri();
         final Term canonical = Generator.generateTermWithId(vocabulary.getUri());
         canonical.setGlossary(vocabulary.getGlossary().getUri());
-        final Vocabulary workingVoc = cloneVocabulary(vocabulary);
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
         final Term workingCopy = cloneTerm(canonical);
         workingCopy.setGlossary(workingVoc.getGlossary().getUri());
         final Vocabulary relatedVocabulary = Generator.generateVocabularyWithId();
@@ -127,7 +118,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         final URI workingCtx = Generator.generateUri();
         final Term canonical = Generator.generateTermWithId(vocabulary.getUri());
         canonical.setGlossary(vocabulary.getGlossary().getUri());
-        final Vocabulary workingVoc = cloneVocabulary(vocabulary);
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
         final Term workingCopy = cloneTerm(canonical);
         workingCopy.setGlossary(workingVoc.getGlossary().getUri());
         final Vocabulary relatedVocabulary = Generator.generateVocabularyWithId();
@@ -157,7 +148,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
     void persistHandlesReferenceToTermFromDifferentVocabulary() {
         final URI workingCtx = Generator.generateUri();
         final Term toPersist = Generator.generateTermWithId();
-        final Vocabulary workingVoc = cloneVocabulary(vocabulary);
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
         final Vocabulary relatedVocabulary = Generator.generateVocabularyWithId();
         final Term related = Generator.generateTermWithId(relatedVocabulary.getUri());
         transactional(() -> {
@@ -195,12 +186,12 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
             Generator.addTermInVocabularyRelationship(canonicalOne, vocabulary.getUri(), em);
         });
         final URI workingCtxOne = Generator.generateUri();
-        final Vocabulary workingVocOne = cloneVocabulary(vocabulary);
+        final Vocabulary workingVocOne = Environment.cloneVocabulary(vocabulary);
         final Term workingCopyOne = cloneTerm(canonicalOne);
         workingCopyOne.getLabel().set(Environment.LANGUAGE, "Different label");
         workingCopyOne.setGlossary(vocabulary.getGlossary().getUri());
         final URI workingCtxTwo = Generator.generateUri();
-        final Vocabulary workingVocTwo = cloneVocabulary(vocabularyTwo);
+        final Vocabulary workingVocTwo = Environment.cloneVocabulary(vocabularyTwo);
         final Term workingCopyTwo = cloneTerm(canonicalTwo);
         transactional(() -> {
             em.persist(workingVocOne, descriptorFactory.vocabularyDescriptor(workingCtxOne));

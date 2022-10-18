@@ -603,32 +603,4 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         });
         assertFalse(sut.isEmpty(vocabulary));
     }
-
-    @Test
-    void findAllHandlesMultipleVersionsOfVocabulary() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Descriptor canonicalDescriptor = descriptorFactory.vocabularyDescriptor(vocabulary.getUri());
-        transactional(() -> em.persist(vocabulary, canonicalDescriptor));
-        final URI versionContext = Generator.generateUri();
-        final Vocabulary version = new Vocabulary(vocabulary.getUri());
-        version.setGlossary(vocabulary.getGlossary());
-        version.setModel(vocabulary.getModel());
-        version.setLabel("Modified label");
-        final Descriptor versionDescriptor = descriptorFactory.vocabularyDescriptor(versionContext);
-        transactional(() -> {
-            em.persist(version, versionDescriptor);
-            final Repository repo = em.unwrap(Repository.class);
-            try (final RepositoryConnection conn = repo.getConnection()) {
-                final ValueFactory vf = conn.getValueFactory();
-                conn.add(vf.createIRI(versionContext.toString()),
-                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_vychazi_z_verze),
-                         vf.createIRI(vocabulary.getUri().toString()), vf.createIRI(versionContext.toString()));
-            }
-        });
-
-        final List<Vocabulary> result = sut.findAll();
-        assertEquals(1, result.size());
-        assertEquals(vocabulary, result.get(0));
-        assertEquals(vocabulary.getLabel(), result.get(0).getLabel());
-    }
 }
