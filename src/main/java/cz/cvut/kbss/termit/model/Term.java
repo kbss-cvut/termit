@@ -16,7 +16,9 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.apache.jena.vocabulary.DCTerms;
 import org.apache.poi.ss.usermodel.Row;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.util.CollectionUtils;
@@ -39,7 +41,9 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     public static final List<String> EXPORT_COLUMNS = List.of("IRI", "Label", "Alternative Labels", "Hidden Labels",
             "Definition", "Description", "Types", "Sources",
             "Parent Terms", "SubTerms", "Related Terms",
-            "Related Match Terms", "Exact Match Terms", "Draft");
+            "Related Match Terms", "Exact Match Terms", "Draft",
+            "Notation", "Example", "References"//, "Real object"
+    );
 
     @Autowired
     @Transient
@@ -324,6 +328,14 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         consolidateAndExportMulti(sb, exactMatchTerms, inverseExactMatchTerms, Term::termInfoStringIri);
         sb.append(',');
         sb.append(isDraft());
+        //what if null
+        final Map<String, Set<String>> propsToExcel = properties != null ? properties : Collections.emptyMap();
+        exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(SKOS.NOTATION)), String::toString);
+        exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(SKOS.EXAMPLE)), String::toString);
+        exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(DCTERMS.REFERENCES)), String::toString);
+        //exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(je-)));
+        // https://onto.fel.cvut.cz/ontologies/page/slovnik/slovník-datového-modelu-dtm/pojem/je-reálným-objektem
+        // skos:notation, skos:example, dcterms:references, je-reálným-objektem
         return sb.toString();
     }
 
@@ -398,6 +410,13 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
                                                .distinct()
                                                .collect(Collectors.toList())));
         row.createCell(13).setCellValue(isDraft());
+        if (properties != null) {
+            row.createCell(14).setCellValue(Utils.emptyIfNull(properties.get(SKOS.NOTATION)).toString());
+            row.createCell(15).setCellValue(Utils.emptyIfNull(properties.get(SKOS.EXAMPLE)).toString());
+            row.createCell(16).setCellValue(Utils.emptyIfNull(properties.get(DCTERMS.REFERENCES)).toString());
+            //https://onto.fel.cvut.cz/ontologies/page/slovnik/slovník-datového-modelu-dtm/pojem/je-reálným-objektem
+        }
+        // skos:notation, skos:example, dcterms:references, je-reálným-objektem
     }
 
     private static String termInfoStringIri(TermInfo ti) {
