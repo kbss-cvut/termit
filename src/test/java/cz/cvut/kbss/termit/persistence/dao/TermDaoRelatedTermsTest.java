@@ -81,10 +81,10 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
         final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(Generator.generateUri()),
                                                       Generator.generateTermWithId(Generator.generateUri()));
         transactional(() -> {
-            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptorForSave(vocabulary.getUri()));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             relatedMatch.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t));
+                em.persist(t, descriptorFactory.termDescriptorForSave(t));
                 Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
             });
             generateRelatedRelationships(term, relatedMatch, SKOS.RELATED_MATCH);
@@ -114,7 +114,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
             generateRelatedRelationships(term, inverseRelatedMatch, SKOS.RELATED_MATCH);
         });
         term.setRelatedMatch(relatedMatch.stream().map(TermInfo::new).collect(Collectors.toSet()));
-        transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
+        transactional(() -> em.merge(term, descriptorFactory.termDescriptorForSave(term)));
 
         final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());
@@ -155,7 +155,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
         });
         term.setRelated(related.stream().map(TermInfo::new).collect(Collectors.toSet()));
         term.setRelatedMatch(relatedMatch.stream().map(TermInfo::new).collect(Collectors.toSet()));
-        transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
+        transactional(() -> em.merge(term, descriptorFactory.termDescriptorForSave(term)));
 
         final List<Term> result = sut.findAllFull(vocabulary);
         final Optional<Term> singleResult = result.stream().filter(t -> t.equals(term)).findFirst();
@@ -176,7 +176,7 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
             generateRelatedRelationships(term, relatedMatch, SKOS.RELATED);
         });
         term.setRelatedMatch(relatedMatch.stream().map(TermInfo::new).collect(Collectors.toSet()));
-        transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
+        transactional(() -> em.merge(term, descriptorFactory.termDescriptorForSave(term)));
 
         final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());

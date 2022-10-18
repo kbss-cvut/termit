@@ -96,7 +96,7 @@ class CascadingSnapshotCreatorTest extends BaseDaoTestRunner {
                 termOne.addParentTerm(termTwo);
                 break;
         }
-        transactional(() -> em.merge(termOne, descriptorFactory.termDescriptor(termOne)));
+        transactional(() -> em.merge(termOne, descriptorFactory.termDescriptorForSave(termOne)));
     }
 
     @Test

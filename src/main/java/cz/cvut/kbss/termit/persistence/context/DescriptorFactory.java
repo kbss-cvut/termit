@@ -23,11 +23,17 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static cz.cvut.kbss.termit.util.Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
 
 /**
  * Provides descriptors for working with repository contexts.
@@ -39,10 +45,15 @@ public class DescriptorFactory {
 
     private final VocabularyContextMapper contextMapper;
 
+    // TODO Circular reference, thing about breaking the cycle
+    private final VocabularyDao vocabularyDao;
+
     @Autowired
-    public DescriptorFactory(EntityManagerFactory emf, VocabularyContextMapper contextMapper) {
+    public DescriptorFactory(EntityManagerFactory emf, VocabularyContextMapper contextMapper,
+                             @Lazy VocabularyDao vocabularyDao) {
         this.emf = emf;
         this.contextMapper = contextMapper;
+        this.vocabularyDao = vocabularyDao;
     }
 
     /**
@@ -217,7 +228,8 @@ public class DescriptorFactory {
      * specified identifier.
      * <p>
      * This means that the context of the Term (and all its relevant attributes) is given by the specified vocabulary
-     * IRI.
+     * IRI. SKOS attributes possibly referencing terms from different vocabularies are provided a descriptor
+     * based on all vocabularies related to the specified one.
      * <p>
      * Note that default context is used for asset author.
      *
@@ -226,15 +238,20 @@ public class DescriptorFactory {
      */
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        final EntityDescriptor externalParentDescriptor = new EntityDescriptor();
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "externalParentTerms"), externalParentDescriptor);
+        final Descriptor interVocabularyRelationshipsDescriptor = resolveInterVocabularyTermRelationshipsDescriptor(vocabularyUri);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "externalParentTerms"), interVocabularyRelationshipsDescriptor);
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), descriptor);
-        final EntityDescriptor exactMatchTermsDescriptor = new EntityDescriptor();
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"), exactMatchTermsDescriptor);
-        final EntityDescriptor relatedDescriptor = new EntityDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), relatedDescriptor);
-        descriptor.addAttributeContext(fieldSpec(Term.class, "relatedMatch"), null);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"), interVocabularyRelationshipsDescriptor);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), descriptor);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "relatedMatch"), interVocabularyRelationshipsDescriptor);
         return descriptor;
+    }
+
+    private Descriptor resolveInterVocabularyTermRelationshipsDescriptor(URI vocabularyUri) {
+        // TODO Cache somehow the related vocabularies
+        final Set<URI> related = vocabularyDao.getRelatedVocabularies(new Vocabulary(vocabularyUri), SKOS_CONCEPT_MATCH_RELATIONSHIPS);
+        final Set<URI> relatedContexts = related.stream().map(contextMapper::getVocabularyContext).collect(Collectors.toSet());
+        return new EntityDescriptor(relatedContexts);
     }
 
     /**
@@ -250,5 +267,44 @@ public class DescriptorFactory {
         Objects.requireNonNull(term);
         assert term.getVocabulary() != null;
         return termDescriptor(term.getVocabulary());
+    }
+
+    /**
+     * Creates a JOPA descriptor for saving the specified {@link cz.cvut.kbss.termit.model.Term}.
+     * <p>
+     * This method expects that the term has a vocabulary assigned. This vocabulary is used to determine the descriptor
+     * context. If the term does not have a vocabulary assigned, use {@link #termDescriptorForSave(URI)}.
+     *
+     * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes representing
+     * SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context descriptors. This is the
+     * main difference between the result of this method and {@link #termDescriptor(Term)}.
+     *
+     * @param term Term for which descriptor should be provided
+     * @return Term descriptor
+     */
+    public Descriptor termDescriptorForSave(Term term) {
+        Objects.requireNonNull(term);
+        return termDescriptorForSave(term.getVocabulary());
+    }
+
+    /**
+     * Creates a JOPA descriptor for saving a term to the context represented by the specified vocabulary identifier.
+     * <p>
+     * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes representing
+     * SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context descriptors. This is the
+     * main difference between the result of this method and {@link #termDescriptor(Term)}.
+     *
+     * @param vocabularyUri Vocabulary identifier used to determine the main target context
+     * @return Term descriptor
+     */
+    public Descriptor termDescriptorForSave(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
+        descriptor.addAttributeContext(fieldSpec(Term.class, "externalParentTerms"), null);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), descriptor);
+        descriptor.addAttributeContext(fieldSpec(Term.class, "exactMatchTerms"), null);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), descriptor);
+        descriptor.addAttributeContext(fieldSpec(Term.class, "relatedMatch"), null);
+        return descriptor;
     }
 }

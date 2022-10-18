@@ -72,16 +72,16 @@ public class TermDaoExactMatchTermsTest extends BaseTermDaoTestRunner {
         final List<Term> inverseExactMatchTerms = new ArrayList<>(Collections.singletonList(Generator.generateTermWithId(Generator.generateUri())));
         inverseExactMatchTerms.addAll(exactMatchTerms);
         transactional(() -> {
-            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptorForSave(vocabulary.getUri()));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             inverseExactMatchTerms.forEach(t -> {
-                em.persist(t, descriptorFactory.termDescriptor(t.getVocabulary()));
+                em.persist(t, descriptorFactory.termDescriptorForSave(t.getVocabulary()));
                 Generator.addTermInVocabularyRelationship(t, t.getVocabulary(), em);
             });
             generateExactMatchRelationships(term, inverseExactMatchTerms);
         });
         term.setExactMatchTerms(exactMatchTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
-        transactional(() -> em.merge(term, descriptorFactory.termDescriptor(term)));
+        transactional(() -> em.merge(term, descriptorFactory.termDescriptorForSave(term)));
 
         final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());

@@ -87,7 +87,7 @@ class CascadingVocabularySnapshotRemoverTest extends BaseDaoTestRunner {
         // Separate transaction to prevent IndividualAlreadyManagedException for tSnapshotTwo as Term and TermInfo in persistence context
 
         tSnapshotOne.addRelatedMatchTerm(new TermInfo(tSnapshotTwo));
-        transactional(() -> em.merge(tSnapshotOne, descriptorFactory.termDescriptor(snapshotOne)));
+        transactional(() -> em.merge(tSnapshotOne, descriptorFactory.termDescriptorForSave(snapshotOne.getUri())));
 
         final Snapshot toRemove = new Snapshot(snapshotOne.getUri(), Utils.timestamp(), vocabularyOneIri,
                                                cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);

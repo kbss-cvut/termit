@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
@@ -69,9 +70,22 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     @Override
     public Optional<Term> find(URI id) {
-        final Optional<Term> result = super.find(id);
-        result.ifPresent(this::postLoad);
-        return result;
+        Objects.requireNonNull(id);
+        try {
+            final Descriptor loadingDescriptor = descriptorFactory.termDescriptor(resolveTermVocabulary(id));
+            final Optional<Term> result = Optional.ofNullable(em.find(type, id, loadingDescriptor));
+            result.ifPresent(this::postLoad);
+            return result;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    private URI resolveTermVocabulary(URI termUri) {
+        return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
+                .setParameter("inVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("t", termUri)
+                .getSingleResult();
     }
 
     private void postLoad(Term r) {
@@ -159,7 +173,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             entity.setGlossary(vocabulary.getGlossary().getUri());
             entity.setVocabulary(null); // This is inferred
-            em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(entity, descriptorFactory.termDescriptorForSave(vocabulary.getUri()));
             evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -179,7 +193,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
             entity.setDefinitionSource(original.getDefinitionSource());
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
-            return em.merge(entity, descriptorFactory.termDescriptor(entity));
+            return em.merge(entity, descriptorFactory.termDescriptorForSave(entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

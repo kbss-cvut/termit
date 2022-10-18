@@ -14,82 +14,113 @@
  */
 package cz.cvut.kbss.termit.persistence.context;
 
+import cz.cvut.kbss.jopa.loaders.PersistenceUnitClassFinder;
+import cz.cvut.kbss.jopa.model.EntityManagerFactory;
+import cz.cvut.kbss.jopa.model.MetamodelImpl;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.metamodel.EntityType;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
-import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.jopa.utils.Configuration;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
+import cz.cvut.kbss.termit.persistence.MainPersistenceFactory;
+import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
-import java.util.Collections;
+import java.util.*;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class DescriptorFactoryTest extends BaseDaoTestRunner {
+@ExtendWith(MockitoExtension.class)
+class DescriptorFactoryTest {
 
     private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
     private Term term;
 
-    private FieldSpecification<?, ?> parentFieldSpec;
+    @Mock
+    private EntityManagerFactory emf;
 
-    @Autowired
+    @Mock
+    private VocabularyDao vocabularyDao;
+
+    @Mock
+    private VocabularyContextMapper vocabularyContextMapper;
+
+    @InjectMocks
     private DescriptorFactory sut;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         this.term = Generator.generateTermWithId();
         term.setVocabulary(vocabulary.getUri());
-        this.parentFieldSpec = mock(FieldSpecification.class);
-        when(parentFieldSpec.getJavaField()).thenReturn(Term.class.getDeclaredField("externalParentTerms"));
+        final Configuration jopaConfig = new Configuration(MainPersistenceFactory.defaultParams());
+        final MetamodelImpl metamodel = new MetamodelImpl(jopaConfig);
+        metamodel.build(new PersistenceUnitClassFinder());
+        when(emf.getMetamodel()).thenReturn(metamodel);
     }
 
     @Test
-    void termDescriptorCreatesSimpleTermDescriptorWhenNoParentsAreProvided() {
+    void termDescriptorSetsRelatedVocabulariesContextsForSkosMappingProperties() {
+        final Set<URI> relatedVocabularies = Set.of(Generator.generateUri(), Generator.generateUri(), vocabulary.getUri());
+        final Map<URI, URI> vocToCtx = new HashMap<>();
+        relatedVocabularies.forEach(u -> {
+            final URI ctx = Generator.generateUri();
+            when(vocabularyContextMapper.getVocabularyContext(u)).thenReturn(ctx);
+            vocToCtx.put(u, ctx);
+        });
+        when(vocabularyDao.getRelatedVocabularies(any(Vocabulary.class), anyCollection())).thenReturn(relatedVocabularies);
+
         final Descriptor result = sut.termDescriptor(term);
-        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
-        assertEquals(Collections.singleton(vocabulary.getUri()), result.getAttributeContexts(parentFieldSpec));
+        final EntityType<Term> et = emf.getMetamodel().entity(Term.class);
+        final Set<URI> contexts = new HashSet<>(vocToCtx.values());
+        assertEquals(contexts, result.getAttributeDescriptor(et.getFieldSpecification("externalParentTerms")).getContexts());
+        assertEquals(contexts, result.getAttributeDescriptor(et.getFieldSpecification("exactMatchTerms")).getContexts());
+        assertEquals(contexts, result.getAttributeDescriptor(et.getFieldSpecification("relatedMatch")).getContexts());
+        verify(vocabularyDao).getRelatedVocabularies(vocabulary, Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS);
     }
 
     @Test
-    void termDescriptorCreatesSimpleTermDescriptorWhenParentsAreInSameVocabulary() {
-        final Term parent = Generator.generateTermWithId();
-        parent.setVocabulary(vocabulary.getUri());
-        term.addParentTerm(parent);
+    void termDescriptorUsesRootDescriptorForSkosConceptProperties() {
+        final URI ctx = Generator.generateUri();
+        when(vocabularyDao.getRelatedVocabularies(any(Vocabulary.class), anyCollection())).thenReturn(
+                Collections.singleton(vocabulary.getUri()));
+        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(ctx);
+
         final Descriptor result = sut.termDescriptor(term);
-        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
-        assertEquals(Collections.singleton(vocabulary.getUri()), result.getAttributeContexts(parentFieldSpec));
+        final EntityType<Term> et = emf.getMetamodel().entity(Term.class);
+        assertEquals(result, result.getAttributeDescriptor(et.getFieldSpecification("parentTerms")));
+        assertEquals(result, result.getAttributeDescriptor(et.getFieldSpecification("related")));
     }
 
     @Test
-    void termDescriptorCreatesDescriptorWithParentTermContextSetToDefaultToAllowParentsFromMultipleVocabularies() {
-        final Term parent = Generator.generateTermWithId();
-        final URI parentVocabulary = Generator.generateUri();
-        parent.setVocabulary(parentVocabulary);
-        term.addParentTerm(parent);
-        final Descriptor result = sut.termDescriptor(term);
-        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
-        assertFalse(result.getAttributeDescriptor(parentFieldSpec).getSingleContext().isPresent());
-    }
+    void termDescriptorForSaveSetsDefaultContextForSkosMappingProperties() {
+        final URI ctx = Generator.generateUri();
+        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(ctx);
 
-    @Test
-    void termDescriptorCreatesDescriptorWithExactMatchesContextSetToDefaultToAllowExactMatchesFromMultipleVocabularies() {
-        final TermInfo exactMatch = Generator.generateTermInfoWithId();
-        final URI parentVocabulary = Generator.generateUri();
-        exactMatch.setVocabulary(parentVocabulary);
-        term.addExactMatch(exactMatch);
-        final Descriptor result = sut.termDescriptor(term);
-        assertEquals(Collections.singleton(vocabulary.getUri()), result.getContexts());
-        assertFalse(result.getAttributeDescriptor(parentFieldSpec).getSingleContext().isPresent());
+        final Descriptor result = sut.termDescriptorForSave(term);
+        final EntityType<Term> et = emf.getMetamodel().entity(Term.class);
+        assertThat(result.getAttributeDescriptor(et.getFieldSpecification("externalParentTerms")).getContexts(), emptyCollectionOf(URI.class));
+        assertThat(result.getAttributeDescriptor(et.getFieldSpecification("exactMatchTerms")).getContexts(), emptyCollectionOf(URI.class));
+        assertThat(result.getAttributeDescriptor(et.getFieldSpecification("relatedMatch")).getContexts(), emptyCollectionOf(URI.class));
+        assertEquals(result, result.getAttributeDescriptor(et.getFieldSpecification("parentTerms")));
+        assertEquals(result, result.getAttributeDescriptor(et.getFieldSpecification("related")));
     }
 
     @Test
@@ -100,8 +131,7 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         file.setDocument(doc);
         doc.setVocabulary(Generator.generateUri());
         final Descriptor result = sut.fileDescriptor(doc.getVocabulary());
-        final FieldSpecification<?, ?> docFieldSpec = mock(FieldSpecification.class);
-        when(docFieldSpec.getJavaField()).thenReturn(File.getDocumentField());
+        final FieldSpecification<?, ?> docFieldSpec = emf.getMetamodel().entity(File.class).getFieldSpecification("document");
         final Descriptor docDescriptor = result.getAttributeDescriptor(docFieldSpec);
         assertNotNull(docDescriptor);
     }
