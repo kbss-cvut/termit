@@ -153,4 +153,13 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     public int hashCode() {
         return Objects.hash(getUri());
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" +
+                getLabel() +
+                " <" + getUri() + '>' +
+                ", types=" + getTypes() +
+                '}';
+    }
 }

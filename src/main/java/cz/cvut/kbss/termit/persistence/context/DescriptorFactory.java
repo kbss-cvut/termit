@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -29,6 +30,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,8 +63,6 @@ public class DescriptorFactory {
      * <p>
      * The descriptor specifies that the instance context will correspond to the {@code vocabulary}'s IRI. It also
      * initializes other required attribute descriptors.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabulary Vocabulary for which the descriptor should be created
      * @return Vocabulary descriptor
@@ -88,8 +88,6 @@ public class DescriptorFactory {
      * <p>
      * The descriptor specifies that the instance context will correspond to the given IRI. It also initializes other
      * required attribute descriptors.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabularyUri Vocabulary identifier for which the descriptor should be created
      * @return Vocabulary descriptor
@@ -99,7 +97,7 @@ public class DescriptorFactory {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "glossary"), glossaryDescriptor(vocabularyUri));
         descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "document"),
-                documentDescriptor(vocabularyUri));
+                                          documentDescriptor(vocabularyUri));
         return descriptor;
     }
 
@@ -109,8 +107,6 @@ public class DescriptorFactory {
      * <p>
      * This means that the context of the Document (and all its relevant attributes) is given by the specified
      * vocabulary's IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabulary Vocabulary on which the descriptor should be based
      * @return Document descriptor
@@ -125,8 +121,6 @@ public class DescriptorFactory {
      * (presumably of a {@link Vocabulary}).
      * <p>
      * This means that the context of the Document (and all its relevant attributes) is given by the specified IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
      * @return Document descriptor
@@ -144,8 +138,6 @@ public class DescriptorFactory {
      * <p>
      * This means that the context of the File (and all its relevant attributes) is given by the specified vocabulary's
      * IRI.
-     * <p>
-     * Note that default context is used for asset author and last editor.
      *
      * @param vocabulary Vocabulary identifier on which the descriptor should be based
      * @return File descriptor
@@ -160,8 +152,6 @@ public class DescriptorFactory {
      * specified identifier.
      * <p>
      * This means that the context of the File (and all its relevant attributes) is given by the specified IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
      * @return File descriptor
@@ -179,8 +169,6 @@ public class DescriptorFactory {
      * <p>
      * This means that the context of the Glossary (and all its relevant attributes) is given by the specified
      * vocabulary's IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabulary Vocabulary on which the descriptor should be based
      * @return Glossary descriptor
@@ -195,8 +183,6 @@ public class DescriptorFactory {
      * specified identifier.
      * <p>
      * This means that the context of the Glossary (and all its relevant attributes) is given by the specified IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
      * @return Glossary descriptor
@@ -212,8 +198,6 @@ public class DescriptorFactory {
      * <p>
      * This means that the context of the Term (and all its relevant attributes) is given by the specified vocabulary's
      * IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabulary Vocabulary on which the descriptor should be based
      * @return Term descriptor
@@ -228,29 +212,34 @@ public class DescriptorFactory {
      * specified identifier.
      * <p>
      * This means that the context of the Term (and all its relevant attributes) is given by the specified vocabulary
-     * IRI. SKOS attributes possibly referencing terms from different vocabularies are provided a descriptor
-     * based on all vocabularies related to the specified one.
-     * <p>
-     * Note that default context is used for asset author.
+     * IRI. SKOS attributes possibly referencing terms from different vocabularies are provided a descriptor based on
+     * all vocabularies related to the specified one.
      *
      * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
      * @return Term descriptor
      */
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        final Descriptor interVocabularyRelationshipsDescriptor = resolveInterVocabularyTermRelationshipsDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "externalParentTerms"), interVocabularyRelationshipsDescriptor);
+        final Descriptor interVocabularyRelationshipsDescriptor = resolveInterVocabularyTermRelationshipsDescriptor(
+                vocabularyUri);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "externalParentTerms"),
+                                          interVocabularyRelationshipsDescriptor);
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), descriptor);
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"), interVocabularyRelationshipsDescriptor);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"),
+                                          interVocabularyRelationshipsDescriptor);
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), descriptor);
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "relatedMatch"), interVocabularyRelationshipsDescriptor);
+        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "relatedMatch"),
+                                          interVocabularyRelationshipsDescriptor);
         return descriptor;
     }
 
     private Descriptor resolveInterVocabularyTermRelationshipsDescriptor(URI vocabularyUri) {
         // TODO Cache somehow the related vocabularies
-        final Set<URI> related = vocabularyDao.getRelatedVocabularies(new Vocabulary(vocabularyUri), SKOS_CONCEPT_MATCH_RELATIONSHIPS);
-        final Set<URI> relatedContexts = related.stream().map(contextMapper::getVocabularyContext).collect(Collectors.toSet());
+        final Vocabulary vocabulary = new Vocabulary(vocabularyUri);
+        final Set<URI> related = new HashSet<>(vocabularyDao.getRelatedVocabularies(vocabulary, SKOS_CONCEPT_MATCH_RELATIONSHIPS));
+        related.addAll(vocabularyDao.getTransitivelyImportedVocabularies(vocabulary));
+        final Set<URI> relatedContexts = related.stream().map(contextMapper::getVocabularyContext)
+                                                .collect(Collectors.toSet());
         return new EntityDescriptor(relatedContexts);
     }
 
@@ -274,10 +263,10 @@ public class DescriptorFactory {
      * <p>
      * This method expects that the term has a vocabulary assigned. This vocabulary is used to determine the descriptor
      * context. If the term does not have a vocabulary assigned, use {@link #termDescriptorForSave(URI)}.
-     *
-     * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes representing
-     * SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context descriptors. This is the
-     * main difference between the result of this method and {@link #termDescriptor(Term)}.
+     * <p>
+     * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes
+     * representing SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context
+     * descriptors. This is the main difference between the result of this method and {@link #termDescriptor(Term)}.
      *
      * @param term Term for which descriptor should be provided
      * @return Term descriptor
@@ -290,9 +279,9 @@ public class DescriptorFactory {
     /**
      * Creates a JOPA descriptor for saving a term to the context represented by the specified vocabulary identifier.
      * <p>
-     * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes representing
-     * SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context descriptors. This is the
-     * main difference between the result of this method and {@link #termDescriptor(Term)}.
+     * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes
+     * representing SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context
+     * descriptors. This is the main difference between the result of this method and {@link #termDescriptor(Term)}.
      *
      * @param vocabularyUri Vocabulary identifier used to determine the main target context
      * @return Term descriptor
@@ -305,6 +294,44 @@ public class DescriptorFactory {
         descriptor.addAttributeContext(fieldSpec(Term.class, "exactMatchTerms"), null);
         descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), descriptor);
         descriptor.addAttributeContext(fieldSpec(Term.class, "relatedMatch"), null);
+        return descriptor;
+    }
+
+    /**
+     * Creates a JOPA descriptor for a {@link cz.cvut.kbss.termit.dto.listing.TermDto} contained in a vocabulary with
+     * the specified identifier.
+     * <p>
+     * This means that the context of the TermDto (and all its relevant attributes) is given by the vocabulary with the
+     * specified IRI. ParentTerms attribute descriptor is the same as the one root descriptor, as these can be only from
+     * the term's vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
+     * @return TermDto descriptor
+     */
+    public Descriptor termDtoDescriptor(URI vocabularyUri) {
+        final Descriptor descriptor = assetDescriptor(vocabularyUri);
+        descriptor.addAttributeDescriptor(fieldSpec(TermDto.class, "parentTerms"), descriptor);
+        return descriptor;
+    }
+
+    /**
+     * Creates a JOPA descriptor for a {@link cz.cvut.kbss.termit.dto.listing.TermDto} contained in a vocabulary with
+     * the specified identifier or any vocabulary imported by it.
+     * <p>
+     * This means that the context of the TermDto (and all its relevant attributes) is given by the vocabulary with the
+     * specified IRI and all vocabularies it (transitively) imports. ParentTerms attribute descriptor is the same as the
+     * one root descriptor, as these can be only from the term's vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
+     * @return TermDto descriptor
+     */
+    public Descriptor termDtoDescriptorWithImportedVocabularies(URI vocabularyUri) {
+        final Set<URI> rootContexts = new HashSet<>();
+        rootContexts.add(vocabularyUri);
+        vocabularyDao.getTransitivelyImportedVocabularies(new Vocabulary(vocabularyUri)).stream().map(
+                contextMapper::getVocabularyContext).forEach(rootContexts::add);
+        final EntityDescriptor descriptor = new EntityDescriptor(rootContexts);
+        descriptor.addAttributeDescriptor(fieldSpec(TermDto.class, "parentTerms"), descriptor);
         return descriptor;
     }
 }

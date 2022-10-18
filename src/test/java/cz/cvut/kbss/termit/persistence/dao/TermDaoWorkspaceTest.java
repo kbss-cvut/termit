@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -17,11 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
@@ -174,5 +178,40 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         final Optional<Term> result = sut.find(toPersist.getUri());
         assertTrue(result.isPresent());
         assertThat(result.get().getRelatedMatch(), hasItem(new TermInfo(related)));
+    }
+
+    @Test
+    void findAllIncludingImportedLoadsTermsFromImportedVocabulariesAsWell() {
+        final Term canonicalOne = Generator.generateTermWithId(vocabulary.getUri());
+        canonicalOne.setGlossary(vocabulary.getGlossary().getUri());
+        final Vocabulary vocabularyTwo = Generator.generateVocabularyWithId();
+        vocabularyTwo.setImportedVocabularies(Collections.singleton(vocabulary.getUri()));
+        final Term canonicalTwo = Generator.generateTermWithId(vocabularyTwo.getUri());
+        transactional(() -> {
+            em.persist(canonicalOne, descriptorFactory.termDescriptorForSave(vocabulary.getUri()));
+            em.persist(vocabularyTwo, descriptorFactory.vocabularyDescriptor(vocabularyTwo));
+            canonicalTwo.setGlossary(vocabularyTwo.getGlossary().getUri());
+            em.persist(canonicalTwo, descriptorFactory.termDescriptorForSave(vocabularyTwo.getUri()));
+            Generator.addTermInVocabularyRelationship(canonicalOne, vocabulary.getUri(), em);
+        });
+        final URI workingCtxOne = Generator.generateUri();
+        final Vocabulary workingVocOne = cloneVocabulary(vocabulary);
+        final Term workingCopyOne = cloneTerm(canonicalOne);
+        workingCopyOne.getLabel().set(Environment.LANGUAGE, "Different label");
+        workingCopyOne.setGlossary(vocabulary.getGlossary().getUri());
+        final URI workingCtxTwo = Generator.generateUri();
+        final Vocabulary workingVocTwo = cloneVocabulary(vocabularyTwo);
+        final Term workingCopyTwo = cloneTerm(canonicalTwo);
+        transactional(() -> {
+            em.persist(workingVocOne, descriptorFactory.vocabularyDescriptor(workingCtxOne));
+            em.persist(workingCopyOne, descriptorFactory.termDescriptorForSave(workingCtxOne));
+            em.persist(workingVocTwo, descriptorFactory.termDescriptor(workingCtxTwo));
+            em.persist(workingCopyTwo, descriptorFactory.termDescriptorForSave(workingCtxTwo));
+        });
+        editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtxOne);
+        editableVocabularies.registerEditableVocabulary(vocabularyTwo.getUri(), workingCtxTwo);
+
+        final List<TermDto> result = sut.findAllIncludingImported(workingVocTwo);
+        assertThat(result, hasItems(new TermDto(workingCopyTwo), new TermDto(workingCopyOne)));
     }
 }

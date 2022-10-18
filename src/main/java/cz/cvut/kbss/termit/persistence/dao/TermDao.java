@@ -83,9 +83,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     private URI resolveTermVocabulary(URI termUri) {
         return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
-                .setParameter("inVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                .setParameter("t", termUri)
-                .getSingleResult();
+                 .setParameter("inVocabulary",
+                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("t", termUri)
+                 .getSingleResult();
     }
 
     private void postLoad(Term r) {
@@ -187,9 +188,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         assert entity.getVocabulary() != null;
 
         try {
-            // Evict possibly cached instance loaded from default context
-            em.getEntityManagerFactory().getCache().evict(Term.class, entity.getUri(), null);
-            em.getEntityManagerFactory().getCache().evict(TermDto.class, entity.getUri(), null);
+            // Evict possibly cached TermDto instance loaded
+            em.getEntityManagerFactory().getCache()
+              .evict(TermDto.class, entity.getUri(), contextMapper.getVocabularyContext(entity.getVocabulary()));
             final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
             entity.setDefinitionSource(original.getDefinitionSource());
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
@@ -268,7 +269,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                  .setParameter("inVocabulary",
                                                                URI.create(
                                                                        cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                                 .setParameter("labelLang", config.getLanguage()));
+                                                 .setParameter("labelLang", config.getLanguage())
+                                                 .setDescriptor(
+                                                         descriptorFactory.termDtoDescriptor(vocabulary.getUri())));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -308,7 +311,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                          .setParameter("inVocabulary",
                                                        URI.create(
                                                                cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                         .setParameter("labelLang", config.getLanguage()).getResultList();
+                                         .setParameter("labelLang", config.getLanguage())
+                                         .setDescriptor(descriptorFactory.termDescriptor(vocabulary)).getResultList();
             return termIris.stream().map(ti -> {
                 final Term t = find(ti).get();
                 em.clear();
@@ -368,7 +372,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                     URI.create(
                                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                       .setParameter("vocabulary", vocabulary)
-                                      .setParameter("labelLang", config.getLanguage());
+                                      .setParameter("labelLang", config.getLanguage())
+                                      .setDescriptor(descriptorFactory.termDtoDescriptorWithImportedVocabularies(
+                                              vocabulary.getUri()));
         return executeQueryAndLoadSubTerms(query);
     }
 
@@ -401,7 +407,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                          .setParameter("labelLang", config.getLanguage())
                          .setParameter("included", includeTerms)
                          .setMaxResults(pageSpec.getPageSize())
-                         .setFirstResult((int) pageSpec.getOffset()));
+                         .setFirstResult((int) pageSpec.getOffset())
+                         .setDescriptor(descriptorFactory.termDtoDescriptor(vocabulary.getUri())));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
         } catch (RuntimeException e) {
@@ -489,7 +496,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         // This strategy is obviously not very efficient in terms of performance but until JOPA supports read-only
         // transactions, this is probably the only way to prevent the aforementioned exceptions from appearing
         em.clear();
-        final List<TermDto> result = includeTerms.stream().map(u -> em.find(TermDto.class, u))
+        final List<TermDto> result = includeTerms.stream().map(u -> em.find(TermDto.class, u,
+                                                                            descriptorFactory.termDtoDescriptor(
+                                                                                    resolveTermVocabulary(u))))
                                                  .filter(Objects::nonNull)
                                                  .collect(Collectors.toList());
         em.clear();
@@ -543,7 +552,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                          .setParameter("labelLang", config.getLanguage())
                          .setParameter("included", includeTerms)
                          .setFirstResult((int) pageSpec.getOffset())
-                         .setMaxResults(pageSpec.getPageSize()));
+                         .setMaxResults(pageSpec.getPageSize())
+                         .setDescriptor(
+                                 descriptorFactory.termDtoDescriptorWithImportedVocabularies(vocabulary.getUri())));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
         } catch (RuntimeException e) {
@@ -578,7 +589,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                             .setParameter("inVocabulary", URI.create(
                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                                             .setParameter("vocabulary", vocabulary.getUri())
-                                            .setParameter("searchString", searchString, config.getLanguage());
+                                            .setParameter("searchString", searchString, config.getLanguage())
+                                            .setDescriptor(descriptorFactory.termDtoDescriptor(vocabulary.getUri()));
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
@@ -657,7 +669,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                           URI.create(
                                                                   cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                             .setParameter("targetVocabulary", vocabulary.getUri())
-                                            .setParameter("searchString", searchString, config.getLanguage());
+                                            .setParameter("searchString", searchString, config.getLanguage())
+                                            .setDescriptor(descriptorFactory.termDtoDescriptorWithImportedVocabularies(
+                                                    vocabulary.getUri()));
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
