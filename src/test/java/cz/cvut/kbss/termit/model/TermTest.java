@@ -199,7 +199,6 @@ class TermTest {
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
         term.getLabel().getValue().values()
             .forEach(v -> assertThat(row.getCell(1).getStringCellValue(), containsString(v)));
-        //assertEquals(Term.EXPORT_COLUMNS.size(), row.getLastCellNum());
     }
 
     @Test
