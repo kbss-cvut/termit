@@ -410,7 +410,6 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
             row.createCell(14).setCellValue(Utils.emptyIfNull(properties.get(SKOS.NOTATION)).toString());
             row.createCell(15).setCellValue(Utils.emptyIfNull(properties.get(SKOS.EXAMPLE)).toString());
             row.createCell(16).setCellValue(Utils.emptyIfNull(properties.get(DCTERMS.REFERENCES)).toString());
-            //https://onto.fel.cvut.cz/ontologies/page/slovnik/slovník-datového-modelu-dtm/pojem/je-reálným-objektem
         }
     }
 
