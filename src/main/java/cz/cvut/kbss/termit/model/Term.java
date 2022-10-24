@@ -42,7 +42,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
             "Definition", "Description", "Types", "Sources",
             "Parent Terms", "SubTerms", "Related Terms",
             "Related Match Terms", "Exact Match Terms", "Draft",
-            "Notation", "Example", "References"//, "Real object"
+            "Notation", "Example", "References"
     );
 
     @Autowired
@@ -328,14 +328,10 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         consolidateAndExportMulti(sb, exactMatchTerms, inverseExactMatchTerms, Term::termInfoStringIri);
         sb.append(',');
         sb.append(isDraft());
-        //what if null
         final Map<String, Set<String>> propsToExcel = properties != null ? properties : Collections.emptyMap();
         exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(SKOS.NOTATION)), String::toString);
         exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(SKOS.EXAMPLE)), String::toString);
         exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(DCTERMS.REFERENCES)), String::toString);
-        //exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(je-)));
-        // https://onto.fel.cvut.cz/ontologies/page/slovnik/slovník-datového-modelu-dtm/pojem/je-reálným-objektem
-        // skos:notation, skos:example, dcterms:references, je-reálným-objektem
         return sb.toString();
     }
 
@@ -416,7 +412,6 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
             row.createCell(16).setCellValue(Utils.emptyIfNull(properties.get(DCTERMS.REFERENCES)).toString());
             //https://onto.fel.cvut.cz/ontologies/page/slovnik/slovník-datového-modelu-dtm/pojem/je-reálným-objektem
         }
-        // skos:notation, skos:example, dcterms:references, je-reálným-objektem
     }
 
     private static String termInfoStringIri(TermInfo ti) {
