@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
@@ -204,5 +206,32 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
 
         final List<TermDto> result = sut.findAllIncludingImported(workingVocTwo);
         assertThat(result, hasItems(new TermDto(workingCopyTwo), new TermDto(workingCopyOne)));
+    }
+
+    @Test
+    void findAllRootsWithoutVocabularyResolvesVocabularyContextsForRelevantTermsPage() {
+        final URI workingCtx = Generator.generateUri();
+        final Term canonical = Generator.generateTermWithId(vocabulary.getUri());
+        canonical.setGlossary(vocabulary.getGlossary().getUri());
+        vocabulary.getGlossary().addRootTerm(canonical);
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
+        final Term workingCopy = cloneTerm(canonical);
+        workingCopy.setGlossary(workingVoc.getGlossary().getUri());
+        workingCopy.setLabel(MultilingualString.create("Updated label", Environment.LANGUAGE));
+        workingVoc.getGlossary().addRootTerm(workingCopy);
+        final Vocabulary relatedVocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> {
+            em.persist(canonical, descriptorFactory.termDescriptor(vocabulary));
+            em.persist(relatedVocabulary, descriptorFactory.vocabularyDescriptor(relatedVocabulary));
+            Generator.addTermInVocabularyRelationship(canonical, vocabulary.getUri(), em);
+        });
+        transactional(() -> {
+            em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
+            em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
+        });
+
+        editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
+        final List<TermDto> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptySet());
+        assertEquals(Collections.singletonList(new TermDto(workingCopy)), result);
     }
 }

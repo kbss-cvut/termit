@@ -468,9 +468,26 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                          .setParameter("included", includeTerms)
                          .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
                          .setMaxResults(pageSpec.getPageSize())
-                         .setFirstResult((int) pageSpec.getOffset()));
+                         .setFirstResult((int) pageSpec.getOffset())
+                         .setDescriptor(
+                                 descriptorFactory.termDtoDescriptor(resolveTermContexts().toArray(new URI[]{}))));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    private List<URI> resolveTermContexts() {
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?vocabulary WHERE { " +
+                                                "?vocabulary a ?type . " +
+                                                "FILTER NOT EXISTS { ?vocabulary a ?snapshot . } " +
+                                                "}", URI.class)
+                     .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
+                     .setParameter("snapshot",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
+                     .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

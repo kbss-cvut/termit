@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.util.Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
 
@@ -235,7 +236,8 @@ public class DescriptorFactory {
     private Descriptor resolveInterVocabularyTermRelationshipsDescriptor(URI vocabularyUri) {
         // TODO Cache somehow the related vocabularies
         final Vocabulary vocabulary = new Vocabulary(vocabularyUri);
-        final Set<URI> related = new HashSet<>(vocabularyDao.getRelatedVocabularies(vocabulary, SKOS_CONCEPT_MATCH_RELATIONSHIPS));
+        final Set<URI> related = new HashSet<>(
+                vocabularyDao.getRelatedVocabularies(vocabulary, SKOS_CONCEPT_MATCH_RELATIONSHIPS));
         related.addAll(vocabularyDao.getTransitivelyImportedVocabularies(vocabulary));
         final Set<URI> relatedContexts = related.stream().map(contextMapper::getVocabularyContext)
                                                 .collect(Collectors.toSet());
@@ -297,18 +299,20 @@ public class DescriptorFactory {
     }
 
     /**
-     * Creates a JOPA descriptor for a {@link cz.cvut.kbss.termit.dto.listing.TermDto} contained in a vocabulary with
-     * the specified identifier.
+     * Creates a JOPA descriptor for a {@link cz.cvut.kbss.termit.dto.listing.TermDto} contained in any of the
+     * vocabularies with the specified identifier.
      * <p>
      * This means that the context of the TermDto (and all its relevant attributes) is given by the vocabulary with the
      * specified IRI. ParentTerms attribute descriptor is the same as the one root descriptor, as these can be only from
      * the term's vocabulary.
      *
-     * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
+     * @param vocabularyUris Identifiers of vocabularies on which the descriptor should be based
      * @return TermDto descriptor
      */
-    public Descriptor termDtoDescriptor(URI vocabularyUri) {
-        final Descriptor descriptor = assetDescriptor(vocabularyUri);
+    public Descriptor termDtoDescriptor(URI... vocabularyUris) {
+        final Descriptor descriptor = new EntityDescriptor(Stream.of(vocabularyUris).map(
+                contextMapper::getVocabularyContext).collect(
+                Collectors.toSet()));
         descriptor.addAttributeDescriptor(fieldSpec(TermDto.class, "parentTerms"), descriptor);
         return descriptor;
     }
