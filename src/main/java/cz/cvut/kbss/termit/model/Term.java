@@ -16,9 +16,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.CsvUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.apache.jena.vocabulary.DCTerms;
 import org.apache.poi.ss.usermodel.Row;
-import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.util.CollectionUtils;
@@ -331,7 +329,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         final Map<String, Set<String>> propsToExcel = properties != null ? properties : Collections.emptyMap();
         exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(SKOS.NOTATION)), String::toString);
         exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(SKOS.EXAMPLE)), String::toString);
-        exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(DCTERMS.REFERENCES)), String::toString);
+        exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(DC.Terms.REFERENCES)), String::toString);
         return sb.toString();
     }
 
@@ -409,7 +407,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         if (properties != null) {
             row.createCell(14).setCellValue(Utils.emptyIfNull(properties.get(SKOS.NOTATION)).toString());
             row.createCell(15).setCellValue(Utils.emptyIfNull(properties.get(SKOS.EXAMPLE)).toString());
-            row.createCell(16).setCellValue(Utils.emptyIfNull(properties.get(DCTERMS.REFERENCES)).toString());
+            row.createCell(16).setCellValue(Utils.emptyIfNull(properties.get(DC.Terms.REFERENCES)).toString());
         }
     }
 
