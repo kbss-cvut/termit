@@ -66,14 +66,16 @@ class TermTest {
         final Term term = Generator.generateTermWithId();
         term.setDescription(MultilingualString.create("Comment, with a comma", Environment.LANGUAGE));
         final String result = term.toCsv();
-        assertThat(result, containsString("\"" + term.getDescription().get(Environment.LANGUAGE) + "\""));
+        assertThat(result, containsString(
+                "\"" + term.getDescription().get(Environment.LANGUAGE) + "\"" + "(" + Environment.LANGUAGE + ")"));
     }
 
     @Test
     void toCsvExportsAltLabelsDelimitedBySemicolons() {
         final Term term = Generator.generateTermWithId();
         term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
-                MultilingualString.create("Construction", Environment.LANGUAGE))));
+                                                      MultilingualString.create("Construction",
+                                                                                Environment.LANGUAGE))));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertEquals(items.length, 14);
@@ -87,7 +89,7 @@ class TermTest {
         final Term term = Generator.generateTermWithId();
         term.setHiddenLabels(
                 new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
-                        MultilingualString.create("Construction", Environment.LANGUAGE))));
+                                            MultilingualString.create("Construction", Environment.LANGUAGE))));
         final String result = term.toCsv();
         final String[] items = result.split(",");
         assertEquals(items.length, 14);
@@ -157,10 +159,11 @@ class TermTest {
         final Term term = Generator.generateTermWithId();
         term.setTypes(Collections.singleton(Vocabulary.s_c_object));
         term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
-                MultilingualString.create("Construction", Environment.LANGUAGE))));
+                                                      MultilingualString.create("Construction",
+                                                                                Environment.LANGUAGE))));
         term.setHiddenLabels(
                 new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
-                        MultilingualString.create("Construction", Environment.LANGUAGE))));
+                                            MultilingualString.create("Construction", Environment.LANGUAGE))));
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
@@ -282,7 +285,7 @@ class TermTest {
         assertEquals(sut.getUri().toString(), row.getCell(0).getStringCellValue());
         sut.getHiddenLabels().forEach(ms -> ms.getValue().values()
                                               .forEach(v -> assertThat(row.getCell(3).getStringCellValue(),
-                                                      containsString(v))));
+                                                                       containsString(v))));
     }
 
     private XSSFRow generateExcel() {
@@ -315,7 +318,8 @@ class TermTest {
                                      .mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
                                      .collect(Collectors.toSet()));
         sut.setInverseRelatedMatch(IntStream.range(0, 5)
-                                            .mapToObj(i -> new TermInfo(Generator.generateTermWithId(Generator.generateUri())))
+                                            .mapToObj(i -> new TermInfo(
+                                                    Generator.generateTermWithId(Generator.generateUri())))
                                             .collect(Collectors.toSet()));
         final int originalRelatedMatchSize = sut.getRelatedMatch().size();
 
@@ -328,9 +332,13 @@ class TermTest {
     void consolidateInferredCopiesInverseExactMatchTermsToExactMatch() {
         final Term sut = Generator.generateTermWithId();
         sut.setExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator
-                .generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
+                                                                                        .generateTermWithId(
+                                                                                                Generator.generateUri())))
+                                        .collect(Collectors.toSet()));
         sut.setInverseExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator
-                .generateTermWithId(Generator.generateUri()))).collect(Collectors.toSet()));
+                                                                                               .generateTermWithId(
+                                                                                                       Generator.generateUri())))
+                                               .collect(Collectors.toSet()));
         final int originalExactMatchSize = sut.getExactMatchTerms().size();
 
         sut.consolidateInferred();
@@ -591,5 +599,23 @@ class TermTest {
         snapshot.addType(Vocabulary.s_c_verze_pojmu);
         assertFalse(original.isSnapshot());
         assertTrue(snapshot.isSnapshot());
+    }
+
+    @Test
+    void toExcelExportsMultilingualAttributesAsValuesWithLanguageInParentheses() {
+        final Term sut = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        final XSSFRow row = generateExcel();
+        sut.toExcel(row);
+        final String label = row.getCell(1).getStringCellValue();
+        assertTrue(label.matches(".+;.+"));
+        sut.getLabel().getValue().forEach((lang, value) -> assertThat(label, containsString(value + "(" + lang + ")")));
+        final String definition = row.getCell(4).getStringCellValue();
+        assertTrue(definition.matches(".+;.+"));
+        sut.getDefinition().getValue()
+           .forEach((lang, value) -> assertThat(definition, containsString(value + "(" + lang + ")")));
+        final String description = row.getCell(5).getStringCellValue();
+        assertTrue(description.matches(".+;.+"));
+        sut.getDescription().getValue()
+           .forEach((lang, value) -> assertThat(description, containsString(value + "(" + lang + ")")));
     }
 }
