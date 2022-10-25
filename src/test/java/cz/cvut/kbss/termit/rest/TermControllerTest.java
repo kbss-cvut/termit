@@ -24,8 +24,11 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
-import cz.cvut.kbss.termit.util.*;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
+import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -317,13 +320,13 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final String content = String.join(",", Term.EXPORT_COLUMNS);
         final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
-                                                                                 CsvUtils.MEDIA_TYPE,
-                                                                                 CsvUtils.FILE_EXTENSION);
-        when(termServiceMock.exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE)).thenReturn(Optional.of(export));
+                                                                                 ExportFormat.CSV.getMediaType(),
+                                                                                 ExportFormat.CSV.getFileExtension());
+        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.CSV.getMediaType())).thenReturn(Optional.of(export));
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(CsvUtils.MEDIA_TYPE)).andExpect(
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())).andExpect(
                 status().isOk());
-        verify(termServiceMock).exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE);
+        verify(termServiceMock).exportGlossary(vocabulary, ExportFormat.CSV.getMediaType());
     }
 
     @Test
@@ -335,15 +338,15 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final String content = String.join(",", Term.EXPORT_COLUMNS);
         final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
-                                                                                 CsvUtils.MEDIA_TYPE,
-                                                                                 CsvUtils.FILE_EXTENSION);
-        when(termServiceMock.exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE)).thenReturn(Optional.of(export));
+                                                                                 ExportFormat.CSV.getMediaType(),
+                                                                                 ExportFormat.CSV.getFileExtension());
+        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.CSV.getMediaType())).thenReturn(Optional.of(export));
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(CsvUtils.MEDIA_TYPE)).andReturn();
+                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())).andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
-                   containsString("filename=\"" + VOCABULARY_NAME + CsvUtils.FILE_EXTENSION + "\""));
+                   containsString("filename=\"" + VOCABULARY_NAME + ExportFormat.CSV.getFileExtension() + "\""));
         assertEquals(content, mvcResult.getResponse().getContentAsString());
     }
 
