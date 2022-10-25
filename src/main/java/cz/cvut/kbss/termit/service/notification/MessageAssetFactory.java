@@ -54,7 +54,7 @@ public class MessageAssetFactory {
         }
     }
 
-    public static class MessageAsset {
+    public static class MessageAsset implements Comparable<MessageAsset> {
 
         private final String label;
         private final String link;
@@ -70,6 +70,11 @@ public class MessageAssetFactory {
 
         public String getLink() {
             return link;
+        }
+
+        @Override
+        public int compareTo(MessageAsset messageAsset) {
+            return label.compareTo(messageAsset.label);
         }
 
         @Override

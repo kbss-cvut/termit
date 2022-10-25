@@ -6,42 +6,41 @@ Dobrý den,
     V období od ${from} do ${to} byly v TermItu vytvořeny nebo upraveny komentáře u těchto pojmů:
 </p>
 
-<ul>
-    #foreach( $asset in ${assets} )
-        <li><a href="${asset.link}">${asset.label}</a></li>
-    #end
-</ul>
+    #foreach($item in ${commentedAssets})
+    <ul>
+        <li><a href="${item.asset.link}">${item.asset.label}</a></li>
+    </ul>
 
-<p>
-    Tabulka níže obsahuje příslušné komentáře.
-</p>
+    <p>
+        Tabulka níže obsahuje příslušné komentáře.
+    </p>
 
-<table border="0" cellspacing="0" width="800">
-    <thead>
-    <tr>
-        <th width="100">Operace</th>
-        <th width="200">Autor</th>
-        <th width="200">Datum a čas</th>
-        <th width="300">Text komentáře</th>
-    </tr>
-    </thead>
-    #foreach( $comment in ${comments} )
+    <table border="0" cellspacing="0" width="800">
+        <thead>
         <tr>
-            <td>
-                #if (${comment.operation} == "CREATE")
-                    Vytvořeno
-                #elseif (${comment.operation} == "UPDATE")
-                    Upraveno
-                #end
-            </td>
-            <td>${comment.author}</td>
-            <td>${comment.lastModified}</td>
-            <td style="white-space: pre-line;">${comment.content}</td>
+            <th align="left" width="100">Operace</th>
+            <th align="left" width="200">Autor</th>
+            <th align="left" width="200">Datum a čas</th>
+            <th align="left" width="300">Text komentáře</th>
         </tr>
+        </thead>
+        #foreach( $comment in ${item.comments} )
+            <tr>
+                <td valign="top">
+                    #if (${comment.operation} == "CREATE")
+                        Vytvořeno
+                    #elseif (${comment.operation} == "UPDATE")
+                        Upraveno
+                    #end
+                </td>
+                <td valign="top">${comment.author}</td>
+                <td valign="top">${comment.lastModified}</td>
+                <td valign="top" style="white-space: pre-line;">${comment.content}</td>
+            </tr>
+        #end
+    </table>
+    <br/>
     #end
-</table>
-
-<br/>
 
 S pozdravem,<br/>
 TermIt Postman
