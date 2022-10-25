@@ -158,7 +158,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
         when(serviceMock.importVocabulary(anyBoolean(), any())).thenReturn(vocabulary);
         final MockMultipartFile upload = new MockMultipartFile("file", "test-glossary.ttl",
-                                                               Constants.Turtle.MEDIA_TYPE,
+                                                               Constants.MediaType.TURTLE,
                                                                Environment.loadFile("data/test-glossary.ttl"));
         final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/import").file(upload)
                                                                                .param("rename", "false"))
@@ -178,7 +178,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(vocabulary.getUri());
         when(serviceMock.importVocabulary(any(URI.class), any())).thenReturn(vocabulary);
         final MockMultipartFile upload = new MockMultipartFile("file", "test-glossary.ttl",
-                                                               Constants.Turtle.MEDIA_TYPE,
+                                                               Constants.MediaType.TURTLE,
                                                                Environment.loadFile("data/test-glossary.ttl"));
         final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/" + FRAGMENT + "/import").file(upload))
                                            .andExpect(status().isCreated())

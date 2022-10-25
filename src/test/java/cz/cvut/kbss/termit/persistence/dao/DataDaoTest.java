@@ -22,7 +22,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.Model;
@@ -198,9 +198,9 @@ class DataDaoTest extends BaseDaoTestRunner {
             final TypeAwareResource result = sut.exportDataAsTurtle();
             assertNotNull(result);
             assertTrue(result.getMediaType().isPresent());
-            assertEquals(Constants.Turtle.MEDIA_TYPE, result.getMediaType().get());
+            assertEquals(ExportFormat.TURTLE.getMediaType(), result.getMediaType().get());
             assertTrue(result.getFileExtension().isPresent());
-            assertEquals(Constants.Turtle.FILE_EXTENSION, result.getFileExtension().get());
+            assertEquals(ExportFormat.TURTLE.getFileExtension(), result.getFileExtension().get());
         });
     }
 

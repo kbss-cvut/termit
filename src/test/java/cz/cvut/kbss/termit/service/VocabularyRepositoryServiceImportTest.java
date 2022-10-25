@@ -51,13 +51,13 @@ class VocabularyRepositoryServiceImportTest {
     @Test
     void passesInputStreamFromProvidedInputFileToImporter() throws IOException {
         final MultipartFile input = new MockMultipartFile("vocabulary.ttl", "vocabulary.ttl",
-                                                          Constants.Turtle.MEDIA_TYPE,
+                                                          Constants.MediaType.TURTLE,
                                                           Environment.loadFile("data/test-vocabulary.ttl"));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         when(importer.importVocabulary(any(URI.class), any(), any(), any())).thenReturn(vocabulary);
         final Vocabulary result = sut.importVocabulary(vocabulary.getUri(), input);
         final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
-        verify(importer).importVocabulary(eq(vocabulary.getUri()), eq(Constants.Turtle.MEDIA_TYPE), any(),
+        verify(importer).importVocabulary(eq(vocabulary.getUri()), eq(Constants.MediaType.TURTLE), any(),
                                           captor.capture());
         assertNotNull(captor.getValue());
         assertEquals(vocabulary, result);

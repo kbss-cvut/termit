@@ -151,39 +151,14 @@ public class Constants {
         }
     }
 
-    public static final class Excel {
-        /**
-         * Media type for MS Excel open format -> .xslx
-         *
-         * @see #FILE_EXTENSION
-         */
-        public static final String MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-        /**
-         * File extension for MS Excel open format
-         */
-        public static final String FILE_EXTENSION = ".xlsx";
-
-        private Excel() {
-            throw new AssertionError();
-        }
-    }
-
-    public static final class Turtle {
-
-        /**
-         * Media type for RDF serialized in Turtle.
-         */
-        public static final String MEDIA_TYPE = "text/turtle";
-
-        /**
-         * Turtle file extension.
-         */
-        public static final String FILE_EXTENSION = ".ttl";
-
-        private Turtle() {
-            throw new AssertionError();
-        }
+    /**
+     * Additional media types not covered by {@link org.springframework.http.MediaType}.
+     */
+    public static final class MediaType {
+        public static final String CSV = "text/csv";
+        public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        public static final String TURTLE = "text/turtle";
+        public static final String RDF_XML = "application/rdf+xml";
     }
 
     /**

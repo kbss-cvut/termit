@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -52,10 +53,10 @@ public class SKOSExporter {
     /**
      * Exports glossary and terms of the specified vocabulary as a SKOS model.
      * <p>
-     * The exported data can be retrieved using {@link #exportAsTtl()}.
+     * The exported data can be retrieved using {@link ##exportAs(ExportFormat)}.
      *
      * @param vocabulary Vocabulary to export
-     * @see #exportAsTtl()
+     * @see #exportAs(ExportFormat)
      * @see #exportGlossaryWithReferences(Vocabulary, Collection)
      */
     public void exportGlossary(Vocabulary vocabulary) {
@@ -89,9 +90,9 @@ public class SKOSExporter {
 
     private void resolvePrefixes(IRI glossaryIri, RepositoryConnection connection) {
         final TupleQuery tq = connection.prepareTupleQuery("SELECT ?prefix ?namespace WHERE {\n" +
-                "?glossary <http://purl.org/vocab/vann/preferredNamespacePrefix> ?prefix ;\n" +
-                "<http://purl.org/vocab/vann/preferredNamespaceUri> ?namespace .\n" +
-                "}");
+                                                                   "?glossary <http://purl.org/vocab/vann/preferredNamespacePrefix> ?prefix ;\n" +
+                                                                   "<http://purl.org/vocab/vann/preferredNamespaceUri> ?namespace .\n" +
+                                                                   "}");
         tq.setBinding("glossary", glossaryIri);
         final TupleQueryResult result = tq.evaluate();
         while (result.hasNext()) {
@@ -126,7 +127,7 @@ public class SKOSExporter {
      *
      * @param vocabulary Vocabulary to export
      * @param properties RDF properties representing references to other terms to take into account when exporting
-     * @see #exportAsTtl()
+     * @see #exportAs(ExportFormat)
      */
     public void exportGlossaryWithReferences(Vocabulary vocabulary, Collection<String> properties) {
         Objects.requireNonNull(properties);
@@ -178,14 +179,16 @@ public class SKOSExporter {
         LOG.trace("Exporting metadata of glossaries of referenced terms: {}.", glossariesToExport);
         try (final RepositoryConnection conn = repository.getConnection()) {
             final String queryString = Utils.loadQuery(GLOSSARY_EXPORT_QUERY);
-            glossariesToExport.forEach(gIri -> conn.getStatements(null, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), gIri)
-                                                   .stream()
-                                                   .forEach(s -> {
-                                                       final GraphQuery gq = conn.prepareGraphQuery(queryString);
-                                                       gq.setBinding("vocabulary", s.getSubject());
-                                                       evaluateAndAddToModel(gq);
-                                                       resolvePrefixes(gIri, conn);
-                                                   }));
+            glossariesToExport.forEach(
+                    gIri -> conn.getStatements(null, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar),
+                                               gIri)
+                                .stream()
+                                .forEach(s -> {
+                                    final GraphQuery gq = conn.prepareGraphQuery(queryString);
+                                    gq.setBinding("vocabulary", s.getSubject());
+                                    evaluateAndAddToModel(gq);
+                                    resolvePrefixes(gIri, conn);
+                                }));
         }
     }
 
@@ -194,9 +197,20 @@ public class SKOSExporter {
      *
      * @return Turtle serialized into bytes
      */
-    public byte[] exportAsTtl() {
+    public byte[] exportAs(ExportFormat format) {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        Rio.write(model, bos, RDFFormat.TURTLE);
+        final RDFFormat rdf4jFormat;
+        switch (format) {
+            case TURTLE:
+                rdf4jFormat = RDFFormat.TURTLE;
+                break;
+            case RDF_XML:
+                rdf4jFormat = RDFFormat.RDFXML;
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported SKOS export format " + format);
+        }
+        Rio.write(model, bos, rdf4jFormat);
         return bos.toByteArray();
     }
 }

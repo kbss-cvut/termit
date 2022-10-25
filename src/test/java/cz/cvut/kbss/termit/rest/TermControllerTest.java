@@ -22,11 +22,10 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.*;
-import cz.cvut.kbss.termit.util.Constants.Excel;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
-import cz.cvut.kbss.termit.util.Constants.Turtle;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -355,11 +354,11 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareExcel();
-        when(termServiceMock.exportGlossary(vocabulary, Excel.MEDIA_TYPE)).thenReturn(Optional.of(export));
+        when(termServiceMock.exportGlossary(vocabulary, Constants.MediaType.EXCEL)).thenReturn(Optional.of(export));
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Excel.MEDIA_TYPE)).andExpect(
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Constants.MediaType.EXCEL)).andExpect(
                 status().isOk());
-        verify(termServiceMock).exportGlossary(vocabulary, Excel.MEDIA_TYPE);
+        verify(termServiceMock).exportGlossary(vocabulary, Constants.MediaType.EXCEL);
     }
 
     private TypeAwareByteArrayResource prepareExcel() throws Exception {
@@ -368,7 +367,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         s.createRow(0).createCell(0).setCellValue("test");
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         wb.write(bos);
-        return new TypeAwareByteArrayResource(bos.toByteArray(), Excel.MEDIA_TYPE, Excel.FILE_EXTENSION);
+        return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
+                                              ExportFormat.EXCEL.getFileExtension());
     }
 
     @Test
@@ -378,13 +378,14 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareExcel();
-        when(termServiceMock.exportGlossary(vocabulary, Excel.MEDIA_TYPE)).thenReturn(Optional.of(export));
+        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.EXCEL.getMediaType())).thenReturn(
+                Optional.of(export));
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Excel.MEDIA_TYPE)).andReturn();
+                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.EXCEL.getMediaType())).andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
-                   containsString("filename=\"" + VOCABULARY_NAME + Excel.FILE_EXTENSION + "\""));
+                   containsString("filename=\"" + VOCABULARY_NAME + ExportFormat.EXCEL.getFileExtension() + "\""));
     }
 
     private void initNamespaceAndIdentifierResolution() {
@@ -519,11 +520,12 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
-        when(termServiceMock.exportGlossary(vocabulary, Turtle.MEDIA_TYPE)).thenReturn(Optional.of(export));
+        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.TURTLE.getMediaType())).thenReturn(
+                Optional.of(export));
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Turtle.MEDIA_TYPE)).andExpect(
-                status().isOk());
-        verify(termServiceMock).exportGlossary(vocabulary, Turtle.MEDIA_TYPE);
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.TURTLE.getMediaType()))
+               .andExpect(status().isOk());
+        verify(termServiceMock).exportGlossary(vocabulary, ExportFormat.TURTLE.getMediaType());
     }
 
     private TypeAwareByteArrayResource prepareTurtle() {
@@ -537,7 +539,8 @@ class TermControllerTest extends BaseControllerTestRunner {
                 "    rel:enemyOf <#green-goblin> ;\n" +
                 "    a foaf:Person ;\n" +
                 "    foaf:name \"Spiderman\", .";
-        return new TypeAwareByteArrayResource(content.getBytes(), Turtle.MEDIA_TYPE, Turtle.FILE_EXTENSION);
+        return new TypeAwareByteArrayResource(content.getBytes(), ExportFormat.TURTLE.getMediaType(),
+                                              ExportFormat.TURTLE.getFileExtension());
     }
 
     @Test
@@ -547,13 +550,14 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
-        when(termServiceMock.exportGlossary(vocabulary, Turtle.MEDIA_TYPE)).thenReturn(Optional.of(export));
+        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.TURTLE.getMediaType())).thenReturn(
+                Optional.of(export));
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Turtle.MEDIA_TYPE)).andReturn();
+                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.TURTLE.getMediaType())).andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
-                   containsString("filename=\"" + VOCABULARY_NAME + Turtle.FILE_EXTENSION + "\""));
+                   containsString("filename=\"" + VOCABULARY_NAME + ExportFormat.TURTLE.getFileExtension() + "\""));
     }
 
     @Test
@@ -1042,12 +1046,14 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
         when(termServiceMock.exportGlossaryWithReferences(eq(vocabulary), anyCollection(),
-                                                          eq(Turtle.MEDIA_TYPE))).thenReturn(Optional.of(export));
+                                                          eq(ExportFormat.EXCEL.getMediaType()))).thenReturn(
+                Optional.of(export));
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Turtle.MEDIA_TYPE)
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.EXCEL.getMediaType())
                                                               .queryParam("withReferences", Boolean.toString(true)))
                .andExpect(status().isOk());
-        verify(termServiceMock).exportGlossaryWithReferences(eq(vocabulary), anyCollection(), eq(Turtle.MEDIA_TYPE));
+        verify(termServiceMock).exportGlossaryWithReferences(eq(vocabulary), anyCollection(),
+                                                             eq(ExportFormat.EXCEL.getMediaType()));
     }
 
     @Test
@@ -1058,17 +1064,19 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
         when(termServiceMock.exportGlossaryWithReferences(eq(vocabulary), anyCollection(),
-                                                          eq(Turtle.MEDIA_TYPE))).thenReturn(Optional.of(export));
+                                                          eq(ExportFormat.EXCEL.getMediaType()))).thenReturn(
+                Optional.of(export));
         final Set<String> properties = new HashSet<>(Arrays.asList(SKOS.EXACT_MATCH, SKOS.RELATED_MATCH));
 
-        final MockHttpServletRequestBuilder builder = get(PATH + VOCABULARY_NAME + "/terms").accept(Turtle.MEDIA_TYPE)
+        final MockHttpServletRequestBuilder builder = get(PATH + VOCABULARY_NAME + "/terms").accept(
+                                                                                                    ExportFormat.EXCEL.getMediaType())
                                                                                             .queryParam(
                                                                                                     "withReferences",
                                                                                                     Boolean.toString(
                                                                                                             true));
         properties.forEach(p -> builder.queryParam("property", p));
         mockMvc.perform(builder).andExpect(status().isOk());
-        verify(termServiceMock).exportGlossaryWithReferences(vocabulary, properties, Turtle.MEDIA_TYPE);
+        verify(termServiceMock).exportGlossaryWithReferences(vocabulary, properties, ExportFormat.EXCEL.getMediaType());
     }
 
     @Test
