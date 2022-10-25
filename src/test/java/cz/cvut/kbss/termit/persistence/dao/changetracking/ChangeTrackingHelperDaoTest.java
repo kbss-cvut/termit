@@ -8,9 +8,12 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
+import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,6 +24,9 @@ class ChangeTrackingHelperDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private DescriptorFactory descriptorFactory;
+
+    @Autowired
+    private EditableVocabularies editableVocabularies;
 
     @Autowired
     private ChangeTrackingHelperDao sut;
@@ -60,5 +66,20 @@ class ChangeTrackingHelperDaoTest extends BaseDaoTestRunner {
             assertNotNull(result);
             assertFalse(em.contains(result));
         });
+    }
+
+    @Test
+    void findStoredSupportsWorkingWithWorkspaces() {
+        final Vocabulary voc = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
+        final Vocabulary workingCopy = Environment.cloneVocabulary(voc);
+        workingCopy.setLabel("Working label");
+        final URI workingCtx = Generator.generateUri();
+        editableVocabularies.registerEditableVocabulary(voc.getUri(), workingCtx);
+        transactional(() -> em.persist(workingCopy, descriptorFactory.vocabularyDescriptor(workingCtx)));
+
+        final Vocabulary result = sut.findStored(workingCopy);
+        assertNotNull(result);
+        assertEquals(workingCopy.getLabel(), result.getLabel());
     }
 }

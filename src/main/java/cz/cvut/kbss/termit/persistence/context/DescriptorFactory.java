@@ -19,6 +19,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -253,7 +254,7 @@ public class DescriptorFactory {
      * @param term Term to create descriptor for
      * @return Term descriptor
      */
-    public Descriptor termDescriptor(Term term) {
+    public Descriptor termDescriptor(AbstractTerm term) {
         Objects.requireNonNull(term);
         assert term.getVocabulary() != null;
         return termDescriptor(term.getVocabulary());
@@ -267,7 +268,7 @@ public class DescriptorFactory {
      * <p>
      * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes
      * representing SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context
-     * descriptors. This is the main difference between the result of this method and {@link #termDescriptor(Term)}.
+     * descriptors. This is the main difference between the result of this method and {@link #termDescriptor(AbstractTerm)}.
      *
      * @param term Term for which descriptor should be provided
      * @return Term descriptor
@@ -282,7 +283,7 @@ public class DescriptorFactory {
      * <p>
      * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes
      * representing SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context
-     * descriptors. This is the main difference between the result of this method and {@link #termDescriptor(Term)}.
+     * descriptors. This is the main difference between the result of this method and {@link #termDescriptor(AbstractTerm)}.
      *
      * @param vocabularyUri Vocabulary identifier used to determine the main target context
      * @return Term descriptor
