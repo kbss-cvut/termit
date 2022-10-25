@@ -161,6 +161,23 @@ public class CommentChangeNotifier {
         public List<CommentForMessage> getComments() {
             return comments;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            AssetWithComments that = (AssetWithComments) o;
+            return asset.equals(that.asset) && comments.equals(that.comments);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(asset, comments);
+        }
     }
 
     /**

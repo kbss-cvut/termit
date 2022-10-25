@@ -158,7 +158,8 @@ class CommentChangeNotifierTest {
         when(commentService.findAll(any(), any(Instant.class), any(Instant.class))).thenReturn(
                 Collections.singletonList(comment));
         final String link = "http://localhost/termit";
-        when(messageAssetFactory.create(term)).thenReturn(new MessageAssetFactory.MessageAsset(term.getPrimaryLabel(), link));
+        when(messageAssetFactory.create(term)).thenReturn(
+                new MessageAssetFactory.MessageAsset(term.getPrimaryLabel(), link));
         when(messageComposer.composeMessage(any(), anyMap())).thenReturn("Test message content");
 
         final Message result = sut.createCommentChangesMessage(from, to);
@@ -170,9 +171,9 @@ class CommentChangeNotifierTest {
         final Map<String, Object> variables = captor.getValue();
         assertEquals(LocalDate.ofInstant(from, ZoneId.systemDefault()), variables.get("from"));
         assertEquals(LocalDate.ofInstant(to, ZoneId.systemDefault()), variables.get("to"));
-        assertEquals(Collections.singletonList(new MessageAssetFactory.MessageAsset(term.getPrimaryLabel(), link)),
-                     variables.get("assets"));
-        assertEquals(Collections.singletonList(new CommentChangeNotifier.CommentForMessage(comment)),
-                     variables.get("comments"));
+        assertEquals(Collections.singletonList(new CommentChangeNotifier.AssetWithComments(
+                             new MessageAssetFactory.MessageAsset(term.getPrimaryLabel(), link),
+                             Collections.singletonList(new CommentChangeNotifier.CommentForMessage(comment)))),
+                     variables.get("commentedAssets"));
     }
 }
