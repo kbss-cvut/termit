@@ -62,16 +62,18 @@ public class CommentChangeNotifier {
     public Message createCommentChangesMessage(Instant from, Instant to) {
         final Map<Asset<?>, List<Comment>> comments = findChangedComments(from, to);
         final Map<String, Object> variables = new HashMap<>();
+        final List<AssetWithComments> assetsWithComments = comments.entrySet().stream()
+                                                                   .map(e -> new AssetWithComments(
+                                                                           messageAssetFactory.create(e.getKey()),
+                                                                           e.getValue().stream()
+                                                                            .map(CommentForMessage::new)
+                                                                            .collect(Collectors.toList())))
+                                                                   .sorted(Comparator.comparing(
+                                                                           AssetWithComments::getAsset))
+                                                                   .collect(Collectors.toList());
         variables.put("from", LocalDate.ofInstant(from, ZoneId.systemDefault()));
         variables.put("to", LocalDate.ofInstant(to, ZoneId.systemDefault()));
-        variables.put("assets", comments.keySet().stream()
-                                        .map(messageAssetFactory::create)
-                                        .sorted(Comparator.comparing(MessageAssetFactory.MessageAsset::getLabel))
-                                        .collect(Collectors.toList()));
-        variables.put("comments",
-                comments.values().stream()
-                        .flatMap(Collection::stream)
-                        .map(CommentChangeNotifier.CommentForMessage::new).collect(Collectors.toList()));
+        variables.put("commentedAssets", assetsWithComments);
         return Message.to(resolveNotificationRecipients(comments).stream().map(
                               AbstractUser::getUsername).toArray(String[]::new))
                       .content(messageComposer.composeMessage(COMMENT_CHANGES_TEMPLATE, variables))
@@ -138,6 +140,32 @@ public class CommentChangeNotifier {
                              .flatMap(Collection::stream).map(User::toUserAccount).collect(Collectors.toSet());
     }
 
+    /**
+     * Groups asset with comments concerning it.
+     *
+     * Allows using simple for loops in Velocity message templates.
+     */
+    public static class AssetWithComments {
+        private final MessageAssetFactory.MessageAsset asset;
+        private final List<CommentForMessage> comments;
+
+        public AssetWithComments(MessageAssetFactory.MessageAsset asset, List<CommentForMessage> comments) {
+            this.asset = asset;
+            this.comments = comments;
+        }
+
+        public MessageAssetFactory.MessageAsset getAsset() {
+            return asset;
+        }
+
+        public List<CommentForMessage> getComments() {
+            return comments;
+        }
+    }
+
+    /**
+     * Representation of a comment for mapping to a Velocity message template.
+     */
     public static class CommentForMessage {
         private final OperationType operation;
         private final String author;
@@ -152,7 +180,7 @@ public class CommentChangeNotifier {
             this.operation = comment.getModified() != null ? OperationType.UPDATE : OperationType.CREATE;
             this.author = comment.getAuthor().getFullName();
             this.lastModified = (comment.getModified() != null ? comment.getModified() :
-                    comment.getCreated()).truncatedTo(ChronoUnit.SECONDS);
+                                 comment.getCreated()).truncatedTo(ChronoUnit.SECONDS);
             this.content = comment.getContent();
         }
 
