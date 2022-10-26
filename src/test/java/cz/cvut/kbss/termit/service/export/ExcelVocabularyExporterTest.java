@@ -99,7 +99,7 @@ class ExcelVocabularyExporterTest {
 
     @Test
     void supportsReturnsTrueForExcelMediaType() {
-        assertTrue(sut.supports(Constants.Excel.MEDIA_TYPE));
+        assertTrue(sut.supports(Constants.MediaType.EXCEL));
     }
 
     @Test

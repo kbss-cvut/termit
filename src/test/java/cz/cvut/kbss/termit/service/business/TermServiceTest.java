@@ -16,6 +16,7 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
@@ -78,13 +79,13 @@ class TermServiceTest {
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
         final TypeAwareByteArrayResource resource = new TypeAwareByteArrayResource("test".getBytes(),
-                                                                                   CsvUtils.MEDIA_TYPE,
-                                                                                   CsvUtils.FILE_EXTENSION);
-        when(exporters.exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE)).thenReturn(Optional.of(resource));
-        final Optional<TypeAwareResource> result = sut.exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE);
+                                                                                   ExportFormat.CSV.getMediaType(),
+                                                                                   ExportFormat.CSV.getFileExtension());
+        when(exporters.exportGlossary(vocabulary, ExportFormat.CSV.getMediaType())).thenReturn(Optional.of(resource));
+        final Optional<TypeAwareResource> result = sut.exportGlossary(vocabulary, ExportFormat.CSV.getMediaType());
         assertTrue(result.isPresent());
         assertEquals(resource, result.get());
-        verify(exporters).exportGlossary(vocabulary, CsvUtils.MEDIA_TYPE);
+        verify(exporters).exportGlossary(vocabulary, ExportFormat.CSV.getMediaType());
     }
 
     @Test
@@ -454,16 +455,16 @@ class TermServiceTest {
     @Test
     void exportGlossaryWithReferencesGetsGlossaryExportWithReferencesForSpecifiedVocabularyFromExporters() {
         final TypeAwareByteArrayResource resource = new TypeAwareByteArrayResource("test".getBytes(),
-                                                                                   CsvUtils.MEDIA_TYPE,
-                                                                                   CsvUtils.FILE_EXTENSION);
+                                                                                   ExportFormat.CSV.getMediaType(),
+                                                                                   ExportFormat.CSV.getFileExtension());
         final Collection<String> properties = Collections.singleton(SKOS.EXACT_MATCH);
-        when(exporters.exportGlossaryWithReferences(vocabulary, properties, CsvUtils.MEDIA_TYPE)).thenReturn(
+        when(exporters.exportGlossaryWithReferences(vocabulary, properties, ExportFormat.CSV.getMediaType())).thenReturn(
                 Optional.of(resource));
         final Optional<TypeAwareResource> result = sut.exportGlossaryWithReferences(vocabulary, properties,
-                                                                                    CsvUtils.MEDIA_TYPE);
+                                                                                    ExportFormat.CSV.getMediaType());
         assertTrue(result.isPresent());
         assertEquals(resource, result.get());
-        verify(exporters).exportGlossaryWithReferences(vocabulary, properties, CsvUtils.MEDIA_TYPE);
+        verify(exporters).exportGlossaryWithReferences(vocabulary, properties, ExportFormat.CSV.getMediaType());
     }
 
     @Test

@@ -128,6 +128,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- For RDF/XML export -->
+        <dependency>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-rio-rdfxml</artifactId>
+            <version>3.7.7</version>
+        </dependency>
 
 
         <!-- Spring declarative transactions with JOPA -->
@@ -351,13 +357,6 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <version>${org.springframework.security.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- For loading SKOS model from W3C site -->
-        <dependency>
-            <groupId>org.eclipse.rdf4j</groupId>
-            <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>3.7.7</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
