@@ -50,7 +50,7 @@ public class CsvUtils {
             return "";
         }
         String result = str;
-        boolean sanitized = result.contains(",");
+        boolean sanitized = result.contains(",") || result.contains("\n");
         if (result.contains("\"")) {
             sanitized = true;
             result = result.replace("\"", "\"\"");
