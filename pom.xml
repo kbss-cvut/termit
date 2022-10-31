@@ -26,13 +26,13 @@
 
     <properties>
         <java.version>11</java.version>
-        <org.springframework.boot.version>2.7.3</org.springframework.boot.version>
-        <org.springframework.version>5.3.22</org.springframework.version>
-        <org.springframework.security.version>5.7.3</org.springframework.security.version>
-        <org.springframework.data.version>2.7.2</org.springframework.data.version>
+        <org.springframework.boot.version>2.7.5</org.springframework.boot.version>
+        <org.springframework.version>5.3.23</org.springframework.version>
+        <org.springframework.security.version>5.7.4</org.springframework.security.version>
+        <org.springframework.data.version>2.7.5</org.springframework.data.version>
         <org.hibernate.validator.version>6.2.3.Final</org.hibernate.validator.version>
-        <org.apache.tika.tika-core.version>2.4.0</org.apache.tika.tika-core.version>
-        <cz.cvut.kbss.jopa.version>0.18.7</cz.cvut.kbss.jopa.version>
+        <org.apache.tika.tika-core.version>2.5.0</org.apache.tika.tika-core.version>
+        <cz.cvut.kbss.jopa.version>0.19.0</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.9.0</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.7</org.aspectj.version>
 
@@ -84,12 +84,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>5.6</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.mitre.dsmiley.httpproxy</groupId>
             <artifactId>smiley-http-proxy-servlet</artifactId>
             <version>1.12.1</version>
@@ -110,7 +104,7 @@
         </dependency>
         <dependency>
             <groupId>cz.cvut.kbss.jopa</groupId>
-            <artifactId>ontodriver-sesame</artifactId>
+            <artifactId>ontodriver-rdf4j</artifactId>
             <version>${cz.cvut.kbss.jopa.version}</version>
         </dependency>
         <dependency>
