@@ -49,7 +49,7 @@ termit:
         # if empty, repository.url will be used
         publicUrl:
     persistence:
-        driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
+        driver: cz.cvut.kbss.ontodriver.rdf4j.Rdf4jDataSource
         language: cs
     jwt:
         secretKey: LongEnoughTermItSecretKeyNeeds32Chars
