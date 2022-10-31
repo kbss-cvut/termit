@@ -56,6 +56,12 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     @OWLAnnotationProperty(iri = SKOS.SCOPE_NOTE)
     private MultilingualString description;
 
+    @OWLDataProperty(iri = SKOS.NOTATION, simpleLiteral = true)
+    private Set<String> notations;
+
+    @OWLAnnotationProperty(iri = SKOS.EXAMPLE)
+    private Set<MultilingualString> examples;
+
     @OWLAnnotationProperty(iri = DC.Terms.SOURCE, simpleLiteral = true)
     private Set<String> sources;
 
@@ -166,6 +172,22 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
 
     public void setDescription(MultilingualString description) {
         this.description = description;
+    }
+
+    public Set<String> getNotations() {
+        return notations;
+    }
+
+    public void setNotations(Set<String> notations) {
+        this.notations = notations;
+    }
+
+    public Set<MultilingualString> getExamples() {
+        return examples;
+    }
+
+    public void setExamples(Set<MultilingualString> examples) {
+        this.examples = examples;
     }
 
     public Set<Term> getParentTerms() {
@@ -313,23 +335,23 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     public String toCsv() {
         final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
         sb.append(',').append(exportMultilingualString(getLabel(), true));
-        exportMulti(sb, altLabels, str -> exportMultilingualString(str, true));
-        exportMulti(sb, hiddenLabels, str -> exportMultilingualString(str, true));
+        exportCollection(sb, altLabels, str -> exportMultilingualString(str, true));
+        exportCollection(sb, hiddenLabels, str -> exportMultilingualString(str, true));
         sb.append(',').append(exportMultilingualString(getDefinition(), true));
         sb.append(',').append(exportMultilingualString(description, true));
-        exportMulti(sb, getTypes(), String::toString);
-        exportMulti(sb, sources, String::toString);
-        exportMulti(sb, parentTerms, pt -> pt.getUri().toString());
-        exportMulti(sb, getSubTerms(), Term::termInfoStringIri);
+        exportCollection(sb, getTypes(), String::toString);
+        exportCollection(sb, sources, String::toString);
+        exportCollection(sb, parentTerms, pt -> pt.getUri().toString());
+        exportCollection(sb, getSubTerms(), Term::termInfoStringIri);
         consolidateAndExportMulti(sb, related, inverseRelated, Term::termInfoStringIri);
         consolidateAndExportMulti(sb, relatedMatch, inverseRelatedMatch, Term::termInfoStringIri);
         consolidateAndExportMulti(sb, exactMatchTerms, inverseExactMatchTerms, Term::termInfoStringIri);
         sb.append(',');
         sb.append(isDraft());
-        final Map<String, Set<String>> propsToExcel = properties != null ? properties : Collections.emptyMap();
-        exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(SKOS.NOTATION)), String::toString);
-        exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(SKOS.EXAMPLE)), String::toString);
-        exportMulti(sb, Utils.emptyIfNull(propsToExcel.get(DC.Terms.REFERENCES)), String::toString);
+        exportCollection(sb, notations, String::toString);
+        exportCollection(sb, examples, str -> exportMultilingualString(str, true));
+        final Map<String, Set<String>> propsToExport = properties != null ? properties : Collections.emptyMap();
+        exportCollection(sb, Utils.emptyIfNull(propsToExport.get(DC.Terms.REFERENCES)), String::toString);
         return sb.toString();
     }
 
@@ -344,11 +366,12 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     }
 
     private static String exportCollection(Collection<String> col) {
+        assert col != null;
         return String.join(";", col);
     }
 
-    private static <T> void exportMulti(final StringBuilder sb, final Collection<T> collection,
-                                        Function<T, String> toString) {
+    private static <T> void exportCollection(final StringBuilder sb, final Collection<T> collection,
+                                             Function<T, String> toString) {
         sb.append(',');
         if (!CollectionUtils.isEmpty(collection)) {
             sb.append(exportCollection(collection.stream().map(toString).collect(Collectors.toSet())));
@@ -358,7 +381,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     private static <T> void consolidateAndExportMulti(final StringBuilder sb, final Collection<T> collectionOne,
                                                       final Collection<T> collectionTwo, Function<T, String> toString) {
         final Collection<T> toExport = Utils.joinCollections(collectionOne, collectionTwo);
-        exportMulti(sb, toExport, toString);
+        exportCollection(sb, toExport, toString);
     }
 
     /**
@@ -409,9 +432,11 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
                                                .distinct()
                                                .collect(Collectors.toList())));
         row.createCell(13).setCellValue(isDraft());
+        row.createCell(14).setCellValue(exportCollection(Utils.emptyIfNull(notations)));
+        row.createCell(15).setCellValue(exportCollection(
+                Utils.emptyIfNull(examples).stream().map(str -> exportMultilingualString(str, false))
+                     .collect(Collectors.toSet())));
         if (properties != null) {
-            row.createCell(14).setCellValue(Utils.emptyIfNull(properties.get(SKOS.NOTATION)).toString());
-            row.createCell(15).setCellValue(Utils.emptyIfNull(properties.get(SKOS.EXAMPLE)).toString());
             row.createCell(16).setCellValue(Utils.emptyIfNull(properties.get(DC.Terms.REFERENCES)).toString());
         }
     }
