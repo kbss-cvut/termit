@@ -14,40 +14,62 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import javax.validation.Validation;
+import javax.validation.Validator;
 import java.net.URI;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-class UserRepositoryServiceTest extends BaseServiceTestRunner {
+@ExtendWith(MockitoExtension.class)
+class UserRepositoryServiceTest {
 
-    @Autowired
-    private EntityManager em;
+    @Spy
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Mock
+    private UserAccountDao userAccountDao;
 
-    @Autowired
+    @Spy
+    private IdentifierResolver identifierResolver;
+
+    @Spy
+    private Configuration configuration = new Configuration();
+
+    @Spy
+    private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
+    @InjectMocks
     private UserRepositoryService sut;
 
     @Test
     void existsByUsernameReturnsTrueForExistingUsername() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
-        transactional(() -> em.persist(user));
+        when(userAccountDao.exists(user.getUsername())).thenReturn(true);
 
         assertTrue(sut.exists(user.getUsername()));
+        verify(userAccountDao).exists(user.getUsername());
     }
 
     @Test
@@ -55,12 +77,13 @@ class UserRepositoryServiceTest extends BaseServiceTestRunner {
         final UserAccount user = Generator.generateUserAccount();
         user.setPassword("12345");
         user.setUri(null);
+        configuration.getNamespace().setUser(Vocabulary.s_c_uzivatel_termitu + "/");
         sut.persist(user);
         assertNotNull(user.getUri());
 
-        final UserAccount result = em.find(UserAccount.class, user.getUri());
-        assertNotNull(result);
-        assertEquals(user, result);
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userAccountDao).persist(captor.capture());
+        assertEquals(user, captor.getValue());
     }
 
     @Test
@@ -70,20 +93,25 @@ class UserRepositoryServiceTest extends BaseServiceTestRunner {
         user.setPassword(plainPassword);
 
         sut.persist(user);
-        final UserAccount result = em.find(UserAccount.class, user.getUri());
-        assertTrue(passwordEncoder.matches(plainPassword, result.getPassword()));
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userAccountDao).persist(captor.capture());
+        assertTrue(passwordEncoder.matches(plainPassword, captor.getValue().getPassword()));
     }
 
     @Test
     void updateEncodesPasswordWhenItWasChanged() {
-        final UserAccount user = persistUser();
+        final UserAccount user = Generator.generateUserAccountWithPassword();
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        when(userAccountDao.find(user.getUri())).thenReturn(Optional.of(user));
+        doAnswer(arg -> arg.getArgument(0)).when(userAccountDao).update(any());
         Environment.setCurrentUser(user);
         final String plainPassword = "updatedPassword01";
         user.setPassword(plainPassword);
 
         sut.update(user);
-        final UserAccount result = em.find(UserAccount.class, user.getUri());
-        assertTrue(passwordEncoder.matches(plainPassword, result.getPassword()));
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userAccountDao).update(captor.capture());
+        assertTrue(passwordEncoder.matches(plainPassword, captor.getValue().getPassword()));
     }
 
     @Test
@@ -91,37 +119,40 @@ class UserRepositoryServiceTest extends BaseServiceTestRunner {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         final String plainPassword = user.getPassword();
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        transactional(() -> em.persist(user));
+        when(userAccountDao.find(user.getUri())).thenReturn(Optional.of(user));
+        doAnswer(arg -> arg.getArgument(0)).when(userAccountDao).update(any());
         Environment.setCurrentUser(user);
-        user.setPassword(null); // Simulate instance being loaded from repo
+        final UserAccount update = new UserAccount();
+        update.setUri(user.getUri());
+        update.setFirstName(user.getFirstName());
+        update.setUsername(user.getUsername());
+        update.setPassword(null); // Simulate instance being loaded from repo
         final String newLastName = "newLastName";
-        user.setLastName(newLastName);
+        update.setLastName(newLastName);
 
-        sut.update(user);
-        final UserAccount result = em.find(UserAccount.class, user.getUri());
-        assertTrue(passwordEncoder.matches(plainPassword, result.getPassword()));
-        assertEquals(newLastName, result.getLastName());
+        sut.update(update);
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userAccountDao).update(captor.capture());
+        assertTrue(passwordEncoder.matches(plainPassword, captor.getValue().getPassword()));
+        assertEquals(newLastName, captor.getValue().getLastName());
     }
 
     @Test
     void postLoadErasesPasswordFromInstance() {
-        final UserAccount user = persistUser();
+        final UserAccount user = Generator.generateUserAccountWithPassword();
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        when(userAccountDao.find(user.getUri())).thenReturn(Optional.of(user));
 
         final Optional<UserAccount> result = sut.find(user.getUri());
         assertTrue(result.isPresent());
         assertNull(result.get().getPassword());
     }
 
-    private UserAccount persistUser() {
-        final UserAccount user = Generator.generateUserAccountWithPassword();
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        transactional(() -> em.persist(user));
-        return user;
-    }
-
     @Test
     void updateThrowsValidationExceptionWhenUpdatedInstanceIsMissingValues() {
-        final UserAccount user = persistUser();
+        final UserAccount user = Generator.generateUserAccountWithPassword();
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        when(userAccountDao.find(user.getUri())).thenReturn(Optional.of(user));
         Environment.setCurrentUser(user);
 
         user.setUsername(null);
@@ -136,8 +167,8 @@ class UserRepositoryServiceTest extends BaseServiceTestRunner {
         final URI originalUri = user.getUri();
         sut.persist(user);
 
-        final UserAccount result = em.find(UserAccount.class, originalUri);
-        assertNotNull(result);
-        assertEquals(originalUri, result.getUri());
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userAccountDao).persist(captor.capture());
+        assertEquals(originalUri, captor.getValue().getUri());
     }
 }
