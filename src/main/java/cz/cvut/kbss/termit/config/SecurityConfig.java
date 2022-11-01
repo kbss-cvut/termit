@@ -96,7 +96,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .and().exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             .and().cors().configurationSource(corsConfigurationSource()).and().csrf().disable()
             .addFilter(authenticationFilter())
-            .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtUtils, securityUtils, userDetailsService,
+            .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtUtils, userDetailsService,
                                                   objectMapper));
     }
 
