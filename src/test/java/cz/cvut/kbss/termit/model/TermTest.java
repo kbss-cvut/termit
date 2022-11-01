@@ -104,7 +104,7 @@ class TermTest {
         term.setTypes(new LinkedHashSet<>(Arrays.asList(Vocabulary.s_c_object, Vocabulary.s_c_entity)));
         final String result = term.toCsv();
         final String[] items = result.split(",");
-        assertThat(items.length, greaterThanOrEqualTo(5));
+        assertThat(items.length, greaterThanOrEqualTo(7));
         final String types = items[6];
         assertTrue(types.matches(".+;.+"));
         term.getTypes().forEach(t -> assertTrue(types.contains(t)));
@@ -117,7 +117,7 @@ class TermTest {
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
         final String result = term.toCsv();
         final String[] items = result.split(",");
-        assertThat(items.length, greaterThanOrEqualTo(6));
+        assertThat(items.length, greaterThanOrEqualTo(8));
         final String sources = items[7];
         assertTrue(sources.matches(".+;.+"));
         term.getSources().forEach(t -> assertTrue(sources.contains(t)));
@@ -129,7 +129,7 @@ class TermTest {
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
         final String result = term.toCsv();
         final String[] items = result.split(",");
-        assertThat(items.length, greaterThanOrEqualTo(7));
+        assertThat(items.length, greaterThanOrEqualTo(9));
         final String parentTerms = items[8];
         assertTrue(parentTerms.matches(".+;.+"));
         term.getParentTerms().forEach(t -> assertTrue(parentTerms.contains(t.getUri().toString())));
@@ -141,7 +141,7 @@ class TermTest {
         term.setSubTerms(IntStream.range(0, 5).mapToObj(i -> generateTermInfo()).collect(Collectors.toSet()));
         final String result = term.toCsv();
         final String[] items = result.split(",");
-        assertThat(items.length, greaterThanOrEqualTo(8));
+        assertThat(items.length, greaterThanOrEqualTo(10));
         final String subTerms = items[9];
         assertTrue(subTerms.matches(".+;.+"));
         term.getSubTerms().forEach(t -> assertTrue(subTerms.contains(t.getUri().toString())));
@@ -152,6 +152,24 @@ class TermTest {
         ti.setLabel(MultilingualString.create("Term " + Generator.randomInt(), Environment.LANGUAGE));
         ti.setVocabulary(Generator.generateUri());
         return ti;
+    }
+
+    @Test
+    void toCsvExportExportsSkosNotationAndExamplesDelimitedBySemicolons() {
+        final Term term = Generator.generateTermWithId();
+        term.setNotations(Collections.singleton("A"));
+        term.setExamples(new HashSet<>());
+        term.getExamples().add(MultilingualString.create("hospital", Environment.LANGUAGE));
+        term.getExamples().add(MultilingualString.create("cottage", Environment.LANGUAGE));
+        final String result = term.toCsv();
+        final String[] items = result.split(",");
+        assertThat(items.length, greaterThanOrEqualTo(15));
+        final String notation = items[14];
+        term.getNotations().forEach(n -> assertThat(notation, containsString(n)));
+        final String examples = items[15];
+        term.getExamples().forEach(ms -> ms.getValue().forEach(
+                (key, value) -> assertThat(examples, containsString(value + "(" + key + ")"))));
+        assertTrue(examples.matches(".+;.+"));
     }
 
     @Test
@@ -168,6 +186,8 @@ class TermTest {
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
         term.setSubTerms(IntStream.range(0, 5).mapToObj(i -> generateTermInfo()).collect(Collectors.toSet()));
+        term.setNotations(Collections.singleton("A"));
+        term.setExamples(Collections.singleton(MultilingualString.create("hospital", Environment.LANGUAGE)));
         final XSSFRow row = generateExcel();
         term.toExcel(row);
         assertEquals(term.getUri().toString(), row.getCell(0).getStringCellValue());
@@ -183,13 +203,15 @@ class TermTest {
             .forEach(v -> assertThat(row.getCell(5).getStringCellValue(), containsString(v)));
         assertEquals(term.getTypes().iterator().next(), row.getCell(6).getStringCellValue());
         assertTrue(row.getCell(7).getStringCellValue().matches(".+;.+"));
-        term.getSources().forEach(s -> assertTrue(row.getCell(7).getStringCellValue().contains(s)));
+        term.getSources().forEach(s -> assertThat(row.getCell(7).getStringCellValue(), containsString(s)));
         assertTrue(row.getCell(8).getStringCellValue().matches(".+;.+"));
         term.getParentTerms()
-            .forEach(st -> assertTrue(row.getCell(8).getStringCellValue().contains(st.getUri().toString())));
+            .forEach(st -> assertThat(row.getCell(8).getStringCellValue(), containsString(st.getUri().toString())));
         assertTrue(row.getCell(9).getStringCellValue().matches(".+;.+"));
         term.getSubTerms()
-            .forEach(st -> assertTrue(row.getCell(9).getStringCellValue().contains(st.getUri().toString())));
+            .forEach(st -> assertThat(row.getCell(9).getStringCellValue(), containsString(st.getUri().toString())));
+        term.getNotations().forEach(n -> assertThat(row.getCell(14).getStringCellValue(), containsString(n)));
+        term.getExamples().forEach(ms -> assertThat(row.getCell(15).getStringCellValue(), containsString(ms.get())));
     }
 
     @Test
