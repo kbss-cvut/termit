@@ -11,8 +11,10 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.*;
 import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
+import org.eclipse.rdf4j.rio.turtle.TurtleWriterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,18 +201,18 @@ public class SKOSExporter {
      */
     public byte[] exportAs(ExportFormat format) {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final RDFFormat rdf4jFormat;
+        final RDFWriter writer;
         switch (format) {
             case TURTLE:
-                rdf4jFormat = RDFFormat.TURTLE;
+                writer = new TurtleWriterFactory().getWriter(bos);
                 break;
             case RDF_XML:
-                rdf4jFormat = RDFFormat.RDFXML;
+                writer = new RDFXMLPrettyWriterFactory().getWriter(bos);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported SKOS export format " + format);
         }
-        Rio.write(model, bos, rdf4jFormat);
+        Rio.write(model, writer);
         return bos.toByteArray();
     }
 }
