@@ -18,7 +18,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.util.CsvUtils;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -79,7 +79,7 @@ class CsvVocabularyExporterTest {
 
     @Test
     void supportsReturnsTrueForCsvMediaType() {
-        assertTrue(sut.supports(CsvUtils.MEDIA_TYPE));
+        assertTrue(sut.supports(Constants.MediaType.CSV));
     }
 
     @Test

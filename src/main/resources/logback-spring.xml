@@ -2,56 +2,60 @@
 <configuration>
     <jmxConfigurator/>
 
-    <!-- Send debug messages to System.out -->
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <!-- By default, encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
-        <encoder>
-            <pattern>%date{dd-MM-yyyy HH:mm:ss.SSS} [%X{username}] [%thread] %-5level %logger{30} - %msg%n</pattern>
-        </encoder>
-    </appender>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <!-- CONSOLE and FILE are appenders provided by Spring -->
 
     <!-- Just INFO for JOPA -->
     <logger name="cz.cvut.kbss.jopa" level="INFO" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
     <!-- and OntoDriver -->
     <logger name="cz.cvut.kbss.ontodriver" level="INFO" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
     <!-- Logger for our app -->
     <logger name="cz.cvut.kbss.termit" level="TRACE" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
     <!-- PERF: Restring logging of HTML occurrence resolver when processing TA results -->
     <logger name="cz.cvut.kbss.termit.service.document.html.HtmlTermOccurrenceResolver" level="DEBUG" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
     <!-- Restrict logging inherited from the JwtAuthenticationFilter's parent class -->
     <logger name="cz.cvut.kbss.termit.security.JwtAuthenticationFilter" level="DEBUG" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
     <!-- Restrict logging of the Sesame HTTP client (used to connect to remote repositories) -->
     <logger name="org.eclipse.rdf4j.http" level="WARN" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
     <!-- Restrict logging of Spring -->
     <logger name="org.springframework" level="INFO" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
     <!-- Restrict Hibernate Validator logging -->
     <logger name="org.hibernate" level="INFO" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
     <!-- By default, the level of the root level is set to INFO -->
     <root level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </root>
 </configuration>

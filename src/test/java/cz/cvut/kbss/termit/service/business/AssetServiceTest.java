@@ -1,13 +1,16 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
@@ -21,65 +24,48 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class AssetServiceTest {
 
     @Mock
-    private ResourceRepositoryService resourceService;
+    private AssetDao assetDao;
 
     @Mock
     private TermRepositoryService termService;
 
-    @Mock
-    private VocabularyRepositoryService vocabularyService;
-
-    @Mock
-    private SecurityUtils securityUtils;
-
     @InjectMocks
     private AssetService sut;
 
-    @Test
-    void findRecentlyEditedCombinesOutputOfAllAssetServices() {
-        final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedAssets(15);
-
-        final int count = allExpected.size();
-        final List<RecentlyModifiedAsset> result = sut.findLastEdited(count);
-        assertEquals(count, result.size());
-        assertTrue(allExpected.containsAll(result));
-        verify(resourceService).findLastEdited(count);
-        verify(termService).findLastEdited(count);
-        verify(vocabularyService).findLastEdited(count);
+    @AfterEach
+    void tearDown() {
+        Environment.resetCurrentUser();
     }
 
     private List<RecentlyModifiedAsset> generateRecentlyModifiedAssets(int count) {
         final List<RecentlyModifiedAsset> assets = new ArrayList<>();
-        final List<RecentlyModifiedAsset> resources = new ArrayList<>();
-        final List<RecentlyModifiedAsset> terms = new ArrayList<>();
-        final List<RecentlyModifiedAsset> vocabularies = new ArrayList<>();
         final User author = Generator.generateUserWithId();
         for (int i = 0; i < count; i++) {
             RecentlyModifiedAsset rma = null;
@@ -87,76 +73,51 @@ class AssetServiceTest {
                 case 0:
                     final Resource resource = Generator.generateResourceWithId();
                     rma = new RecentlyModifiedAsset(resource.getUri(), resource.getLabel(), Utils.timestamp(),
-                            author.getUri(), null,
-                            cz.cvut.kbss.termit.util.Vocabulary.s_c_resource, Vocabulary.s_c_vytvoreni_entity);
-                    resources.add(rma);
+                                                    author.getUri(), null,
+                                                    cz.cvut.kbss.termit.util.Vocabulary.s_c_resource,
+                                                    Vocabulary.s_c_vytvoreni_entity);
                     break;
                 case 1:
                     final Term term = Generator.generateTermWithId();
                     rma = new RecentlyModifiedAsset(term.getUri(), term.getLabel().get(Environment.LANGUAGE),
-                            Utils.timestamp(), author.getUri(), null,
-                            SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity);
-                    terms.add(rma);
+                                                    Utils.timestamp(), author.getUri(), null,
+                                                    SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity);
                     break;
                 case 2:
                     final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
                     rma = new RecentlyModifiedAsset(vocabulary.getUri(), vocabulary.getLabel(), Utils.timestamp(),
-                            author.getUri(), null,
-                            Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
-                    vocabularies.add(rma);
+                                                    author.getUri(), null,
+                                                    Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
                     break;
             }
             rma.setModified(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             rma.setEditor(author);
             assets.add(rma);
         }
-        when(resourceService.findLastEdited(anyInt())).thenReturn(resources);
-        when(resourceService.findLastEditedBy(any(User.class), anyInt())).thenReturn(resources);
-        when(termService.findLastEdited(anyInt())).thenReturn(terms);
-        when(termService.findLastEditedBy(any(User.class), anyInt())).thenReturn(terms);
-        when(vocabularyService.findLastEdited(anyInt())).thenReturn(vocabularies);
-        when(vocabularyService.findLastEditedBy(any(User.class), anyInt())).thenReturn(vocabularies);
         return assets;
     }
 
     @Test
-    void findLastEditedReturnsAssetsSortedByDateCreatedDescending() {
+    void findLastEditedReturnsRecentlyEditedAssets() {
         final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedAssets(6);
-        allExpected.sort(Comparator.comparing(RecentlyModifiedAsset::getModified).reversed());
-        final List<RecentlyModifiedAsset> result = sut.findLastEdited(10);
-        assertEquals(allExpected, result);
-    }
-
-    @Test
-    void findLastEditedReturnsSublistOfAssetsWhenCountIsLessThanTotalNumber() {
-        final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedAssets(10);
-        allExpected.sort(Comparator.comparing(RecentlyModifiedAsset::getModified).reversed());
-        final int count = 6;
-        final List<RecentlyModifiedAsset> result = sut.findLastEdited(count);
-        assertEquals(allExpected.subList(0, count), result);
-    }
-
-    @Test
-    void findLastEditedThrowsIllegalArgumentForCountLessThanZero() {
-        assertThrows(IllegalArgumentException.class, () -> sut.findLastEdited(-1));
-        verify(resourceService, never()).findLastEdited(anyInt());
-        verify(termService, never()).findLastEdited(anyInt());
-        verify(vocabularyService, never()).findLastEdited(anyInt());
+        when(assetDao.findLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
+        final PageRequest pageSpec = PageRequest.of(0, 10);
+        final Page<RecentlyModifiedAsset> result = sut.findLastEdited(pageSpec);
+        assertEquals(allExpected, result.getContent());
+        verify(assetDao).findLastEdited(pageSpec);
     }
 
     @Test
     void findMyLastEditedGetsLastEditedByCurrentUser() {
         final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedAssets(15);
+        when(assetDao.findLastEditedBy(any(User.class), any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
         final UserAccount currentUser = Generator.generateUserAccount();
-        when(securityUtils.getCurrentUser()).thenReturn(currentUser);
+        Environment.setCurrentUser(currentUser);
 
-        final int count = allExpected.size();
-        final List<RecentlyModifiedAsset> result = sut.findMyLastEdited(count);
-        assertEquals(count, result.size());
-        assertTrue(allExpected.containsAll(result));
-        verify(resourceService).findLastEditedBy(currentUser.toUser(), count);
-        verify(termService).findLastEditedBy(currentUser.toUser(), count);
-        verify(vocabularyService).findLastEditedBy(currentUser.toUser(), count);
+        final PageRequest pageSpec = PageRequest.of(0, 10);
+        final Page<RecentlyModifiedAsset> result = sut.findMyLastEdited(pageSpec);
+        assertEquals(allExpected, result.getContent());
+        verify(assetDao).findLastEditedBy(currentUser.toUser(), pageSpec);
     }
 
     private List<RecentlyCommentedAsset> generateRecentlyCommentedAssets() {
@@ -166,16 +127,13 @@ class AssetServiceTest {
             final Term term = Generator.generateTermWithId();
             Comment comment = Generator.generateComment(author, term);
             RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), null,
-                    SKOS.CONCEPT);
+                                                                    SKOS.CONCEPT);
             comment.setCreated(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             comment.setAuthor(author);
             comment.setAsset(term.getUri());
             rca.setLastComment(comment);
             assets.add(rca);
         }
-        when(termService.findLastCommented(anyInt())).thenReturn(assets);
-        when(termService.findMyLastCommented(any(User.class), anyInt())).thenReturn(assets);
-        when(termService.findLastCommentedInReaction(any(User.class), anyInt())).thenReturn(assets);
         return assets;
     }
 
@@ -184,31 +142,36 @@ class AssetServiceTest {
         final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
         allExpected.sort(
                 Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
-        final List<RecentlyCommentedAsset> result = sut.findLastCommented(10);
-        assertEquals(allExpected, result);
+        when(termService.findLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
+        final Page<RecentlyCommentedAsset> result = sut.findLastCommented(PageRequest.of(0, 10));
+        assertEquals(allExpected, result.getContent());
     }
 
     @Test
     void findMyLastCommentedReturnsAssetsSortedByDateCommentCreatedDescending() {
         final UserAccount currentUser = Generator.generateUserAccount();
-        when(securityUtils.getCurrentUser()).thenReturn(currentUser);
+        Environment.setCurrentUser(currentUser);
 
         final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
         allExpected.sort(
                 Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
-        final List<RecentlyCommentedAsset> result = sut.findMyLastCommented(10);
-        assertEquals(allExpected, result);
+        when(termService.findMyLastCommented(any(User.class), any(Pageable.class))).thenReturn(
+                new PageImpl<>(allExpected));
+        final Page<RecentlyCommentedAsset> result = sut.findMyLastCommented(PageRequest.of(0, 10));
+        assertEquals(allExpected, result.getContent());
     }
 
     @Test
     void findLastCommentedInReactionToMineReturnsAssetsSortedByDateCommentCreatedDescending() {
         final UserAccount currentUser = Generator.generateUserAccount();
-        when(securityUtils.getCurrentUser()).thenReturn(currentUser);
+        Environment.setCurrentUser(currentUser);
 
         final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
         allExpected.sort(
                 Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
-        final List<RecentlyCommentedAsset> result = sut.findLastCommentedInReactionToMine(10);
-        assertEquals(allExpected, result);
+        when(termService.findLastCommentedInReaction(any(User.class), any(Pageable.class))).thenReturn(
+                new PageImpl<>(allExpected));
+        final Page<RecentlyCommentedAsset> result = sut.findLastCommentedInReactionToMine(PageRequest.of(0, 10));
+        assertEquals(allExpected, result.getContent());
     }
 }

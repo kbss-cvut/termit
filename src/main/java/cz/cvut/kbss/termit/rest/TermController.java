@@ -15,10 +15,11 @@ import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
-import cz.cvut.kbss.termit.util.*;
-import cz.cvut.kbss.termit.util.Constants.Excel;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
-import cz.cvut.kbss.termit.util.Constants.Turtle;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 
 @RestController
 @RequestMapping("/")
@@ -77,9 +80,10 @@ public class TermController extends BaseController {
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE,
                             JsonLd.MEDIA_TYPE,
-                            CsvUtils.MEDIA_TYPE,
-                            Excel.MEDIA_TYPE,
-                            Turtle.MEDIA_TYPE})
+                            Constants.MediaType.CSV,
+                            Constants.MediaType.EXCEL,
+                            Constants.MediaType.TURTLE,
+                            Constants.MediaType.RDF_XML})
     public ResponseEntity<?> getAll(@PathVariable String vocabularyIdFragment,
                                     @RequestParam(name = QueryParams.NAMESPACE,
                                                   required = false) Optional<String> namespace,

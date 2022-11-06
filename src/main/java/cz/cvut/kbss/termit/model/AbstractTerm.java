@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -133,6 +134,11 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @Override
     public boolean isSnapshot() {
         return hasType(Vocabulary.s_c_verze_pojmu);
+    }
+
+    @Override
+    public void accept(AssetVisitor visitor) {
+        visitor.visitTerm(this);
     }
 
     @Override

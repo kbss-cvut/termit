@@ -22,13 +22,16 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.util.HashSet;
+import java.time.Instant;
 
 @OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
 public class UserAccount extends AbstractUser {
 
     @OWLDataProperty(iri = Vocabulary.s_p_ma_heslo)
     private String password;
+
+    @OWLDataProperty(iri = Vocabulary.s_p_last_activity_date)
+    private Instant lastSeen;
 
     public String getPassword() {
         return password;
@@ -38,11 +41,19 @@ public class UserAccount extends AbstractUser {
         this.password = password;
     }
 
+    public Instant getLastSeen() {
+        return lastSeen;
+    }
+
+    public void setLastSeen(Instant lastSeen) {
+        this.lastSeen = lastSeen;
+    }
+
     /**
      * Erases the password in this instance.
      * <p>
      * This should be used for security reasons when passing the instance throughout the application and especially when
-     * it to be send from the REST API to the client.
+     * it is to be sent from the REST API to the client.
      */
     public void erasePassword() {
         this.password = null;
@@ -125,16 +136,6 @@ public class UserAccount extends AbstractUser {
         return user;
     }
 
-    protected void copyAttributes(AbstractUser target) {
-        target.setUri(uri);
-        target.setFirstName(firstName);
-        target.setLastName(lastName);
-        target.setUsername(username);
-        if (types != null) {
-            target.setTypes(new HashSet<>(types));
-        }
-    }
-
     /**
      * Returns a copy of this user account.
      *
@@ -144,6 +145,7 @@ public class UserAccount extends AbstractUser {
         final UserAccount clone = new UserAccount();
         copyAttributes(clone);
         clone.password = password;
+        clone.lastSeen = lastSeen;
         return clone;
     }
 }

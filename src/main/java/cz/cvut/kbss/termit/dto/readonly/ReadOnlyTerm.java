@@ -30,8 +30,11 @@ public class ReadOnlyTerm extends AbstractTerm {
     @OWLObjectProperty(iri = SKOS.BROADER)
     private Set<ReadOnlyTerm> parentTerms;
 
-    @OWLObjectProperty(iri = SKOS.NOTATION)
-    private String notation;
+    @OWLDataProperty(iri = SKOS.NOTATION, simpleLiteral = true)
+    private Set<String> notations;
+
+    @OWLAnnotationProperty(iri = SKOS.EXAMPLE)
+    private Set<MultilingualString> examples;
 
     @OWLObjectProperty(iri = SKOS.EXACT_MATCH, fetch = FetchType.EAGER)
     private Set<TermInfo> exactMatchTerms;
@@ -79,6 +82,12 @@ public class ReadOnlyTerm extends AbstractTerm {
         }
         if (term.getExactMatchTerms() != null) {
             this.exactMatchTerms = new HashSet<>(term.getExactMatchTerms());
+        }
+        if (term.getNotations() != null) {
+            this.notations = new HashSet<>(term.getNotations());
+        }
+        if (term.getExamples() != null) {
+            this.examples = new HashSet<>(term.getExamples());
         }
         if (term.getProperties() != null) {
             this.properties = new HashMap<>();
@@ -152,12 +161,20 @@ public class ReadOnlyTerm extends AbstractTerm {
         this.relatedMatch = relatedMatch;
     }
 
-    public String getNotation() {
-        return notation;
+    public Set<String> getNotations() {
+        return notations;
     }
 
-    public void setNotation(String notation) {
-        this.notation = notation;
+    public void setNotations(Set<String> notations) {
+        this.notations = notations;
+    }
+
+    public Set<MultilingualString> getExamples() {
+        return examples;
+    }
+
+    public void setExamples(Set<MultilingualString> examples) {
+        this.examples = examples;
     }
 
     public Map<String, Set<String>> getProperties() {

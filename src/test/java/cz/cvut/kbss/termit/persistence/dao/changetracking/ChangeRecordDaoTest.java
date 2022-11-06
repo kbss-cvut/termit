@@ -17,6 +17,7 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
 import java.time.Instant;
@@ -28,6 +29,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
     @Autowired
@@ -86,7 +88,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final Term asset = Generator.generateTermWithId();
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000L),
-                        asset.getUri())).collect(Collectors.toList());
+                                          asset.getUri())).collect(Collectors.toList());
         transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
@@ -97,7 +99,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     private Descriptor persistDescriptor(URI context) {
         final EntityDescriptor descriptor = new EntityDescriptor(context);
         descriptor.addAttributeDescriptor(em.getMetamodel().entity(AbstractChangeRecord.class).getAttribute("author"),
-                new EntityDescriptor());
+                                          new EntityDescriptor());
         return descriptor;
     }
 
@@ -107,7 +109,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final Term asset = Generator.generateTermWithId();
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() + i * 10000L),
-                        asset.getUri())).collect(Collectors.toList());
+                                          asset.getUri())).collect(Collectors.toList());
         transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
@@ -206,5 +208,28 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
             }
         }
         return new HashSet<>(target);
+    }
+
+    @Test
+    void getAuthorsRetrievesUsersAssociatedWithPersistChangeRecordsOfSpecifiedAsset() {
+        enableRdfsInference(em);
+        final Term asset = Generator.generateTermWithId(vocabulary.getUri());
+        final AbstractChangeRecord persistRecord = generatePersistRecord(Utils.timestamp(), asset.getUri());
+        final User editor = Generator.generateUserWithId();
+        final AbstractChangeRecord anotherPersistRecord = generatePersistRecord(Utils.timestamp(), Generator.generateUri());
+        anotherPersistRecord.setAuthor(editor);
+        final AbstractChangeRecord updateRecord = generateUpdateRecord(Utils.timestamp(), asset.getUri());
+        updateRecord.setAuthor(editor);
+        transactional(() -> {
+            em.persist(asset);
+            em.persist(editor);
+            final Descriptor descriptor = persistDescriptor(vocabulary.getUri());
+            em.persist(persistRecord, descriptor);
+            em.persist(anotherPersistRecord, descriptor);
+            em.persist(updateRecord, descriptor);
+        });
+
+        final Set<User> result = sut.getAuthors(asset);
+        assertEquals(Collections.singleton(author), result);
     }
 }

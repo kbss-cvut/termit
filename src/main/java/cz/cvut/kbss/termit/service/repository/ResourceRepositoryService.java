@@ -20,7 +20,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
-import cz.cvut.kbss.termit.persistence.dao.AssetDao;
+import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -60,7 +60,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     }
 
     @Override
-    protected AssetDao<Resource> getPrimaryDao() {
+    protected BaseAssetDao<Resource> getPrimaryDao() {
         return resourceDao;
     }
 

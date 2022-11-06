@@ -12,7 +12,7 @@ import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
-import cz.cvut.kbss.termit.persistence.dao.AssetDao;
+import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
@@ -97,7 +97,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    protected AssetDao<Vocabulary> getPrimaryDao() {
+    protected BaseAssetDao<Vocabulary> getPrimaryDao() {
         return vocabularyDao;
     }
 

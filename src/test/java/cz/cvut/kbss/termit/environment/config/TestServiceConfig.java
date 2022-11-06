@@ -31,6 +31,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
@@ -98,5 +99,10 @@ public class TestServiceConfig {
     @Primary
     public ApplicationEventPublisher eventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public JavaMailSender javaMailSender() {
+        return mock(JavaMailSender.class);
     }
 }

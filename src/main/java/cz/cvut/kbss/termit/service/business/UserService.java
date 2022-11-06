@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,8 +54,7 @@ public class UserService {
     private final SecurityUtils securityUtils;
 
     @Autowired
-    public UserService(UserRepositoryService repositoryService,
-                       UserRoleRepositoryService userRoleRepositoryService,
+    public UserService(UserRepositoryService repositoryService, UserRoleRepositoryService userRoleRepositoryService,
                        SecurityUtils securityUtils) {
         this.repositoryService = repositoryService;
         this.userRoleRepositoryService = userRoleRepositoryService;
@@ -92,14 +92,25 @@ public class UserService {
     }
 
     /**
-     * Retrieves currently logged in user.
+     * Retrieves currently logged-in user.
      *
-     * @return Currently logged in user's account
+     * It also updates last seen timestamp of the current user. While this is a side effect in a get method, it is a simpler
+     * solution that emitting some kind of event and using that.
+     *
+     * @return Currently logged-in user's account
      */
+    @Transactional
     public UserAccount getCurrent() {
         final UserAccount account = securityUtils.getCurrentUser();
         account.erasePassword();
+        updateLastSeen(account.copy());
         return account;
+    }
+
+    private void updateLastSeen(UserAccount account) {
+        account.setLastSeen(Utils.timestamp());
+        LOG.trace("Updating last seen timestamp of user {}.", account);
+        repositoryService.update(account);
     }
 
     /**

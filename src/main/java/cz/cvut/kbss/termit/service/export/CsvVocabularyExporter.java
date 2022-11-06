@@ -29,9 +29,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import static cz.cvut.kbss.termit.util.CsvUtils.FILE_EXTENSION;
-import static cz.cvut.kbss.termit.util.CsvUtils.MEDIA_TYPE;
-
 @Service("csv")
 public class CsvVocabularyExporter implements VocabularyExporter {
 
@@ -48,7 +45,8 @@ public class CsvVocabularyExporter implements VocabularyExporter {
         final StringBuilder export = new StringBuilder(String.join(",", Term.EXPORT_COLUMNS));
         final List<Term> terms = termService.findAllFull(vocabulary);
         terms.forEach(t -> export.append('\n').append(t.toCsv()));
-        return new TypeAwareByteArrayResource(export.toString().getBytes(), MEDIA_TYPE, FILE_EXTENSION);
+        return new TypeAwareByteArrayResource(export.toString().getBytes(), ExportFormat.CSV.getMediaType(),
+                                              ExportFormat.CSV.getFileExtension());
     }
 
     @Override
@@ -59,6 +57,6 @@ public class CsvVocabularyExporter implements VocabularyExporter {
 
     @Override
     public boolean supports(String mediaType) {
-        return Objects.equals(MEDIA_TYPE, mediaType);
+        return Objects.equals(ExportFormat.CSV.getMediaType(), mediaType);
     }
 }

@@ -48,6 +48,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import javax.servlet.FilterChain;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
@@ -91,6 +92,8 @@ class JwtAuthorizationFilterTest {
 
     private JwtAuthorizationFilter sut;
 
+    private final Instant tokenIssued = JwtUtils.issueTimestamp();
+
     @BeforeEach
     void setUp() {
         this.user = Generator.generateUserAccount();
@@ -98,7 +101,7 @@ class JwtAuthorizationFilterTest {
         this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
         this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
         this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, securityUtilsMock, detailsServiceMock,
-                objectMapper);
+                                              objectMapper);
     }
 
     @Test
@@ -121,8 +124,8 @@ class JwtAuthorizationFilterTest {
     private String generateJwt() {
         return Jwts.builder().setSubject(user.getUsername())
                    .setId(user.getUri().toString())
-                   .setIssuedAt(new Date())
-                   .setExpiration(new Date(System.currentTimeMillis() + 10000))
+                   .setIssuedAt(Date.from(tokenIssued))
+                   .setExpiration(Date.from(tokenIssued.plusMillis(10000L)))
                    .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM)
                    .compact();
     }
@@ -159,7 +162,7 @@ class JwtAuthorizationFilterTest {
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertTrue(mockResponse.containsHeader(HttpHeaders.AUTHORIZATION));
         assertNotEquals(mockRequest.getHeader(HttpHeaders.AUTHORIZATION),
-                mockResponse.getHeader(HttpHeaders.AUTHORIZATION));
+                        mockResponse.getHeader(HttpHeaders.AUTHORIZATION));
         verify(jwtUtilsSpy).refreshToken(any());
     }
 

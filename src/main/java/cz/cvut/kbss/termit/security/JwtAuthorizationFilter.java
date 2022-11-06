@@ -48,8 +48,8 @@ import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private static final Set<String> PUBLIC_ENDPOINTS = new HashSet<>(Arrays.asList(
-        REST_MAPPING_PATH + PUBLIC_API_PATH,
-        "data/label"    // DataController.getLabel
+            REST_MAPPING_PATH + PUBLIC_API_PATH,
+            "data/label"    // DataController.getLabel
     ));
 
     private final JwtUtils jwtUtils;
@@ -72,7 +72,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-        throws IOException, ServletException {
+            throws IOException, ServletException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith(SecurityConstants.JWT_TOKEN_PREFIX)) {
             chain.doFilter(request, response);
@@ -98,10 +98,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)
-        throws IOException {
+            throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         objectMapper.writeValue(response.getOutputStream(),
-            ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
+                                ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
     }
 
     private void refreshToken(String authToken, HttpServletResponse response) {

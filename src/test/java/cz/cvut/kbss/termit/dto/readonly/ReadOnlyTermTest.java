@@ -1,6 +1,8 @@
 package cz.cvut.kbss.termit.dto.readonly;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -21,6 +23,8 @@ class ReadOnlyTermTest {
         term.setSources(Collections.singleton(Generator.generateUri().toString()));
         final Term child = Generator.generateTermWithId();
         term.setSubTerms(Collections.singleton(new TermInfo(child)));
+        term.setNotations(Collections.singleton("A-10"));
+        term.setExamples(Collections.singleton(MultilingualString.create("Warthog", Environment.LANGUAGE)));
 
         final ReadOnlyTerm result = new ReadOnlyTerm(term);
         assertEquals(term.getUri(), result.getUri());
@@ -37,6 +41,8 @@ class ReadOnlyTermTest {
         assertEquals(term.getExactMatchTerms(), result.getExactMatchTerms());
         assertEquals(term.getRelated(), result.getRelated());
         assertEquals(term.getRelatedMatch(), result.getRelatedMatch());
+        assertEquals(term.getNotations(), result.getNotations());
+        assertEquals(term.getExamples(), result.getExamples());
     }
 
     @Test
@@ -46,9 +52,9 @@ class ReadOnlyTermTest {
         final URI u3 = Generator.generateUri();
 
         final Term term = Generator.generateTermWithId();
-        final Map<String,Set<String>> properties = new HashMap<>();
-        properties.put(u1.toString(),Collections.singleton("a"));
-        properties.put(u2.toString(),Collections.singleton("b"));
+        final Map<String, Set<String>> properties = new HashMap<>();
+        properties.put(u1.toString(), Collections.singleton("a"));
+        properties.put(u2.toString(), Collections.singleton("b"));
 
         term.setProperties(properties);
 

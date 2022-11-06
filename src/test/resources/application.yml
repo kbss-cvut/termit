@@ -12,7 +12,7 @@ termit:
     repository:
         url: mem:termit
     persistence:
-        driver: cz.cvut.kbss.ontodriver.sesame.SesameDataSource
+        driver: cz.cvut.kbss.ontodriver.rdf4j.Rdf4jDataSource
         language: en
     jwt:
         secretKey: TermItSecretKeyExtendedToBeLongEnoughForJWT
