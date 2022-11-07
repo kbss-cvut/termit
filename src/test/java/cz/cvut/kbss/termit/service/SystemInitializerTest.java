@@ -1,17 +1,19 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service;
 
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
@@ -20,36 +22,42 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.annotation.DirtiesContext;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.*;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class SystemInitializerTest extends BaseServiceTestRunner {
+@ExtendWith(MockitoExtension.class)
+class SystemInitializerTest {
 
     private static final URI ADMIN_URI = URI.create(Vocabulary.ONTOLOGY_IRI_termit + "/system-admin-user");
 
-    @Autowired
-    private Configuration config;
+    @Spy
+    private Configuration config = new Configuration();
 
-    @Autowired
+    @Mock
     private UserRepositoryService userService;
 
-    @Autowired
-    private EntityManager em;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Mock
+    private PlatformTransactionManager txManager;
 
     private String adminCredentialsDir;
 
@@ -61,82 +69,85 @@ class SystemInitializerTest extends BaseServiceTestRunner {
         this.adminCredentialsDir =
                 System.getProperty("java.io.tmpdir") + File.separator + Generator.randomInt(0, 10000);
         config.getAdmin().setCredentialsLocation(adminCredentialsDir);
+        config.getAdmin().setCredentialsFile(".termit-admin");
         this.sut = new SystemInitializer(config, userService, txManager);
     }
 
     @AfterEach
-    void tearDown() throws Exception {
-        final File dir = new File(adminCredentialsDir);
-        if (dir.listFiles() != null) {
-            for (File child : dir.listFiles()) {
-                Files.deleteIfExists(child.toPath());
-            }
+    void tearDown() throws IOException {
+        final File toDelete = new File(adminCredentialsDir);
+        if (toDelete.exists()) {
+            Files.walk(toDelete.toPath())
+                 .sorted(Comparator.reverseOrder())
+                 .map(Path::toFile)
+                 .forEach(File::delete);
         }
-        Files.deleteIfExists(dir.toPath());
     }
 
     @Test
     void persistsSystemAdminWhenHeDoesNotExist() {
         sut.initSystemAdmin();
-        assertNotNull(em.find(UserAccount.class, ADMIN_URI));
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userService).persist(captor.capture());
+        assertEquals(ADMIN_URI, captor.getValue().getUri());
     }
 
     @Test
     void doesNotCreateNewAdminWhenOneAlreadyExists() {
+        when(userService.doesAdminExist()).thenReturn(true);
         sut.initSystemAdmin();
-        final UserAccount admin = em.find(UserAccount.class, ADMIN_URI);
-        sut.initSystemAdmin();
-        final UserAccount result = em.find(UserAccount.class, ADMIN_URI);
-        // We know that password is generated, so the same password means no new instance was created
-        assertEquals(admin.getPassword(), result.getPassword());
-    }
-
-    @Test
-    void doesNotCreateNewAdminWhenDifferentAdminAlreadyExists() {
-        final UserAccount differentAdmin = Generator.generateUserAccount();
-        differentAdmin.addType(Vocabulary.s_c_administrator_termitu);
-        transactional(() -> em.persist(differentAdmin));
-        sut.initSystemAdmin();
-        assertNull(em.find(UserAccount.class, ADMIN_URI));
+        verify(userService, never()).persist(any(UserAccount.class));
     }
 
     @Test
     void savesAdminLoginCredentialsIntoHiddenFileInUserHome() throws Exception {
+        doAnswer(arg -> {
+            final UserAccount account = arg.getArgument(0, UserAccount.class);
+            account.setPassword(new BCryptPasswordEncoder().encode(account.getPassword()));
+            return null;
+        }).when(userService).persist(any(UserAccount.class));
         sut.initSystemAdmin();
-        final UserAccount admin = em.find(UserAccount.class, ADMIN_URI);
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userService).persist(captor.capture());
         final String home = config.getAdmin().getCredentialsLocation();
         final File credentialsFile = new File(home + File.separator + config.getAdmin().getCredentialsFile());
         assertTrue(credentialsFile.exists());
         assertTrue(credentialsFile.isHidden());
-        verifyAdminCredentialsFileContent(admin, credentialsFile);
+        verifyAdminCredentialsFileContent(captor.getValue(), credentialsFile);
     }
 
     private void verifyAdminCredentialsFileContent(UserAccount admin, File credentialsFile) throws IOException {
         final List<String> lines = Files.readAllLines(credentialsFile.toPath());
         assertThat(lines.get(0), containsString(admin.getUsername() + "/"));
         final String password = lines.get(0).substring(lines.get(0).indexOf('/') + 1);
-        assertTrue(passwordEncoder.matches(password, admin.getPassword()));
+        assertTrue(new BCryptPasswordEncoder().matches(password, admin.getPassword()));
     }
 
     @Test
     void savesAdminLoginCredentialsIntoConfiguredFile() throws Exception {
+        doAnswer(arg -> {
+            final UserAccount account = arg.getArgument(0, UserAccount.class);
+            account.setPassword(new BCryptPasswordEncoder().encode(account.getPassword()));
+            return null;
+        }).when(userService).persist(any(UserAccount.class));
         final String adminFileName = ".admin-file-with-different-name";
         config.getAdmin().setCredentialsFile(adminFileName);
         this.sut = new SystemInitializer(config, userService, txManager);
         sut.initSystemAdmin();
-        final UserAccount admin = em.find(UserAccount.class, ADMIN_URI);
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userService).persist(captor.capture());
         final File credentialsFile = new File(adminCredentialsDir + File.separator + adminFileName);
         assertTrue(credentialsFile.exists());
         assertTrue(credentialsFile.isHidden());
-        verifyAdminCredentialsFileContent(admin, credentialsFile);
+        verifyAdminCredentialsFileContent(captor.getValue(), credentialsFile);
     }
 
     @Test
     void ensuresGeneratedAccountIsAdmin() {
         sut.initSystemAdmin();
-        final UserAccount result = em.find(UserAccount.class, ADMIN_URI);
-        assertNotNull(result);
-        assertThat(result.getTypes(), hasItem(Vocabulary.s_c_administrator_termitu));
-        assertThat(result.getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userService).persist(captor.capture());
+        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator_termitu));
+        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
     }
 }
