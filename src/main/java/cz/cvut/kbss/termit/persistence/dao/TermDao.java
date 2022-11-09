@@ -470,7 +470,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                          .setMaxResults(pageSpec.getPageSize())
                          .setFirstResult((int) pageSpec.getOffset())
                          .setDescriptor(
-                                 descriptorFactory.termDtoDescriptor(resolveTermContexts().toArray(new URI[]{}))));
+                                 descriptorFactory.termDtoDescriptor(findAllVocabularies().toArray(new URI[]{}))));
             result.addAll(loadIncludedTerms(includeTerms));
             return result;
         } catch (RuntimeException e) {
@@ -478,7 +478,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    private List<URI> resolveTermContexts() {
+    private List<URI> findAllVocabularies() {
         try {
             return em.createNativeQuery("SELECT DISTINCT ?vocabulary WHERE { " +
                                                 "?vocabulary a ?type . " +
@@ -640,7 +640,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                                             .setParameter("snapshot", URI.create(
                                                     cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
-                                            .setParameter("searchString", searchString, config.getLanguage());
+                                            .setParameter("searchString", searchString, config.getLanguage())
+                                            .setDescriptor(descriptorFactory.termDtoDescriptor(
+                                                    findAllVocabularies().toArray(new URI[]{})));
 
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);

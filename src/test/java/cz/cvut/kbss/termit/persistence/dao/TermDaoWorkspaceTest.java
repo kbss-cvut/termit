@@ -25,9 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasItems;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
@@ -232,6 +230,49 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
 
         editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
         final List<TermDto> result = sut.findAllRoots(Constants.DEFAULT_PAGE_SPEC, Collections.emptySet());
-        assertEquals(Collections.singletonList(new TermDto(workingCopy)), result);
+        assertThat(result, hasItem(new TermDto(workingCopy)));
+    }
+
+    @Test
+    void findAllBySearchStringDoesNotReturnNewTermCreatedInAnotherWorkspace() {
+        final URI workingCtx = Generator.generateUri();
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
+        final Vocabulary anotherVocabulary = Generator.generateVocabularyWithId();
+        final URI anotherWorkingCtx = Generator.generateUri();
+        final Vocabulary anotherWorkingVoc = Environment.cloneVocabulary(anotherVocabulary);
+        final Term newTerm = Generator.generateTermWithId(anotherVocabulary.getUri());
+        newTerm.setGlossary(workingVoc.getGlossary().getUri());
+        workingVoc.getGlossary().addRootTerm(newTerm);
+        transactional(() -> em.persist(anotherVocabulary, descriptorFactory.vocabularyDescriptor(anotherVocabulary)));
+        transactional(() -> {
+            em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
+            em.persist(anotherWorkingVoc, descriptorFactory.vocabularyDescriptor(anotherWorkingCtx));
+            em.persist(newTerm, descriptorFactory.termDescriptor(anotherWorkingCtx));
+            Generator.addTermInVocabularyRelationship(newTerm, anotherVocabulary.getUri(), em);
+        });
+
+        editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
+        final List<TermDto> result = sut.findAll(
+                newTerm.getPrimaryLabel().substring(0, newTerm.getPrimaryLabel().length() / 2));
+        assertThat(result, not(hasItem(new TermDto(newTerm))));
+    }
+
+    @Test
+    void findAllBySearchStringReturnsNewTermCreatedInCurrentWorkspace() {
+        final URI workingCtx = Generator.generateUri();
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
+        final Term newTerm = Generator.generateTermWithId(vocabulary.getUri());
+        newTerm.setGlossary(workingVoc.getGlossary().getUri());
+        workingVoc.getGlossary().addRootTerm(newTerm);
+        transactional(() -> {
+            em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
+            em.persist(newTerm, descriptorFactory.termDescriptor(workingCtx));
+            Generator.addTermInVocabularyRelationship(newTerm, vocabulary.getUri(), em);
+        });
+
+        editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
+        final List<TermDto> result = sut.findAll(
+                newTerm.getPrimaryLabel().substring(0, newTerm.getPrimaryLabel().length() / 2));
+        assertThat(result, hasItem(new TermDto(newTerm)));
     }
 }
