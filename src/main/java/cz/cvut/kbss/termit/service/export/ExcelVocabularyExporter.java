@@ -35,9 +35,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import static cz.cvut.kbss.termit.util.Constants.Excel.FILE_EXTENSION;
-import static cz.cvut.kbss.termit.util.Constants.Excel.MEDIA_TYPE;
-
 /**
  * Supports vocabulary export to MS Excel format
  */
@@ -65,7 +62,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
             generateTermRows(termService.findAllFull(vocabulary), sheet);
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             wb.write(bos);
-            return new TypeAwareByteArrayResource(bos.toByteArray(), MEDIA_TYPE, FILE_EXTENSION);
+            return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(), ExportFormat.EXCEL.getFileExtension());
         } catch (IOException e) {
             throw new TermItException("Unable to generate excel file from glossary of " + vocabulary, e);
         }
@@ -94,6 +91,6 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
 
     @Override
     public boolean supports(String mediaType) {
-        return Objects.equals(MEDIA_TYPE, mediaType);
+        return Objects.equals(ExportFormat.EXCEL.getMediaType(), mediaType);
     }
 }

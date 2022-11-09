@@ -27,6 +27,7 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 
 import java.io.IOException;
@@ -54,6 +55,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
     private Configuration config;
 
     @Autowired
+    @Qualifier("skos-turtle")
     private SKOSVocabularyExporter sut;
 
     Vocabulary vocabulary;
@@ -74,7 +76,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
 
     @Test
     void supportsReturnsTrueForTurtleMediaType() {
-        assertTrue(sut.supports(Constants.Turtle.MEDIA_TYPE));
+        assertTrue(sut.supports(Constants.MediaType.TURTLE));
     }
 
     @Test

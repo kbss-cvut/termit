@@ -1,6 +1,7 @@
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dc: <http://purl.org/dc/terms/>
 
@@ -26,7 +27,7 @@ CONSTRUCT {
     ?vocabulary pdp:má-glosář ?glossary .
     OPTIONAL {
         ?term ?skosProperty ?skosPropertyValue .
-        FILTER( ?skosProperty in ( dc:source, skos:altLabel, skos:definition, skos:scopeNote, skos:changeNote, skos:editorialNote, skos:historyNote, skos:notation, skos:example ) )
+        FILTER( ?skosProperty in ( dc:source, dc:references, skos:altLabel, skos:definition, skos:scopeNote, skos:changeNote, skos:editorialNote, skos:historyNote, skos:notation, skos:example, termit:je-draft ) )
     }
     OPTIONAL {
         ?term skos:broader ?broader .
