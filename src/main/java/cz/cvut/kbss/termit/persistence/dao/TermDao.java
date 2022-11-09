@@ -188,7 +188,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         assert entity.getVocabulary() != null;
 
         try {
-            // Evict possibly cached TermDto instance loaded
+            // Evict possibly cached TermDto instance
             em.getEntityManagerFactory().getCache()
               .evict(TermDto.class, entity.getUri(), contextMapper.getVocabularyContext(entity.getVocabulary()));
             final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
@@ -212,22 +212,20 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
 
     private void setTermDraftStatusTo(Term term, boolean draft) {
-        // Evict possibly cached instance loaded from default context
-        em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
+        // Evict possibly cached TermDto instance
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
         em.createNativeQuery("DELETE {" +
-                                     "?t ?hasStatus ?oldDraft ." +
+                                     "GRAPH ?g { ?t ?hasStatus ?oldDraft . }" +
                                      "} INSERT {" +
-                                     "GRAPH ?g {" +
-                                     "?t ?hasStatus ?newDraft ." +
-                                     "}} WHERE {" +
-                                     "OPTIONAL {?t ?hasStatus ?oldDraft .}" +
-                                     "GRAPH ?g {" +
-                                     "?t ?inScheme ?glossary ." +
-                                     "}}").setParameter("t", term)
+                                     "GRAPH ?g { ?t ?hasStatus ?newDraft . }" +
+                                     "} WHERE {" +
+                                     "OPTIONAL { ?t ?hasStatus ?oldDraft . }" +
+                                     "GRAPH ?g { ?t ?inScheme ?glossary . }" +
+                                     "}").setParameter("t", term)
           .setParameter("hasStatus", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft))
           .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
-          .setParameter("newDraft", draft).executeUpdate();
+          .setParameter("newDraft", draft)
+          .setParameter("g", contextMapper.getVocabularyContext(term.getVocabulary())).executeUpdate();
     }
 
     /**

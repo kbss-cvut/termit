@@ -26,6 +26,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
@@ -261,18 +262,53 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
     void findAllBySearchStringReturnsNewTermCreatedInCurrentWorkspace() {
         final URI workingCtx = Generator.generateUri();
         final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
-        final Term newTerm = Generator.generateTermWithId(vocabulary.getUri());
-        newTerm.setGlossary(workingVoc.getGlossary().getUri());
-        workingVoc.getGlossary().addRootTerm(newTerm);
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setGlossary(workingVoc.getGlossary().getUri());
+        workingVoc.getGlossary().addRootTerm(term);
         transactional(() -> {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
-            em.persist(newTerm, descriptorFactory.termDescriptor(workingCtx));
-            Generator.addTermInVocabularyRelationship(newTerm, vocabulary.getUri(), em);
+            em.persist(term, descriptorFactory.termDescriptor(workingCtx));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
         editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
         final List<TermDto> result = sut.findAll(
-                newTerm.getPrimaryLabel().substring(0, newTerm.getPrimaryLabel().length() / 2));
-        assertThat(result, hasItem(new TermDto(newTerm)));
+                term.getPrimaryLabel().substring(0, term.getPrimaryLabel().length() / 2));
+        assertThat(result, hasItem(new TermDto(term)));
+    }
+
+    @Test
+    void setTermStatusSetsItOnlyInCurrentWorkspace() {
+        final URI workingCtx = Generator.generateUri();
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
+        final Term canonical = Generator.generateTermWithId(vocabulary.getUri());
+        canonical.setDraft(true);
+        canonical.setGlossary(vocabulary.getGlossary().getUri());
+        final Term workingCopy = cloneTerm(canonical);
+        workingCopy.setGlossary(workingVoc.getGlossary().getUri());
+        workingVoc.getGlossary().addRootTerm(canonical);
+        transactional(() -> {
+            em.persist(canonical, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(canonical, vocabulary.getUri(), em);
+        });
+        transactional(() -> {
+            em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
+            em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
+        });
+
+        editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
+        transactional(() -> sut.setAsConfirmed(workingCopy));
+
+        final String query = "SELECT ?status WHERE { GRAPH ?g { ?t ?isDraft ?status } }";
+        assertFalse(em.createNativeQuery(query, Boolean.class)
+                      .setParameter("g", workingCtx)
+                      .setParameter("t", canonical)
+                      .setParameter("isDraft", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft))
+                      .getSingleResult());
+        assertTrue(em.createNativeQuery(query, Boolean.class)
+                     .setParameter("g", vocabulary.getUri())
+                     .setParameter("t", canonical)
+                     .setParameter("isDraft", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft))
+                     .getSingleResult());
     }
 }
