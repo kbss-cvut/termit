@@ -44,7 +44,8 @@ public class Vocabulary extends Asset<String> implements HasTypes, SupportsSnaps
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
     private String description;
 
-    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument, cascade = {CascadeType.PERSIST},
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_popisuje_dokument,
+                       cascade = {CascadeType.PERSIST, CascadeType.MERGE},
                        fetch = FetchType.EAGER)
     private Document document;
 
