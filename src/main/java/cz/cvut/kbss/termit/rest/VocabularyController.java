@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import org.slf4j.Logger;
@@ -50,12 +51,14 @@ public class VocabularyController extends BaseController {
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyController.class);
 
     private final VocabularyService vocabularyService;
+    private final ResourceRepositoryService resourceRepositoryService;
 
     @Autowired
     public VocabularyController(VocabularyService vocabularyService, IdentifierResolver idResolver,
-                                Configuration config) {
+                                Configuration config, ResourceRepositoryService resourceRepositoryService) {
         super(idResolver, config);
         this.vocabularyService = vocabularyService;
+        this.resourceRepositoryService = resourceRepositoryService;
     }
 
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -176,6 +179,7 @@ public class VocabularyController extends BaseController {
                                  @RequestBody Vocabulary update) {
         final URI vocabularyUri = resolveVocabularyUri(fragment, namespace);
         verifyRequestAndEntityIdentifier(update, vocabularyUri);
+        resourceRepositoryService.update(update.getDocument());
         vocabularyService.update(update);
         LOG.debug("Vocabulary {} updated.", update);
     }
