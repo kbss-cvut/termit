@@ -90,10 +90,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     private void postLoad(Term r) {
-        r.setSubTerms(getSubTerms(r));
-        r.setInverseRelated(loadInverseRelatedTerms(r));
-        r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r));
-        r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
+        final Descriptor descriptor = descriptorFactory.termInfoDescriptor(findAllVocabularies().toArray(new URI[]{}));
+        r.setSubTerms(getSubTerms(r, descriptor));
+        r.setInverseRelated(loadInverseRelatedTerms(r, descriptor));
+        r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r, descriptor));
+        r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r, descriptor));
     }
 
     public void detach(Term term) {
@@ -104,54 +105,64 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     /**
      * Loads terms whose relatedness to the specified term is inferred due to the symmetry of SKOS related.
      *
-     * @param term Term to load related terms for
+     * @param term              Term to load related terms for
+     * @param loadingDescriptor Descriptor for the loaded related terms
      */
-    private Set<TermInfo> loadInverseRelatedTerms(Term term) {
+    private Set<TermInfo> loadInverseRelatedTerms(Term term, Descriptor loadingDescriptor) {
         return loadInverseTermInfo(term, SKOS.RELATED,
-                                   Utils.joinCollections(term.getRelated(), term.getRelatedMatch()));
+                                   Utils.joinCollections(term.getRelated(), term.getRelatedMatch()), loadingDescriptor);
     }
 
     /**
      * Loads information about terms that have the specified term as object of assertion of the specified property.
      *
-     * @param term     Assertion object
-     * @param property Property
-     * @param exclude  Terms to exclude from the result
+     * @param term       Assertion object
+     * @param property   Property
+     * @param exclude    Terms to exclude from the result
+     * @param descriptor Descriptor for the loaded terms. Used to determine contexts to load the relationships and terms
+     *                   from
      * @return Set of matching terms
      */
-    private Set<TermInfo> loadInverseTermInfo(HasIdentifier term, String property, Collection<TermInfo> exclude) {
+    private Set<TermInfo> loadInverseTermInfo(HasIdentifier term, String property, Collection<TermInfo> exclude,
+                                              Descriptor descriptor) {
         final List<TermInfo> result = em.createNativeQuery("SELECT ?inverse WHERE {" +
-                                                                   "?inverse ?property ?term ;" +
-                                                                   "a ?type ." +
+                                                                   "GRAPH ?g { " +
+                                                                   "?inverse ?property ?term . } " +
+                                                                   "?inverse a ?type ." +
                                                                    "FILTER (?inverse NOT IN (?exclude))" +
+                                                                   "FILTER (?g IN (?contexts))" +
                                                                    "} ORDER BY ?inverse", TermInfo.class)
                                         .setParameter("property", URI.create(property))
                                         .setParameter("term", term)
                                         .setParameter("type", typeUri)
                                         .setParameter("exclude", exclude)
+                                        .setParameter("contexts", descriptor.getContexts())
+                                        .setDescriptor(descriptor)
                                         .getResultList();
         result.sort(termInfoComparator);
         return new LinkedHashSet<>(result);
     }
 
     /**
-     * Loads terms whose relatedness to the specified term is inferred due to the symmetric of SKOS relatedMatch.
+     * Loads terms whose relatedness to the specified term is inferred due to the symmetry of SKOS relatedMatch.
      *
-     * @param term Term to load related terms for
+     * @param term              Term to load related terms for
+     * @param loadingDescriptor Descriptor for the loaded terms
      */
-    private Set<TermInfo> loadInverseRelatedMatchTerms(Term term) {
-        return loadInverseTermInfo(term, SKOS.RELATED_MATCH, term.getRelatedMatch() != null ? term
-                .getRelatedMatch() : Collections.emptySet());
+    private Set<TermInfo> loadInverseRelatedMatchTerms(Term term, Descriptor loadingDescriptor) {
+        return loadInverseTermInfo(term, SKOS.RELATED_MATCH, Utils.emptyIfNull(term.getRelatedMatch()),
+                                   loadingDescriptor);
     }
 
     /**
-     * Loads terms whose exact match to the specified term is inferred due to the symmetric of SKOS exactMatch.
+     * Loads terms whose exact match to the specified term is inferred due to the symmetry of SKOS exactMatch.
      *
-     * @param term Term to load related terms for
+     * @param term              Term to load related terms for
+     * @param loadingDescriptor Descriptor for the loaded terms
      */
-    private Set<TermInfo> loadInverseExactMatchTerms(Term term) {
-        return loadInverseTermInfo(term, SKOS.EXACT_MATCH, term.getExactMatchTerms() != null ? term
-                .getExactMatchTerms() : Collections.emptySet());
+    private Set<TermInfo> loadInverseExactMatchTerms(Term term, Descriptor loadingDescriptor) {
+        return loadInverseTermInfo(term, SKOS.EXACT_MATCH, Utils.emptyIfNull(term.getExactMatchTerms()),
+                                   loadingDescriptor);
     }
 
     @Override
@@ -328,20 +339,23 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         // and JOPA then attempting to load them as TermInfo because they are children of some other term already managed
         // This strategy is obviously not very efficient in terms of performance but until JOPA supports read-only
         // transactions, this is probably the only way to prevent the aforementioned exceptions from appearing
+        final Descriptor descriptor = descriptorFactory.termInfoDescriptor(findAllVocabularies().toArray(new URI[]{}));
         final List<T> result = query.getResultList();
         em.clear();
-        result.forEach(t -> t.setSubTerms(getSubTerms(t)));
+        result.forEach(t -> t.setSubTerms(getSubTerms(t, descriptor)));
         return result;
     }
 
     /**
      * Gets sub-term info for the specified parent term.
      *
-     * @param parent Parent term
+     * @param parent            Parent term
+     * @param loadingDescriptor Descriptor for loading the terms
      */
-    private Set<TermInfo> getSubTerms(HasIdentifier parent) {
+    private Set<TermInfo> getSubTerms(HasIdentifier parent, Descriptor loadingDescriptor) {
         return subTermsCache.getOrCompute(parent.getUri(),
-                                          (k) -> loadInverseTermInfo(parent, SKOS.BROADER, Collections.emptySet()));
+                                          (k) -> loadInverseTermInfo(parent, SKOS.BROADER, Collections.emptySet(),
+                                                                     loadingDescriptor));
     }
 
     /**
@@ -517,7 +531,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                  .filter(Objects::nonNull)
                                                  .collect(Collectors.toList());
         em.clear();
-        result.forEach(this::recursivelyLoadParentTermSubTerms);
+        result.forEach(this::loadParentSubTerms);
         return result;
     }
 
@@ -527,12 +541,17 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * This implementation ensures that the term hierarchy can be traversed both ways for the specified term. This has
      * to be done to allow the tree-select component on the frontend to work properly and display the terms.
      *
-     * @param term The term to load subterms for
+     * @param parent The term to load subterms for
      */
-    private void recursivelyLoadParentTermSubTerms(TermDto term) {
-        term.setSubTerms(getSubTerms(term));
-        if (term.hasParentTerms()) {
-            term.getParentTerms().forEach(this::recursivelyLoadParentTermSubTerms);
+    private void loadParentSubTerms(TermDto parent) {
+        final Descriptor descriptor = descriptorFactory.termInfoDescriptor(findAllVocabularies().toArray(new URI[]{}));
+        recursivelyLoadParentSubTerms(parent, descriptor);
+    }
+
+    private void recursivelyLoadParentSubTerms(TermDto parent, Descriptor subTermDescriptor) {
+        parent.setSubTerms(getSubTerms(parent, subTermDescriptor));
+        if (parent.hasParentTerms()) {
+            parent.getParentTerms().forEach(pt -> recursivelyLoadParentSubTerms(pt, subTermDescriptor));
         }
     }
 
@@ -651,13 +670,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    private void loadParentSubTerms(TermDto parent) {
-        parent.setSubTerms(getSubTerms(parent));
-        if (parent.getParentTerms() != null) {
-            parent.getParentTerms().forEach(this::loadParentSubTerms);
-        }
-    }
-
     /**
      * Finds terms whose label contains the specified search string.
      * <p>
@@ -769,8 +781,24 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         return new AssetSnapshotLoader<Term>(em, typeUri, URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
                 .findVersionValidAt(asset, at).map(t -> {
-                    postLoad(t);
+                    final Descriptor descriptor = descriptorFactory.termInfoDescriptor(findAllSnapshotVocabularies().toArray(new URI[]{}));
+                    t.setSubTerms(getSubTerms(t, descriptor));
+                    t.setInverseRelated(loadInverseRelatedTerms(t, descriptor));
+                    t.setInverseRelatedMatch(loadInverseRelatedMatchTerms(t, descriptor));
+                    t.setInverseExactMatchTerms(loadInverseExactMatchTerms(t, descriptor));
                     return t;
                 });
+    }
+
+    private List<URI> findAllSnapshotVocabularies() {
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?vocabulary WHERE { " +
+                                                "?vocabulary a ?snapshot . " +
+                                                "}", URI.class)
+                     .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
+                     .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 }

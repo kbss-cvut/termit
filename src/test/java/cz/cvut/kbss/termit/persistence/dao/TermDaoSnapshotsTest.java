@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -9,6 +8,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -54,43 +54,44 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
     }
 
     private Term generateSnapshotStub(Term term, Instant timestamp) {
-        return generateSnapshotStub(term, timestamp, true);
+        final Vocabulary snapshot = generateVocabularySnapshot(vocabulary);
+        return generateSnapshotStub(term, timestamp, snapshot);
     }
 
-    private Term generateSnapshotStub(Term term, Instant timestamp, boolean snapshotVocabulary) {
+    private Vocabulary generateVocabularySnapshot(Vocabulary vocabulary) {
+        final String strTimestamp = Utils.timestamp().toString().replace(":", "");
+        final URI vocSnapshotUri = URI.create(vocabulary.getUri().toString() + "/version/" + strTimestamp);
+        final Vocabulary vocabularySnapshot = Generator.generateVocabulary();
+        vocabularySnapshot.setUri(vocSnapshotUri);
+        vocabularySnapshot.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
+        transactional(() -> em.persist(vocabularySnapshot, descriptorFactory.vocabularyDescriptor(vocSnapshotUri)));
+        return vocabularySnapshot;
+    }
+
+    private Term generateSnapshotStub(Term term, Instant timestamp, Vocabulary vocabularySnapshot) {
         final String strTimestamp = timestamp.toString().replace(":", "");
         final Term stub = new Term();
         stub.setUri(URI.create(term.getUri().toString() + "/version/" + strTimestamp));
         stub.setLabel(new MultilingualString(term.getLabel().getValue()));
         stub.setDefinition(new MultilingualString(term.getDefinition().getValue()));
         stub.setDescription(new MultilingualString(term.getDescription().getValue()));
-        // This one will simulate a vocabulary snapshot
-        final URI vocSnapshotUri = URI.create(vocabulary.getUri().toString() + "/version/" + strTimestamp);
-        stub.setVocabulary(vocSnapshotUri);
+        stub.setVocabulary(vocabularySnapshot.getUri());
+        stub.setGlossary(vocabularySnapshot.getGlossary().getUri());
         stub.setProperties(new HashMap<>());
-        if (snapshotVocabulary) {
-            transactional(() -> {
-                final Vocabulary vocabularySnapshot = Generator.generateVocabulary();
-                vocabularySnapshot.setUri(vocSnapshotUri);
-                vocabularySnapshot.getGlossary().addRootTerm(stub);
-                em.persist(vocabularySnapshot, descriptorFactory.vocabularyDescriptor(vocSnapshotUri));
-                stub.setGlossary(vocabularySnapshot.getGlossary().getUri());
-            });
-        }
         transactional(() -> {
-            em.persist(stub, descriptorFactory.termDescriptor(vocSnapshotUri));
+            em.persist(stub, descriptorFactory.termDescriptorForSave(vocabularySnapshot.getUri()));
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection connection = repo.getConnection()) {
                 final ValueFactory vf = connection.getValueFactory();
                 final IRI stubIri = vf.createIRI(stub.getUri().toString());
                 connection.begin();
                 connection.add(stubIri, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_verzi_pojmu),
-                        vf.createIRI(term.getUri().toString()), vf.createIRI(vocSnapshotUri.toString()));
+                        vf.createIRI(term.getUri().toString()), vf.createIRI(vocabularySnapshot.getUri().toString()));
                 connection.add(stubIri,
                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_vytvoreni_verze),
-                        vf.createLiteral(Date.from(timestamp)), vf.createIRI(vocSnapshotUri.toString()));
+                        vf.createLiteral(Date.from(timestamp)), vf.createIRI(vocabularySnapshot.getUri().toString()));
                 connection.add(stubIri, RDF.TYPE, vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu),
-                        vf.createIRI(vocSnapshotUri.toString()));
+                        vf.createIRI(vocabularySnapshot.getUri().toString()));
                 connection.commit();
             }
         });
@@ -198,21 +199,17 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         final Term related = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
-            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            em.persist(related, descriptorFactory.termDescriptor(vocabulary));
-        });
-        transactional(() -> {
-            term.addRelatedTerm(new TermInfo(related));
-            em.merge(term, descriptorFactory.termDescriptor(term));
-            Generator.simulateInferredSkosRelationship(term, Collections.singleton(related), SKOS.RELATED, em);
+            em.persist(term, descriptorFactory.termDescriptorForSave(vocabulary.getUri()));
+            em.persist(related, descriptorFactory.termDescriptorForSave(vocabulary.getUri()));
         });
         final Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).minus(1, ChronoUnit.DAYS);
-        final Term termSnapshot = generateSnapshotStub(term, timestamp);
-        final Term relatedSnapshot = generateSnapshotStub(related, timestamp, false);
+        final Vocabulary vocabularySnapshot = generateVocabularySnapshot(vocabulary);
+        final Term termSnapshot = generateSnapshotStub(term, timestamp, vocabularySnapshot);
+        final Term relatedSnapshot = generateSnapshotStub(related, timestamp, vocabularySnapshot);
         transactional(() -> {
-            final Term updateSnapshot = em.find(Term.class, termSnapshot.getUri());
+            final Term updateSnapshot = em.find(Term.class, termSnapshot.getUri(), descriptorFactory.termDescriptor(termSnapshot));
             updateSnapshot.addRelatedTerm(new TermInfo(relatedSnapshot));
-            em.merge(updateSnapshot, descriptorFactory.termDescriptor(updateSnapshot));
+            em.merge(updateSnapshot, descriptorFactory.termDescriptorForSave(updateSnapshot));
         });
 
         final Optional<Term> termSnapshotResult = sut.findVersionValidAt(term, Instant.now());

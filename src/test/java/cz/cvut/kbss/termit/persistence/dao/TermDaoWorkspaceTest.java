@@ -311,4 +311,41 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
                      .setParameter("isDraft", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft))
                      .getSingleResult());
     }
+
+    @Test
+    void inverseRelationshipLoadingOfCanonicalVersionSkipsReferencesExistingOnlyInWorkspace() {
+        enableRdfsInference(em);
+        final URI workingCtx = Generator.generateUri();
+        final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
+        final Term canonical = Generator.generateTermWithId(vocabulary.getUri());
+        canonical.setDraft(true);
+        canonical.setGlossary(vocabulary.getGlossary().getUri());
+        final Term workingCopy = cloneTerm(canonical);
+        workingCopy.setGlossary(workingVoc.getGlossary().getUri());
+        workingVoc.getGlossary().addRootTerm(canonical);
+        final URI otherWorkingCtx = Generator.generateUri();
+        final Vocabulary otherVocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary otherVocabularyWorking = Environment.cloneVocabulary(otherVocabulary);
+        final Term canonicalChild = Generator.generateTermWithId(otherVocabulary.getUri());
+        final Term workingChild = cloneTerm(canonicalChild);
+        workingChild.addParentTerm(workingCopy);
+        transactional(() -> {
+            em.persist(canonical, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(canonical, vocabulary.getUri(), em);
+            em.persist(otherVocabulary, descriptorFactory.vocabularyDescriptor(otherVocabulary.getUri()));
+            em.persist(canonicalChild, descriptorFactory.termDtoDescriptor(otherVocabulary.getUri()));
+            Generator.addTermInVocabularyRelationship(canonicalChild, otherVocabulary.getUri(), em);
+        });
+        transactional(() -> {
+            em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
+            em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
+            em.persist(otherVocabularyWorking, descriptorFactory.vocabularyDescriptor(otherWorkingCtx));
+            em.persist(workingChild, descriptorFactory.termDescriptor(otherWorkingCtx));
+        });
+        em.getEntityManagerFactory().getCache().evictAll();
+
+        final Optional<Term> result = sut.find(canonical.getUri());
+        assertTrue(result.isPresent());
+        assertThat(result.get().getSubTerms(), not(hasItem(new TermInfo(canonicalChild))));
+    }
 }

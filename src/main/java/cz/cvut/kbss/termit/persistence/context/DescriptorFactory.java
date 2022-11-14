@@ -268,7 +268,8 @@ public class DescriptorFactory {
      * <p>
      * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes
      * representing SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context
-     * descriptors. This is the main difference between the result of this method and {@link #termDescriptor(AbstractTerm)}.
+     * descriptors. This is the main difference between the result of this method and {@link
+     * #termDescriptor(AbstractTerm)}.
      *
      * @param term Term for which descriptor should be provided
      * @return Term descriptor
@@ -283,7 +284,8 @@ public class DescriptorFactory {
      * <p>
      * In addition, to allow for adding references to terms from previously unrelated vocabularies, attributes
      * representing SKOS mapping properties (broadMatch, exactMatch, relatedMatch) are assigned default context
-     * descriptors. This is the main difference between the result of this method and {@link #termDescriptor(AbstractTerm)}.
+     * descriptors. This is the main difference between the result of this method and {@link
+     * #termDescriptor(AbstractTerm)}.
      *
      * @param vocabularyUri Vocabulary identifier used to determine the main target context
      * @return Term descriptor
@@ -337,5 +339,20 @@ public class DescriptorFactory {
         final EntityDescriptor descriptor = new EntityDescriptor(rootContexts);
         descriptor.addAttributeDescriptor(fieldSpec(TermDto.class, "parentTerms"), descriptor);
         return descriptor;
+    }
+
+    /**
+     * Creates a JOPA descriptor for {@link cz.cvut.kbss.termit.dto.TermInfo} instances loaded from the specified
+     * vocabularies.
+     * <p>
+     * This means that the context of the TermInfo (and all its relevant attributes) is given by the vocabulary with the
+     * specified IRI.
+     *
+     * @param vocabularyUris Vocabulary identifiers
+     * @return
+     */
+    public Descriptor termInfoDescriptor(URI... vocabularyUris) {
+        return new EntityDescriptor(
+                Stream.of(vocabularyUris).map(contextMapper::getVocabularyContext).collect(Collectors.toSet()));
     }
 }

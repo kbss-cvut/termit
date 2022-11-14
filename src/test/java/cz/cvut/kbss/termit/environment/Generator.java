@@ -425,8 +425,8 @@ public class Generator {
         return new Snapshot(uri, timestamp, asset.getUri(), type);
     }
 
-    public static void simulateInferredSkosRelationship(AbstractTerm source, Collection<? extends AbstractTerm> related,
-                                                        String relationship, EntityManager em) {
+    public static void simulateInferredSkosInverseRelationship(AbstractTerm source, Collection<? extends AbstractTerm> related,
+                                                               String relationship, EntityManager em) {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
@@ -434,7 +434,7 @@ public class Generator {
             for (AbstractTerm r : related) {
                 // Don't put it into any specific context to make it look like inference
                 conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(relationship),
-                        vf.createIRI(source.getUri().toString()));
+                        vf.createIRI(source.getUri().toString()), vf.createIRI(r.getVocabulary().toString()));
             }
             conn.commit();
         }
