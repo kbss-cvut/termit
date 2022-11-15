@@ -20,8 +20,7 @@ public class BaseTermDaoTestRunner extends BaseDaoTestRunner {
     Vocabulary vocabulary;
 
     void setUp() {
-        this.vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
+        this.vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
     }
 }

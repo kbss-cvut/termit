@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao.lucene;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,13 +49,16 @@ class LuceneSearchDaoTest {
     private Configuration configMock;
 
     @Mock
+    private VocabularyContextMapper contextMapperMock;
+
+    @Mock
     private Query queryMock;
 
     private LuceneSearchDao sut;
 
     @BeforeEach
     void setUp() {
-        this.sut = new LuceneSearchDao(emMock, configMock);
+        this.sut = new LuceneSearchDao(emMock, configMock, contextMapperMock);
     }
 
     private void mockSearchQuery() {

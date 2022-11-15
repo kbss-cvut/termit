@@ -40,6 +40,7 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -185,5 +186,13 @@ public class Environment {
         clone.getGlossary().setUri(original.getGlossary().getUri());
         clone.getModel().setUri(original.getModel().getUri());
         return clone;
+    }
+
+    public static void insertContextBasedOnCanonical(URI workingCtx, URI canonicalCtx, EntityManager em) {
+        em.createNativeQuery("INSERT DATA { GRAPH ?g { ?g ?basedOn ?canonical . }}")
+          .setParameter("g", workingCtx)
+          .setParameter("basedOn", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_vychazi_z_verze))
+          .setParameter("canonical", canonicalCtx)
+          .executeUpdate();
     }
 }

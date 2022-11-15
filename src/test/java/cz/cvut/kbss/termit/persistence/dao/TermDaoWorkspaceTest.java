@@ -60,12 +60,17 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
             em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
             em.persist(child, descriptorFactory.termDescriptor(workingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
         });
 
         editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
         final Optional<Term> result = sut.find(child.getUri());
         assertTrue(result.isPresent());
         assertThat(result.get().getParentTerms(), hasItem(workingCopy));
+    }
+
+    private void insertContextBasedOnCanonical(URI workingCtx, URI canonicalCtx) {
+        Environment.insertContextBasedOnCanonical(workingCtx, canonicalCtx, em);
     }
 
     private Term cloneTerm(Term original) {
@@ -99,6 +104,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
             em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
@@ -135,6 +141,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
             em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
         });
         editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
         workingCopy.addRelatedMatchTerm(new TermInfo(related));
@@ -159,7 +166,10 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
             Generator.addTermInVocabularyRelationship(related, relatedVocabulary.getUri(), em);
         });
         editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
-        transactional(() -> em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx)));
+        transactional(() -> {
+            em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
+        });
         toPersist.addRelatedMatchTerm(new TermInfo(related));
 
         transactional(() -> {
@@ -199,6 +209,8 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
             em.persist(workingCopyOne, descriptorFactory.termDescriptorForSave(workingCtxOne));
             em.persist(workingVocTwo, descriptorFactory.termDescriptor(workingCtxTwo));
             em.persist(workingCopyTwo, descriptorFactory.termDescriptorForSave(workingCtxTwo));
+            insertContextBasedOnCanonical(workingCtxOne, vocabulary.getUri());
+            insertContextBasedOnCanonical(workingCtxTwo, vocabularyTwo.getUri());
         });
         editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtxOne);
         editableVocabularies.registerEditableVocabulary(vocabularyTwo.getUri(), workingCtxTwo);
@@ -227,6 +239,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
             em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
         });
 
         editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
@@ -248,6 +261,8 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
             em.persist(anotherWorkingVoc, descriptorFactory.vocabularyDescriptor(anotherWorkingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
+            insertContextBasedOnCanonical(anotherWorkingCtx, anotherVocabulary.getUri());
             em.persist(newTerm, descriptorFactory.termDescriptor(anotherWorkingCtx));
             Generator.addTermInVocabularyRelationship(newTerm, anotherVocabulary.getUri(), em);
         });
@@ -267,6 +282,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         workingVoc.getGlossary().addRootTerm(term);
         transactional(() -> {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
             em.persist(term, descriptorFactory.termDescriptor(workingCtx));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
@@ -294,6 +310,7 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
             em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
         });
 
         editableVocabularies.registerEditableVocabulary(vocabulary.getUri(), workingCtx);
@@ -314,7 +331,6 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
 
     @Test
     void inverseRelationshipLoadingOfCanonicalVersionSkipsReferencesExistingOnlyInWorkspace() {
-        enableRdfsInference(em);
         final URI workingCtx = Generator.generateUri();
         final Vocabulary workingVoc = Environment.cloneVocabulary(vocabulary);
         final Term canonical = Generator.generateTermWithId(vocabulary.getUri());
@@ -339,7 +355,9 @@ public class TermDaoWorkspaceTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.persist(workingVoc, descriptorFactory.vocabularyDescriptor(workingCtx));
             em.persist(workingCopy, descriptorFactory.termDescriptor(workingCtx));
+            insertContextBasedOnCanonical(workingCtx, vocabulary.getUri());
             em.persist(otherVocabularyWorking, descriptorFactory.vocabularyDescriptor(otherWorkingCtx));
+            insertContextBasedOnCanonical(otherWorkingCtx, otherVocabulary.getUri());
             em.persist(workingChild, descriptorFactory.termDescriptor(otherWorkingCtx));
         });
         em.getEntityManagerFactory().getCache().evictAll();

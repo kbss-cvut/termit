@@ -490,19 +490,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    private List<URI> findAllVocabularies() {
-        try {
-            return em.createNativeQuery("SELECT DISTINCT ?vocabulary WHERE { " +
-                                                "?vocabulary a ?type . " +
-                                                "FILTER NOT EXISTS { ?vocabulary a ?snapshot . } " +
-                                                "}", URI.class)
-                     .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
-                     .setParameter("snapshot",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
-                     .getResultList();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
+    private Set<URI> findAllVocabularies() {
+        return contextMapper.getVocabularyContexts().keySet();
     }
 
     private <T> TypedQuery<T> setCommonFindAllRootsQueryParams(TypedQuery<T> query, boolean includeImports) {

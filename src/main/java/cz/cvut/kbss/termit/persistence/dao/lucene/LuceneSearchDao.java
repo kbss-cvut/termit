@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.persistence.dao.lucene;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -44,8 +45,8 @@ public class LuceneSearchDao extends SearchDao {
 
     static final char LUCENE_WILDCARD = '*';
 
-    public LuceneSearchDao(EntityManager em, Configuration config) {
-        super(em, config);
+    public LuceneSearchDao(EntityManager em, Configuration config, VocabularyContextMapper contextMapper) {
+        super(em, config, contextMapper);
     }
 
     @Override

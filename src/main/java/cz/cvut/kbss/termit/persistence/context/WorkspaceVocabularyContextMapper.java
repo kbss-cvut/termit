@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -36,5 +38,15 @@ public class WorkspaceVocabularyContextMapper implements VocabularyContextMapper
     @Override
     public Optional<URI> getVocabularyInContext(URI contextUri) {
         return delegatee.getVocabularyInContext(contextUri);
+    }
+
+    @Override
+    public Map<URI, URI> getVocabularyContexts() {
+        final Map<URI, URI> repoContexts = new HashMap<>(delegatee.getVocabularyContexts());
+        repoContexts.keySet().forEach(k -> {
+            final Optional<URI> ctx = editableVocabularies.getVocabularyContext(k);
+            ctx.ifPresent(c -> repoContexts.put(k, c));
+        });
+        return repoContexts;
     }
 }

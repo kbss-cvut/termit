@@ -11,19 +11,24 @@ PREFIX dc: <http://purl.org/dc/terms/>
 
 SELECT ?entity ?label ?vocabularyUri ?draft ?type ?snippetField ?snippetText WHERE {
     {
-        ?entity a ?term ;
-           skos:prefLabel ?label ;
-           ?inVocabulary ?vocabularyUri .
-        OPTIONAL { ?entity ?isDraft ?draft . }
+        GRAPH ?g {
+            ?entity a ?term ;
+                skos:prefLabel ?label ;
+                ?inVocabulary ?vocabularyUri .
+            OPTIONAL { ?entity ?isDraft ?draft . }
+        }
         BIND (?term as ?type) .
     } UNION {
-        ?entity a ?vocabulary ;
-           dc:title ?label .
+        GRAPH ?g {
+            ?entity a ?vocabulary ;
+                dc:title ?label .
+        }
         BIND (?vocabulary as ?type) .
     }
     BIND (?label as ?snippetText) .
     BIND (str("label") as ?snippetField) .
     FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .
     FILTER (lang(?label) = ?langTag)
+    FILTER (?g IN (?contexts))
     FILTER NOT EXISTS { ?entity a ?snapshot . }
 } ORDER BY ?label

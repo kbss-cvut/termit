@@ -13,9 +13,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
@@ -24,7 +22,7 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
  * Caching implementation of the {@link VocabularyContextMapper}.
  * <p>
  * Context map is loaded on startup and reloaded every time a vocabulary is created.
- *
+ * <p>
  * Note that only <i>canonical</i> versions of vocabularies are considered for context resolution.
  */
 @Component
@@ -33,7 +31,7 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
 
     private static final Logger LOG = LoggerFactory.getLogger(CachingVocabularyContextMapper.class);
 
-    private Map<URI, List<URI>> contexts;
+    private Map<URI, URI> contexts;
 
     public CachingVocabularyContextMapper(EntityManager em) {
         super(em);
@@ -45,19 +43,23 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
     @EventListener(value = {VocabularyCreatedEvent.class, EvictCacheEvent.class, ContextRefreshedEvent.class})
     public void load() {
         this.contexts = new HashMap<>();
-        em.createNativeQuery("SELECT ?v ?g WHERE { " +
-                  "GRAPH ?g { " +
-                  "?v a ?type . " +
-                  "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
-                  "}}")
+        em.createNativeQuery("SELECT DISTINCT ?v ?g WHERE { " +
+                                     "GRAPH ?g { " +
+                                     "?v a ?type . " +
+                                     "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
+                                     "}}")
           .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
           .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
           .getResultStream().forEach(row -> {
               assert row instanceof Object[];
               assert ((Object[]) row).length == 2;
               final Object[] bindingSet = (Object[]) row;
-              final List<URI> ctx = contexts.computeIfAbsent((URI) bindingSet[0], k -> new ArrayList<>());
-              ctx.add((URI) bindingSet[1]);
+              final URI vocIri = (URI) bindingSet[0];
+              if (contexts.containsKey(vocIri)) {
+                  throw new AmbiguousVocabularyContextException(
+                          "Multiple repository contexts found for vocabulary " + uriToString(vocIri));
+              }
+              contexts.put(vocIri, (URI) bindingSet[1]);
           });
     }
 
@@ -74,11 +76,6 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
                       uriToString(vocabularyUri));
             return vocabularyUri;
         }
-        final List<URI> vocabularyContexts = contexts.get(vocabularyUri);
-        if (vocabularyContexts.size() > 1) {
-            throw new AmbiguousVocabularyContextException(
-                    "Multiple repository contexts found for vocabulary " + uriToString(vocabularyUri));
-        }
-        return vocabularyContexts.get(0);
+        return contexts.get(vocabularyUri);
     }
 }

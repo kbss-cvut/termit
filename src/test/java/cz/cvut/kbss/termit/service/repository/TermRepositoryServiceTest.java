@@ -830,8 +830,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         exactMatch.setGlossary(childVocabulary.getGlossary().getUri());
         exactMatch.setVocabulary(childVocabulary.getUri());
         transactional(() -> {
-            em.persist(term, descriptorFactory.termDescriptor(term));
-            em.persist(exactMatch, descriptorFactory.termDescriptor(exactMatch));
+            em.persist(term, descriptorFactory.termDescriptorForSave(term));
+            em.persist(exactMatch, descriptorFactory.termDescriptorForSave(exactMatch));
         });
         transactional(() -> {
             term.addExactMatch(new TermInfo(exactMatch));
