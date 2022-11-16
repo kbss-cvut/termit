@@ -13,10 +13,10 @@ SELECT ?entity ?label ?vocabularyUri ?draft ?type ?snippetField ?snippetText WHE
     {
         GRAPH ?g {
             ?entity a ?term ;
-                skos:prefLabel ?label ;
-                ?inVocabulary ?vocabularyUri .
+                skos:prefLabel ?label .
             OPTIONAL { ?entity ?isDraft ?draft . }
         }
+        ?entity ?inVocabulary ?vocabularyUri .
         BIND (?term as ?type) .
     } UNION {
         GRAPH ?g {
