@@ -596,7 +596,7 @@ public class Configuration {
     @org.springframework.context.annotation.Configuration
     public static class Cors {
         @NotNull
-        private String allowedOrigins = "http://localhost:3000";
+        private String allowedOrigins = "http://localhost";
 
         public String getAllowedOrigins() {
             return allowedOrigins;
