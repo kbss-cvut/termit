@@ -51,7 +51,6 @@ public class VocabularyController extends BaseController {
 
     private final VocabularyService vocabularyService;
 
-
     @Autowired
     public VocabularyController(VocabularyService vocabularyService, IdentifierResolver idResolver,
                                 Configuration config) {

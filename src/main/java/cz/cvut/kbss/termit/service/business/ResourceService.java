@@ -185,7 +185,7 @@ public class ResourceService
     public void updateDocumentFile(File original, File modified) {
         Objects.requireNonNull(original);
         Objects.requireNonNull(modified);
-        
+
         //Checks if the label isn't the same as any other file already existing in the document
         if (!original.getLabel().equals(modified.getLabel())) {
             for (File f:original.getDocument().getFiles()) {
