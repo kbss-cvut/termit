@@ -21,6 +21,7 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -173,6 +174,23 @@ public class ResourceController extends BaseController {
         final File file = (File) resourceService.findRequired(fileIdentifier);
         resourceService.removeFile(file);
         LOG.debug("File {} successfully removed.", fileIdentifier);
+    }
+
+    @PutMapping(value = "/{resourceName}/files/{fileName}",
+                consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public void updateFileInDocument(@PathVariable String resourceName,
+                                     @RequestParam(name = QueryParams.NAMESPACE,
+                                                   required = false) Optional<String> namespace,
+                                     @PathVariable String fileName,
+                                     @RequestBody File file
+    ) {
+        final URI fileIdentifier = resolveIdentifier(resourceNamespace(namespace), fileName);
+        verifyRequestAndEntityIdentifier(file, fileIdentifier);
+        final File original = (File) resourceService.findRequired(fileIdentifier);
+        resourceService.updateDocumentFile(original, file);
+        LOG.debug("File {} successfully updated.", fileIdentifier);
     }
 
     /**
