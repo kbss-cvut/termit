@@ -24,7 +24,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.time.Instant;
 
-@OWLClass(iri = Vocabulary.s_c_uzivatel)
+@OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
 public class UserAccount extends AbstractUser {
 
     @OWLDataProperty(iri = Vocabulary.s_p_ma_heslo)
