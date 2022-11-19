@@ -149,19 +149,6 @@ class UserRepositoryServiceTest {
     }
 
     @Test
-    void updateThrowsValidationExceptionWhenUpdatedInstanceIsMissingValues() {
-        final UserAccount user = Generator.generateUserAccountWithPassword();
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        when(userAccountDao.find(user.getUri())).thenReturn(Optional.of(user));
-        Environment.setCurrentUser(user);
-
-        user.setUsername(null);
-        user.setPassword(null); // Simulate instance being loaded from repo
-        final ValidationException ex = assertThrows(ValidationException.class, () -> sut.update(user));
-        assertThat(ex.getMessage(), containsString("username must not be blank"));
-    }
-
-    @Test
     void persistDoesNotGenerateUriIfItIsAlreadyPresent() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         final URI originalUri = user.getUri();

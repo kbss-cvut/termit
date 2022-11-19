@@ -242,18 +242,6 @@ class UserServiceTest {
     }
 
     @Test
-    void getCurrentUpdatesLastSeenTimestampOfCurrentUser() {
-        final UserAccount account = Generator.generateUserAccount();
-        when(securityUtilsMock.getCurrentUser()).thenReturn(account);
-        assertNull(account.getLastSeen());
-        sut.getCurrent();
-        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
-        verify(repositoryServiceMock).update(captor.capture());
-        assertEquals(account.getUri(), captor.getValue().getUri());
-        assertNotNull(captor.getValue().getLastSeen());
-    }
-
-    @Test
     void persistAddsUserRestrictedType() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         sut.persist(user);

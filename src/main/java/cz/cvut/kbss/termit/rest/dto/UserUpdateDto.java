@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * DTO used for user updating so that original password can be validated.
  */
-@OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
+@OWLClass(iri = Vocabulary.s_c_uzivatel)
 public class UserUpdateDto extends UserAccount {
 
     @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/original-password")
