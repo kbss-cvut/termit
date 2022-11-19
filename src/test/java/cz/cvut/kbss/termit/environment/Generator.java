@@ -163,6 +163,7 @@ public class Generator {
         final UserAccount account = new UserAccount();
         account.setFirstName("FirstName" + randomInt());
         account.setLastName("LastName" + randomInt());
+        account.setUsername("user" + randomInt() + "@kbss.felk.cvut.cz");
         account.setUri(Generator.generateUri());
         return account;
     }
