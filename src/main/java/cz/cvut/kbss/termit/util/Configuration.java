@@ -582,7 +582,7 @@ public class Configuration {
     public static class Workspace {
 
         @NotNull
-        private boolean allVocabulariesEditable = true;
+        private boolean allVocabulariesEditable = false;
 
         public boolean isAllVocabulariesEditable() {
             return allVocabulariesEditable;

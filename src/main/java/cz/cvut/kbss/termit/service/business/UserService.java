@@ -103,7 +103,6 @@ public class UserService {
     public UserAccount getCurrent() {
         final UserAccount account = securityUtils.getCurrentUser();
         account.erasePassword();
-        updateLastSeen(account.copy());
         return account;
     }
 

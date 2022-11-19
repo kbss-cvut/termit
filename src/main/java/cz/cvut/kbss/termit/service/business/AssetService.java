@@ -32,10 +32,13 @@ public class AssetService {
 
     private final AssetDao assetDao;
 
+    private final SecurityUtils securityUtils;
+
     @Autowired
-    public AssetService(TermRepositoryService termRepositoryService, AssetDao assetDao) {
+    public AssetService(TermRepositoryService termRepositoryService, AssetDao assetDao, SecurityUtils securityUtils) {
         this.termRepositoryService = termRepositoryService;
         this.assetDao = assetDao;
+        this.securityUtils = securityUtils;
     }
 
     /**
@@ -65,7 +68,7 @@ public class AssetService {
      * @return Page of recently added/edited assets
      */
     public Page<RecentlyModifiedAsset> findMyLastEdited(Pageable pageSpec) {
-        final User me = SecurityUtils.currentUser().toUser();
+        final User me = securityUtils.getCurrentUser().toUser();
         return assetDao.findLastEditedBy(me, pageSpec);
     }
 
@@ -76,7 +79,7 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findLastCommentedInReactionToMine(Pageable pageSpec) {
-        final User me = SecurityUtils.currentUser().toUser();
+        final User me = securityUtils.getCurrentUser().toUser();
         return termRepositoryService.findLastCommentedInReaction(me, pageSpec);
     }
 
@@ -87,7 +90,7 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findMyLastCommented(Pageable pageSpec) {
-        final User me = SecurityUtils.currentUser().toUser();
+        final User me = securityUtils.getCurrentUser().toUser();
         return termRepositoryService.findMyLastCommented(me, pageSpec);
     }
 }
