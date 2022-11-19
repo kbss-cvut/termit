@@ -48,31 +48,27 @@ import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private static final Set<String> PUBLIC_ENDPOINTS = new HashSet<>(Arrays.asList(
-        REST_MAPPING_PATH + PUBLIC_API_PATH,
-        "data/label"    // DataController.getLabel
+            REST_MAPPING_PATH + PUBLIC_API_PATH,
+            "data/label"    // DataController.getLabel
     ));
 
     private final JwtUtils jwtUtils;
-
-    private final SecurityUtils securityUtils;
 
     private final TermItUserDetailsService userDetailsService;
 
     private final ObjectMapper objectMapper;
 
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils,
-                                  SecurityUtils securityUtils, TermItUserDetailsService userDetailsService,
-                                  ObjectMapper objectMapper) {
+                                  TermItUserDetailsService userDetailsService, ObjectMapper objectMapper) {
         super(authenticationManager);
         this.jwtUtils = jwtUtils;
-        this.securityUtils = securityUtils;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-        throws IOException, ServletException {
+            throws IOException, ServletException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith(SecurityConstants.JWT_TOKEN_PREFIX)) {
             chain.doFilter(request, response);
@@ -83,7 +79,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             final TermItUserDetails userDetails = jwtUtils.extractUserInfo(authToken);
             final TermItUserDetails existingDetails = userDetailsService.loadUserByUsername(userDetails.getUsername());
             SecurityUtils.verifyAccountStatus(existingDetails.getUser());
-            securityUtils.setCurrentUser(existingDetails);
+            SecurityUtils.setCurrentUser(existingDetails);
             refreshToken(authToken, response);
             chain.doFilter(request, response);
         } catch (JwtException e) {
@@ -98,10 +94,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     private void unauthorizedRequest(HttpServletRequest request, HttpServletResponse response, RuntimeException e)
-        throws IOException {
+            throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         objectMapper.writeValue(response.getOutputStream(),
-            ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
+                                ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()));
     }
 
     private void refreshToken(String authToken, HttpServletResponse response) {

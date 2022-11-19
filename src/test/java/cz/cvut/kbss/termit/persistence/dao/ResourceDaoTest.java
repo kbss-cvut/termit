@@ -26,6 +26,10 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -320,5 +324,75 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         assertEquals(newLabel, result.get().getLabel());
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
+    }
+
+    @Test
+    void removeFileUpdatesParentDocumentInVocabularyContext() {
+        final Document document = Generator.generateDocumentWithId();
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = new cz.cvut.kbss.termit.model.Vocabulary();
+        vocabulary.setUri(Generator.generateUri());
+        vocabulary.setLabel("Vocabulary");
+        vocabulary.setGlossary(new Glossary());
+        vocabulary.setModel(new Model());
+        vocabulary.setDocument(document);
+        document.setVocabulary(vocabulary.getUri());
+        final File file = new File();
+        file.setLabel("test.html");
+        file.setUri(Generator.generateUri());
+        file.setDocument(document);
+        final File fileTwo = new File();
+        fileTwo.setLabel("test-two.html");
+        fileTwo.setUri(Generator.generateUri());
+        fileTwo.setDocument(document);
+        document.addFile(fileTwo);
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(document, descriptorFactory.documentDescriptor(vocabulary));
+            em.persist(file, descriptorFactory.fileDescriptor(vocabulary));
+            em.persist(fileTwo, descriptorFactory.fileDescriptor(vocabulary));
+        });
+
+        transactional(() -> {
+            final Resource toRemove = sut.getReference(file.getUri()).get();
+            sut.remove(toRemove);
+        });
+
+        final cz.cvut.kbss.termit.model.Vocabulary
+                result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class, vocabulary.getUri(),
+                                 descriptorFactory.vocabularyDescriptor(vocabulary));
+        assertEquals(1, result.getDocument().getFiles().size());
+        assertTrue(result.getDocument().getFiles().contains(fileTwo));
+    }
+
+    @Test
+    void updateSupportsSubclassesOfResource() {
+        final Document doc = Generator.generateDocumentWithId();
+        final File fileOne = Generator.generateFileWithId("test.html");
+        doc.addFile(fileOne);
+        final File fileTwo = Generator.generateFileWithId("testTwo.html");
+        transactional(() -> {
+            // Ensure correct RDFS class hierarchy interpretation
+            final Repository repository = em.unwrap(Repository.class);
+            try (final RepositoryConnection conn = repository.getConnection()) {
+                final ValueFactory vf = conn.getValueFactory();
+                conn.add(vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_c_dokument), RDFS.SUBCLASSOF, vf.createIRI(
+                        cz.cvut.kbss.termit.util.Vocabulary.s_c_zdroj));
+            }
+            em.persist(doc);
+            em.persist(fileOne);
+            em.persist(fileTwo);
+        });
+
+        final String newName = "Updated name";
+        doc.setLabel(newName);
+        final String newDescription = "Document description.";
+        doc.setDescription(newDescription);
+        doc.addFile(fileTwo);
+        transactional(() -> sut.update(doc));
+        final Document result = em.find(Document.class, doc.getUri());
+        assertEquals(newName, result.getLabel());
+        assertEquals(newDescription, result.getDescription());
+        assertEquals(2, result.getFiles().size());
+        assertTrue(result.getFiles().contains(fileTwo));
     }
 }

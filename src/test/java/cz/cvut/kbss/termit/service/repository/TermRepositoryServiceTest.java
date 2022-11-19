@@ -609,7 +609,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(property), vf
-                    .createIRI(term.getUri().toString()));
+                    .createIRI(term.getUri().toString()), vf.createIRI(related.getVocabulary().toString()));
         }
     }
 
@@ -830,12 +830,12 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         exactMatch.setGlossary(childVocabulary.getGlossary().getUri());
         exactMatch.setVocabulary(childVocabulary.getUri());
         transactional(() -> {
-            em.persist(term, descriptorFactory.termDescriptor(term));
-            em.persist(exactMatch, descriptorFactory.termDescriptor(exactMatch));
+            em.persist(term, descriptorFactory.termDescriptorForSave(term));
+            em.persist(exactMatch, descriptorFactory.termDescriptorForSave(exactMatch));
         });
         transactional(() -> {
             term.addExactMatch(new TermInfo(exactMatch));
-            em.merge(term, descriptorFactory.termDescriptor(term));
+            em.merge(term, descriptorFactory.termDescriptorForSave(term));
         });
 
         transactional(() -> {

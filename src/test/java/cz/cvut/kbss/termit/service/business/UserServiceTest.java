@@ -1,13 +1,16 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
@@ -239,6 +242,18 @@ class UserServiceTest {
     }
 
     @Test
+    void getCurrentUpdatesLastSeenTimestampOfCurrentUser() {
+        final UserAccount account = Generator.generateUserAccount();
+        when(securityUtilsMock.getCurrentUser()).thenReturn(account);
+        assertNull(account.getLastSeen());
+        sut.getCurrent();
+        final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(repositoryServiceMock).update(captor.capture());
+        assertEquals(account.getUri(), captor.getValue().getUri());
+        assertNotNull(captor.getValue().getLastSeen());
+    }
+
+    @Test
     void persistAddsUserRestrictedType() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         sut.persist(user);
@@ -310,7 +325,7 @@ class UserServiceTest {
         when(securityUtilsMock.getCurrentUser()).thenReturn(ua);
 
         assertThrows(UnsupportedOperationException.class,
-                () -> sut.changeRole(ua, Vocabulary.s_c_administrator_termitu));
+                     () -> sut.changeRole(ua, Vocabulary.s_c_administrator_termitu));
     }
 
     @Test

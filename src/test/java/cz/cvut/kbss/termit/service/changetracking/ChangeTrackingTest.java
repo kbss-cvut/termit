@@ -235,8 +235,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     @Test
     void updatingTermDraftStatusCreatesUpdateChangeRecord() {
         enableRdfsInference(em);
-        enableRdfsInference(em);
-        final Term term = Generator.generateTermWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             term.setGlossary(vocabulary.getGlossary().getUri());

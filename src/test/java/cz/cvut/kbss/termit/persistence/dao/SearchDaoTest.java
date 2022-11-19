@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,10 +49,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * Repository-tailored queries stored in corresponding profiles should be used in production.
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@ActiveProfiles("no-cache")
 class SearchDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private SearchDao sut;
@@ -83,8 +89,8 @@ class SearchDaoTest extends BaseDaoTestRunner {
     private List<Term> generateAndPersistTerms() {
         final List<Term> terms = generateTerms();
         transactional(() -> {
-            em.persist(vocabulary);
-            terms.forEach(em::persist);
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptorForSave(t)));
         });
         return terms;
     }
@@ -106,7 +112,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
     @Test
     void defaultFullTextSearchFindsVocabulariesWithMatchingLabel() {
         final List<Vocabulary> vocabularies = generateVocabularies();
-        transactional(() -> vocabularies.forEach(em::persist));
+        transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v))));
         final Collection<Vocabulary> matching = vocabularies.stream().filter(v -> v.getLabel().contains("Matching"))
                                                             .collect(Collectors.toList());
         final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
@@ -134,9 +140,9 @@ class SearchDaoTest extends BaseDaoTestRunner {
         final List<Term> terms = generateTerms();
         final List<Vocabulary> vocabularies = generateVocabularies();
         transactional(() -> {
-            em.persist(vocabulary);
-            terms.forEach(em::persist);
-            vocabularies.forEach(em::persist);
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptorForSave(t)));
+            vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v)));
         });
         final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
                                                     .collect(Collectors.toList());
@@ -158,10 +164,10 @@ class SearchDaoTest extends BaseDaoTestRunner {
     void defaultFullTextSearchIncludesDraftStatusInResult() {
         final List<Term> terms = generateTerms();
         transactional(() -> {
-            em.persist(vocabulary);
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> {
                 t.setDraft(Generator.randomBoolean());
-                em.persist(t);
+                em.persist(t, descriptorFactory.termDescriptorForSave(t));
             });
         });
         final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
@@ -192,8 +198,8 @@ class SearchDaoTest extends BaseDaoTestRunner {
         final Vocabulary snapshot = Generator.generateVocabularyWithId();
         snapshot.setLabel(matchingLabel + " 1");
         transactional(() -> {
-            em.persist(v);
-            em.persist(snapshot);
+            em.persist(v, descriptorFactory.vocabularyDescriptor(v));
+            em.persist(snapshot, descriptorFactory.vocabularyDescriptor(snapshot.getUri()));
             insertSnapshotType(snapshot);
         });
 

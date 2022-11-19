@@ -40,13 +40,12 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Environment {
@@ -85,16 +84,6 @@ public class Environment {
         ua.setUsername(user.getUsername());
         ua.setTypes(user.getTypes());
         setCurrentUser(ua);
-    }
-
-    /**
-     * Gets current user as security principal.
-     *
-     * @return Current user authentication as principal or {@code null} if there is no current user
-     */
-    public static Optional<Principal> getCurrentUserPrincipal() {
-        return SecurityContextHolder.getContext() != null ?
-               Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication()) : Optional.empty();
     }
 
     public static UserAccount getCurrentUser() {
@@ -188,5 +177,22 @@ public class Environment {
 
     public static List<TermDto> termsToDtos(List<Term> terms) {
         return terms.stream().map(TermDto::new).collect(Collectors.toList());
+    }
+
+    public static cz.cvut.kbss.termit.model.Vocabulary cloneVocabulary(cz.cvut.kbss.termit.model.Vocabulary original) {
+        final cz.cvut.kbss.termit.model.Vocabulary clone = Generator.generateVocabulary();
+        clone.setUri(original.getUri());
+        clone.setLabel(original.getLabel());
+        clone.getGlossary().setUri(original.getGlossary().getUri());
+        clone.getModel().setUri(original.getModel().getUri());
+        return clone;
+    }
+
+    public static void insertContextBasedOnCanonical(URI workingCtx, URI canonicalCtx, EntityManager em) {
+        em.createNativeQuery("INSERT DATA { GRAPH ?g { ?g ?basedOn ?canonical . }}")
+          .setParameter("g", workingCtx)
+          .setParameter("basedOn", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_vychazi_z_verze))
+          .setParameter("canonical", canonicalCtx)
+          .executeUpdate();
     }
 }

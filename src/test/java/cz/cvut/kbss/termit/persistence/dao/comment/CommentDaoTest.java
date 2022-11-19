@@ -28,8 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CommentDaoTest extends BaseDaoTestRunner {
@@ -195,9 +194,15 @@ class CommentDaoTest extends BaseDaoTestRunner {
         final Instant to = Utils.timestamp().minus(1, ChronoUnit.DAYS);
 
         final List<Comment> result = sut.findAll(term, from, to);
+        verifyCommentInterval(from, to, result);
+    }
+
+    private void verifyCommentInterval(Instant from, Instant to, List<Comment> result) {
         assertFalse(result.isEmpty());
-        result.forEach(c -> assertAll(() -> assertThat(c.getCreated(), greaterThanOrEqualTo(from)),
-                                      () -> assertThat(c.getCreated(), lessThan(to))));
+        result.forEach(c -> assertThat(c, anyOf(
+                hasProperty("created", both(greaterThanOrEqualTo(from)).and(lessThan(to))),
+                hasProperty("modified", both(greaterThanOrEqualTo(from)).and(lessThan(to)))
+        )));
     }
 
     @Test
@@ -220,7 +225,53 @@ class CommentDaoTest extends BaseDaoTestRunner {
         });
 
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?reactsTo ?comment }", Boolean.class)
-                            .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
-                            .setParameter("comment", comment).getSingleResult());
+                      .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
+                      .setParameter("comment", comment).getSingleResult());
+    }
+
+    @Test
+    void findAllByAssetAndTimeIntervalAllowsMissingAsset() {
+        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
+                                                .collect(
+                                                        Collectors.toList());
+        final EntityDescriptor descriptor = createDescriptor();
+        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
+        transactional(() -> {
+            for (int i = 0; i < comments.size(); i++) {
+                final Comment c = comments.get(i);
+                c.setCreated(Utils.timestamp().minus(i, ChronoUnit.DAYS));
+                em.merge(c, descriptor);
+            }
+        });
+        final Instant from = Utils.timestamp().minus(comments.size() / 2, ChronoUnit.DAYS);
+        final Instant to = Utils.timestamp().minus(1, ChronoUnit.DAYS);
+
+        final List<Comment> result = sut.findAll(null, from, to);
+        verifyCommentInterval(from, to, result);
+    }
+
+    @Test
+    void findAllByAssetAndTimeIntervalReturnsCommentsEditedInSpecifiedTimeInterval() {
+        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
+                                                .collect(
+                                                        Collectors.toList());
+        final EntityDescriptor descriptor = createDescriptor();
+        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
+        transactional(() -> {
+            for (int i = 0; i < comments.size(); i++) {
+                final Comment c = comments.get(i);
+                em.createNativeQuery("INSERT DATA { GRAPH ?g { ?c ?modified ?timestamp } }")
+                  .setParameter("g", descriptor.getSingleContext().get())
+                  .setParameter("c", c)
+                  .setParameter("modified", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
+                  .setParameter("timestamp", Utils.timestamp().minus(i, ChronoUnit.DAYS))
+                  .executeUpdate();
+            }
+        });
+        final Instant from = Utils.timestamp().minus(comments.size() / 2, ChronoUnit.DAYS);
+        final Instant to = Utils.timestamp().minus(1, ChronoUnit.DAYS);
+
+        final List<Comment> result = sut.findAll(null, from, to);
+        verifyCommentInterval(from, to, result);
     }
 }

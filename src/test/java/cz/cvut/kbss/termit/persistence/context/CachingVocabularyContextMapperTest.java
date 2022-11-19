@@ -58,13 +58,11 @@ class CachingVocabularyContextMapperTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void getVocabularyContextThrowsAmbiguousVocabularyContextExceptionWhenMultipleContextsForVocabularyAreDetermined() {
+    void loadThrowsAmbiguousVocabularyContextExceptionWhenMultipleContextsForVocabularyAreDetermined() {
         final Vocabulary v = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(v, new EntityDescriptor(v.getUri())));
         transactional(() -> em.persist(v, new EntityDescriptor(Generator.generateUri())));
-        sut.load();
-
-        assertThrows(AmbiguousVocabularyContextException.class, () -> sut.getVocabularyContext(v));
+        assertThrows(AmbiguousVocabularyContextException.class, () -> sut.load());
     }
 
     @Test

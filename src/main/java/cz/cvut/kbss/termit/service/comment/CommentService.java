@@ -50,9 +50,9 @@ public class CommentService {
     /**
      * Gets all comments from the specified asset created in the specified time interval.
      *
-     * @param asset Target of the comments
-     * @param from  Retrieval interval start
-     * @param to    Retrieval interval end
+     * @param asset Target of the comments, optional
+     * @param from  Retrieval interval start, optional
+     * @param to    Retrieval interval end, optional
      * @return List of comments, ordered by date of creation.
      */
     public List<Comment> findAll(Asset<?> asset, Instant from, Instant to) {
@@ -118,7 +118,7 @@ public class CommentService {
      * @param comment Comment to remove
      */
     @Transactional
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "') || @securityUtils.currentUser() == #comment.author")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "') || @securityUtils.getCurrentUser() == #comment.author")
     public void remove(Comment comment) {
         Objects.requireNonNull(comment);
         dao.remove(comment);

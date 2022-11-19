@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -136,6 +137,11 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     }
 
     @Override
+    public void accept(AssetVisitor visitor) {
+        visitor.visitTerm(this);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof AbstractTerm)) return false;
@@ -146,5 +152,14 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @Override
     public int hashCode() {
         return Objects.hash(getUri());
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" +
+                getLabel() +
+                " <" + getUri() + '>' +
+                ", types=" + getTypes() +
+                '}';
     }
 }

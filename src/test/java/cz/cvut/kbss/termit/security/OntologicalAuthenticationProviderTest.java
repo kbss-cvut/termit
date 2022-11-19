@@ -1,64 +1,69 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.security;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.environment.config.TestSecurityConfig;
 import cz.cvut.kbss.termit.event.LoginFailureEvent;
 import cz.cvut.kbss.termit.event.LoginSuccessEvent;
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.event.EventListener;
-import org.springframework.security.authentication.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ContextConfiguration;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @Tag("security")
-@ContextConfiguration(classes = {TestSecurityConfig.class, OntologicalAuthenticationProviderTest.TestConfiguration.class})
-class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
+@ExtendWith(MockitoExtension.class)
+class OntologicalAuthenticationProviderTest {
 
-    @Autowired
-    private AuthenticationProvider sut;
+    @Mock
+    private TermItUserDetailsService userDetailsService;
 
-    @Autowired
-    private UserAccountDao userAccountDao;
+    @Spy
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
-    @Autowired
-    private Listener listener;
+    @InjectMocks
+    private OntologicalAuthenticationProvider sut;
 
     private UserAccount user;
     private String plainPassword;
@@ -68,14 +73,13 @@ class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
         this.user = Generator.generateUserAccountWithPassword();
         this.plainPassword = user.getPassword();
         user.setPassword(passwordEncoder.encode(plainPassword));
-        transactional(() -> userAccountDao.persist(user));
         SecurityContextHolder.setContext(new SecurityContextImpl());
+        sut.setApplicationEventPublisher(eventPublisher);
     }
 
     @AfterEach
     void tearDown() {
         SecurityContextHolder.setContext(new SecurityContextImpl());
-        Mockito.reset(listener);
     }
 
     @Test
@@ -83,6 +87,8 @@ class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
         final Authentication auth = authentication(user.getUsername(), plainPassword);
         final SecurityContext context = SecurityContextHolder.getContext();
         assertNull(context.getAuthentication());
+        when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
+
         final Authentication result = sut.authenticate(auth);
         assertNotNull(SecurityContextHolder.getContext());
         final TermItUserDetails details =
@@ -98,6 +104,7 @@ class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
     @Test
     void authenticateThrowsUserNotFoundExceptionForUnknownUsername() {
         final Authentication auth = authentication("unknownUsername", user.getPassword());
+        when(userDetailsService.loadUserByUsername(anyString())).thenThrow(new UsernameNotFoundException("Unknown"));
         assertThrows(UsernameNotFoundException.class, () -> sut.authenticate(auth));
         final SecurityContext context = SecurityContextHolder.getContext();
         assertNull(context.getAuthentication());
@@ -105,6 +112,7 @@ class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
 
     @Test
     void authenticateThrowsBadCredentialsForInvalidPassword() {
+        when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         final Authentication auth = authentication(user.getUsername(), "unknownPassword");
         assertThrows(BadCredentialsException.class, () -> sut.authenticate(auth));
         final SecurityContext context = SecurityContextHolder.getContext();
@@ -120,30 +128,37 @@ class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
     void authenticateThrowsAuthenticationExceptionForEmptyUsername() {
         final Authentication auth = authentication("", "");
         final UsernameNotFoundException ex = assertThrows(UsernameNotFoundException.class,
-                () -> sut.authenticate(auth));
+                                                          () -> sut.authenticate(auth));
         assertThat(ex.getMessage(), containsString("Username cannot be empty."));
+        verify(userDetailsService, never()).loadUserByUsername("");
     }
 
     @Test
     void successfulLoginEmitsLoginSuccessEvent() {
+        when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         final Authentication auth = authentication(user.getUsername(), plainPassword);
         sut.authenticate(auth);
-        verify(listener).onSuccess(any());
-        assertEquals(user, listener.user);
+        final ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue(), instanceOf(LoginSuccessEvent.class));
+        assertEquals(user, ((LoginSuccessEvent) captor.getValue()).getUser());
     }
 
     @Test
     void failedLoginEmitsLoginFailureEvent() {
+        when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         final Authentication auth = authentication(user.getUsername(), "unknownPassword");
         assertThrows(BadCredentialsException.class, () -> sut.authenticate(auth));
-        verify(listener).onFailure(any());
-        assertEquals(user, listener.user);
+        final ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue(), instanceOf(LoginFailureEvent.class));
+        assertEquals(user, ((LoginFailureEvent) captor.getValue()).getUser());
     }
 
     @Test
     void authenticateThrowsLockedExceptionForLockedUser() {
         user.lock();
-        transactional(() -> userAccountDao.update(user));
+        when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         final Authentication auth = authentication(user.getUsername(), plainPassword);
         final LockedException ex = assertThrows(LockedException.class, () -> sut.authenticate(auth));
         assertEquals("Account of user " + user + " is locked.", ex.getMessage());
@@ -152,34 +167,9 @@ class OntologicalAuthenticationProviderTest extends BaseServiceTestRunner {
     @Test
     void authenticationThrowsDisabledExceptionForDisabledUser() {
         user.disable();
-        transactional(() -> userAccountDao.update(user));
+        when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(user));
         final Authentication auth = authentication(user.getUsername(), plainPassword);
         final DisabledException ex = assertThrows(DisabledException.class, () -> sut.authenticate(auth));
         assertEquals("Account of user " + user + " is disabled.", ex.getMessage());
-    }
-
-    @org.springframework.boot.test.context.TestConfiguration
-    @ComponentScan(basePackages = "cz.cvut.kbss.termit.security")
-    public static class TestConfiguration {
-        @Bean
-        public Listener listener() {
-            return spy(new Listener());
-        }
-
-    }
-
-    public static class Listener {
-
-        private UserAccount user;
-
-        @EventListener
-        public void onSuccess(LoginSuccessEvent event) {
-            this.user = event.getUser();
-        }
-
-        @EventListener
-        public void onFailure(LoginFailureEvent event) {
-            this.user = event.getUser();
-        }
     }
 }

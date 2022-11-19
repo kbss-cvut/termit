@@ -20,6 +20,12 @@ package cz.cvut.kbss.termit.model;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-@OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
+@OWLClass(iri = Vocabulary.s_c_uzivatel)
 public class User extends AbstractUser {
+
+    public UserAccount toUserAccount() {
+        final UserAccount account = new UserAccount();
+        copyAttributes(account);
+        return account;
+    }
 }

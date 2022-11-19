@@ -21,8 +21,11 @@ public class AuthorizationService {
 
     private final EditableVocabularies editableVocabularies;
 
-    public AuthorizationService(EditableVocabularies editableVocabularies) {
+    private final SecurityUtils securityUtils;
+
+    public AuthorizationService(EditableVocabularies editableVocabularies, SecurityUtils securityUtils) {
         this.editableVocabularies = editableVocabularies;
+        this.securityUtils = securityUtils;
     }
 
     /**
@@ -41,7 +44,7 @@ public class AuthorizationService {
     }
 
     private boolean isUserAtLeastEditor() {
-        final UserAccount user = SecurityUtils.currentUser();
+        final UserAccount user = securityUtils.getCurrentUser();
         return user.isAdmin() || user.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu);
     }
 

@@ -36,6 +36,8 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,15 +63,20 @@ public class JwtUtils {
      * @return Generated JWT hash
      */
     public String generateToken(AbstractUser user, Collection<? extends GrantedAuthority> authorities) {
-        final Date issued = new Date();
+        final Instant issued = issueTimestamp();
         return Jwts.builder().setSubject(user.getUsername())
                    .setId(user.getUri().toString())
-                   .setIssuedAt(issued)
-                   .setExpiration(new Date(issued.getTime() + SecurityConstants.SESSION_TIMEOUT))
+                   .setIssuedAt(Date.from(issued))
+                   .setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)))
                    .claim(SecurityConstants.JWT_ROLE_CLAIM, mapAuthoritiesToClaim(authorities))
                    .signWith(key, SIGNATURE_ALGORITHM)
                    .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
                    .compact();
+    }
+
+    static Instant issueTimestamp() {
+        // Truncate timestamp to seconds, it would get truncated on serialization/deserialization anyway
+        return Instant.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
     private static String mapAuthoritiesToClaim(Collection<? extends GrantedAuthority> authorities) {
@@ -102,9 +109,7 @@ public class JwtUtils {
 
     private Claims getClaimsFromToken(String token) {
         try {
-            return Jwts.parserBuilder().setSigningKey(key)
-                       .deserializeJsonWith(new JacksonDeserializer<>(objectMapper))
-                       .build().parseClaimsJws(token).getBody();
+            return parseClaims(token);
         } catch (MalformedJwtException | UnsupportedJwtException e) {
             throw new JwtException("Unable to parse the specified JWT.", e);
         } catch (SecurityException e) {
@@ -112,6 +117,12 @@ public class JwtUtils {
         } catch (ExpiredJwtException e) {
             throw new TokenExpiredException(e.getMessage());
         }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(key)
+                   .deserializeJsonWith(new JacksonDeserializer<>(objectMapper))
+                   .build().parseClaimsJws(token).getBody();
     }
 
     private static void verifyAttributePresence(Claims claims) {
@@ -147,12 +158,43 @@ public class JwtUtils {
     public String refreshToken(String token) {
         Objects.requireNonNull(token);
         final Claims claims = getClaimsFromToken(token);
-        final Date issuedAt = new Date();
-        claims.setIssuedAt(issuedAt);
-        claims.setExpiration(new Date(issuedAt.getTime() + SecurityConstants.SESSION_TIMEOUT));
+        final Instant issued = issueTimestamp();
+        claims.setIssuedAt(Date.from(issued));
+        claims.setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)));
         return Jwts.builder().setClaims(claims)
                    .signWith(key, SIGNATURE_ALGORITHM)
                    .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
                    .compact();
+    }
+
+    /**
+     * Gets URI of the user represented by the specified token.
+     *
+     * Note that it is expected
+     * @param token JSON Web Token
+     * @return User identifier
+     */
+    public URI getUserUri(String token) {
+        try {
+            final Claims claims = parseClaims(token);
+            return URI.create(claims.getId());
+        } catch (ExpiredJwtException e) {
+            return URI.create(e.getClaims().getId());
+        }
+    }
+
+    /**
+     * Retrieves timestamp when the specified token was issued.
+     *
+     * @param token JSON Web Token
+     * @return Timestamp of token issue
+     */
+    public Instant getTokenIssueTimestamp(String token) {
+        try {
+            final Claims claims = parseClaims(token);
+            return claims.getIssuedAt().toInstant();
+        } catch (ExpiredJwtException e) {
+            return e.getClaims().getIssuedAt().toInstant();
+        }
     }
 }

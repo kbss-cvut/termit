@@ -36,8 +36,11 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping(UserController.PATH)
 public class UserController extends BaseController {
+
+    public static final String PATH = "/users";
+    public static final String CURRENT_USER_PATH = "/current";
 
     private static final Logger LOG = LoggerFactory.getLogger(UserController.class);
 
@@ -55,13 +58,13 @@ public class UserController extends BaseController {
         return userService.findAll();
     }
 
-    @GetMapping(value = "/current", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = CURRENT_USER_PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public UserAccount getCurrent() {
         return userService.getCurrent();
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping(value = "/current", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PutMapping(value = CURRENT_USER_PATH, consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public void updateCurrent(@RequestBody UserUpdateDto update) {
         userService.updateCurrent(update);
         LOG.debug("User {} successfully updated.", update);

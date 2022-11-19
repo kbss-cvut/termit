@@ -84,8 +84,8 @@ class UserControllerSecurityTest extends BaseControllerTestRunner {
         final UserAccount toUnlock = Generator.generateUserAccountWithPassword();
 
         mockMvc.perform(
-                delete(BASE_URL + "/" + extractIdentifierFragment(toUnlock.getUri()) + "/lock")
-                        .content(toUnlock.getPassword()))
+                       delete(BASE_URL + "/" + extractIdentifierFragment(toUnlock.getUri()) + "/lock")
+                               .content(toUnlock.getPassword()))
                .andExpect(status().isForbidden());
         verify(userService, never()).unlock(any(), any());
     }

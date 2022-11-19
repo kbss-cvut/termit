@@ -1,22 +1,20 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
@@ -25,6 +23,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -44,8 +43,6 @@ public abstract class AbstractUser implements HasIdentifier, HasTypes, Serializa
     @OWLDataProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni)
     String lastName;
 
-    @NotBlank
-    @ParticipationConstraints(nonEmpty = true)
     @OWLDataProperty(iri = Vocabulary.s_p_ma_uzivatelske_jmeno)
     String username;
 
@@ -96,6 +93,21 @@ public abstract class AbstractUser implements HasIdentifier, HasTypes, Serializa
         this.types = types;
     }
 
+    protected void copyAttributes(AbstractUser target) {
+        target.setUri(uri);
+        target.setFirstName(firstName);
+        target.setLastName(lastName);
+        target.setUsername(username);
+        if (types != null) {
+            target.setTypes(new HashSet<>(types));
+        }
+    }
+
+    @JsonIgnore
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -116,8 +128,7 @@ public abstract class AbstractUser implements HasIdentifier, HasTypes, Serializa
     @Override
     public String toString() {
         return "User{" +
-                firstName +
-                " " + lastName +
+                getFullName() +
                 ", username='" + username + '\'' +
                 '}';
     }

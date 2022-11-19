@@ -10,6 +10,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,5 +63,22 @@ class WorkspaceVocabularyContextMapperTest {
         assertTrue(result.isPresent());
         assertEquals(vocabulary, result.get());
         verify(delegatee).getVocabularyInContext(context);
+    }
+
+    @Test
+    void getVocabularyContextsOverridesDelegateeWithEditableVocabularyContexts() {
+        final URI vocabularyIri = Generator.generateUri();
+        final Map<URI, URI> repoContexts = Map.of(Generator.generateUri(), Generator.generateUri(),
+                                                  Generator.generateUri(), Generator.generateUri(),
+                                                  vocabularyIri, Generator.generateUri());
+        when(delegatee.getVocabularyContexts()).thenReturn(repoContexts);
+        final URI contextOverride = Generator.generateUri();
+        when(editableVocabularies.getVocabularyContext(any(URI.class))).thenReturn(Optional.empty());
+        when(editableVocabularies.getVocabularyContext(vocabularyIri)).thenReturn(Optional.of(contextOverride));
+
+        final Map<URI, URI> expected = new HashMap<>(repoContexts);
+        expected.put(vocabularyIri, contextOverride);
+        final Map<URI, URI> result = sut.getVocabularyContexts();
+        assertEquals(expected, result);
     }
 }

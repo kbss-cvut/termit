@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.persistence.context;
 import cz.cvut.kbss.termit.model.Vocabulary;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -42,4 +43,14 @@ public interface VocabularyContextMapper {
      * @return Optional vocabulary identifier
      */
     Optional<URI> getVocabularyInContext(URI contextUri);
+
+    /**
+     * Resolves the identifiers of repository contexts of all accessible vocabularies.
+     * <p>
+     * Note that snapshot vocabularies as well as inaccessible working copies of vocabularies are excluded from the
+     * result.
+     *
+     * @return Map of vocabulary identifiers to repository contexts
+     */
+    Map<URI, URI> getVocabularyContexts();
 }

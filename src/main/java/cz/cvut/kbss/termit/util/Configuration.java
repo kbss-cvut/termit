@@ -31,6 +31,10 @@ import java.util.Set;
 @ConfigurationProperties("termit")
 @Primary
 public class Configuration {
+    /**
+     * TermIt frontend URL.
+     */
+    private String url = "http://localhost:3000/#";
     private Persistence persistence = new Persistence();
     private Repository repository = new Repository();
     private ChangeTracking changetracking = new ChangeTracking();
@@ -44,6 +48,16 @@ public class Configuration {
     private PublicView publicView = new PublicView();
     private Workspace workspace = new Workspace();
     private Cors cors = new Cors();
+    private Schedule schedule = new Schedule();
+    private Mail mail = new Mail();
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
     public Persistence getPersistence() {
         return persistence;
@@ -147,6 +161,22 @@ public class Configuration {
 
     public void setCors(Cors cors) {
         this.cors = cors;
+    }
+
+    public Schedule getSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(Schedule schedule) {
+        this.schedule = schedule;
+    }
+
+    public Mail getMail() {
+        return mail;
+    }
+
+    public void setMail(Mail mail) {
+        this.mail = mail;
     }
 
     @org.springframework.context.annotation.Configuration
@@ -486,7 +516,7 @@ public class Configuration {
          * Score threshold for a term occurrence for it to be saved into the repository.
          */
         @NotNull
-        String termOccurrenceMinScore;
+        String termOccurrenceMinScore = "0.8";
 
         public String getUrl() {
             return url;
@@ -552,7 +582,7 @@ public class Configuration {
     public static class Workspace {
 
         @NotNull
-        private boolean allVocabulariesEditable = true;
+        private boolean allVocabulariesEditable = false;
 
         public boolean isAllVocabulariesEditable() {
             return allVocabulariesEditable;
@@ -574,6 +604,64 @@ public class Configuration {
 
         public void setAllowedOrigins(String allowedOrigins) {
             this.allowedOrigins = allowedOrigins;
+        }
+    }
+
+    @org.springframework.context.annotation.Configuration
+    public static class Schedule {
+
+        private Cron cron = new Cron();
+
+        public Cron getCron() {
+            return cron;
+        }
+
+        public void setCron(Cron cron) {
+            this.cron = cron;
+        }
+
+        public static class Cron {
+
+            private Notification notification = new Notification();
+
+            public Notification getNotification() {
+                return notification;
+            }
+
+            public void setNotification(Notification notification) {
+                this.notification = notification;
+            }
+
+            public static class Notification {
+
+                /**
+                 * CRON expression configuring when to send notifications of changes in comments to admins and
+                 * vocabulary authors. Defaults to '-' which disables this functionality.
+                 */
+                private String comments = "-";
+
+                public String getComments() {
+                    return comments;
+                }
+
+                public void setComments(String comments) {
+                    this.comments = comments;
+                }
+            }
+        }
+    }
+
+    @org.springframework.context.annotation.Configuration
+    public static class Mail {
+
+        private String sender;
+
+        public String getSender() {
+            return sender;
+        }
+
+        public void setSender(String sender) {
+            this.sender = sender;
         }
     }
 }

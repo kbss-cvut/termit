@@ -27,11 +27,11 @@ import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +41,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -48,6 +49,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import javax.servlet.FilterChain;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
@@ -80,9 +82,6 @@ class JwtAuthorizationFilterTest {
     @Mock
     private TermItUserDetailsService detailsServiceMock;
 
-    @Mock
-    private SecurityUtils securityUtilsMock;
-
     private JwtUtils jwtUtilsSpy;
 
     private ObjectMapper objectMapper;
@@ -91,14 +90,21 @@ class JwtAuthorizationFilterTest {
 
     private JwtAuthorizationFilter sut;
 
+    private final Instant tokenIssued = JwtUtils.issueTimestamp();
+
     @BeforeEach
     void setUp() {
         this.user = Generator.generateUserAccount();
         this.objectMapper = Environment.getObjectMapper();
         this.signingKey = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
         this.jwtUtilsSpy = spy(new JwtUtils(objectMapper, config));
-        this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, securityUtilsMock, detailsServiceMock,
-                objectMapper);
+        this.sut = new JwtAuthorizationFilter(authManagerMock, jwtUtilsSpy, detailsServiceMock,
+                                              objectMapper);
+    }
+
+    @AfterEach
+    void tearDown() {
+        Environment.resetCurrentUser();
     }
 
     @Test
@@ -107,10 +113,7 @@ class JwtAuthorizationFilterTest {
         generateJwtIntoRequest();
 
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
-        final ArgumentCaptor<TermItUserDetails> captor = ArgumentCaptor.forClass(TermItUserDetails.class);
-        verify(securityUtilsMock).setCurrentUser(captor.capture());
-        final TermItUserDetails userDetails = captor.getValue();
-        assertEquals(user, userDetails.getUser());
+        assertEquals(user, SecurityUtils.currentUser());
     }
 
     private void generateJwtIntoRequest() {
@@ -121,8 +124,8 @@ class JwtAuthorizationFilterTest {
     private String generateJwt() {
         return Jwts.builder().setSubject(user.getUsername())
                    .setId(user.getUri().toString())
-                   .setIssuedAt(new Date())
-                   .setExpiration(new Date(System.currentTimeMillis() + 10000))
+                   .setIssuedAt(Date.from(tokenIssued))
+                   .setExpiration(Date.from(tokenIssued.plusMillis(10000L)))
                    .signWith(signingKey, JwtUtils.SIGNATURE_ALGORITHM)
                    .compact();
     }
@@ -138,18 +141,20 @@ class JwtAuthorizationFilterTest {
     @Test
     void doFilterInternalLeavesEmptySecurityContextAndPassesRequestDownChainWhenAuthenticationIsMissing()
             throws Exception {
+        Environment.resetCurrentUser();
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         verify(chainMock).doFilter(mockRequest, mockResponse);
-        verify(securityUtilsMock, never()).setCurrentUser(any());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
     void doFilterInternalLeavesEmptySecurityContextAndPassesRequestDownChainWhenAuthenticationHasIncorrectFormat()
             throws Exception {
+        Environment.resetCurrentUser();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, generateJwt());
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         verify(chainMock).doFilter(mockRequest, mockResponse);
-        verify(securityUtilsMock, never()).setCurrentUser(any());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
@@ -159,7 +164,7 @@ class JwtAuthorizationFilterTest {
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
         assertTrue(mockResponse.containsHeader(HttpHeaders.AUTHORIZATION));
         assertNotEquals(mockRequest.getHeader(HttpHeaders.AUTHORIZATION),
-                mockResponse.getHeader(HttpHeaders.AUTHORIZATION));
+                        mockResponse.getHeader(HttpHeaders.AUTHORIZATION));
         verify(jwtUtilsSpy).refreshToken(any());
     }
 

@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -43,14 +44,17 @@ public class SearchDao {
 
     private final Configuration.Persistence config;
 
+    private final VocabularyContextMapper contextMapper;
+
     protected String ftsQuery;
 
     protected final EntityManager em;
 
     @Autowired
-    public SearchDao(EntityManager em, Configuration config) {
+    public SearchDao(EntityManager em, Configuration config, VocabularyContextMapper contextMapper) {
         this.em = em;
         this.config = config.getPersistence();
+        this.contextMapper = contextMapper;
     }
 
     @PostConstruct
@@ -110,7 +114,8 @@ public class SearchDao {
                               URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                 .setParameter("isDraft", URI.create(Vocabulary.s_p_je_draft))
                 .setParameter("langTag", config.getLanguage(), null)
-                .setParameter("searchString", searchString, null);
+                .setParameter("searchString", searchString, null)
+                .setParameter("contexts", contextMapper.getVocabularyContexts().values());
     }
 
     protected String queryIncludingSnapshots() {

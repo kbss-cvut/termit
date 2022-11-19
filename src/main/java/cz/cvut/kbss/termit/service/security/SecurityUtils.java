@@ -129,7 +129,7 @@ public class SecurityUtils {
      * @param userDetails Details of the user to set as current
      * @return The generated authentication token
      */
-    public AuthenticationToken setCurrentUser(TermItUserDetails userDetails) {
+    public static AuthenticationToken setCurrentUser(TermItUserDetails userDetails) {
         final AuthenticationToken token = new AuthenticationToken(userDetails.getAuthorities(), userDetails);
         token.setAuthenticated(true);
 
