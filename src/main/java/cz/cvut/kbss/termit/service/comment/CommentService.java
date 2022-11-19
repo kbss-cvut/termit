@@ -118,7 +118,7 @@ public class CommentService {
      * @param comment Comment to remove
      */
     @Transactional
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "') || @securityUtils.currentUser() == #comment.author")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "') || @securityUtils.getCurrentUser() == #comment.author")
     public void remove(Comment comment) {
         Objects.requireNonNull(comment);
         dao.remove(comment);

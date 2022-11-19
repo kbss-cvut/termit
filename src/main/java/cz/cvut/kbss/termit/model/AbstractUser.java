@@ -44,8 +44,6 @@ public abstract class AbstractUser implements HasIdentifier, HasTypes, Serializa
     @OWLDataProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni)
     String lastName;
 
-    @NotBlank
-    @ParticipationConstraints(nonEmpty = true)
     @OWLDataProperty(iri = Vocabulary.s_p_ma_uzivatelske_jmeno)
     String username;
 
