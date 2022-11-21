@@ -21,7 +21,6 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -175,7 +174,6 @@ public class ResourceController extends BaseController {
         resourceService.removeFile(file);
         LOG.debug("File {} successfully removed.", fileIdentifier);
     }
-
 
     /**
      * Runs text analysis on the specified resource.

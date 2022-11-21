@@ -173,8 +173,7 @@ public class ResourceService
             return Collections.emptyList();
         }
     }
-
-
+    
     /**
      * Adds the specified file to the specified document and persists it.
      *
