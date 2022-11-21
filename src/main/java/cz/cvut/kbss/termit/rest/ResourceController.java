@@ -176,22 +176,6 @@ public class ResourceController extends BaseController {
         LOG.debug("File {} successfully removed.", fileIdentifier);
     }
 
-    @PutMapping(value = "/{resourceName}/files/{fileName}",
-                consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void updateFileInDocument(@PathVariable String resourceName,
-                                     @RequestParam(name = QueryParams.NAMESPACE,
-                                                   required = false) Optional<String> namespace,
-                                     @PathVariable String fileName,
-                                     @RequestBody File file
-    ) {
-        final URI fileIdentifier = resolveIdentifier(resourceNamespace(namespace), fileName);
-        verifyRequestAndEntityIdentifier(file, fileIdentifier);
-        final File original = (File) resourceService.findRequired(fileIdentifier);
-        resourceService.updateDocumentFile(original, file);
-        LOG.debug("File {} successfully updated.", fileIdentifier);
-    }
 
     /**
      * Runs text analysis on the specified resource.

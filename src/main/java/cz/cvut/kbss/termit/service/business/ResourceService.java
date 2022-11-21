@@ -174,28 +174,6 @@ public class ResourceService
         }
     }
 
-    /**
-     * Takes the properties of modified File and rewrites them in the original.
-     * Currently edits only label
-     *
-     * @param original File loaded from database
-     * @param modified File containing the changes
-     * @throws UnsupportedAssetOperationException If the specified modification is not permitted
-     */
-    public void updateDocumentFile(File original, File modified) {
-        Objects.requireNonNull(original);
-        Objects.requireNonNull(modified);
-
-        //Checks if the label isn't the same as any other file already existing in the document
-        if (!original.getLabel().equals(modified.getLabel())) {
-            for (File f:original.getDocument().getFiles()) {
-                if(f.getLabel().equals(modified.getLabel()))
-                    throw new UnsupportedAssetOperationException("Unable to change the name of  " + original);
-            }
-            original.setLabel(modified.getLabel());
-        }
-        update(original);
-    }
 
     /**
      * Adds the specified file to the specified document and persists it.
