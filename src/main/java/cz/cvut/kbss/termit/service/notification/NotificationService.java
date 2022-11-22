@@ -11,6 +11,7 @@ import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.util.Optional;
 
 @Service
 public class NotificationService {
@@ -39,8 +40,8 @@ public class NotificationService {
         LOG.debug("Running comment change notification.");
         final Instant now = Utils.timestamp();
         final Instant previous = resolvePreviousRun(now, scheduleConfig.getCron().getNotification().getComments());
-        final Message changeNotificationMessage = commentChangeNotifier.createCommentChangesMessage(previous, now);
-        postman.sendMessage(changeNotificationMessage);
+        final Optional<Message> changeNotificationMessage = commentChangeNotifier.createCommentChangesMessage(previous, now);
+        changeNotificationMessage.ifPresent(postman::sendMessage);
     }
 
     private static Instant resolvePreviousRun(Instant now, String cronExpression) {

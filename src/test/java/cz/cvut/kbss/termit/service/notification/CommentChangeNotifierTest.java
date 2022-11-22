@@ -35,8 +35,7 @@ import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.contains
 import static cz.cvut.kbss.termit.service.notification.CommentChangeNotifier.COMMENT_CHANGES_TEMPLATE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -162,8 +161,9 @@ class CommentChangeNotifierTest {
                 new MessageAssetFactory.MessageAsset(term.getPrimaryLabel(), link));
         when(messageComposer.composeMessage(any(), anyMap())).thenReturn("Test message content");
 
-        final Message result = sut.createCommentChangesMessage(from, to);
-        assertEquals(Collections.singletonList(author.getUsername()), result.getRecipients());
+        final Optional<Message> result = sut.createCommentChangesMessage(from, to);
+        assertTrue(result.isPresent());
+        assertEquals(Collections.singletonList(author.getUsername()), result.get().getRecipients());
         verify(changeRecordService).getAuthors(new cz.cvut.kbss.termit.model.Vocabulary(term.getVocabulary()));
         verify(commentService).findAll(null, from, to);
         final ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
@@ -175,5 +175,20 @@ class CommentChangeNotifierTest {
                              new MessageAssetFactory.MessageAsset(term.getPrimaryLabel(), link),
                              Collections.singletonList(new CommentChangeNotifier.CommentForMessage(comment)))),
                      variables.get("commentedAssets"));
+    }
+
+    @Test
+    void createCommentChangesMessageReturnsEmptyOptionalWhenThereAreNoCommentChanges() throws Exception {
+        final Instant from = Utils.timestamp().minus(7, ChronoUnit.DAYS);
+        final Instant to = Utils.timestamp();
+        final Term term = Generator.generateTermWithId(Generator.generateUri());
+        // Simulate autowired configuration
+        final Field configField = Term.class.getDeclaredField("config");
+        configField.setAccessible(true);
+        configField.set(term, new Configuration());
+        when(commentService.findAll(any(), any(Instant.class), any(Instant.class))).thenReturn(Collections.emptyList());
+
+        final Optional<Message> result = sut.createCommentChangesMessage(from, to);
+        assertTrue(result.isEmpty());
     }
 }

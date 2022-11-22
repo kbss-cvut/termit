@@ -59,8 +59,12 @@ public class CommentChangeNotifier {
      * @param to   Interval end
      * @return Notification message ready for sending via email
      */
-    public Message createCommentChangesMessage(Instant from, Instant to) {
+    public Optional<Message> createCommentChangesMessage(Instant from, Instant to) {
         final Map<Asset<?>, List<Comment>> comments = findChangedComments(from, to);
+        if (comments.isEmpty()) {
+            LOG.debug("No new or updated comments found for the specified interval.");
+            return Optional.empty();
+        }
         final Map<String, Object> variables = new HashMap<>();
         final List<AssetWithComments> assetsWithComments = comments.entrySet().stream()
                                                                    .map(e -> new AssetWithComments(
@@ -74,10 +78,10 @@ public class CommentChangeNotifier {
         variables.put("from", LocalDate.ofInstant(from, ZoneId.systemDefault()));
         variables.put("to", LocalDate.ofInstant(to, ZoneId.systemDefault()));
         variables.put("commentedAssets", assetsWithComments);
-        return Message.to(resolveNotificationRecipients(comments).stream().map(
+        return Optional.of(Message.to(resolveNotificationRecipients(comments).stream().map(
                               AbstractUser::getUsername).toArray(String[]::new))
                       .content(messageComposer.composeMessage(COMMENT_CHANGES_TEMPLATE, variables))
-                      .subject("TermIt News").build();
+                      .subject("TermIt News").build());
     }
 
     /**
