@@ -10,7 +10,7 @@ COPY ontology ontology
 COPY profile profile
 COPY src src
 
-RUN mvn package -B -P graphdb,standalone -DskipTests=true
+RUN mvn package -B -P standalone -DskipTests=true
 
 FROM openjdk:11-jdk-oracle as runtime
 COPY --from=build  /termit/target/termit.jar termit.jar
