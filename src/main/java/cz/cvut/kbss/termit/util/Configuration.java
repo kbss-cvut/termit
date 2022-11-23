@@ -594,16 +594,17 @@ public class Configuration {
     }
 
     @org.springframework.context.annotation.Configuration
+    @ConfigurationProperties(prefix = "cors")
     public static class Cors {
         @NotNull
-        private String allowedOrigins = "http://localhost";
+        private String allowedOriginPatterns;
 
-        public String getAllowedOrigins() {
-            return allowedOrigins;
+        public String getAllowedOriginPatterns() {
+            return allowedOriginPatterns;
         }
 
-        public void setAllowedOrigins(String allowedOrigins) {
-            this.allowedOrigins = allowedOrigins;
+        public void setAllowedOriginPatterns(String allowedOriginPatterns) {
+            this.allowedOriginPatterns = allowedOriginPatterns;
         }
     }
 
