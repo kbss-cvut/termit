@@ -597,7 +597,7 @@ public class Configuration {
     @ConfigurationProperties(prefix = "cors")
     public static class Cors {
         @NotNull
-        private String allowedOriginPatterns;
+        private String allowedOriginPatterns = "http://localhost:3000*";
 
         public String getAllowedOriginPatterns() {
             return allowedOriginPatterns;
