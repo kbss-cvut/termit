@@ -42,11 +42,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Environment {
@@ -85,16 +83,6 @@ public class Environment {
         ua.setUsername(user.getUsername());
         ua.setTypes(user.getTypes());
         setCurrentUser(ua);
-    }
-
-    /**
-     * Gets current user as security principal.
-     *
-     * @return Current user authentication as principal or {@code null} if there is no current user
-     */
-    public static Optional<Principal> getCurrentUserPrincipal() {
-        return SecurityContextHolder.getContext() != null ?
-               Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication()) : Optional.empty();
     }
 
     public static UserAccount getCurrentUser() {

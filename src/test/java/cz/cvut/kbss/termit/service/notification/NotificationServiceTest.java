@@ -17,12 +17,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
@@ -62,9 +62,20 @@ class NotificationServiceTest {
         configuration.getSchedule().getCron().getNotification().setComments(cronExpr);
         final Message testMessage = Message.to("test@example.org").content("Test message").subject("Test").build();
         when(commentChangeNotifier.createCommentChangesMessage(any(Instant.class), any(Instant.class))).thenReturn(
-                testMessage);
+                Optional.of(testMessage));
 
         sut.notifyOfCommentChanges();
         verify(postman).sendMessage(testMessage);
+    }
+
+    @Test
+    void notifyOfCommentChangesDoesNotSendAnythingWhenCommentChangeNotifierReturnsEmptyMessage() {
+        final String cronExpr = "0 1 5 * * MON";
+        configuration.getSchedule().getCron().getNotification().setComments(cronExpr);
+        when(commentChangeNotifier.createCommentChangesMessage(any(Instant.class), any(Instant.class))).thenReturn(
+                Optional.empty());
+
+        sut.notifyOfCommentChanges();
+        verify(postman, never()).sendMessage(any());
     }
 }

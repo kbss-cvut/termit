@@ -54,18 +54,14 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private final JwtUtils jwtUtils;
 
-    private final SecurityUtils securityUtils;
-
     private final TermItUserDetailsService userDetailsService;
 
     private final ObjectMapper objectMapper;
 
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils,
-                                  SecurityUtils securityUtils, TermItUserDetailsService userDetailsService,
-                                  ObjectMapper objectMapper) {
+                                  TermItUserDetailsService userDetailsService, ObjectMapper objectMapper) {
         super(authenticationManager);
         this.jwtUtils = jwtUtils;
-        this.securityUtils = securityUtils;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
     }
@@ -83,7 +79,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             final TermItUserDetails userDetails = jwtUtils.extractUserInfo(authToken);
             final TermItUserDetails existingDetails = userDetailsService.loadUserByUsername(userDetails.getUsername());
             SecurityUtils.verifyAccountStatus(existingDetails.getUser());
-            securityUtils.setCurrentUser(existingDetails);
+            SecurityUtils.setCurrentUser(existingDetails);
             refreshToken(authToken, response);
             chain.doFilter(request, response);
         } catch (JwtException e) {

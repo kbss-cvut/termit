@@ -39,8 +39,6 @@ public class OntologicalAuthenticationProvider implements AuthenticationProvider
 
     private static final Logger LOG = LoggerFactory.getLogger(OntologicalAuthenticationProvider.class);
 
-    private final SecurityUtils securityUtils;
-
     private final TermItUserDetailsService userDetailsService;
 
     private final PasswordEncoder passwordEncoder;
@@ -48,9 +46,7 @@ public class OntologicalAuthenticationProvider implements AuthenticationProvider
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    public OntologicalAuthenticationProvider(SecurityUtils securityUtils, TermItUserDetailsService userDetailsService,
-                                             PasswordEncoder passwordEncoder) {
-        this.securityUtils = securityUtils;
+    public OntologicalAuthenticationProvider(TermItUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -69,7 +65,7 @@ public class OntologicalAuthenticationProvider implements AuthenticationProvider
             throw new BadCredentialsException("Provided credentials don't match.");
         }
         onLoginSuccess(userDetails.getUser());
-        return securityUtils.setCurrentUser(userDetails);
+        return SecurityUtils.setCurrentUser(userDetails);
     }
 
     private static void verifyUsernameNotEmpty(String username) {
