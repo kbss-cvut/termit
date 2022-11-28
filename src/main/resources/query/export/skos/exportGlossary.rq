@@ -18,7 +18,7 @@ CONSTRUCT {
               <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix ;
               <http://purl.org/ontology/bibo/status> ?status .
 } WHERE {
-    ?GRAPH ?g {
+    GRAPH ?g {
         ?vocabulary pdp:má-glosář ?glossary ;
                     dc:title ?vocabularyLabel .
         OPTIONAL {

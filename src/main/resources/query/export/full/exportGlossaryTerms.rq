@@ -1,0 +1,93 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT {
+    ?term ?y ?z ;
+          skos:broader ?broader ;
+          skos:broadMatch ?broadMatch ;
+        skos:related ?related ;
+    	skos:topConceptOf ?topOf ;
+        a ?type ;
+        skos:broader ?superClass ;
+        skos:broader ?whole ;
+        skos:broader ?parentEvent .
+}WHERE {
+    GRAPH ?g {
+    	?term a skos:Concept ;
+        	skos:inScheme ?glossary ;
+    		?y ?z .
+
+        ?vocabulary pdp:má-glosář ?glossary .
+
+        OPTIONAL {
+            ?term skos:broader ?broader .
+            FILTER NOT EXISTS {
+                ?term skos:broader ?intermediate .
+                ?intermediate skos:broader ?broader .
+                FILTER (?broader != ?intermediate)
+            }
+            FILTER NOT EXISTS {
+                ?term skos:broadMatch ?broader .
+            }
+        }
+        OPTIONAL {
+            ?term skos:broadMatch ?broadMatch .
+            FILTER NOT EXISTS {
+                ?term skos:broadMatch ?intermediate2 .
+                ?intermediate2 skos:broadMatch ?broadMatch .
+                FILTER (?broadMatch != ?intermediate2)
+            }
+        }
+        OPTIONAL {
+            ?term skos:related ?related .
+            FILTER NOT EXISTS {
+                ?term skos:relatedMatch ?related .
+            }
+        }
+        OPTIONAL {
+        # This ensures only parent-less terms become top concepts of their glossaries
+            BIND(IF(EXISTS {?glossary skos:hasTopConcept ?term}, ?glossary, BNODE()) as ?topOf)
+            FILTER (!ISBLANK(?topOf))
+        }
+        OPTIONAL {
+            ?term a ?type .
+            FILTER (?type != skos:Concept)
+            FILTER(!STRSTARTS(STR(?type), str(owl:)))
+            FILTER NOT EXISTS {
+                ?term a ?intermediateType .
+                ?intermediateType rdfs:subClassOf ?type .
+                FILTER (?type != ?intermediateType)
+            }
+        }
+        OPTIONAL {
+            ?term rdfs:subClassOf ?superClass .
+            FILTER (!sameTerm(?term, ?superClass))
+            FILTER(!STRSTARTS(STR(?superClass), str(owl:)))
+            FILTER NOT EXISTS {
+                ?term rdfs:subClassOf ?intermediateSuperClass .
+                ?intermediateSuperClass rdfs:subClassOf ?superClass .
+                FILTER (!sameTerm(?term, ?superClass) && !sameTerm(?term, ?intermediateSuperClass) && !sameTerm(?superClass, ?intermediateSuperClass))
+            }
+        }
+	}
+    FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf))
+
+    OPTIONAL {
+        ?whole <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?term .
+        FILTER NOT EXISTS {
+            ?intermediateWhole <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?term .
+            ?whole <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?intermediateWhole .
+            FILTER (?whole != ?intermediateWhole)
+        }
+    }
+    OPTIONAL {
+        ?parentEvent <http://onto.fel.cvut.cz/ontologies/ufo/has-participant> ?term .
+        FILTER NOT EXISTS {
+            ?intermediateParentEvent <http://onto.fel.cvut.cz/ontologies/ufo/has-participant> ?term .
+            ?parenEvent <http://onto.fel.cvut.cz/ontologies/ufo/has-participant> ?intermediateParentEvent .
+            FILTER (?parentEvent != ?intermediateParentEvent)
+        }
+    }
+}
