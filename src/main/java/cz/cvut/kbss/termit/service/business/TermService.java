@@ -15,6 +15,7 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -73,35 +74,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Attempts to export glossary terms from the specified vocabulary as the specified media type.
+     * Attempts to export glossary of the specified vocabulary according to the specified configuration.
      * <p>
      * If export into the specified media type is not supported, an empty {@link Optional} is returned.
      *
      * @param vocabulary Vocabulary to export
-     * @param mediaType  Expected media type of the export
+     * @param config Expected media type of the export
      * @return Exported resource wrapped in an {@code Optional}
      */
-    public Optional<TypeAwareResource> exportGlossary(Vocabulary vocabulary, String mediaType) {
+    public Optional<TypeAwareResource> exportGlossary(Vocabulary vocabulary, ExportConfig config) {
         Objects.requireNonNull(vocabulary);
-        return exporters.exportGlossary(vocabulary, mediaType);
-    }
-
-    /**
-     * Attempts to export glossary terms including references to external terms from the specified vocabulary as the
-     * specified media type.
-     * <p>
-     * If export into the specified media type is not supported, an empty {@link Optional} is returned.
-     *
-     * @param vocabulary Vocabulary to export
-     * @param mediaType  Expected media type of the export
-     * @return Exported resource wrapped in an {@code Optional}
-     * @see cz.cvut.kbss.termit.service.export.VocabularyExporter
-     */
-    public Optional<TypeAwareResource> exportGlossaryWithReferences(Vocabulary vocabulary,
-                                                                    Collection<String> properties, String mediaType) {
-        Objects.requireNonNull(vocabulary);
-        Objects.requireNonNull(properties);
-        return exporters.exportGlossaryWithReferences(vocabulary, properties, mediaType);
+        Objects.requireNonNull(config);
+        return exporters.exportGlossary(vocabulary, config);
     }
 
     /**

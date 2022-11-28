@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
@@ -16,12 +15,17 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
+import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.util.*;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -33,7 +37,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigInteger;
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -81,11 +88,12 @@ class TermServiceTest {
         final TypeAwareByteArrayResource resource = new TypeAwareByteArrayResource("test".getBytes(),
                                                                                    ExportFormat.CSV.getMediaType(),
                                                                                    ExportFormat.CSV.getFileExtension());
-        when(exporters.exportGlossary(vocabulary, ExportFormat.CSV.getMediaType())).thenReturn(Optional.of(resource));
-        final Optional<TypeAwareResource> result = sut.exportGlossary(vocabulary, ExportFormat.CSV.getMediaType());
+        final ExportConfig exportConfig = new ExportConfig(ExportType.SKOS, ExportFormat.CSV.getMediaType());
+        when(exporters.exportGlossary(vocabulary, exportConfig)).thenReturn(Optional.of(resource));
+        final Optional<TypeAwareResource> result = sut.exportGlossary(vocabulary, exportConfig);
         assertTrue(result.isPresent());
         assertEquals(resource, result.get());
-        verify(exporters).exportGlossary(vocabulary, ExportFormat.CSV.getMediaType());
+        verify(exporters).exportGlossary(vocabulary, exportConfig);
     }
 
     @Test
@@ -450,21 +458,6 @@ class TermServiceTest {
 
         sut.update(update);
         verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
-    }
-
-    @Test
-    void exportGlossaryWithReferencesGetsGlossaryExportWithReferencesForSpecifiedVocabularyFromExporters() {
-        final TypeAwareByteArrayResource resource = new TypeAwareByteArrayResource("test".getBytes(),
-                                                                                   ExportFormat.CSV.getMediaType(),
-                                                                                   ExportFormat.CSV.getFileExtension());
-        final Collection<String> properties = Collections.singleton(SKOS.EXACT_MATCH);
-        when(exporters.exportGlossaryWithReferences(vocabulary, properties, ExportFormat.CSV.getMediaType())).thenReturn(
-                Optional.of(resource));
-        final Optional<TypeAwareResource> result = sut.exportGlossaryWithReferences(vocabulary, properties,
-                                                                                    ExportFormat.CSV.getMediaType());
-        assertTrue(result.isPresent());
-        assertEquals(resource, result.get());
-        verify(exporters).exportGlossaryWithReferences(vocabulary, properties, ExportFormat.CSV.getMediaType());
     }
 
     @Test

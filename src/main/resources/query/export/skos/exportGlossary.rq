@@ -25,9 +25,6 @@ CONSTRUCT {
             ?glossary dc:title ?glossaryLabel .
         }
         OPTIONAL {
-            ?vocabulary pdp:importuje-slovník/pdp:má-glosář ?imported .
-        }
-        OPTIONAL {
             ?glossary owl:versionIRI ?versionIri .
         }
         OPTIONAL {
@@ -40,6 +37,9 @@ CONSTRUCT {
         OPTIONAL {
             ?glossary <http://purl.org/ontology/bibo/status> ?status .
         }
+    }
+    OPTIONAL {
+        ?vocabulary pdp:importuje-slovník/pdp:má-glosář ?imported .
     }
     OPTIONAL {
         ?createRecord a pdp:vytvoření-entity ;
