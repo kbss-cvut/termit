@@ -38,8 +38,8 @@ public class SKOSExporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSExporter.class);
 
-    private static final String GLOSSARY_EXPORT_QUERY = "skos" + File.separator + "exportGlossary.rq";
-    private static final String TERMS_EXPORT_QUERY = "skos" + File.separator + "exportGlossaryTerms.rq";
+    private static final String GLOSSARY_EXPORT_QUERY = "export" + File.separator + "skos" + File.separator + "exportGlossary.rq";
+    private static final String TERMS_EXPORT_QUERY = "export" + File.separator + "skos" + File.separator + "exportGlossaryTerms.rq";
 
     private final org.eclipse.rdf4j.repository.Repository repository;
     private final ValueFactory vf;
