@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
@@ -25,7 +26,6 @@ import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,19 +40,22 @@ public class CsvVocabularyExporter implements VocabularyExporter {
     }
 
     @Override
-    public TypeAwareResource exportGlossary(Vocabulary vocabulary) {
+    public TypeAwareResource exportGlossary(Vocabulary vocabulary, ExportConfig config) {
+        Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(config);
+        if (ExportType.SKOS == config.getType()) {
+            return exportGlossary(vocabulary);
+        }
+        throw new UnsupportedOperationException("Unsupported export type " + config.getType());
+    }
+
+    private TypeAwareByteArrayResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final StringBuilder export = new StringBuilder(String.join(",", Term.EXPORT_COLUMNS));
         final List<Term> terms = termService.findAllFull(vocabulary);
         terms.forEach(t -> export.append('\n').append(t.toCsv()));
         return new TypeAwareByteArrayResource(export.toString().getBytes(), ExportFormat.CSV.getMediaType(),
                                               ExportFormat.CSV.getFileExtension());
-    }
-
-    @Override
-    public TypeAwareResource exportGlossaryWithReferences(Vocabulary vocabulary,
-                                                          Collection<String> properties) {
-        throw new UnsupportedOperationException("Exporting glossary with references to CSV is not supported.");
     }
 
     @Override

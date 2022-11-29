@@ -137,7 +137,7 @@ public class Utils {
      * @param termSeparator separator between a term local name and vocabulary IRI
      * @return IRI of the vocabulary
      * @throws IllegalArgumentException if the namespace is not unique in concept IRIs, there is no concept, or the
-     *                                  concept IRI does not have the form "pojem".
+     *                                  concept IRI is not an absolute IRI.
      */
     public static String getVocabularyIri(final Set<String> conceptUris, String termSeparator) {
         if (conceptUris.isEmpty()) {

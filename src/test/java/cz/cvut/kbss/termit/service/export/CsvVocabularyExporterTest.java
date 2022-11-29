@@ -52,11 +52,15 @@ class CsvVocabularyExporterTest {
     @Test
     void exportVocabularyGlossaryOutputsHeaderContainingColumnNamesIntoResult() throws Exception {
         when(termService.findAllFull(vocabulary)).thenReturn(Collections.emptyList());
-        final Resource result = sut.exportGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(result.getInputStream()))) {
             final String header = reader.readLine();
             assertEquals(String.join(",", Term.EXPORT_COLUMNS), header);
         }
+    }
+
+    private static ExportConfig exportConfig() {
+        return new ExportConfig(ExportType.SKOS, ExportFormat.CSV.getMediaType());
     }
 
     @Test
@@ -64,7 +68,7 @@ class CsvVocabularyExporterTest {
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId()).collect(
                 Collectors.toList());
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        final Resource result = sut.exportGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(result.getInputStream()))) {
             final List<String> lines = reader.lines().collect(Collectors.toList());
             // terms + header
