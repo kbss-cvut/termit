@@ -14,40 +14,14 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-
-import java.util.Collection;
 
 /**
  * Allows to export a vocabulary and assets related to it.
  */
 public interface VocabularyExporter {
-
-    /**
-     * Gets a resource representation (e.g., a CSV file) of the specified vocabulary's glossary.
-     *
-     * @param vocabulary Vocabulary whose glossary should be exported
-     * @return IO resource representing the exported glossary
-     * @see #exportGlossaryWithReferences(Vocabulary, Collection)
-     */
-    TypeAwareResource exportGlossary(Vocabulary vocabulary);
-
-    /**
-     * Gets a resource representation of the specified vocabulary's glossary including external terms referenced by the
-     * vocabulary's terms.
-     * <p>
-     * That is, besides the exported glossary specified by the argument, terms from other vocabularies referenced by
-     * terms from the exported glossary via one of the specified properties are included in the result as well. If
-     * {@code properties} are empty, this method behaves exactly as {@link #exportGlossary(Vocabulary)}. Only SKOS-based
-     * properties (e.g, skos:exactMatch, skos:relatedMatch) are supported.
-     *
-     * @param vocabulary Vocabulary whose glossary should be exported
-     * @param properties Properties used to identify references to terms from other glossaries (e.g., skos:exactMatch)
-     * @return IO resource representing the exported glossary
-     * @see #exportGlossary(Vocabulary)
-     */
-    TypeAwareResource exportGlossaryWithReferences(Vocabulary vocabulary, Collection<String> properties);
 
     /**
      * Exports the specified vocabulary in a form specified by the export configuration.
@@ -57,9 +31,7 @@ public interface VocabularyExporter {
      * @return IO resource representing the exported glossary
      * @throws UnsupportedOperationException If the specified export type is not supported by the exporter
      */
-    default TypeAwareResource exportGlossary(Vocabulary vocabulary, ExportConfig config) {
-        throw new UnsupportedOperationException("Export configuration " + config + " not supported by this exporter.");
-    }
+    TypeAwareResource exportGlossary(Vocabulary vocabulary, ExportConfig config);
 
     /**
      * Checks whether this exporter supports the specified media type.

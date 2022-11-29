@@ -56,11 +56,15 @@ class ExcelVocabularyExporterTest {
     @Test
     void exportVocabularyGlossaryOutputsExcelWorkbookWithSingleSheet() throws Exception {
         when(termService.findAllFull(vocabulary)).thenReturn(Collections.emptyList());
-        final Resource result = sut.exportGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         assertNotNull(result);
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         assertEquals(1, wb.getNumberOfSheets());
         assertEquals(0, wb.getSheetIndex(SHEET_NAME));
+    }
+
+    private static ExportConfig exportConfig() {
+        return new ExportConfig(ExportType.SKOS, ExportFormat.EXCEL.getMediaType());
     }
 
     @Test
@@ -68,7 +72,7 @@ class ExcelVocabularyExporterTest {
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId()).collect(
                 Collectors.toList());
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        final Resource result = sut.exportGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
         assertNotNull(sheet);
@@ -84,7 +88,7 @@ class ExcelVocabularyExporterTest {
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId()).collect(
                 Collectors.toList());
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        final Resource result = sut.exportGlossary(vocabulary);
+        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
         final XSSFSheet sheet = wb.getSheet(SHEET_NAME);
         assertNotNull(sheet);
