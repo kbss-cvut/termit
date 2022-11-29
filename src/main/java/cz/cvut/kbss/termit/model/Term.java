@@ -146,6 +146,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
      * @see #getLabel()
      */
     @JsonIgnore
+    @Override
     public String getPrimaryLabel() {
         return getLabel() != null ? getLabel().get(config.getPersistence().getLanguage()) : null;
     }
@@ -360,8 +361,8 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
             return "";
         }
         return exportCollection(
-                str.getValue().entrySet().stream().map((e) -> (sanitizeCommas ? CsvUtils.sanitizeString(e.getValue()) :
-                                                               e.getValue()) + "(" + e.getKey() + ")")
+                str.getValue().entrySet().stream().map(e -> (sanitizeCommas ? CsvUtils.sanitizeString(e.getValue()) :
+                                                             e.getValue()) + "(" + e.getKey() + ")")
                    .collect(Collectors.toSet()));
     }
 

@@ -89,7 +89,7 @@ public class ResourceService
     @Transactional
     public void remove(Resource toRemove) {
         Objects.requireNonNull(toRemove);
-        if (toRemove instanceof Document && ((Document) toRemove).getFiles().size() > 0) {
+        if (toRemove instanceof Document && !((Document) toRemove).getFiles().isEmpty()) {
             throw new AssetRemovalException("Cannot remove non-empty document " + toRemove.getLabel() + "!");
         }
         // We need the reference managed, so that its name is available to document manager

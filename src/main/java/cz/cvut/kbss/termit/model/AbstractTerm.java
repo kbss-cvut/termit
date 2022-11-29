@@ -143,8 +143,12 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof AbstractTerm)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AbstractTerm)) {
+            return false;
+        }
         AbstractTerm that = (AbstractTerm) o;
         return Objects.equals(getUri(), that.getUri());
     }

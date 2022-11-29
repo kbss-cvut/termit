@@ -17,8 +17,6 @@
  */
 package cz.cvut.kbss.termit.exception;
 
-import java.net.URI;
-
 /**
  * Indicates that a user's authentication token has expired.
  */

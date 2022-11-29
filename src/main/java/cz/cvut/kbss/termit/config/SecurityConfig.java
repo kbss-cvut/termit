@@ -16,7 +16,6 @@ package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.security.*;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.slf4j.Logger;
@@ -57,8 +56,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final JwtUtils jwtUtils;
 
-    private final SecurityUtils securityUtils;
-
     private final TermItUserDetailsService userDetailsService;
 
     private final ObjectMapper objectMapper;
@@ -69,14 +66,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public SecurityConfig(AuthenticationProvider authenticationProvider,
                           AuthenticationSuccess authenticationSuccessHandler,
                           AuthenticationFailureHandler authenticationFailureHandler,
-                          JwtUtils jwtUtils, SecurityUtils securityUtils,
-                          TermItUserDetailsService userDetailsService,
+                          JwtUtils jwtUtils, TermItUserDetailsService userDetailsService,
                           ObjectMapper objectMapper, cz.cvut.kbss.termit.util.Configuration config) {
         this.authenticationProvider = authenticationProvider;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
         this.jwtUtils = jwtUtils;
-        this.securityUtils = securityUtils;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
         this.config = config;
