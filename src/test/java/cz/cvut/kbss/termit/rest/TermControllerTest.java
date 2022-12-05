@@ -1184,4 +1184,9 @@ class TermControllerTest extends BaseControllerTestRunner {
         verify(termServiceMock, never()).findVersionValidAt(any(), any());
         verify(termServiceMock, never()).findSnapshots(any());
     }
+
+    @Test
+    void getTermsReturnsNotAcceptableWhenAskingForUnsupportedMediaType() throws Exception {
+        mockMvc.perform(get("/terms").accept(MediaType.APPLICATION_PDF_VALUE)).andExpect(status().isNotAcceptable());
+    }
 }

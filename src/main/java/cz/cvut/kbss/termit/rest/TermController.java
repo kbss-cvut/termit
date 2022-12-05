@@ -30,7 +30,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.NotAcceptableStatusException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -101,9 +103,12 @@ public class TermController extends BaseController {
                                      termService.findAll(searchString, vocabulary));
         }
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
-        return export.orElse(ResponseEntity
-                                     .ok(includeImported ? termService.findAllIncludingImported(vocabulary) :
-                                         termService.findAll(vocabulary)));
+        return export.orElseGet(() -> {
+            verifyAcceptType(acceptType);
+            return ResponseEntity
+                    .ok(includeImported ? termService.findAllIncludingImported(vocabulary) :
+                        termService.findAll(vocabulary));
+        });
     }
 
     private Optional<ResponseEntity<?>> exportTerms(Vocabulary vocabulary, ExportType exportType,
@@ -127,6 +132,14 @@ public class TermController extends BaseController {
                 throw new TermItException("Unable to export terms.", e);
             }
         });
+    }
+
+    private void verifyAcceptType(String acceptType) {
+        if (!JsonLd.MEDIA_TYPE.equals(acceptType) && !MediaType.APPLICATION_JSON_VALUE.equals(
+                acceptType) && !MediaType.ALL_VALUE.equals(acceptType)) {
+            throw new NotAcceptableStatusException(
+                    "Media type " + acceptType + " not supported for term retrieval. If you are attempting to export terms, do not forget to add exportType parameter.");
+        }
     }
 
     /**
