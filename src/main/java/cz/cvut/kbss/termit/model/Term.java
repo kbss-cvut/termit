@@ -36,10 +36,10 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
      * Names of columns used in term export.
      * <p>
      */
-    public static final List<String> EXPORT_COLUMNS = List.of("IRI", "Label", "Alternative Labels", "Hidden Labels",
-                                                              "Definition", "Description", "Types", "Sources",
-                                                              "Parent Terms", "SubTerms", "Related Terms",
-                                                              "Related Match Terms", "Exact Match Terms", "Draft",
+    public static final List<String> EXPORT_COLUMNS = List.of("IRI", "Label", "Synonyms", "Search strings",
+                                                              "Definition", "Scope note", "Type", "Source",
+                                                              "Parent terms", "Sub terms", "Related terms",
+                                                              "Related match terms", "Exact matches", "Status",
                                                               "Notation", "Example", "References"
     );
 
@@ -348,7 +348,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         consolidateAndExportMulti(sb, relatedMatch, inverseRelatedMatch, Term::termInfoStringIri);
         consolidateAndExportMulti(sb, exactMatchTerms, inverseExactMatchTerms, Term::termInfoStringIri);
         sb.append(',');
-        sb.append(isDraft());
+        sb.append(draftToStatus());
         exportCollection(sb, notations, String::toString);
         exportCollection(sb, examples, str -> exportMultilingualString(str, true));
         final Map<String, Set<String>> propsToExport = properties != null ? properties : Collections.emptyMap();
@@ -432,7 +432,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
                                                .map(Term::termInfoStringIri)
                                                .distinct()
                                                .collect(Collectors.toList())));
-        row.createCell(13).setCellValue(isDraft());
+        row.createCell(13).setCellValue(draftToStatus());
         row.createCell(14).setCellValue(exportCollection(Utils.emptyIfNull(notations)));
         row.createCell(15).setCellValue(exportCollection(
                 Utils.emptyIfNull(examples).stream().map(str -> exportMultilingualString(str, false))
@@ -445,6 +445,10 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     private static String termInfoStringIri(TermInfo ti) {
         assert ti != null;
         return ti.getUri().toString();
+    }
+
+    private String draftToStatus() {
+        return isDraft() ? "DRAFT" : "CONFIRMED";
     }
 
     /**
