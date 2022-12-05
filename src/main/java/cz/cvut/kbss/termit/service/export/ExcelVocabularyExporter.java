@@ -21,8 +21,8 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +42,9 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
      * Name of the single sheet produced by this exporter
      */
     static final String SHEET_NAME = "Glossary";
+    private static final String FONT = "Arial";
+    private static final short FONT_SIZE = (short) 10;
+    private static final int COLUMN_WIDTH = 25;
 
     private final TermRepositoryService termService;
 
@@ -64,8 +67,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         Objects.requireNonNull(vocabulary);
         try (final XSSFWorkbook wb = new XSSFWorkbook()) {
             final Sheet sheet = wb.createSheet(SHEET_NAME);
-            generateHeaderRow(sheet);
-            generateTermRows(termService.findAllFull(vocabulary), sheet);
+            generateHeaderRow(wb, sheet);
+            generateTermRows(termService.findAllFull(vocabulary), wb, sheet);
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             wb.write(bos);
             return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
@@ -75,17 +78,37 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         }
     }
 
-    private static void generateHeaderRow(Sheet sheet) {
+    private static void generateHeaderRow(XSSFWorkbook wb, Sheet sheet) {
+        final XSSFFont font = initFont(wb);
+        font.setBold(true);
         final Row row = sheet.createRow(0);
+        final CellStyle style = wb.createCellStyle();
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        row.setRowStyle(style);
         for (int i = 0; i < Term.EXPORT_COLUMNS.size(); i++) {
+            sheet.setColumnWidth(i, COLUMN_WIDTH * 256);
             row.createCell(i).setCellValue(Term.EXPORT_COLUMNS.get(i));
+
         }
     }
 
-    private static void generateTermRows(List<Term> terms, Sheet sheet) {
+    private static XSSFFont initFont(XSSFWorkbook wb) {
+        final XSSFFont font = wb.createFont();
+        font.setFontHeightInPoints(FONT_SIZE);
+        font.setFontName(FONT);
+        return font;
+    }
+
+    private static void generateTermRows(List<Term> terms, XSSFWorkbook wb, Sheet sheet) {
         // Row no. 0 is the header
+        final XSSFFont font = initFont(wb);
+        final CellStyle style = wb.createCellStyle();
+        style.setFont(font);
+        style.setWrapText(true);
         for (int i = 0; i < terms.size(); i++) {
             final Row row = sheet.createRow(i + 1);
+            row.setRowStyle(style);
             terms.get(i).toExcel(row);
         }
     }

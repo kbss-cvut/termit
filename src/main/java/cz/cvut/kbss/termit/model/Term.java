@@ -437,8 +437,8 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         row.createCell(15).setCellValue(exportCollection(
                 Utils.emptyIfNull(examples).stream().map(str -> exportMultilingualString(str, false))
                      .collect(Collectors.toSet())));
-        if (properties != null) {
-            row.createCell(16).setCellValue(Utils.emptyIfNull(properties.get(DC.Terms.REFERENCES)).toString());
+        if (properties != null && !Utils.emptyIfNull(properties.get(DC.Terms.REFERENCES)).isEmpty()) {
+            row.createCell(16).setCellValue(properties.get(DC.Terms.REFERENCES).toString());
         }
     }
 
