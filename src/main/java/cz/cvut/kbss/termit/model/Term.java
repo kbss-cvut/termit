@@ -13,35 +13,18 @@ import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.CsvUtils;
-import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
-import org.springframework.util.CollectionUtils;
 
 import java.net.URI;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Configurable
 @Audited
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
 public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
-
-    /**
-     * Names of columns used in term export.
-     * <p>
-     */
-    public static final List<String> EXPORT_COLUMNS = List.of("IRI", "Label", "Alternative Labels", "Hidden Labels",
-                                                              "Definition", "Description", "Types", "Sources",
-                                                              "Parent Terms", "SubTerms", "Related Terms",
-                                                              "Related Match Terms", "Exact Match Terms", "Draft",
-                                                              "Notation", "Example", "References"
-    );
 
     @Autowired
     @Transient
@@ -327,131 +310,10 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     }
 
     /**
-     * Generates a CSV line representing this term.
-     * <p>
-     * The line contains columns specified in {@link #EXPORT_COLUMNS}
-     *
-     * @return CSV representation of this term
-     */
-    public String toCsv() {
-        final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
-        sb.append(',').append(exportMultilingualString(getLabel(), true));
-        exportCollection(sb, altLabels, str -> exportMultilingualString(str, true));
-        exportCollection(sb, hiddenLabels, str -> exportMultilingualString(str, true));
-        sb.append(',').append(exportMultilingualString(getDefinition(), true));
-        sb.append(',').append(exportMultilingualString(description, true));
-        exportCollection(sb, getTypes(), String::toString);
-        exportCollection(sb, sources, String::toString);
-        exportCollection(sb, parentTerms, pt -> pt.getUri().toString());
-        exportCollection(sb, getSubTerms(), Term::termInfoStringIri);
-        consolidateAndExportMulti(sb, related, inverseRelated, Term::termInfoStringIri);
-        consolidateAndExportMulti(sb, relatedMatch, inverseRelatedMatch, Term::termInfoStringIri);
-        consolidateAndExportMulti(sb, exactMatchTerms, inverseExactMatchTerms, Term::termInfoStringIri);
-        sb.append(',');
-        sb.append(isDraft());
-        exportCollection(sb, notations, String::toString);
-        exportCollection(sb, examples, str -> exportMultilingualString(str, true));
-        final Map<String, Set<String>> propsToExport = properties != null ? properties : Collections.emptyMap();
-        exportCollection(sb, Utils.emptyIfNull(propsToExport.get(DC.Terms.REFERENCES)), String::toString);
-        return sb.toString();
-    }
-
-    private static String exportMultilingualString(MultilingualString str, boolean sanitizeCommas) {
-        if (str == null) {
-            return "";
-        }
-        return exportCollection(
-                str.getValue().entrySet().stream().map(e -> (sanitizeCommas ? CsvUtils.sanitizeString(e.getValue()) :
-                                                             e.getValue()) + "(" + e.getKey() + ")")
-                   .collect(Collectors.toSet()));
-    }
-
-    private static String exportCollection(Collection<String> col) {
-        assert col != null;
-        return String.join(";", col);
-    }
-
-    private static <T> void exportCollection(final StringBuilder sb, final Collection<T> collection,
-                                             Function<T, String> toString) {
-        sb.append(',');
-        if (!CollectionUtils.isEmpty(collection)) {
-            sb.append(exportCollection(collection.stream().map(toString).collect(Collectors.toSet())));
-        }
-    }
-
-    private static <T> void consolidateAndExportMulti(final StringBuilder sb, final Collection<T> collectionOne,
-                                                      final Collection<T> collectionTwo, Function<T, String> toString) {
-        final Collection<T> toExport = Utils.joinCollections(collectionOne, collectionTwo);
-        exportCollection(sb, toExport, toString);
-    }
-
-    /**
-     * Generates an Excel line (line with tab separated values) representing this term.
-     * <p>
-     * The line contains columns specified in {@link #EXPORT_COLUMNS}
-     *
-     * @param row The row into which data of this term will be generated
-     */
-    public void toExcel(Row row) {
-        Objects.requireNonNull(row);
-        row.createCell(0).setCellValue(getUri().toString());
-        row.createCell(1).setCellValue(exportMultilingualString(getLabel(), false));
-        row.createCell(2)
-           .setCellValue(exportCollection(
-                   Utils.emptyIfNull(altLabels).stream().map(str -> exportMultilingualString(str, false))
-                        .collect(Collectors.toSet())));
-        row.createCell(3)
-           .setCellValue(exportCollection(
-                   Utils.emptyIfNull(hiddenLabels).stream().map(str -> exportMultilingualString(str, false))
-                        .collect(Collectors.toSet())));
-        if (getDefinition() != null) {
-            row.createCell(4).setCellValue(exportMultilingualString(getDefinition(), false));
-        }
-        if (description != null) {
-            row.createCell(5).setCellValue(exportMultilingualString(description, false));
-        }
-        row.createCell(6).setCellValue(exportCollection(Utils.emptyIfNull(getTypes())));
-        row.createCell(7).setCellValue(exportCollection(Utils.emptyIfNull(sources)));
-        row.createCell(8)
-           .setCellValue(exportCollection(Utils.emptyIfNull(parentTerms).stream().map(pt -> pt.getUri().toString())
-                                               .collect(Collectors.toSet())));
-        row.createCell(9)
-           .setCellValue(exportCollection(Utils.emptyIfNull(getSubTerms()).stream().map(Term::termInfoStringIri)
-                                               .collect(Collectors.toSet())));
-        row.createCell(10).setCellValue(exportCollection(Utils.joinCollections(related, inverseRelated).stream()
-                                                              .map(Term::termInfoStringIri)
-                                                              .distinct()
-                                                              .collect(Collectors.toList())));
-        row.createCell(11)
-           .setCellValue(exportCollection(Utils.joinCollections(relatedMatch, inverseRelatedMatch).stream()
-                                               .map(Term::termInfoStringIri)
-                                               .distinct()
-                                               .collect(Collectors.toList())));
-        row.createCell(12)
-           .setCellValue(exportCollection(Utils.joinCollections(exactMatchTerms, inverseExactMatchTerms).stream()
-                                               .map(Term::termInfoStringIri)
-                                               .distinct()
-                                               .collect(Collectors.toList())));
-        row.createCell(13).setCellValue(isDraft());
-        row.createCell(14).setCellValue(exportCollection(Utils.emptyIfNull(notations)));
-        row.createCell(15).setCellValue(exportCollection(
-                Utils.emptyIfNull(examples).stream().map(str -> exportMultilingualString(str, false))
-                     .collect(Collectors.toSet())));
-        if (properties != null) {
-            row.createCell(16).setCellValue(Utils.emptyIfNull(properties.get(DC.Terms.REFERENCES)).toString());
-        }
-    }
-
-    private static String termInfoStringIri(TermInfo ti) {
-        assert ti != null;
-        return ti.getUri().toString();
-    }
-
-    /**
      * Checks whether this term has a parent term in the same vocabulary.
      *
-     * @return Whether this term has parent in its vocabulary. Returns {@code false} also if this term has no parent
-     * term at all
+     * @return Whether this term has a parent in its vocabulary. Returns {@code false} also if this term has no parent
+     * term at all.
      */
     public boolean hasParentInSameVocabulary() {
         return parentTerms != null && parentTerms.stream().anyMatch(p -> p.getGlossary().equals(getGlossary()));

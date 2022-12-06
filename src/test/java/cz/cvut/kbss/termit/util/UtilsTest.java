@@ -39,6 +39,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -189,5 +191,36 @@ class UtilsTest {
     void trimReturnsTrimmedInputStringForNonNullInput() {
         final String input = "aaa bbb   ";
         assertEquals(input.trim(), Utils.trim(input));
+    }
+
+    @Test
+    public void htmlToPlainTextExtractsTextFromHtmlString() {
+        final String html = "<p>This is regular <b>text</b> mixed <i>with</i> <a href=\"www.inbas.cz\">HTML</a> tags.</p>";
+        final String text = "This is regular text mixed with HTML tags.";
+
+        assertThat(Utils.htmlToPlainText(html), containsString(text));
+    }
+
+    @Test
+    void markdownToPlainTextExtractsTextFromMarkdownString() {
+        final String markdown = "# This is a headline\n" +
+                "**This is bold text**, _this is italics_";
+        final String text = "This is a headline\n\nThis is bold text, this is italics";
+
+        assertThat(Utils.markdownToPlainText(markdown), containsString(text));
+    }
+
+    @Test
+    void markdownToPlainTextReturnsArgumentWhenItDoesNotContainMarkup() {
+        final String text = "This is text without any markup.\n" +
+                "It uses just newline";
+        assertEquals(text, Utils.markdownToPlainText(text));
+    }
+
+    @Test
+    void htmlToPlaintextReturnsArgumentWhenItDoesNotContainMarkup() {
+        final String text = "This is text without any markup.\n" +
+                "It uses just newline";
+        assertEquals(text, Utils.htmlToPlainText(text));
     }
 }

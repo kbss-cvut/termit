@@ -32,6 +32,7 @@
         <org.springframework.data.version>2.7.5</org.springframework.data.version>
         <org.hibernate.validator.version>6.2.3.Final</org.hibernate.validator.version>
         <org.apache.tika.tika-core.version>2.5.0</org.apache.tika.tika-core.version>
+        <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
         <cz.cvut.kbss.jopa.version>0.19.2</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.9.0</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.7</org.aspectj.version>
@@ -269,6 +270,13 @@
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.15.3</version>
+        </dependency>
+
+        <!-- Flexmark for handling Markdown -->
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.64.0</version>
         </dependency>
 
         <!-- Logging -->

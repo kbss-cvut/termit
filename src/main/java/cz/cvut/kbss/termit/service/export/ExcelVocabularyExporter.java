@@ -14,40 +14,68 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
+import java.net.URI;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * Supports vocabulary export to MS Excel format
+ * Implements vocabulary export to the MS Excel format.
  */
 @Service("excel")
 public class ExcelVocabularyExporter implements VocabularyExporter {
 
     /**
-     * Name of the single sheet produced by this exporter
+     * Name of the main sheet containing the exported glossary
      */
     static final String SHEET_NAME = "Glossary";
+    /**
+     * Name of the sheet with prefix mapping
+     */
+    static final String PREFIX_SHEET_NAME = "Prefixes";
+    /**
+     * Name of the prefix column in the prefix mapping sheet
+     */
+    static final String PREFIX_COLUMN = "Prefix";
+    /**
+     * Name of the namespace column in the prefix mapping sheet
+     */
+    static final String NAMESPACE_COLUMN = "Namespace";
+
+    private static final String FONT = "Arial";
+    private static final short FONT_SIZE = (short) 10;
+    private static final int COLUMN_WIDTH = 25;
 
     private final TermRepositoryService termService;
 
+    private final VocabularyService vocabularyService;
+
     @Autowired
-    public ExcelVocabularyExporter(TermRepositoryService termService) {
+    public ExcelVocabularyExporter(TermRepositoryService termService, VocabularyService vocabularyService) {
         this.termService = termService;
+        this.vocabularyService = vocabularyService;
     }
 
     @Override
@@ -63,9 +91,9 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     private TypeAwareResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         try (final XSSFWorkbook wb = new XSSFWorkbook()) {
-            final Sheet sheet = wb.createSheet(SHEET_NAME);
-            generateHeaderRow(sheet);
-            generateTermRows(termService.findAllFull(vocabulary), sheet);
+            final Map<URI, PrefixDeclaration> prefixes = new HashMap<>();
+            generateGlossarySheet(vocabulary, wb, prefixes);
+            generatePrefixMappingSheet(wb, prefixes);
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             wb.write(bos);
             return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
@@ -75,18 +103,89 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         }
     }
 
-    private static void generateHeaderRow(Sheet sheet) {
+    private void generateGlossarySheet(Vocabulary vocabulary, XSSFWorkbook wb, Map<URI, PrefixDeclaration> prefixes) {
+        final Sheet sheet = wb.createSheet(SHEET_NAME);
+        generateHeaderRow(wb, sheet);
+        generateTermRows(termService.findAllFull(vocabulary), wb, sheet, prefixes);
+    }
+
+    private static void generateHeaderRow(XSSFWorkbook wb, Sheet sheet) {
+        final XSSFFont font = initFont(wb);
+        font.setBold(true);
         final Row row = sheet.createRow(0);
-        for (int i = 0; i < Term.EXPORT_COLUMNS.size(); i++) {
-            row.createCell(i).setCellValue(Term.EXPORT_COLUMNS.get(i));
+        final CellStyle style = wb.createCellStyle();
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        row.setRowStyle(style);
+        for (int i = 0; i < TabularTermExportUtils.EXPORT_COLUMNS.size(); i++) {
+            sheet.setColumnWidth(i, COLUMN_WIDTH * 256);
+            row.createCell(i).setCellValue(TabularTermExportUtils.EXPORT_COLUMNS.get(i));
+
         }
     }
 
-    private static void generateTermRows(List<Term> terms, Sheet sheet) {
-        // Row no. 0 is the header
+    private static XSSFFont initFont(XSSFWorkbook wb) {
+        final XSSFFont font = wb.createFont();
+        font.setFontHeightInPoints(FONT_SIZE);
+        font.setFontName(FONT);
+        return font;
+    }
+
+    private void generateTermRows(List<Term> terms, XSSFWorkbook wb, Sheet sheet,
+                                  Map<URI, PrefixDeclaration> prefixes) {
+        final XSSFFont font = initFont(wb);
+        final CellStyle style = wb.createCellStyle();
+        style.setFont(font);
+        style.setWrapText(true);
+        final ExcelTermExporter termExporter = new ExcelTermExporter(prefixes);
         for (int i = 0; i < terms.size(); i++) {
+            // Row no. 0 is the header
             final Row row = sheet.createRow(i + 1);
-            terms.get(i).toExcel(row);
+            row.setRowStyle(style);
+            final Term t = terms.get(i);
+            resolvePrefixes(t, prefixes);
+            termExporter.export(t, row);
+        }
+    }
+
+    private void resolvePrefixes(Term t, Map<URI, PrefixDeclaration> prefixes) {
+        if (!prefixes.containsKey(t.getVocabulary())) {
+            prefixes.put(t.getVocabulary(), vocabularyService.resolvePrefix(t.getVocabulary()));
+        }
+        final Set<TermInfo> allRelated = new HashSet<>();
+        allRelated.addAll(Utils.emptyIfNull(t.getSubTerms()));
+        allRelated.addAll(Utils.emptyIfNull(t.getExactMatchTerms()));
+        allRelated.addAll(Utils.emptyIfNull(t.getInverseExactMatchTerms()));
+        allRelated.addAll(Utils.emptyIfNull(t.getRelatedMatch()));
+        allRelated.addAll(Utils.emptyIfNull(t.getInverseRelatedMatch()));
+        allRelated.addAll(
+                Utils.emptyIfNull(t.getExternalParentTerms()).stream().map(TermInfo::new).collect(Collectors.toSet()));
+        allRelated.stream().filter(ti -> !prefixes.containsKey(ti.getVocabulary()))
+                  .forEach(ti -> prefixes.put(ti.getVocabulary(), vocabularyService.resolvePrefix(ti.getVocabulary())));
+    }
+
+    private void generatePrefixMappingSheet(XSSFWorkbook wb, Map<URI, PrefixDeclaration> prefixes) {
+        final Sheet sheet = wb.createSheet(PREFIX_SHEET_NAME);
+        final XSSFFont font = initFont(wb);
+        font.setBold(true);
+        final Row row = sheet.createRow(0);
+        final CellStyle style = wb.createCellStyle();
+        style.setFont(font);
+        row.setRowStyle(style);
+        sheet.setColumnWidth(0, COLUMN_WIDTH * 2 * 256);
+        sheet.setColumnWidth(1, COLUMN_WIDTH * 4 * 256);
+        // Sheet header
+        row.createCell(0).setCellValue(PREFIX_COLUMN);
+        row.createCell(1).setCellValue(NAMESPACE_COLUMN);
+        // Prefixes
+        int i = 1;
+        for (PrefixDeclaration pd : prefixes.values()) {
+            if (pd.getPrefix() == null) {
+                continue;
+            }
+            final Row prefixRow = sheet.createRow(i++);
+            prefixRow.createCell(0).setCellValue(pd.getPrefix());
+            prefixRow.createCell(1).setCellValue(pd.getNamespace());
         }
     }
 
