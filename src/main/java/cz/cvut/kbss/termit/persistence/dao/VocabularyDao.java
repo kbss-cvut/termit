@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -389,5 +390,36 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             result.addAll(toAdd);
         }
         return new HashSet<>(result);
+    }
+
+    /**
+     * Resolves preferred namespace prefix and URI of a vocabulary with the specified identifier.
+     * <p>
+     * This method expects that the prefix and namespace are declared on the vocabulary itself, not on its glossary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Prefix declaration, possibly containing {@code null} values
+     */
+    public PrefixDeclaration resolvePrefix(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        try {
+            final List<?> result = em.createNativeQuery("SELECT ?prefix ?namespace WHERE { " +
+                                                                "?vocabulary ?hasPrefix ?prefix ; " +
+                                                                "?hasNamespace ?namespace . }")
+                                     .setParameter("vocabulary", vocabularyUri)
+                                     .setParameter("hasPrefix", URI.create(
+                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix))
+                                     .setParameter("hasNamespace", URI.create(
+                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri))
+                                     .getResultList();
+            if (result.size() == 0) {
+                return new PrefixDeclaration();
+            }
+            assert result.get(0) instanceof Object[];
+            return new PrefixDeclaration(((Object[]) result.get(0))[0].toString(),
+                                         ((Object[]) result.get(0))[1].toString());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 }

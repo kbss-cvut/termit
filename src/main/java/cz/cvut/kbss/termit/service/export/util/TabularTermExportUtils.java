@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.service.export.util;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.CsvUtils;
 
@@ -32,17 +31,6 @@ public class TabularTermExportUtils {
 
     public static String draftToStatus(Term t) {
         return t.isDraft() ? "DRAFT" : "CONFIRMED";
-    }
-
-    /**
-     * Simple extractor of TermInfo identifier to string.
-     *
-     * @param ti TermInfo instance
-     * @return String identifier of the argument
-     */
-    public static String termInfoStringIri(TermInfo ti) {
-        assert ti != null;
-        return ti.getUri().toString();
     }
 
     /**

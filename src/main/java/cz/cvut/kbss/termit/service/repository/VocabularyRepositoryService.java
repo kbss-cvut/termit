@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
@@ -327,6 +328,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public Vocabulary findVersionValidAt(Vocabulary vocabulary, Instant at) {
         return vocabularyDao.findVersionValidAt(vocabulary, at)
                             .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
+    }
+
+    @Transactional(readOnly = true)
+    public PrefixDeclaration resolvePrefix(URI vocabularyUri) {
+        return vocabularyDao.resolvePrefix(vocabularyUri);
     }
 
     @Override

@@ -14,9 +14,11 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
@@ -27,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -39,6 +40,7 @@ import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.service.export.ExcelVocabularyExporter.SHEET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +48,9 @@ class ExcelVocabularyExporterTest {
 
     @Mock
     private TermRepositoryService termService;
+
+    @Mock
+    private VocabularyService vocabularyService;
 
     @InjectMocks
     private ExcelVocabularyExporter sut;
@@ -68,6 +73,7 @@ class ExcelVocabularyExporterTest {
 
     @Test
     void exportVocabularyGlossaryOutputsHeaderRowWithColumnNamesIntoSheet() throws Exception {
+        when(vocabularyService.resolvePrefix(any())).thenReturn(new PrefixDeclaration());
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId()).collect(
                 Collectors.toList());
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
@@ -84,6 +90,7 @@ class ExcelVocabularyExporterTest {
 
     @Test
     void exportVocabularyGlossaryOutputsGlossaryTermsIntoSheet() throws Exception {
+        when(vocabularyService.resolvePrefix(any())).thenReturn(new PrefixDeclaration());
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId()).collect(
                 Collectors.toList());
         when(termService.findAllFull(vocabulary)).thenReturn(terms);

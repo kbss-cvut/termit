@@ -1,16 +1,19 @@
 package cz.cvut.kbss.termit.service.export;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -22,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExcelTermExporterTest {
 
-    private final ExcelTermExporter sut = new ExcelTermExporter();
+    private final ExcelTermExporter sut = new ExcelTermExporter(new HashMap<>());
 
     @Test
     void exportExportsTermToExcelRow() {
@@ -236,5 +239,27 @@ class ExcelTermExporterTest {
         sut.export(term, row);
         assertThat(row.getCell(4).getStringCellValue(), containsString(text));
         assertThat(row.getCell(5).getStringCellValue(), containsString(text));
+    }
+
+    @Test
+    void exportReplacesFullIrisWithPrefixedWhenPossible() {
+        final String prefix = "test";
+        final String namespace = Environment.BASE_URI + "/";
+        final URI vocabularyUri = Generator.generateUri();
+        final Term term = Generator.generateTermWithId(vocabularyUri);
+        term.addParentTerm(Generator.generateTermWithId(vocabularyUri));
+        term.setSubTerms(Collections.singleton(new TermInfo(Generator.generateTermWithId(vocabularyUri))));
+        final Map<URI, PrefixDeclaration> prefixes = Collections.singletonMap(vocabularyUri,
+                                                                              new PrefixDeclaration(prefix, namespace));
+        final ExcelTermExporter sut = new ExcelTermExporter(prefixes);
+
+        final XSSFRow row = generateExcel();
+        sut.export(term, row);
+        assertThat(row.getCell(0).getStringCellValue(), containsString(
+                prefix + PrefixDeclaration.SEPARATOR + IdentifierResolver.extractIdentifierFragment(term.getUri())));
+        term.getParentTerms().forEach(pt -> assertThat(row.getCell(8).getStringCellValue(), containsString(
+                prefix + PrefixDeclaration.SEPARATOR + IdentifierResolver.extractIdentifierFragment(pt.getUri()))));
+        term.getSubTerms().forEach(st -> assertThat(row.getCell(9).getStringCellValue(), containsString(
+                prefix + PrefixDeclaration.SEPARATOR + IdentifierResolver.extractIdentifierFragment(st.getUri()))));
     }
 }

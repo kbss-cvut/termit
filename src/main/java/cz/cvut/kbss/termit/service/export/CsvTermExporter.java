@@ -34,12 +34,12 @@ public class CsvTermExporter {
         exportCollection(sb, t.getTypes(), String::toString);
         exportCollection(sb, t.getSources(), String::toString);
         exportCollection(sb, t.getParentTerms(), pt -> pt.getUri().toString());
-        exportCollection(sb, t.getSubTerms(), TabularTermExportUtils::termInfoStringIri);
-        consolidateAndExportMulti(sb, t.getRelated(), t.getInverseRelated(), TabularTermExportUtils::termInfoStringIri);
+        exportCollection(sb, t.getSubTerms(), ti -> ti.getUri().toString());
+        consolidateAndExportMulti(sb, t.getRelated(), t.getInverseRelated(), ti -> ti.getUri().toString());
         consolidateAndExportMulti(sb, t.getRelatedMatch(), t.getInverseRelatedMatch(),
-                                  TabularTermExportUtils::termInfoStringIri);
+                                  ti -> ti.getUri().toString());
         consolidateAndExportMulti(sb, t.getExactMatchTerms(), t.getInverseExactMatchTerms(),
-                                  TabularTermExportUtils::termInfoStringIri);
+                                  ti -> ti.getUri().toString());
         sb.append(',')
           .append(TabularTermExportUtils.draftToStatus(t));
         exportCollection(sb, t.getNotations(), String::toString);

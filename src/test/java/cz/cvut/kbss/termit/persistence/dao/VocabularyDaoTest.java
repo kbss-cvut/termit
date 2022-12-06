@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -602,5 +603,23 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             });
         });
         assertFalse(sut.isEmpty(vocabulary));
+    }
+
+    @Test
+    void resolvePrefixRetrievesPrefixDeclarationForVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.setProperties(new HashMap<>());
+        final String prefix = "vocab";
+        final String namespace = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik + "/";
+        vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix,
+                                       Collections.singleton(prefix));
+        vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri,
+                                       Collections.singleton(namespace));
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+
+        final PrefixDeclaration result = sut.resolvePrefix(vocabulary.getUri());
+        assertNotNull(result);
+        assertEquals(prefix, result.getPrefix());
+        assertEquals(namespace, result.getNamespace());
     }
 }

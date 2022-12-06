@@ -14,14 +14,18 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
@@ -33,8 +37,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
+import java.net.URI;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Implements vocabulary export to the MS Excel format.
@@ -52,9 +57,12 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
 
     private final TermRepositoryService termService;
 
+    private final VocabularyService vocabularyService;
+
     @Autowired
-    public ExcelVocabularyExporter(TermRepositoryService termService) {
+    public ExcelVocabularyExporter(TermRepositoryService termService, VocabularyService vocabularyService) {
         this.termService = termService;
+        this.vocabularyService = vocabularyService;
     }
 
     @Override
@@ -105,17 +113,36 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     }
 
     private void generateTermRows(List<Term> terms, XSSFWorkbook wb, Sheet sheet) {
+        final Map<URI, PrefixDeclaration> prefixes = new HashMap<>();
         final XSSFFont font = initFont(wb);
         final CellStyle style = wb.createCellStyle();
         style.setFont(font);
         style.setWrapText(true);
-        final ExcelTermExporter termExporter = new ExcelTermExporter();
+        final ExcelTermExporter termExporter = new ExcelTermExporter(prefixes);
         for (int i = 0; i < terms.size(); i++) {
             // Row no. 0 is the header
             final Row row = sheet.createRow(i + 1);
             row.setRowStyle(style);
-            termExporter.export(terms.get(i), row);
+            final Term t = terms.get(i);
+            resolvePrefixes(t, prefixes);
+            termExporter.export(t, row);
         }
+    }
+
+    private void resolvePrefixes(Term t, Map<URI, PrefixDeclaration> prefixes) {
+        if (!prefixes.containsKey(t.getVocabulary())) {
+            prefixes.put(t.getVocabulary(), vocabularyService.resolvePrefix(t.getVocabulary()));
+        }
+        final Set<TermInfo> allRelated = new HashSet<>();
+        allRelated.addAll(Utils.emptyIfNull(t.getSubTerms()));
+        allRelated.addAll(Utils.emptyIfNull(t.getExactMatchTerms()));
+        allRelated.addAll(Utils.emptyIfNull(t.getInverseExactMatchTerms()));
+        allRelated.addAll(Utils.emptyIfNull(t.getRelatedMatch()));
+        allRelated.addAll(Utils.emptyIfNull(t.getInverseRelatedMatch()));
+        allRelated.addAll(
+                Utils.emptyIfNull(t.getExternalParentTerms()).stream().map(TermInfo::new).collect(Collectors.toSet()));
+        allRelated.stream().filter(ti -> !prefixes.containsKey(ti.getVocabulary()))
+                  .forEach(ti -> prefixes.put(ti.getVocabulary(), vocabularyService.resolvePrefix(ti.getVocabulary())));
     }
 
     @Override

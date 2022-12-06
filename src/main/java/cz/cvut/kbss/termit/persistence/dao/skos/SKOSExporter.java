@@ -55,8 +55,9 @@ public class SKOSExporter {
 
     /**
      * Exports glossary and terms of the specified vocabulary as a SKOS model.
-     *
-     * Only basic SKOS properties are exported for terms. To get all available data, use {@link #exportFullGlossary(Vocabulary)}.
+     * <p>
+     * Only basic SKOS properties are exported for terms. To get all available data, use {@link
+     * #exportFullGlossary(Vocabulary)}.
      * <p>
      * The exported data can be retrieved using {@link ##exportAs(ExportFormat)}.
      *
@@ -72,7 +73,7 @@ public class SKOSExporter {
 
     /**
      * Exports glossary and terms of the specified vocabulary as a SKOS model.
-     *
+     * <p>
      * This method exports all available asserted data for each term.
      * <p>
      * The exported data can be retrieved using {@link ##exportAs(ExportFormat)}.
@@ -111,10 +112,14 @@ public class SKOSExporter {
 
     private void resolvePrefixes(IRI glossaryIri, RepositoryConnection connection) {
         final TupleQuery tq = connection.prepareTupleQuery("SELECT ?prefix ?namespace WHERE {\n" +
-                                                                   "?glossary <http://purl.org/vocab/vann/preferredNamespacePrefix> ?prefix ;\n" +
-                                                                   "<http://purl.org/vocab/vann/preferredNamespaceUri> ?namespace .\n" +
+                                                                   "?glossary ?hasPreferredPrefix ?prefix ;\n" +
+                                                                   "?hasPreferredNamespace ?namespace .\n" +
                                                                    "}");
         tq.setBinding("glossary", glossaryIri);
+        tq.setBinding("hasPreferredPrefix",
+                      vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix));
+        tq.setBinding("hasPreferredNamespace",
+                      vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
         final TupleQueryResult result = tq.evaluate();
         while (result.hasNext()) {
             final BindingSet binding = result.next();
@@ -162,7 +167,7 @@ public class SKOSExporter {
      * <p>
      * In addition, terms from other vocabularies referenced via the any of the specified properties are exported as
      * well, together with metadata of their respective glossaries.
-     *
+     * <p>
      * This method exports all available asserted data for each term.
      *
      * @param vocabulary Vocabulary to export
