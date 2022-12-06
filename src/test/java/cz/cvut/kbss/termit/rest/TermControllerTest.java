@@ -7,6 +7,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermStatus;
+import cz.cvut.kbss.termit.dto.export.TabularTermExportUtils;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -320,7 +321,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final String content = String.join(",", Term.EXPORT_COLUMNS);
+        final String content = String.join(",", TabularTermExportUtils.EXPORT_COLUMNS);
         final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
                                                                                  ExportFormat.CSV.getMediaType(),
                                                                                  ExportFormat.CSV.getFileExtension());
@@ -340,7 +341,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final String content = String.join(",", Term.EXPORT_COLUMNS);
+        final String content = String.join(",", TabularTermExportUtils.EXPORT_COLUMNS);
         final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
                                                                                  ExportFormat.CSV.getMediaType(),
                                                                                  ExportFormat.CSV.getFileExtension());

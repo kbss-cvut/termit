@@ -17,6 +17,8 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.dto.export.TabularTermExportUtils;
+import cz.cvut.kbss.termit.service.mapper.TermDtoMapper;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -34,9 +36,12 @@ public class CsvVocabularyExporter implements VocabularyExporter {
 
     private final TermRepositoryService termService;
 
+    private final TermDtoMapper dtoMapper;
+
     @Autowired
-    public CsvVocabularyExporter(TermRepositoryService termService) {
+    public CsvVocabularyExporter(TermRepositoryService termService, TermDtoMapper dtoMapper) {
         this.termService = termService;
+        this.dtoMapper = dtoMapper;
     }
 
     @Override
@@ -51,9 +56,9 @@ public class CsvVocabularyExporter implements VocabularyExporter {
 
     private TypeAwareByteArrayResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        final StringBuilder export = new StringBuilder(String.join(",", Term.EXPORT_COLUMNS));
+        final StringBuilder export = new StringBuilder(String.join(",", TabularTermExportUtils.EXPORT_COLUMNS));
         final List<Term> terms = termService.findAllFull(vocabulary);
-        terms.forEach(t -> export.append('\n').append(t.toCsv()));
+        terms.stream().map(dtoMapper::termToCsvExportDto).forEach(t -> export.append('\n').append(t.export()));
         return new TypeAwareByteArrayResource(export.toString().getBytes(), ExportFormat.CSV.getMediaType(),
                                               ExportFormat.CSV.getFileExtension());
     }

@@ -14,11 +14,13 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.dto.export.TabularTermExportUtils;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
+import cz.cvut.kbss.termit.service.mapper.TermDtoMapper;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.apache.poi.ss.usermodel.*;
@@ -48,9 +50,12 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
 
     private final TermRepositoryService termService;
 
+    private final TermDtoMapper dtoMapper;
+
     @Autowired
-    public ExcelVocabularyExporter(TermRepositoryService termService) {
+    public ExcelVocabularyExporter(TermRepositoryService termService, TermDtoMapper dtoMapper) {
         this.termService = termService;
+        this.dtoMapper = dtoMapper;
     }
 
     @Override
@@ -86,9 +91,9 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.CENTER);
         row.setRowStyle(style);
-        for (int i = 0; i < Term.EXPORT_COLUMNS.size(); i++) {
+        for (int i = 0; i < TabularTermExportUtils.EXPORT_COLUMNS.size(); i++) {
             sheet.setColumnWidth(i, COLUMN_WIDTH * 256);
-            row.createCell(i).setCellValue(Term.EXPORT_COLUMNS.get(i));
+            row.createCell(i).setCellValue(TabularTermExportUtils.EXPORT_COLUMNS.get(i));
 
         }
     }
@@ -100,7 +105,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         return font;
     }
 
-    private static void generateTermRows(List<Term> terms, XSSFWorkbook wb, Sheet sheet) {
+    private void generateTermRows(List<Term> terms, XSSFWorkbook wb, Sheet sheet) {
         // Row no. 0 is the header
         final XSSFFont font = initFont(wb);
         final CellStyle style = wb.createCellStyle();
@@ -109,7 +114,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         for (int i = 0; i < terms.size(); i++) {
             final Row row = sheet.createRow(i + 1);
             row.setRowStyle(style);
-            terms.get(i).toExcel(row);
+            dtoMapper.termToExcelExportDto(terms.get(i)).export(row);
         }
     }
 
