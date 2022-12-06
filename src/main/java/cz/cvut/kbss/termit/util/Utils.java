@@ -1,9 +1,15 @@
 package cz.cvut.kbss.termit.util;
 
+import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.util.ast.Node;
 import cz.cvut.kbss.termit.exception.TermItException;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.util.Statements;
 import org.eclipse.rdf4j.model.util.Values;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Safelist;
 
 import java.io.*;
 import java.net.URI;
@@ -266,5 +272,38 @@ public class Utils {
      */
     public static boolean isValidEmail(String str) {
         return str != null && Pattern.compile(EMAIL_REGEXP).matcher(str).matches();
+    }
+
+    /**
+     * Converts the specified HTML to plain text by removing all HTML tags and keeping only the text.
+     *
+     * @param html The HTML to convert
+     * @return Text content of the input string
+     */
+    public static String htmlToPlainText(String html) {
+        Objects.requireNonNull(html);
+        final Document doc = Jsoup.parse(html);
+        final Document.OutputSettings outputSettings = new Document.OutputSettings();
+        outputSettings.prettyPrint(false);
+        doc.outputSettings(outputSettings);
+        doc.select("br").before("\\n");
+        doc.select("p").before("\\n");
+        final String str = doc.html().replaceAll("\\\\n", "\n");
+        return Jsoup.clean(str, "", Safelist.none(), outputSettings).trim();
+    }
+
+    /**
+     * Converts the specified Markdown to plain text by removing all Markdown markup and keeping only the text.
+     *
+     * @param markdown The Markdown content to convert
+     * @return Text content of the input string
+     */
+    public static String markdownToPlainText(String markdown) {
+        Objects.requireNonNull(markdown);
+        final Parser parser = Parser.builder().build();
+        final Node document = parser.parse(markdown);
+        final HtmlRenderer renderer = HtmlRenderer.builder().build();
+        final String html = renderer.render(document);
+        return htmlToPlainText(html);
     }
 }

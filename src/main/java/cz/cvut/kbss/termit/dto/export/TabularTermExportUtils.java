@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.util.CsvUtils;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TabularTermExportUtils {
@@ -34,13 +35,15 @@ public class TabularTermExportUtils {
         return ti.getUri().toString();
     }
 
-    static String exportMultilingualString(MultilingualString str, boolean sanitizeCommas) {
+    static String exportMultilingualString(MultilingualString str, Function<String, String> preProcessor,
+                                           boolean sanitizeCommas) {
         if (str == null) {
             return "";
         }
         return exportStringCollection(
-                str.getValue().entrySet().stream().map(e -> (sanitizeCommas ? CsvUtils.sanitizeString(e.getValue()) :
-                                                             e.getValue()) + "(" + e.getKey() + ")")
+                str.getValue().entrySet().stream()
+                   .map(e -> (sanitizeCommas ? CsvUtils.sanitizeString(preProcessor.apply(e.getValue())) :
+                              preProcessor.apply(e.getValue())) + "(" + e.getKey() + ")")
                    .collect(Collectors.toSet()));
     }
 

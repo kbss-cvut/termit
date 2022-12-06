@@ -25,7 +25,7 @@ class CsvExportTermDtoTest {
     private static final TermDtoMapper dtoMapper = new TermDtoMapperImpl();
 
     @Test
-    void toCsvOutputsAllColumnsEvenIfNotAllAttributesArePresent() {
+    void exportOutputsAllColumnsEvenIfNotAllAttributesArePresent() {
         final CsvExportTermDto term = generate();
         term.setDescription(null);
         final String result = term.export();
@@ -43,7 +43,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvGeneratesStringContainingIriLabelDefinitionAndComment() {
+    void exportGeneratesStringContainingIriLabelDefinitionAndComment() {
         final CsvExportTermDto term = generate();
         final String result = term.export();
         final String[] items = result.split(",");
@@ -55,7 +55,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvPutsCommentInQuotesToEscapeCommas() {
+    void exportPutsCommentInQuotesToEscapeCommas() {
         final CsvExportTermDto term = generate();
         term.setDescription(MultilingualString.create("Comment, with a comma", Environment.LANGUAGE));
         final String result = term.export();
@@ -64,7 +64,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvExportsAltLabelsDelimitedBySemicolons() {
+    void exportExportsAltLabelsDelimitedBySemicolons() {
         final CsvExportTermDto term = generate();
         term.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
                                                       MultilingualString.create("Construction",
@@ -78,7 +78,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvExportsHiddenLabelsDelimitedBySemicolons() {
+    void exportExportsHiddenLabelsDelimitedBySemicolons() {
         final CsvExportTermDto term = generate();
         term.setHiddenLabels(
                 new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
@@ -92,7 +92,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvExportsTypesDelimitedBySemicolons() {
+    void exportExportsTypesDelimitedBySemicolons() {
         final CsvExportTermDto term = generate();
         term.setTypes(new LinkedHashSet<>(Arrays.asList(Vocabulary.s_c_object, Vocabulary.s_c_entity)));
         final String result = term.export();
@@ -104,7 +104,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvExportsSourcesDelimitedBySemicolons() {
+    void exportExportsSourcesDelimitedBySemicolons() {
         final CsvExportTermDto term = generate();
         term.setSources(new LinkedHashSet<>(
                 Arrays.asList(Generator.generateUri().toString(), "PSP/c-1/p-2/b-c", "PSP/c-1/p-2/b-f")));
@@ -117,7 +117,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvExportsParentTermIrisDelimitedBySemicolons() {
+    void exportExportsParentTermIrisDelimitedBySemicolons() {
         final CsvExportTermDto term = generate();
         term.setParentTerms(new HashSet<>(Generator.generateTermsWithIds(5)));
         final String result = term.export();
@@ -129,7 +129,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvExportsSubTermIrisDelimitedBySemicolons() {
+    void exportExportsSubTermIrisDelimitedBySemicolons() {
         final CsvExportTermDto term = generate();
         term.setSubTerms(IntStream.range(0, 5).mapToObj(i -> generateTermInfo()).collect(Collectors.toSet()));
         final String result = term.export();
@@ -148,7 +148,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvExportExportsSkosNotationAndExamplesDelimitedBySemicolons() {
+    void exportExportExportsSkosNotationAndExamplesDelimitedBySemicolons() {
         final CsvExportTermDto term = generate();
         term.setNotations(Collections.singleton("A"));
         term.setExamples(new HashSet<>());
@@ -166,7 +166,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvSanitizesTermUriToHandleCommas() {
+    void exportSanitizesTermUriToHandleCommas() {
         final CsvExportTermDto term = generate();
         term.setUri(URI.create(
                 "http://onto.fel.cvut.cz/ontologies/slovnik/oha-togaf/pojem/koncept-katalogů,-matic-a-pohledů"));
@@ -175,7 +175,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvExportsAltLabelsInDifferentLanguages() {
+    void exportExportsAltLabelsInDifferentLanguages() {
         final CsvExportTermDto sut = generate();
         final MultilingualString altOne = MultilingualString.create("Building", "en");
         altOne.set("cs", "Budova");
@@ -190,7 +190,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvIncludesRelatedAndInverseRelatedTerms() {
+    void exportIncludesRelatedAndInverseRelatedTerms() {
         final CsvExportTermDto sut = dtoMapper.termToCsvExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         sut.setVocabulary(Generator.generateUri());
@@ -209,7 +209,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvIncludesRelatedMatchAndInverseRelatedMatchTerms() {
+    void exportIncludesRelatedMatchAndInverseRelatedMatchTerms() {
         final CsvExportTermDto sut = dtoMapper.termToCsvExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         sut.setVocabulary(Generator.generateUri());
@@ -226,7 +226,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvIncludesExactMatchAndInverseExactMatchTerms() {
+    void exportIncludesExactMatchAndInverseExactMatchTerms() {
         final CsvExportTermDto sut = dtoMapper.termToCsvExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         sut.setVocabulary(Generator.generateUri());
@@ -243,7 +243,7 @@ class CsvExportTermDtoTest {
     }
 
     @Test
-    void toCsvEnsuresNoDuplicatesInRelatedRelatedMatchAndExactMatchTerms() {
+    void exportEnsuresNoDuplicatesInRelatedRelatedMatchAndExactMatchTerms() {
         final CsvExportTermDto sut = dtoMapper.termToCsvExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         sut.setVocabulary(Generator.generateUri());
@@ -271,5 +271,20 @@ class CsvExportTermDtoTest {
         final String resultExactMatch = items[12];
         final String[] exactMatchIris = resultExactMatch.split(";");
         assertEquals(asserted.size() + inverse.size(), exactMatchIris.length);
+    }
+
+    @Test
+    void exportRemovesMarkdownMarkupFromDefinitionAndScopeNote() {
+        final CsvExportTermDto sut = generate();
+        final String markdown = "# This is a headline\n" +
+                "**This is bold text** and _this is italics_";
+        final String text = "This is a headline\n\nThis is bold text and this is italics";
+        sut.getDefinition().set(Environment.LANGUAGE, markdown);
+        sut.getDescription().set(Environment.LANGUAGE, markdown);
+
+        final String result = sut.export();
+        final String[] items = result.split(",");
+        assertThat(items[4], containsString(text));
+        assertThat(items[5], containsString(text));
     }
 }

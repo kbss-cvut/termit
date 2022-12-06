@@ -20,11 +20,15 @@ public class CsvExportTermDto extends Term {
 
     public String export() {
         final StringBuilder sb = new StringBuilder(CsvUtils.sanitizeString(getUri().toString()));
-        sb.append(',').append(TabularTermExportUtils.exportMultilingualString(getLabel(), true));
-        exportCollection(sb, getAltLabels(), str -> TabularTermExportUtils.exportMultilingualString(str, true));
-        exportCollection(sb, getHiddenLabels(), str -> TabularTermExportUtils.exportMultilingualString(str, true));
-        sb.append(',').append(TabularTermExportUtils.exportMultilingualString(getDefinition(), true));
-        sb.append(',').append(TabularTermExportUtils.exportMultilingualString(getDescription(), true));
+        sb.append(',').append(TabularTermExportUtils.exportMultilingualString(getLabel(), Function.identity(), true));
+        exportCollection(sb, getAltLabels(),
+                         str -> TabularTermExportUtils.exportMultilingualString(str, Function.identity(), true));
+        exportCollection(sb, getHiddenLabels(),
+                         str -> TabularTermExportUtils.exportMultilingualString(str, Function.identity(), true));
+        sb.append(',')
+          .append(TabularTermExportUtils.exportMultilingualString(getDefinition(), Utils::markdownToPlainText, true));
+        sb.append(',')
+          .append(TabularTermExportUtils.exportMultilingualString(getDescription(), Utils::markdownToPlainText, true));
         exportCollection(sb, getTypes(), String::toString);
         exportCollection(sb, getSources(), String::toString);
         exportCollection(sb, getParentTerms(), pt -> pt.getUri().toString());
@@ -37,7 +41,8 @@ public class CsvExportTermDto extends Term {
         sb.append(',');
         sb.append(TabularTermExportUtils.draftToStatus(this));
         exportCollection(sb, getNotations(), String::toString);
-        exportCollection(sb, getExamples(), str -> TabularTermExportUtils.exportMultilingualString(str, true));
+        exportCollection(sb, getExamples(),
+                         str -> TabularTermExportUtils.exportMultilingualString(str, Function.identity(), true));
         final Map<String, Set<String>> propsToExport =
                 getProperties() != null ? getProperties() : Collections.emptyMap();
         exportCollection(sb, Utils.emptyIfNull(propsToExport.get(DC.Terms.REFERENCES)), String::toString);
@@ -54,7 +59,8 @@ public class CsvExportTermDto extends Term {
                                              Function<T, String> toString) {
         sb.append(',');
         if (!CollectionUtils.isEmpty(collection)) {
-            sb.append(TabularTermExportUtils.exportStringCollection(collection.stream().map(toString).collect(Collectors.toSet())));
+            sb.append(TabularTermExportUtils.exportStringCollection(
+                    collection.stream().map(toString).collect(Collectors.toSet())));
         }
     }
 }

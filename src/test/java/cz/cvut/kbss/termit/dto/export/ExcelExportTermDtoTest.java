@@ -26,7 +26,7 @@ class ExcelExportTermDtoTest {
     private static final TermDtoMapper dtoMapper = new TermDtoMapperImpl();
 
     @Test
-    void toExcelExportsTermToExcelRow() {
+    void exportExportsTermToExcelRow() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(Generator.generateTermWithId());
         sut.setTypes(Collections.singleton(Vocabulary.s_c_object));
         sut.setAltLabels(new HashSet<>(Arrays.asList(MultilingualString.create("Building", Environment.LANGUAGE),
@@ -81,7 +81,7 @@ class ExcelExportTermDtoTest {
     }
 
     @Test
-    void toExcelHandlesEmptyOptionalAttributeValues() {
+    void exportHandlesEmptyOptionalAttributeValues() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(Generator.generateTermWithId());
         sut.setDescription(null);
         sut.setDefinition(null);
@@ -93,7 +93,7 @@ class ExcelExportTermDtoTest {
     }
 
     @Test
-    void toExcelHandlesSkippingEmptyColumns() {
+    void exportHandlesSkippingEmptyColumns() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(Generator.generateTermWithId());
         sut.setDescription(null);
         sut.setSources(new LinkedHashSet<>(
@@ -108,7 +108,7 @@ class ExcelExportTermDtoTest {
     }
 
     @Test
-    void toExcelHandlesNullAltLabelsAttribute() {
+    void exportHandlesNullAltLabelsAttribute() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(Generator.generateTermWithId());
         final MultilingualString hiddenOne = MultilingualString.create("budova", "cs");
         final MultilingualString hiddenTwo = MultilingualString.create("budovy", "cs");
@@ -124,7 +124,7 @@ class ExcelExportTermDtoTest {
     }
 
     @Test
-    void toExcelIncludesRelatedAndInverseRelatedTerms() {
+    void exportIncludesRelatedAndInverseRelatedTerms() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         sut.setVocabulary(Generator.generateUri());
@@ -144,7 +144,7 @@ class ExcelExportTermDtoTest {
     }
 
     @Test
-    void toExcelIncludesRelatedMatchAndInverseRelatedMatchTerms() {
+    void exportIncludesRelatedMatchAndInverseRelatedMatchTerms() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         sut.setVocabulary(Generator.generateUri());
@@ -162,7 +162,7 @@ class ExcelExportTermDtoTest {
     }
 
     @Test
-    void toExcelIncludesExactMatchAndInverseExactMatchTerms() {
+    void exportIncludesExactMatchAndInverseExactMatchTerms() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         sut.setVocabulary(Generator.generateUri());
@@ -180,7 +180,7 @@ class ExcelExportTermDtoTest {
     }
 
     @Test
-    void toExcelEnsuresNoDuplicatesInRelatedRelatedMatchAndExactMatchTerms() {
+    void exportEnsuresNoDuplicatesInRelatedRelatedMatchAndExactMatchTerms() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         sut.setVocabulary(Generator.generateUri());
@@ -210,7 +210,7 @@ class ExcelExportTermDtoTest {
     }
 
     @Test
-    void toExcelExportsMultilingualAttributesAsValuesWithLanguageInParentheses() {
+    void exportExportsMultilingualAttributesAsValuesWithLanguageInParentheses() {
         final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(
                 Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs"));
         final XSSFRow row = generateExcel();
@@ -226,5 +226,20 @@ class ExcelExportTermDtoTest {
         assertTrue(description.matches(".+;.+"));
         sut.getDescription().getValue()
            .forEach((lang, value) -> assertThat(description, containsString(value + "(" + lang + ")")));
+    }
+
+    @Test
+    void exportRemovesMarkdownMarkupFromDefinitionAndScopeNote() {
+        final ExcelExportTermDto sut = dtoMapper.termToExcelExportDto(Generator.generateTermWithId());
+        final String markdown = "# This is a headline\n" +
+                "**This is bold text** and _this is italics_";
+        final String text = "This is a headline\n\nThis is bold text and this is italics";
+        sut.getDefinition().set(Environment.LANGUAGE, markdown);
+        sut.getDescription().set(Environment.LANGUAGE, markdown);
+
+        final XSSFRow row = generateExcel();
+        sut.export(row);
+        assertThat(row.getCell(4).getStringCellValue(), containsString(text));
+        assertThat(row.getCell(5).getStringCellValue(), containsString(text));
     }
 }
