@@ -35,6 +35,17 @@ public class TabularTermExportUtils {
         return ti.getUri().toString();
     }
 
+    /**
+     * Transforms the specified {@link MultilingualString} to a single string where individual translations are
+     * separated by a predefined delimiter.
+     * <p>
+     * The translations are added to the result in the following form: {@literal translation(language)}.
+     *
+     * @param str            Multilingual string to transform
+     * @param preProcessor   Function to apply to every translation before it is added to the result
+     * @param sanitizeCommas Whether to sanitize commas in the string content
+     * @return A single string containing all translations from the argument
+     */
     static String exportMultilingualString(MultilingualString str, Function<String, String> preProcessor,
                                            boolean sanitizeCommas) {
         if (str == null) {

@@ -38,8 +38,8 @@ public class CsvExportTermDto extends Term {
                                   TabularTermExportUtils::termInfoStringIri);
         consolidateAndExportMulti(sb, getExactMatchTerms(), getInverseExactMatchTerms(),
                                   TabularTermExportUtils::termInfoStringIri);
-        sb.append(',');
-        sb.append(TabularTermExportUtils.draftToStatus(this));
+        sb.append(',')
+          .append(TabularTermExportUtils.draftToStatus(this));
         exportCollection(sb, getNotations(), String::toString);
         exportCollection(sb, getExamples(),
                          str -> TabularTermExportUtils.exportMultilingualString(str, Function.identity(), true));
