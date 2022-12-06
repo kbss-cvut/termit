@@ -14,19 +14,16 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
-import cz.cvut.kbss.termit.dto.export.TabularTermExportUtils;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.service.mapper.TermDtoMapper;
-import cz.cvut.kbss.termit.service.mapper.TermDtoMapperImpl;
+import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -47,9 +44,6 @@ class CsvVocabularyExporterTest {
 
     @Mock
     private TermRepositoryService termService;
-
-    @Spy
-    private TermDtoMapper dtoMapper = new TermDtoMapperImpl();
 
     @InjectMocks
     private CsvVocabularyExporter sut;

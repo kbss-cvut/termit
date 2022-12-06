@@ -14,12 +14,10 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
-import cz.cvut.kbss.termit.dto.export.TabularTermExportUtils;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.service.mapper.TermDtoMapper;
-import cz.cvut.kbss.termit.service.mapper.TermDtoMapperImpl;
+import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -48,9 +46,6 @@ class ExcelVocabularyExporterTest {
 
     @Mock
     private TermRepositoryService termService;
-
-    @Spy
-    private TermDtoMapper dtoMapper = new TermDtoMapperImpl();
 
     @InjectMocks
     private ExcelVocabularyExporter sut;

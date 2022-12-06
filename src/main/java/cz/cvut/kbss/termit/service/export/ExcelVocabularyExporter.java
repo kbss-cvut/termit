@@ -14,16 +14,18 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
-import cz.cvut.kbss.termit.dto.export.TabularTermExportUtils;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
-import cz.cvut.kbss.termit.service.mapper.TermDtoMapper;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +37,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Supports vocabulary export to MS Excel format
+ * Implements vocabulary export to the MS Excel format.
  */
 @Service("excel")
 public class ExcelVocabularyExporter implements VocabularyExporter {
@@ -50,12 +52,9 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
 
     private final TermRepositoryService termService;
 
-    private final TermDtoMapper dtoMapper;
-
     @Autowired
-    public ExcelVocabularyExporter(TermRepositoryService termService, TermDtoMapper dtoMapper) {
+    public ExcelVocabularyExporter(TermRepositoryService termService) {
         this.termService = termService;
-        this.dtoMapper = dtoMapper;
     }
 
     @Override
@@ -106,15 +105,16 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     }
 
     private void generateTermRows(List<Term> terms, XSSFWorkbook wb, Sheet sheet) {
-        // Row no. 0 is the header
         final XSSFFont font = initFont(wb);
         final CellStyle style = wb.createCellStyle();
         style.setFont(font);
         style.setWrapText(true);
+        final ExcelTermExporter termExporter = new ExcelTermExporter();
         for (int i = 0; i < terms.size(); i++) {
+            // Row no. 0 is the header
             final Row row = sheet.createRow(i + 1);
             row.setRowStyle(style);
-            dtoMapper.termToExcelExportDto(terms.get(i)).export(row);
+            termExporter.export(terms.get(i), row);
         }
     }
 

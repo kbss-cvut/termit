@@ -17,11 +17,10 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
-import cz.cvut.kbss.termit.dto.export.TabularTermExportUtils;
-import cz.cvut.kbss.termit.service.mapper.TermDtoMapper;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -31,17 +30,17 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Implements vocabulary export to CSV.
+ */
 @Service("csv")
 public class CsvVocabularyExporter implements VocabularyExporter {
 
     private final TermRepositoryService termService;
 
-    private final TermDtoMapper dtoMapper;
-
     @Autowired
-    public CsvVocabularyExporter(TermRepositoryService termService, TermDtoMapper dtoMapper) {
+    public CsvVocabularyExporter(TermRepositoryService termService) {
         this.termService = termService;
-        this.dtoMapper = dtoMapper;
     }
 
     @Override
@@ -58,7 +57,8 @@ public class CsvVocabularyExporter implements VocabularyExporter {
         Objects.requireNonNull(vocabulary);
         final StringBuilder export = new StringBuilder(String.join(",", TabularTermExportUtils.EXPORT_COLUMNS));
         final List<Term> terms = termService.findAllFull(vocabulary);
-        terms.stream().map(dtoMapper::termToCsvExportDto).forEach(t -> export.append('\n').append(t.export()));
+        final CsvTermExporter termExporter = new CsvTermExporter();
+        terms.forEach(t -> export.append('\n').append(termExporter.export(t)));
         return new TypeAwareByteArrayResource(export.toString().getBytes(), ExportFormat.CSV.getMediaType(),
                                               ExportFormat.CSV.getFileExtension());
     }
