@@ -48,9 +48,22 @@ import java.util.stream.Collectors;
 public class ExcelVocabularyExporter implements VocabularyExporter {
 
     /**
-     * Name of the single sheet produced by this exporter
+     * Name of the main sheet containing the exported glossary
      */
     static final String SHEET_NAME = "Glossary";
+    /**
+     * Name of the sheet with prefix mapping
+     */
+    static final String PREFIX_SHEET_NAME = "Prefixes";
+    /**
+     * Name of the prefix column in the prefix mapping sheet
+     */
+    static final String PREFIX_COLUMN = "Prefix";
+    /**
+     * Name of the namespace column in the prefix mapping sheet
+     */
+    static final String NAMESPACE_COLUMN = "Namespace";
+
     private static final String FONT = "Arial";
     private static final short FONT_SIZE = (short) 10;
     private static final int COLUMN_WIDTH = 25;
@@ -78,9 +91,9 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     private TypeAwareResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         try (final XSSFWorkbook wb = new XSSFWorkbook()) {
-            final Sheet sheet = wb.createSheet(SHEET_NAME);
-            generateHeaderRow(wb, sheet);
-            generateTermRows(termService.findAllFull(vocabulary), wb, sheet);
+            final Map<URI, PrefixDeclaration> prefixes = new HashMap<>();
+            generateGlossarySheet(vocabulary, wb, prefixes);
+            generatePrefixMappingSheet(wb, prefixes);
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             wb.write(bos);
             return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
@@ -88,6 +101,12 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         } catch (IOException e) {
             throw new TermItException("Unable to generate excel file from glossary of " + vocabulary, e);
         }
+    }
+
+    private void generateGlossarySheet(Vocabulary vocabulary, XSSFWorkbook wb, Map<URI, PrefixDeclaration> prefixes) {
+        final Sheet sheet = wb.createSheet(SHEET_NAME);
+        generateHeaderRow(wb, sheet);
+        generateTermRows(termService.findAllFull(vocabulary), wb, sheet, prefixes);
     }
 
     private static void generateHeaderRow(XSSFWorkbook wb, Sheet sheet) {
@@ -112,8 +131,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         return font;
     }
 
-    private void generateTermRows(List<Term> terms, XSSFWorkbook wb, Sheet sheet) {
-        final Map<URI, PrefixDeclaration> prefixes = new HashMap<>();
+    private void generateTermRows(List<Term> terms, XSSFWorkbook wb, Sheet sheet,
+                                  Map<URI, PrefixDeclaration> prefixes) {
         final XSSFFont font = initFont(wb);
         final CellStyle style = wb.createCellStyle();
         style.setFont(font);
@@ -143,6 +162,31 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
                 Utils.emptyIfNull(t.getExternalParentTerms()).stream().map(TermInfo::new).collect(Collectors.toSet()));
         allRelated.stream().filter(ti -> !prefixes.containsKey(ti.getVocabulary()))
                   .forEach(ti -> prefixes.put(ti.getVocabulary(), vocabularyService.resolvePrefix(ti.getVocabulary())));
+    }
+
+    private void generatePrefixMappingSheet(XSSFWorkbook wb, Map<URI, PrefixDeclaration> prefixes) {
+        final Sheet sheet = wb.createSheet(PREFIX_SHEET_NAME);
+        final XSSFFont font = initFont(wb);
+        font.setBold(true);
+        final Row row = sheet.createRow(0);
+        final CellStyle style = wb.createCellStyle();
+        style.setFont(font);
+        row.setRowStyle(style);
+        sheet.setColumnWidth(0, COLUMN_WIDTH * 2 * 256);
+        sheet.setColumnWidth(1, COLUMN_WIDTH * 4 * 256);
+        // Sheet header
+        row.createCell(0).setCellValue(PREFIX_COLUMN);
+        row.createCell(1).setCellValue(NAMESPACE_COLUMN);
+        // Prefixes
+        int i = 1;
+        for (PrefixDeclaration pd : prefixes.values()) {
+            if (pd.getPrefix() == null) {
+                continue;
+            }
+            final Row prefixRow = sheet.createRow(i++);
+            prefixRow.createCell(0).setCellValue(pd.getPrefix());
+            prefixRow.createCell(1).setCellValue(pd.getNamespace());
+        }
     }
 
     @Override
