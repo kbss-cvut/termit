@@ -176,7 +176,7 @@ public class SKOSExporter {
      */
     public void exportFullGlossaryWithReferences(Vocabulary vocabulary, Collection<String> properties) {
         Objects.requireNonNull(properties);
-        exportGlossary(vocabulary);
+        exportFullGlossary(vocabulary);
         exportReferencedTermsWithQuery(properties, TERMS_FULL_EXPORT_QUERY);
         exportReferencedGlossaries();
     }
