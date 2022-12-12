@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.util;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
+import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.util.Statements;
@@ -51,17 +52,26 @@ public class Utils {
      * @return Query string read from the file
      */
     public static String loadQuery(String queryFileName) {
-        final InputStream is = Utils.class.getClassLoader().getResourceAsStream(
-                Constants.QUERY_DIRECTORY + File.separator + queryFileName);
+        return loadClasspathResource(Constants.QUERY_DIRECTORY + File.separator + queryFileName);
+    }
+
+    /**
+     * Loads the content of a text file from the classpath.
+     * <p>
+     * That is, this method resolves the specified path w.r.t. the application classpath.
+     *
+     * @param path Path to the file to load
+     * @return Content of the file as a string
+     */
+    public static String loadClasspathResource(String path) {
+        final InputStream is = Utils.class.getClassLoader().getResourceAsStream(path);
         if (is == null) {
-            throw new TermItException(
-                    "Initialization exception. Query file not found in " + Constants.QUERY_DIRECTORY +
-                            File.separator + queryFileName);
+            throw new ResourceNotFoundException("Initialization exception. Classpath resource not found in " + path);
         }
         try (final BufferedReader in = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
             return in.lines().collect(Collectors.joining("\n"));
         } catch (IOException e) {
-            throw new TermItException("Initialization exception. Unable to load query!", e);
+            throw new TermItException("Initialization exception. Unable to load classpath resource!", e);
         }
     }
 
@@ -267,6 +277,7 @@ public class Utils {
 
     /**
      * Checks if the specified string is a valid email address.
+     *
      * @param str String to validate
      * @return {@code true} if the specified string is a valid email, {@code false} otherwise
      */

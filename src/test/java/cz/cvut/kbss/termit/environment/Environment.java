@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -51,7 +52,7 @@ public class Environment {
 
     public static final String BASE_URI = Vocabulary.ONTOLOGY_IRI_termit;
 
-    public static final String LANGUAGE = "en";
+    public static final String LANGUAGE = Constants.DEFAULT_LANGUAGE;
 
     private static UserAccount currentUser;
 
