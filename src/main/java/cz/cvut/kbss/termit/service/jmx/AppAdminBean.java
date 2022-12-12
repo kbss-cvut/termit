@@ -57,7 +57,7 @@ public class AppAdminBean {
     }
 
     @ManagedOperation(description = "Sends test email to the specified address.")
-    public void sendTermEmail(String address) {
+    public void sendTestEmail(String address) {
         final Message message = Message.to(address).subject("TermIt Test Email")
                                        .content("This is a test message from TermIt.").build();
         postman.sendMessage(message);

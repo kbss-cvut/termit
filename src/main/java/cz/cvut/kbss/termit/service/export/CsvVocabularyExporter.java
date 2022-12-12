@@ -17,13 +17,18 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,11 +41,19 @@ import java.util.Objects;
 @Service("csv")
 public class CsvVocabularyExporter implements VocabularyExporter {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CsvVocabularyExporter.class);
+
+    private static final String DIRECTORY = "template";
+    private static final String TEMPLATE_FILE = "export.csv";
+
     private final TermRepositoryService termService;
 
+    private final Configuration config;
+
     @Autowired
-    public CsvVocabularyExporter(TermRepositoryService termService) {
+    public CsvVocabularyExporter(TermRepositoryService termService, Configuration config) {
         this.termService = termService;
+        this.config = config;
     }
 
     @Override
@@ -55,12 +68,24 @@ public class CsvVocabularyExporter implements VocabularyExporter {
 
     private TypeAwareByteArrayResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        final StringBuilder export = new StringBuilder(String.join(",", TabularTermExportUtils.EXPORT_COLUMNS));
+        final StringBuilder export = new StringBuilder(loadHeader().trim());
         final List<Term> terms = termService.findAllFull(vocabulary);
         final CsvTermExporter termExporter = new CsvTermExporter();
         terms.forEach(t -> export.append('\n').append(termExporter.export(t)));
         return new TypeAwareByteArrayResource(export.toString().getBytes(), ExportFormat.CSV.getMediaType(),
                                               ExportFormat.CSV.getFileExtension());
+    }
+
+    private String loadHeader() {
+        try {
+            // First try loading a localized header
+            return Utils.loadClasspathResource(
+                    DIRECTORY + "/" + config.getPersistence().getLanguage() + "/" + TEMPLATE_FILE);
+        } catch (ResourceNotFoundException e) {
+            // If we do not find it, fall back to the default one
+            LOG.warn("Unable to find localized CSV export header. Falling back to the default one.", e);
+            return Utils.loadClasspathResource(DIRECTORY + "/" + Constants.DEFAULT_LANGUAGE + "/" + TEMPLATE_FILE);
+        }
     }
 
     @Override

@@ -21,8 +21,8 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -30,6 +30,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -58,41 +59,16 @@ class ExcelVocabularyExporterTest {
     @Mock
     private VocabularyService vocabularyService;
 
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private Configuration config;
+
     @InjectMocks
     private ExcelVocabularyExporter sut;
 
     private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
-    @Test
-    void exportVocabularyGlossaryOutputsExcelWorkbookWithGlossaryAndPrefixesSheet() throws Exception {
-        when(termService.findAllFull(vocabulary)).thenReturn(Collections.emptyList());
-        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
-        assertNotNull(result);
-        final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
-        assertEquals(2, wb.getNumberOfSheets());
-        assertEquals(0, wb.getSheetIndex(ExcelVocabularyExporter.SHEET_NAME));
-        assertEquals(1, wb.getSheetIndex(ExcelVocabularyExporter.PREFIX_SHEET_NAME));
-    }
-
     private static ExportConfig exportConfig() {
         return new ExportConfig(ExportType.SKOS, ExportFormat.EXCEL.getMediaType());
-    }
-
-    @Test
-    void exportVocabularyGlossaryOutputsHeaderRowWithColumnNamesIntoSheet() throws Exception {
-        when(vocabularyService.resolvePrefix(any())).thenReturn(new PrefixDeclaration());
-        final List<Term> terms = IntStream.range(0, 2).mapToObj(i -> Generator.generateTermWithId()).collect(
-                Collectors.toList());
-        when(termService.findAllFull(vocabulary)).thenReturn(terms);
-        final Resource result = sut.exportGlossary(vocabulary, exportConfig());
-        final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
-        final XSSFSheet sheet = wb.getSheet(ExcelVocabularyExporter.SHEET_NAME);
-        assertNotNull(sheet);
-        final XSSFRow row = sheet.getRow(0);
-        assertNotNull(row);
-        for (int i = 0; i < TabularTermExportUtils.EXPORT_COLUMNS.size(); i++) {
-            assertEquals(TabularTermExportUtils.EXPORT_COLUMNS.get(i), row.getCell(i).getStringCellValue());
-        }
     }
 
     @Test
@@ -103,15 +79,15 @@ class ExcelVocabularyExporterTest {
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
         final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
-        final XSSFSheet sheet = wb.getSheet(ExcelVocabularyExporter.SHEET_NAME);
+        final XSSFSheet sheet = wb.getSheetAt(ExcelVocabularyExporter.GLOSSARY_SHEET_INDEX);
         assertNotNull(sheet);
-        // Plus header row
-        assertEquals(terms.size(), sheet.getLastRowNum());
-        for (int i = 1; i < sheet.getLastRowNum(); i++) {
+        int i;
+        for (i = 1; i < terms.size(); i++) {
             final XSSFRow row = sheet.getRow(i);
             final String id = row.getCell(0).getStringCellValue();
             assertTrue(terms.stream().anyMatch(t -> t.getUri().toString().equals(id)));
         }
+        assertNull(sheet.getRow(i + 1));
     }
 
     @Test
@@ -159,7 +135,7 @@ class ExcelVocabularyExporterTest {
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
         final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         final XSSFWorkbook wb = new XSSFWorkbook(result.getInputStream());
-        final XSSFSheet sheet = wb.getSheet(ExcelVocabularyExporter.PREFIX_SHEET_NAME);
+        final XSSFSheet sheet = wb.getSheetAt(ExcelVocabularyExporter.PREFIX_SHEET_INDEX);
         assertNotNull(sheet);
         // First row is the header
         final Row header = sheet.getRow(0);

@@ -14,14 +14,17 @@
  */
 package cz.cvut.kbss.termit.service.export;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,6 +48,9 @@ class CsvVocabularyExporterTest {
     @Mock
     private TermRepositoryService termService;
 
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private Configuration config;
+
     @InjectMocks
     private CsvVocabularyExporter sut;
 
@@ -56,7 +62,9 @@ class CsvVocabularyExporterTest {
         final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(result.getInputStream()))) {
             final String header = reader.readLine();
-            assertEquals(String.join(",", TabularTermExportUtils.EXPORT_COLUMNS), header);
+            assertEquals(
+                    Utils.loadClasspathResource("template" + "/" + Environment.LANGUAGE + "/" + "export.csv").trim(),
+                    header);
         }
     }
 
