@@ -21,22 +21,25 @@ import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,14 +50,16 @@ import java.util.stream.Collectors;
 @Service("excel")
 public class ExcelVocabularyExporter implements VocabularyExporter {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ExcelVocabularyExporter.class);
+
     /**
-     * Name of the main sheet containing the exported glossary
+     * Index of the main sheet containing the exported glossary
      */
-    static final String SHEET_NAME = "Glossary";
+    static final int GLOSSARY_SHEET_INDEX = 0;
     /**
-     * Name of the sheet with prefix mapping
+     * Index of the sheet with prefix mapping
      */
-    static final String PREFIX_SHEET_NAME = "Prefixes";
+    static final int PREFIX_SHEET_INDEX = 1;
     /**
      * Name of the prefix column in the prefix mapping sheet
      */
@@ -66,16 +71,19 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
 
     private static final String FONT = "Arial";
     private static final short FONT_SIZE = (short) 10;
-    private static final int COLUMN_WIDTH = 25;
 
     private final TermRepositoryService termService;
 
     private final VocabularyService vocabularyService;
 
+    private final Configuration config;
+
     @Autowired
-    public ExcelVocabularyExporter(TermRepositoryService termService, VocabularyService vocabularyService) {
+    public ExcelVocabularyExporter(TermRepositoryService termService, VocabularyService vocabularyService,
+                                   Configuration config) {
         this.termService = termService;
         this.vocabularyService = vocabularyService;
+        this.config = config;
     }
 
     @Override
@@ -90,7 +98,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
 
     private TypeAwareResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        try (final XSSFWorkbook wb = new XSSFWorkbook()) {
+        try (final XSSFWorkbook wb = new XSSFWorkbook(loadWorkbookTemplate())) {
             final Map<URI, PrefixDeclaration> prefixes = new HashMap<>();
             generateGlossarySheet(vocabulary, wb, prefixes);
             generatePrefixMappingSheet(wb, prefixes);
@@ -103,25 +111,20 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         }
     }
 
-    private void generateGlossarySheet(Vocabulary vocabulary, XSSFWorkbook wb, Map<URI, PrefixDeclaration> prefixes) {
-        final Sheet sheet = wb.createSheet(SHEET_NAME);
-        generateHeaderRow(wb, sheet);
-        generateTermRows(termService.findAllFull(vocabulary), wb, sheet, prefixes);
+    private InputStream loadWorkbookTemplate() {
+        final InputStream templateIs = ExcelVocabularyExporter.class.getClassLoader().getResourceAsStream(
+                "template/" + config.getPersistence().getLanguage() + "/export.xlsx");
+        if (templateIs == null) {
+            LOG.warn("Localized Excel export template file not found. Falling back to the default one.");
+            return ExcelVocabularyExporter.class.getClassLoader().getResourceAsStream(
+                    "template/" + Constants.DEFAULT_LANGUAGE + "/export.xlsx");
+        }
+        return templateIs;
     }
 
-    private static void generateHeaderRow(XSSFWorkbook wb, Sheet sheet) {
-        final XSSFFont font = initFont(wb);
-        font.setBold(true);
-        final Row row = sheet.createRow(0);
-        final CellStyle style = wb.createCellStyle();
-        style.setFont(font);
-        style.setAlignment(HorizontalAlignment.CENTER);
-        row.setRowStyle(style);
-        for (int i = 0; i < TabularTermExportUtils.EXPORT_COLUMNS.size(); i++) {
-            sheet.setColumnWidth(i, COLUMN_WIDTH * 256);
-            row.createCell(i).setCellValue(TabularTermExportUtils.EXPORT_COLUMNS.get(i));
-
-        }
+    private void generateGlossarySheet(Vocabulary vocabulary, XSSFWorkbook wb, Map<URI, PrefixDeclaration> prefixes) {
+        final Sheet sheet = wb.getSheetAt(GLOSSARY_SHEET_INDEX);
+        generateTermRows(termService.findAllFull(vocabulary), wb, sheet, prefixes);
     }
 
     private static XSSFFont initFont(XSSFWorkbook wb) {
@@ -165,18 +168,11 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     }
 
     private void generatePrefixMappingSheet(XSSFWorkbook wb, Map<URI, PrefixDeclaration> prefixes) {
-        final Sheet sheet = wb.createSheet(PREFIX_SHEET_NAME);
+        final Sheet sheet = wb.getSheetAt(PREFIX_SHEET_INDEX);
         final XSSFFont font = initFont(wb);
-        font.setBold(true);
-        final Row row = sheet.createRow(0);
         final CellStyle style = wb.createCellStyle();
         style.setFont(font);
-        row.setRowStyle(style);
-        sheet.setColumnWidth(0, COLUMN_WIDTH * 2 * 256);
-        sheet.setColumnWidth(1, COLUMN_WIDTH * 4 * 256);
-        // Sheet header
-        row.createCell(0).setCellValue(PREFIX_COLUMN);
-        row.createCell(1).setCellValue(NAMESPACE_COLUMN);
+        style.setWrapText(true);
         // Prefixes
         int i = 1;
         for (PrefixDeclaration pd : prefixes.values()) {
@@ -184,6 +180,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
                 continue;
             }
             final Row prefixRow = sheet.createRow(i++);
+            prefixRow.setRowStyle(style);
             prefixRow.createCell(0).setCellValue(pd.getPrefix());
             prefixRow.createCell(1).setCellValue(pd.getNamespace());
         }
