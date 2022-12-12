@@ -32,7 +32,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Collections;
@@ -63,8 +62,9 @@ class CsvVocabularyExporterTest {
         final Resource result = sut.exportGlossary(vocabulary, exportConfig());
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(result.getInputStream()))) {
             final String header = reader.readLine();
-            assertEquals(Utils.loadClasspathResource(
-                    "template" + File.separator + Environment.LANGUAGE + File.separator + "export.csv").trim(), header);
+            assertEquals(
+                    Utils.loadClasspathResource("template" + "/" + Environment.LANGUAGE + "/" + "export.csv").trim(),
+                    header);
         }
     }
 

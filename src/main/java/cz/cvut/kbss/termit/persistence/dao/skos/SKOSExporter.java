@@ -23,7 +23,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
@@ -38,9 +37,9 @@ public class SKOSExporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSExporter.class);
 
-    private static final String GLOSSARY_EXPORT_QUERY = "export" + File.separator + "skos" + File.separator + "exportGlossary.rq";
-    private static final String TERMS_EXPORT_QUERY = "export" + File.separator + "skos" + File.separator + "exportGlossaryTerms.rq";
-    private static final String TERMS_FULL_EXPORT_QUERY = "export" + File.separator + "full" + File.separator + "exportGlossaryTerms.rq";
+    private static final String GLOSSARY_EXPORT_QUERY = "export/skos/exportGlossary.rq";
+    private static final String TERMS_EXPORT_QUERY = "export/skos/exportGlossaryTerms.rq";
+    private static final String TERMS_FULL_EXPORT_QUERY = "export/full/exportGlossaryTerms.rq";
 
     private final org.eclipse.rdf4j.repository.Repository repository;
     private final ValueFactory vf;

@@ -52,7 +52,7 @@ public class Utils {
      * @return Query string read from the file
      */
     public static String loadQuery(String queryFileName) {
-        return loadClasspathResource(Constants.QUERY_DIRECTORY + File.separator + queryFileName);
+        return loadClasspathResource(Constants.QUERY_DIRECTORY + "/" + queryFileName);
     }
 
     /**

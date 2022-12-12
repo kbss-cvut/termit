@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
@@ -80,13 +79,12 @@ public class CsvVocabularyExporter implements VocabularyExporter {
     private String loadHeader() {
         try {
             // First try loading a localized header
-            return Utils.loadClasspathResource(DIRECTORY + File.separator + config.getPersistence()
-                                                                                  .getLanguage() + File.separator + TEMPLATE_FILE);
+            return Utils.loadClasspathResource(
+                    DIRECTORY + "/" + config.getPersistence().getLanguage() + "/" + TEMPLATE_FILE);
         } catch (ResourceNotFoundException e) {
             // If we do not find it, fall back to the default one
             LOG.warn("Unable to find localized CSV export header. Falling back to the default one.", e);
-            return Utils.loadClasspathResource(
-                    DIRECTORY + File.separator + Constants.DEFAULT_LANGUAGE + File.separator + TEMPLATE_FILE);
+            return Utils.loadClasspathResource(DIRECTORY + "/" + Constants.DEFAULT_LANGUAGE + "/" + TEMPLATE_FILE);
         }
     }
 

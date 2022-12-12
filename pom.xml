@@ -477,12 +477,6 @@
 
     <build>
         <finalName>termit</finalName>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -631,7 +625,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>copy-resources</id>
@@ -640,9 +634,16 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
+                            <nonFilteredFileExtensions>
+                                <nonFilteredFileExtension>xlsx</nonFilteredFileExtension>
+                            </nonFilteredFileExtensions>
                             <overwrite>true</overwrite>
                             <outputDirectory>${basedir}/target/classes</outputDirectory>
                             <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <filtering>true</filtering>
+                                </resource>
                                 <resource>
                                     <directory>profile/${profile.name}</directory>
                                     <includes>
