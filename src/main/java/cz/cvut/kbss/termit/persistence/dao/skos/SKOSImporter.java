@@ -70,6 +70,7 @@ public class SKOSImporter {
     private final EntityManager em;
 
     private final Model model = new LinkedHashModel();
+    private final Model mappingStatements = new LinkedHashModel();
 
     private IRI glossaryIri;
 
@@ -150,6 +151,7 @@ public class SKOSImporter {
 
         final Vocabulary vocabulary = createVocabulary(rename, vocabularyIri, vocabularyIriFromData);
         ensureConceptIrisAreCompatibleWithTermIt();
+        extractSkosMappingStatements();
 
         if (vocabularyIri == null) {
             LOG.trace("New vocabulary {} with a new glossary {}.", vocabulary.getUri(),
@@ -161,7 +163,6 @@ public class SKOSImporter {
 
         em.flush();
         persist.accept(vocabulary);
-        pruneInferableSkosMappingStatements();
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;
@@ -277,20 +278,13 @@ public class SKOSImporter {
     }
 
     /**
-     * Removes all SKOS mapping assertions that can be inferred from the imported model.
+     * Extracts SKOS mapping property statements from the imported model into a separate one for later processing.
      */
-    private void pruneInferableSkosMappingStatements() {
-        final Repository repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
-        // Gather all statements that use an inferrable SKOS mapping property
-        final List<Statement> mappings = INFERABLE_MAPPING_PROPERTIES.stream()
-                                                                     .flatMap(prop -> model.filter(null, prop, null)
-                                                                                           .stream())
-                                                                     .collect(Collectors.toList());
-        try (final RepositoryConnection conn = repository.getConnection()) {
-            // Remove all statements that are inferred in the repository
-            mappings.stream().filter(s -> conn.hasStatement(s, true) && !conn.hasStatement(s, false))
-                    .forEach(model::remove);
-        }
+    private void extractSkosMappingStatements() {
+        INFERABLE_MAPPING_PROPERTIES.stream()
+                                    .flatMap(prop -> model.filter(null, prop, null).stream())
+                                    .forEach(mappingStatements::add);
+        model.removeAll(mappingStatements);
     }
 
     private void addDataIntoRepository(URI vocabularyIri) {
@@ -300,7 +294,19 @@ public class SKOSImporter {
             final IRI targetContext = repository.getValueFactory().createIRI(vocabularyIri.toString());
             LOG.debug("Importing vocabulary into context <{}>.", targetContext);
             conn.add(model, targetContext);
+            addAssertedSkosMappingStatements(conn, targetContext);
             conn.commit();
+        }
+    }
+
+    /**
+     * Adds only those SKOS mapping property statements that cannot be inferred from existing data to the repository.
+     */
+    private void addAssertedSkosMappingStatements(RepositoryConnection conn, IRI targetContext) {
+        for (Statement s : mappingStatements) {
+            if (!conn.hasStatement(s, true)) {
+                conn.add(s, targetContext);
+            }
         }
     }
 
