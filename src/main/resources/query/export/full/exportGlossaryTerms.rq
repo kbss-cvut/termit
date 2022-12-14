@@ -8,6 +8,8 @@ CONSTRUCT {
           skos:broader ?broader ;
           skos:broadMatch ?broadMatch ;
         skos:related ?related ;
+        skos:exactMatch ?exactMatch ;
+        skos:relatedMatch ?relatedMatch ;
     	skos:topConceptOf ?topOf ;
         a ?type ;
         skos:broader ?superClass ;
@@ -72,8 +74,13 @@ CONSTRUCT {
             }
         }
 	}
-    FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf))
-
+    FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf, skos:relatedMatch, skos:exactMatch))
+    OPTIONAL {
+        ?term skos:relatedMatch ?relatedMatch .
+    }
+    OPTIONAL {
+        ?term skos:exactMatch ?exactMatch .
+    }
     OPTIONAL {
         ?whole <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?term .
         FILTER NOT EXISTS {

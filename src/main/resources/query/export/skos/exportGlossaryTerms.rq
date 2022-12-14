@@ -56,12 +56,6 @@ CONSTRUCT {
             }
         }
         OPTIONAL {
-            ?term skos:relatedMatch ?relatedMatch .
-        }
-        OPTIONAL {
-            ?term skos:exactMatch ?exactMatch .
-        }
-        OPTIONAL {
         # This ensures only parent-less terms become top concepts of their glossaries
             BIND(IF(EXISTS {?glossary skos:hasTopConcept ?term}, ?glossary, BNODE()) as ?topOf)
             FILTER (!ISBLANK(?topOf))
@@ -86,6 +80,12 @@ CONSTRUCT {
                 FILTER (!sameTerm(?term, ?superClass) && !sameTerm(?term, ?intermediateSuperClass) && !sameTerm(?superClass, ?intermediateSuperClass))
             }
         }
+    }
+    OPTIONAL {
+        ?term skos:relatedMatch ?relatedMatch .
+    }
+    OPTIONAL {
+        ?term skos:exactMatch ?exactMatch .
     }
     OPTIONAL {
         ?whole <http://onto.fel.cvut.cz/ontologies/ufo/has-part> ?term .
