@@ -31,7 +31,10 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -57,6 +60,8 @@ public class SKOSImporter {
             SKOS.SCOPE_NOTE.toString(),
             SKOS.DEFINITION.toString()
     );
+
+    private static final Set<IRI> INFERABLE_MAPPING_PROPERTIES = Set.of(SKOS.EXACT_MATCH, SKOS.RELATED_MATCH);
 
     private final Configuration config;
     private final VocabularyDao vocabularyDao;
@@ -130,7 +135,7 @@ public class SKOSImporter {
         final Set<String> languageTags = getLanguageTagsPerProperties(model, MULTILINGUAL_PROPERTIES);
         if (languageTags.contains("")) {
             throw new IllegalArgumentException(
-                    "Each value of the properties must have a non-empty language tag: " + MULTILINGUAL_PROPERTIES);
+                    "Each value of the following properties must have a non-empty language tag: " + MULTILINGUAL_PROPERTIES);
         }
 
         glossaryIri = resolveGlossaryIriFromImportedData(model);
@@ -156,6 +161,7 @@ public class SKOSImporter {
 
         em.flush();
         persist.accept(vocabulary);
+        pruneInferableSkosMappingStatements();
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;
@@ -268,6 +274,23 @@ public class SKOSImporter {
                 model.add(glossaryIri, SKOS.HAS_TOP_CONCEPT, t);
             }
         });
+    }
+
+    /**
+     * Removes all SKOS mapping assertions that can be inferred from the imported model.
+     */
+    private void pruneInferableSkosMappingStatements() {
+        final Repository repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
+        // Gather all statements that use an inferrable SKOS mapping property
+        final List<Statement> mappings = INFERABLE_MAPPING_PROPERTIES.stream()
+                                                                     .flatMap(prop -> model.filter(null, prop, null)
+                                                                                           .stream())
+                                                                     .collect(Collectors.toList());
+        try (final RepositoryConnection conn = repository.getConnection()) {
+            // Remove all statements that are inferred in the repository
+            mappings.stream().filter(s -> conn.hasStatement(s, true) && !conn.hasStatement(s, false))
+                    .forEach(model::remove);
+        }
     }
 
     private void addDataIntoRepository(URI vocabularyIri) {
