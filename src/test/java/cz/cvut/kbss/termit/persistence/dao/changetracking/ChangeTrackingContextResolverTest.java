@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +39,7 @@ class ChangeTrackingContextResolverTest {
     @BeforeEach
     void setUp() {
         when(config.getChangetracking().getContext().getExtension()).thenReturn(CHANGE_CONTEXT_EXTENSION);
-        this.sut = new ChangeTrackingContextResolver(em, config);
+        this.sut = new ChangeTrackingContextResolver(em, config, new EditableVocabularies(config));
     }
 
     @Test
