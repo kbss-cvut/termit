@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.persistence.dao.changetracking;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -77,6 +78,8 @@ public class ChangeRecordDao {
                      .setParameter("hasTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
                      .setParameter("asset", asset.getUri()).setDescriptor(descriptor).getResultList();
         } catch (RuntimeException e) {
+            if(e instanceof NotFoundException)
+                throw e;
             throw new PersistenceException(e);
         }
     }

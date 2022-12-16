@@ -1,6 +1,8 @@
 package cz.cvut.kbss.termit.persistence.dao.changetracking;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -41,18 +43,18 @@ public class ChangeTrackingContextResolver {
      * @param changedAsset Asset for which change records will be generated
      * @return Identifier of the change tracking context of the specified asset
      */
-    public URI resolveChangeTrackingContext(Asset<?> changedAsset) {
+    public URI resolveChangeTrackingContext(Asset<?> changedAsset) throws NotFoundException {
         Objects.requireNonNull(changedAsset);
         if (changedAsset instanceof Vocabulary) {
-            URI changeTrackingContextURI = resolveExistingChangeTrackingContext(changedAsset.getUri());
-            if(Objects.nonNull(changeTrackingContextURI))
-                return changeTrackingContextURI;
-            return URI.create(changedAsset.getUri().toString().concat(contextExtension));
+            Optional<URI> changeTrackingContextURI = resolveExistingChangeTrackingContext(changedAsset.getUri());
+            return changeTrackingContextURI.orElse(
+                    URI.create(changedAsset.getUri().toString().concat(contextExtension)));
         } else if (changedAsset instanceof Term) {
-            URI changeTrackingContextURI = resolveExistingChangeTrackingContext(resolveTermVocabulary((Term) changedAsset));
-            if(Objects.nonNull(changeTrackingContextURI))
-                return changeTrackingContextURI;
-            return URI.create(resolveTermVocabulary((Term) changedAsset).toString().concat(contextExtension));
+            URI vocabularyUri = resolveTermVocabulary((Term) changedAsset);
+            Optional<URI> changeTrackingContextURI = resolveExistingChangeTrackingContext(
+                    vocabularyUri);
+            return changeTrackingContextURI.orElse(
+                    URI.create(vocabularyUri.toString().concat(contextExtension)));
         }
         return URI.create(changedAsset.getUri().toString().concat(contextExtension));
     }
@@ -70,14 +72,21 @@ public class ChangeTrackingContextResolver {
         }
     }
 
-    private URI resolveExistingChangeTrackingContext(URI vocabularyURI) {
+    private Optional<URI> resolveExistingChangeTrackingContext(URI vocabularyURI) throws NotFoundException {
         Optional<URI> vocabularyContext = vocabularies.getVocabularyContext(vocabularyURI);
-        return vocabularyContext.map(uri -> em.createNativeQuery(
-                                                      "SELECT DISTINCT ?ctc WHERE { GRAPH ?vc { ?vc ?hasChangeTrackingContext ?ctc } }", URI.class)
-                                              .setParameter("vc", uri)
-                                              .setParameter("hasChangeTrackingContext",
-                                                      URI.create(
-                                                              cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_kontext_sledovani_zmen))
-                                              .getSingleResult()).orElse(null);
+        return vocabularyContext.map(uri -> {
+            try {
+                return em.createNativeQuery(
+                                 "SELECT DISTINCT ?ctc WHERE { GRAPH ?vc { ?vc ?hasChangeTrackingContext ?ctc } }", URI.class)
+                         .setParameter("vc", uri)
+                         .setParameter("hasChangeTrackingContext",
+                                 URI.create(
+                                         cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_kontext_sledovani_zmen))
+                         .getSingleResult();
+            } catch (NoResultException nre) {
+                throw new NotFoundException(
+                        String.format("Vocabulary context [%s] does not refer to any change context.", uri));
+            }
+        });
     }
 }
