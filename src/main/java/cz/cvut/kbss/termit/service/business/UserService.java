@@ -123,7 +123,8 @@ public class UserService {
         Objects.requireNonNull(account);
         LOG.trace("Persisting user account {}.", account);
         if (!securityUtils.isAuthenticated() || !securityUtils.getCurrentUser().isAdmin()) {
-            account.addType(Vocabulary.s_c_omezeny_uzivatel_termitu);
+            account.addType(Vocabulary.s_c_plny_uzivatel_termitu);
+            account.removeType(Vocabulary.s_c_omezeny_uzivatel_termitu);
             account.removeType(Vocabulary.s_c_administrator_termitu);
         }
         if (account.getPassword() == null || account.getPassword().trim().isEmpty()) {

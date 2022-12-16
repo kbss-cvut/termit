@@ -254,13 +254,14 @@ class UserServiceTest {
     }
 
     @Test
-    void persistAddsUserRestrictedType() {
+    void persistAddsFullUserType() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         sut.persist(user);
 
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(repositoryServiceMock).persist(captor.capture());
-        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_plny_uzivatel_termitu));
+        assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
     }
 
     @Test
