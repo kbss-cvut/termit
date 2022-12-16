@@ -77,7 +77,7 @@ public class ChangeTrackingContextResolver {
                                               .setParameter("vc", uri)
                                               .setParameter("hasChangeTrackingContext",
                                                       URI.create(
-                                                              cz.cvut.kbss.termit.util.Vocabulary.s_i_ma_kontext_sledovani_zmen))
+                                                              cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_kontext_sledovani_zmen))
                                               .getSingleResult()).orElse(null);
     }
 }
