@@ -64,12 +64,11 @@ public class ChangeRecordDao {
             final Descriptor descriptor = new EntityDescriptor();
             URI changeTrackingContextUri = changeTrackingContextResolver.resolveChangeTrackingContext(asset);
             descriptor.setLanguage(null);
-            return em.createNativeQuery("SELECT ?r WHERE {" +
-                             "GRAPH ?ctc { ?r ?relatesTo ?asset . }" +
-                             "?r a ?changeRecord ;" +
-                             "?relatesTo ?asset ;" +
-                             "?hasTime ?timestamp ." +
-                             "OPTIONAL { ?r ?hasChangedAttribute ?attribute . }" +
+            return em.createNativeQuery("SELECT ?r WHERE { " +
+                             "GRAPH ?ctc { ?r ?relatesTo ?asset ; " +
+                             "?hasTime ?timestamp . " +
+                             "OPTIONAL { ?r ?hasChangedAttribute ?attribute . } } " +
+                             "?r a ?changeRecord . " +
                              "} ORDER BY DESC(?timestamp) ?attribute", AbstractChangeRecord.class)
                      .setParameter("ctc", changeTrackingContextUri)
                      .setParameter("changeRecord", URI.create(Vocabulary.s_c_zmena))
