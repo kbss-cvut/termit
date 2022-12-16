@@ -294,7 +294,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
                              () -> new NotFoundException(
                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage())))
+                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
+                                                  Comparator.nullsLast(Comparator.naturalOrder())))
                      .collect(Collectors.toList());
     }
 

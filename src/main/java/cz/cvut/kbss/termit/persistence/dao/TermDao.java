@@ -58,7 +58,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                    Cache<URI, Set<TermInfo>> subTermsCache, VocabularyContextMapper contextMapper) {
         super(Term.class, em, config.getPersistence(), descriptorFactory);
         this.subTermsCache = subTermsCache;
-        this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(config.getPersistence().getLanguage()));
+        this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(config.getPersistence().getLanguage()),
+                                                       Comparator.nullsLast(Comparator.naturalOrder()));
         this.contextMapper = contextMapper;
     }
 
