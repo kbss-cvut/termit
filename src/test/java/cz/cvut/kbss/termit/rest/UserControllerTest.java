@@ -19,6 +19,8 @@ import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -137,5 +139,18 @@ class UserControllerTest extends BaseControllerTestRunner {
                 .andReturn();
         final Boolean result = readValue(mvcResult, Boolean.class);
         assertTrue(result);
+    }
+
+    @Test
+    void changeRoleUsesProvidedNamespaceToResolveUserUri() throws Exception {
+        final String namespace = Vocabulary.s_c_uzivatel_termitu + "/";
+        when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
+        when(userService.findRequired(user.getUri())).thenReturn(user);
+        mockMvc.perform(put(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/role")
+                                .queryParam(Constants.QueryParams.NAMESPACE, namespace)
+                                .content(Vocabulary.s_c_omezeny_uzivatel).contentType(MediaType.TEXT_PLAIN))
+               .andExpect(status().isNoContent());
+        verify(idResolverMock).resolveIdentifier(namespace, extractIdentifierFragment(user.getUri()));
+        verify(userService).changeRole(user, Vocabulary.s_c_omezeny_uzivatel);
     }
 }
