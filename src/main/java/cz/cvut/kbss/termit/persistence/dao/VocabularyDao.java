@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -178,6 +179,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         Objects.requireNonNull(entity);
         try {
             em.persist(entity, descriptorFactory.vocabularyDescriptor(entity));
+            if (entity.getDocument() != null && em.find(Document.class, entity.getDocument().getUri()) == null) {
+                em.persist(entity.getDocument(), descriptorFactory.documentDescriptor(entity));
+            }
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

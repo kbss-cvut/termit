@@ -6,7 +6,6 @@ import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -156,7 +155,7 @@ public class SKOSImporter {
                       vocabulary.getGlossary().getUri());
             ensureUniqueness(vocabulary);
         } else {
-            clearVocabulary(vocabularyIri);
+            clearVocabulary(vocabulary);
         }
         em.flush();
         em.clear();
@@ -178,9 +177,12 @@ public class SKOSImporter {
         }
     }
 
-    private void clearVocabulary(final URI vocabularyIri) {
-        final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(vocabularyIri);
-        possibleVocabulary.ifPresent(vocabularyDao::forceRemove);
+    private void clearVocabulary(Vocabulary newVocabulary) {
+        final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(newVocabulary.getUri());
+        possibleVocabulary.ifPresent(toRemove -> {
+            newVocabulary.setDocument(toRemove.getDocument());
+            vocabularyDao.forceRemove(toRemove);
+        });
     }
 
     private void ensureConceptIrisAreCompatibleWithTermIt() {

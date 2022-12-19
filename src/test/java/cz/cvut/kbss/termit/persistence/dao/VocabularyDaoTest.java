@@ -661,4 +661,19 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                                                                      descriptorFactory.vocabularyDescriptor(
                                                                              vocabulary)));
     }
+
+    @Test
+    void persistPersistsDocumentWhenItDoesNotExist() {
+        final Vocabulary instance = Generator.generateVocabularyWithId();
+        final Document document = Generator.generateDocumentWithId();
+        instance.setDocument(document);
+        transactional(() -> sut.persist(instance));
+
+        final Vocabulary result = em.find(Vocabulary.class, instance.getUri(), descriptorFor(instance));
+        assertNotNull(result);
+        assertNotNull(result.getDocument());
+        assertEquals(document, result.getDocument());
+        assertEquals(document,
+                     em.find(Document.class, document.getUri(), descriptorFactory.documentDescriptor(instance)));
+    }
 }
