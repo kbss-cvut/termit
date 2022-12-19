@@ -65,7 +65,6 @@ public class SKOSImporter {
 
     private final Configuration config;
     private final VocabularyDao vocabularyDao;
-    private final TermDao termDao;
 
     private final EntityManager em;
 
@@ -75,10 +74,9 @@ public class SKOSImporter {
     private IRI glossaryIri;
 
     @Autowired
-    public SKOSImporter(Configuration config, VocabularyDao vocabularyDao, TermDao termDao, EntityManager em) {
+    public SKOSImporter(Configuration config, VocabularyDao vocabularyDao, EntityManager em) {
         this.config = config;
         this.vocabularyDao = vocabularyDao;
-        this.termDao = termDao;
         this.em = em;
     }
 
@@ -160,8 +158,9 @@ public class SKOSImporter {
         } else {
             clearVocabulary(vocabularyIri);
         }
-
         em.flush();
+        em.clear();
+
         persist.accept(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
@@ -181,19 +180,7 @@ public class SKOSImporter {
 
     private void clearVocabulary(final URI vocabularyIri) {
         final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(vocabularyIri);
-        if (possibleVocabulary.isPresent()) {
-            Vocabulary vocabulary = possibleVocabulary.get();
-            termDao.findAllFull(vocabulary).forEach(t -> {
-                if (t.getProperties() != null) {
-                    t.getProperties().clear();
-                }
-                // Note that this causes repeated vocabulary validation, which is not very efficient
-                // Especially since we are going to remove the vocabulary anyway
-                termDao.remove(t);
-                vocabulary.getGlossary().removeRootTerm(t);
-            });
-            vocabularyDao.remove(vocabulary);
-        }
+        possibleVocabulary.ifPresent(vocabularyDao::forceRemove);
     }
 
     private void ensureConceptIrisAreCompatibleWithTermIt() {
