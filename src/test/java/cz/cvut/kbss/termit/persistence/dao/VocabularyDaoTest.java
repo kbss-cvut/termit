@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
@@ -621,5 +622,58 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertNotNull(result);
         assertEquals(prefix, result.getPrefix());
         assertEquals(namespace, result.getNamespace());
+    }
+
+    @Test
+    void forceRemoveRemovesVocabularyGlossaryModelAndAllTerms() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
+                                          .collect(
+                                                  Collectors.toList());
+        final Document doc = Generator.generateDocumentWithId();
+        vocabulary.setDocument(doc);
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            em.persist(doc, descriptorFactory.documentDescriptor(vocabulary));
+            terms.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(t));
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
+            });
+        });
+
+        transactional(() -> sut.forceRemove(vocabulary));
+        final String query = "ASK { ?x a ?type }";
+        assertFalse(em.createNativeQuery(query, Boolean.class)
+                      .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
+                      .getSingleResult());
+        assertFalse(em.createNativeQuery(query, Boolean.class)
+                      .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_glosar))
+                      .getSingleResult());
+        assertFalse(em.createNativeQuery(query, Boolean.class)
+                      .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_model))
+                      .getSingleResult());
+        assertFalse(em.createNativeQuery(query, Boolean.class).setParameter("type", URI.create(SKOS.CONCEPT))
+                      .getSingleResult());
+        assertTrue(em.createNativeQuery(query, Boolean.class)
+                     .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_dokument))
+                     .getSingleResult());
+        assertFalse(em.getEntityManagerFactory().getCache().contains(Vocabulary.class, vocabulary.getUri(),
+                                                                     descriptorFactory.vocabularyDescriptor(
+                                                                             vocabulary)));
+    }
+
+    @Test
+    void persistPersistsDocumentWhenItDoesNotExist() {
+        final Vocabulary instance = Generator.generateVocabularyWithId();
+        final Document document = Generator.generateDocumentWithId();
+        instance.setDocument(document);
+        transactional(() -> sut.persist(instance));
+
+        final Vocabulary result = em.find(Vocabulary.class, instance.getUri(), descriptorFor(instance));
+        assertNotNull(result);
+        assertNotNull(result.getDocument());
+        assertEquals(document, result.getDocument());
+        assertEquals(document,
+                     em.find(Document.class, document.getUri(), descriptorFactory.documentDescriptor(instance)));
     }
 }
