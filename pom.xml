@@ -410,54 +410,6 @@
             </build>
         </profile>
 
-        <profile>
-            <id>dev</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-        </profile>
-        <profile>
-            <id>production</id>
-            <properties>
-                <profile.name>production</profile.name>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.google.code.maven-replacer-plugin</groupId>
-                        <artifactId>replacer</artifactId>
-                        <version>1.5.3</version>
-                        <executions>
-                            <execution>
-                                <id>admin-jmx-name</id>
-                                <phase>process-sources</phase>
-                                <goals>
-                                    <goal>replace</goal>
-                                </goals>
-                                <configuration>
-                                    <file>
-                                        ${project.basedir}/src/main/java/cz/cvut/kbss/termit/service/jmx/AppAdminBean.java
-                                    </file>
-                                    <outputFile>
-                                        ${project.basedir}/src/main/java/cz/cvut/kbss/termit/service/jmx/AppAdminBean.java
-                                    </outputFile>
-                                    <regex>false</regex>
-                                    <token>TermItAdminBean</token>
-                                    <value>TermItAdminBean-${deployment}</value>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>replace</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <!-- Profiles for storages. Important for correct full text search functionality -->
         <profile>
             <id>rdf4j</id>

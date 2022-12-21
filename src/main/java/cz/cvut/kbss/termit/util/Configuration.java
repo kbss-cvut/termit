@@ -35,6 +35,7 @@ public class Configuration {
      * TermIt frontend URL.
      */
     private String url = "http://localhost:3000/#";
+    private String jmxBeanName = "TermItAdminBean";
     private Persistence persistence = new Persistence();
     private Repository repository = new Repository();
     private ChangeTracking changetracking = new ChangeTracking();
@@ -57,6 +58,14 @@ public class Configuration {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getJmxBeanName() {
+        return jmxBeanName;
+    }
+
+    public void setJmxBeanName(String jmxBeanName) {
+        this.jmxBeanName = jmxBeanName;
     }
 
     public Persistence getPersistence() {
