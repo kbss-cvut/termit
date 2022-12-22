@@ -6,7 +6,6 @@ import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -31,7 +30,10 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -58,21 +60,22 @@ public class SKOSImporter {
             SKOS.DEFINITION.toString()
     );
 
+    private static final Set<IRI> INFERABLE_MAPPING_PROPERTIES = Set.of(SKOS.EXACT_MATCH, SKOS.RELATED_MATCH);
+
     private final Configuration config;
     private final VocabularyDao vocabularyDao;
-    private final TermDao termDao;
 
     private final EntityManager em;
 
     private final Model model = new LinkedHashModel();
+    private final Model mappingStatements = new LinkedHashModel();
 
     private IRI glossaryIri;
 
     @Autowired
-    public SKOSImporter(Configuration config, VocabularyDao vocabularyDao, TermDao termDao, EntityManager em) {
+    public SKOSImporter(Configuration config, VocabularyDao vocabularyDao, EntityManager em) {
         this.config = config;
         this.vocabularyDao = vocabularyDao;
-        this.termDao = termDao;
         this.em = em;
     }
 
@@ -130,7 +133,7 @@ public class SKOSImporter {
         final Set<String> languageTags = getLanguageTagsPerProperties(model, MULTILINGUAL_PROPERTIES);
         if (languageTags.contains("")) {
             throw new IllegalArgumentException(
-                    "Each value of the properties must have a non-empty language tag: " + MULTILINGUAL_PROPERTIES);
+                    "Each value of the following properties must have a non-empty language tag: " + MULTILINGUAL_PROPERTIES);
         }
 
         glossaryIri = resolveGlossaryIriFromImportedData(model);
@@ -145,16 +148,18 @@ public class SKOSImporter {
 
         final Vocabulary vocabulary = createVocabulary(rename, vocabularyIri, vocabularyIriFromData);
         ensureConceptIrisAreCompatibleWithTermIt();
+        extractSkosMappingStatements();
 
         if (vocabularyIri == null) {
             LOG.trace("New vocabulary {} with a new glossary {}.", vocabulary.getUri(),
                       vocabulary.getGlossary().getUri());
             ensureUniqueness(vocabulary);
         } else {
-            clearVocabulary(vocabularyIri);
+            clearVocabulary(vocabulary);
         }
-
         em.flush();
+        em.clear();
+
         persist.accept(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
@@ -172,21 +177,12 @@ public class SKOSImporter {
         }
     }
 
-    private void clearVocabulary(final URI vocabularyIri) {
-        final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(vocabularyIri);
-        if (possibleVocabulary.isPresent()) {
-            Vocabulary vocabulary = possibleVocabulary.get();
-            termDao.findAllFull(vocabulary).forEach(t -> {
-                if (t.getProperties() != null) {
-                    t.getProperties().clear();
-                }
-                // Note that this causes repeated vocabulary validation, which is not very efficient
-                // Especially since we are going to remove the vocabulary anyway
-                termDao.remove(t);
-                vocabulary.getGlossary().removeRootTerm(t);
-            });
-            vocabularyDao.remove(vocabulary);
-        }
+    private void clearVocabulary(Vocabulary newVocabulary) {
+        final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(newVocabulary.getUri());
+        possibleVocabulary.ifPresent(toRemove -> {
+            newVocabulary.setDocument(toRemove.getDocument());
+            vocabularyDao.forceRemove(toRemove);
+        });
     }
 
     private void ensureConceptIrisAreCompatibleWithTermIt() {
@@ -270,6 +266,16 @@ public class SKOSImporter {
         });
     }
 
+    /**
+     * Extracts SKOS mapping property statements from the imported model into a separate one for later processing.
+     */
+    private void extractSkosMappingStatements() {
+        INFERABLE_MAPPING_PROPERTIES.stream()
+                                    .flatMap(prop -> model.filter(null, prop, null).stream())
+                                    .forEach(mappingStatements::add);
+        model.removeAll(mappingStatements);
+    }
+
     private void addDataIntoRepository(URI vocabularyIri) {
         final Repository repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         try (final RepositoryConnection conn = repository.getConnection()) {
@@ -277,7 +283,19 @@ public class SKOSImporter {
             final IRI targetContext = repository.getValueFactory().createIRI(vocabularyIri.toString());
             LOG.debug("Importing vocabulary into context <{}>.", targetContext);
             conn.add(model, targetContext);
+            addAssertedSkosMappingStatements(conn, targetContext);
             conn.commit();
+        }
+    }
+
+    /**
+     * Adds only those SKOS mapping property statements that cannot be inferred from existing data to the repository.
+     */
+    private void addAssertedSkosMappingStatements(RepositoryConnection conn, IRI targetContext) {
+        for (Statement s : mappingStatements) {
+            if (!conn.hasStatement(s, true)) {
+                conn.add(s, targetContext);
+            }
         }
     }
 

@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -155,4 +156,12 @@ public interface VocabularyService
      * @return Version of the asset valid at the specified instant
      */
     Vocabulary findVersionValidAt(Vocabulary asset, Instant at);
+
+    /**
+     * Resolves preferred prefix of a vocabulary with the specified identifier.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Prefix declaration, possibly empty
+     */
+    PrefixDeclaration resolvePrefix(URI vocabularyUri);
 }

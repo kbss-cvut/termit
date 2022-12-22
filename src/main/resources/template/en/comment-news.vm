@@ -1,0 +1,53 @@
+<html lang="en">
+<body>
+Hello,
+
+<p>
+    The following terms have been commented or their comments were updated in TermIt between ${from} and ${to}:
+</p>
+
+    #foreach($item in ${commentedAssets})
+    <ul>
+        <li><a href="${item.asset.link}">${item.asset.label}</a></li>
+    </ul>
+
+    <p>
+        The following table contains the relevant comments.
+    </p>
+
+    <table border="0" cellspacing="0" width="800">
+        <thead>
+        <tr>
+            <th align="left" width="100">Action</th>
+            <th align="left" width="200">Author</th>
+            <th align="left" width="200">Datetime</th>
+            <th align="left" width="300">Comment</th>
+        </tr>
+        </thead>
+        #foreach( $comment in ${item.comments} )
+            <tr>
+                <td valign="top">
+                    #if (${comment.operation} == "CREATE")
+                        Created
+                    #elseif (${comment.operation} == "UPDATE")
+                        Updated
+                    #end
+                </td>
+                <td valign="top">${comment.author}</td>
+                <td valign="top">${comment.lastModified}</td>
+                <td valign="top" style="white-space: pre-line;">${comment.content}</td>
+            </tr>
+        #end
+    </table>
+    <br/>
+    #end
+
+Kind regards,<br/>
+TermIt Postman
+<br/>
+<p>
+    -------------------------------------------------------------------------------<br/>
+    This is an automated message. Please do not reply to it.
+</p>
+</body>
+</html>

@@ -86,7 +86,7 @@ public class TextAnalysisService {
         input.setContent(documentManager.loadFileContent(file));
         final Optional<String> publicUrl = config.getRepository().getPublicUrl();
         URI repositoryUrl = URI.create(
-            !publicUrl.isPresent() || publicUrl.get().isEmpty() ? config.getRepository().getUrl() : publicUrl.get()
+                publicUrl.isEmpty() || publicUrl.get().isEmpty() ? config.getRepository().getUrl() : publicUrl.get()
         );
         input.setVocabularyRepository(repositoryUrl);
         input.setLanguage(config.getPersistence().getLanguage());

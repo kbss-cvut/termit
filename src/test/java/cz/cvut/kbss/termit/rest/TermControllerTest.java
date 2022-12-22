@@ -7,6 +7,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermStatus;
+import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -22,7 +23,9 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
+import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
+import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -318,15 +321,17 @@ class TermControllerTest extends BaseControllerTestRunner {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final String content = String.join(",", Term.EXPORT_COLUMNS);
+        final String content = String.join(",", TabularTermExportUtils.EXPORT_COLUMNS);
         final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
                                                                                  ExportFormat.CSV.getMediaType(),
                                                                                  ExportFormat.CSV.getFileExtension());
-        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.CSV.getMediaType())).thenReturn(Optional.of(export));
+        when(termServiceMock.exportGlossary(eq(vocabulary), any(ExportConfig.class))).thenReturn(Optional.of(export));
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())).andExpect(
-                status().isOk());
-        verify(termServiceMock).exportGlossary(vocabulary, ExportFormat.CSV.getMediaType());
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())
+                                                              .queryParam("exportType", ExportType.SKOS.toString()))
+               .andExpect(status().isOk());
+        verify(termServiceMock).exportGlossary(vocabulary,
+                                               new ExportConfig(ExportType.SKOS, ExportFormat.CSV.getMediaType()));
     }
 
     @Test
@@ -336,14 +341,18 @@ class TermControllerTest extends BaseControllerTestRunner {
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final String content = String.join(",", Term.EXPORT_COLUMNS);
+        final String content = String.join(",", TabularTermExportUtils.EXPORT_COLUMNS);
         final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
                                                                                  ExportFormat.CSV.getMediaType(),
                                                                                  ExportFormat.CSV.getFileExtension());
-        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.CSV.getMediaType())).thenReturn(Optional.of(export));
+        when(termServiceMock.exportGlossary(vocabulary, new ExportConfig(ExportType.SKOS,
+                                                                         ExportFormat.CSV.getMediaType()))).thenReturn(
+                Optional.of(export));
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())).andReturn();
+                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())
+                                                               .queryParam("exportType", ExportType.SKOS.toString()))
+                .andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
                    containsString("filename=\"" + VOCABULARY_NAME + ExportFormat.CSV.getFileExtension() + "\""));
@@ -357,11 +366,14 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareExcel();
-        when(termServiceMock.exportGlossary(vocabulary, Constants.MediaType.EXCEL)).thenReturn(Optional.of(export));
+        when(termServiceMock.exportGlossary(eq(vocabulary), any(ExportConfig.class))).thenReturn(Optional.of(export));
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Constants.MediaType.EXCEL)).andExpect(
-                status().isOk());
-        verify(termServiceMock).exportGlossary(vocabulary, Constants.MediaType.EXCEL);
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(Constants.MediaType.EXCEL)
+                                                              .queryParam("exportType", ExportType.SKOS.toString()))
+               .andExpect(
+                       status().isOk());
+        verify(termServiceMock).exportGlossary(vocabulary,
+                                               new ExportConfig(ExportType.SKOS, ExportFormat.EXCEL.getMediaType()));
     }
 
     private TypeAwareByteArrayResource prepareExcel() throws Exception {
@@ -381,11 +393,14 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareExcel();
-        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.EXCEL.getMediaType())).thenReturn(
+        when(termServiceMock.exportGlossary(vocabulary, new ExportConfig(ExportType.SKOS,
+                                                                         ExportFormat.EXCEL.getMediaType()))).thenReturn(
                 Optional.of(export));
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.EXCEL.getMediaType())).andReturn();
+                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.EXCEL.getMediaType())
+                                                               .queryParam("exportType", ExportType.SKOS.toString()))
+                .andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
                    containsString("filename=\"" + VOCABULARY_NAME + ExportFormat.EXCEL.getFileExtension() + "\""));
@@ -523,12 +538,14 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
-        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.TURTLE.getMediaType())).thenReturn(
+        when(termServiceMock.exportGlossary(eq(vocabulary), any(ExportConfig.class))).thenReturn(
                 Optional.of(export));
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.TURTLE.getMediaType()))
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.TURTLE.getMediaType())
+                                                              .queryParam("exportType", ExportType.SKOS.toString()))
                .andExpect(status().isOk());
-        verify(termServiceMock).exportGlossary(vocabulary, ExportFormat.TURTLE.getMediaType());
+        verify(termServiceMock).exportGlossary(vocabulary,
+                                               new ExportConfig(ExportType.SKOS, ExportFormat.TURTLE.getMediaType()));
     }
 
     private TypeAwareByteArrayResource prepareTurtle() {
@@ -553,11 +570,14 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
-        when(termServiceMock.exportGlossary(vocabulary, ExportFormat.TURTLE.getMediaType())).thenReturn(
+        when(termServiceMock.exportGlossary(vocabulary, new ExportConfig(ExportType.SKOS,
+                                                                         ExportFormat.TURTLE.getMediaType()))).thenReturn(
                 Optional.of(export));
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.TURTLE.getMediaType())).andReturn();
+                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.TURTLE.getMediaType())
+                                                               .queryParam("exportType", ExportType.SKOS.toString()))
+                .andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
                    containsString("filename=\"" + VOCABULARY_NAME + ExportFormat.TURTLE.getFileExtension() + "\""));
@@ -1048,15 +1068,15 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
-        when(termServiceMock.exportGlossaryWithReferences(eq(vocabulary), anyCollection(),
-                                                          eq(ExportFormat.EXCEL.getMediaType()))).thenReturn(
+        when(termServiceMock.exportGlossary(eq(vocabulary), any(ExportConfig.class))).thenReturn(
                 Optional.of(export));
 
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.EXCEL.getMediaType())
-                                                              .queryParam("withReferences", Boolean.toString(true)))
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.TURTLE.getMediaType())
+                                                              .queryParam("exportType",
+                                                                          ExportType.SKOS_WITH_REFERENCES.toString()))
                .andExpect(status().isOk());
-        verify(termServiceMock).exportGlossaryWithReferences(eq(vocabulary), anyCollection(),
-                                                             eq(ExportFormat.EXCEL.getMediaType()));
+        verify(termServiceMock).exportGlossary(vocabulary, new ExportConfig(ExportType.SKOS_WITH_REFERENCES,
+                                                                            ExportFormat.TURTLE.getMediaType()));
     }
 
     @Test
@@ -1066,20 +1086,19 @@ class TermControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
-        when(termServiceMock.exportGlossaryWithReferences(eq(vocabulary), anyCollection(),
-                                                          eq(ExportFormat.EXCEL.getMediaType()))).thenReturn(
-                Optional.of(export));
+        when(termServiceMock.exportGlossary(eq(vocabulary), any(ExportConfig.class))).thenReturn(Optional.of(export));
         final Set<String> properties = new HashSet<>(Arrays.asList(SKOS.EXACT_MATCH, SKOS.RELATED_MATCH));
 
         final MockHttpServletRequestBuilder builder = get(PATH + VOCABULARY_NAME + "/terms").accept(
-                                                                                                    ExportFormat.EXCEL.getMediaType())
-                                                                                            .queryParam(
-                                                                                                    "withReferences",
-                                                                                                    Boolean.toString(
-                                                                                                            true));
+                                                                                                    ExportFormat.TURTLE.getMediaType())
+                                                                                            .queryParam("exportType",
+                                                                                                        ExportType.SKOS_WITH_REFERENCES.toString());
         properties.forEach(p -> builder.queryParam("property", p));
         mockMvc.perform(builder).andExpect(status().isOk());
-        verify(termServiceMock).exportGlossaryWithReferences(vocabulary, properties, ExportFormat.EXCEL.getMediaType());
+        final ExportConfig expected = new ExportConfig(ExportType.SKOS_WITH_REFERENCES,
+                                                       ExportFormat.TURTLE.getMediaType());
+        expected.setReferenceProperties(properties);
+        verify(termServiceMock).exportGlossary(vocabulary, expected);
     }
 
     @Test
@@ -1165,5 +1184,10 @@ class TermControllerTest extends BaseControllerTestRunner {
                .andExpect(status().isBadRequest());
         verify(termServiceMock, never()).findVersionValidAt(any(), any());
         verify(termServiceMock, never()).findSnapshots(any());
+    }
+
+    @Test
+    void getTermsReturnsNotAcceptableWhenAskingForUnsupportedMediaType() throws Exception {
+        mockMvc.perform(get("/terms").accept(MediaType.APPLICATION_PDF_VALUE)).andExpect(status().isNotAcceptable());
     }
 }

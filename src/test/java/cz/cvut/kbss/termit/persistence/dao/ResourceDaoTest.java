@@ -261,7 +261,10 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         voc.setGlossary(new Glossary());
         voc.setModel(new Model());
 
-        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
+        transactional(() -> {
+            em.persist(voc, descriptorFactory.vocabularyDescriptor(voc));
+            em.persist(doc, descriptorFactory.documentDescriptor(voc));
+        });
         doc.setVocabulary(voc.getUri());
 
         final File f = Generator.generateFileWithId("test.html");

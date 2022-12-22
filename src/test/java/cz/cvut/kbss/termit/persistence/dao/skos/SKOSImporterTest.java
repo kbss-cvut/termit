@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
@@ -363,5 +364,31 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final Glossary result = em.find(Glossary.class, URI.create(GLOSSARY_IRI));
         assertNotNull(result);
         assertFalse(result.getRootTerms().isEmpty());
+    }
+
+    @Test
+    void importConnectsExistingDocumentToReimportedVocabulary() {
+        final Document document = Generator.generateDocumentWithId();
+        transactional(() -> {
+            final cz.cvut.kbss.termit.model.Vocabulary existing = em.find(cz.cvut.kbss.termit.model.Vocabulary.class,
+                                                                          VOCABULARY_IRI,
+                                                                          descriptorFactory.vocabularyDescriptor(
+                                                                                  VOCABULARY_IRI));
+            existing.setDocument(document);
+            em.persist(document, descriptorFactory.documentDescriptor(VOCABULARY_IRI));
+        });
+
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(VOCABULARY_IRI, Constants.MediaType.TURTLE, persister,
+                                 Environment.loadFile("data/test-glossary.ttl"));
+        });
+        final cz.cvut.kbss.termit.model.Vocabulary result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class,
+                                                                    VOCABULARY_IRI,
+                                                                    descriptorFactory.vocabularyDescriptor(
+                                                                            VOCABULARY_IRI));
+        assertNotNull(result);
+        assertNotNull(result.getDocument());
+        assertEquals(document, result.getDocument());
     }
 }

@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(UserController.PATH)
@@ -73,22 +74,25 @@ public class UserController extends BaseController {
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping(value = "/{fragment}/lock")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void unlock(@PathVariable(name = "fragment") String identifierFragment, @RequestBody String newPassword) {
-        final UserAccount user = getUserAccountForUpdate(identifierFragment);
+    public void unlock(@PathVariable(name = "fragment") String identifierFragment,
+                       @RequestParam(name = "namespace") Optional<String> namespace,
+                       @RequestBody String newPassword) {
+        final UserAccount user = getUserAccountForUpdate(namespace, identifierFragment);
         userService.unlock(user, newPassword);
         LOG.debug("User {} successfully unlocked.", user);
     }
 
-    private UserAccount getUserAccountForUpdate(String identifierFragment) {
-        final URI id = idResolver.resolveIdentifier(config.getNamespace().getUser(), identifierFragment);
+    private UserAccount getUserAccountForUpdate(Optional<String> namespace, String identifierFragment) {
+        final URI id = idResolver.resolveIdentifier(namespace.orElse(config.getNamespace().getUser()), identifierFragment);
         return userService.findRequired(id);
     }
 
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PostMapping(value = "/{fragment}/status")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void enable(@PathVariable(name = "fragment") String identifierFragment) {
-        final UserAccount user = getUserAccountForUpdate(identifierFragment);
+    public void enable(@PathVariable(name = "fragment") String identifierFragment,
+                       @RequestParam(name = "namespace") Optional<String> namespace) {
+        final UserAccount user = getUserAccountForUpdate(namespace, identifierFragment);
         userService.enable(user);
         LOG.debug("User {} successfully enabled.", user);
     }
@@ -96,8 +100,9 @@ public class UserController extends BaseController {
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping(value = "/{fragment}/status")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void disable(@PathVariable(name = "fragment") String identifierFragment) {
-        final UserAccount user = getUserAccountForUpdate(identifierFragment);
+    public void disable(@PathVariable(name = "fragment") String identifierFragment,
+                        @RequestParam(name = "namespace") Optional<String> namespace) {
+        final UserAccount user = getUserAccountForUpdate(namespace, identifierFragment);
         userService.disable(user);
         LOG.debug("User {} successfully disabled.", user);
     }
@@ -113,8 +118,9 @@ public class UserController extends BaseController {
         consumes = {MediaType.TEXT_PLAIN_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeRole(@PathVariable(name = "fragment") String identifierFragment,
+                           @RequestParam(name = "namespace") Optional<String> namespace,
                            @RequestBody String role) {
-        final UserAccount user = getUserAccountForUpdate(identifierFragment);
+        final UserAccount user = getUserAccountForUpdate(namespace, identifierFragment);
         userService.changeRole(user, role);
         LOG.debug("Role of user {} successfully changed to {}.", user, role);
     }

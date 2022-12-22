@@ -21,17 +21,23 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
@@ -46,6 +52,8 @@ import java.util.*;
 public class VocabularyDao extends BaseAssetDao<Vocabulary>
         implements SnapshotProvider<Vocabulary>, SupportsLastModification {
 
+    private static final Logger LOG = LoggerFactory.getLogger(VocabularyDao.class);
+
     private static final URI LABEL_PROPERTY = URI.create(DC.Terms.TITLE);
     private static final String CONTENT_CHANGES_QUERY = "SELECT ?date (COUNT(DISTINCT(?t)) as ?cnt) WHERE { " +
             "    ?ch a ?type ; " +
@@ -55,14 +63,19 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             "    BIND (SUBSTR(STR(?timestamp), 1, 10) as ?date) " +
             "} GROUP BY ?date HAVING (?cnt > 0) ORDER BY ?date";
 
+    private static final String REMOVE_GLOSSARY_TERMS_QUERY_FILE = "remove/removeGlossaryTerms.ru";
+
     private volatile long lastModified;
+
+    private final VocabularyContextMapper contextMapper;
 
     private final ApplicationContext context;
 
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
-                         ApplicationContext context) {
+                         VocabularyContextMapper contextMapper, ApplicationContext context) {
         super(Vocabulary.class, em, config.getPersistence(), descriptorFactory);
+        this.contextMapper = contextMapper;
         refreshLastModified();
         this.context = context;
     }
@@ -166,6 +179,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         Objects.requireNonNull(entity);
         try {
             em.persist(entity, descriptorFactory.vocabularyDescriptor(entity));
+            if (entity.getDocument() != null && em.find(Document.class, entity.getDocument().getUri()) == null) {
+                em.persist(entity.getDocument(), descriptorFactory.documentDescriptor(entity));
+            }
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -177,6 +193,32 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         Objects.requireNonNull(entity);
         try {
             find(entity.getUri()).ifPresent(em::remove);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Forcefully removes the specified vocabulary.
+     * <p>
+     * This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
+     * should be exercised when using this method, as it does not check for any references or usage and just drops all
+     * the relevant data.
+     *
+     * @param entity The vocabulary to delete
+     */
+    @ModifiesData
+    public void forceRemove(Vocabulary entity) {
+        Objects.requireNonNull(entity);
+        LOG.debug("Forcefully removing vocabulary {} and all its contents.", entity);
+        try {
+            final URI context = contextMapper.getVocabularyContext(entity);
+            em.createNativeQuery(Utils.loadQuery(REMOVE_GLOSSARY_TERMS_QUERY_FILE))
+              .setParameter("g", context)
+              .setParameter("vocabulary", entity)
+              .executeUpdate();
+            remove(entity);
+            em.getEntityManagerFactory().getCache().evict(context);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -389,5 +431,36 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             result.addAll(toAdd);
         }
         return new HashSet<>(result);
+    }
+
+    /**
+     * Resolves preferred namespace prefix and URI of a vocabulary with the specified identifier.
+     * <p>
+     * This method expects that the prefix and namespace are declared on the vocabulary itself, not on its glossary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Prefix declaration, possibly containing {@code null} values
+     */
+    public PrefixDeclaration resolvePrefix(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        try {
+            final List<?> result = em.createNativeQuery("SELECT ?prefix ?namespace WHERE { " +
+                                                                "?vocabulary ?hasPrefix ?prefix ; " +
+                                                                "?hasNamespace ?namespace . }")
+                                     .setParameter("vocabulary", vocabularyUri)
+                                     .setParameter("hasPrefix", URI.create(
+                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix))
+                                     .setParameter("hasNamespace", URI.create(
+                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri))
+                                     .getResultList();
+            if (result.size() == 0) {
+                return new PrefixDeclaration();
+            }
+            assert result.get(0) instanceof Object[];
+            return new PrefixDeclaration(((Object[]) result.get(0))[0].toString(),
+                                         ((Object[]) result.get(0))[1].toString());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 }

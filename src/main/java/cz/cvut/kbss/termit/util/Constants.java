@@ -79,6 +79,13 @@ public class Constants {
     public static final String DEFAULT_MODEL_IRI_COMPONENT = "model";
 
     /**
+     * Default language when none is specified in configuration.
+     *
+     * Used mainly for resolving internationalized templates.
+     */
+    public static final String DEFAULT_LANGUAGE = "en";
+
+    /**
      * CRON pattern for executing scheduled actions.
      * <p>
      * Indicates that the scheduled actions should be executed at 1:10 every day.

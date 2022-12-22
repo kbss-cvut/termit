@@ -58,7 +58,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                    Cache<URI, Set<TermInfo>> subTermsCache, VocabularyContextMapper contextMapper) {
         super(Term.class, em, config.getPersistence(), descriptorFactory);
         this.subTermsCache = subTermsCache;
-        this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(config.getPersistence().getLanguage()));
+        this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(config.getPersistence().getLanguage()),
+                                                       Comparator.nullsLast(Comparator.naturalOrder()));
         this.contextMapper = contextMapper;
     }
 
@@ -173,9 +174,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         assert entity.getVocabulary() != null;
 
         try {
-            // Evict possibly cached instance loaded from default context
-            em.getEntityManagerFactory().getCache().evict(Term.class, entity.getUri(), null);
-            em.getEntityManagerFactory().getCache().evict(TermDto.class, entity.getUri(), null);
+            evictPossiblyCachedReferences(entity);
             final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
             entity.setDefinitionSource(original.getDefinitionSource());
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
@@ -183,6 +182,24 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    /**
+     * Evicts possibly cached instance loaded from the default context, as well as references to the instance from sub
+     * terms.
+     *
+     * @param term Entity to evict
+     */
+    private void evictPossiblyCachedReferences(Term term) {
+        em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
+        em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
+        term.setSubTerms(getSubTerms(term));
+        // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
+        Utils.emptyIfNull(term.getSubTerms())
+             .forEach(st -> {
+                 em.getEntityManagerFactory().getCache().evict(Term.class, st.getUri(), null);
+                 em.getEntityManagerFactory().getCache().evict(TermDto.class, st.getUri(), null);
+             });
     }
 
     /**
@@ -197,9 +214,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
 
     private void setTermDraftStatusTo(Term term, boolean draft) {
-        // Evict possibly cached instance loaded from default context
-        em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
-        em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
+        evictPossiblyCachedReferences(term);
         em.createNativeQuery("DELETE {" +
                                      "?t ?hasStatus ?oldDraft ." +
                                      "} INSERT {" +
