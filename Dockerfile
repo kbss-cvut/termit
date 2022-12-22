@@ -4,7 +4,7 @@ WORKDIR /termit
 
 COPY pom.xml pom.xml
 
-RUN mvn -B dependency:resolve
+RUN mvn -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies
 
 COPY ontology ontology
 COPY profile profile
