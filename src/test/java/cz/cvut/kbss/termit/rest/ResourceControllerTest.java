@@ -1,13 +1,16 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
@@ -26,6 +29,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.AfterEach;
@@ -45,6 +49,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -99,10 +105,11 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final Resource resource = Generator.generateResource();
         resource.setLabel(RESOURCE_NAME);
         resource.setUri(RESOURCE_URI);
-        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME)).thenReturn(resource.getUri());
+        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(),
+                                                      RESOURCE_NAME)).thenReturn(resource.getUri());
         mockMvc.perform(
-                put(PATH + "/" + RESOURCE_NAME).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+                       put(PATH + "/" + RESOURCE_NAME).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isNoContent());
         verify(identifierResolverMock).resolveIdentifier(configMock.getNamespace().getResource(), RESOURCE_NAME);
         verify(resourceServiceMock).update(resource);
     }
@@ -113,9 +120,9 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         resource.setLabel(RESOURCE_NAME);
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
         final MvcResult mvcResult = mockMvc.perform(
-                put(PATH + "/" + RESOURCE_NAME).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON)
-                        .param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(status().isConflict()).andReturn();
+                                                   put(PATH + "/" + RESOURCE_NAME).content(toJson(resource)).contentType(MediaType.APPLICATION_JSON)
+                                                                                  .param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
+                                           .andExpect(status().isConflict()).andReturn();
         final ErrorInfo errorInfo = readValue(mvcResult, ErrorInfo.class);
         assertThat(errorInfo.getMessage(), containsString("does not match the ID of the specified entity"));
     }
@@ -160,14 +167,14 @@ class ResourceControllerTest extends BaseControllerTestRunner {
 
         final java.io.File attachment = createTemporaryHtmlFile();
         final MockMultipartFile upload = new MockMultipartFile("file", file.getLabel(), MediaType.TEXT_HTML_VALUE,
-                Files.readAllBytes(attachment.toPath())
+                                                               Files.readAllBytes(attachment.toPath())
         );
         mockMvc.perform(multipart(PATH + "/" + FILE_NAME + "/content").file(upload)
-                .with(req -> {
-                    req.setMethod(HttpMethod.PUT.toString());
-                    return req;
-                }))
-                .andExpect(status().isNoContent());
+                                                                      .with(req -> {
+                                                                          req.setMethod(HttpMethod.PUT.toString());
+                                                                          return req;
+                                                                      }))
+               .andExpect(status().isNoContent());
         verify(resourceServiceMock).saveContent(eq(file), any(InputStream.class));
     }
 
@@ -177,7 +184,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, FILE_NAME)).thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
         mockMvc.perform(put(PATH + "/" + FILE_NAME + "/text-analysis").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(status().isNoContent());
+               .andExpect(status().isNoContent());
         verify(resourceServiceMock).runTextAnalysis(file, Collections.emptySet());
     }
 
@@ -187,11 +194,11 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, FILE_NAME)).thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
         final Set<String> vocabularies = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri().toString())
-                .collect(Collectors.toSet());
+                                                  .collect(Collectors.toSet());
         mockMvc.perform(put(PATH + "/" + FILE_NAME + "/text-analysis").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
-                .param("vocabulary",
-                        vocabularies.toArray(new String[0])))
-                .andExpect(status().isNoContent());
+                                                                      .param("vocabulary",
+                                                                             vocabularies.toArray(new String[0])))
+               .andExpect(status().isNoContent());
         verify(resourceServiceMock)
                 .runTextAnalysis(file, vocabularies.stream().map(URI::create).collect(Collectors.toSet()));
     }
@@ -225,7 +232,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(resourceServiceMock.getRequiredReference(RESOURCE_URI)).thenReturn(resource);
         when(resourceServiceMock.getFiles(resource)).thenThrow(UnsupportedAssetOperationException.class);
         mockMvc.perform(get(PATH + "/" + RESOURCE_NAME + "/files").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(status().isConflict());
+               .andExpect(status().isConflict());
     }
 
     @Test
@@ -238,9 +245,9 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(document.getUri());
 
         mockMvc.perform(post(PATH + "/" + RESOURCE_NAME + "/files").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
-                .content(toJson(fOne))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated());
+                                                                   .content(toJson(fOne))
+                                                                   .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isCreated());
         verify(resourceServiceMock).addFileToDocument(document, fOne);
     }
 
@@ -255,8 +262,8 @@ class ResourceControllerTest extends BaseControllerTestRunner {
 
         final MvcResult mvcResult = mockMvc
                 .perform(post(PATH + "/" + RESOURCE_NAME + "/files").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
-                        .content(toJson(fOne))
-                        .contentType(MediaType.APPLICATION_JSON))
+                                                                    .content(toJson(fOne))
+                                                                    .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated()).andReturn();
         verifyLocationEquals(PATH + "/" + fOne.getLabel(), mvcResult);
     }
@@ -271,9 +278,9 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(resourceServiceMock.findRequired(RESOURCE_URI)).thenReturn(resource);
         doThrow(UnsupportedAssetOperationException.class).when(resourceServiceMock).addFileToDocument(resource, fOne);
         mockMvc.perform(post(PATH + "/" + RESOURCE_NAME + "/files").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
-                .content(toJson(fOne))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isConflict());
+                                                                   .content(toJson(fOne))
+                                                                   .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isConflict());
     }
 
     @Test
@@ -283,7 +290,8 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         document.setUri(RESOURCE_URI);
         final File file = generateFile();
         document.addFile(file);
-        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), FILE_NAME)).thenReturn(file.getUri());
+        when(identifierResolverMock.resolveIdentifier(configMock.getNamespace().getResource(), FILE_NAME)).thenReturn(
+                file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
         mockMvc
                 .perform(delete(PATH + "/" + RESOURCE_NAME + "/files/" + FILE_NAME, RESOURCE_NAMESPACE))
@@ -307,7 +315,8 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         record.setVocabularies(Collections.singleton(Generator.generateUri()));
         when(resourceServiceMock.findLatestTextAnalysisRecord(file)).thenReturn(record);
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FILE_NAME + "/text-analysis/records/latest")
-                .param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)).andExpect(status().isOk()).andReturn();
+                                                            .param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
+                                           .andExpect(status().isOk()).andReturn();
         final TextAnalysisRecord result = readValue(mvcResult, TextAnalysisRecord.class);
         assertNotNull(result);
         assertEquals(record.getAnalyzedResource().getUri(), result.getAnalyzedResource().getUri());
@@ -325,7 +334,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(resourceServiceMock.getContent(file))
                 .thenReturn(new TypeAwareFileSystemResource(content, MediaType.TEXT_HTML_VALUE));
         mockMvc.perform(head(PATH + "/" + FILE_NAME + "/content").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(status().isNoContent());
+               .andExpect(status().isNoContent());
         verify(resourceServiceMock).hasContent(file);
     }
 
@@ -339,8 +348,8 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(resourceServiceMock.getContent(file))
                 .thenReturn(new TypeAwareFileSystemResource(content, MediaType.TEXT_HTML_VALUE));
         mockMvc.perform(head(PATH + "/" + FILE_NAME + "/content")
-                .param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
-                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE));
+                                .param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
+               .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE));
 
         verify(resourceServiceMock).hasContent(file);
     }
@@ -359,7 +368,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                 .andExpect(status().isOk()).andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
-                containsString("filename=\"" + FILE_NAME + "\""));
+                   containsString("filename=\"" + FILE_NAME + "\""));
         final String resultContent = mvcResult.getResponse().getContentAsString();
         assertEquals(HTML_CONTENT, resultContent);
         assertEquals(MediaType.TEXT_HTML_VALUE, mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_TYPE));
@@ -383,5 +392,25 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         assertNotNull(result);
         assertEquals(records, result);
         verify(resourceServiceMock).getChanges(resource);
+    }
+
+    @Test
+    void getContentWithTimestampReturnsContentOfRequestedFileAtSpecifiedTimestamp() throws Exception {
+        final File file = generateFile();
+        when(identifierResolverMock.resolveIdentifier(any(), eq(FILE_NAME)))
+                .thenReturn(file.getUri());
+        when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
+        final java.io.File content = createTemporaryHtmlFile();
+        final Instant at = Utils.timestamp().truncatedTo(ChronoUnit.SECONDS);
+        when(resourceServiceMock.getContent(eq(file), any(Instant.class)))
+                .thenReturn(new TypeAwareFileSystemResource(content, MediaType.TEXT_HTML_VALUE));
+        final MvcResult mvcResult = mockMvc
+                .perform(get(PATH + "/" + FILE_NAME + "/content")
+                                 .queryParam("at", Constants.TIMESTAMP_FORMATTER.format(at)))
+                .andExpect(status().isOk()).andReturn();
+        final String resultContent = mvcResult.getResponse().getContentAsString();
+        assertEquals(HTML_CONTENT, resultContent);
+        assertEquals(MediaType.TEXT_HTML_VALUE, mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_TYPE));
+        verify(resourceServiceMock).getContent(file, at);
     }
 }

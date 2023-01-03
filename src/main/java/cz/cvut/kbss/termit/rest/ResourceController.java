@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
+import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
@@ -42,6 +43,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -84,10 +86,17 @@ public class ResourceController extends BaseController {
     public ResponseEntity<org.springframework.core.io.Resource> getContent(
             @PathVariable String normalizedName,
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-            @RequestParam(name = "attachment", required = false) boolean asAttachment) {
+            @RequestParam(name = "attachment", required = false) boolean asAttachment,
+            @RequestParam(name = "at", required = false) Optional<String> at) {
         final Resource resource = getResource(normalizedName, namespace);
         try {
-            final TypeAwareResource content = resourceService.getContent(resource);
+            final TypeAwareResource content;
+            if (at.isPresent()) {
+                final Instant timestamp = RestUtils.parseTimestamp(at.get());
+                content = resourceService.getContent(resource, timestamp);
+            } else {
+                content = resourceService.getContent(resource);
+            }
             final ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                                                                      .contentLength(content.contentLength())
                                                                      .contentType(MediaType.parseMediaType(
