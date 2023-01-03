@@ -41,6 +41,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.function.Consumer;
@@ -54,6 +55,7 @@ public class DefaultDocumentManager implements DocumentManager {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDocumentManager.class);
 
     static final String BACKUP_NAME_SEPARATOR = "~";
+    private static final int BACKUP_TIMESTAMP_LENGTH = 19;
     static final DateTimeFormatter BACKUP_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
                                                                               .withZone(ZoneId.systemDefault());
 
@@ -117,19 +119,25 @@ public class DefaultDocumentManager implements DocumentManager {
             LOG.error("File {} not found at location {}.", file, directory.getPath());
             throw new NotFoundException("File " + file + " not found on file system.");
         }
-        return new TypeAwareFileSystemResource(resolveFileVersionAt(at, candidates), getMediaType(file));
+        return new TypeAwareFileSystemResource(resolveFileVersionAt(file, at, candidates), getMediaType(file));
     }
 
-    private java.io.File resolveFileVersionAt(Instant at, List<java.io.File> candidates) {
+    private java.io.File resolveFileVersionAt(File file, Instant at, List<java.io.File> candidates) {
         final Map<Instant, java.io.File> backups = new HashMap<>();
         candidates.forEach(f -> {
             if (!f.getName().contains(BACKUP_NAME_SEPARATOR)) {
                 backups.put(Utils.timestamp(), f);
                 return;
             }
-            final String strTimestamp = f.getName().substring(f.getName().indexOf(BACKUP_NAME_SEPARATOR) + 1);
-            final TemporalAccessor backupTimestamp = BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
-            backups.put(Instant.from(backupTimestamp), f);
+            String strTimestamp = f.getName().substring(f.getName().indexOf(BACKUP_NAME_SEPARATOR) + 1);
+            // Cut off possibly legacy extra millis places
+            strTimestamp = strTimestamp.substring(0, BACKUP_TIMESTAMP_LENGTH);
+            try {
+                final TemporalAccessor backupTimestamp = BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
+                backups.put(Instant.from(backupTimestamp), f);
+            } catch (DateTimeParseException e) {
+                LOG.warn("Unable to parse backup timestamp {}. Skipping file.", strTimestamp);
+            }
         });
         final List<Instant> backupTimestamps = new ArrayList<>(backups.keySet());
         Collections.sort(backupTimestamps);
@@ -138,7 +146,8 @@ public class DefaultDocumentManager implements DocumentManager {
                 return backups.get(timestamp);
             }
         }
-        throw new DocumentManagerException("Unable to find file version at " + at);
+        LOG.warn("Unable to find version of {} valid at {}, returning current file.", file, at);
+        return resolveFile(file, true);
     }
 
     @Override

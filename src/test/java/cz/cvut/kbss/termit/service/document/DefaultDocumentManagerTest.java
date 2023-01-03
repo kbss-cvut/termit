@@ -38,6 +38,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -625,6 +627,20 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     }
 
     @Test
+    void getAsResourceWithTimestampReturnsCurrentFileWhenTimestampIsInFuture() throws Exception {
+        final Instant at = Utils.timestamp().plusSeconds(100);
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+
+        createTestBackups(physicalFile);
+        final org.springframework.core.io.Resource result = sut.getAsResource(file, at);
+        assertEquals(physicalFile, result.getFile());
+    }
+
+    @Test
     void getAsResourceWithTimestampThrowsNotFoundExceptionWhenParentDocumentDirectoryDoesNotExistOnFileSystem() {
         final File file = Generator.generateFileWithId("test.html");
         document.addFile(file);
@@ -633,7 +649,8 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void getAsResourceWithTimestampThrowsNotFoundExceptionWhenFileDoesNotExistInParentDocumentDirectoryOnFileSystem() throws Exception {
+    void getAsResourceWithTimestampThrowsNotFoundExceptionWhenFileDoesNotExistInParentDocumentDirectoryOnFileSystem()
+            throws Exception {
         final File file = new File();
         final java.io.File physicalFile = generateFile();
         file.setLabel(physicalFile.getName());
@@ -655,5 +672,29 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         final Optional<String> result = sut.getContentType(file);
         assertTrue(result.isPresent());
         assertEquals(MediaType.TEXT_HTML_VALUE, result.get());
+    }
+
+    @Test
+    void getAsResourceAtTimestampHandlesLegacyBackupTimestampPatterns() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+
+        final String path = physicalFile.getAbsolutePath();
+        // Legacy pattern used multiple millis places
+        final String newPath = path + DefaultDocumentManager.BACKUP_NAME_SEPARATOR + DateTimeFormatter.ofPattern(
+                                                                                                              "yyyy-MM-dd_HHmmss_SSS")
+                                                                                                      .withZone(
+                                                                                                              ZoneId.systemDefault())
+                                                                                                      .format(Instant.now()
+                                                                                                                     .minusSeconds(
+                                                                                                                             10));
+        final java.io.File backup = new java.io.File(newPath);
+        Files.copy(physicalFile.toPath(), backup.toPath());
+        backup.deleteOnExit();
+        final org.springframework.core.io.Resource result = sut.getAsResource(file, Instant.EPOCH);
+        assertEquals(backup, result.getFile());
     }
 }
