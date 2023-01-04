@@ -72,11 +72,12 @@ public class Validator implements VocabularyContentValidator {
             throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
-        final RepositoryConnection c = repository.getConnection();
-        final List<IRI> iris = new ArrayList<>();
-        vocabularyIris.forEach(i -> iris.add(vf.createIRI(i.toString())));
-        c.export(new TurtleWriter(writer), iris.toArray(new IRI[]{}));
-        writer.close();
+        try (final RepositoryConnection c = repository.getConnection()) {
+            final List<IRI> iris = new ArrayList<>();
+            vocabularyIris.forEach(i -> iris.add(vf.createIRI(i.toString())));
+            c.export(new TurtleWriter(writer), iris.toArray(new IRI[]{}));
+            writer.close();
+        }
         final byte[] savedData = baos.toByteArray();
         final ByteArrayInputStream bais = new ByteArrayInputStream(savedData);
         Model model = ModelFactory.createDefaultModel();
