@@ -1,0 +1,15 @@
+@prefix skos:          <http://www.w3.org/2004/02/skos/core#> .
+@prefix sh:            <http://www.w3.org/ns/shacl#> .
+@prefix j-sgov-obecný: <https://slovník.gov.cz/jazyk/obecný/> .
+
+j-sgov-obecný:g2
+    a                      sh:NodeShape ;
+    sh:severity            sh:Violation ;
+    sh:message             "Pojem nemá název v primárním jazyce této instance TermItu."@cs,
+                           "The term does not have a preferred label in the primary configured language of this deployment of TermIt."@en ;
+    sh:targetClass         skos:Concept ;
+    sh:path                skos:prefLabel ;
+    sh:qualifiedValueShape [ sh:languageIn ( "$lang" ) ] ;
+    sh:qualifiedMinCount   1 ;
+    sh:minLength           1
+.
