@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>2.14.1</version>
+    <version>2.15.0</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -26,14 +26,14 @@
 
     <properties>
         <java.version>11</java.version>
-        <org.springframework.boot.version>2.7.5</org.springframework.boot.version>
-        <org.springframework.version>5.3.23</org.springframework.version>
-        <org.springframework.security.version>5.7.4</org.springframework.security.version>
+        <org.springframework.boot.version>2.7.6</org.springframework.boot.version>
+        <org.springframework.version>5.3.24</org.springframework.version>
+        <org.springframework.security.version>5.7.5</org.springframework.security.version>
         <org.springframework.data.version>2.7.5</org.springframework.data.version>
         <org.hibernate.validator.version>6.2.3.Final</org.hibernate.validator.version>
-        <org.apache.tika.tika-core.version>2.5.0</org.apache.tika.tika-core.version>
+        <org.apache.tika.tika-core.version>2.6.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
-        <cz.cvut.kbss.jopa.version>0.19.2</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>0.19.3</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.9.0</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.7</org.aspectj.version>
 
@@ -58,7 +58,7 @@
         <dependency>
             <groupId>com.github.sgov</groupId>
             <artifactId>sgov-validator</artifactId>
-            <version>1.6.5</version>
+            <version>1.6.7</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
@@ -135,7 +135,7 @@
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.4</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework</groupId>
@@ -410,54 +410,6 @@
             </build>
         </profile>
 
-        <profile>
-            <id>dev</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-        </profile>
-        <profile>
-            <id>production</id>
-            <properties>
-                <profile.name>production</profile.name>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.google.code.maven-replacer-plugin</groupId>
-                        <artifactId>replacer</artifactId>
-                        <version>1.5.3</version>
-                        <executions>
-                            <execution>
-                                <id>admin-jmx-name</id>
-                                <phase>process-sources</phase>
-                                <goals>
-                                    <goal>replace</goal>
-                                </goals>
-                                <configuration>
-                                    <file>
-                                        ${project.basedir}/src/main/java/cz/cvut/kbss/termit/service/jmx/AppAdminBean.java
-                                    </file>
-                                    <outputFile>
-                                        ${project.basedir}/src/main/java/cz/cvut/kbss/termit/service/jmx/AppAdminBean.java
-                                    </outputFile>
-                                    <regex>false</regex>
-                                    <token>TermItAdminBean</token>
-                                    <value>TermItAdminBean-${deployment}</value>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>replace</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <!-- Profiles for storages. Important for correct full text search functionality -->
         <profile>
             <id>rdf4j</id>
@@ -654,6 +606,11 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>de.qaware.maven</groupId>
+                <artifactId>go-offline-maven-plugin</artifactId>
+                <version>1.2.8</version>
             </plugin>
         </plugins>
     </build>

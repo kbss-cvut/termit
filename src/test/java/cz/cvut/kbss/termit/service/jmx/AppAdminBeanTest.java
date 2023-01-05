@@ -17,8 +17,10 @@ package cz.cvut.kbss.termit.service.jmx;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -35,6 +37,9 @@ class AppAdminBeanTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisherMock;
+
+    @Mock(answer = Answers.CALLS_REAL_METHODS)
+    private Configuration configuration;
 
     @InjectMocks
     private AppAdminBean sut;

@@ -26,6 +26,9 @@ import java.util.Set;
  * <p>
  * The runtime configuration consists of predefined default values and configuration loaded from config files on
  * classpath. Values from config files supersede the default values.
+ * <p>
+ * The configuration can be also set via <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
+ * environment variables</a>. These override any statically configured values.
  */
 @org.springframework.context.annotation.Configuration
 @ConfigurationProperties("termit")
@@ -33,8 +36,17 @@ import java.util.Set;
 public class Configuration {
     /**
      * TermIt frontend URL.
+     * <p>
+     * It is used, for example, for links in emails sent to users.
      */
     private String url = "http://localhost:3000/#";
+    /**
+     * Name of the JMX bean exported by TermIt.
+     * <p>
+     * Normally should not need to change unless multiple instances of TermIt are running in the same application
+     * server.
+     */
+    private String jmxBeanName = "TermItAdminBean";
     private Persistence persistence = new Persistence();
     private Repository repository = new Repository();
     private ChangeTracking changetracking = new ChangeTracking();
@@ -57,6 +69,14 @@ public class Configuration {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getJmxBeanName() {
+        return jmxBeanName;
+    }
+
+    public void setJmxBeanName(String jmxBeanName) {
+        this.jmxBeanName = jmxBeanName;
     }
 
     public Persistence getPersistence() {
@@ -220,6 +240,8 @@ public class Configuration {
         String url;
         /**
          * Public URL of the main application repository.
+         * <p>
+         * Can be used to provide read-only no authorization access to the underlying data.
          */
         Optional<String> publicUrl = Optional.empty();
         /**
@@ -299,7 +321,7 @@ public class Configuration {
     @ConfigurationProperties(prefix = "comments")
     public static class Comments {
         /**
-         * IRI of the repository context used to store comments (discussion to assets)
+         * IRI of the repository context used to store comments (discussion to assets).
          */
         @NotNull
         String context;
@@ -349,10 +371,10 @@ public class Configuration {
          * Since File identifier is given by the identifier of the Document it belongs to and its own normalized label,
          * this separator is used to (optionally) configure the File identifier namespace.
          * <p>
-         * For example, if we have a Document with IRI {@code http://www.example.org/ontologies/resources/metropolitan-plan}
+         * For example, if we have a Document with IRI {@code http://www.example.org/ontologies/resources/metropolitan-plan/document}
          * and a File with normalized label {@code main-file}, the resulting IRI will be {@code
-         * http://www.example.org/ontologies/resources/metropolitan-plan/SEPARATOR/main-file}, where 'SEPARATOR' is the
-         * value of this configuration parameter.
+         * http://www.example.org/ontologies/resources/metropolitan-plan/document/SEPARATOR/main-file}, where
+         * 'SEPARATOR' is the value of this configuration parameter.
          */
         private NamespaceDetail file = new NamespaceDetail();
 
@@ -431,12 +453,12 @@ public class Configuration {
     @ConfigurationProperties(prefix = "admin")
     public static class Admin {
         /**
-         * Specifies folder in which admin credentials are saved when his account is generated.
+         * Specifies the folder in which admin credentials are saved when its account is generated.
          */
         @NotNull
         String credentialsLocation;
         /**
-         * Name of the file in which admin credentials are saved when his account is generated.
+         * Name of the file in which admin credentials are saved when its account is generated.
          */
         @NotNull
         String credentialsFile;
@@ -508,7 +530,10 @@ public class Configuration {
          * <p>
          * More specifically, when annotated file content is being processed, term occurrences with sufficient score
          * will cause creation of corresponding term assignments to the file.
+         *
+         * @deprecated This configuration is currently not used.
          */
+        @Deprecated
         @NotNull
         String termAssignmentMinScore;
 
@@ -581,6 +606,14 @@ public class Configuration {
     @org.springframework.context.annotation.Configuration
     public static class Workspace {
 
+        /**
+         * Whether all vocabularies in the repository are editable.
+         * <p>
+         * Allows running TermIt in two modes - one is that all vocabularies represent the current version and can be
+         * edited. The other mode is that working copies of vocabularies are created and the user only selects a subset
+         * of these working copies to edit (the so-called workspace), while all other vocabularies are read-only for
+         * them.
+         */
         @NotNull
         private boolean allVocabulariesEditable = true;
 
@@ -595,6 +628,9 @@ public class Configuration {
 
     @org.springframework.context.annotation.Configuration
     public static class Cors {
+        /**
+         * A comma-separated list of allowed origins for CORS.
+         */
         @NotNull
         private String allowedOrigins = "http://localhost:3000";
 
@@ -654,6 +690,9 @@ public class Configuration {
     @org.springframework.context.annotation.Configuration
     public static class Mail {
 
+        /**
+         * Human-readable name to use as email sender.
+         */
         private String sender;
 
         public String getSender() {

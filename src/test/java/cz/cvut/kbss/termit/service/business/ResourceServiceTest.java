@@ -39,6 +39,7 @@ import org.springframework.transaction.TransactionSystemException;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -110,9 +111,7 @@ class ResourceServiceTest {
 
     @Test
     void getContentLoadsContentOfFileFromDocumentManager() {
-        final File file = new File();
-        file.setLabel("Test");
-        file.setUri(Generator.generateUri());
+        final File file = Generator.generateFileWithId("test.html");
         sut.getContent(file);
         verify(documentManager).getAsResource(file);
     }
@@ -127,9 +126,7 @@ class ResourceServiceTest {
     @Test
     void saveContentSavesFileContentViaDocumentManager() {
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
-        final File file = new File();
-        file.setLabel("Test");
-        file.setUri(Generator.generateUri());
+        final File file = Generator.generateFileWithId("test.html");
         sut.saveContent(file, bis);
         verify(documentManager).saveFileContent(file, bis);
     }
@@ -145,9 +142,7 @@ class ResourceServiceTest {
     @Test
     void saveContentCreatesBackupBeforeSavingFileContentInDocumentManager() {
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
-        final File file = new File();
-        file.setLabel("Test");
-        file.setUri(Generator.generateUri());
+        final File file = Generator.generateFileWithId("test.html");
         when(documentManager.exists(file)).thenReturn(true);
         sut.saveContent(file, bis);
         final InOrder inOrder = Mockito.inOrder(documentManager);
@@ -158,9 +153,7 @@ class ResourceServiceTest {
     @Test
     void saveContentDoesNotCreateBackupWhenFileDoesNotYetExist() {
         final ByteArrayInputStream bis = new ByteArrayInputStream("test".getBytes());
-        final File file = new File();
-        file.setLabel("Test");
-        file.setUri(Generator.generateUri());
+        final File file = Generator.generateFileWithId("test.html");
         when(documentManager.exists(file)).thenReturn(false);
         sut.saveContent(file, bis);
         verify(documentManager, never()).createBackup(file);
@@ -256,9 +249,7 @@ class ResourceServiceTest {
 
     @Test
     void getFilesReturnsFilesFromDocument() {
-        final Document doc = new Document();
-        doc.setLabel("test document");
-        doc.setUri(Generator.generateUri());
+        final Document doc = Generator.generateDocumentWithId();
         final File fOne = Generator.generateFileWithId("test.html");
         doc.addFile(fOne);
         when(resourceRepositoryService.findRequired(doc.getUri())).thenReturn(doc);
@@ -270,9 +261,7 @@ class ResourceServiceTest {
 
     @Test
     void getFilesReturnsFilesSortedByLabel() {
-        final Document doc = new Document();
-        doc.setLabel("test document");
-        doc.setUri(Generator.generateUri());
+        final Document doc = Generator.generateDocumentWithId();
         final File fOne = Generator.generateFileWithId("test.html");
         doc.addFile(fOne);
         final File fTwo = Generator.generateFileWithId("act.html");
@@ -284,9 +273,7 @@ class ResourceServiceTest {
 
     @Test
     void getFilesReturnsEmptyListWhenDocumentHasNoFiles() {
-        final Document doc = new Document();
-        doc.setLabel("test document");
-        doc.setUri(Generator.generateUri());
+        final Document doc = Generator.generateDocumentWithId();
         when(resourceRepositoryService.findRequired(doc.getUri())).thenReturn(doc);
         final List<File> result = sut.getFiles(doc);
         assertNotNull(result);
@@ -475,5 +462,13 @@ class ResourceServiceTest {
 
         assertThrows(AssetRemovalException.class, () -> sut.remove(document));
         verify(resourceRepositoryService, never()).remove(any());
+    }
+
+    @Test
+    void getContentAtTimestampLoadsContentOfFileAtTimestampFromDocumentManager() {
+        final File file = Generator.generateFileWithId("test.hml");
+        final Instant at = Utils.timestamp();
+        sut.getContent(file, at);
+        verify(documentManager).getAsResource(file, at);
     }
 }

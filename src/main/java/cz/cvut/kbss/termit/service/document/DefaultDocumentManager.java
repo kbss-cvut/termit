@@ -38,11 +38,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -53,8 +54,10 @@ public class DefaultDocumentManager implements DocumentManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDocumentManager.class);
 
-    private final DateTimeFormatter timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
-                                                                       .withZone(ZoneId.systemDefault());
+    static final String BACKUP_NAME_SEPARATOR = "~";
+    private static final int BACKUP_TIMESTAMP_LENGTH = 19;
+    static final DateTimeFormatter BACKUP_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss_S")
+                                                                              .withZone(ZoneId.systemDefault());
 
     private final Configuration config;
 
@@ -100,6 +103,54 @@ public class DefaultDocumentManager implements DocumentManager {
     }
 
     @Override
+    public TypeAwareResource getAsResource(File file, Instant at) {
+        Objects.requireNonNull(file);
+        Objects.requireNonNull(at);
+        final String fileName = IdentifierResolver.sanitizeFileName(file.getLabel());
+        final java.io.File directory = new java.io.File(config.getFile()
+                                                              .getStorage() + java.io.File.separator + file.getDirectoryName() + java.io.File.separator);
+        if (!directory.exists() || !directory.isDirectory()) {
+            LOG.error("Document directory not found for file {} at location {}.", file, directory.getPath());
+            throw new NotFoundException("File " + file + " not found on file system.");
+        }
+        final List<java.io.File> candidates = Arrays.asList(
+                Objects.requireNonNull(directory.listFiles((dir, filename) -> filename.startsWith(fileName))));
+        if (candidates.isEmpty()) {
+            LOG.error("File {} not found at location {}.", file, directory.getPath());
+            throw new NotFoundException("File " + file + " not found on file system.");
+        }
+        return new TypeAwareFileSystemResource(resolveFileVersionAt(file, at, candidates), getMediaType(file));
+    }
+
+    private java.io.File resolveFileVersionAt(File file, Instant at, List<java.io.File> candidates) {
+        final Map<Instant, java.io.File> backups = new HashMap<>();
+        candidates.forEach(f -> {
+            if (!f.getName().contains(BACKUP_NAME_SEPARATOR)) {
+                backups.put(Utils.timestamp(), f);
+                return;
+            }
+            String strTimestamp = f.getName().substring(f.getName().indexOf(BACKUP_NAME_SEPARATOR) + 1);
+            // Cut off possibly legacy extra millis places
+            strTimestamp = strTimestamp.substring(0, Math.min(BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
+            try {
+                final TemporalAccessor backupTimestamp = BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
+                backups.put(Instant.from(backupTimestamp), f);
+            } catch (DateTimeParseException e) {
+                LOG.warn("Unable to parse backup timestamp {}. Skipping file.", strTimestamp);
+            }
+        });
+        final List<Instant> backupTimestamps = new ArrayList<>(backups.keySet());
+        Collections.sort(backupTimestamps);
+        for (Instant timestamp : backupTimestamps) {
+            if (timestamp.isAfter(at)) {
+                return backups.get(timestamp);
+            }
+        }
+        LOG.warn("Unable to find version of {} valid at {}, returning current file.", file, at);
+        return resolveFile(file, true);
+    }
+
+    @Override
     public void saveFileContent(File file, InputStream content) {
         try {
             final java.io.File target = resolveFile(file, false);
@@ -132,7 +183,7 @@ public class DefaultDocumentManager implements DocumentManager {
      */
     private String generateBackupFileName(File file) {
         final String origName = IdentifierResolver.sanitizeFileName(file.getLabel());
-        return origName + "~" + timestampFormat.format(Utils.timestamp());
+        return origName + BACKUP_NAME_SEPARATOR + BACKUP_TIMESTAMP_FORMAT.format(Utils.timestamp());
     }
 
     @Override
@@ -276,9 +327,9 @@ public class DefaultDocumentManager implements DocumentManager {
         tmpNewFile.setUri(changedFile.getUri());
         tmpNewFile.setLabel(event.getNewName());
         final java.io.File newDirectory = new java.io.File(originalDirectory.getParentFile().getAbsolutePath() +
-                java.io.File.separator + tmpNewFile.getDirectoryName());
+                                                                   java.io.File.separator + tmpNewFile.getDirectoryName());
         LOG.trace("Moving file parent directory from '{}' to '{}' due to file rename.",
-                originalDirectory.getAbsolutePath(), newDirectory.getAbsolutePath());
+                  originalDirectory.getAbsolutePath(), newDirectory.getAbsolutePath());
         Files.move(originalDirectory.toPath(), newDirectory.toPath());
         return new java.io.File(
                 newDirectory.getAbsolutePath() + java.io.File.separator + physicalOriginal.getName());
@@ -291,7 +342,7 @@ public class DefaultDocumentManager implements DocumentManager {
         tempNewFile.setLabel(event.getNewName());
         final java.io.File newFile = resolveFile(tempNewFile, false);
         LOG.debug("Moving content from '{}' to '{}' due to file rename.", event.getOriginalName(),
-                event.getNewName());
+                  event.getNewName());
         Files.move(physicalOriginal.toPath(), newFile.toPath());
         moveBackupFiles(original, physicalOriginal.getParentFile(), event);
     }
