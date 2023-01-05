@@ -6,6 +6,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -13,6 +14,7 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,15 +43,27 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     @Autowired
     private ChangeRecordDao sut;
 
+    @Autowired
+    private Configuration config;
+
     private User author;
 
     private Vocabulary vocabulary;
 
+    private String contextExtension;
+
     @BeforeEach
     void setUp() {
+        this.contextExtension = config.getChangetracking().getContext().getExtension();
         this.vocabulary = Generator.generateVocabularyWithId();
+        Glossary glossary = new Glossary();
+        glossary.setUri(Generator.generateUri());
+        vocabulary.setGlossary(glossary);
         this.author = Generator.generateUserWithId();
-        transactional(() -> em.persist(author));
+        transactional(() -> {
+            em.persist(author);
+            em.persist(vocabulary);
+        });
     }
 
     @Test
@@ -86,10 +100,12 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     void findAllRetrievesChangeRecordsRelatedToSpecifiedAsset() {
         enableRdfsInference(em);
         final Term asset = Generator.generateTermWithId();
+        asset.setGlossary(vocabulary.getGlossary().getUri());
+        Descriptor descriptor = persistDescriptor(URI.create(vocabulary.getUri().toString().concat(contextExtension)));
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000L),
-                                          asset.getUri())).collect(Collectors.toList());
-        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
+                        asset.getUri())).collect(Collectors.toList());
+        transactional(() -> records.forEach(r -> em.persist(r, descriptor)));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
         assertEquals(records.size(), result.size());
@@ -99,7 +115,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     private Descriptor persistDescriptor(URI context) {
         final EntityDescriptor descriptor = new EntityDescriptor(context);
         descriptor.addAttributeDescriptor(em.getMetamodel().entity(AbstractChangeRecord.class).getAttribute("author"),
-                                          new EntityDescriptor());
+                new EntityDescriptor());
         return descriptor;
     }
 
@@ -107,10 +123,12 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     void findAllReturnsChangeRecordsOrderedByTimestampDescending() {
         enableRdfsInference(em);
         final Term asset = Generator.generateTermWithId();
+        asset.setGlossary(vocabulary.getGlossary().getUri());
+        Descriptor descriptor = persistDescriptor(URI.create(vocabulary.getUri().toString().concat(contextExtension)));
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() + i * 10000L),
-                                          asset.getUri())).collect(Collectors.toList());
-        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
+                        asset.getUri())).collect(Collectors.toList());
+        transactional(() -> records.forEach(r -> em.persist(r, descriptor)));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
         records.sort(Comparator.comparing(AbstractChangeRecord::getTimestamp).reversed());
@@ -121,14 +139,16 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     void findAllReturnsChangeRecordsOrderedByTimestampDescendingAndChangedAttributeId() {
         enableRdfsInference(em);
         final Term asset = Generator.generateTermWithId();
+        asset.setGlossary(vocabulary.getGlossary().getUri());
+        Descriptor descriptor = persistDescriptor(URI.create(vocabulary.getUri().toString().concat(contextExtension)));
         final Instant now = Utils.timestamp();
         final UpdateChangeRecord rOne = generateUpdateRecord(now, asset.getUri());
         rOne.setChangedAttribute(URI.create(SKOS.PREF_LABEL));
         final UpdateChangeRecord rTwo = generateUpdateRecord(now, asset.getUri());
         rTwo.setChangedAttribute(URI.create(SKOS.DEFINITION));
         transactional(() -> {
-            em.persist(rOne, persistDescriptor(vocabulary.getUri()));
-            em.persist(rTwo, persistDescriptor(vocabulary.getUri()));
+            em.persist(rOne, descriptor);
+            em.persist(rTwo, descriptor);
         });
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
@@ -141,7 +161,9 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllReturnsEmptyListForUnknownAsset() {
         enableRdfsInference(em);
-        final List<AbstractChangeRecord> result = sut.findAll(Generator.generateTermWithId());
+        Term asset = Generator.generateTermWithId();
+        asset.setGlossary(vocabulary.getGlossary().getUri());
+        final List<AbstractChangeRecord> result = sut.findAll(asset);
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
@@ -216,7 +238,8 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final Term asset = Generator.generateTermWithId(vocabulary.getUri());
         final AbstractChangeRecord persistRecord = generatePersistRecord(Utils.timestamp(), asset.getUri());
         final User editor = Generator.generateUserWithId();
-        final AbstractChangeRecord anotherPersistRecord = generatePersistRecord(Utils.timestamp(), Generator.generateUri());
+        final AbstractChangeRecord anotherPersistRecord = generatePersistRecord(Utils.timestamp(),
+                Generator.generateUri());
         anotherPersistRecord.setAuthor(editor);
         final AbstractChangeRecord updateRecord = generateUpdateRecord(Utils.timestamp(), asset.getUri());
         updateRecord.setAuthor(editor);
