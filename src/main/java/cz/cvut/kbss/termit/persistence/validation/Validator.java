@@ -13,14 +13,12 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.util.FileUtils;
 import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -37,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class Validator implements VocabularyContentValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(Validator.class);
@@ -56,42 +53,68 @@ public class Validator implements VocabularyContentValidator {
      */
     private static final Set<String> MODEL_RULES_TO_ADD = Set.of("m1.ttl", "m2.ttl");
 
-    private final org.eclipse.rdf4j.repository.Repository repository;
-    private final ValueFactory vf;
+    private final EntityManager em;
 
-    private final String language;
+    private com.github.sgov.server.Validator validator;
+    private Model validationModel;
 
     @Autowired
     public Validator(EntityManager em, Configuration config) {
-        this.repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
-        vf = repository.getValueFactory();
-        this.language = config.getPersistence().getLanguage();
+        this.em = em;
+        initValidator(config.getPersistence().getLanguage());
     }
 
-    private Model getModelFromRdf4jRepository(final Collection<URI> vocabularyIris)
-            throws IOException {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
-        try (final RepositoryConnection c = repository.getConnection()) {
-            final List<IRI> iris = new ArrayList<>();
-            vocabularyIris.forEach(i -> iris.add(vf.createIRI(i.toString())));
-            c.export(new TurtleWriter(writer), iris.toArray(new IRI[]{}));
-            writer.close();
+    /**
+     * Initializes the validator.
+     * <p>
+     * Note that the validator can be reused as long as the language stays the same. If TermIt starts supporting
+     * selection of language per vocabulary, this initialization will have to change.
+     *
+     * @param language Primary language of the instance, used to parameterize validation rules
+     */
+    private void initValidator(String language) {
+        try {
+            this.validator = new com.github.sgov.server.Validator();
+            this.validationModel = initValidationModel(validator, language);
+        } catch (IOException e) {
+            throw new TermItException("Unable to initialize validator.", e);
         }
-        final byte[] savedData = baos.toByteArray();
-        final ByteArrayInputStream bais = new ByteArrayInputStream(savedData);
-        Model model = ModelFactory.createDefaultModel();
-        model.read(bais, null, FileUtils.langTurtle);
-        return model;
+    }
+
+    private Model initValidationModel(com.github.sgov.server.Validator validator, String language) throws IOException {
+        final Set<URL> rules = new HashSet<>();
+        rules.addAll(validator.getGlossaryRules().stream()
+                              .filter(r -> GLOSSARY_RULES_TO_OVERRIDE.stream().noneMatch(s -> r.toString().contains(s)))
+                              .collect(Collectors.toSet()));
+        rules.addAll(
+                // Currently, only using content rules, not OntoUml, as TermIt does not support adding OntoUml rules
+                validator.getModelRules().stream()
+                         .filter(r -> MODEL_RULES_TO_ADD.stream().anyMatch(s -> r.toString().contains(s)))
+                         .collect(Collectors.toList())
+        );
+        final Model validationModel = com.github.sgov.server.Validator.getRulesModel(rules);
+        loadOverrideRules(validationModel, language);
+        return validationModel;
+    }
+
+    private void loadOverrideRules(Model validationModel, String language) throws IOException {
+        final ClassLoader classLoader = Validator.class.getClassLoader();
+        final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(classLoader);
+
+        Resource[] resources = resolver.getResources("classpath:/validation/*.ttl");
+        for (Resource r : resources) {
+            String rule = Utils.loadClasspathResource("validation/" + r.getFilename());
+            rule = rule.replace("$lang", language);
+            validationModel.read(new ByteArrayInputStream(rule.getBytes(StandardCharsets.UTF_8)), null,
+                                 FileUtils.langTurtle);
+        }
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<ValidationResult> validate(final Collection<URI> vocabularyIris) {
         LOG.debug("Validating {}", vocabularyIris);
-        final com.github.sgov.server.Validator validator = new com.github.sgov.server.Validator();
         try {
-            final Model validationModel = initValidationModel(validator);
             final Model dataModel = getModelFromRdf4jRepository(vocabularyIris);
             org.topbraid.shacl.validation.ValidationReport report = validator.validate(dataModel, validationModel);
             LOG.debug("Done.");
@@ -121,33 +144,21 @@ public class Validator implements VocabularyContentValidator {
         }
     }
 
-    private Model initValidationModel(com.github.sgov.server.Validator validator) throws IOException {
-        // TODO We could cache the validation model between calls
-        final Set<URL> rules = new HashSet<>();
-        rules.addAll(validator.getGlossaryRules().stream()
-                              .filter(r -> GLOSSARY_RULES_TO_OVERRIDE.stream().noneMatch(s -> r.toString().contains(s)))
-                              .collect(Collectors.toSet()));
-        rules.addAll(
-                // Currently, only using content rules, not OntoUml, as TermIt does not support adding OntoUml rules
-                validator.getModelRules().stream()
-                         .filter(r -> MODEL_RULES_TO_ADD.stream().anyMatch(s -> r.toString().contains(s)))
-                         .collect(Collectors.toList())
-        );
-        final Model validationModel = com.github.sgov.server.Validator.getRulesModel(rules);
-        loadOverrideRules(validationModel);
-        return validationModel;
-    }
-
-    private void loadOverrideRules(Model validationModel) throws IOException {
-        final ClassLoader classLoader = Validator.class.getClassLoader();
-        final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(classLoader);
-
-        Resource[] resources = resolver.getResources("classpath:/validation/*.ttl");
-        for (Resource r : resources) {
-            String rule = Utils.loadClasspathResource("validation/" + r.getFilename());
-            rule = rule.replace("$lang", language);
-            validationModel.read(new ByteArrayInputStream(rule.getBytes(StandardCharsets.UTF_8)), null,
-                                 FileUtils.langTurtle);
+    private Model getModelFromRdf4jRepository(final Collection<URI> vocabularyIris)
+            throws IOException {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
+        final Repository repository = em.unwrap(Repository.class);
+        try (final RepositoryConnection c = repository.getConnection()) {
+            final List<IRI> iris = new ArrayList<>();
+            vocabularyIris.forEach(i -> iris.add(repository.getValueFactory().createIRI(i.toString())));
+            c.export(new TurtleWriter(writer), iris.toArray(new IRI[]{}));
+            writer.close();
         }
+        final byte[] savedData = baos.toByteArray();
+        final ByteArrayInputStream bais = new ByteArrayInputStream(savedData);
+        Model model = ModelFactory.createDefaultModel();
+        model.read(bais, null, FileUtils.langTurtle);
+        return model;
     }
 }
