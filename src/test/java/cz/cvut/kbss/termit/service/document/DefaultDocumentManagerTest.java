@@ -675,7 +675,7 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void getAsResourceAtTimestampHandlesLegacyBackupTimestampPatterns() throws Exception {
+    void getAsResourceAtTimestampHandlesLegacyBackupTimestampPattern() throws Exception {
         final File file = new File();
         final java.io.File physicalFile = generateFile();
         file.setLabel(physicalFile.getName());
@@ -696,5 +696,29 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         backup.deleteOnExit();
         final org.springframework.core.io.Resource result = sut.getAsResource(file, Instant.EPOCH);
         assertEquals(backup, result.getFile());
+    }
+
+    @Test
+    void getAsResourceAtTimestampSkipsBackupFilesWithInvalidTimestampPattern() throws Exception {
+        final File file = new File();
+        final java.io.File physicalFile = generateFile();
+        file.setLabel(physicalFile.getName());
+        document.addFile(file);
+        file.setDocument(document);
+
+        final String path = physicalFile.getAbsolutePath();
+        // Legacy pattern used multiple millis places
+        final String newPath = path + DefaultDocumentManager.BACKUP_NAME_SEPARATOR + DateTimeFormatter.ofPattern(
+                                                                                                              "yyyy-MM-dd_HHmmss")
+                                                                                                      .withZone(
+                                                                                                              ZoneId.systemDefault())
+                                                                                                      .format(Instant.now()
+                                                                                                                     .minusSeconds(
+                                                                                                                             10));
+        final java.io.File backup = new java.io.File(newPath);
+        Files.copy(physicalFile.toPath(), backup.toPath());
+        backup.deleteOnExit();
+        final org.springframework.core.io.Resource result = sut.getAsResource(file, Instant.EPOCH);
+        assertEquals(physicalFile, result.getFile());
     }
 }

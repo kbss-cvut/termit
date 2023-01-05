@@ -131,7 +131,7 @@ public class DefaultDocumentManager implements DocumentManager {
             }
             String strTimestamp = f.getName().substring(f.getName().indexOf(BACKUP_NAME_SEPARATOR) + 1);
             // Cut off possibly legacy extra millis places
-            strTimestamp = strTimestamp.substring(0, BACKUP_TIMESTAMP_LENGTH);
+            strTimestamp = strTimestamp.substring(0, Math.min(BACKUP_TIMESTAMP_LENGTH, strTimestamp.length()));
             try {
                 final TemporalAccessor backupTimestamp = BACKUP_TIMESTAMP_FORMAT.parse(strTimestamp);
                 backups.put(Instant.from(backupTimestamp), f);
