@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.persistence.dao.changetracking;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -23,9 +24,13 @@ public class ChangeRecordDao {
 
     private final EntityManager em;
 
-    public ChangeRecordDao(ChangeTrackingContextResolver contextResolver, EntityManager em) {
+    private final ChangeTrackingContextResolver changeTrackingContextResolver;
+
+    public ChangeRecordDao(ChangeTrackingContextResolver contextResolver, EntityManager em,
+                           ChangeTrackingContextResolver changeTrackingContextResolver) {
         this.contextResolver = contextResolver;
         this.em = em;
+        this.changeTrackingContextResolver = changeTrackingContextResolver;
     }
 
     /**
@@ -58,19 +63,23 @@ public class ChangeRecordDao {
         Objects.requireNonNull(asset);
         try {
             final Descriptor descriptor = new EntityDescriptor();
+            URI changeTrackingContextUri = changeTrackingContextResolver.resolveChangeTrackingContext(asset);
             descriptor.setLanguage(null);
-            return em.createNativeQuery("SELECT ?r WHERE {" +
-                             "?r a ?changeRecord ;" +
-                             "?relatesTo ?asset ;" +
-                             "?hasTime ?timestamp ." +
-                             "OPTIONAL { ?r ?hasChangedAttribute ?attribute . }" +
+            return em.createNativeQuery("SELECT ?r WHERE { " +
+                             "GRAPH ?ctc { ?r ?relatesTo ?asset ; " +
+                             "?hasTime ?timestamp . " +
+                             "OPTIONAL { ?r ?hasChangedAttribute ?attribute . } } " +
+                             "?r a ?changeRecord . " +
                              "} ORDER BY DESC(?timestamp) ?attribute", AbstractChangeRecord.class)
+                     .setParameter("ctc", changeTrackingContextUri)
                      .setParameter("changeRecord", URI.create(Vocabulary.s_c_zmena))
                      .setParameter("relatesTo", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                      .setParameter("hasChangedAttribute", URI.create(Vocabulary.s_p_ma_zmeneny_atribut))
                      .setParameter("hasTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
                      .setParameter("asset", asset.getUri()).setDescriptor(descriptor).getResultList();
         } catch (RuntimeException e) {
+            if(e instanceof NotFoundException)
+                throw e;
             throw new PersistenceException(e);
         }
     }
