@@ -310,7 +310,9 @@ public class Utils {
      * @return Text content of the input string
      */
     public static String markdownToPlainText(String markdown) {
-        Objects.requireNonNull(markdown);
+        if (markdown == null) {
+            return null;
+        }
         final Parser parser = Parser.builder().build();
         final Node document = parser.parse(markdown);
         final HtmlRenderer renderer = HtmlRenderer.builder().build();

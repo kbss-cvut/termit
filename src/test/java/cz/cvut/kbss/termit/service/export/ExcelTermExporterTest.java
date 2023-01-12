@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExcelTermExporterTest {
 
-    private final ExcelTermExporter sut = new ExcelTermExporter(new HashMap<>());
+    private final ExcelTermExporter sut = new ExcelTermExporter(new HashMap<>(), Environment.LANGUAGE);
 
     @Test
     void exportExportsTermToExcelRow() {
@@ -112,8 +112,8 @@ class ExcelTermExporterTest {
     @Test
     void exportHandlesNullAltLabelsAttribute() {
         final Term term = Generator.generateTermWithId();
-        final MultilingualString hiddenOne = MultilingualString.create("budova", "cs");
-        final MultilingualString hiddenTwo = MultilingualString.create("budovy", "cs");
+        final MultilingualString hiddenOne = MultilingualString.create("building", Environment.LANGUAGE);
+        final MultilingualString hiddenTwo = MultilingualString.create("buildings", Environment.LANGUAGE);
         term.setAltLabels(null);
         term.setHiddenLabels(new HashSet<>(Arrays.asList(hiddenOne, hiddenTwo)));
 
@@ -127,7 +127,7 @@ class ExcelTermExporterTest {
 
     @Test
     void exportIncludesRelatedAndInverseRelatedTerms() {
-        final Term term = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         term.setRelated(IntStream.range(0, 5)
                                  .mapToObj(i -> new TermInfo(Generator.generateTermWithId(term.getVocabulary())))
@@ -146,7 +146,7 @@ class ExcelTermExporterTest {
 
     @Test
     void exportIncludesRelatedMatchAndInverseRelatedMatchTerms() {
-        final Term term = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         term.setRelatedMatch(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
                                       .collect(Collectors.toSet()));
@@ -163,7 +163,7 @@ class ExcelTermExporterTest {
 
     @Test
     void exportIncludesExactMatchAndInverseExactMatchTerms() {
-        final Term term = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         term.setExactMatchTerms(IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
                                          .collect(Collectors.toSet()));
@@ -180,7 +180,7 @@ class ExcelTermExporterTest {
 
     @Test
     void exportEnsuresNoDuplicatesInRelatedRelatedMatchAndExactMatchTerms() {
-        final Term term = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+        final Term term = Generator.generateTermWithId();
         term.setVocabulary(Generator.generateUri());
         final Set<TermInfo> asserted = IntStream.range(0, 5).mapToObj(i -> new TermInfo(Generator.generateTermWithId()))
                                                 .collect(Collectors.toSet());
@@ -208,22 +208,18 @@ class ExcelTermExporterTest {
     }
 
     @Test
-    void exportExportsMultilingualAttributesAsValuesWithLanguageInParentheses() {
-        final Term term = Generator.generateMultiLingualTerm(Environment.LANGUAGE, "cs");
+    void exportExportsSpecifiedLanguageOfMultilingualString() {
+        final String lang = "cs";
+        final ExcelTermExporter sut = new ExcelTermExporter(new HashMap<>(), lang);
+        final Term term = Generator.generateMultiLingualTerm(Environment.LANGUAGE, lang);
         final XSSFRow row = generateExcel();
         sut.export(term, row);
         final String label = row.getCell(1).getStringCellValue();
-        assertTrue(label.matches(".+;.+"));
-        term.getLabel().getValue()
-            .forEach((lang, value) -> assertThat(label, containsString(value + "(" + lang + ")")));
+        assertEquals(term.getLabel().get(lang), label);
         final String definition = row.getCell(4).getStringCellValue();
-        assertTrue(definition.matches(".+;.+"));
-        term.getDefinition().getValue()
-            .forEach((lang, value) -> assertThat(definition, containsString(value + "(" + lang + ")")));
+        assertEquals(term.getDefinition().get(lang), definition);
         final String description = row.getCell(5).getStringCellValue();
-        assertTrue(description.matches(".+;.+"));
-        term.getDescription().getValue()
-            .forEach((lang, value) -> assertThat(description, containsString(value + "(" + lang + ")")));
+        assertEquals(term.getDescription().get(lang), description);
     }
 
     @Test
@@ -251,7 +247,7 @@ class ExcelTermExporterTest {
         term.setSubTerms(Collections.singleton(new TermInfo(Generator.generateTermWithId(vocabularyUri))));
         final Map<URI, PrefixDeclaration> prefixes = Collections.singletonMap(vocabularyUri,
                                                                               new PrefixDeclaration(prefix, namespace));
-        final ExcelTermExporter sut = new ExcelTermExporter(prefixes);
+        final ExcelTermExporter sut = new ExcelTermExporter(prefixes, Environment.LANGUAGE);
 
         final XSSFRow row = generateExcel();
         sut.export(term, row);

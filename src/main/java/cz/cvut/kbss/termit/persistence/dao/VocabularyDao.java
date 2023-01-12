@@ -454,7 +454,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                              cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri))
                                      .getResultList();
             if (result.size() == 0) {
-                return new PrefixDeclaration();
+                return PrefixDeclaration.EMPTY_PREFIX;
             }
             assert result.get(0) instanceof Object[];
             return new PrefixDeclaration(((Object[]) result.get(0))[0].toString(),

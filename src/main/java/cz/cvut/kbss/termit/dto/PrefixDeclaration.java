@@ -2,7 +2,12 @@ package cz.cvut.kbss.termit.dto;
 
 import java.util.Objects;
 
-public class PrefixDeclaration {
+public class PrefixDeclaration implements Comparable<PrefixDeclaration> {
+
+    /**
+     * Empty prefix declaration, i.e. no prefix is declared.
+     */
+    public static final PrefixDeclaration EMPTY_PREFIX = new PrefixDeclaration(null, null);
 
     /**
      * Prefix and local name separator.
@@ -12,10 +17,6 @@ public class PrefixDeclaration {
     private final String prefix;
 
     private final String namespace;
-
-    public PrefixDeclaration() {
-        this(null, null);
-    }
 
     public PrefixDeclaration(String prefix, String namespace) {
         this.prefix = prefix;
@@ -45,5 +46,16 @@ public class PrefixDeclaration {
     @Override
     public int hashCode() {
         return Objects.hash(prefix, namespace);
+    }
+
+    @Override
+    public int compareTo(PrefixDeclaration prefixDeclaration) {
+        assert prefixDeclaration != null;
+        if (prefix == null) {
+            return 1;
+        } else if (prefixDeclaration.prefix == null) {
+            return -1;
+        }
+        return prefix.compareTo(prefixDeclaration.prefix);
     }
 }
