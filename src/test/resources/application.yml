@@ -29,7 +29,7 @@ termit:
     file:
         storage: /tmp/termit
     textAnalysis:
-        url:
+        url: http://localhost/annotace
         termAssignmentMinScore: 1
         termOccurrenceMinScore: 0.49
     comments:

@@ -95,9 +95,12 @@ public class TextAnalysisService {
 
     private void invokeTextAnalysisOnFile(File file, TextAnalysisInput input) {
         try {
-            final Resource result = invokeTextAnalysisService(input);
+            final Optional<Resource> result = invokeTextAnalysisService(input);
+            if (result.isEmpty()) {
+                return;
+            }
             documentManager.createBackup(file);
-            try (final InputStream is = result.getInputStream()) {
+            try (final InputStream is = result.get().getInputStream()) {
                 annotationGenerator.generateAnnotations(is, file);
             }
             storeTextAnalysisRecord(file, input);
@@ -110,18 +113,23 @@ public class TextAnalysisService {
         }
     }
 
-    private Resource invokeTextAnalysisService(TextAnalysisInput input) {
+    private Optional<Resource> invokeTextAnalysisService(TextAnalysisInput input) {
+        final String taUrl = config.getTextAnalysis().getUrl();
+        if (taUrl == null || taUrl.isBlank()) {
+            LOG.warn("Text analysis service URL not configured. Text analysis will not be invoked.");
+            return Optional.empty();
+        }
         final HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE);
         LOG.debug("Invoking text analysis service on input: {}", input);
         final ResponseEntity<Resource> resp = restClient
                 .exchange(config.getTextAnalysis().getUrl(), HttpMethod.POST,
-                        new HttpEntity<>(input, headers), Resource.class);
+                          new HttpEntity<>(input, headers), Resource.class);
         if (!resp.hasBody()) {
             throw new WebServiceIntegrationException("Text analysis service returned empty response.");
         }
         assert resp.getBody() != null;
-        return resp.getBody();
+        return Optional.of(resp.getBody());
     }
 
     private void storeTextAnalysisRecord(File file, TextAnalysisInput config) {
@@ -146,7 +154,7 @@ public class TextAnalysisService {
     /**
      * Invokes text analysis on the specified term's definition.
      * <p>
-     * The the specified vocabulary context is used for analysis. Analysis results are stored as definitional term
+     * The specified vocabulary context is used for analysis. Analysis results are stored as definitional term
      * occurrences.
      *
      * @param term Term whose definition is to be analyzed.
@@ -156,7 +164,7 @@ public class TextAnalysisService {
         final String language = config.getPersistence().getLanguage();
         if (term.getDefinition() != null && term.getDefinition().contains(language)) {
             final TextAnalysisInput input = new TextAnalysisInput(term.getDefinition().get(language), language,
-                    URI.create(config.getRepository().getUrl()));
+                                                                  URI.create(config.getRepository().getUrl()));
             input.addVocabularyContext(vocabularyContext);
 
             invokeTextAnalysisOnTerm(term, input);
@@ -165,8 +173,11 @@ public class TextAnalysisService {
 
     private void invokeTextAnalysisOnTerm(AbstractTerm term, TextAnalysisInput input) {
         try {
-            final Resource result = invokeTextAnalysisService(input);
-            try (final InputStream is = result.getInputStream()) {
+            final Optional<Resource> result = invokeTextAnalysisService(input);
+            if (result.isEmpty()) {
+                return;
+            }
+            try (final InputStream is = result.get().getInputStream()) {
                 annotationGenerator.generateAnnotations(is, term);
             }
         } catch (WebServiceIntegrationException e) {

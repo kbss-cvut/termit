@@ -522,7 +522,6 @@ public class Configuration {
         /**
          * URL of the text analysis service.
          */
-        @NotNull
         String url;
 
         /**
