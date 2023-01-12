@@ -4,21 +4,10 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.CsvUtils;
 
-import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TabularTermExportUtils {
-
-    /**
-     * Names of columns used in term export to a tabular structure.
-     */
-    public static final List<String> EXPORT_COLUMNS = List.of("IRI", "Label", "Synonyms", "Search strings",
-                                                              "Definition", "Scope note", "Type", "Source",
-                                                              "Parent terms", "Sub terms", "Related terms",
-                                                              "Related match terms", "Exact matches", "Status",
-                                                              "Notation", "Example", "References"
-    );
 
     /**
      * Delimiter of a joined list of strings.
