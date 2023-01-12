@@ -183,4 +183,16 @@ class ExcelVocabularyExporterTest {
         // Glossary sheets + prefix sheet
         assertEquals(languages.length + 1, wb.getNumberOfSheets());
     }
+
+    @Test
+    void exportGlossaryHandlesTermsWithoutDescriptionAndDefinition() throws Exception {
+        when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
+        final String[] languages = {"en", "cs"};
+        final List<Term> terms = List.of(Generator.generateMultiLingualTerm(languages),
+                                         Generator.generateMultiLingualTerm(languages));
+        terms.get(0).setDescription(null);
+        terms.get(1).setDefinition(null);
+        when(termService.findAllFull(vocabulary)).thenReturn(terms);
+        assertDoesNotThrow(() -> sut.exportGlossary(vocabulary, exportConfig()));
+    }
 }

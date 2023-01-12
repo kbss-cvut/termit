@@ -110,8 +110,8 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         final Set<String> uniqueLanguages = new HashSet<>();
         for (Term t : terms) {
             uniqueLanguages.addAll(t.getLabel().getLanguages());
-            uniqueLanguages.addAll(t.getDefinition().getLanguages());
-            uniqueLanguages.addAll(t.getDescription().getLanguages());
+            uniqueLanguages.addAll(t.getDefinition() != null ? t.getDefinition().getLanguages() : Collections.emptyList());
+            uniqueLanguages.addAll(t.getDescription() != null ? t.getDescription().getLanguages() : Collections.emptyList());
             Utils.emptyIfNull(t.getAltLabels()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
             Utils.emptyIfNull(t.getHiddenLabels()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
             Utils.emptyIfNull(t.getExamples()).forEach(ms -> uniqueLanguages.addAll(ms.getLanguages()));
