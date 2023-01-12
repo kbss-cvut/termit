@@ -69,7 +69,7 @@ class ExcelVocabularyExporterTest {
 
     @Test
     void exportGlossaryOutputsGlossaryTermsIntoSheet() throws Exception {
-        when(vocabularyService.resolvePrefix(any())).thenReturn(new PrefixDeclaration());
+        when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId()).collect(
                 Collectors.toList());
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
@@ -104,7 +104,7 @@ class ExcelVocabularyExporterTest {
                                           .collect(Collectors.toList());
         terms.get(0).setExactMatchTerms(
                 Collections.singleton(new TermInfo(Generator.generateTermWithId(exactMatchVocabularyUri))));
-        when(vocabularyService.resolvePrefix(any())).thenReturn(new PrefixDeclaration());
+        when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         when(termService.findAllFull(vocabulary)).thenReturn(terms);
 
         sut.exportGlossary(vocabulary, exportConfig());
@@ -150,7 +150,7 @@ class ExcelVocabularyExporterTest {
 
     @Test
     void exportGlossaryOutputsLocalizedVersionsOfTermsIntoSeparateSheets() throws Exception {
-        when(vocabularyService.resolvePrefix(any())).thenReturn(new PrefixDeclaration());
+        when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         final String[] languages = {"en", "cs"};
         final List<Term> terms = List.of(Generator.generateMultiLingualTerm(languages),
                                          Generator.generateMultiLingualTerm(languages));
@@ -172,7 +172,7 @@ class ExcelVocabularyExporterTest {
 
     @Test
     void exportGlossarySkipsNullLanguages() throws Exception {
-        when(vocabularyService.resolvePrefix(any())).thenReturn(new PrefixDeclaration());
+        when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         final String[] languages = {"en", "cs"};
         final List<Term> terms = List.of(Generator.generateMultiLingualTerm(languages),
                                          Generator.generateMultiLingualTerm(languages));

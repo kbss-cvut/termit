@@ -85,7 +85,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         try (final XSSFWorkbook wb = new XSSFWorkbook()) {
             final Map<URI, PrefixDeclaration> prefixes = new HashMap<>();
             generateGlossarySheets(vocabulary, wb, prefixes);
-            generatePrefixMappingSheet(wb, prefixes);
+            generatePrefixMappingSheet(wb, prefixes.values());
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             wb.write(bos);
             return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
@@ -181,7 +181,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
                   .forEach(ti -> prefixes.put(ti.getVocabulary(), vocabularyService.resolvePrefix(ti.getVocabulary())));
     }
 
-    private void generatePrefixMappingSheet(XSSFWorkbook wb, Map<URI, PrefixDeclaration> prefixes) {
+    private void generatePrefixMappingSheet(XSSFWorkbook wb, Collection<PrefixDeclaration> prefixes) {
         final XSSFSheet sheet = wb.createSheet(PREFIX_COLUMN);
         generatePrefixSheetHeader(sheet);
         final XSSFFont font = initFont(wb);
@@ -190,7 +190,9 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
         style.setWrapText(true);
         // Prefixes
         int i = 1;
-        for (PrefixDeclaration pd : prefixes.values()) {
+        final List<PrefixDeclaration> prefixList = new ArrayList<>(prefixes);
+        Collections.sort(prefixList);
+        for (PrefixDeclaration pd : prefixList) {
             if (pd.getPrefix() == null) {
                 continue;
             }
