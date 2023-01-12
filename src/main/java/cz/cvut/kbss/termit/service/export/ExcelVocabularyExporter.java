@@ -162,6 +162,9 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
             final Term t = terms.get(i);
             resolvePrefixes(t, prefixes);
             termExporter.export(t, row);
+            for (short j = 0; j < row.getLastCellNum(); j++) {
+                row.getCell(j).setCellStyle(style);
+            }
         }
     }
 
