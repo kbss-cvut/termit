@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -101,6 +102,16 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
         differentiator.differentiateExactMatchTerms(instance, original);
         orphanedRelationshipRemover.removeOrphanedInverseTermRelationships(instance, original);
         instance.splitExternalAndInternalParents();
+        pruneEmptyTranslations(instance);
+    }
+
+    private void pruneEmptyTranslations(Term instance) {
+        assert instance != null;
+        Utils.pruneBlankTranslations(instance.getLabel());
+        Utils.pruneBlankTranslations(instance.getDefinition());
+        Utils.pruneBlankTranslations(instance.getDescription());
+        Utils.emptyIfNull(instance.getAltLabels()).forEach(Utils::pruneBlankTranslations);
+        Utils.emptyIfNull(instance.getHiddenLabels()).forEach(Utils::pruneBlankTranslations);
     }
 
     @Override
@@ -143,6 +154,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
             instance.setUri(generateIdentifier(vocabularyUri, instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
+        pruneEmptyTranslations(instance);
     }
 
     private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {

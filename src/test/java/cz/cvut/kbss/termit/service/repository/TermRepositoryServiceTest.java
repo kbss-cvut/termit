@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
@@ -851,5 +852,33 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertThat(resultExactMatch.getInverseExactMatchTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
         final Term resultTerm = em.find(Term.class, term.getUri());
         assertThat(resultTerm.getExactMatchTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+    }
+
+    @Test
+    void updatePrunesEmptyTranslationsInMultilingualAttributes() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
+        term.getLabel().set(Environment.LANGUAGE, "update");
+        term.getLabel().set("cs", "");
+        final MultilingualString expected = new MultilingualString(term.getLabel().getValue());
+        expected.remove("cs");
+        transactional(() -> sut.update(term));
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertEquals(expected, result.getLabel());
+    }
+
+    @Test
+    void persistPreparationPrunesEmptyTranslationsInMultilingualAttributes() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.getDefinition().set(Environment.LANGUAGE, "   ");
+        term.getDefinition().set("cs", "Test");
+        final MultilingualString expected = new MultilingualString(term.getDefinition().getValue());
+        expected.remove(Environment.LANGUAGE);
+
+        sut.addRootTermToVocabulary(term, vocabulary);
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertEquals(expected, result.getDefinition());
     }
 }
