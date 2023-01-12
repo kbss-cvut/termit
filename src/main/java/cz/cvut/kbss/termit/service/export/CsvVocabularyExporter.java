@@ -1,23 +1,19 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.export;
 
-import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -26,9 +22,6 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import cz.cvut.kbss.termit.util.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,11 +33,6 @@ import java.util.Objects;
  */
 @Service("csv")
 public class CsvVocabularyExporter implements VocabularyExporter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CsvVocabularyExporter.class);
-
-    private static final String DIRECTORY = "template";
-    private static final String TEMPLATE_FILE = "export.csv";
 
     private final TermRepositoryService termService;
 
@@ -68,7 +56,7 @@ public class CsvVocabularyExporter implements VocabularyExporter {
 
     private TypeAwareByteArrayResource exportGlossary(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        final StringBuilder export = new StringBuilder(loadHeader().trim());
+        final StringBuilder export = new StringBuilder(generateHeader().trim());
         final List<Term> terms = termService.findAllFull(vocabulary);
         final CsvTermExporter termExporter = new CsvTermExporter();
         terms.forEach(t -> export.append('\n').append(termExporter.export(t)));
@@ -76,16 +64,11 @@ public class CsvVocabularyExporter implements VocabularyExporter {
                                               ExportFormat.CSV.getFileExtension());
     }
 
-    private String loadHeader() {
-        try {
-            // First try loading a localized header
-            return Utils.loadClasspathResource(
-                    DIRECTORY + "/" + config.getPersistence().getLanguage() + "/" + TEMPLATE_FILE);
-        } catch (ResourceNotFoundException e) {
-            // If we do not find it, fall back to the default one
-            LOG.warn("Unable to find localized CSV export header. Falling back to the default one.", e);
-            return Utils.loadClasspathResource(DIRECTORY + "/" + Constants.DEFAULT_LANGUAGE + "/" + TEMPLATE_FILE);
-        }
+    private String generateHeader() {
+        final String langCode = config.getPersistence().getLanguage();
+        return String.join(",", Constants.EXPORT_COLUMN_LABELS.getOrDefault(langCode,
+                                                                            Constants.EXPORT_COLUMN_LABELS.get(
+                                                                                    Constants.DEFAULT_LANGUAGE)));
     }
 
     @Override
