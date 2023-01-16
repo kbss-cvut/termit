@@ -21,10 +21,8 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Term;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,12 +31,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@Tag("dao")
 class BaseDaoTest extends BaseDaoTestRunner {
 
     @Autowired
@@ -61,8 +56,7 @@ class BaseDaoTest extends BaseDaoTestRunner {
                 }).collect(Collectors.toList());
         transactional(() -> sut.persist(terms));
         final List<Term> result = sut.findAll();
-        assertEquals(terms.size(), result.size());
-        assertTrue(terms.containsAll(result));
+        assertThat(result, hasItems(terms.toArray(new Term[] {})));
     }
 
     @Test

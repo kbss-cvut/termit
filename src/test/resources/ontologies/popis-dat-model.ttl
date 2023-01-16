@@ -1,0 +1,538 @@
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix a-popis-dat-pojem: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix a-popis-dat: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/> .
+
+a-popis-dat-pojem:je-pojmem
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:term ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-záznamem .
+
+a-popis-dat-pojem:číselník
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:databázová-tabulka .
+
+a-popis-dat-pojem:má-heslo
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         a-popis-dat-pojem:uživatel ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+a-popis-dat-pojem:má-posledního-editora
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-editora .
+
+a-popis-dat-pojem:má-datový-typ
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:atribut-databázové-tabulky ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:záznam
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://www.w3.org/2004/02/skos/core#Concept> , <http://onto.fel.cvut.cz/ontologies/ufo/object> .
+
+a-popis-dat-pojem:je-záznamem-datové-sady
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:range          a-popis-dat-pojem:datová-sada ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-záznamem .
+
+a-popis-dat-pojem:legislativní-slovník
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:dokumentový-slovník .
+
+a-popis-dat-pojem:poskytuje-záznam
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:zdroj-záznamu ;
+        rdfs:range          a-popis-dat-pojem:záznam ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:statistický-atribut-záznamu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:atribut-záznamu .
+
+a-popis-dat-pojem:funkce
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/ufo/trope> .
+
+a-popis-dat-pojem:má-dokumentový-slovník
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        owl:inverseOf       a-popis-dat-pojem:popisuje-dokument;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-atribut
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:range          a-popis-dat-pojem:atribut ;
+        owl:inverseOf       a-popis-dat-pojem:je-atributem;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:soubor
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:zdroj .
+
+a-popis-dat-pojem:je-datovým-atributem-záznamu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:datový-atribut-záznamu ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-atributem-záznamu .
+
+a-popis-dat-pojem:zdroj
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/ufo/object> .
+
+a-popis-dat-pojem:má-referenční-atribut-záznamu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        owl:inverseOf       a-popis-dat-pojem:je-referenčním-atributem-záznamu ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-atribut-záznamu .
+
+a-popis-dat-pojem:je-referenčním-atributem-záznamu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:referenční-atribut-záznamu ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-atributem-záznamu .
+
+a-popis-dat-pojem:má-atribut-databázové-tabulky
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:databázová-tabulka ;
+        rdfs:range          a-popis-dat-pojem:atribut-databázové-tabulky ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-atribut .
+
+a-popis-dat-pojem:dokument
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:zdroj .
+
+a-popis-dat-pojem:má-číselníkovou-hodnotu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:číselník ;
+        rdfs:range          a-popis-dat-pojem:číselníková-hodnota ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-atribut-databázové-tabulky .
+
+a-popis-dat-pojem:term
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:záznam .
+
+a-popis-dat-pojem:je-pojmem-ze-slovníku
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:range          a-popis-dat-pojem:slovník ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-pojmem .
+
+<http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/dataset>
+        a       owl:Class .
+
+a-popis-dat-pojem:dokumentový-slovník
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:slovník .
+
+a-popis-dat-pojem:má-datum-a-čas-poslední-modifikace
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-datum-a-čas-modifikace .
+
+a-popis-dat-pojem:je-záznamem
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:záznam ;
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/ufo/object> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:datový-atribut-záznamu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:atribut-záznamu .
+
+a-popis-dat-pojem:atribut
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <https://slovník.gov.cz/základní/pojem/objekt> .
+
+a-popis-dat-pojem:zdroj-záznamu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:zdroj-dat .
+
+a-popis-dat-pojem:databázová-tabulka-jako-zdroj-dat
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:dotaz-sql-databáze , a-popis-dat-pojem:databázová-tabulka .
+
+a-popis-dat-pojem:má-příjmení
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/person> ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+a-popis-dat-pojem:má-model
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:slovník ;
+        rdfs:range          a-popis-dat-pojem:model ;
+        rdfs:subPropertyOf  <http://onto.fel.cvut.cz/ontologies/ufo/has-part> .
+
+a-popis-dat-pojem:je-v-kontextu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-datum-a-čas-modifikace
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/ufo/object> ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+a-popis-dat-pojem:je-statistickým-atributem-záznamu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:statistický-atribut-záznamu ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-atributem-záznamu .
+
+a-popis-dat-pojem:má-atribut-záznamu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        owl:inverseOf       a-popis-dat-pojem:je-atributem-záznamu ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-atribut .
+
+a-popis-dat-pojem:datový-slovník
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:slovník .
+
+a-popis-dat-pojem:má-statistický-atribut-záznamu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        owl:inverseOf       a-popis-dat-pojem:je-statistickým-atributem-záznamu ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-atribut-záznamu .
+
+a-popis-dat-pojem:má-hodnotu-z-číselníku
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:atribut-databázové-tabulky ;
+        rdfs:range          a-popis-dat-pojem:číselník ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:definuje-funkci
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:atribut-databázové-tabulky ;
+        rdfs:range          a-popis-dat-pojem:funkce ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:referenční-atribut-záznamu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:atribut-záznamu .
+
+a-popis-dat-pojem:je-v-kontextu-datové-sady
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:range          a-popis-dat-pojem:datová-sada ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-v-kontextu .
+
+a-popis-dat-pojem:dokument-legislativní-povahy
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:dokument .
+
+a-popis-dat-pojem:atribut-záznamu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:term , a-popis-dat-pojem:atribut .
+
+<http://onto.fel.cvut.cz/ontologies/ufo/trope>
+        a       owl:Class .
+
+a-popis-dat-pojem:číselníková-hodnota
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:atribut-databázové-tabulky .
+
+a-popis-dat-pojem:je-atributem-databázové-tabulky
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:atribut-databázové-tabulky ;
+        rdfs:range          a-popis-dat-pojem:databázová-tabulka ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-atributem .
+
+a-popis-dat-pojem:dotaz-sql-databáze
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:zdroj-dat .
+
+<http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/dataset-source>
+        a       owl:Class .
+
+a-popis-dat-pojem:má-autora
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-editora .
+
+a-popis-dat-pojem:má-editora
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:range          a-popis-dat-pojem:uživatel ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:importuje-slovník
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:slovník ;
+        rdfs:range          a-popis-dat-pojem:slovník ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-glosář
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:slovník ;
+        rdfs:range          a-popis-dat-pojem:glosář ;
+        rdfs:subPropertyOf  <http://onto.fel.cvut.cz/ontologies/ufo/has-part> .
+
+a-popis-dat-pojem:poskytuje-atribut-záznamu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:zdroj-atributu-záznamu ;
+        rdfs:range          a-popis-dat-pojem:atribut-záznamu ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat:model  a    a-popis-dat-pojem:model , owl:Ontology ;
+        rdfs:label      "Vocabulary for data description - model"@en , "Slovník popis dat - model"@cs ;
+        <http://purl.org/dc/elements/1.1/creator>
+                "Michal Med" ;
+        <http://purl.org/dc/elements/1.1/rights>
+                <https://creativecommons.org/licenses/by/4.0/> ;
+        <http://purl.org/dc/elements/1.1/title>
+                "Slovník popis dat - model"@cs , "Vocabulary for data description - model"@en ;
+        <http://purl.org/dc/terms/created>
+                "13.11.2019" ;
+        <http://purl.org/ontology/bibo/status>
+                "Specifikace"@cs , "Specification"@en ;
+        <http://purl.org/vocab/vann/preferredNamespacePrefix>
+                "a-popis-dat-pojem" ;
+        <http://purl.org/vocab/vann/preferredNamespaceUri>
+                "http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/pojem/" ;
+        owl:imports     <http://onto.fel.cvut.cz/ontologies/dataset-descriptor/1.0.0> , a-popis-dat:glosář ;
+        owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/model/verze/1.0.1> .
+
+a-popis-dat-pojem:zdroj-datové-sady
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/dataset-source> .
+
+a-popis-dat-pojem:model
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/ufo/object> .
+
+a-popis-dat-pojem:databáze
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:zdroj .
+
+a-popis-dat-pojem:je-atributem
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:atribut ;
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/ufo/object> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:atribut-databázové-tabulky
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:atribut .
+
+a-popis-dat-pojem:geometrický-atribut
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:atribut .
+
+a-popis-dat-pojem:katalogizuje-datovou-sadu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:katalog ;
+        rdfs:range          a-popis-dat-pojem:datová-sada ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:obsahuje-kořenový-pojem
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  <http://www.w3.org/2004/02/skos/core#hasTopConcept> , a-popis-dat-pojem:obsahuje-pojem .
+
+a-popis-dat-pojem:obsahuje-pojem
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:glosář ;
+        rdfs:range          a-popis-dat-pojem:term ;
+        owl:inverseOf       <http://www.w3.org/2004/02/skos/core#inScheme>;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-soubor
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:dokument ;
+        rdfs:range          a-popis-dat-pojem:soubor ;
+        owl:inverseOf       a-popis-dat-pojem:je-částí-dokumentu;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:datová-sada
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/dataset> , a-popis-dat-pojem:zdroj , a-popis-dat-pojem:kontext .
+
+<http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/person>
+        a       owl:Class .
+
+a-popis-dat-pojem:poskytuje-datovou-sadu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:zdroj-datové-sady ;
+        rdfs:range          a-popis-dat-pojem:datová-sada ;
+        rdfs:subPropertyOf  <http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/offers-dataset> .
+
+a-popis-dat-pojem:glosář
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/ufo/object> .
+
+a-popis-dat-pojem:diagram
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://www.w3.org/2004/02/skos/core#ConceptScheme> , <http://onto.fel.cvut.cz/ontologies/ufo/object> .
+
+a-popis-dat-pojem:je-částí-dokumentu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-křestní-jméno
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/person> ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+a-popis-dat-pojem:je-atributem-záznamu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:atribut-záznamu ;
+        rdfs:range          a-popis-dat-pojem:záznam ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-atributem .
+
+a-popis-dat-pojem:slovník
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:datová-sada .
+
+a-popis-dat-pojem:má-datový-atribut-záznamu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        owl:inverseOf       a-popis-dat-pojem:je-datovým-atributem-záznamu ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-atribut-záznamu .
+
+a-popis-dat-pojem:katalog
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:datová-sada .
+
+a-popis-dat-pojem:popisuje-legislativní-dokument
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:legislativní-slovník ;
+        rdfs:range          a-popis-dat-pojem:dokument-legislativní-povahy ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:popisuje-dokument .
+
+a-popis-dat-pojem:popisuje-dokument
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:dokumentový-slovník ;
+        rdfs:range          a-popis-dat-pojem:dokument ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:uživatel
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/dataset-descriptor/pojem/person> .
+
+a-popis-dat-pojem:zdroj-dat
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/ufo/object> .
+
+<http://onto.fel.cvut.cz/ontologies/ufo/object>
+        a       owl:Class .
+
+<http://onto.fel.cvut.cz/ontologies/ufo/endurant>
+        a       owl:Class .
+
+a-popis-dat-pojem:má-zdroj
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/ufo/object> ;
+        rdfs:range          a-popis-dat-pojem:zdroj ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-uživatelské-jméno
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:domain         a-popis-dat-pojem:uživatel ;
+        rdfs:range          rdfs:Literal ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+
+
+a-popis-dat-pojem:verze-objektu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf      <http://onto.fel.cvut.cz/ontologies/ufo/object> .
+
+a-popis-dat-pojem:verze-slovníku
+        a                   <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf      a-popis-dat-pojem:verze-objektu , a-popis-dat-pojem:slovník .
+
+a-popis-dat-pojem:verze-modelu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf      a-popis-dat-pojem:verze-objektu , a-popis-dat-pojem:model .
+
+a-popis-dat-pojem:verze-glosáře
+        a                   <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf      a-popis-dat-pojem:verze-objektu , a-popis-dat-pojem:glosář .
+
+a-popis-dat-pojem:verze-pojmu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf      a-popis-dat-pojem:verze-objektu , a-popis-dat-pojem:term .
+
+a-popis-dat-pojem:je-verzí
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:verze-objektu .
+
+a-popis-dat-pojem:je-verzí-slovníku
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-verzí ;
+        rdfs:domain         a-popis-dat-pojem:verze-slovníku .
+
+a-popis-dat-pojem:je-verzí-modelu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-verzí ;
+        rdfs:domain         a-popis-dat-pojem:verze-modelu .
+
+a-popis-dat-pojem:je-verzí-glosáře
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-verzí ;
+        rdfs:domain         a-popis-dat-pojem:verze-glosáře .
+
+a-popis-dat-pojem:je-verzí-pojmu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:je-verzí ;
+        rdfs:domain         a-popis-dat-pojem:verze-pojmu .
+
+a-popis-dat-pojem:má-verzi-glosáře
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf       a-popis-dat-pojem:má-glosář ;
+        rdfs:domain         a-popis-dat-pojem:slovník ;
+        rdfs:range          a-popis-dat-pojem:glosář .
+
+a-popis-dat-pojem:má-verzi-modelu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf       a-popis-dat-pojem:má-model ;
+        rdfs:domain         a-popis-dat-pojem:slovník ;
+        rdfs:range          a-popis-dat-pojem:model .
+
+a-popis-dat-pojem:má-datum-a-čas-vytvoření-verze
+        a                    <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain          a-popis-dat-pojem:verze-objektu ;
+        rdfs:subPropertyOf   a-popis-dat-pojem:má-datum-a-čas-modifikace .
+
+a-popis-dat-pojem:databázová-tabulka
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/ufo/object> .
+
+a-popis-dat-pojem:zdroj-atributu-záznamu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:zdroj-dat .
+
+a-popis-dat-pojem:agendový-slovník
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  a-popis-dat-pojem:slovník .
+
+a-popis-dat-pojem:kontext
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/ufo/endurant> .
+
+a-popis-dat-pojem:má-datum-a-čas-vytvoření
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:subPropertyOf  a-popis-dat-pojem:má-datum-a-čas-modifikace .
+
+a-popis-dat-pojem:změna
+        a       <https://slovník.gov.cz/základní/pojem/typ-události>, owl:Class .
+
+a-popis-dat-pojem:vytvoření-entity
+        a       <https://slovník.gov.cz/základní/pojem/typ-události>, owl:Class ;
+        rdfs:subClassOf a-popis-dat-pojem:změna .
+
+
+a-popis-dat-pojem:úprava-entity
+        a       <https://slovník.gov.cz/základní/pojem/typ-události>, owl:Class ;
+        rdfs:subClassOf a-popis-dat-pojem:změna .
+
+a-popis-dat-pojem:má-změněnou-entitu
+        a                   owl:ObjectProperty ,  <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:změna ;
+        rdfs:range          <http://onto.fel.cvut.cz/ontologies/ufo/endurant> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-změněný-atribut
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:úprava-entity ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-novou-hodnotu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:úprava-entity ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:má-původní-hodnotu
+        a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         a-popis-dat-pojem:úprava-entity ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
