@@ -315,12 +315,11 @@ class ResourceDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void updateRefreshesLastModifiedValue() throws Exception {
+    void updateRefreshesLastModifiedValue() {
         final Resource resource = generateResource();
         final long before = sut.getLastModified();
         final String newLabel = "New label";
         resource.setLabel(newLabel);
-        Thread.sleep(100);  // force time to move on
         transactional(() -> sut.update(resource));
         final Optional<Resource> result = sut.find(resource.getUri());
         assertTrue(result.isPresent());
