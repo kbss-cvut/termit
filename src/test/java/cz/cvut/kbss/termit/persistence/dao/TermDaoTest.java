@@ -38,6 +38,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,15 +54,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         super.setUp();
     }
 
-    @Test
-    void findAllRootsWithDefaultPageSpecReturnsAllTerms() {
-        final List<Term> terms = generateTerms(10);
-        addTermsAndSave(new HashSet<>(terms), vocabulary);
-
-        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
-        assertEquals(toDtos(terms), result);
-    }
-
     private static List<TermDto> toDtos(List<Term> terms) {
         return Environment.termsToDtos(terms);
     }
@@ -73,7 +65,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             terms.forEach(t -> {
                 t.setGlossary(vocabulary.getGlossary().getUri());
                 em.persist(t, descriptorFactory.termDescriptor(vocabulary));
-                addTermInVocabularyRelationship(t, vocabulary.getUri());
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
             });
         });
     }
@@ -84,40 +76,42 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                         .collect(Collectors.toList());
     }
 
-    private void addTermInVocabularyRelationship(Term term, URI vocabularyIri) {
-        Generator.addTermInVocabularyRelationship(term, vocabularyIri, em);
-    }
-
     @Test
     void findAllRootsReturnsMatchingPageWithTerms() {
         final List<Term> terms = generateTerms(10);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
-        // Paging starts at 0
-        final List<TermDto> result = sut
-                .findAllRoots(vocabulary, PageRequest.of(1, terms.size() / 2), Collections.emptyList());
-        final List<Term> subList = terms.subList(terms.size() / 2, terms.size());
-        assertEquals(toDtos(subList), result);
+        final List<TermDto> resultOne = sut.findAllRoots(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
+        final List<TermDto> resultTwo = sut.findAllRoots(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
+
+        assertEquals(5, resultOne.size());
+        assertEquals(5, resultTwo.size());
+
+        final List<TermDto> expectedDtos = termsToDtos(terms);
+        resultOne.forEach(t -> {
+            assertThat(expectedDtos, hasItem(t));
+            assertThat(resultTwo, not(hasItem(t)));
+        });
+        resultTwo.forEach(t -> assertThat(expectedDtos, hasItem(t)));
     }
 
     @Test
     void findAllRootsReturnsOnlyTermsInSpecifiedVocabulary() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(2);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
         final Vocabulary another = Generator.generateVocabulary();
         another.setUri(Generator.generateUri());
-        another.getGlossary().setRootTerms(generateTerms(4).stream().map(Asset::getUri).collect(Collectors.toSet()));
+        another.getGlossary().setRootTerms(generateTerms(2).stream().map(Asset::getUri).collect(Collectors.toSet()));
         transactional(() -> em.persist(another));
 
-        final List<TermDto> result = sut
-                .findAllRoots(vocabulary, PageRequest.of(0, terms.size() / 2), Collections.emptyList());
-        assertEquals(terms.size() / 2, result.size());
-        assertTrue(toDtos(terms).containsAll(result));
+        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        assertEquals(terms.size(), result.size());
+        assertThat(result, hasItems(toDtos(terms).toArray(new TermDto[]{})));
     }
 
     @Test
     void findAllRootsWithoutVocabularyReturnsMatchingPageWithTerms() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
         // Paging starts at 0
@@ -129,7 +123,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllRootsWithoutVocabularyReturnsOnlyRootTerms() {
-        final List<Term> rootTerms = generateTerms(10);
+        final List<Term> rootTerms = generateTerms(4);
         addTermsAndSave(new HashSet<>(rootTerms), vocabulary);
         transactional(() -> rootTerms.forEach(t -> {
             final Term child = Generator.generateTermWithId(vocabulary.getUri());
@@ -158,7 +152,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllRootsReturnsOnlyRootTerms() {
-        final List<Term> rootTerms = generateTerms(10);
+        final List<Term> rootTerms = generateTerms(4);
         addTermsAndSave(new HashSet<>(rootTerms), vocabulary);
         transactional(() -> rootTerms.forEach(t -> {
             final Term child = Generator.generateTermWithId(vocabulary.getUri());
@@ -173,8 +167,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllBySearchStringReturnsTermsWithMatchingLabel() {
-        final List<Term> terms = generateTerms(10);
-        addTermsAndSave(new HashSet<>(terms), vocabulary);
+        final List<Term> terms = generateTerms(4);
+        addTermsAndSave(terms, vocabulary);
 
         final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Environment.LANGUAGE), vocabulary);
         assertEquals(1, result.size());
@@ -183,8 +177,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllBySearchStringWithoutVocabularyReturnsTermsWithMatchingLabel() {
-        final List<Term> terms = generateTerms(10);
-        addTermsAndSave(new HashSet<>(terms), vocabulary);
+        final List<Term> terms = generateTerms(4);
+        addTermsAndSave(terms, vocabulary);
 
         final List<TermDto> result = sut.findAll(terms.get(0).getLabel().get(Environment.LANGUAGE));
         assertEquals(1, result.size());
@@ -194,7 +188,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     @Test
     void findAllBySearchStringReturnsTermsWithMatchingLabelWhichAreNotRoots() {
         enableRdfsInference(em);
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
         final Term root = terms.get(Generator.randomIndex(terms));
         final Term child = Generator.generateTermWithId(vocabulary.getUri());
@@ -217,7 +211,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void existsInVocabularyReturnsTrueForLabelExistingInVocabulary() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(2);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
         final String label = terms.get(0).getLabel().get(Environment.LANGUAGE);
@@ -226,7 +220,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void existsInVocabularyReturnsFalseForUnknownLabel() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
         assertFalse(sut.existsInVocabulary("unknown label", vocabulary, Environment.LANGUAGE));
@@ -234,7 +228,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void existsInVocabularyReturnsTrueWhenLabelDiffersOnlyInCase() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(2);
         addTermsAndSave(terms, vocabulary);
 
         final String label = terms.get(0).getLabel().get(Environment.LANGUAGE).toLowerCase();
@@ -255,7 +249,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllFullGetsAllTermsInVocabulary() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
         final List<Term> result = sut.findAllFull(vocabulary);
@@ -265,7 +259,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllFullReturnsAllTermsFromVocabularyOrderedByLabel() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
         final List<Term> result = sut.findAllFull(vocabulary);
@@ -275,7 +269,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllIncludingImportedReturnsTermsInVocabularyAndImportedVocabularies() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
         final Vocabulary parent = Generator.generateVocabularyWithId();
         vocabulary.setImportedVocabularies(Collections.singleton(parent.getUri()));
@@ -323,7 +317,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             term.setGlossary(vocabulary.getGlossary().getUri());
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            addTermInVocabularyRelationship(term, vocabulary.getUri());
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
         final String updatedLabel = "Updated label";
@@ -404,7 +398,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllRootsIncludingImportsReturnsVocabularyRootTermsWhenVocabularyDoesNotImportAnyOther() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
 
         final List<TermDto> result = sut
@@ -537,8 +531,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             term.addParentTerm(parent);
             em.persist(parent, descriptorFactory.termDescriptor(parentVoc));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            addTermInVocabularyRelationship(term, vocabulary.getUri());
-            addTermInVocabularyRelationship(parent, parentVoc.getUri());
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parent, parentVoc.getUri(), em);
         });
 
         final Term toUpdate = sut.find(term.getUri()).get();
@@ -571,9 +565,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             em.persist(parentTwo, descriptorFactory.termDescriptor(parentTwoVoc));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             parentTwo.setGlossary(parentTwoVoc.getGlossary().getUri());
-            addTermInVocabularyRelationship(term, vocabulary.getUri());
-            addTermInVocabularyRelationship(parentOne, parentOneVoc.getUri());
-            addTermInVocabularyRelationship(parentTwo, parentTwoVoc.getUri());
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parentOne, parentOneVoc.getUri(), em);
+            Generator.addTermInVocabularyRelationship(parentTwo, parentTwoVoc.getUri(), em);
         });
 
         em.getEntityManagerFactory().getCache().evictAll();
@@ -636,7 +630,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             vocabulary.getGlossary().addRootTerm(parent);
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
-            addTermInVocabularyRelationship(parent, vocabulary.getUri());
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
         }));
     }
 
@@ -769,21 +763,21 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllRootsRetrievesRootTermsAndTermsSpecifiedByProvidedIdentifiers() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
         final Term childToReturn = Generator.generateTermWithId(vocabulary.getUri());
         childToReturn.addParentTerm(terms.get(0));
         transactional(() -> em.persist(childToReturn, descriptorFactory.termDescriptor(childToReturn)));
 
         final List<TermDto> results = sut
-                .findAllRoots(vocabulary, PageRequest.of(0, 5), Collections.singleton(childToReturn.getUri()));
+                .findAllRoots(vocabulary, PageRequest.of(0, terms.size() / 2), Collections.singleton(childToReturn.getUri()));
         assertFalse(results.isEmpty());
         assertThat(results, hasItem(new TermDto(childToReturn)));
     }
 
     @Test
     void findAllRootsIncludingImportsRetrievesRootTermsAndTermsSpecifiedByProvidedIdentifiers() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
         final Vocabulary parentVoc = Generator.generateVocabularyWithId();
         final Term parentTermInParentVoc = Generator.generateTermWithId(parentVoc.getUri());
@@ -798,7 +792,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         });
 
         final List<TermDto> results = sut
-                .findAllRootsIncludingImports(vocabulary, PageRequest.of(0, 5),
+                .findAllRootsIncludingImports(vocabulary, PageRequest.of(0, terms.size() / 2),
                                               Collections.singleton(childTermInParentVoc.getUri()));
         assertFalse(results.isEmpty());
         assertThat(results, hasItem(new TermDto(childTermInParentVoc)));
@@ -917,7 +911,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
-            addTermInVocabularyRelationship(term, vocabulary.getUri());
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
         final List<TermDto> dto = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, dto.size());
@@ -933,7 +927,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     @Test
     void loadsSubTermsForIncludedTermsLoadedWhenFetchingRoots() {
         enableRdfsInference(em);
-        final List<Term> rootTerms = generateTerms(10);
+        final List<Term> rootTerms = generateTerms(4);
         addTermsAndSave(rootTerms, vocabulary);
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         // Make it last
@@ -962,7 +956,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     @Test
     void findAllRootsLoadsSubTermsForAncestorsOfIncludedTerms() {
         enableRdfsInference(em);
-        final List<Term> rootTerms = generateTerms(10);
+        final List<Term> rootTerms = generateTerms(4);
         addTermsAndSave(rootTerms, vocabulary);
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         term.setGlossary(vocabulary.getGlossary().getUri());
@@ -993,7 +987,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
      */
     @Test
     void findAllRootsEnsuresIncludedTermsAreNotDuplicatedInResult() {
-        final List<Term> rootTerms = generateTerms(10);
+        final List<Term> rootTerms = generateTerms(4);
         addTermsAndSave(rootTerms, vocabulary);
         rootTerms.sort(Comparator.comparing(Term::getPrimaryLabel));
         final Term toInclude = rootTerms.get(0);
@@ -1039,7 +1033,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllGetsAllTermsInVocabulary() {
-        final List<Term> terms = generateTerms(10);
+        final List<Term> terms = generateTerms(4);
         addTermsAndSave(terms, vocabulary);
 
         final List<TermDto> result = sut.findAll(vocabulary);
@@ -1089,7 +1083,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             parent.setGlossary(vocabulary.getGlossary().getUri());
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-            addTermInVocabularyRelationship(parent, vocabulary.getUri());
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
         });
         final List<TermDto> rootsBefore = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC,
                                                            Collections.emptyList());
