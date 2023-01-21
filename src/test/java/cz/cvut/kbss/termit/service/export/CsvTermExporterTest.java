@@ -5,7 +5,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +35,7 @@ class CsvTermExporterTest {
                 count++;
             }
         }
-        assertEquals(TabularTermExportUtils.EXPORT_COLUMNS.size(), count);
+        assertEquals(Constants.EXPORT_COLUMN_LABELS.get(Constants.DEFAULT_LANGUAGE).size(), count);
     }
 
     @Test

@@ -12,7 +12,6 @@ import org.apache.poi.ss.usermodel.Row;
 import java.net.URI;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -21,34 +20,29 @@ import java.util.stream.Collectors;
 public class ExcelTermExporter {
 
     private final Map<URI, PrefixDeclaration> prefixes;
+    private final String langCode;
 
-    public ExcelTermExporter(Map<URI, PrefixDeclaration> prefixes) {
+    public ExcelTermExporter(Map<URI, PrefixDeclaration> prefixes, String langCode) {
         this.prefixes = prefixes;
+        this.langCode = langCode;
     }
 
     public void export(Term t, Row row) {
         Objects.requireNonNull(row);
         row.createCell(0).setCellValue(prefixedUri(t.getVocabulary(), t));
-        row.createCell(1)
-           .setCellValue(TabularTermExportUtils.exportMultilingualString(t.getLabel(), Function.identity(), false));
-        row.createCell(2)
-           .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER,
-                                     Utils.emptyIfNull(t.getAltLabels()).stream()
-                                          .map(str -> TabularTermExportUtils.exportMultilingualString(str,
-                                                                                                      Function.identity(),
-                                                                                                      false))
-                                          .collect(Collectors.toSet())));
-        row.createCell(3)
-           .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER,
-                                     Utils.emptyIfNull(t.getHiddenLabels()).stream()
-                                          .map(str -> TabularTermExportUtils.exportMultilingualString(str,
-                                                                                                      Function.identity(),
-                                                                                                      false))
-                                          .collect(Collectors.toSet())));
-        row.createCell(4).setCellValue(
-                TabularTermExportUtils.exportMultilingualString(t.getDefinition(), Utils::markdownToPlainText, false));
+        row.createCell(1).setCellValue(t.getLabel().get(langCode));
+        row.createCell(2).setCellValue(Utils.emptyIfNull(t.getAltLabels()).stream()
+                                            .map(str -> str.get(langCode))
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        row.createCell(3).setCellValue(Utils.emptyIfNull(t.getHiddenLabels()).stream()
+                                            .map(str -> str.get(langCode))
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
+        row.createCell(4)
+           .setCellValue(Utils.markdownToPlainText(t.getDefinition() != null ? t.getDefinition().get(langCode) : null));
         row.createCell(5).setCellValue(
-                TabularTermExportUtils.exportMultilingualString(t.getDescription(), Utils::markdownToPlainText, false));
+                Utils.markdownToPlainText(t.getDescription() != null ? t.getDescription().get(langCode) : null));
         row.createCell(6)
            .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getTypes())));
         row.createCell(7)
@@ -57,10 +51,9 @@ public class ExcelTermExporter {
            .setCellValue(Utils.emptyIfNull(t.getParentTerms()).stream().map(pt -> prefixedUri(pt.getVocabulary(), pt))
                               .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
         row.createCell(9)
-           .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER,
-                                     Utils.emptyIfNull(t.getSubTerms()).stream()
-                                          .map(this::termInfoPrefixedUri)
-                                          .collect(Collectors.toSet())));
+           .setCellValue(Utils.emptyIfNull(t.getSubTerms()).stream()
+                              .map(this::termInfoPrefixedUri)
+                              .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
         row.createCell(10).setCellValue(Utils.joinCollections(t.getRelated(), t.getInverseRelated()).stream()
                                              .map(this::termInfoPrefixedUri)
                                              .distinct()
@@ -79,9 +72,8 @@ public class ExcelTermExporter {
         row.createCell(14)
            .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getNotations())));
         row.createCell(15).setCellValue(Utils.emptyIfNull(t.getExamples()).stream()
-                                             .map(str -> TabularTermExportUtils.exportMultilingualString(str,
-                                                                                                         Function.identity(),
-                                                                                                         false))
+                                             .map(str -> str.get(langCode))
+                                             .filter(Objects::nonNull)
                                              .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
         if (t.getProperties() != null && !Utils.emptyIfNull(t.getProperties().get(DC.Terms.REFERENCES)).isEmpty()) {
             row.createCell(16).setCellValue(t.getProperties().get(DC.Terms.REFERENCES).toString());

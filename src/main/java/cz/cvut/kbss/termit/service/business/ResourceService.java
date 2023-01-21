@@ -44,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -118,13 +119,37 @@ public class ResourceService
      * @param resource Resource whose content should be retrieved
      * @return Representation of the resource content
      * @throws UnsupportedAssetOperationException When content of the specified resource cannot be retrieved
+     * @throws NotFoundException                  When the specified resource has no content stored
      */
     public TypeAwareResource getContent(Resource resource) {
         Objects.requireNonNull(resource);
-        if (!(resource instanceof File)) {
-            throw new UnsupportedAssetOperationException("Content retrieval is not supported for resource " + resource);
-        }
+        verifyFileOperationPossible(resource, "Content retrieval");
         return documentManager.getAsResource((File) resource);
+    }
+
+    private void verifyFileOperationPossible(Resource resource, String operation) {
+        if (!(resource instanceof File)) {
+            throw new UnsupportedAssetOperationException(operation + " is not supported for resource " + resource);
+        }
+    }
+
+    /**
+     * Gets content of the specified resource valid at the specified timestamp.
+     * <p>
+     * This method provides access to backups of the specified resource. If the specified timestamp is older than the
+     * first version of the specified resource, this version is returned. Similarly, if the timestamp is later than the
+     * most recent backup of the resource, the current version is returned.
+     *
+     * @param resource Resource whose content should be retrieved
+     * @param at       Timestamp of the version of the retrieved resource
+     * @return Representation of the resource content
+     * @throws UnsupportedAssetOperationException When content of the specified resource cannot be retrieved
+     * @throws NotFoundException                  When the specified resource has no content stored
+     */
+    public TypeAwareResource getContent(Resource resource, Instant at) {
+        Objects.requireNonNull(resource);
+        verifyFileOperationPossible(resource, "Content retrieval");
+        return documentManager.getAsResource((File) resource, at);
     }
 
     /**
@@ -138,9 +163,7 @@ public class ResourceService
     public void saveContent(Resource resource, InputStream content) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(content);
-        if (!(resource instanceof File)) {
-            throw new UnsupportedAssetOperationException("Content saving is not supported for resource " + resource);
-        }
+        verifyFileOperationPossible(resource, "Content saving");
         LOG.trace("Saving new content of resource {}.", resource);
         final File file = (File) resource;
         if (documentManager.exists(file)) {
@@ -196,7 +219,7 @@ public class ResourceService
         } else {
             repositoryService.persist(file);
         }
-        if (!getReference(document.getUri()).isPresent()) {
+        if (getReference(document.getUri()).isEmpty()) {
             repositoryService.persist(document);
         } else {
             update(doc);
@@ -238,9 +261,7 @@ public class ResourceService
     public void runTextAnalysis(Resource resource, Set<URI> vocabularies) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(vocabularies);
-        if (!(resource instanceof File)) {
-            throw new UnsupportedAssetOperationException("Text analysis is not supported for resource " + resource);
-        }
+        verifyFileOperationPossible(resource, "Text analysis");
         LOG.trace("Invoking text analysis on resource {}.", resource);
         final File file = (File) resource;
         if (vocabularies.isEmpty()) {
@@ -249,7 +270,8 @@ public class ResourceService
                         "Cannot analyze file without specifying vocabulary context.");
             }
             textAnalysisService.analyzeFile(file,
-                    includeImportedVocabularies(Collections.singleton(file.getDocument().getVocabulary())));
+                                            includeImportedVocabularies(
+                                                    Collections.singleton(file.getDocument().getVocabulary())));
         } else {
             textAnalysisService.analyzeFile(file, includeImportedVocabularies(vocabularies));
         }
@@ -304,14 +326,13 @@ public class ResourceService
         if (instance instanceof File) {
             final Resource original = findRequired(instance.getUri());
             if (!Objects.equals(original.getLabel(), instance.getLabel())) {
-                return Optional.of(new FileRenameEvent((File) instance, original.getLabel(),
-                        instance.getLabel()));
+                return Optional.of(new FileRenameEvent((File) instance, original.getLabel(), instance.getLabel()));
             }
         } else if (instance instanceof Document) {
             final Resource original = findRequired(instance.getUri());
             if (!Objects.equals(original.getLabel(), instance.getLabel())) {
-                return Optional.of(new DocumentRenameEvent((Document) instance, original.getLabel(),
-                        instance.getLabel()));
+                return Optional.of(
+                        new DocumentRenameEvent((Document) instance, original.getLabel(), instance.getLabel()));
             }
         }
         return Optional.empty();

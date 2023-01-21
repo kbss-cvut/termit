@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.util;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import org.eclipse.rdf4j.model.*;
@@ -12,7 +13,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -310,11 +314,30 @@ public class Utils {
      * @return Text content of the input string
      */
     public static String markdownToPlainText(String markdown) {
-        Objects.requireNonNull(markdown);
+        if (markdown == null) {
+            return null;
+        }
         final Parser parser = Parser.builder().build();
         final Node document = parser.parse(markdown);
         final HtmlRenderer renderer = HtmlRenderer.builder().build();
         final String html = renderer.render(document);
         return htmlToPlainText(html);
+    }
+
+    /**
+     * Removes blank translations from the specified {@link MultilingualString}.
+     * <p>
+     * That is, deletes records in languages where the value is a blank string.
+     *
+     * @param str Multilingual string to prune, possibly {@code null}
+     */
+    public static void pruneBlankTranslations(MultilingualString str) {
+        if (str == null) {
+            return;
+        }
+        // TODO Rewrite to entrySet.removeIf once JOPA MultilingualString.getValue does not return unmodifiable Map
+        final Set<String> langsToRemove = str.getValue().entrySet().stream().filter(e -> e.getValue().isBlank())
+                                             .map(Map.Entry::getKey).collect(Collectors.toSet());
+        langsToRemove.forEach(str::remove);
     }
 }
