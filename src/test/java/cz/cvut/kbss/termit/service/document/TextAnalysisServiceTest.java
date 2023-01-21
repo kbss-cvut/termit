@@ -335,4 +335,16 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         mockServer.verify();
         verify(annotationGeneratorMock, never()).generateAnnotations(any(), any(Term.class));
     }
+
+    @Test
+    void analyzeTermDefinitionDoesNothingWhenTextAnalysisServiceUrlIsNotConfigured() {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        config.getTextAnalysis().setUrl(null);
+
+        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        mockServer.verify();
+        verify(annotationGeneratorMock, never()).generateAnnotations(any(), any(Term.class));
+        verify(textAnalysisRecordDao, never()).persist(any());
+    }
 }

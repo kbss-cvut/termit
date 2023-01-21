@@ -15,7 +15,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.TermStatus;
@@ -26,7 +26,10 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
-import cz.cvut.kbss.termit.model.*;
+import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -40,7 +43,6 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
@@ -48,9 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -271,62 +271,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void findAllRootsReturnsRootTermsOnMatchingPage() {
-        final List<Term> terms = Generator.generateTermsWithIds(10);
-        vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
-        transactional(() -> {
-            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-        });
-
-        final List<TermDto> resultOne = sut.findAllRoots(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
-        final List<TermDto> resultTwo = sut.findAllRoots(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
-
-        assertEquals(5, resultOne.size());
-        assertEquals(5, resultTwo.size());
-
-        final List<TermDto> expectedDtos = termsToDtos(terms);
-        resultOne.forEach(t -> {
-            assertThat(expectedDtos, hasItem(t));
-            assertThat(resultTwo, not(hasItem(t)));
-        });
-        resultTwo.forEach(t -> assertThat(expectedDtos, hasItem(t)));
-    }
-
-    @Test
-    void findTermsBySearchStringReturnsMatchingTerms() {
-        final List<Term> terms = Generator.generateTermsWithIds(10);
-        terms.forEach(t -> t.setVocabulary(vocabulary.getUri()));
-        final List<Term> matching = terms.subList(0, 5);
-        matching.forEach(t -> t.getLabel().set(Environment.LANGUAGE, "Result + " + t.getLabel()));
-
-        vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
-        final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
-        transactional(() -> {
-            terms.forEach(t -> em.persist(t, termDescriptor));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-        });
-
-        List<TermDto> result = sut.findAll("Result", vocabulary);
-        assertEquals(matching.size(), result.size());
-        assertTrue(termsToDtos(matching).containsAll(result));
-    }
-
-    @Test
-    void existsInVocabularyChecksForTermWithMatchingLabel() {
-        final Term t = Generator.generateTermWithId();
-        transactional(() -> {
-            t.setVocabulary(vocabulary.getUri());
-            vocabulary.getGlossary().addRootTerm(t);
-            em.persist(t, descriptorFactory.termDescriptor(vocabulary));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-        });
-
-        assertTrue(sut.existsInVocabulary(t.getLabel().get(Environment.LANGUAGE), vocabulary,
-                                          Environment.LANGUAGE));
-    }
-
-    @Test
     void updateUpdatesTermWithParent() {
         final Term t = Generator.generateTermWithId();
         vocabulary.getGlossary().addRootTerm(t);
@@ -444,70 +388,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
                                         descriptorFactory.glossaryDescriptor(vocabulary));
         assertTrue(result.getRootTerms().contains(parent.getUri()));
         assertTrue(result.getRootTerms().contains(child.getUri()));
-    }
-
-    @Test
-    void findAllRootsIncludingImportsReturnsRootTermsOnMatchingPage() {
-        final List<Term> terms = Generator.generateTermsWithIds(10);
-        vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
-        transactional(() -> {
-            terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(vocabulary)));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-        });
-
-        final List<TermDto> resultOne = sut
-                .findAllRootsIncludingImported(vocabulary, PageRequest.of(0, 5), Collections.emptyList());
-        final List<TermDto> resultTwo = sut
-                .findAllRootsIncludingImported(vocabulary, PageRequest.of(1, 5), Collections.emptyList());
-
-        assertEquals(5, resultOne.size());
-        assertEquals(5, resultTwo.size());
-
-        final List<TermDto> expectedDtos = termsToDtos(terms);
-        resultOne.forEach(t -> {
-            assertThat(expectedDtos, hasItem(t));
-            assertThat(resultTwo, not(hasItem(t)));
-        });
-        resultTwo.forEach(t -> assertThat(expectedDtos, hasItem(t)));
-    }
-
-    @Test
-    void findAllIncludingImportedBySearchStringReturnsMatchingTerms() {
-        final List<Term> terms = Generator.generateTermsWithIds(10);
-        final String searchString = "Result";
-        final List<Term> matching = terms.subList(0, 5);
-        matching.forEach(t -> t.getLabel().set(Environment.LANGUAGE, searchString + " " + t.getLabel()));
-
-        vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
-        terms.forEach(t -> t.setVocabulary(vocabulary.getUri()));
-        final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
-        transactional(() -> {
-            terms.forEach(t -> em.persist(t, termDescriptor));
-            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
-        });
-
-        List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary);
-        assertEquals(matching.size(), result.size());
-        assertTrue(termsToDtos(matching).containsAll(result));
-    }
-
-    @Test
-    void findAllWithSearchStringReturnsMatchingTerms() {
-        final List<TermDto> terms = Generator
-                .generateTermsWithIds(10)
-                .stream().map(TermDto::new).collect(Collectors.toList());
-        final String searchString = "Result";
-        final List<TermDto> matching = terms.subList(0, 5);
-        matching.forEach(t -> t.getLabel().set(Environment.LANGUAGE, searchString + " " + t.getLabel()));
-
-        vocabulary.getGlossary().setRootTerms(terms.stream().map(Asset::getUri).collect(Collectors.toSet()));
-        terms.forEach(t -> t.setVocabulary(vocabulary.getUri()));
-        final Descriptor termDescriptor = descriptorFactory.termDescriptor(vocabulary);
-        transactional(() -> terms.forEach(t -> em.persist(t, termDescriptor)));
-
-        List<TermDto> result = sut.findAll(searchString);
-        assertEquals(matching.size(), result.size());
-        assertTrue(matching.containsAll(result));
     }
 
     @Test
@@ -851,5 +731,33 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         assertThat(resultExactMatch.getInverseExactMatchTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
         final Term resultTerm = em.find(Term.class, term.getUri());
         assertThat(resultTerm.getExactMatchTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+    }
+
+    @Test
+    void updatePrunesEmptyTranslationsInMultilingualAttributes() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
+        term.getLabel().set(Environment.LANGUAGE, "update");
+        term.getLabel().set("cs", "");
+        final MultilingualString expected = new MultilingualString(term.getLabel().getValue());
+        expected.remove("cs");
+        transactional(() -> sut.update(term));
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertEquals(expected, result.getLabel());
+    }
+
+    @Test
+    void persistPreparationPrunesEmptyTranslationsInMultilingualAttributes() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.getDefinition().set(Environment.LANGUAGE, "   ");
+        term.getDefinition().set("cs", "Test");
+        final MultilingualString expected = new MultilingualString(term.getDefinition().getValue());
+        expected.remove(Environment.LANGUAGE);
+
+        sut.addRootTermToVocabulary(term, vocabulary);
+
+        final Term result = em.find(Term.class, term.getUri());
+        assertEquals(expected, result.getDefinition());
     }
 }

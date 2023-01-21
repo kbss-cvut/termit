@@ -206,7 +206,7 @@ public class VocabularyController extends BaseController {
      */
     @GetMapping(value = "/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     public void runTextAnalysisOnAllVocabularies() {
         vocabularyService.runTextAnalysisOnAllVocabularies();
     }

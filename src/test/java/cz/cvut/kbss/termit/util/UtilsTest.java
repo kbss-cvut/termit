@@ -1,22 +1,20 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.util;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -55,7 +53,7 @@ class UtilsTest {
 
     @Test
     public void getUniqueIriFromBaseReturnsBaseIfCheckSucceeds() {
-        final Function f = Mockito.mock(Function.class);
+        final Function<String, Optional<Object>> f = Mockito.mock(Function.class);
         when(f.apply(BASE)).thenReturn(Optional.of(new Object()));
         when(f.apply(BASE + "-0")).thenReturn(Optional.empty());
         Assert.equals(BASE + "-0", Utils.getUniqueIriFromBase(BASE, f));
@@ -100,9 +98,8 @@ class UtilsTest {
 
     @Test
     public void getVocabularyIriThrowsExceptionIfNoConceptIsProvided() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            Utils.getVocabularyIri(Collections.emptySet(), "/pojem");
-        });
+        Assertions.assertThrows(IllegalArgumentException.class,
+                                () -> Utils.getVocabularyIri(Collections.emptySet(), "/pojem"));
     }
 
     @Test
@@ -110,9 +107,7 @@ class UtilsTest {
         final Set<String> conceptIris = new HashSet<>();
         conceptIris.add("https://example.org/pojem/A");
         conceptIris.add("https://example2.org/pojem/B");
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            Utils.getVocabularyIri(conceptIris, "/pojem");
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> Utils.getVocabularyIri(conceptIris, "/pojem"));
     }
 
     @Test
@@ -176,8 +171,9 @@ class UtilsTest {
         model.add(iriA, iriP1, f.createLiteral("a label cs", "cs"));
         model.add(iriA, iriP2, f.createLiteral("a label"));
 
-        final Set<String> expected = Stream.of("cs","").collect(Collectors.toSet());
-        final Set<String> actual = Utils.getLanguageTagsPerProperties(model, Stream.of(p1, p2).collect(Collectors.toSet()));
+        final Set<String> expected = Stream.of("cs", "").collect(Collectors.toSet());
+        final Set<String> actual = Utils.getLanguageTagsPerProperties(model,
+                                                                      Stream.of(p1, p2).collect(Collectors.toSet()));
 
         assertEquals(expected, actual);
     }
@@ -222,5 +218,15 @@ class UtilsTest {
         final String text = "This is text without any markup.\n" +
                 "It uses just newline";
         assertEquals(text, Utils.htmlToPlainText(text));
+    }
+
+    @Test
+    void pruneBlankTranslationsRemovesTranslationsThatAreBlankStrings() {
+        final MultilingualString str = MultilingualString.create("test", "en");
+        str.set("cs", "");
+        str.set("de", "   ");
+        Utils.pruneBlankTranslations(str);
+        assertEquals(1, str.getValue().size());
+        assertEquals("test", str.get("en"));
     }
 }

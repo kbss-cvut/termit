@@ -22,6 +22,8 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -113,6 +115,20 @@ public class Constants {
     public static final Set<URI> SKOS_CONCEPT_MATCH_RELATIONSHIPS = Stream.of(
             SKOS.BROAD_MATCH, SKOS.NARROW_MATCH, SKOS.EXACT_MATCH, SKOS.RELATED_MATCH
     ).map(URI::create).collect(Collectors.toSet());
+
+    /**
+     * Labels of columns representing exported term attributes in various supported languages.
+     */
+    public static final Map<String, List<String>> EXPORT_COLUMN_LABELS = Map.of(
+            "cs",
+            List.of("Identifikátor", "Název", "Synonyma", "Vyhledávací texty", "Definice", "Doplňující poznámka", "Typ",
+                    "Zdroj", "Nadřazené pojmy", "Podřazené pojmy", "Související pojmy", "Externí související pojmy",
+                    "Pojmy se stejným významem", "Stav pojmu", "Notace", "Příklady", "Reference"),
+            DEFAULT_LANGUAGE,
+            List.of("Identifier", "Label", "Synonyms", "Search strings", "Definition", "Scope note", "Type", "Source",
+                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "Status",
+                    "Notation", "Example", "References")
+    );
 
     private Constants() {
         throw new AssertionError();
