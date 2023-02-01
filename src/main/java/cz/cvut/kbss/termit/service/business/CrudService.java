@@ -24,15 +24,16 @@ import java.util.List;
  * Declares Create, Retrieve, Update and Delete (CRUD) operations for business services.
  *
  * @param <T> Type of the concept managed by this service
+ * @param <DTO> Type of DTO used by the findAll retrieval method
  */
-public interface CrudService<T> extends RudService<T> {
+public interface CrudService<T, DTO> extends RudService<T> {
 
     /**
      * Gets all items of the type managed by this service from the repository.
      *
      * @return List of items
      */
-    List<T> findAll();
+    List<DTO> findAll();
 
     /**
      * Checks if an item with the specified identifier exists.

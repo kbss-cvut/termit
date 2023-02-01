@@ -24,6 +24,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.sessions.UnitOfWorkImpl;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
+import cz.cvut.kbss.jsonld.jackson.serialization.SerializationConstants;
 import cz.cvut.kbss.termit.rest.servlet.DiagnosticsContextFilter;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
 import cz.cvut.kbss.termit.util.ConfigParam;
@@ -111,6 +112,7 @@ public class WebAppConfig implements WebMvcConfigurer {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         final JsonLdModule jsonLdModule = new JsonLdModule();
         jsonLdModule.configure(cz.cvut.kbss.jsonld.ConfigParam.SCAN_PACKAGE, "cz.cvut.kbss.termit");
+        jsonLdModule.configure(SerializationConstants.FORM, SerializationConstants.FORM_COMPACT_WITH_CONTEXT);
         mapper.registerModule(jsonLdModule);
         return mapper;
     }

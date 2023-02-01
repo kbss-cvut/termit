@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Validator;
 
-public class BaseRepositoryServiceImpl extends BaseRepositoryService<UserAccount> {
+public class BaseRepositoryServiceImpl extends BaseRepositoryService<UserAccount, UserAccount> {
 
     private final UserAccountDao userAccountDao;
 
@@ -37,5 +37,10 @@ public class BaseRepositoryServiceImpl extends BaseRepositoryService<UserAccount
     @Override
     protected GenericDao<UserAccount> getPrimaryDao() {
         return userAccountDao;
+    }
+
+    @Override
+    protected UserAccount mapToDto(UserAccount entity) {
+        return entity;
     }
 }
