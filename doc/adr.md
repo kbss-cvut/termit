@@ -3,6 +3,34 @@
 This file explains some of the important architectural decisions made during the development of TermIt, together with
 possible implications and lessons learnt for future.
 
+Status options are: _proposed_, _accepted_, _superseded_.
+
+### Vocabulary Access Control
+- **Status**: proposed
+- **Date: 2023-02-06
+
+##### Context
+
+It has been decided that access control should to vocabularies and terms should be implemented in greater detail than the current
+global roles.
+
+##### Considered Options
+
+1. ACL-based only access control.
+2. ACL combined with global roles supporting only users.
+3. ACL combined with global roles supporting users and user groups.
+
+##### Decision Outcome
+
+TBD
+
+##### Consequences
+
+The `AuthorizationService` needs to be extended to support the ACL-based access control. Every access to a vocabulary or its
+contents has to be validated by based on the ACL. Existing data prior to implementation of this have to be migrated to sensible
+defaults or the `AuthorizationService` has to provided defaults when access control is not configured for a vocabulary.
+
+
 ### Session-based Editable Vocabularies
 - **Status**: accepted
 - **Date**: 2022-08-23
