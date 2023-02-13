@@ -1,5 +1,8 @@
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
@@ -39,6 +42,9 @@ public class VocabularyRepositoryServiceWorkspaceTest {
     @Mock
     private VocabularyDao dao;
 
+    @Spy
+    private final DtoMapper dtoMapper = Environment.getDtoMapper();
+
     @InjectMocks
     private VocabularyRepositoryService sut;
 
@@ -50,11 +56,14 @@ public class VocabularyRepositoryServiceWorkspaceTest {
         when(dao.findAll()).thenReturn(vocabularies);
         final Set<Vocabulary> readOnly = vocabularies.stream().filter(v -> Generator.randomBoolean())
                                                      .collect(Collectors.toSet());
+        final Set<VocabularyDto> dtos = readOnly.stream()
+                                                .map(v -> Environment.getDtoMapper().vocabularyToVocabularyDto(v))
+                                                .collect(Collectors.toSet());
         when(editableVocabularies.isEditable(any(Vocabulary.class))).thenReturn(true);
         readOnly.forEach(v -> when(editableVocabularies.isEditable(v)).thenReturn(false));
 
-        final List<Vocabulary> result = sut.findAll();
-        result.stream().filter(readOnly::contains)
+        final List<VocabularyDto> result = sut.findAll();
+        result.stream().filter(dtos::contains)
               .forEach(v -> assertThat(v.getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni)));
     }
 

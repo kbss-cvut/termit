@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Validator;
 
-public class BaseAssetRepositoryServiceImpl extends BaseAssetRepositoryService<Vocabulary> {
+public class BaseAssetRepositoryServiceImpl extends BaseAssetRepositoryService<Vocabulary, Vocabulary> {
 
     private final VocabularyDao dao;
 
@@ -38,5 +38,10 @@ public class BaseAssetRepositoryServiceImpl extends BaseAssetRepositoryService<V
     @Override
     protected BaseAssetDao<Vocabulary> getPrimaryDao() {
         return dao;
+    }
+
+    @Override
+    protected Vocabulary mapToDto(Vocabulary entity) {
+        return entity;
     }
 }

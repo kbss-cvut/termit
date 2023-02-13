@@ -18,6 +18,7 @@ import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +30,7 @@ import javax.validation.Validator;
  *
  * @param <T> Asset type
  */
-public abstract class BaseAssetRepositoryService<T extends Asset<?>> extends BaseRepositoryService<T> {
+public abstract class BaseAssetRepositoryService<T extends Asset<?>, DTO extends HasIdentifier> extends BaseRepositoryService<T, DTO> {
 
     protected BaseAssetRepositoryService(Validator validator) {
         super(validator);

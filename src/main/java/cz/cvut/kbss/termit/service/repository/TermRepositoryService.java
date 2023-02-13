@@ -50,7 +50,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 @Service
-public class TermRepositoryService extends BaseAssetRepositoryService<Term> implements SnapshotProvider<Term> {
+public class TermRepositoryService extends BaseAssetRepositoryService<Term, TermDto> implements SnapshotProvider<Term> {
 
     private final IdentifierResolver idResolver;
 
@@ -81,6 +81,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term> impl
     @Override
     protected BaseAssetDao<Term> getPrimaryDao() {
         return termDao;
+    }
+
+    @Override
+    protected TermDto mapToDto(Term entity) {
+        return new TermDto(entity);
     }
 
     @Override
