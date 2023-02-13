@@ -6,8 +6,8 @@ possible implications and lessons learnt for future.
 Status options are: _proposed_, _accepted_, _superseded_.
 
 ### Vocabulary Access Control
-- **Status**: proposed
-- **Date: 2023-02-06
+- **Status**: accepted
+- **Date: 2023-02-13
 
 ##### Context
 
@@ -22,7 +22,18 @@ global roles.
 
 ##### Decision Outcome
 
-TBD
+Option **3** will be used. Global roles will be applicable mainly as defaults when creating a new vocabulary. Global admin role
+also has master access to all vocabularies. In particular, the following access levels will be defined for each vocabulary:
+
+1. `None` - vocabulary is not visible at all.
+2. `Read` - user can perform only read operations on a vocabulary and its content (incl. export) and comments its terms.
+3. `Write` - `Read` + user can edit vocabulary and its content, run text analysis on file and term definitions, create/edit files associated with vocabulary.
+4. `Security` - `Write` + delete vocabulary, restore from SKOS (re-import), manage snapshots, remove file, manage user access levels.
+
+In addition:
+- When a new vocabulary is created, its author is automatically assigned `Security` access level. 
+- User access level overrides group access level.
+- When a new vocabulary is created, its author decides what the default access levels for editors and readers will be.
 
 ##### Consequences
 
