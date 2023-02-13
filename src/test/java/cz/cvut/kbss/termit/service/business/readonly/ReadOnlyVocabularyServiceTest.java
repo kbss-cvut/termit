@@ -1,7 +1,9 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyVocabulary;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -37,8 +39,9 @@ class ReadOnlyVocabularyServiceTest {
 
     @Test
     void findAllReturnsAllVocabulariesTransformedToReadOnlyVersions() {
-        final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
-                                                       .collect(Collectors.toList());
+        final List<VocabularyDto> vocabularies = IntStream.range(0, 5).mapToObj(
+                                                                  i -> Environment.getDtoMapper().vocabularyToVocabularyDto(Generator.generateVocabularyWithId()))
+                                                          .collect(Collectors.toList());
         when(vocabularyService.findAll()).thenReturn(vocabularies);
 
         final List<ReadOnlyVocabulary> result = sut.findAll();

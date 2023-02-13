@@ -35,7 +35,7 @@ import javax.validation.Validator;
 import java.util.Objects;
 
 @Service
-public class ResourceRepositoryService extends BaseAssetRepositoryService<Resource>
+public class ResourceRepositoryService extends BaseAssetRepositoryService<Resource, Resource>
         implements SupportsLastModification {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResourceRepositoryService.class);
@@ -62,6 +62,11 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     @Override
     protected BaseAssetDao<Resource> getPrimaryDao() {
         return resourceDao;
+    }
+
+    @Override
+    protected Resource mapToDto(Resource entity) {
+        return entity;
     }
 
     @Override

@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -40,6 +41,16 @@ public class ReadOnlyVocabulary extends Asset<String> implements HasIdentifier, 
         this.description = vocabulary.getDescription();
         if (vocabulary.getImportedVocabularies() != null) {
             this.importedVocabularies = new HashSet<>(vocabulary.getImportedVocabularies());
+        }
+    }
+
+    public ReadOnlyVocabulary(VocabularyDto vocabularyDto) {
+        Objects.requireNonNull(vocabularyDto);
+        setUri(vocabularyDto.getUri());
+        this.label = vocabularyDto.getLabel();
+        this.description = vocabularyDto.getDescription();
+        if (vocabularyDto.getImportedVocabularies() != null) {
+            this.importedVocabularies = new HashSet<>(vocabularyDto.getImportedVocabularies());
         }
     }
 
