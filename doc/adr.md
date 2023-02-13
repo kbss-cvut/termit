@@ -7,7 +7,7 @@ Status options are: _proposed_, _accepted_, _superseded_.
 
 ### Vocabulary Access Control
 - **Status**: accepted
-- **Date: 2023-02-13
+- **Date**: 2023-02-13
 
 ##### Context
 
@@ -34,6 +34,7 @@ In addition:
 - When a new vocabulary is created, its author is automatically assigned `Security` access level. 
 - User access level overrides group access level.
 - When a new vocabulary is created, its author decides what the default access levels for editors and readers will be.
+- Only TermIt admins are able to manage user groups.
 
 ##### Consequences
 
