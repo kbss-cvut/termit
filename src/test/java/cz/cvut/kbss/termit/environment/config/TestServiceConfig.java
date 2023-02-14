@@ -16,6 +16,8 @@ package cz.cvut.kbss.termit.environment.config;
 
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
 import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.service.document.html.DummySelectorGenerator;
@@ -104,5 +106,10 @@ public class TestServiceConfig {
     @Bean
     public JavaMailSender javaMailSender() {
         return mock(JavaMailSender.class);
+    }
+
+    @Bean
+    public DtoMapper dtoMapper() {
+        return new DtoMapperImpl();
     }
 }

@@ -19,6 +19,8 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.config.WebAppConfig;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -58,6 +60,8 @@ public class Environment {
     private static ObjectMapper objectMapper;
 
     private static ObjectMapper jsonLdObjectMapper;
+
+    private static final DtoMapper DTO_MAPPER = new DtoMapperImpl();
 
     /**
      * Initializes security context with the specified user.
@@ -119,6 +123,10 @@ public class Environment {
             jsonLdObjectMapper = WebAppConfig.createJsonLdObjectMapper();
         }
         return jsonLdObjectMapper;
+    }
+
+    public static DtoMapper getDtoMapper() {
+        return DTO_MAPPER;
     }
 
     /**
