@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.rest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
@@ -77,19 +78,16 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllReturnsAllExistingVocabularies() throws Exception {
-        final List<Vocabulary> vocabularies =
-                IntStream.range(0, 5).mapToObj(i -> generateVocabulary())
-                         .collect(Collectors.toList());
+        final List<VocabularyDto> vocabularies = IntStream.range(0, 5).mapToObj(
+                                                                  i -> Environment.getDtoMapper().vocabularyToVocabularyDto(generateVocabulary()))
+                                                          .collect(Collectors.toList());
         when(serviceMock.findAll()).thenReturn(vocabularies);
 
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
-        final List<Vocabulary> result = readValue(mvcResult, new TypeReference<List<Vocabulary>>() {
+        final List<VocabularyDto> result = readValue(mvcResult, new TypeReference<List<VocabularyDto>>() {
         });
-        assertEquals(vocabularies.size(), result.size());
-        for (Vocabulary voc : vocabularies) {
-            assertTrue(result.stream().anyMatch(v -> v.getUri().equals(voc.getUri())));
-        }
+        assertThat(result, containsSameEntities(vocabularies));
     }
 
     private Vocabulary generateVocabulary() {
@@ -98,20 +96,17 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getAllReturnsLastModifiedHeader() throws Exception {
-        final List<Vocabulary> vocabularies =
-                IntStream.range(0, 5).mapToObj(i -> generateVocabulary())
-                         .collect(Collectors.toList());
+        final List<VocabularyDto> vocabularies = Collections.singletonList(
+                Environment.getDtoMapper().vocabularyToVocabularyDto(generateVocabulary()));
         when(serviceMock.findAll()).thenReturn(vocabularies);
         // Round to seconds
         final long lastModified = (System.currentTimeMillis() / 1000) * 1000;
         when(serviceMock.getLastModified()).thenReturn(lastModified);
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
-        final String lastModifiedHeader =
-                mvcResult.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
+        final String lastModifiedHeader = mvcResult.getResponse().getHeader(HttpHeaders.LAST_MODIFIED);
         assertNotNull(lastModifiedHeader);
-        ZonedDateTime zdt =
-                ZonedDateTime.parse(lastModifiedHeader, DateTimeFormatter.RFC_1123_DATE_TIME);
+        ZonedDateTime zdt = ZonedDateTime.parse(lastModifiedHeader, DateTimeFormatter.RFC_1123_DATE_TIME);
         assertEquals(lastModified, zdt.toInstant().toEpochMilli());
     }
 

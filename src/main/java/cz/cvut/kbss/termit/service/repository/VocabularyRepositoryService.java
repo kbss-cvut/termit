@@ -4,6 +4,8 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -28,6 +30,7 @@ import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +56,7 @@ import java.util.stream.Collectors;
 
 @CacheConfig(cacheNames = "vocabularies")
 @Service
-public class VocabularyRepositoryService extends BaseAssetRepositoryService<Vocabulary>
+public class VocabularyRepositoryService extends BaseAssetRepositoryService<Vocabulary, VocabularyDto>
         implements ApplicationEventPublisherAware, VocabularyService {
 
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyRepositoryService.class);
@@ -72,6 +75,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final ApplicationContext context;
 
+    private final DtoMapper dtoMapper;
+
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
@@ -79,7 +84,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                                        IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
                                        @Lazy TermService termService,
-                                       EditableVocabularies editableVocabularies, Configuration config) {
+                                       EditableVocabularies editableVocabularies, Configuration config,
+                                       DtoMapper dtoMapper) {
         super(validator);
         this.context = context;
         this.vocabularyDao = vocabularyDao;
@@ -88,6 +94,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         this.changeRecordService = changeRecordService;
         this.editableVocabularies = editableVocabularies;
         this.config = config;
+        this.dtoMapper = dtoMapper;
     }
 
     /**
@@ -105,12 +112,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     // Cache only if all vocabularies are editable
     @Cacheable(condition = "@configuration.workspace.allVocabulariesEditable")
     @Override
-    public List<Vocabulary> findAll() {
+    public List<VocabularyDto> findAll() {
         return super.findAll();
     }
 
     @Override
-    protected Vocabulary postLoad(Vocabulary instance) {
+    protected Vocabulary postLoad(@NotNull Vocabulary instance) {
         super.postLoad(instance);
         if (!config.getWorkspace().isAllVocabulariesEditable() && !editableVocabularies.isEditable(instance)) {
             instance.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
@@ -118,19 +125,23 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return instance;
     }
 
+    @Override
+    protected VocabularyDto mapToDto(Vocabulary entity) {
+        return dtoMapper.vocabularyToVocabularyDto(entity);
+    }
+
     @CacheEvict(allEntries = true)
     @Override
     @Transactional
-    public void persist(Vocabulary instance) {
+    public void persist(@NotNull Vocabulary instance) {
         super.persist(instance);
     }
 
     @Override
-    protected void prePersist(Vocabulary instance) {
+    protected void prePersist(@NotNull Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(),
-                                                          instance.getLabel()));
+            instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
@@ -152,12 +163,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    protected void postPersist(Vocabulary instance) {
+    protected void postPersist(@NotNull Vocabulary instance) {
         eventPublisher.publishEvent(new VocabularyCreatedEvent(instance));
     }
 
     @Override
-    protected void preUpdate(Vocabulary instance) {
+    protected void preUpdate(@NotNull Vocabulary instance) {
         super.preUpdate(instance);
         final Vocabulary original = findRequired(instance.getUri());
         verifyVocabularyImports(instance, original);
@@ -336,7 +347,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }

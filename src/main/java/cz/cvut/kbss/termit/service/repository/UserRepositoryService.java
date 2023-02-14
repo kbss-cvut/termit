@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import javax.validation.Validator;
 
 @Service
-public class UserRepositoryService extends BaseRepositoryService<UserAccount> {
+public class UserRepositoryService extends BaseRepositoryService<UserAccount, UserAccount> {
 
     private final UserAccountDao userAccountDao;
 
@@ -61,6 +61,11 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount> {
      */
     public boolean exists(String username) {
         return userAccountDao.exists(username);
+    }
+
+    @Override
+    protected UserAccount mapToDto(UserAccount entity) {
+        return entity;
     }
 
     @Override

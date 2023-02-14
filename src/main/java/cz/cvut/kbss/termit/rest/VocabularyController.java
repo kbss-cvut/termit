@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -59,7 +60,7 @@ public class VocabularyController extends BaseController {
     }
 
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<List<Vocabulary>> getAll(ServletWebRequest webRequest) {
+    public ResponseEntity<List<VocabularyDto>> getAll(ServletWebRequest webRequest) {
         if (webRequest.checkNotModified(vocabularyService.getLastModified())) {
             return null;
         }

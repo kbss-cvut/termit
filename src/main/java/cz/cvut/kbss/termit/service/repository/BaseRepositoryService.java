@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> Domain object type managed by this service
  */
-public abstract class BaseRepositoryService<T extends HasIdentifier> {
+public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends HasIdentifier> {
 
     private final Validator validator;
 
@@ -66,10 +66,18 @@ public abstract class BaseRepositoryService<T extends HasIdentifier> {
      *
      * @return List of all matching instances
      */
-    public List<T> findAll() {
+    public List<DTO> findAll() {
         final List<T> loaded = getPrimaryDao().findAll();
-        return loaded.stream().map(this::postLoad).collect(Collectors.toList());
+        return loaded.stream().map(this::postLoad).map(this::mapToDto).collect(Collectors.toList());
     }
+
+    /**
+     * Maps the specified entity to a DTO used for listing large number of objects of the entity's type.
+     *
+     * @param entity Entity to map
+     * @return DTO representing the entity
+     */
+    protected abstract DTO mapToDto(T entity);
 
     /**
      * Finds an object with the specified id and returns it.
@@ -141,7 +149,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier> {
         // Adapted from https://gist.github.com/yunspace/930d4d40a787a1f6a7d1
         final List<ResolvedType> typeParameters =
                 new TypeResolver().resolve(this.getClass()).typeParametersFor(BaseRepositoryService.class);
-        assert typeParameters.size() == 1;
+        assert typeParameters.size() >= 1;
         return (Class<T>) typeParameters.get(0).getErasedType();
     }
 

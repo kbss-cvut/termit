@@ -633,12 +633,29 @@ public class Configuration {
         @NotNull
         private String allowedOrigins = "http://localhost:3000";
 
+        /**
+         * A comma-separated list of allowed origin patterns for CORS.
+         * <p>
+         * This allows a more dynamic configuration of allowed origins that {@link #allowedOrigins} which contains exact
+         * origin URLs. It is useful, for example, for Netlify preview builds of the frontend which use a generated
+         * subdomain URL.
+         */
+        private String allowedOriginPatterns;
+
         public String getAllowedOrigins() {
             return allowedOrigins;
         }
 
         public void setAllowedOrigins(String allowedOrigins) {
             this.allowedOrigins = allowedOrigins;
+        }
+
+        public String getAllowedOriginPatterns() {
+            return allowedOriginPatterns;
+        }
+
+        public void setAllowedOriginPatterns(String allowedOriginPatterns) {
+            this.allowedOriginPatterns = allowedOriginPatterns;
         }
     }
 
