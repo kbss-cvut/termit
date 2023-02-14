@@ -34,7 +34,6 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.topbraid.shacl.vocabulary.SH;
 
 import java.net.URI;
 import java.time.Instant;
@@ -223,8 +222,8 @@ public class Generator {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Environment.LANGUAGE));
         term.setDefinition(MultilingualString
-                .create("Normative definition of term " + term.getLabel().get(),
-                        Environment.LANGUAGE));
+                                   .create("Normative definition of term " + term.getLabel().get(),
+                                           Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
         if (Generator.randomBoolean()) {
             term.setSources(Collections.singleton("PSP/c-1/p-2/b-c"));
@@ -310,6 +309,15 @@ public class Generator {
         return record;
     }
 
+    /**
+     * Generates a list of change records for the specified asset.
+     * <p>
+     * The list contains one persist record and several update records.
+     *
+     * @param asset Asset to generate change records for
+     * @param user  Author of the changes
+     * @return List of change records
+     */
     public static List<AbstractChangeRecord> generateChangeRecords(Asset<?> asset, User user) {
         final PersistChangeRecord persistRecord = generatePersistChange(asset);
         final List<AbstractChangeRecord> result =
@@ -320,17 +328,6 @@ public class Generator {
             result.forEach(r -> r.setAuthor(user));
         }
         return result;
-    }
-
-    public static List<cz.cvut.kbss.termit.model.validation.ValidationResult> generateValidationRecords() {
-        return IntStream.range(0, 1)
-                        .mapToObj(i ->
-                                new cz.cvut.kbss.termit.model.validation.ValidationResult()
-                                        .setTermUri(URI.create("https://example.org/term-" + i))
-                                        .setIssueCauseUri(URI.create("https://example.org/issue-" + i))
-                                        .setSeverity(URI.create(SH.Violation.toString()))
-                        )
-                        .collect(Collectors.toList());
     }
 
     /**
@@ -346,8 +343,8 @@ public class Generator {
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(term.getUri().toString()),
-                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                    vf.createIRI(vocabularyIri.toString()));
+                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                     vf.createIRI(vocabularyIri.toString()));
         }
     }
 
@@ -359,7 +356,9 @@ public class Generator {
      */
     public static Comment generateComment(User user, Asset<?> asset) {
         final Comment comment = new Comment();
-        comment.setAsset(asset.getUri());
+        if (asset != null) {
+            comment.setAsset(asset.getUri());
+        }
         comment.setAuthor(user);
         comment.setCreated(Utils.timestamp());
         comment.setModified(Utils.timestamp());
@@ -375,23 +374,7 @@ public class Generator {
      * @return a list of comments
      */
     public static List<Comment> generateComments(Term term) {
-        return IntStream.range(0, 5).mapToObj(i -> generateComment(term)).collect(Collectors.toList());
-    }
-
-    /**
-     * Generates five random comments for the given term.
-     *
-     * @param term the term to generate comments for, or null if no term shall be assigned to the comment
-     * @return comment
-     */
-    public static Comment generateComment(Term term) {
-        final Comment c = new Comment();
-        c.setContent("Comment " + Generator.randomInt());
-        if (term != null) {
-            c.setAsset(term.getUri());
-            c.setCreated(Utils.timestamp());
-        }
-        return c;
+        return IntStream.range(0, 5).mapToObj(i -> generateComment(null, term)).collect(Collectors.toList());
     }
 
     public static TermOccurrence generateTermOccurrence(Term term, Asset<?> target, boolean suggested) {
@@ -434,9 +417,16 @@ public class Generator {
             for (AbstractTerm r : related) {
                 // Don't put it into any specific context to make it look like inference
                 conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(relationship),
-                        vf.createIRI(source.getUri().toString()));
+                         vf.createIRI(source.getUri().toString()));
             }
             conn.commit();
         }
+    }
+
+    public static UserGroup generateUserGroup() {
+        final UserGroup group = new UserGroup();
+        group.setUri(Generator.generateUri());
+        group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
+        return group;
     }
 }

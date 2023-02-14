@@ -52,7 +52,7 @@ public class UserGroup extends AbstractEntity {
     public String toString() {
         return "UserGroup{" +
                 label + Utils.uriToString(getUri()) +
-                ", members count =" + Utils.emptyIfNull(members).size() +
+                ", member count = " + Utils.emptyIfNull(members).size() +
                 '}';
     }
 }

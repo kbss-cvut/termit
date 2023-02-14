@@ -112,8 +112,8 @@ class CommentChangeNotifierTest {
         when(changeRecordService.getAuthors(any(Asset.class))).thenReturn(Collections.singleton(author));
 
         final List<User> result = sut.resolveNotificationRecipients(
-                Map.of(tOne, Collections.singletonList(Generator.generateComment(tOne)),
-                       tTwo, Collections.singletonList(Generator.generateComment(tTwo))));
+                Map.of(tOne, Collections.singletonList(Generator.generateComment(null, tOne)),
+                       tTwo, Collections.singletonList(Generator.generateComment(null, tTwo))));
         assertThat(result, hasItems(admin.toUser(), author));
         verify(changeRecordService).getAuthors(new cz.cvut.kbss.termit.model.Vocabulary(tOne.getVocabulary()));
         verify(changeRecordService).getAuthors(new cz.cvut.kbss.termit.model.Vocabulary(tTwo.getVocabulary()));
