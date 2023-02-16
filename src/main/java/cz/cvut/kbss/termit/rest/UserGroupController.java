@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,10 +23,12 @@ import java.util.stream.Collectors;
 
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
 @RestController
-@RequestMapping("/groups")
+@RequestMapping(UserGroupController.PATH)
 public class UserGroupController extends BaseController {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserGroupController.class);
+
+    static final String PATH = "/groups";
 
     private final UserGroupService groupService;
 
@@ -37,6 +40,13 @@ public class UserGroupController extends BaseController {
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<UserGroup> getAll() {
         return groupService.findAll();
+    }
+
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<Void> create(@RequestBody UserGroup group) {
+        groupService.persist(group);
+        LOG.debug("Group {} created.", group);
+        return ResponseEntity.created(generateLocation(group.getUri())).build();
     }
 
     @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})

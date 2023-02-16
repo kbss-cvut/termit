@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -49,12 +50,25 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
+    void createReturnsCreatedResponseWithLocationHeader() throws Exception {
+        final UserGroup group = Generator.generateUserGroup();
+        final String fragment = IdentifierResolver.extractIdentifierFragment(group.getUri());
+        final MvcResult mvcResult = mockMvc.perform(post(UserGroupController.PATH).content(toJson(group))
+                                                                                  .contentType(
+                                                                                          MediaType.APPLICATION_JSON_VALUE))
+                                           .andExpect(status().isCreated()).andReturn();
+        verifyLocationEquals(UserGroupController.PATH + "/" + fragment, mvcResult);
+        verify(groupService).persist(group);
+    }
+
+    @Test
     void removeRemovesSpecifiedGroupViaService() throws Exception {
         final UserGroup toRemove = Generator.generateUserGroup();
         final String fragment = IdentifierResolver.extractIdentifierFragment(toRemove.getUri());
         final String namespace = IdentifierResolver.extractIdentifierNamespace(toRemove.getUri());
         when(groupService.getRequiredReference(toRemove.getUri())).thenReturn(toRemove);
-        mockMvc.perform(delete("/groups/" + fragment).queryParam(Constants.QueryParams.NAMESPACE, namespace))
+        mockMvc.perform(delete(UserGroupController.PATH + "/" + fragment).queryParam(Constants.QueryParams.NAMESPACE,
+                                                                                     namespace))
                .andExpect(status().isNoContent());
         verify(groupService).remove(toRemove);
     }
@@ -67,7 +81,7 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
         when(groupService.findRequired(target.getUri())).thenReturn(target);
         final List<User> users = List.of(Generator.generateUserWithId(), Generator.generateUserWithId());
         users.forEach(u -> when(groupService.getRequiredUserReference(u.getUri())).thenReturn(u));
-        mockMvc.perform(post("/groups/" + fragment + "/members")
+        mockMvc.perform(post(UserGroupController.PATH + "/" + fragment + "/members")
                                 .queryParam(Constants.QueryParams.NAMESPACE, namespace)
                                 .content(toJson(users.stream().map(AbstractUser::getUri).collect(Collectors.toList())))
                                 .contentType(MediaType.APPLICATION_JSON))
@@ -87,7 +101,7 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
         final List<User> users = List.of(Generator.generateUserWithId(), Generator.generateUserWithId());
         target.setMembers(new HashSet<>(users));
         users.forEach(u -> when(groupService.getRequiredUserReference(u.getUri())).thenReturn(u));
-        mockMvc.perform(delete("/groups/" + fragment + "/members")
+        mockMvc.perform(delete(UserGroupController.PATH + "/" + fragment + "/members")
                                 .queryParam(Constants.QueryParams.NAMESPACE, namespace)
                                 .content(toJson(users.stream().map(AbstractUser::getUri).collect(Collectors.toList())))
                                 .contentType(MediaType.APPLICATION_JSON))
