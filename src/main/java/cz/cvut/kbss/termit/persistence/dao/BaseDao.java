@@ -18,6 +18,8 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
@@ -49,6 +51,7 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     public List<T> findAll() {
         try {
             return em.createNativeQuery("SELECT DISTINCT ?x WHERE { ?x a ?type . }", type).setParameter("type", typeUri)
+                    .setDescriptor(getDescriptor())
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -59,7 +62,7 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     public Optional<T> find(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.find(type, id));
+            return Optional.ofNullable(em.find(type, id, getDescriptor()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -69,7 +72,7 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     public Optional<T> getReference(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.getReference(type, id));
+            return Optional.ofNullable(em.getReference(type, id, getDescriptor()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -80,7 +83,7 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     public void persist(T entity) {
         Objects.requireNonNull(entity);
         try {
-            em.persist(entity);
+            em.persist(entity, getDescriptor());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -102,7 +105,7 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     public T update(T entity) {
         Objects.requireNonNull(entity);
         try {
-            return em.merge(entity);
+            return em.merge(entity, getDescriptor());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -130,5 +133,9 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    protected Descriptor getDescriptor() {
+        return new EntityDescriptor();
     }
 }
