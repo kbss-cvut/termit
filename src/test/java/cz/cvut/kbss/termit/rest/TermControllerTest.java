@@ -968,7 +968,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
-        final Comment comment = generateComment(null);
+        final Comment comment = generateComment(null, null);
         comment.setUri(Generator.generateUri());
 
         mockMvc.perform(post("/vocabularies/" + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments")
@@ -984,7 +984,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
-        final Comment comment = generateComment(null);
+        final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
         final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
         comment.setUri(URI.create(namespace + name));
@@ -1001,7 +1001,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void addCommentStandaloneAddsSpecifiedCommentToSpecifiedTerm() throws Exception {
         final Term term = generateTermForStandalone();
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
-        final Comment comment = generateComment(null);
+        final Comment comment = generateComment(null, null);
         comment.setUri(Generator.generateUri());
 
         mockMvc.perform(post("/terms/" + TERM_NAME + "/comments")
@@ -1024,7 +1024,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void addCommentStandaloneReturnsLocationHeaderWithGeneratedIdentifier() throws Exception {
         final Term term = generateTermForStandalone();
         when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
-        final Comment comment = generateComment(null);
+        final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
         final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
         comment.setUri(URI.create(namespace + name));
