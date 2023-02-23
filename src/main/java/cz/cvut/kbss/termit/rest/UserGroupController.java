@@ -7,7 +7,6 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserGroupService;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -50,28 +49,33 @@ public class UserGroupController extends BaseController {
     }
 
     @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public UserGroup getById(@PathVariable String fragment,
-                             @RequestParam(Constants.QueryParams.NAMESPACE) String namespace) {
-        final URI uri = resolveIdentifier(namespace, fragment);
+    public UserGroup getById(@PathVariable String fragment) {
+        final URI uri = resolveIdentifier(UserGroup.NAMESPACE, fragment);
         return groupService.findRequired(uri);
     }
 
     @DeleteMapping(value = "/{fragment}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remove(@PathVariable String fragment, @RequestParam(Constants.QueryParams.NAMESPACE) String namespace) {
-        final URI uri = resolveIdentifier(namespace, fragment);
+    public void remove(@PathVariable String fragment) {
+        final URI uri = resolveIdentifier(UserGroup.NAMESPACE, fragment);
         final UserGroup toRemove = groupService.getRequiredReference(uri);
         groupService.remove(toRemove);
         LOG.debug("Group {} removed.", toRemove);
     }
 
+    @PutMapping(value = "/{fragment}/label")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateGroupLabel(@PathVariable String fragment, @RequestBody String label) {
+        final UserGroup group = getById(fragment);
+        group.setLabel(label);
+        groupService.update(group);
+    }
+
     @PostMapping(value = "/{fragment}/members", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addMembers(@PathVariable String fragment,
-                           @RequestParam(Constants.QueryParams.NAMESPACE) String namespace,
-                           @RequestBody Set<URI> toAdd) {
-        final UserGroup target = getById(fragment, namespace);
-        final List<User> usersToAdd = toAdd.stream().map(groupService::getRequiredUserReference)
+    public void addMembers(@PathVariable String fragment, @RequestBody Set<URI> toAdd) {
+        final UserGroup target = getById(fragment);
+        final List<User> usersToAdd = toAdd.stream().map(groupService::findRequiredUser)
                                            .collect(Collectors.toList());
         groupService.addMembers(target, usersToAdd);
         LOG.debug("{} users added to group {}.", usersToAdd.size(), target);
@@ -79,11 +83,9 @@ public class UserGroupController extends BaseController {
 
     @DeleteMapping(value = "/{fragment}/members", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeMembers(@PathVariable String fragment,
-                              @RequestParam(Constants.QueryParams.NAMESPACE) String namespace,
-                              @RequestBody Set<URI> toRemove) {
-        final UserGroup target = getById(fragment, namespace);
-        final List<User> usersToRemove = toRemove.stream().map(groupService::getRequiredUserReference)
+    public void removeMembers(@PathVariable String fragment, @RequestBody Set<URI> toRemove) {
+        final UserGroup target = getById(fragment);
+        final List<User> usersToRemove = toRemove.stream().map(groupService::findRequiredUser)
                                                  .collect(Collectors.toList());
         groupService.removeMembers(target, usersToRemove);
         LOG.debug("{} users removed from group {}.", usersToRemove.size(), target);

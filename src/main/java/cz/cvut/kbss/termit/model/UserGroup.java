@@ -1,9 +1,6 @@
 package cz.cvut.kbss.termit.model;
 
-import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
-import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
-import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -16,12 +13,17 @@ import java.util.Set;
 @OWLClass(iri = Vocabulary.s_c_Usergroup)
 public class UserGroup extends AbstractEntity {
 
+    /**
+     * Namespace of UserGroup identifiers.
+     */
+    public static final String NAMESPACE = "http://rdfs.org/sioc/ns#";
+
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
     private String label;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_member_A)
+    @OWLObjectProperty(iri = Vocabulary.s_p_has_member_A, fetch = FetchType.EAGER)
     private Set<User> members;
 
     public String getLabel() {

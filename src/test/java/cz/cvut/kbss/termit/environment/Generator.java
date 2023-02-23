@@ -425,7 +425,8 @@ public class Generator {
 
     public static UserGroup generateUserGroup() {
         final UserGroup group = new UserGroup();
-        group.setUri(Generator.generateUri());
+        group.setUri(
+                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup + "_instance" + Generator.randomInt()));
         group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
         return group;
     }

@@ -11,7 +11,7 @@ import java.util.Collection;
  */
 public interface UserGroupService extends CrudService<UserGroup, UserGroup> {
 
-    User getRequiredUserReference(URI uri);
+    User findRequiredUser(URI uri);
 
     /**
      * Adds the specified users to the specified target group.

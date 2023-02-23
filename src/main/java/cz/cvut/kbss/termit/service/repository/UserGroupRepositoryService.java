@@ -77,8 +77,8 @@ public class UserGroupRepositoryService extends BaseRepositoryService<UserGroup,
     }
 
     @Override
-    public User getRequiredUserReference(URI uri) {
-        return userService.getRequiredReference(uri).toUser();
+    public User findRequiredUser(URI uri) {
+        return userService.findRequired(uri).toUser();
     }
 
     @Override
