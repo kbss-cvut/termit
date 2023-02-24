@@ -3,6 +3,46 @@
 This file explains some of the important architectural decisions made during the development of TermIt, together with
 possible implications and lessons learnt for future.
 
+Status options are: _proposed_, _accepted_, _superseded_.
+
+### Vocabulary Access Control
+- **Status**: accepted
+- **Date**: 2023-02-13
+
+##### Context
+
+It has been decided that access control should to vocabularies and terms should be implemented in greater detail than the current
+global roles.
+
+##### Considered Options
+
+1. ACL-based only access control.
+2. ACL combined with global roles supporting only users.
+3. ACL combined with global roles supporting users and user groups.
+
+##### Decision Outcome
+
+Option **3** will be used. Global roles will be applicable mainly as defaults when creating a new vocabulary. Global admin role
+also has master access to all vocabularies. In particular, the following access levels will be defined for each vocabulary:
+
+1. `None` - vocabulary is not visible at all.
+2. `Read` - user can perform only read operations on a vocabulary and its content (incl. export) and comments its terms.
+3. `Write` - `Read` + user can edit vocabulary and its content, run text analysis on file and term definitions, create/edit files associated with vocabulary.
+4. `Security` - `Write` + delete vocabulary, restore from SKOS (re-import), manage snapshots, remove file, manage user access levels.
+
+In addition:
+- When a new vocabulary is created, its author is automatically assigned `Security` access level. 
+- User access level overrides group access level.
+- When a new vocabulary is created, its author decides what the default access levels for editors and readers will be.
+- Only TermIt admins are able to manage user groups.
+
+##### Consequences
+
+The `AuthorizationService` needs to be extended to support the ACL-based access control. Every access to a vocabulary or its
+contents has to be validated by based on the ACL. Existing data prior to implementation of this have to be migrated to sensible
+defaults or the `AuthorizationService` has to provided defaults when access control is not configured for a vocabulary.
+
+
 ### Session-based Editable Vocabularies
 - **Status**: accepted
 - **Date**: 2022-08-23
