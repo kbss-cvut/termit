@@ -267,3 +267,42 @@ termit-pojem:má-oddělovač-verze
 
 termit-pojem:pouze-pro-čtení
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class .
+
+termit-pojem:seznam-řízení-přístupu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
+
+termit-pojem:má-seznam-řízení-přístupu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/zdroj> ;
+        rdfs:range          termit-pojem:seznam-řízení-přístupu ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:záznam-řízení-přístupu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
+
+termit-pojem:má-záznam-řízení-přístupu
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:seznam-řízení-přístupu ;
+        rdfs:range          termit-pojem:záznam-řízení-přístupu ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:záznam-řízení-přístupu-uživatele
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        rdfs:subClassOf  termit-pojem:záznam-řízení-přístupu .
+
+termit-pojem:záznam-řízení-přístupu-uživatelské-skupiny
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        rdfs:subClassOf  termit-pojem:záznam-řízení-přístupu .
+
+termit-pojem:záznam-řízení-přístupu-uživatelské-role
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        rdfs:subClassOf  termit-pojem:záznam-řízení-přístupu .
+
+termit-pojem:má-držitele-přístupových-oprávnění
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:domain         termit-pojem:záznam-řízení-přístupu ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+termit-pojem:má-úroveň-přístupových-oprávnění
+        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .

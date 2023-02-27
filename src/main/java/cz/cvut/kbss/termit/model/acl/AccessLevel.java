@@ -6,6 +6,8 @@ import java.util.Set;
  * Levels of access to an asset.
  * <p>
  * The access levels are hierarchical, i.e., higher levels of access include lower (more restricted) levels.
+ *
+ * TODO Map to individuals from owl:oneOf
  */
 public enum AccessLevel {
     /**
