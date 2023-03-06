@@ -43,10 +43,7 @@ public class WorkspaceVocabularyContextMapper implements VocabularyContextMapper
     @Override
     public Map<URI, URI> getVocabularyContexts() {
         final Map<URI, URI> repoContexts = new HashMap<>(delegatee.getVocabularyContexts());
-        repoContexts.keySet().forEach(k -> {
-            final Optional<URI> ctx = editableVocabularies.getVocabularyContext(k);
-            ctx.ifPresent(c -> repoContexts.put(k, c));
-        });
+        repoContexts.putAll(editableVocabularies.getRegisteredVocabularies());
         return repoContexts;
     }
 }
