@@ -10,9 +10,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -73,12 +73,31 @@ class WorkspaceVocabularyContextMapperTest {
                                                   vocabularyIri, Generator.generateUri());
         when(delegatee.getVocabularyContexts()).thenReturn(repoContexts);
         final URI contextOverride = Generator.generateUri();
-        when(editableVocabularies.getVocabularyContext(any(URI.class))).thenReturn(Optional.empty());
-        when(editableVocabularies.getVocabularyContext(vocabularyIri)).thenReturn(Optional.of(contextOverride));
+        when(editableVocabularies.getRegisteredVocabularies()).thenReturn(Collections.singletonMap(vocabularyIri, contextOverride));
 
         final Map<URI, URI> expected = new HashMap<>(repoContexts);
         expected.put(vocabularyIri, contextOverride);
         final Map<URI, URI> result = sut.getVocabularyContexts();
         assertEquals(expected, result);
+    }
+
+    /**
+     * This happens for new vocabularies that have not been published yet
+     */
+    @Test
+    void getVocabularyContextsAddsEditableVocabularyContextsWithoutCanonicalOriginalIntoResult() {
+        final Set<URI> allVocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri()).collect(
+                Collectors.toSet());
+        final Map<URI, URI> canonicalRepoContexts = new HashMap<>();
+        allVocabularies.forEach(v -> canonicalRepoContexts.put(v, Generator.generateUri()));
+        final Map<URI, URI> editable = new HashMap<>();
+        editable.put(allVocabularies.iterator().next(), Generator.generateUri());
+        final Map<URI, URI> newVocabularies = Map.of(Generator.generateUri(), Generator.generateUri());
+        editable.putAll(newVocabularies);
+        when(delegatee.getVocabularyContexts()).thenReturn(canonicalRepoContexts);
+        when(editableVocabularies.getRegisteredVocabularies()).thenReturn(editable);
+
+        final Map<URI, URI> result = sut.getVocabularyContexts();
+        editable.forEach((v, ctx) -> assertEquals(ctx, result.get(v)));
     }
 }

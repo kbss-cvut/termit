@@ -39,7 +39,8 @@ public class EditableVocabularies implements Serializable {
     public void registerEditableVocabulary(URI vocabularyUri, URI contextUri) {
         Objects.requireNonNull(vocabularyUri);
         Objects.requireNonNull(contextUri);
-        LOG.debug("Registering working context {} for vocabulary {}.", uriToString(contextUri), uriToString(vocabularyUri));
+        LOG.debug("Registering working context {} for vocabulary {}.", uriToString(contextUri),
+                  uriToString(vocabularyUri));
         editableVocabularies.put(vocabularyUri, contextUri);
     }
 
@@ -87,5 +88,14 @@ public class EditableVocabularies implements Serializable {
      */
     public Set<URI> getRegisteredContexts() {
         return new HashSet<>(editableVocabularies.values());
+    }
+
+    /**
+     * Gets all the registered editable vocabularies mapped to their repository contexts.
+     *
+     * @return Unmodifiable map of registered vocabulary identifiers to contexts
+     */
+    public Map<URI, URI> getRegisteredVocabularies() {
+        return Collections.unmodifiableMap(editableVocabularies);
     }
 }
