@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.rest.dto;
 
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -25,6 +26,7 @@ import java.util.Objects;
 /**
  * DTO used for user updating so that original password can be validated.
  */
+@NonEntity
 @OWLClass(iri = Vocabulary.s_c_uzivatel_termitu)
 public class UserUpdateDto extends UserAccount {
 

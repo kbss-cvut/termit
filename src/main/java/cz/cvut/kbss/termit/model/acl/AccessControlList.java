@@ -19,17 +19,17 @@ public class AccessControlList extends AbstractEntity {
 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_zaznam_rizeni_pristupu, fetch = FetchType.EAGER,
                        cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private Set<AccessControlRecord> records;
+    private Set<AccessControlRecord<?>> records;
 
-    public Set<AccessControlRecord> getRecords() {
+    public Set<AccessControlRecord<?>> getRecords() {
         return records;
     }
 
-    public void setRecords(Set<AccessControlRecord> records) {
+    public void setRecords(Set<AccessControlRecord<?>> records) {
         this.records = records;
     }
 
-    public void addRecord(AccessControlRecord record) {
+    public void addRecord(AccessControlRecord<?> record) {
         Objects.requireNonNull(record);
         if (records == null) {
             this.records = new HashSet<>();

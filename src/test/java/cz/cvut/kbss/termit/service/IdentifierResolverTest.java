@@ -16,13 +16,14 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -125,7 +126,7 @@ class IdentifierResolverTest {
     @Test
     void generateIdentifierThrowsIllegalArgumentWhenNoComponentsAreProvided() {
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> sut.generateIdentifier(Environment.BASE_URI));
+                                                         () -> sut.generateIdentifier(Environment.BASE_URI));
         assertEquals("Must provide at least one component for identifier generation.", ex.getMessage());
     }
 
@@ -163,7 +164,7 @@ class IdentifierResolverTest {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/vocabulary/";
         final String fragment = "metropolitan-plan";
         assertEquals(namespace + fragment,
-                sut.resolveIdentifier(namespace, fragment).toString());
+                     sut.resolveIdentifier(namespace, fragment).toString());
     }
 
     @Test
@@ -261,7 +262,7 @@ class IdentifierResolverTest {
         final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/resource/";
         final String label = "http://onto.fel.cvut.cz/ontologies/termit/resourceOne?test=one&test=two";
         assertEquals(URI.create("http://onto.fel.cvut.cz/ontologies/termit/resourceOne"),
-                sut.generateIdentifier(namespace, label));
+                     sut.generateIdentifier(namespace, label));
     }
 
     @Test
@@ -275,5 +276,24 @@ class IdentifierResolverTest {
         final String label = "Otevřená krajina";
         final String namespace = "https://onto.fel.cvut.cz/ontologies/page/slovn%c3%adk/datov%c3%bd/mpp-3.5-np/";
         assertEquals(URI.create(namespace + "otevřená-krajina"), sut.generateIdentifier(namespace, label));
+    }
+
+    @Test
+    void generateSyntheticIdentifierGeneratesIdentifierForBaseContainingHash() {
+        final String base = Vocabulary.s_c_Usergroup;
+        assertThat(base, containsString("#"));
+        final URI result = IdentifierResolver.generateSyntheticIdentifier(base);
+        assertThat(result.toString(), containsString(base));
+        assertThat(result.toString().length(), greaterThan(base.length()));
+        assertThat(result.toString().lastIndexOf('/'), lessThan(result.toString().lastIndexOf('#')));
+    }
+
+    @Test
+    void generateSyntheticIdentifierGeneratesIdentifierForBaseNotContainingHash() {
+        final String base = Vocabulary.s_c_slovnik;
+        assertThat(base, not(containsString("#")));
+        final URI result = IdentifierResolver.generateSyntheticIdentifier(base);
+        assertThat(result.toString(), containsString(base));
+        assertThat(result.toString().length(), greaterThan(base.length()));
     }
 }
