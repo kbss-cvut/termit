@@ -252,7 +252,7 @@ termit-pojem:konfigurace
 
 termit-pojem:je-tématem
         a               owl:ObjectProperty;
-        owl:inverseOf   sioc:topic .
+        owl:inverseOf   <http://rdfs.org/sioc/ns#topic> .
 
 termit-pojem:má-můj-poslední-komentář
         a               owl:ObjectProperty.
@@ -304,5 +304,30 @@ termit-pojem:má-držitele-přístupových-oprávnění
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
 
 termit-pojem:má-úroveň-přístupových-oprávnění
-        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
-        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
+        a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> ;
+        rdfs:domain         termit-pojem:záznam-řízení-přístupu ;
+        rdfs:range          termit-pojem:úroveň-přístupových-oprávnění .
+
+termit-pojem:úroveň-přístupových-oprávnění
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        owl:equivalentClass [
+                            a          owl:Class ;
+                            owl:oneOf ( <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/správa>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/zápis>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/čtení>
+                                        <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/žádná>
+                                       )
+                            ] .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/žádná>
+        a               owl:NamedIndividual .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/čtení>
+        a               owl:NamedIndividual .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/zápis>
+        a               owl:NamedIndividual .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/správa>
+        a               owl:NamedIndividual .
