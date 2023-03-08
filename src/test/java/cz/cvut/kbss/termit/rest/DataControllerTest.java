@@ -1,20 +1,25 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.ontodriver.model.LangString;
 import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -59,8 +64,7 @@ class DataControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getPropertiesLoadsPropertiesFromDao() throws Exception {
-        final RdfsResource property = new RdfsResource(URI.create(Vocabulary.s_p_ma_krestni_jmeno), "Name", null,
-                RDF.PROPERTY);
+        final RdfsResource property = create(Vocabulary.s_p_ma_krestni_jmeno, "Name", null);
         when(dataServiceMock.findAllProperties()).thenReturn(Collections.singletonList(property));
         final MvcResult mvcResult = mockMvc.perform(get("/data/properties")).andExpect(status().isOk()).andReturn();
         final List<RdfsResource> result = readValue(mvcResult, new TypeReference<List<RdfsResource>>() {
@@ -68,13 +72,17 @@ class DataControllerTest extends BaseControllerTestRunner {
         assertEquals(Collections.singletonList(property), result);
     }
 
+    private static RdfsResource create(String uri, String label, String comment) {
+        return new RdfsResource(URI.create(uri), new LangString(label, Environment.LANGUAGE),
+                                comment != null ? new LangString(comment, Environment.LANGUAGE) : null, null);
+    }
+
     @Test
     void getByIdReturnsResourceWithSpecifiedIdentifier() throws Exception {
-        final RdfsResource property = new RdfsResource(URI.create(Vocabulary.s_p_ma_krestni_jmeno), "Name", null,
-                RDFS.RESOURCE);
+        final RdfsResource property = create(Vocabulary.s_p_ma_krestni_jmeno, "Name", null);
         when(dataServiceMock.find(any())).thenReturn(Optional.of(property));
         final MvcResult mvcResult = mockMvc.perform(get("/data/resource").param("iri", property.getUri().toString()))
-                .andExpect(status().isOk()).andReturn();
+                                           .andExpect(status().isOk()).andReturn();
         assertEquals(property, readValue(mvcResult, RdfsResource.class));
     }
 
@@ -82,7 +90,7 @@ class DataControllerTest extends BaseControllerTestRunner {
     void getByIdThrowsNotFoundExceptionForUnknownResourceIdentifier() throws Exception {
         when(dataServiceMock.find(any())).thenReturn(Optional.empty());
         mockMvc.perform(get("/data/resource").param("iri", Generator.generateUri().toString()))
-                .andExpect(status().isNotFound());
+               .andExpect(status().isNotFound());
     }
 
     @Test
@@ -91,7 +99,7 @@ class DataControllerTest extends BaseControllerTestRunner {
         final String label = "Test term";
         when(dataServiceMock.getLabel(uri)).thenReturn(Optional.of(label));
         final MvcResult mvcResult = mockMvc.perform(get("/data/label").param("iri", uri.toString()))
-                .andExpect(status().isOk()).andReturn();
+                                           .andExpect(status().isOk()).andReturn();
         assertEquals(label, readValue(mvcResult, String.class));
     }
 
@@ -104,19 +112,21 @@ class DataControllerTest extends BaseControllerTestRunner {
 
     @Test
     void createPropertySavesResource() throws Exception {
-        final RdfsResource property = new RdfsResource(URI.create(RDFS.RANGE), "Range", "Property range", RDF.PROPERTY);
+        final RdfsResource property = create(RDFS.RANGE, "Range", "Property range");
+        property.setTypes(Collections.singleton(RDF.PROPERTY));
         mockMvc.perform(
-                post("/data/properties").content(toJson(property)).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isCreated());
+                       post("/data/properties").content(toJson(property)).contentType(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isCreated());
         verify(dataServiceMock).persistProperty(property);
     }
 
     @Test
     void createPropertyReturnsLocationHeaderLeadingToProperties() throws Exception {
-        final RdfsResource property = new RdfsResource(URI.create(RDFS.RANGE), "Range", "Property range", RDF.PROPERTY);
+        final RdfsResource property = create(RDFS.RANGE, "Range", "Property range");
+        property.setTypes(Collections.singleton(RDF.PROPERTY));
         final MvcResult mvcResult = mockMvc.perform(
-                post("/data/properties").content(toJson(property)).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isCreated()).andReturn();
+                                                   post("/data/properties").content(toJson(property)).contentType(MediaType.APPLICATION_JSON_VALUE))
+                                           .andExpect(status().isCreated()).andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.LOCATION), containsString("/data/properties"));
     }
 }
