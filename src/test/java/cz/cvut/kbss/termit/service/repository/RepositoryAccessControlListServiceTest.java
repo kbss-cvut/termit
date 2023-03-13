@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.persistence.dao.acl.AccessControlListDao;
@@ -110,5 +111,23 @@ class RepositoryAccessControlListServiceTest {
 
         assertEquals(1, acl.getRecords().size());
         assertEquals(update.getAccessLevel(), acl.getRecords().iterator().next().getAccessLevel());
+    }
+
+    @Test
+    void getRequiredReferenceThrowsNotFoundExceptionWhenMatchingAccessControlListIsNotFound() {
+        final URI uri = Generator.generateUri();
+        when(dao.getReference(uri)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> sut.getRequiredReference(uri));
+        verify(dao).getReference(uri);
+    }
+
+    @Test
+    void findRequiredThrowsNotFoundExceptionWhenMatchingAccessControlListIsNotFound() {
+        final URI uri = Generator.generateUri();
+        when(dao.find(uri)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> sut.findRequired(uri));
+        verify(dao).find(uri);
     }
 }

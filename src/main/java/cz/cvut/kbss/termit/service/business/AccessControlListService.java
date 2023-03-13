@@ -25,6 +25,15 @@ public interface AccessControlListService {
     AccessControlList findRequired(URI id);
 
     /**
+     * Gets a reference to an {@link AccessControlList} with the specified identifier.
+     *
+     * @param id ACL identifier
+     * @return Reference to a matching ACL
+     * @throws cz.cvut.kbss.termit.exception.NotFoundException If no matching ACL exists
+     */
+    AccessControlList getRequiredReference(URI id);
+
+    /**
      * Finds an {@link AccessControlList} guarding access to the specified subject.
      *
      * @param subject Subject of the ACL

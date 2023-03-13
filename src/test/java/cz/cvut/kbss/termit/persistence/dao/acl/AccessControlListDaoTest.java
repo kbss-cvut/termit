@@ -150,4 +150,14 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
                               cz.cvut.kbss.termit.util.Vocabulary.s_c_zaznam_rizeni_pristupu_uzivatele))
                       .getSingleResult());
     }
+
+    @Test
+    void getReferenceReturnsReferenceToMatchingAccessControlList() {
+        final AccessControlList acl = new AccessControlList();
+        transactional(() -> em.persist(acl, descriptorFactory.accessControlListDescriptor()));
+
+        final Optional<AccessControlList> result = sut.getReference(acl.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(acl.getUri(), result.get().getUri());
+    }
 }

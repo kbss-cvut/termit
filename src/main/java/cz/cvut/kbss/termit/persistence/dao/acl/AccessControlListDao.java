@@ -38,6 +38,17 @@ public class AccessControlListDao {
     }
 
     /**
+     * Gets a reference to an {@link AccessControlList} with the specified identifier.
+     *
+     * @param id ACL identifier
+     * @return Matching ACL reference wrapped in an {@link Optional}, empty {@link Optional} if no such ACL exists
+     */
+    public Optional<AccessControlList> getReference(URI id) {
+        return Optional.ofNullable(
+                em.getReference(AccessControlList.class, id, descriptorFactory.accessControlListDescriptor()));
+    }
+
+    /**
      * Finds an {@link AccessControlList} guarding access to the specified subject.
      *
      * @param subject ACL subject
@@ -69,7 +80,7 @@ public class AccessControlListDao {
 
     /**
      * Updates the specified {@link AccessControlList}.
-     *
+     * <p>
      * Removes any orphaned {@link AccessControlRecord}s.
      *
      * @param acl Access control list to update
