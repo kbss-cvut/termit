@@ -2,7 +2,6 @@ package cz.cvut.kbss.termit.persistence.dao.acl;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -28,7 +27,18 @@ public class AccessControlListDao {
     }
 
     /**
-     * Finds an {@link AccessControlList} guarding access of the specified subject.
+     * Finds an {@link AccessControlList} with the specified identifier.
+     *
+     * @param id ACL identifier
+     * @return Matching ACL instance wrapped in an {@link Optional}, empty {@link Optional} if no such ACL exists
+     */
+    public Optional<AccessControlList> find(URI id) {
+        return Optional.ofNullable(
+                em.find(AccessControlList.class, id, descriptorFactory.accessControlListDescriptor()));
+    }
+
+    /**
+     * Finds an {@link AccessControlList} guarding access to the specified subject.
      *
      * @param subject ACL subject
      * @return Matching ACL instance wrapped in an {@link Optional}, empty {@link Optional} if no such ACL exists
@@ -40,11 +50,10 @@ public class AccessControlListDao {
                     em.createNativeQuery("SELECT ?acl WHERE { ?subject ?hasAcl ?acl . }", AccessControlList.class)
                       .setParameter("subject", subject)
                       .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                      .setDescriptor(descriptorFactory.accessControlListDescriptor())
                       .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
         }
     }
 
@@ -55,28 +64,22 @@ public class AccessControlListDao {
      */
     public void persist(AccessControlList acl) {
         Objects.requireNonNull(acl);
-        try {
-            em.persist(acl, descriptorFactory.accessControlListDescriptor());
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
+        em.persist(acl, descriptorFactory.accessControlListDescriptor());
     }
 
     /**
      * Updates the specified {@link AccessControlList}.
      *
+     * Removes any orphaned {@link AccessControlRecord}s.
+     *
      * @param acl Access control list to update
      */
     public void update(AccessControlList acl) {
         Objects.requireNonNull(acl);
-        try {
-            final AccessControlList original = em.find(AccessControlList.class, acl.getUri());
-            assert original != null;
-            removeOrphanRecords(original, acl);
-            em.merge(acl, descriptorFactory.accessControlListDescriptor());
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
+        final AccessControlList original = em.find(AccessControlList.class, acl.getUri());
+        assert original != null;
+        removeOrphanRecords(original, acl);
+        em.merge(acl, descriptorFactory.accessControlListDescriptor());
     }
 
     private void removeOrphanRecords(AccessControlList original, AccessControlList update) {

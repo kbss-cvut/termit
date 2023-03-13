@@ -14,7 +14,7 @@ import java.net.URI;
  * Since entity attribute values must be entity classes themselves, a mapped superclass would not be enough.
  * <p>
  * However, this class is completely synthetic, it has no bearing on the underlying data or the conceptual model. It is
- * purely a technical means of achieving the ability to have a  generic access control record with specializations for
+ * purely a technical means of achieving the ability to have a generic access control record with specializations for
  * different access control holder types.
  */
 @OWLClass(iri = Vocabulary.s_c_Agent)

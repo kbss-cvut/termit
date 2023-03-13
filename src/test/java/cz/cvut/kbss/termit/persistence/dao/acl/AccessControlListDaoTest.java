@@ -36,6 +36,12 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
     private AccessControlListDao sut;
 
     @Test
+    void findByIdRetrievesMatchingAccessControlListWrappedInOptional() {
+        final AccessControlList acl = new AccessControlList();
+        transactional(() -> em.persist(acl, descriptorFactory.accessControlListDescriptor()));
+    }
+
+    @Test
     void findForRetrievesAccessControlListForSpecifiedVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = new AccessControlList();
@@ -49,7 +55,7 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(editorRole);
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(acl);
+            em.persist(acl, descriptorFactory.accessControlListDescriptor());
         });
 
         final Optional<AccessControlList> result = sut.findFor(vocabulary);

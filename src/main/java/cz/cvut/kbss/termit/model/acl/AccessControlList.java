@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.termit.model.AbstractEntity;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.util.HashSet;
@@ -39,8 +40,8 @@ public class AccessControlList extends AbstractEntity {
 
     @Override
     public String toString() {
-        return "AccessControlList{" +
-                "records=" + records +
+        return "AccessControlList{" + Utils.uriToString(getUri()) +
+                " records=" + records +
                 '}';
     }
 }

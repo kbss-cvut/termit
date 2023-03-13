@@ -5,6 +5,8 @@ import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.AccessControlAgent;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
+import java.util.Objects;
+
 @OWLClass(iri = Vocabulary.s_c_zaznam_rizeni_pristupu)
 public abstract class AccessControlRecord<T extends AccessControlAgent> extends AbstractEntity {
 
@@ -29,6 +31,23 @@ public abstract class AccessControlRecord<T extends AccessControlAgent> extends 
 
     public void setHolder(T holder) {
         this.holder = holder;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AccessControlRecord)) {
+            return false;
+        }
+        AccessControlRecord<?> that = (AccessControlRecord<?>) o;
+        return accessLevel == that.accessLevel && Objects.equals(holder, that.holder);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(accessLevel, holder);
     }
 
     @Override
