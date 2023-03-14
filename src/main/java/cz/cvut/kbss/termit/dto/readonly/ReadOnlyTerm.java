@@ -184,13 +184,4 @@ public class ReadOnlyTerm extends AbstractTerm {
     public void setProperties(final Map<String, Set<String>> properties) {
         this.properties = properties;
     }
-
-    @Override
-    public String toString() {
-        return "ReadOnlyTerm{" +
-                getLabel() +
-                " <" + getUri() + '>' +
-                ", types=" + getTypes() +
-                '}';
-    }
 }
