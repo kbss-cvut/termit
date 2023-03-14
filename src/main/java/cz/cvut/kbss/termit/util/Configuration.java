@@ -540,7 +540,7 @@ public class Configuration {
          * Score threshold for a term occurrence for it to be saved into the repository.
          */
         @NotNull
-        String termOccurrenceMinScore;
+        String termOccurrenceMinScore = Constants.SCORE_THRESHOLD.toString();
 
         public String getUrl() {
             return url;

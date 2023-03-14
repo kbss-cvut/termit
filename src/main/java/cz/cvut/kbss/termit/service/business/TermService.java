@@ -394,7 +394,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * during the analysis).
      *
      * @param term              Term to analyze
-     * @param vocabularyContext Identifier of the vocabulary used for analysis
+     * @param vocabularyContext Identifier of the repository context of the vocabulary used for analysis
      */
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyContext) {
         Objects.requireNonNull(term);

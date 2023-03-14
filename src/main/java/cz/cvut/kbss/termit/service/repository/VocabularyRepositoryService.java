@@ -15,13 +15,14 @@ import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.security.AuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -41,7 +42,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,9 +65,11 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final VocabularyDao vocabularyDao;
 
-    private final TermService termService;
+    private final AsyncTermService termService;
 
     private final ChangeRecordService changeRecordService;
+
+    private final VocabularyContextMapper contextMapper;
 
     private final EditableVocabularies editableVocabularies;
 
@@ -83,7 +85,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public VocabularyRepositoryService(ApplicationContext context, VocabularyDao vocabularyDao,
                                        IdentifierResolver idResolver,
                                        Validator validator, ChangeRecordService changeRecordService,
-                                       @Lazy TermService termService,
+                                       @Lazy AsyncTermService termService,
+                                       VocabularyContextMapper contextMapper,
                                        EditableVocabularies editableVocabularies, Configuration config,
                                        DtoMapper dtoMapper) {
         super(validator);
@@ -92,6 +95,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         this.idResolver = idResolver;
         this.termService = termService;
         this.changeRecordService = changeRecordService;
+        this.contextMapper = contextMapper;
         this.editableVocabularies = editableVocabularies;
         this.config = config;
         this.dtoMapper = dtoMapper;
@@ -287,24 +291,27 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
     @Override
-    @Async
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         AuthorizationService.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
                 importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
+        final Map<TermDto, URI> termsToContexts = new HashMap<>(allTerms.size());
         allTerms.stream().filter(t -> t.getDefinition() != null)
-                .forEach(t -> termService.analyzeTermDefinition(t, vocabulary.getUri()));
+                .forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
+        termService.asyncAnalyzeTermDefinitions(termsToContexts);
     }
 
     @Override
-    @Async
     public void runTextAnalysisOnAllVocabularies() {
+        LOG.debug("Analyzing definitions of all terms in all vocabularies.");
+        final Map<TermDto, URI> termsToContexts = new HashMap<>();
         vocabularyDao.findAll().forEach(v -> {
             List<TermDto> terms = termService.findAll(v);
             terms.stream().filter(t -> t.getDefinition() != null)
-                 .forEach(t -> termService.analyzeTermDefinition(t, v.getUri()));
+                 .forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
+            termService.asyncAnalyzeTermDefinitions(termsToContexts);
         });
     }
 
