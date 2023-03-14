@@ -79,7 +79,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * If export into the specified media type is not supported, an empty {@link Optional} is returned.
      *
      * @param vocabulary Vocabulary to export
-     * @param config Expected media type of the export
+     * @param config     Expected media type of the export
      * @return Exported resource wrapped in an {@code Optional}
      */
     public Optional<TypeAwareResource> exportGlossary(Vocabulary vocabulary, ExportConfig config) {
@@ -91,7 +91,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Retrieves all terms from the specified vocabulary.
      *
-     * @param vocabulary Vocabulary whose terms will be returned
+     * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
      * @return Matching terms
      */
     public List<TermDto> findAll(Vocabulary vocabulary) {

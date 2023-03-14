@@ -27,6 +27,12 @@ public class AsyncTermService {
         this.termService = termService;
     }
 
+    /**
+     * Gets a list of all terms in the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs
+     */
     public List<TermDto> findAll(Vocabulary vocabulary) {
         return termService.findAll(vocabulary);
     }
