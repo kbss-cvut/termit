@@ -16,7 +16,6 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
-import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
@@ -304,16 +303,6 @@ public class VocabularyService
      */
     public Vocabulary findVersionValidAt(Vocabulary asset, Instant at) {
         return repositoryService.findVersionValidAt(asset, at);
-    }
-
-    /**
-     * Resolves preferred prefix of a vocabulary with the specified identifier.
-     *
-     * @param vocabularyUri Vocabulary identifier
-     * @return Prefix declaration, possibly empty
-     */
-    public PrefixDeclaration resolvePrefix(URI vocabularyUri) {
-        return repositoryService.resolvePrefix(vocabularyUri);
     }
 
     @Override

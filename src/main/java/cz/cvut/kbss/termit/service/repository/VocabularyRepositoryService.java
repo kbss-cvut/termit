@@ -264,6 +264,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                             .orElseThrow(() -> new NotFoundException("No version valid at " + at + " exists."));
     }
 
+    /**
+     * Resolves preferred prefix of a vocabulary with the specified identifier.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Prefix declaration, possibly empty
+     */
     @Transactional(readOnly = true)
     public PrefixDeclaration resolvePrefix(URI vocabularyUri) {
         return vocabularyDao.resolvePrefix(vocabularyUri);
