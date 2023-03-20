@@ -760,6 +760,17 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     @Override
+    public Optional<Term> getReference(URI id) {
+        Objects.requireNonNull(id);
+        try {
+            Descriptor descriptor = descriptorFactory.termDescriptor(resolveTermVocabulary(id));
+            return Optional.ofNullable(em.getReference(type, id, descriptor));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
     public List<Snapshot> findSnapshots(Term asset) {
         return new AssetSnapshotLoader<Term>(em, typeUri, URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu)).findSnapshots(asset);
