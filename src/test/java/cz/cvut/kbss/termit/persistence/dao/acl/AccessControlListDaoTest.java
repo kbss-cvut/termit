@@ -51,11 +51,11 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         record.setHolder(editorRole);
         record.setAccessLevel(AccessLevel.WRITE);
         acl.addRecord(record);
-        vocabulary.setAcl(acl);
         transactional(() -> {
             em.persist(editorRole);
-            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             em.persist(acl, descriptorFactory.accessControlListDescriptor());
+            vocabulary.setAcl(acl.getUri());
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
 
         final Optional<AccessControlList> result = sut.findFor(vocabulary);

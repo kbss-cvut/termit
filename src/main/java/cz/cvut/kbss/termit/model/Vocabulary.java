@@ -18,7 +18,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
-import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
@@ -66,7 +65,7 @@ public class Vocabulary extends Asset<String> implements HasTypes, SupportsSnaps
 
     @JsonIgnore
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_seznam_rizeni_pristupu, fetch = FetchType.EAGER)
-    private AccessControlList acl;
+    private URI acl;
 
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<String>> properties;
@@ -131,11 +130,11 @@ public class Vocabulary extends Asset<String> implements HasTypes, SupportsSnaps
         this.importedVocabularies = importedVocabularies;
     }
 
-    public AccessControlList getAcl() {
+    public URI getAcl() {
         return acl;
     }
 
-    public void setAcl(AccessControlList acl) {
+    public void setAcl(URI acl) {
         this.acl = acl;
     }
 

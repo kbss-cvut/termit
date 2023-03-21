@@ -19,6 +19,14 @@ public abstract class AccessControlRecord<T extends AccessControlAgent> extends 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_drzitele_pristupovych_opravneni, fetch = FetchType.EAGER)
     private T holder;
 
+    public AccessControlRecord() {
+    }
+
+    public AccessControlRecord(AccessLevel accessLevel, T holder) {
+        this.accessLevel = accessLevel;
+        this.holder = holder;
+    }
+
     public AccessLevel getAccessLevel() {
         return accessLevel;
     }

@@ -42,6 +42,20 @@ public interface AccessControlListService {
     Optional<AccessControlList> findFor(HasIdentifier subject);
 
     /**
+     * Creates and persists an {@link AccessControlList} with default access records and returns it.
+     * <p>
+     * The created ACL has the following records:
+     * <ul>
+     *     <li>{@link cz.cvut.kbss.termit.model.acl.AccessLevel#SECURITY} for the current user (if available)</li>
+     *     <li>{@link cz.cvut.kbss.termit.model.acl.AccessLevel#SECURITY} for all authors of the specified subject (if {@link cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord}s exist for the specified asset)</li>
+     *     <li>Access level for {@link cz.cvut.kbss.termit.security.SecurityConstants#ROLE_FULL_USER} and {@link cz.cvut.kbss.termit.security.SecurityConstants#ROLE_RESTRICTED_USER} based on configuration</li>
+     * </ul>
+     *
+     * @return New ACL with default records
+     */
+    AccessControlList createFor(HasIdentifier subject);
+
+    /**
      * Adds the specified records to the specified target {@link AccessControlList}.
      *
      * @param acl     Target ACL

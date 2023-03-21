@@ -59,7 +59,7 @@ public class AccessControlListDao {
         try {
             return Optional.of(
                     em.createNativeQuery("SELECT ?acl WHERE { ?subject ?hasAcl ?acl . }", AccessControlList.class)
-                      .setParameter("subject", subject)
+                      .setParameter("subject", subject.getUri())
                       .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
                       .setDescriptor(descriptorFactory.accessControlListDescriptor())
                       .getSingleResult());
