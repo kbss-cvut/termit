@@ -121,6 +121,8 @@ public class VocabularyService
     @Transactional
     public void persist(Vocabulary instance) {
         repositoryService.persist(instance);
+        final AccessControlList acl = aclService.createFor(instance);
+        instance.setAcl(acl.getUri());
         eventPublisher.publishEvent(new VocabularyCreatedEvent(instance));
     }
 

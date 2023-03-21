@@ -134,6 +134,7 @@ class VocabularyServiceTest {
     @Test
     void persistPublishesVocabularyCreatedEvent() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(aclService.createFor(vocabulary)).thenReturn(Generator.generateAccessControlList(false));
 
         sut.persist(vocabulary);
         verify(repositoryService).persist(vocabulary);
@@ -204,5 +205,17 @@ class VocabularyServiceTest {
         sut.updateAccessControlLevel(vocabulary, record);
         verify(aclService).findFor(vocabulary);
         verify(aclService).updateRecordAccessLevel(acl, record);
+    }
+
+    @Test
+    void persistCreatesAccessControlListAndSetsItOnVocabularyInstance() {
+        final AccessControlList acl = Generator.generateAccessControlList(true);
+        final Vocabulary toPersist = Generator.generateVocabulary();
+        when(aclService.createFor(toPersist)).thenReturn(acl);
+
+        sut.persist(toPersist);
+        verify(repositoryService).persist(toPersist);
+        verify(aclService).createFor(toPersist);
+        assertEquals(acl.getUri(), toPersist.getAcl());
     }
 }
