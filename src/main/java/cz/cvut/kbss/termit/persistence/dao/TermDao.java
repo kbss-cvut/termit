@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
@@ -699,6 +700,30 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
+    @Override
+    public boolean exists(URI id) {
+        Objects.requireNonNull(id);
+        try {
+            URI vocabularyContext = null;
+            boolean notInAnyContext = false;
+            try {
+                vocabularyContext = contextMapper.getVocabularyContext(resolveTermVocabulary(id));
+            } catch (NoResultException e) {
+                notInAnyContext = true;
+            }
+            return em.createNativeQuery("ASK { " +
+                                        (notInAnyContext ? "" : "GRAPH <"+vocabularyContext+"> { ") +
+                                        "?x a ?type . " +
+                                        (notInAnyContext ? "" : "} ") +
+                                        "}", Boolean.class)
+                     .setParameter("x", id)
+                     .setParameter("type", typeUri)
+                     .getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     /**
      * Checks whether a term with the specified label exists in a vocabulary with the specified URI.
      * <p>
@@ -713,18 +738,22 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(label);
         Objects.requireNonNull(vocabulary);
         try {
-            return em.createNativeQuery("ASK { ?term a ?type ; " +
-                                                "?hasLabel ?label ;" +
-                                                "?inVocabulary ?vocabulary ." +
-                                                "FILTER (LCASE(?label) = LCASE(?searchString)) . "
-                                                + "}", Boolean.class)
+            URI vocabularyContext = contextMapper.getVocabularyContext(vocabulary);
+            return em.createNativeQuery("ASK { GRAPH ?context { " +
+                                        "?term a ?type ; " +
+                                        "?hasLabel ?label . } " +
+                                        "?term ?inVocabulary ?vocabulary . " +
+                                        "FILTER (LCASE(?label) = LCASE(?searchString)) . " +
+                                        "}", Boolean.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("inVocabulary",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                      .setParameter("vocabulary", vocabulary)
                      .setParameter("searchString", label,
-                                   languageTag != null ? languageTag : config.getLanguage()).getSingleResult();
+                                   languageTag != null ? languageTag : config.getLanguage())
+                     .setParameter("context", vocabularyContext)
+                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
