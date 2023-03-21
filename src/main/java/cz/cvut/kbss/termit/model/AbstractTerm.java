@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 
@@ -156,5 +157,14 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @Override
     public int hashCode() {
         return Objects.hash(getUri());
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" +
+                getLabel() + ' ' +
+                Utils.uriToString(getUri()) +
+                ", types=" + getTypes() +
+                '}';
     }
 }

@@ -383,13 +383,4 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         this.parentTerms = parents;
         this.externalParentTerms = externalParents;
     }
-
-    @Override
-    public String toString() {
-        return "Term{" +
-                getLabel() +
-                " <" + getUri() + '>' +
-                ", types=" + getTypes() +
-                '}';
-    }
 }

@@ -17,8 +17,10 @@
  */
 package cz.cvut.kbss.termit.dto;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.ontodriver.model.LangString;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 
 import java.io.Serializable;
@@ -35,9 +37,9 @@ import java.util.Set;
                                                                                      @VariableResult(name = "x",
                                                                                                      type = URI.class),
                                                                                      @VariableResult(name = "label",
-                                                                                                     type = String.class),
+                                                                                                     type = LangString.class),
                                                                                      @VariableResult(name = "comment",
-                                                                                                     type = String.class),
+                                                                                                     type = LangString.class),
                                                                                      @VariableResult(name = "type",
                                                                                                      type = String.class)
                                                                              })})
@@ -48,10 +50,10 @@ public class RdfsResource implements Serializable, HasTypes {
     private URI uri;
 
     @OWLAnnotationProperty(iri = RDFS.LABEL)
-    private String label;
+    private MultilingualString label;
 
     @OWLAnnotationProperty(iri = RDFS.COMMENT)
-    private String comment;
+    private MultilingualString comment;
 
     @Types
     private Set<String> types;
@@ -59,10 +61,14 @@ public class RdfsResource implements Serializable, HasTypes {
     public RdfsResource() {
     }
 
-    public RdfsResource(URI uri, String label, String comment, String type) {
+    public RdfsResource(URI uri, LangString label, LangString comment, String type) {
         this.uri = uri;
-        this.label = label;
-        this.comment = comment;
+        if (label != null) {
+            this.label = MultilingualString.create(label.getValue(), label.getLanguage().orElse(null));
+        }
+        if (comment != null) {
+            this.comment = MultilingualString.create(comment.getValue(), comment.getLanguage().orElse(null));
+        }
         this.types = Collections.singleton(type);
     }
 
@@ -74,19 +80,19 @@ public class RdfsResource implements Serializable, HasTypes {
         this.uri = uri;
     }
 
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
     }
 
-    public String getComment() {
+    public MultilingualString getComment() {
         return comment;
     }
 
-    public void setComment(String comment) {
+    public void setComment(MultilingualString comment) {
         this.comment = comment;
     }
 
@@ -123,7 +129,7 @@ public class RdfsResource implements Serializable, HasTypes {
     public String toString() {
         return "RdfsResource{" +
                 "uri=" + uri +
-                ", label='" + label + '\'' +
+                ", label=" + label +
                 ", types=" + types +
                 '}';
     }

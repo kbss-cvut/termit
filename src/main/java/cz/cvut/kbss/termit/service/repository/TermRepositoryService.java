@@ -37,6 +37,7 @@ import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.jena.vocabulary.SKOS;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,13 +90,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    public void persist(Term instance) {
+    public void persist(@NotNull Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
     }
 
     @Override
-    protected void preUpdate(Term instance) {
+    protected void preUpdate(@NotNull Term instance) {
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
@@ -200,7 +201,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * <p>
      * This returns all terms contained in a vocabulary's glossary.
      *
-     * @param vocabulary Vocabulary whose terms should be returned
+     * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @return List of term DTOs ordered by label
      * @see #findAllFull(Vocabulary)
      */

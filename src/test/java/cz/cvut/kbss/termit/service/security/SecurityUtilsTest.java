@@ -18,29 +18,45 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
-import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
-class SecurityUtilsTest extends BaseServiceTestRunner {
+@ExtendWith(MockitoExtension.class)
+@SuppressWarnings("unused")
+class SecurityUtilsTest {
 
-    @Autowired
-    private UserAccountDao userAccountDao;
+    @Mock
+    private UserDetailsService userDetailsService;
 
-    @Autowired
+    @Spy
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Spy
+    private Configuration config = new Configuration();
+
+    @InjectMocks
     private SecurityUtils sut;
 
     private UserAccount user;
@@ -71,7 +87,7 @@ class SecurityUtilsTest extends BaseServiceTestRunner {
         update.setLastName("updatedLastName");
         update.setPassword(user.getPassword());
         update.setUsername(user.getUsername());
-        transactional(() -> userAccountDao.update(update));
+        when(userDetailsService.loadUserByUsername(user.getUsername())).thenReturn(new TermItUserDetails(update));
         sut.updateCurrentUser();
 
         final UserAccount currentUser = sut.getCurrentUser();

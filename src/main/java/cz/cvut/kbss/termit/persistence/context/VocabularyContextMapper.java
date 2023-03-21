@@ -14,7 +14,7 @@ public interface VocabularyContextMapper {
     /**
      * Gets identifier of the repository context in which the specified vocabulary is stored.
      *
-     * @param vocabulary Vocabulary whose context to retrieve
+     * @param vocabulary Vocabulary whose context to retrieve. A reference is sufficient
      * @return Repository context identifier
      */
     default URI getVocabularyContext(Vocabulary vocabulary) {

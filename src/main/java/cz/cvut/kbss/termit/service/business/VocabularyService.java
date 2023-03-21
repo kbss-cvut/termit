@@ -16,25 +16,111 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
-import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
+import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
+import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
+import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
+import cz.cvut.kbss.termit.service.security.AuthorizationService;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
- * Interface of business logic concerning vocabularies.
+ * Business logic concerning vocabularies.
  */
-public interface VocabularyService
-        extends CrudService<Vocabulary, VocabularyDto>, ChangeRecordProvider<Vocabulary>, SupportsLastModification {
+@Service
+public class VocabularyService
+        implements CrudService<Vocabulary, VocabularyDto>, ChangeRecordProvider<Vocabulary>, SupportsLastModification, ApplicationEventPublisherAware {
+
+    private static final Logger LOG = LoggerFactory.getLogger(VocabularyService.class);
+
+    private final VocabularyRepositoryService repositoryService;
+
+    private final ChangeRecordService changeRecordService;
+
+    private final AsyncTermService termService;
+
+    private final VocabularyContextMapper contextMapper;
+
+    private final ApplicationContext context;
+
+    private ApplicationEventPublisher eventPublisher;
+
+    public VocabularyService(VocabularyRepositoryService repositoryService,
+                             ChangeRecordService changeRecordService,
+                             @Lazy AsyncTermService termService,
+                             VocabularyContextMapper contextMapper,
+                             ApplicationContext context) {
+        this.repositoryService = repositoryService;
+        this.changeRecordService = changeRecordService;
+        this.termService = termService;
+        this.contextMapper = contextMapper;
+        this.context = context;
+    }
+
+    @Override
+    public List<VocabularyDto> findAll() {
+        return repositoryService.findAll();
+    }
+
+    @Override
+    public long getLastModified() {
+        return repositoryService.getLastModified();
+    }
+
+
+    @Override
+    public Optional<Vocabulary> find(URI id) {
+        return repositoryService.find(id);
+    }
+
+    @Override
+    public Vocabulary findRequired(URI id) {
+        return repositoryService.findRequired(id);
+    }
+
+    @Override
+    public Optional<Vocabulary> getReference(URI id) {
+        return repositoryService.getReference(id);
+    }
+
+    @Override
+    public Vocabulary getRequiredReference(URI id) {
+        return repositoryService.getRequiredReference(id);
+    }
+
+    @Override
+    @Transactional
+    public void persist(Vocabulary instance) {
+        repositoryService.persist(instance);
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(instance));
+    }
+
+    @Override
+    public Vocabulary update(Vocabulary instance) {
+        return repositoryService.update(instance);
+    }
 
     /**
      * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
@@ -42,7 +128,9 @@ public interface VocabularyService
      * @param entity Base vocabulary, whose imports should be retrieved
      * @return Collection of (transitively) imported vocabularies
      */
-    Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity);
+    public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
+        return repositoryService.getTransitivelyImportedVocabularies(entity);
+    }
 
     /**
      * Gets identifiers of all vocabularies whose terms are in a SKOS relationship with the specified vocabulary or are
@@ -53,7 +141,9 @@ public interface VocabularyService
      * @param entity Base vocabulary whose related vocabularies to return
      * @return Set of vocabulary identifiers
      */
-    Set<URI> getRelatedVocabularies(Vocabulary entity);
+    public Set<URI> getRelatedVocabularies(Vocabulary entity) {
+        return repositoryService.getRelatedVocabularies(entity);
+    }
 
     /**
      * Imports a new vocabulary from the specified file.
@@ -65,7 +155,9 @@ public interface VocabularyService
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      */
-    Vocabulary importVocabulary(boolean rename, MultipartFile file);
+    public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
+        return repositoryService.importVocabulary(rename, file);
+    }
 
     /**
      * Imports a vocabulary from the specified file.
@@ -78,7 +170,14 @@ public interface VocabularyService
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      */
-    Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file);
+    public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
+        return repositoryService.importVocabulary(vocabularyIri, file);
+    }
+
+    @Override
+    public List<AbstractChangeRecord> getChanges(Vocabulary asset) {
+        return changeRecordService.getChanges(asset);
+    }
 
     /**
      * Gets aggregated information about changes in the specified vocabulary.
@@ -86,7 +185,9 @@ public interface VocabularyService
      * @param vocabulary Vocabulary whose content changes to get
      * @return List of aggregated change objects, ordered by date in ascending order
      */
-    List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary);
+    public List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary) {
+        return repositoryService.getChangesOfContent(vocabulary);
+    }
 
     /**
      * Runs text analysis on the definitions of all terms in the specified vocabulary, including terms in the
@@ -94,27 +195,57 @@ public interface VocabularyService
      *
      * @param vocabulary Vocabulary to be analyzed
      */
-    void runTextAnalysisOnAllTerms(Vocabulary vocabulary);
+    @Transactional(readOnly = true)
+    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
+    public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
+        LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
+        AuthorizationService.verifySnapshotNotModified(vocabulary);
+        final List<TermDto> allTerms = termService.findAll(vocabulary);
+        getTransitivelyImportedVocabularies(vocabulary).forEach(
+                importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
+        final Map<TermDto, URI> termsToContexts = new HashMap<>(allTerms.size());
+        allTerms.stream().filter(t -> t.getDefinition() != null)
+                .forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
+        termService.asyncAnalyzeTermDefinitions(termsToContexts);
+    }
 
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
      */
-    void runTextAnalysisOnAllVocabularies();
+    @Transactional(readOnly = true)
+    public void runTextAnalysisOnAllVocabularies() {
+        LOG.debug("Analyzing definitions of all terms in all vocabularies.");
+        final Map<TermDto, URI> termsToContexts = new HashMap<>();
+        repositoryService.findAll().forEach(v -> {
+            List<TermDto> terms = termService.findAll(new Vocabulary(v.getUri()));
+            terms.stream().filter(t -> t.getDefinition() != null)
+                 .forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
+            termService.asyncAnalyzeTermDefinitions(termsToContexts);
+        });
+    }
 
     /**
-     * Removes a vocabulary if: - it is not a document vocabulary, or - it is imported by another vocabulary, or - it
-     * contains terms.
+     * Removes a vocabulary unless:
+     * <ul>
+     *     <li>it is a document vocabulary or</li>
+     *     <li>it is imported by another vocabulary or</li>
+     *     <li>it contains terms</li>
+     * </ul>
      *
      * @param asset Vocabulary to remove
      */
-    void remove(Vocabulary asset);
+    public void remove(Vocabulary asset) {
+        repositoryService.remove(asset);
+    }
 
     /**
      * Validates a vocabulary: - it checks glossary rules, - it checks OntoUml constraints.
      *
      * @param validate Vocabulary to validate
      */
-    List<ValidationResult> validateContents(Vocabulary validate);
+    public List<ValidationResult> validateContents(Vocabulary validate) {
+        return repositoryService.validateContents(validate);
+    }
 
     /**
      * Gets the number of terms in the specified vocabulary.
@@ -124,7 +255,9 @@ public interface VocabularyService
      * @param vocabulary Vocabulary whose terms should be counted
      * @return Number of terms in the vocabulary, 0 for empty or unknown vocabulary
      */
-    Integer getTermCount(Vocabulary vocabulary);
+    public Integer getTermCount(Vocabulary vocabulary) {
+        return repositoryService.getTermCount(vocabulary);
+    }
 
     /**
      * Creates a snapshot of the specified vocabulary.
@@ -134,7 +267,17 @@ public interface VocabularyService
      *
      * @param vocabulary Vocabulary to snapshot
      */
-    Snapshot createSnapshot(Vocabulary vocabulary);
+    @Transactional
+    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
+    public Snapshot createSnapshot(Vocabulary vocabulary) {
+        final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
+        return s;
+    }
+
+    private SnapshotCreator getSnapshotCreator() {
+        return context.getBean(SnapshotCreator.class);
+    }
 
     /**
      * Finds snapshots of the specified asset.
@@ -145,7 +288,9 @@ public interface VocabularyService
      * @param asset Asset whose snapshots to find
      * @return List of snapshots, sorted by date of creation (latest first)
      */
-    List<Snapshot> findSnapshots(Vocabulary asset);
+    public List<Snapshot> findSnapshots(Vocabulary asset) {
+        return repositoryService.findSnapshots(asset);
+    }
 
     /**
      * Finds a version of the specified asset valid at the specified instant.
@@ -156,13 +301,12 @@ public interface VocabularyService
      * @param at    Instant at which the asset should be returned
      * @return Version of the asset valid at the specified instant
      */
-    Vocabulary findVersionValidAt(Vocabulary asset, Instant at);
+    public Vocabulary findVersionValidAt(Vocabulary asset, Instant at) {
+        return repositoryService.findVersionValidAt(asset, at);
+    }
 
-    /**
-     * Resolves preferred prefix of a vocabulary with the specified identifier.
-     *
-     * @param vocabularyUri Vocabulary identifier
-     * @return Prefix declaration, possibly empty
-     */
-    PrefixDeclaration resolvePrefix(URI vocabularyUri);
+    @Override
+    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
 }
