@@ -10,6 +10,10 @@ import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
@@ -504,5 +508,84 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                .andExpect(status().isBadRequest());
         verify(serviceMock, never()).findVersionValidAt(any(), any());
         verify(serviceMock, never()).findSnapshots(any());
+    }
+
+    @Test
+    void getAccessControlListReturnsAccessControlListRetrievedFromService() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final AccessControlList acl = Generator.generateAccessControlList(true);
+        when(serviceMock.getAccessControlList(vocabulary)).thenReturn(acl);
+
+        final MvcResult mvcResult = mockMvc.perform(
+                get(PATH + "/" + FRAGMENT + "/acl")).andReturn();
+        final AccessControlList result = readValue(mvcResult, AccessControlList.class);
+        assertEquals(acl.getUri(), result.getUri());
+        assertThat(result.getRecords(), containsSameEntities(acl.getRecords()));
+    }
+
+    @Test
+    void addAccessControlRecordsAddsRecordsToVocabularyViaService() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final List<AccessControlRecord<?>> toAdd = Generator.generateAccessControlRecords().subList(0, 2);
+        toAdd.forEach(r -> r.setUri(null));
+
+        // Explicitly use type reference to force Jackson to serialize the records with type info
+        mockMvc.perform(post(PATH + "/" + FRAGMENT + "/acl/records").content(objectMapper.writerFor(
+                                                                            new TypeReference<List<AccessControlRecord<?>>>() {
+                                                                            }).writeValueAsString(toAdd))
+                                                                    .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isNoContent());
+        final ArgumentCaptor<Collection<AccessControlRecord<?>>> captor = ArgumentCaptor.forClass(Collection.class);
+        verify(serviceMock).addAccessControlRecords(eq(vocabulary), captor.capture());
+        assertEquals(captor.getValue().size(), toAdd.size());
+        toAdd.forEach(r -> assertTrue(captor.getValue().stream().anyMatch(p -> Objects.equals(p.getHolder().getUri(),
+                                                                                              r.getHolder()
+                                                                                               .getUri()) && p.getAccessLevel() == r.getAccessLevel())));
+    }
+
+    @Test
+    void removeAccessControlRecordsRemovesRecordsFromVocabularyViaService() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final List<AccessControlRecord<?>> toRemove = Generator.generateAccessControlRecords().subList(0, 2);
+
+        // Explicitly use type reference to force Jackson to serialize the records with type info
+        mockMvc.perform(delete(PATH + "/" + FRAGMENT + "/acl/records").content(objectMapper.writerFor(
+                                                                              new TypeReference<List<AccessControlRecord<?>>>() {
+                                                                              }).writeValueAsString(toRemove))
+                                                                      .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isNoContent());
+        final ArgumentCaptor<Collection<AccessControlRecord<?>>> captor = ArgumentCaptor.forClass(Collection.class);
+        verify(serviceMock).removeAccessControlRecords(eq(vocabulary), captor.capture());
+        assertEquals(captor.getValue().size(), toRemove.size());
+        assertThat(captor.getValue(), containsSameEntities(toRemove));
+    }
+
+    @Test
+    void updateAccessControlLevelUpdatesAccessLevelOfSpecifiedRecordViaService() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final UserAccessControlRecord record = new UserAccessControlRecord();
+        record.setUri(Generator.generateUri());
+        record.setAccessLevel(AccessLevel.SECURITY);
+        record.setHolder(Generator.generateUserWithId());
+
+        mockMvc.perform(put(PATH + "/" + FRAGMENT + "/acl/records/" + IdentifierResolver.extractIdentifierFragment(
+                       record.getUri())).content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isNoContent());
+        final ArgumentCaptor<AccessControlRecord<?>> captor = ArgumentCaptor.forClass(AccessControlRecord.class);
+        verify(serviceMock).updateAccessControlLevel(eq(vocabulary), captor.capture());
+        assertEquals(record, captor.getValue());
+    }
+
+    @Test
+    void updateAccessControlLevelThrowsBadRequestForRecordUriNotMatchingPath() throws Exception {
+        final UserAccessControlRecord record = new UserAccessControlRecord();
+        record.setUri(Generator.generateUri());
+        record.setAccessLevel(AccessLevel.SECURITY);
+        record.setHolder(Generator.generateUserWithId());
+
+        mockMvc.perform(put(PATH + "/" + FRAGMENT + "/acl/records/" + Generator.randomInt())
+                                .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isBadRequest());
+        verify(serviceMock, never()).updateAccessControlLevel(any(Vocabulary.class), any(AccessControlRecord.class));
     }
 }

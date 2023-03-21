@@ -48,7 +48,6 @@ public class BaseControllerTestRunner {
                                       .setMessageConverters(createJsonLdMessageConverter(),
                                               createDefaultMessageConverter(), createStringEncodingMessageConverter(),
                                               createResourceMessageConverter())
-                                      .setUseSuffixPatternMatch(false)
                                       .setContentNegotiationManager(new ContentNegotiationManager())
                                       .build();
     }

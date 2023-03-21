@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.model.acl;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.AccessControlAgent;
@@ -7,6 +8,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.util.Objects;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
 @OWLClass(iri = Vocabulary.s_c_zaznam_rizeni_pristupu)
 public abstract class AccessControlRecord<T extends AccessControlAgent> extends AbstractEntity {
 

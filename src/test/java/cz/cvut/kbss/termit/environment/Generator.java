@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.*;
+import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.model.assignment.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
@@ -429,5 +430,40 @@ public class Generator {
                 URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup + "_instance" + Generator.randomInt()));
         group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
         return group;
+    }
+
+    public static AccessControlList generateAccessControlList(boolean withRecords) {
+        final AccessControlList acl = new AccessControlList();
+        acl.setUri(Generator.generateUri());
+        if (withRecords) {
+            acl.setRecords(new HashSet<>(generateAccessControlRecords()));
+        }
+        return acl;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static List<AccessControlRecord<?>> generateAccessControlRecords() {
+        return IntStream.range(0, 5).mapToObj(i -> {
+            final AccessControlRecord r;
+            switch (randomInt(0, 3)) {
+                case 0:
+                    r = new UserAccessControlRecord();
+                    r.setHolder(Generator.generateUserWithId());
+                    break;
+                case 1:
+                    r = new UserGroupAccessControlRecord();
+                    r.setHolder(generateUserGroup());
+                    break;
+                default:
+                    r = new RoleAccessControlRecord();
+                    final UserRole role = new UserRole();
+                    role.setUri(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
+                    r.setHolder(role);
+                    break;
+            }
+            r.setUri(Generator.generateUri());
+            r.setAccessLevel(AccessLevel.values()[Generator.randomIndex(AccessLevel.values())]);
+            return (AccessControlRecord<?>) r;
+        }).collect(Collectors.toList());
     }
 }

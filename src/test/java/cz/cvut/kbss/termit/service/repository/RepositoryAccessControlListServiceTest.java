@@ -48,8 +48,7 @@ class RepositoryAccessControlListServiceTest {
     }
 
     private AccessControlList generateAcl() {
-        final AccessControlList acl = new AccessControlList();
-        acl.setUri(Generator.generateUri());
+        final AccessControlList acl = Generator.generateAccessControlList(false);
         when(dao.find(acl.getUri())).thenReturn(Optional.of(acl));
         return acl;
     }

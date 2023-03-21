@@ -145,18 +145,12 @@ class VocabularyServiceTest {
     @Test
     void getAccessControlListRetrievesACLForSpecifiedVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final AccessControlList acl = generateAcl();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
         when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
 
         final AccessControlList result = sut.getAccessControlList(vocabulary);
         assertEquals(acl, result);
         verify(aclService).findFor(vocabulary);
-    }
-
-    private static AccessControlList generateAcl() {
-        final AccessControlList acl = new AccessControlList();
-        acl.setUri(Generator.generateUri());
-        return acl;
     }
 
     @Test
@@ -169,7 +163,7 @@ class VocabularyServiceTest {
     @Test
     void addAccessControlRecordsRetrievesACLForVocabularyAndAddsSpecifiedRecordsToIt() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final AccessControlList acl = generateAcl();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
         when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
         final UserAccessControlRecord record = generateAccessControlRecord();
 
@@ -189,7 +183,7 @@ class VocabularyServiceTest {
     @Test
     void removeAccessControlRecordsRetrievesACLForVocabularyAndRemovesSpecifiedRecordsFromIt() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final AccessControlList acl = generateAcl();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
         when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
         final UserAccessControlRecord record = generateAccessControlRecord();
         record.setUri(Generator.generateUri());
@@ -202,7 +196,7 @@ class VocabularyServiceTest {
     @Test
     void updateAccessControlLevelRetrievesACLForVocabularyAndUpdatesSpecifiedRecord() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final AccessControlList acl = generateAcl();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
         when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
         final UserAccessControlRecord record = generateAccessControlRecord();
         record.setUri(Generator.generateUri());
