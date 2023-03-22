@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -40,9 +41,12 @@ public class Validator implements VocabularyContentValidator {
     private final org.eclipse.rdf4j.repository.Repository repository;
     private final ValueFactory vf;
 
+    private final VocabularyContextMapper vocabularyContextMapper;
+
     @Autowired
-    public Validator(EntityManager em) {
+    public Validator(EntityManager em, VocabularyContextMapper vocabularyContextMapper) {
         this.repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
+        this.vocabularyContextMapper = vocabularyContextMapper;
         vf = repository.getValueFactory();
     }
 
@@ -52,7 +56,7 @@ public class Validator implements VocabularyContentValidator {
         final OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
         final RepositoryConnection c = repository.getConnection();
         final List<IRI> iris = new ArrayList<>();
-        vocabularyIris.forEach(i -> iris.add(vf.createIRI(i.toString())));
+        vocabularyIris.forEach(i -> iris.add(vf.createIRI(vocabularyContextMapper.getVocabularyContext(i).toString())));
         c.export(new TurtleWriter(writer), iris.toArray(new IRI[]{}));
         writer.close();
         final byte[] savedData = baos.toByteArray();
