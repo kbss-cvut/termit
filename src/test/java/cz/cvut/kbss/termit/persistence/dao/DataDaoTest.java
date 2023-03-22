@@ -15,8 +15,10 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.OWL;
+import cz.cvut.kbss.ontodriver.model.LangString;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -82,16 +84,18 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
+                connection.begin();
+                connection.clear();
                 connection.add(vf.createIRI(OWL.DATATYPE_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
                 connection.add(vf.createIRI(OWL.OBJECT_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
                 connection.add(vf.createIRI(OWL.ANNOTATION_PROPERTY), RDFS.SUBCLASSOF, RDF.PROPERTY);
                 connection.add(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDF.TYPE,
-                        vf.createIRI(OWL.DATATYPE_PROPERTY));
+                               vf.createIRI(OWL.DATATYPE_PROPERTY));
                 connection.add(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDFS.LABEL,
-                        vf.createLiteral(FIRST_NAME_LABEL));
+                               vf.createLiteral(FIRST_NAME_LABEL, Environment.LANGUAGE));
                 connection.add(vf.createIRI(Vocabulary.s_p_ma_prijmeni), RDF.TYPE, vf.createIRI(OWL.DATATYPE_PROPERTY));
                 connection.add(vf.createIRI(Vocabulary.s_p_ma_uzivatelske_jmeno), RDF.TYPE,
-                        vf.createIRI(OWL.DATATYPE_PROPERTY));
+                               vf.createIRI(OWL.DATATYPE_PROPERTY));
                 connection.commit();
             }
         });
@@ -103,7 +107,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         final Optional<RdfsResource> result = sut.find(URI.create(Vocabulary.s_p_ma_krestni_jmeno));
         assertTrue(result.isPresent());
         assertEquals(Vocabulary.s_p_ma_krestni_jmeno, result.get().getUri().toString());
-        assertEquals(FIRST_NAME_LABEL, result.get().getLabel());
+        assertEquals(MultilingualString.create(FIRST_NAME_LABEL, Environment.LANGUAGE), result.get().getLabel());
     }
 
     @Test
@@ -134,7 +138,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, vf.createIRI(Vocabulary.s_c_term));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                        vf.createLiteral(term.getPrimaryLabel()));
+                               vf.createLiteral(term.getPrimaryLabel()));
                 connection.commit();
             }
         });
@@ -165,9 +169,9 @@ class DataDaoTest extends BaseDaoTestRunner {
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, vf.createIRI(Vocabulary.s_c_term));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                        vf.createLiteral(term.getPrimaryLabel()));
+                               vf.createLiteral(term.getPrimaryLabel()));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                        vf.createLiteral("Another label"));
+                               vf.createLiteral("Another label"));
                 connection.commit();
             }
         });
@@ -179,8 +183,9 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void persistSavesSpecifiedResource() {
         final RdfsResource resource =
-                new RdfsResource(URI.create(RDFS.LABEL.toString()), "Label", "Label specification",
-                        RDF.PROPERTY.toString());
+                new RdfsResource(URI.create(RDFS.LABEL.toString()),
+                                 new LangString("Label", Environment.LANGUAGE),
+                                 new LangString("Label specification", Environment.LANGUAGE), RDF.PROPERTY.toString());
         transactional(() -> sut.persist(resource));
 
         final RdfsResource result = em.find(RdfsResource.class, resource.getUri());
@@ -210,11 +215,11 @@ class DataDaoTest extends BaseDaoTestRunner {
             final TypeAwareResource result = sut.exportDataAsTurtle();
             final Model model = parseExportToModel(result);
             assertAll(() -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDFS.LABEL,
-                    vf.createLiteral(FIRST_NAME_LABEL))),
-                    () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_prijmeni), RDF.TYPE,
-                            vf.createIRI(OWL.DATATYPE_PROPERTY))),
-                    () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_uzivatelske_jmeno), RDF.TYPE,
-                            vf.createIRI(OWL.DATATYPE_PROPERTY))));
+                                                      vf.createLiteral(FIRST_NAME_LABEL, Environment.LANGUAGE))),
+                      () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_prijmeni), RDF.TYPE,
+                                                      vf.createIRI(OWL.DATATYPE_PROPERTY))),
+                      () -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_uzivatelske_jmeno), RDF.TYPE,
+                                                      vf.createIRI(OWL.DATATYPE_PROPERTY))));
         });
     }
 
@@ -227,7 +232,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(Vocabulary.s_c_term), RDFS.LABEL, vf.createLiteral("Term"),
-                        vf.createIRI(context.toString()));
+                               vf.createIRI(context.toString()));
                 connection.commit();
             }
         });
@@ -249,5 +254,28 @@ class DataDaoTest extends BaseDaoTestRunner {
             throw new RuntimeException(e);
         }
         return model;
+    }
+
+    @Test
+    void findAllPropertiesConsolidatesMultipleTranslationsOfPropertyLabelIntoOneObject() {
+        generateProperties();
+        generateLabelTranslations();
+        final List<RdfsResource> result = sut.findAllProperties();
+        assertFalse(result.isEmpty());
+        final Optional<RdfsResource> firstName = result.stream().filter(r -> r.getUri().equals(URI.create(
+                Vocabulary.s_p_ma_krestni_jmeno))).findAny();
+        assertTrue(firstName.isPresent());
+        assertEquals(2, firstName.get().getLabel().getLanguages().size());
+    }
+
+    private void generateLabelTranslations() {
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            final ValueFactory vf = repo.getValueFactory();
+            try (final RepositoryConnection connection = repo.getConnection()) {
+                connection.add(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDFS.LABEL,
+                               vf.createLiteral("Má křestní jméno", "cs"));
+            }
+        });
     }
 }

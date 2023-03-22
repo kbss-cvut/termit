@@ -21,8 +21,8 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -56,7 +56,7 @@ class ExcelVocabularyExporterTest {
     private TermRepositoryService termService;
 
     @Mock
-    private VocabularyService vocabularyService;
+    private VocabularyRepositoryService vocabularyService;
 
     @InjectMocks
     private ExcelVocabularyExporter sut;
@@ -185,7 +185,7 @@ class ExcelVocabularyExporterTest {
     }
 
     @Test
-    void exportGlossaryHandlesTermsWithoutDescriptionAndDefinition() throws Exception {
+    void exportGlossaryHandlesTermsWithoutDescriptionAndDefinition() {
         when(vocabularyService.resolvePrefix(any())).thenReturn(PrefixDeclaration.EMPTY_PREFIX);
         final String[] languages = {"en", "cs"};
         final List<Term> terms = List.of(Generator.generateMultiLingualTerm(languages),

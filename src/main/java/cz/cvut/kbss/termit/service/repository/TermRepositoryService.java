@@ -37,6 +37,7 @@ import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.jena.vocabulary.SKOS;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,13 +90,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    public void persist(Term instance) {
+    public void persist(@NotNull Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
     }
 
     @Override
-    protected void preUpdate(Term instance) {
+    protected void preUpdate(@NotNull Term instance) {
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
@@ -200,7 +201,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * <p>
      * This returns all terms contained in a vocabulary's glossary.
      *
-     * @param vocabulary Vocabulary whose terms should be returned
+     * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
      * @return List of term DTOs ordered by label
      * @see #findAllFull(Vocabulary)
      */
@@ -388,41 +389,62 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     public void remove(Term instance) {
 
-        final List<TermOccurrences> ai = this.getOccurrenceInfo(instance);
 
+        super.remove(instance);
+    }
+
+    /**
+     * Checks that a term can be removed.
+     * <p>
+     * A term can be removed if:
+     * <ul>
+     *     <li>It does not have any children</li>
+     *     <li>It does not occur in any resource and is not assigned to any resource</li>
+     *     <li>Is not related to any other term via SKOS mapping properties</li>
+     * </ul>
+     *
+     * @param instance The instance to be removed, not {@code null}
+     * @throws TermRemovalException If the specified term cannot be removed
+     */
+    @Override
+    protected void preRemove(@NotNull Term instance) {
+        super.preRemove(instance);
+        final List<TermOccurrences> ai = getOccurrenceInfo(instance);
         if (!ai.isEmpty()) {
             throw new TermRemovalException(
-                    "Cannot delete the term. It is used for annotating resources : " +
+                    "Cannot delete the term. It is used for annotating resources: " +
                             ai.stream().map(TermOccurrences::getResourceLabel).collect(
                                     joining(",")));
         }
-
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
             throw new TermRemovalException(
-                    "Cannot delete the term. It is a parent of other terms : " + subTerms
+                    "Cannot delete the term. It is a parent of other terms: " + subTerms
                             .stream().map(t -> t.getUri().toString())
                             .collect(joining(",")));
         }
-
         if (instance.getProperties() != null) {
             Set<String> props = instance.getProperties().keySet();
             List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.getURI())) && !(
                     s.equalsIgnoreCase(SKOS.changeNote.toString())
                             || s.equalsIgnoreCase(SKOS.editorialNote.toString())
                             || s.equalsIgnoreCase(SKOS.historyNote.toString())
-                            || s.equalsIgnoreCase(SKOS.example.toString())
-                            || s.equalsIgnoreCase(SKOS.note.toString())
-                            || s.equalsIgnoreCase(SKOS.scopeNote.toString())
-                            || s.equalsIgnoreCase(SKOS.notation.toString()))).collect(toList());
+                            || s.equalsIgnoreCase(SKOS.note.toString()))).collect(toList());
             if (!properties.isEmpty()) {
                 throw new TermRemovalException(
                         "Cannot delete the term. It is linked to another term through properties "
                                 + String.join(",", properties));
             }
         }
+    }
 
-        super.remove(instance);
+    @Override
+    protected void postRemove(Term instance) {
+        super.postRemove(instance);
+        if (!instance.hasParentInSameVocabulary()) {
+            final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
+            v.getGlossary().removeRootTerm(instance);
+        }
     }
 
     @Override
