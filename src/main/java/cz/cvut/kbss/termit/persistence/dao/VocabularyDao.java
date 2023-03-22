@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
@@ -60,12 +61,15 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     private final ApplicationContext context;
 
+    private final VocabularyContextMapper contextMapper;
+
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
-                         ApplicationContext context) {
+                         ApplicationContext context, VocabularyContextMapper contextMapper) {
         super(Vocabulary.class, em, config.getPersistence(), descriptorFactory);
         refreshLastModified();
         this.context = context;
+        this.contextMapper = contextMapper;
     }
 
     @Override
@@ -300,8 +304,14 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      */
     public Integer getTermCount(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
-        return em.createQuery("SELECT DISTINCT COUNT(t) FROM Term t WHERE t.vocabulary = :vocabulary", Integer.class)
-                 .setParameter("vocabulary", vocabulary).getSingleResult();
+        URI vocabularyContext = contextMapper.getVocabularyContext(vocabulary);
+        return em.createNativeQuery("SELECT DISTINCT (COUNT(?t) as ?count) WHERE { " +
+                                    "GRAPH ?context {" +
+                                    "?t a ?type " +
+                                    "} }", Integer.class)
+                 .setParameter("type", URI.create(SKOS.CONCEPT))
+                 .setParameter("context", vocabularyContext)
+                 .getSingleResult();
     }
 
     /**
