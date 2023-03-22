@@ -760,4 +760,21 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term result = em.find(Term.class, term.getUri());
         assertEquals(expected, result.getDefinition());
     }
+
+    @Test
+    void removeRemovesHasTopConceptReferenceToRemovedTerm() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        vocabulary.getGlossary().addRootTerm(term);
+        transactional(() -> {
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+        });
+
+        sut.remove(term);
+        assertNull(em.find(Term.class, term.getUri()));
+        assertFalse(em.createNativeQuery("ASK { ?glossary ?hasTopConcept ?term . }", Boolean.class)
+                            .setParameter("glossary", vocabulary.getGlossary())
+                            .setParameter("hasTopConcept", URI.create(SKOS.HAS_TOP_CONCEPT))
+                            .setParameter("term", term).getSingleResult());
+    }
 }
