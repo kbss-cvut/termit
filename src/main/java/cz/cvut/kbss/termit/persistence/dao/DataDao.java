@@ -38,10 +38,7 @@ import org.springframework.stereotype.Repository;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -65,7 +62,7 @@ public class DataDao {
      * @return List of properties, ordered by label
      */
     public List<RdfsResource> findAllProperties() {
-        return em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
+        final List<RdfsResource> result = em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
                                             "BIND (?property as ?type)" +
                                             "?x a ?type ." +
                                             "OPTIONAL { ?x ?has-label ?label . }" +
@@ -74,6 +71,25 @@ public class DataDao {
                  .setParameter("property", URI.create(RDF.PROPERTY))
                  .setParameter("has-label", RDFS_LABEL)
                  .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList();
+        return consolidateTranslations(result);
+    }
+
+    private static List<RdfsResource> consolidateTranslations(List<RdfsResource> queryResult) {
+        final Map<URI, RdfsResource> map = new LinkedHashMap<>(queryResult.size());
+        queryResult.forEach(r -> {
+            if (!map.containsKey(r.getUri())) {
+                map.put(r.getUri(), r);
+            } else {
+                final RdfsResource res = map.get(r.getUri());
+                if (r.getLabel() != null) {
+                    res.getLabel().getValue().putAll(r.getLabel().getValue());
+                }
+                if (r.getComment() != null) {
+                    res.getComment().getValue().putAll(r.getComment().getValue());
+                }
+            }
+        });
+        return new ArrayList<>(map.values());
     }
 
     /**
@@ -101,14 +117,14 @@ public class DataDao {
      */
     public Optional<RdfsResource> find(URI id) {
         Objects.requireNonNull(id);
-        final List<RdfsResource> resources = em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
+        final List<RdfsResource> resources = consolidateTranslations(em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
                                                                           "BIND (?id AS ?x)" +
                                                                           "?x a ?type ." +
                                                                           "OPTIONAL { ?x ?has-label ?label .}" +
                                                                           "OPTIONAL { ?x ?has-comment ?comment . }" +
                                                                           "}", "RdfsResource").setParameter("id", id)
                                                .setParameter("has-label", RDFS_LABEL)
-                                               .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList();
+                                               .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList());
         if (resources.isEmpty()) {
             return Optional.empty();
         }

@@ -5,6 +5,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.jena.rdf.model.Literal;
@@ -13,6 +14,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.util.FileUtils;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
@@ -54,13 +56,17 @@ public class Validator implements VocabularyContentValidator {
     private static final Set<String> MODEL_RULES_TO_ADD = Set.of("m1.ttl", "m2.ttl");
 
     private final EntityManager em;
+    private final VocabularyContextMapper vocabularyContextMapper;
 
     private com.github.sgov.server.Validator validator;
     private Model validationModel;
 
     @Autowired
-    public Validator(EntityManager em, Configuration config) {
+    public Validator(EntityManager em,
+                     VocabularyContextMapper vocabularyContextMapper,
+                     Configuration config) {
         this.em = em;
+        this.vocabularyContextMapper = vocabularyContextMapper;
         initValidator(config.getPersistence().getLanguage());
     }
 
@@ -149,9 +155,11 @@ public class Validator implements VocabularyContentValidator {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
         final Repository repository = em.unwrap(Repository.class);
+        final ValueFactory vf = repository.getValueFactory();
         try (final RepositoryConnection c = repository.getConnection()) {
             final List<IRI> iris = new ArrayList<>();
-            vocabularyIris.forEach(i -> iris.add(repository.getValueFactory().createIRI(i.toString())));
+            vocabularyIris.forEach(
+                    i -> iris.add(vf.createIRI(vocabularyContextMapper.getVocabularyContext(i).toString())));
             c.export(new TurtleWriter(writer), iris.toArray(new IRI[]{}));
             writer.close();
         }

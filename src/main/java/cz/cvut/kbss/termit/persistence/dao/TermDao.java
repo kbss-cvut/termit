@@ -250,6 +250,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         newCopy.forEach(t -> subTermsCache.evict(t.getUri()));
     }
 
+    /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs
+     */
     public List<TermDto> findAll(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         try {

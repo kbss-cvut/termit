@@ -16,16 +16,13 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
-import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.*;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
@@ -33,14 +30,10 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.hamcrest.collection.IsEmptyCollection;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,17 +43,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
 
 class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
-
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private Configuration config;
@@ -81,12 +69,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         this.user = Generator.generateUserAccountWithPassword();
         transactional(() -> em.persist(user));
         Environment.setCurrentUser(user);
-        sut.setApplicationEventPublisher(eventPublisher);
-    }
-
-    @AfterEach
-    void tearDown() {
-        Mockito.reset(eventPublisher);
     }
 
     @Test
@@ -104,16 +86,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(record);
         assertEquals(user.toUser(), record.getAuthor());
         assertNotNull(record.getTimestamp());
-    }
-
-    @Test
-    void persistPublishesVocabularyCreatedEvent() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-
-        sut.persist(vocabulary);
-        final ArgumentCaptor<VocabularyCreatedEvent> captor = ArgumentCaptor.forClass(VocabularyCreatedEvent.class);
-        verify(eventPublisher).publishEvent(captor.capture());
-        assertNotNull(captor.getValue());
     }
 
     @Test
@@ -273,14 +245,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void getChangesRetrievesChangesForVocabulary() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
-        final List<AbstractChangeRecord> changes = sut.getChanges(vocabulary);
-        assertTrue(changes.isEmpty());
-    }
-
-    @Test
     void importVocabularyImportsAValidVocabulary() {
         final String skos =
                 "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
@@ -377,29 +341,6 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertEquals(vocabulary.getUri() + "/" + Constants.DEFAULT_MODEL_IRI_COMPONENT,
                      result.getModel().getUri().toString());
-    }
-
-    @Test
-    void createSnapshotCreatesSnapshotOfSpecifiedVocabulary() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
-
-        final Snapshot snapshot = sut.createSnapshot(vocabulary);
-        assertNotNull(snapshot);
-        assertEquals(vocabulary.getUri(), snapshot.getVersionOf());
-        final Vocabulary result = em.find(Vocabulary.class, snapshot.getUri());
-        assertNotNull(result);
-    }
-
-    @Test
-    void createSnapshotPublishesVocabularyCreatedEvent() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
-
-        sut.createSnapshot(vocabulary);
-        final ArgumentCaptor<VocabularyCreatedEvent> captor = ArgumentCaptor.forClass(VocabularyCreatedEvent.class);
-        verify(eventPublisher).publishEvent(captor.capture());
-        assertNotNull(captor.getValue());
     }
 
     @Test

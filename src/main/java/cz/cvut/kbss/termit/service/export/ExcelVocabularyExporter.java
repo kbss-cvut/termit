@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
@@ -62,10 +63,10 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
 
     private final TermRepositoryService termService;
 
-    private final VocabularyService vocabularyService;
+    private final VocabularyRepositoryService vocabularyService;
 
     @Autowired
-    public ExcelVocabularyExporter(TermRepositoryService termService, VocabularyService vocabularyService) {
+    public ExcelVocabularyExporter(TermRepositoryService termService, VocabularyRepositoryService vocabularyService) {
         this.termService = termService;
         this.vocabularyService = vocabularyService;
     }

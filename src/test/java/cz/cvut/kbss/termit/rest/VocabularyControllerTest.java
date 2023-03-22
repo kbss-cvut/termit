@@ -27,6 +27,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
+import org.topbraid.shacl.vocabulary.SH;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -401,7 +402,12 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void validateExecutesServiceValidate() throws Exception {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
-        final List<ValidationResult> records = Generator.generateValidationRecords();
+        final List<ValidationResult> records = Collections.singletonList(new ValidationResult()
+                                                                                 .setTermUri(Generator.generateUri())
+                                                                                 .setIssueCauseUri(
+                                                                                         Generator.generateUri())
+                                                                                 .setSeverity(URI.create(
+                                                                                         SH.Violation.toString())));
         when(serviceMock.validateContents(vocabulary)).thenReturn(records);
 
 

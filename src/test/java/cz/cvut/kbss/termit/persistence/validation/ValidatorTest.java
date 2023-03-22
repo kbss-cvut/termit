@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -29,6 +30,9 @@ class ValidatorTest extends BaseDaoTestRunner {
     private DescriptorFactory descriptorFactory;
 
     @Autowired
+    private VocabularyContextMapper vocabularyContextMapper;
+
+    @Autowired
     private Configuration config;
 
     @BeforeEach
@@ -42,7 +46,7 @@ class ValidatorTest extends BaseDaoTestRunner {
     void validateUsesOverrideRulesToAllowI18n() {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
-            final Validator sut = new Validator(em, config);
+            final Validator sut = new Validator(em, vocabularyContextMapper, config);
             final List<ValidationResult> result = sut.validate(Collections.singleton(vocabulary.getUri()));
             assertTrue(result.stream().noneMatch(
                     vr -> vr.getMessage().get("en").contains("The term does not have a preferred label in Czech")));
