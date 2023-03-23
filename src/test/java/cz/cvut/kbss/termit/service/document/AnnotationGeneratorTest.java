@@ -128,7 +128,9 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
             em.persist(vocabulary, vocabDescriptor);
             em.persist(document, descriptorFactory.documentDescriptor(vocabulary));
             em.persist(file, descriptorFactory.documentDescriptor(vocabulary));
+            term.setGlossary(vocabulary.getGlossary().getUri());
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            termTwo.setGlossary(vocabulary.getGlossary().getUri());
             em.persist(termTwo, descriptorFactory.termDescriptor(vocabulary));
         });
         enableRdfsInference(em);
@@ -244,8 +246,11 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         area.setLabel(MultilingualString.create("Území", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         area.setUri(URI.create("http://test.org/pojem/uzemi"));
         vocabulary.getGlossary().addRootTerm(mp);
+        mp.setGlossary(vocabulary.getGlossary().getUri());
         vocabulary.getGlossary().addRootTerm(ma);
+        ma.setGlossary(vocabulary.getGlossary().getUri());
         vocabulary.getGlossary().addRootTerm(area);
+        area.setGlossary(vocabulary.getGlossary().getUri());
         transactional(() -> {
             em.persist(mp, descriptorFactory.termDescriptor(vocabulary));
             em.persist(ma, descriptorFactory.termDescriptor(vocabulary));
@@ -378,7 +383,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final TermOccurrence to = new TermFileOccurrence(otherTerm.getUri(), t);
         transactional(() -> {
             em.persist(t);
-            em.persist(otherTerm);
+            em.persist(otherTerm, descriptorFactory.termDescriptor(vocabulary));
             em.persist(to);
         });
         final InputStream content = loadFile("data/rdfa-simple.html");
