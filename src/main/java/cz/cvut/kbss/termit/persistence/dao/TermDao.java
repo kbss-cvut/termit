@@ -718,30 +718,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    @Override
-    public boolean exists(URI id) {
-        Objects.requireNonNull(id);
-        try {
-            URI vocabularyContext = null;
-            boolean notInAnyContext = false;
-            try {
-                vocabularyContext = contextMapper.getVocabularyContext(resolveTermVocabulary(id));
-            } catch (NoResultException e) {
-                notInAnyContext = true;
-            }
-            return em.createNativeQuery("ASK { " +
-                                        (notInAnyContext ? "" : "GRAPH <"+vocabularyContext+"> { ") +
-                                        "?x a ?type . " +
-                                        (notInAnyContext ? "" : "} ") +
-                                        "}", Boolean.class)
-                     .setParameter("x", id)
-                     .setParameter("type", typeUri)
-                     .getSingleResult();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
     /**
      * Checks whether a term with the specified label exists in a vocabulary with the specified URI.
      * <p>
