@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -83,11 +84,15 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     private URI resolveTermVocabulary(URI termUri) {
-        return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
-                 .setParameter("inVocabulary",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                 .setParameter("t", termUri)
-                 .getSingleResult();
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
+                     .setParameter("inVocabulary",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("t", termUri)
+                     .getSingleResult();
+        } catch (NoResultException e) {
+            throw NotFoundException.create(Term.class, termUri);
+        }
     }
 
     private void postLoad(Term r) {
@@ -96,6 +101,19 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         r.setInverseRelated(loadInverseRelatedTerms(r, descriptor));
         r.setInverseRelatedMatch(loadInverseRelatedMatchTerms(r, descriptor));
         r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r, descriptor));
+    }
+
+    @Override
+    public boolean exists(URI id) {
+        try {
+            return em.createNativeQuery("ASK { GRAPH ?context { ?t a ?type } }", Boolean.class)
+                     .setParameter("context", resolveTermVocabulary(id))
+                     .setParameter("t", id)
+                     .setParameter("type", typeUri).getSingleResult();
+        } catch (NotFoundException e) {
+            // Thrown by resolveTermVocabulary when the term does not exist
+            return false;
+        }
     }
 
     public void detach(Term term) {

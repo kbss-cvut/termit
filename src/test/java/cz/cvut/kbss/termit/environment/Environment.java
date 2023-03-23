@@ -163,12 +163,11 @@ public class Environment {
         final Repository repo = em.unwrap(Repository.class);
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
-            // Using the accent-less version of popis dat ontology URL to prevent encoding issues on Windows
-            conn.add(new URL("http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/model"), BASE_URI,
+            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/popis-dat-model.ttl"), BASE_URI,
                     RDFFormat.TURTLE);
             conn.add(new File("ontology/termit-model.ttl"), BASE_URI, RDFFormat.TURTLE);
             conn.add(new File("rulesets/rules-termit-spin.ttl"), BASE_URI, RDFFormat.TURTLE);
-            conn.add(new URL("https://www.w3.org/TR/skos-reference/skos.rdf"), "", RDFFormat.RDFXML);
+            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "", RDFFormat.RDFXML);
             conn.commit();
         } catch (IOException e) {
             throw new RuntimeException("Unable to load TermIt model for import.", e);
