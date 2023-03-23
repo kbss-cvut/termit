@@ -14,6 +14,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
@@ -67,6 +68,9 @@ class TermServiceTest {
 
     @Mock
     private CommentService commentService;
+
+    @Mock
+    private VocabularyContextMapper contextMapper;
 
     @Spy
     private Configuration configuration = new Configuration();
@@ -274,6 +278,8 @@ class TermServiceTest {
     @Test
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
         final Term toAnalyze = generateTermWithId();
+        toAnalyze.setVocabulary(vocabulary.getUri());
+        when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
         verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
     }
@@ -282,6 +288,7 @@ class TermServiceTest {
     void persistChildInvokesTextAnalysisOnPersistedChildTerm() {
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
+        when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
         sut.persistChild(childToPersist, parent);
         verify(textAnalysisService).analyzeTermDefinition(childToPersist, parent.getVocabulary());
@@ -290,6 +297,8 @@ class TermServiceTest {
     @Test
     void persistRootInvokesTextAnalysisOnPersistedRootTerm() {
         final Term toPersist = generateTermWithId();
+        toPersist.setVocabulary(vocabulary.getUri());
+        when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         sut.persistRoot(toPersist, vocabulary);
         verify(textAnalysisService).analyzeTermDefinition(toPersist, vocabulary.getUri());
     }
@@ -303,6 +312,7 @@ class TermServiceTest {
         toUpdate.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
+        when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         sut.update(toUpdate);
         verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
     }
