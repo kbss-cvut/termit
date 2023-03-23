@@ -278,6 +278,8 @@ class TermServiceTest {
     @Test
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
         final Term toAnalyze = generateTermWithId();
+        toAnalyze.setVocabulary(vocabulary.getUri());
+        when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
         verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
     }
@@ -286,6 +288,7 @@ class TermServiceTest {
     void persistChildInvokesTextAnalysisOnPersistedChildTerm() {
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
+        when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
         sut.persistChild(childToPersist, parent);
         verify(textAnalysisService).analyzeTermDefinition(childToPersist, parent.getVocabulary());
@@ -294,6 +297,8 @@ class TermServiceTest {
     @Test
     void persistRootInvokesTextAnalysisOnPersistedRootTerm() {
         final Term toPersist = generateTermWithId();
+        toPersist.setVocabulary(vocabulary.getUri());
+        when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         sut.persistRoot(toPersist, vocabulary);
         verify(textAnalysisService).analyzeTermDefinition(toPersist, vocabulary.getUri());
     }

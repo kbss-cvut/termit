@@ -385,7 +385,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(term);
         final Term original = repositoryService.findRequired(term.getUri());
         if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
-            analyzeTermDefinition(term, contextMapper.getVocabularyContext(term.getVocabulary()));
+            analyzeTermDefinition(term, term.getVocabulary());
         }
         final Term result = repositoryService.update(term);
         // Ensure the change is merged into the repo before analyzing other terms
@@ -412,15 +412,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * A vocabulary with the specified identifier is used as base for the text analysis (its terms are searched for
      * during the analysis).
      *
-     * @param term              Term to analyze
-     * @param vocabularyContext Identifier of the vocabulary used for analysis
+     * @param term       Term to analyze
+     * @param vocabulary Identifier of the vocabulary used for analysis
      */
-    public void analyzeTermDefinition(AbstractTerm term, URI vocabularyContext) {
+    public void analyzeTermDefinition(AbstractTerm term, URI vocabulary) {
         Objects.requireNonNull(term);
         if (term.getDefinition().isEmpty()) {
             return;
         }
         LOG.debug("Analyzing definition of term {}.", term);
+        URI vocabularyContext = contextMapper.getVocabularyContext(vocabulary);
         textAnalysisService.analyzeTermDefinition(term, vocabularyContext);
     }
 
