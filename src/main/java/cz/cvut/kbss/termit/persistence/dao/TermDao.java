@@ -732,18 +732,22 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(label);
         Objects.requireNonNull(vocabulary);
         try {
-            return em.createNativeQuery("ASK { ?term a ?type ; " +
-                                                "?hasLabel ?label ;" +
-                                                "?inVocabulary ?vocabulary ." +
-                                                "FILTER (LCASE(?label) = LCASE(?searchString)) . "
-                                                + "}", Boolean.class)
+            URI vocabularyContext = contextMapper.getVocabularyContext(vocabulary);
+            return em.createNativeQuery("ASK { GRAPH ?context { " +
+                                        "?term a ?type ; " +
+                                        "?hasLabel ?label . } " +
+                                        "?term ?inVocabulary ?vocabulary . " +
+                                        "FILTER (LCASE(?label) = LCASE(?searchString)) . " +
+                                        "}", Boolean.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("inVocabulary",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                      .setParameter("vocabulary", vocabulary)
                      .setParameter("searchString", label,
-                                   languageTag != null ? languageTag : config.getLanguage()).getSingleResult();
+                                   languageTag != null ? languageTag : config.getLanguage())
+                     .setParameter("context", vocabularyContext)
+                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -776,6 +780,17 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public void remove(Term entity) {
         super.remove(entity);
         evictCachedSubTerms(entity.getParentTerms(), Collections.emptySet());
+    }
+
+    @Override
+    public Optional<Term> getReference(URI id) {
+        Objects.requireNonNull(id);
+        try {
+            Descriptor descriptor = descriptorFactory.termDescriptor(resolveTermVocabulary(id));
+            return Optional.ofNullable(em.getReference(type, id, descriptor));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     @Override
