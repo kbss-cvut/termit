@@ -106,8 +106,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     @Override
     public boolean exists(URI id) {
         try {
+            URI vocabularyContext = contextMapper.getVocabularyContext(resolveTermVocabulary(id));
             return em.createNativeQuery("ASK { GRAPH ?context { ?t a ?type } }", Boolean.class)
-                     .setParameter("context", resolveTermVocabulary(id))
+                     .setParameter("context", vocabularyContext)
                      .setParameter("t", id)
                      .setParameter("type", typeUri).getSingleResult();
         } catch (NotFoundException e) {
