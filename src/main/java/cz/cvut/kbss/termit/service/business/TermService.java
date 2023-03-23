@@ -12,6 +12,7 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
@@ -46,6 +47,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     private final VocabularyService vocabularyService;
 
+    private final VocabularyContextMapper vocabularyContextMapper;
+
     private final TermRepositoryService repositoryService;
 
     private final TextAnalysisService textAnalysisService;
@@ -60,11 +63,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     @Autowired
     public TermService(VocabularyExporters exporters, VocabularyService vocabularyService,
+                       VocabularyContextMapper vocabularyContextMapper,
                        TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
                        TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
                        CommentService commentService, Configuration config) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
+        this.vocabularyContextMapper = vocabularyContextMapper;
         this.repositoryService = repositoryService;
         this.textAnalysisService = textAnalysisService;
         this.termOccurrenceService = termOccurrenceService;
@@ -394,15 +399,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * during the analysis).
      *
      * @param term              Term to analyze
-     * @param vocabularyContext Identifier of the repository context of the vocabulary used for analysis
+     * @param vocabularyIri Identifier of the vocabulary used for analysis
      */
-    public void analyzeTermDefinition(AbstractTerm term, URI vocabularyContext) {
+    public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
         Objects.requireNonNull(term);
         if (term.getDefinition().isEmpty()) {
             return;
         }
         LOG.debug("Analyzing definition of term {}.", term);
-        textAnalysisService.analyzeTermDefinition(term, vocabularyContext);
+        textAnalysisService.analyzeTermDefinition(term, vocabularyContextMapper.getVocabularyContext(vocabularyIri));
     }
 
     /**
