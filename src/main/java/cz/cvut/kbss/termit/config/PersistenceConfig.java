@@ -17,8 +17,12 @@ package cz.cvut.kbss.termit.config;
 import com.github.ledsoft.jopa.spring.transaction.DelegatingEntityManager;
 import com.github.ledsoft.jopa.spring.transaction.JopaTransactionManager;
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
+import cz.cvut.kbss.termit.persistence.context.WorkspaceVocabularyContextMapper;
+import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -34,5 +38,16 @@ public class PersistenceConfig {
     @Bean(name = "txManager")
     public PlatformTransactionManager transactionManager(EntityManagerFactory emf, DelegatingEntityManager emProxy) {
         return new JopaTransactionManager(emf, emProxy);
+    }
+
+    @Bean
+    @Primary
+    public VocabularyContextMapper vocabularyContextMapper(cz.cvut.kbss.termit.util.Configuration config,
+                                                           VocabularyContextMapper wrapped,
+                                                           EditableVocabularies editableVocabularies) {
+        if (config.getWorkspace().isAllVocabulariesEditable()) {
+            return wrapped;
+        }
+        return new WorkspaceVocabularyContextMapper(wrapped, editableVocabularies);
     }
 }

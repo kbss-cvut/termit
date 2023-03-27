@@ -4,8 +4,8 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.SessionScope;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -13,21 +13,31 @@ import java.util.*;
 
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
+/**
+ * Provides access to editable vocabularies.
+ * <p>
+ * Based on configuration, all vocabularies in a repository may be editable, or just a subset of them opened for
+ * editing. When only a subset is open for editing, it assumed that it represents working copies of canonical versions
+ * of the vocabularies.
+ * <p>
+ * This bean then allows checking whether a vocabulary is editable and what repository context it occupies (important
+ * especially for the working copy scenario).
+ */
 @Component
-@SessionScope
 public class EditableVocabularies implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(EditableVocabularies.class);
 
+    private static final EditableVocabulariesHolder SHARED = new EditableVocabulariesHolder.SharedEditableVocabulariesHolder();
+
     private final boolean allVocabulariesEditable;
 
-    /**
-     * Mapping of editable vocabulary identifiers to contexts in which the editable version is stored.
-     */
-    private final Map<URI, URI> editableVocabularies = new HashMap<>();
+    private final ObjectProvider<EditableVocabulariesHolder> editableVocabularies;
 
-    public EditableVocabularies(Configuration configuration) {
+    public EditableVocabularies(Configuration configuration,
+                                ObjectProvider<EditableVocabulariesHolder> editableVocabularies) {
         this.allVocabulariesEditable = configuration.getWorkspace().isAllVocabulariesEditable();
+        this.editableVocabularies = editableVocabularies;
     }
 
     /**
@@ -39,15 +49,16 @@ public class EditableVocabularies implements Serializable {
     public void registerEditableVocabulary(URI vocabularyUri, URI contextUri) {
         Objects.requireNonNull(vocabularyUri);
         Objects.requireNonNull(contextUri);
-        LOG.debug("Registering working context {} for vocabulary {}.", uriToString(contextUri), uriToString(vocabularyUri));
-        editableVocabularies.put(vocabularyUri, contextUri);
+        LOG.debug("Registering working context {} for vocabulary {}.", uriToString(contextUri),
+                  uriToString(vocabularyUri));
+        editableVocabularies.getObject().registerEditableVocabulary(vocabularyUri, contextUri);
     }
 
     /**
      * Clears the registered contexts.
      */
     public void clear() {
-        editableVocabularies.clear();
+        editableVocabularies.ifAvailable(EditableVocabulariesHolder::clear);
     }
 
     /**
@@ -67,7 +78,8 @@ public class EditableVocabularies implements Serializable {
 
     public boolean isEditable(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
-        return allVocabulariesEditable || editableVocabularies.containsKey(vocabularyUri);
+        return allVocabulariesEditable || editableVocabularies.getIfAvailable(() -> SHARED)
+                                                              .hasRegisteredVocabulary(vocabularyUri);
     }
 
     public Optional<URI> getVocabularyContext(Vocabulary vocabulary) {
@@ -77,7 +89,7 @@ public class EditableVocabularies implements Serializable {
 
     public Optional<URI> getVocabularyContext(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
-        return Optional.ofNullable(editableVocabularies.get(vocabularyUri));
+        return editableVocabularies.getIfAvailable(() -> SHARED).getVocabularyContext(vocabularyUri);
     }
 
     /**
@@ -86,6 +98,6 @@ public class EditableVocabularies implements Serializable {
      * @return Set of context identifiers
      */
     public Set<URI> getRegisteredContexts() {
-        return new HashSet<>(editableVocabularies.values());
+        return editableVocabularies.getIfAvailable(() -> SHARED).getRegisteredContexts();
     }
 }

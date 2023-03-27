@@ -22,11 +22,12 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Service;
 
 @Service
 @Profile("!test")
-public class SystemInitializer implements SmartInitializingSingleton {
+public class SystemInitializer implements SmartInitializingSingleton, Ordered {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemInitializer.class);
 
@@ -42,5 +43,10 @@ public class SystemInitializer implements SmartInitializingSingleton {
         LOG.info("Running startup tasks.");
         appContext.getBean(AdminAccountGenerator.class).initSystemAdmin();
         appContext.getBean(VocabularyAccessControlListGenerator.class).generateMissingAccessControlLists();
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.LOWEST_PRECEDENCE;
     }
 }

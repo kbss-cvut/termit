@@ -1,12 +1,18 @@
 package cz.cvut.kbss.termit.service.init;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.net.URI;
+import java.util.List;
 
 @Service
 public class VocabularyAccessControlListGenerator {
@@ -37,8 +43,23 @@ public class VocabularyAccessControlListGenerator {
      * This method is asynchronous to prevent slowing down the system startup.
      */
     @Async
+    @Transactional
     public void generateMissingAccessControlLists() {
-        LOG.debug("Generating missing vocabulary access control lists.");
-        // TODO
+        LOG.debug("Generating missing vocabulary access control lists (ACLs).");
+        final List<URI> vocabsWithoutAcl = resolveVocabulariesWithoutAcl();
+        LOG.trace("Generating access control lists for vocabularies: {}.", vocabsWithoutAcl);
+        vocabsWithoutAcl.forEach(vUri -> {
+            final cz.cvut.kbss.termit.model.Vocabulary v = vocabularyService.findRequired(vUri);
+            final AccessControlList acl = aclService.createFor(v);
+            v.setAcl(acl.getUri());
+        });
+        LOG.trace("Finished generating {} vocabulary ACLs.", vocabsWithoutAcl.size());
+    }
+
+    private List<URI> resolveVocabulariesWithoutAcl() {
+        return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?v a ?vocabulary . FILTER NOT EXISTS { ?v ?hasAcl ?acl . } }", URI.class)
+                .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                .getResultList();
     }
 }
