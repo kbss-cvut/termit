@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see
  * <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.service;
+package cz.cvut.kbss.termit.service.init;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -28,7 +28,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +45,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SystemInitializerTest {
+class AdminAccountGeneratorTest {
 
     private static final URI ADMIN_URI = URI.create(Vocabulary.ONTOLOGY_IRI_termit + "/system-admin-user");
 
@@ -56,12 +55,9 @@ class SystemInitializerTest {
     @Mock
     private UserRepositoryService userService;
 
-    @Mock
-    private PlatformTransactionManager txManager;
-
     private String adminCredentialsDir;
 
-    private SystemInitializer sut;
+    private AdminAccountGenerator sut;
 
     @BeforeEach
     void setUp() {
@@ -70,7 +66,7 @@ class SystemInitializerTest {
                 System.getProperty("java.io.tmpdir") + File.separator + Generator.randomInt(0, 10000);
         config.getAdmin().setCredentialsLocation(adminCredentialsDir);
         config.getAdmin().setCredentialsFile(".termit-admin");
-        this.sut = new SystemInitializer(config, userService, txManager);
+        this.sut = new AdminAccountGenerator(userService, config);
     }
 
     @AfterEach
@@ -132,7 +128,7 @@ class SystemInitializerTest {
         }).when(userService).persist(any(UserAccount.class));
         final String adminFileName = ".admin-file-with-different-name";
         config.getAdmin().setCredentialsFile(adminFileName);
-        this.sut = new SystemInitializer(config, userService, txManager);
+        this.sut = new AdminAccountGenerator(userService, config);
         sut.initSystemAdmin();
         final ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
         verify(userService).persist(captor.capture());
