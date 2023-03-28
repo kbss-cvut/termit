@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
@@ -38,10 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A service that fetches parts of the UFO-compliant language for the use in TermIt.
- * <p>
- * In this class: - lang = natural language tag, e.g. "cs", or "en" - language = UFO language, e.g. OntoUML, or Basic
- * Language
+ * Jena-based implementation of {@link LanguageService}.
+ *
+ * It uses Jena to load and access languages not stored in the application main repository.
  */
 @Qualifier("jena")
 @Service
@@ -50,8 +50,8 @@ public class LanguageServiceJena extends LanguageService {
     private static final Logger LOG = LoggerFactory.getLogger(LanguageServiceJena.class);
 
     @Autowired
-    public LanguageServiceJena(ClassPathResource languageTtlUrl) {
-        super(languageTtlUrl);
+    public LanguageServiceJena(DataRepositoryService dataService, ClassPathResource languageTtlUrl) {
+        super(dataService, languageTtlUrl);
     }
 
     /**

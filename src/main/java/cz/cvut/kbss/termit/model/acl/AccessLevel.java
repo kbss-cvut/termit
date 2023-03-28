@@ -15,30 +15,37 @@ public enum AccessLevel {
      * The most restricted access level. The asset is not even visible to the user.
      */
     @Individual(iri = Vocabulary.s_i_zadna)
-    NONE(),
+    NONE(Vocabulary.s_i_zadna),
     /**
      * Read access to an asset. May include exporting, commenting, or snapshot display.
      */
     @Individual(iri = Vocabulary.s_i_cteni)
-    READ(NONE),
+    READ(Vocabulary.s_i_cteni, NONE),
     /**
      * Write access to an asset. The user can edit the asset.
      */
     @Individual(iri = Vocabulary.s_i_zapis)
-    WRITE(NONE, READ),
+    WRITE(Vocabulary.s_i_zapis, NONE, READ),
     /**
      * User can edit or remove an asset and manage access of other users/user groups to it.
      */
     @Individual(iri = Vocabulary.s_i_sprava)
-    SECURITY(NONE, READ, WRITE);
+    SECURITY(Vocabulary.s_i_sprava, NONE, READ, WRITE);
+
+    private final String iri;
 
     private final Set<AccessLevel> included;
 
-    AccessLevel(AccessLevel... included) {
+    AccessLevel(String iri, AccessLevel... included) {
+        this.iri = iri;
         this.included = Set.of(included);
     }
 
     public boolean includes(AccessLevel requested) {
         return this == requested || included.contains(requested);
+    }
+
+    public String getIri() {
+        return iri;
     }
 }

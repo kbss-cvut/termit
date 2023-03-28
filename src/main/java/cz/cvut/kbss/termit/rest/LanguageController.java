@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.language.LanguageService;
@@ -47,5 +48,10 @@ public class LanguageController extends BaseController {
     @GetMapping(value = "/types", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Term> getAll() {
         return service.getTypes();
+    }
+
+    @GetMapping(value = "/accessLevels", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RdfsResource> getAccessLevels() {
+        return service.getAccessLevels();
     }
 }
