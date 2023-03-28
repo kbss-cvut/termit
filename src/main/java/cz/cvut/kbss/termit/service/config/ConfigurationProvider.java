@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.config;
 
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * Provides access to selected configuration values.
@@ -42,6 +45,7 @@ public class ConfigurationProvider {
         result.setRoles(new HashSet<>(service.findAll()));
         result.setMaxFileUploadSize(maxFileUploadSize);
         result.setVersionSeparator(config.getNamespace().getSnapshot().getSeparator());
+        result.setAccessLevels(new LinkedHashSet<>(List.of(AccessLevel.values())));
         return result;
     }
 }
