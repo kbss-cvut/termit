@@ -292,27 +292,27 @@ public class VocabularyController extends BaseController {
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PostMapping(value = "/{fragment}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addAccessControlRecords(@PathVariable String fragment,
-                                        @RequestParam(name = QueryParams.NAMESPACE,
+    public void addAccessControlRecord(@PathVariable String fragment,
+                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                       required = false) Optional<String> namespace,
-                                        @RequestBody Collection<AccessControlRecord<?>> records) {
+                                       @RequestBody AccessControlRecord<?> record) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
-        vocabularyService.addAccessControlRecords(vocabulary, records);
-        LOG.debug("Added access control records to ACL of vocabulary {}.", vocabulary);
+        vocabularyService.addAccessControlRecords(vocabulary, record);
+        LOG.debug("Added access control record to ACL of vocabulary {}.", vocabulary);
     }
 
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping(value = "/{fragment}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeAccessControlRecords(@PathVariable String fragment,
-                                           @RequestParam(name = QueryParams.NAMESPACE,
+    public void removeAccessControlRecord(@PathVariable String fragment,
+                                          @RequestParam(name = QueryParams.NAMESPACE,
                                                          required = false) Optional<String> namespace,
-                                           @RequestBody Collection<AccessControlRecord<?>> records) {
+                                          @RequestBody AccessControlRecord<?> record) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
-        vocabularyService.removeAccessControlRecords(vocabulary, records);
-        LOG.debug("Removed access control records from ACL of vocabulary {}.", vocabulary);
+        vocabularyService.removeAccessControlRecord(vocabulary, record);
+        LOG.debug("Removed access control record from ACL of vocabulary {}.", vocabulary);
     }
 
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
@@ -320,7 +320,8 @@ public class VocabularyController extends BaseController {
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateAccessControlLevel(@PathVariable String fragment, @PathVariable String recordId,
-                                         @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+                                         @RequestParam(name = QueryParams.NAMESPACE,
+                                                       required = false) Optional<String> namespace,
                                          @RequestBody AccessControlRecord<?> record) {
         if (!record.getUri().toString().contains(recordId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Change record identifier does not match URL.");

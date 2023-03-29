@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -76,7 +75,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         // Add possible authors in case the subject already existed
         changeRecordService.getAuthors(subject)
                            .forEach(u -> acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, u)));
-        // Add records with configured access level for reader and editor user roles
+        // Add record with configured access level for reader and editor user roles
         final List<UserRole> roles = userRoleService.findAll();
         roles.stream().filter(ur -> cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType().equals(ur.getUri()
                                                                                                              .toString()))
@@ -91,31 +90,26 @@ public class RepositoryAccessControlListService implements AccessControlListServ
 
     @Transactional
     @Override
-    public void addRecords(AccessControlList acl, Collection<AccessControlRecord<?>> records) {
+    public void addRecord(AccessControlList acl, AccessControlRecord<?> record) {
         Objects.requireNonNull(acl);
-        Objects.requireNonNull(records);
-        if (records.isEmpty()) {
-            return;
-        }
+        Objects.requireNonNull(record);
         final AccessControlList toUpdate = findRequired(acl.getUri());
-        LOG.debug("Adding records {} to ACL {}.", records, toUpdate);
-        records.forEach(toUpdate::addRecord);
-        // Explicitly update to trigger merge of the new records
+        LOG.debug("Adding record {} to ACL {}.", record, toUpdate);
+        toUpdate.addRecord(record);
+        // Explicitly update to trigger merge of the new record
         dao.update(toUpdate);
     }
 
     @Transactional
     @Override
-    public void removeRecords(AccessControlList acl, Collection<AccessControlRecord<?>> records) {
+    public void removeRecord(AccessControlList acl, AccessControlRecord<?> record) {
         Objects.requireNonNull(acl);
-        Objects.requireNonNull(records);
-        if (records.isEmpty()) {
-            return;
-        }
+        Objects.requireNonNull(record);
+
         final AccessControlList toUpdate = findRequired(acl.getUri());
-        LOG.debug("Removing records {} from ACL {}.", records, toUpdate);
+        LOG.debug("Removing record {} from ACL {}.", record, toUpdate);
         assert toUpdate.getRecords() != null;
-        records.forEach(r -> toUpdate.getRecords().removeIf(acr -> Objects.equals(acr.getUri(), r.getUri())));
+        toUpdate.getRecords().removeIf(acr -> Objects.equals(acr.getUri(), record.getUri()));
         // Explicitly update to remove orphans
         dao.update(toUpdate);
     }

@@ -162,15 +162,15 @@ class VocabularyServiceTest {
     }
 
     @Test
-    void addAccessControlRecordsRetrievesACLForVocabularyAndAddsSpecifiedRecordsToIt() {
+    void addAccessControlRecordRetrievesACLForVocabularyAndAddsSpecifiedRecordToIt() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = Generator.generateAccessControlList(false);
         when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
         final UserAccessControlRecord record = generateAccessControlRecord();
 
-        sut.addAccessControlRecords(vocabulary, List.of(record));
+        sut.addAccessControlRecords(vocabulary, record);
         verify(aclService).findFor(vocabulary);
-        verify(aclService).addRecords(acl, List.of(record));
+        verify(aclService).addRecord(acl, record);
     }
 
     @NotNull
@@ -182,16 +182,16 @@ class VocabularyServiceTest {
     }
 
     @Test
-    void removeAccessControlRecordsRetrievesACLForVocabularyAndRemovesSpecifiedRecordsFromIt() {
+    void removeAccessControlRecordRetrievesACLForVocabularyAndRemovesSpecifiedRecordFromIt() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = Generator.generateAccessControlList(false);
         when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
         final UserAccessControlRecord record = generateAccessControlRecord();
         record.setUri(Generator.generateUri());
 
-        sut.removeAccessControlRecords(vocabulary, List.of(record));
+        sut.removeAccessControlRecord(vocabulary, record);
         verify(aclService).findFor(vocabulary);
-        verify(aclService).removeRecords(acl, List.of(record));
+        verify(aclService).removeRecord(acl, record);
     }
 
     @Test

@@ -526,38 +526,31 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void addAccessControlRecordsAddsRecordsToVocabularyViaService() throws Exception {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
-        final List<AccessControlRecord<?>> toAdd = Generator.generateAccessControlRecords().subList(0, 2);
-        toAdd.forEach(r -> r.setUri(null));
+        final AccessControlRecord<?> toAdd = Generator.generateAccessControlRecords().get(0);
+        toAdd.setUri(null);
 
         // Explicitly use type reference to force Jackson to serialize the records with type info
-        mockMvc.perform(post(PATH + "/" + FRAGMENT + "/acl/records").content(objectMapper.writerFor(
-                                                                            new TypeReference<List<AccessControlRecord<?>>>() {
-                                                                            }).writeValueAsString(toAdd))
+        mockMvc.perform(post(PATH + "/" + FRAGMENT + "/acl/records").content(toJson(toAdd))
                                                                     .contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isNoContent());
-        final ArgumentCaptor<Collection<AccessControlRecord<?>>> captor = ArgumentCaptor.forClass(Collection.class);
+        final ArgumentCaptor<AccessControlRecord<?>> captor = ArgumentCaptor.forClass(AccessControlRecord.class);
         verify(serviceMock).addAccessControlRecords(eq(vocabulary), captor.capture());
-        assertEquals(captor.getValue().size(), toAdd.size());
-        toAdd.forEach(r -> assertTrue(captor.getValue().stream().anyMatch(p -> Objects.equals(p.getHolder().getUri(),
-                                                                                              r.getHolder()
-                                                                                               .getUri()) && p.getAccessLevel() == r.getAccessLevel())));
+        assertEquals(toAdd.getHolder().getUri(), captor.getValue().getHolder().getUri());
+        assertEquals(toAdd.getAccessLevel(), captor.getValue().getAccessLevel());
     }
 
     @Test
-    void removeAccessControlRecordsRemovesRecordsFromVocabularyViaService() throws Exception {
+    void removeAccessControlRecordRemovesRecordFromVocabularyViaService() throws Exception {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
-        final List<AccessControlRecord<?>> toRemove = Generator.generateAccessControlRecords().subList(0, 2);
+        final AccessControlRecord<?> toRemove = Generator.generateAccessControlRecords().get(0);
 
         // Explicitly use type reference to force Jackson to serialize the records with type info
-        mockMvc.perform(delete(PATH + "/" + FRAGMENT + "/acl/records").content(objectMapper.writerFor(
-                                                                              new TypeReference<List<AccessControlRecord<?>>>() {
-                                                                              }).writeValueAsString(toRemove))
+        mockMvc.perform(delete(PATH + "/" + FRAGMENT + "/acl/records").content(toJson(toRemove))
                                                                       .contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isNoContent());
-        final ArgumentCaptor<Collection<AccessControlRecord<?>>> captor = ArgumentCaptor.forClass(Collection.class);
-        verify(serviceMock).removeAccessControlRecords(eq(vocabulary), captor.capture());
-        assertEquals(captor.getValue().size(), toRemove.size());
-        assertThat(captor.getValue(), containsSameEntities(toRemove));
+        final ArgumentCaptor<AccessControlRecord<?>> captor = ArgumentCaptor.forClass(AccessControlRecord.class);
+        verify(serviceMock).removeAccessControlRecord(eq(vocabulary), captor.capture());
+        assertEquals(toRemove.getUri(), captor.getValue().getUri());
     }
 
     @Test

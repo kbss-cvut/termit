@@ -327,27 +327,27 @@ public class VocabularyService
     }
 
     /**
-     * Adds the specified access control records to the access control list of the specified vocabulary.
+     * Adds the specified access control record to the access control list of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param records    Records to add to the target ACL
+     * @param record     Record to add to the target ACL
      */
     @Transactional
-    public void addAccessControlRecords(Vocabulary vocabulary, Collection<AccessControlRecord<?>> records) {
+    public void addAccessControlRecords(Vocabulary vocabulary, AccessControlRecord<?> record) {
         final AccessControlList acl = getAccessControlList(vocabulary);
-        aclService.addRecords(acl, records);
+        aclService.addRecord(acl, record);
     }
 
     /**
-     * Removes the specified access control records from the access control list of the specified vocabulary.
+     * Removes the specified access control record from the access control list of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param records    Records to remove from the target ACL
+     * @param record    Record to remove from the target ACL
      */
     @Transactional
-    public void removeAccessControlRecords(Vocabulary vocabulary, Collection<AccessControlRecord<?>> records) {
+    public void removeAccessControlRecord(Vocabulary vocabulary, AccessControlRecord<?> record) {
         final AccessControlList acl = getAccessControlList(vocabulary);
-        aclService.removeRecords(acl, records);
+        aclService.removeRecord(acl, record);
     }
 
     /**

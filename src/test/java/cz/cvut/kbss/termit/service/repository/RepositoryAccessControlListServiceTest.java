@@ -19,7 +19,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,7 +26,8 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RepositoryAccessControlListServiceTest {
@@ -48,14 +48,14 @@ class RepositoryAccessControlListServiceTest {
     private RepositoryAccessControlListService sut;
 
     @Test
-    void addRecordsLoadsTargetAccessControlListAddsSpecifiedRecordsToItAndUpdatesIt() {
+    void addRecordLoadsTargetAccessControlListAddsSpecifiedRecordToItAndUpdatesIt() {
         final AccessControlList acl = generateAcl();
         final AccessControlRecord<UserRole> toAdd = new RoleAccessControlRecord();
         toAdd.setAccessLevel(AccessLevel.READ);
         toAdd.setHolder(new UserRole());
         toAdd.getHolder().setUri(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
 
-        sut.addRecords(acl, Collections.singleton(toAdd));
+        sut.addRecord(acl, toAdd);
         verify(dao).find(acl.getUri());
         final ArgumentCaptor<AccessControlList> captor = ArgumentCaptor.forClass(AccessControlList.class);
         verify(dao).update(captor.capture());
@@ -70,16 +70,6 @@ class RepositoryAccessControlListServiceTest {
     }
 
     @Test
-    void addRecordsDoesNothingWhenNoRecordsAreProvidedForAddition() {
-        final AccessControlList acl = new AccessControlList();
-        acl.setUri(Generator.generateUri());
-
-        sut.addRecords(acl, Collections.emptyList());
-        verify(dao, never()).find(any());
-        verify(dao, never()).update(any());
-    }
-
-    @Test
     void removeRecordsLoadsTargetAccessControlListRemovesSpecifiedRecordsAndUpdatesIt() {
         final AccessControlList acl = generateAcl();
         final UserAccessControlRecord existingRecord = new UserAccessControlRecord();
@@ -91,22 +81,12 @@ class RepositoryAccessControlListServiceTest {
         toRemove.setHolder(Generator.generateUserGroup());
         acl.addRecord(toRemove);
 
-        sut.removeRecords(acl, Collections.singletonList(toRemove));
+        sut.removeRecord(acl, toRemove);
         verify(dao).find(acl.getUri());
         final ArgumentCaptor<AccessControlList> captor = ArgumentCaptor.forClass(AccessControlList.class);
         verify(dao).update(captor.capture());
         assertEquals(acl.getUri(), captor.getValue().getUri());
         assertThat(captor.getValue().getRecords(), not(hasItem(toRemove)));
-    }
-
-    @Test
-    void removeRecordsDoesNothingWhenNoRecordsAreProvidedForRemoval() {
-        final AccessControlList acl = new AccessControlList();
-        acl.setUri(Generator.generateUri());
-
-        sut.removeRecords(acl, Collections.emptyList());
-        verify(dao, never()).find(any());
-        verify(dao, never()).update(any());
     }
 
     @Test

@@ -5,7 +5,6 @@ import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 
 import java.net.URI;
-import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -56,20 +55,20 @@ public interface AccessControlListService {
     AccessControlList createFor(HasIdentifier subject);
 
     /**
-     * Adds the specified records to the specified target {@link AccessControlList}.
+     * Adds the specified record to the specified target {@link AccessControlList}.
      *
-     * @param acl     Target ACL
-     * @param records Records to add to the ACL
+     * @param acl    Target ACL
+     * @param record Record to add to the ACL
      */
-    void addRecords(AccessControlList acl, Collection<AccessControlRecord<?>> records);
+    void addRecord(AccessControlList acl, AccessControlRecord<?> record);
 
     /**
-     * Removes the specified records from the specified target {@link AccessControlList}.
+     * Removes the specified record from the specified target {@link AccessControlList}.
      *
-     * @param acl     Target ACL
-     * @param records Records to remove from the ACL
+     * @param acl    Target ACL
+     * @param record Record to remove from the ACL
      */
-    void removeRecords(AccessControlList acl, Collection<AccessControlRecord<?>> records);
+    void removeRecord(AccessControlList acl, AccessControlRecord<?> record);
 
     /**
      * Updates access level in specified record in the specified target {@link AccessControlList}.
