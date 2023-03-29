@@ -36,6 +36,7 @@ public class UserGroupController extends BaseController {
         this.groupService = groupService;
     }
 
+    @PreAuthorize("hasAnyRole('" + SecurityConstants.ROLE_ADMIN + "', '" + SecurityConstants.ROLE_FULL_USER + "')")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<UserGroup> getAll() {
         return groupService.findAll();
