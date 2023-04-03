@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
@@ -321,7 +322,12 @@ public class VocabularyService
      * @return Access control list of the specified vocabulary
      */
     @Transactional(readOnly = true)
-    public AccessControlList getAccessControlList(Vocabulary vocabulary) {
+    public AccessControlListDto getAccessControlList(Vocabulary vocabulary) {
+        return aclService.findForAsDto(vocabulary).orElseThrow(
+                () -> new NotFoundException("Access control list for vocabulary " + vocabulary + " not found."));
+    }
+
+    private AccessControlList findRequiredAclForVocabulary(Vocabulary vocabulary) {
         return aclService.findFor(vocabulary).orElseThrow(
                 () -> new NotFoundException("Access control list for vocabulary " + vocabulary + " not found."));
     }
@@ -334,7 +340,7 @@ public class VocabularyService
      */
     @Transactional
     public void addAccessControlRecords(Vocabulary vocabulary, AccessControlRecord<?> record) {
-        final AccessControlList acl = getAccessControlList(vocabulary);
+        final AccessControlList acl = findRequiredAclForVocabulary(vocabulary);
         aclService.addRecord(acl, record);
     }
 
@@ -346,7 +352,7 @@ public class VocabularyService
      */
     @Transactional
     public void removeAccessControlRecord(Vocabulary vocabulary, AccessControlRecord<?> record) {
-        final AccessControlList acl = getAccessControlList(vocabulary);
+        final AccessControlList acl = findRequiredAclForVocabulary(vocabulary);
         aclService.removeRecord(acl, record);
     }
 
@@ -358,7 +364,7 @@ public class VocabularyService
      */
     @Transactional
     public void updateAccessControlLevel(Vocabulary vocabulary, AccessControlRecord<?> update) {
-        final AccessControlList acl = getAccessControlList(vocabulary);
+        final AccessControlList acl = findRequiredAclForVocabulary(vocabulary);
         aclService.updateRecordAccessLevel(acl, update);
     }
 

@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -37,8 +38,18 @@ public interface AccessControlListService {
      *
      * @param subject Subject of the ACL
      * @return Matching ACL instance wrapped in an {@link Optional}, empty {@link Optional} if no such ACL exists
+     * @see #findForAsDto(HasIdentifier)
      */
     Optional<AccessControlList> findFor(HasIdentifier subject);
+
+    /**
+     * Finds an {@link AccessControlList} guarding access to the specified subject and returns it as DTO.
+     *
+     * @param subject Subject of the ACL
+     * @return Matching ACL instance DTO wrapped in an {@link Optional}, empty {@link Optional} if no such ACL exists
+     * @see #findFor(HasIdentifier)
+     */
+    Optional<AccessControlListDto> findForAsDto(HasIdentifier subject);
 
     /**
      * Creates and persists an {@link AccessControlList} with default access records and returns it.

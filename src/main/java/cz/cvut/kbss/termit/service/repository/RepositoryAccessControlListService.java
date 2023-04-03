@@ -1,5 +1,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.*;
@@ -30,13 +32,17 @@ public class RepositoryAccessControlListService implements AccessControlListServ
 
     private final UserRoleRepositoryService userRoleService;
 
+    private final DtoMapper dtoMapper;
+
     private final Configuration.ACL aclConfig;
 
     public RepositoryAccessControlListService(AccessControlListDao dao, ChangeRecordService changeRecordService,
-                                              UserRoleRepositoryService userRoleService, Configuration config) {
+                                              UserRoleRepositoryService userRoleService,
+                                              DtoMapper dtoMapper, Configuration config) {
         this.dao = dao;
         this.changeRecordService = changeRecordService;
         this.userRoleService = userRoleService;
+        this.dtoMapper = dtoMapper;
         this.aclConfig = config.getAcl();
     }
 
@@ -53,6 +59,11 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     @Override
     public Optional<AccessControlList> findFor(HasIdentifier subject) {
         return dao.findFor(subject);
+    }
+
+    @Override
+    public Optional<AccessControlListDto> findForAsDto(HasIdentifier subject) {
+        return findFor(subject).map(dtoMapper::accessControlListToDto);
     }
 
     @Transactional

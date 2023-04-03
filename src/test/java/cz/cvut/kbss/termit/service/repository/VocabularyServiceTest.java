@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -147,18 +148,18 @@ class VocabularyServiceTest {
     void getAccessControlListRetrievesACLForSpecifiedVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = Generator.generateAccessControlList(false);
-        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+        when(aclService.findForAsDto(vocabulary)).thenReturn(Optional.of(Environment.getDtoMapper().accessControlListToDto(acl)));
 
-        final AccessControlList result = sut.getAccessControlList(vocabulary);
-        assertEquals(acl, result);
-        verify(aclService).findFor(vocabulary);
+        final AccessControlListDto result = sut.getAccessControlList(vocabulary);
+        assertEquals(acl.getUri(), result.getUri());
+        verify(aclService).findForAsDto(vocabulary);
     }
 
     @Test
     void getAccessControlListThrowsNotFoundExceptionWhenNoACLIsFoundForSpecifiedVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         assertThrows(NotFoundException.class, () -> sut.getAccessControlList(vocabulary));
-        verify(aclService).findFor(vocabulary);
+        verify(aclService).findForAsDto(vocabulary);
     }
 
     @Test

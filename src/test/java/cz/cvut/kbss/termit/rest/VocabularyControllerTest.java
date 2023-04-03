@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.rest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -514,11 +515,11 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     void getAccessControlListReturnsAccessControlListRetrievedFromService() throws Exception {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final AccessControlList acl = Generator.generateAccessControlList(true);
-        when(serviceMock.getAccessControlList(vocabulary)).thenReturn(acl);
+        final AccessControlListDto dto = Environment.getDtoMapper().accessControlListToDto(acl);
+        when(serviceMock.getAccessControlList(vocabulary)).thenReturn(dto);
 
-        final MvcResult mvcResult = mockMvc.perform(
-                get(PATH + "/" + FRAGMENT + "/acl")).andReturn();
-        final AccessControlList result = readValue(mvcResult, AccessControlList.class);
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/acl")).andReturn();
+        final AccessControlListDto result = readValue(mvcResult, AccessControlListDto.class);
         assertEquals(acl.getUri(), result.getUri());
         assertThat(result.getRecords(), containsSameEntities(acl.getRecords()));
     }

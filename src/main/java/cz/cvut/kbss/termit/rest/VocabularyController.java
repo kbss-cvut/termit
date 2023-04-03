@@ -17,9 +17,9 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -281,8 +281,8 @@ public class VocabularyController extends BaseController {
 
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @GetMapping(value = "/{fragment}/acl", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public AccessControlList getAccessControlList(@PathVariable String fragment,
-                                                  @RequestParam(name = QueryParams.NAMESPACE,
+    public AccessControlListDto getAccessControlList(@PathVariable String fragment,
+                                                     @RequestParam(name = QueryParams.NAMESPACE,
                                                                 required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
