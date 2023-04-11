@@ -313,7 +313,7 @@ termit-pojem:má-cíl  a  <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
-                ", \"Has target"@en , "Má cíl"@cs .
+                "Has target"@en , "Má cíl"@cs .
 
 termit-pojem:má-slovník-pro-analýzu
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
