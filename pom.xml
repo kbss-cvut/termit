@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.8</version>
+        <version>2.7.9</version>
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>2.16.2</version>
+    <version>2.16.3</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -25,7 +25,7 @@
 
     <properties>
         <java.version>11</java.version>
-        <org.apache.tika.tika-core.version>2.6.0</org.apache.tika.tika-core.version>
+        <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
         <cz.cvut.kbss.jopa.version>0.21.1</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.12.3</cz.cvut.kbss.jsonld.version>
@@ -250,7 +250,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.15.3</version>
+            <version>1.15.4</version>
         </dependency>
 
         <!-- Flexmark for handling Markdown -->
@@ -295,7 +295,7 @@
         <dependency>
             <groupId>net.bull.javamelody</groupId>
             <artifactId>javamelody-spring-boot-starter</artifactId>
-            <version>1.91.0</version>
+            <version>1.92.0</version>
         </dependency>
 
         <!-- Caching -->
@@ -431,9 +431,9 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
+                <groupId>dev.aspectj</groupId>
                 <artifactId>aspectj-maven-plugin</artifactId>
-                <version>1.14.0</version>
+                <version>1.13.1</version>
                 <configuration>
                     <complianceLevel>${java.version}</complianceLevel>
                     <source>${java.version}</source>
