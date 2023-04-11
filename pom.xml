@@ -28,7 +28,7 @@
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
         <cz.cvut.kbss.jopa.version>0.21.1</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.12.0</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jsonld.version>0.12.3</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.7</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->

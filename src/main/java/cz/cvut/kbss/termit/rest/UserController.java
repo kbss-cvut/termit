@@ -1,19 +1,16 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
@@ -53,7 +50,7 @@ public class UserController extends BaseController {
         this.userService = userService;
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
+    @PreAuthorize("hasAnyRole('" + SecurityConstants.ROLE_ADMIN + "', '" + SecurityConstants.ROLE_FULL_USER + "')")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<UserAccount> getAll() {
         return userService.findAll();
@@ -83,7 +80,8 @@ public class UserController extends BaseController {
     }
 
     private UserAccount getUserAccountForUpdate(Optional<String> namespace, String identifierFragment) {
-        final URI id = idResolver.resolveIdentifier(namespace.orElse(config.getNamespace().getUser()), identifierFragment);
+        final URI id = idResolver.resolveIdentifier(namespace.orElse(config.getNamespace().getUser()),
+                                                    identifierFragment);
         return userService.findRequired(id);
     }
 
@@ -115,7 +113,7 @@ public class UserController extends BaseController {
 
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PutMapping(value = "/{fragment}/role",
-        consumes = {MediaType.TEXT_PLAIN_VALUE})
+                consumes = {MediaType.TEXT_PLAIN_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeRole(@PathVariable(name = "fragment") String identifierFragment,
                            @RequestParam(name = "namespace") Optional<String> namespace,

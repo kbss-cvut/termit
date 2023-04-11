@@ -5,6 +5,11 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 import java.net.URI;
 import java.util.Set;
@@ -15,12 +20,20 @@ class EditableVocabulariesTest {
 
     private Configuration configuration;
 
+    private ApplicationContext appContext;
+
     private EditableVocabularies sut;
 
     @BeforeEach
     void setUp() {
         this.configuration = new Configuration();
-        this.sut = new EditableVocabularies(configuration);
+        final AnnotationConfigWebApplicationContext appCtx = new AnnotationConfigWebApplicationContext();
+        appCtx.register(EditableVocabulariesHolder.class);
+        appCtx.refresh();
+        this.appContext = appCtx;
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        this.sut = new EditableVocabularies(configuration, appCtx.getBeanProvider(EditableVocabulariesHolder.class));
     }
 
     @Test
@@ -35,7 +48,7 @@ class EditableVocabulariesTest {
     @Test
     void isEditableReturnsTrueForUnregisteredVocabularyWhenAllVocabulariesAreEditable() {
         configuration.getWorkspace().setAllVocabulariesEditable(true);
-        this.sut = new EditableVocabularies(configuration);
+        this.sut = new EditableVocabularies(configuration, appContext.getBeanProvider(EditableVocabulariesHolder.class));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
         assertTrue(sut.isEditable(vocabulary));
@@ -44,7 +57,7 @@ class EditableVocabulariesTest {
     @Test
     void isEditableReturnsFalseForUnregisteredVocabularyWhenAllVocabulariesAreNotEditable() {
         configuration.getWorkspace().setAllVocabulariesEditable(false);
-        this.sut = new EditableVocabularies(configuration);
+        this.sut = new EditableVocabularies(configuration, appContext.getBeanProvider(EditableVocabulariesHolder.class));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
         assertFalse(sut.isEditable(vocabulary));

@@ -20,13 +20,18 @@ import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -38,6 +43,13 @@ public class DescriptorFactory {
     private final EntityManagerFactory emf;
 
     private final VocabularyContextMapper contextMapper;
+
+    /**
+     * Static descriptors are not dependent on particular instances.
+     * <p>
+     * They are based on the target entity class.
+     */
+    private final Map<Class<?>, Descriptor> staticDescriptors = new HashMap<>();
 
     @Autowired
     public DescriptorFactory(EntityManagerFactory emf, VocabularyContextMapper contextMapper) {
@@ -88,7 +100,7 @@ public class DescriptorFactory {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "glossary"), glossaryDescriptor(vocabularyUri));
         descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "document"),
-                documentDescriptor(vocabularyUri));
+                                          documentDescriptor(vocabularyUri));
         return descriptor;
     }
 
@@ -250,5 +262,39 @@ public class DescriptorFactory {
         Objects.requireNonNull(term);
         assert term.getVocabulary() != null;
         return termDescriptor(term.getVocabulary());
+    }
+
+    /**
+     * Gets descriptor for storing {@link UserGroup} instances.
+     * <p>
+     * All instances are stored in the same repository context.
+     *
+     * @return Persistence descriptor
+     */
+    public Descriptor userGroupDescriptor() {
+        return staticDescriptors.computeIfAbsent(UserGroup.class, (cls) -> {
+            final EntityDescriptor descriptor = new EntityDescriptor(URI.create(StaticContexts.USER_GROUPS));
+            descriptor.addAttributeContext(emf.getMetamodel().entity(UserGroup.class).getAttribute("members"), null);
+            return descriptor;
+        });
+    }
+
+    /**
+     * Gets a descriptor for storing {@link AccessControlList} instances.
+     * <p>
+     * All instances are stored in the same repository context.
+     *
+     * @return Persistence descriptor
+     */
+    public Descriptor accessControlListDescriptor() {
+        return staticDescriptors.computeIfAbsent(AccessControlList.class, (cls) -> {
+            final EntityDescriptor descriptor = new EntityDescriptor(URI.create(StaticContexts.ACCESS_CONTROL_LISTS));
+            final EntityDescriptor recordsDesc = new EntityDescriptor(URI.create(StaticContexts.ACCESS_CONTROL_LISTS));
+            recordsDesc.addAttributeContext(emf.getMetamodel().entity(AccessControlRecord.class).getAttribute("holder"),
+                                            null);
+            descriptor.addAttributeDescriptor(
+                    emf.getMetamodel().entity(AccessControlList.class).getAttribute("records"), recordsDesc);
+            return descriptor;
+        });
     }
 }

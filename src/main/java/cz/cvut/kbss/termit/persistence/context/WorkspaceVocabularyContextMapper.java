@@ -1,8 +1,6 @@
 package cz.cvut.kbss.termit.persistence.context;
 
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Optional;
@@ -13,8 +11,6 @@ import java.util.Optional;
  * When resolving vocabulary context, it is checked whether the specified vocabulary is edited. If so, the context is
  * resolved via {@link EditableVocabularies}, as the vocabulary will be an editable copy stored in a different context.
  */
-@Component
-@Primary
 public class WorkspaceVocabularyContextMapper implements VocabularyContextMapper {
 
     private final VocabularyContextMapper delegatee;
