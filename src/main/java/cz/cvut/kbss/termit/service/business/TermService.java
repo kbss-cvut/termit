@@ -335,7 +335,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term  Term to persist
      * @param owner Vocabulary to add the term to
      */
-    @PreAuthorize("@authorizationService.canEdit(#owner)")
+    @PreAuthorize("@termAuthorizationService.canCreateIn(#owner)")
     public void persistRoot(Term term, Vocabulary owner) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(owner);
@@ -350,7 +350,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param child  The child to persist
      * @param parent Existing parent term
      */
-    @PreAuthorize("@authorizationService.canEdit(#parent)")
+    @PreAuthorize("@termAuthorizationService.canModify(#parent)")
     public void persistChild(Term child, Term parent) {
         Objects.requireNonNull(child);
         Objects.requireNonNull(parent);
@@ -365,7 +365,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term Term update data
      * @return The updated term
      */
-    @PreAuthorize("@authorizationService.canEdit(#term)")
+    @PreAuthorize("@termAuthorizationService.canModify(#term)")
     @Transactional
     public Term update(Term term) {
         Objects.requireNonNull(term);
@@ -386,7 +386,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param term Term to remove
      */
-    @PreAuthorize("@authorizationService.canEdit(#term)")
+    @PreAuthorize("@termAuthorizationService.canRemove(#term)")
     public void remove(Term term) {
         Objects.requireNonNull(term);
         repositoryService.remove(term);
@@ -438,7 +438,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term             Term whose definition source is being specified
      * @param definitionSource Definition source representation
      */
-    @PreAuthorize("@authorizationService.canEdit(#term)")
+    @PreAuthorize("@termAuthorizationService.canModify(#term)")
     @Transactional
     public void setTermDefinitionSource(Term term, TermDefinitionSource definitionSource) {
         Objects.requireNonNull(term);
@@ -460,7 +460,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param term Term whose definition to remove
      */
-    @PreAuthorize("@authorizationService.canEdit(#term)")
+    @PreAuthorize("@termAuthorizationService.canModify(#term)")
     @Transactional
     public void removeTermDefinitionSource(Term term) {
         Objects.requireNonNull(term);
@@ -475,7 +475,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term   Term to update
      * @param status New status
      */
-    @PreAuthorize("@authorizationService.canEdit(#term)")
+    @PreAuthorize("@termAuthorizationService.canModify(#term)")
     @Transactional
     public void setStatus(Term term, TermStatus status) {
         repositoryService.setStatus(term, status);

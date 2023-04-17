@@ -33,7 +33,7 @@ import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
-import cz.cvut.kbss.termit.service.security.AuthorizationService;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -206,10 +206,10 @@ public class VocabularyService
      * @param vocabulary Vocabulary to be analyzed
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
-        AuthorizationService.verifySnapshotNotModified(vocabulary);
+        SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
                 importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
@@ -278,7 +278,7 @@ public class VocabularyService
      * @param vocabulary Vocabulary to snapshot
      */
     @Transactional
-    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
         eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
