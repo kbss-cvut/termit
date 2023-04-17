@@ -57,4 +57,11 @@ class VocabularyAuthorizationServiceTest {
 
         assertTrue(sut.canModify(vocabulary));
     }
+
+    @Test
+    void canCreateReturnsFalseWhenCurrentUserIsNotEditor() {
+        user.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_omezeny_uzivatel_termitu);
+        Environment.setCurrentUser(user);
+        assertFalse(sut.canCreate());
+    }
 }

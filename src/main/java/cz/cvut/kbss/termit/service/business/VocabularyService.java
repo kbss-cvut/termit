@@ -120,6 +120,7 @@ public class VocabularyService
 
     @Override
     @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
     public void persist(Vocabulary instance) {
         repositoryService.persist(instance);
         final AccessControlList acl = aclService.createFor(instance);
@@ -128,6 +129,7 @@ public class VocabularyService
     }
 
     @Override
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#instance)")
     public Vocabulary update(Vocabulary instance) {
         return repositoryService.update(instance);
     }
@@ -244,6 +246,7 @@ public class VocabularyService
      *
      * @param asset Vocabulary to remove
      */
+    @PreAuthorize("@vocabularyAuthorizationService.canRemove(#asset)")
     public void remove(Vocabulary asset) {
         repositoryService.remove(asset);
     }

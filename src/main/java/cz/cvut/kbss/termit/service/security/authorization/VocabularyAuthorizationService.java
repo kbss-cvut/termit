@@ -20,6 +20,17 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
         this.editableVocabularies = editableVocabularies;
     }
 
+    /**
+     * Checks if the current user can create a vocabulary.
+     * <p>
+     * Currently, this check means that a user must be at least in the editor role.
+     *
+     * @return {@code true} if the current user can create a vocabulary, {@code false} otherwise
+     */
+    public boolean canCreate() {
+        return isUserAtLeastEditor();
+    }
+
     private boolean isUserAtLeastEditor() {
         final UserAccount user = SecurityUtils.currentUser();
         return user.isAdmin() || user.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu);
