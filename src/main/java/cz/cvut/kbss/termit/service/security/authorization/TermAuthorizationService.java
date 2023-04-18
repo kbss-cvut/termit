@@ -1,11 +1,10 @@
 package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.termit.model.AbstractTerm;
-import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.security.model.UserRole;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 /**
  * Authorizes access to terms.
@@ -23,7 +22,7 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
 
     /**
      * Checks if the current user can create a term in the specified target vocabulary.
-     *
+     * <p>
      * A user is authorized to create a term if they are authorized to modify a vocabulary.
      *
      * @param target Owner of the new term
@@ -31,15 +30,25 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
      * otherwise
      */
     public boolean canCreateIn(Vocabulary target) {
-        return isUserAtLeastEditor() && vocabularyAuthorizationService.canModify(target);
+        return vocabularyAuthorizationService.canModify(target);
     }
 
-    private boolean isUserAtLeastEditor() {
-        final UserAccount user = SecurityUtils.currentUser();
-        return user.isAdmin() || user.hasRole(UserRole.FULL_USER);
+    /**
+     * Checks if the current user can create a child of the specified term.
+     * <p>
+     * A user is authorized to crate a child term of a term if they are authorized to modify the vocabulary that
+     * contains the parent term.
+     *
+     * @param parent Parent term of the new term
+     * @return {@code true} if the current user is authorized to create term in the parent term's vocabulary, {@code
+     * false} otherwise
+     */
+    public boolean canCreateChild(AbstractTerm parent) {
+        return canCreateIn(getVocabulary(parent));
     }
 
     private Vocabulary getVocabulary(AbstractTerm term) {
+        Objects.requireNonNull(term);
         return new Vocabulary(term.getVocabulary());
     }
 
