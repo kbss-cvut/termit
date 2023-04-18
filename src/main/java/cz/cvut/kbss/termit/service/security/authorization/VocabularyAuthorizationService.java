@@ -37,11 +37,6 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     }
 
     @Override
-    public boolean canView(Vocabulary asset) {
-        return true;
-    }
-
-    @Override
     public boolean canRead(Vocabulary asset) {
         return true;
     }

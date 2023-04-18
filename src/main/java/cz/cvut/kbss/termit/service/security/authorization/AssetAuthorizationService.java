@@ -4,7 +4,7 @@ import cz.cvut.kbss.termit.model.Asset;
 
 /**
  * Authorizes access to resources assets of the target type.
- *
+ * <p>
  * This class provides custom authorization logic that cannot be (at least not easily) done using SpEL. Instead, methods
  * of this class should be invoked by authorization mechanisms such as {@link org.springframework.security.access.prepost.PreAuthorize}.
  *
@@ -13,26 +13,13 @@ import cz.cvut.kbss.termit.model.Asset;
 public interface AssetAuthorizationService<T extends Asset<?>> {
 
     /**
-     * Checks whether the current user can view the specified asset.
-     * <p>
-     * View differs from read in that without view access the asset should also be excluded from listing. With view
-     * access, the asset appears in a listing, but its detail is not accessible unless read access is allowed as
-     * well.
-     *
-     * @param asset Resource access to which is to be authorized
-     * @return {@code true} if view access is authorized for the current user, {@code false} otherwise
-     * @see #canRead(T)
-     */
-    boolean canView(T asset);
-
-    /**
      * Checks whether the current user can read the specified asset.
      * <p>
-     * Read access means that the user may access the details of the specified asset.
+     * Read access means that the user may view the specified asset in a collection of assets as well access the details
+     * of the specified asset.
      *
      * @param asset Resource access to which is to be authorized
      * @return {@code true} if read access is authorized for the current user, {@code false} otherwise
-     * @see #canView(T)
      */
     boolean canRead(T asset);
 

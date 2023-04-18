@@ -333,12 +333,9 @@ class UserServiceTest {
         final UserAccount ua = Generator.generateUserAccount();
         ua.addType(Vocabulary.s_c_omezeny_uzivatel_termitu);
         final UserAccount current = Generator.generateUserAccount();
-        final UserRole rOne = new UserRole();
-        rOne.setUri(URI.create(Vocabulary.s_c_administrator_termitu));
-        final UserRole rTwo = new UserRole();
-        rTwo.setUri(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
-        final UserRole rThree = new UserRole();
-        rThree.setUri(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole rOne = new UserRole(URI.create(Vocabulary.s_c_administrator_termitu));
+        final UserRole rTwo = new UserRole(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
+        final UserRole rThree = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
         final List<UserRole> roles = Arrays.asList(rOne, rTwo, rThree);
 
         when(securityUtilsMock.getCurrentUser()).thenReturn(current);

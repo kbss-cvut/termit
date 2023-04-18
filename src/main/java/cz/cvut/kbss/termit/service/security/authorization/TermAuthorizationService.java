@@ -36,11 +36,6 @@ public class TermAuthorizationService implements AssetAuthorizationService<Abstr
         return user.isAdmin() || user.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu);
     }
 
-    @Override
-    public boolean canView(AbstractTerm asset) {
-        return vocabularyAuthorizationService.canView(getVocabulary(asset));
-    }
-
     private Vocabulary getVocabulary(AbstractTerm term) {
         return new Vocabulary(term.getVocabulary());
     }

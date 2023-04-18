@@ -37,8 +37,7 @@ class DtoMapperTest {
         final UserGroupAccessControlRecord rTwo = new UserGroupAccessControlRecord(AccessLevel.READ,
                                                                                    Generator.generateUserGroup());
         rTwo.setUri(Generator.generateUri());
-        final UserRole role = new UserRole();
-        role.setUri(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
         role.setLabel(MultilingualString.create("Reader", Environment.LANGUAGE));
         final RoleAccessControlRecord rThree = new RoleAccessControlRecord(AccessLevel.WRITE, role);
         rThree.setUri(Generator.generateUri());
@@ -65,8 +64,7 @@ class DtoMapperTest {
         final UserGroupAccessControlRecord rTwo = new UserGroupAccessControlRecord(AccessLevel.READ,
                                                                                    Generator.generateUserGroup());
         rTwo.setUri(Generator.generateUri());
-        final UserRole role = new UserRole();
-        role.setUri(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole role = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
         role.setLabel(MultilingualString.create("Reader", Environment.LANGUAGE));
         final RoleAccessControlRecord rThree = new RoleAccessControlRecord(AccessLevel.WRITE, role);
         rThree.setUri(Generator.generateUri());

@@ -46,8 +46,7 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = new AccessControlList();
         final RoleAccessControlRecord record = new RoleAccessControlRecord();
-        final UserRole editorRole = new UserRole();
-        editorRole.setUri(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
+        final UserRole editorRole = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
         record.setHolder(editorRole);
         record.setAccessLevel(AccessLevel.WRITE);
         acl.addRecord(record);

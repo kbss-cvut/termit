@@ -159,10 +159,8 @@ class RepositoryAccessControlListServiceTest {
     void createForAddsRoleAccessLevelRecordsForReaderAndEditorBasedOnConfiguration() {
         final cz.cvut.kbss.termit.model.Vocabulary subject = Generator.generateVocabularyWithId();
         Environment.setCurrentUser(Generator.generateUserAccount());
-        final UserRole editor = new UserRole();
-        editor.setUri(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
-        final UserRole reader = new UserRole();
-        reader.setUri(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole editor = new UserRole(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
+        final UserRole reader = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
         when(userRoleService.findAll()).thenReturn(List.of(reader, editor));
 
         final AccessControlList result = sut.createFor(subject);
