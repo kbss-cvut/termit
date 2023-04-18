@@ -69,9 +69,25 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
      * A use can manage access to a vocabulary when they have {@link AccessLevel#SECURITY} level access.
      *
      * @param asset Vocabulary to which access is checked
-     * @return {@code true} if current user can manage the ACL of the specified vocabulary, {@code false} otherwise
+     * @return {@code true} if the current user can manage the ACL of the specified vocabulary, {@code false} otherwise
      */
     public boolean canManageAccess(Vocabulary asset) {
+        Objects.requireNonNull(asset);
+        final UserAccount user = SecurityUtils.currentUser();
+        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset);
+    }
+
+    /**
+     * Checks if the current use can remove files from a document associated with the specified vocabulary.
+     * <p>
+     * A user can remove files from a vocabulary document when they have {@link AccessLevel#SECURITY} level access to
+     * the vocabulary.
+     *
+     * @param asset Vocabulary to which access is checked
+     * @return {@code true} if the current user can remove files from the specified vocabulary's document, {@code false}
+     * otherwise
+     */
+    public boolean canRemoveFiles(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = SecurityUtils.currentUser();
         return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset);

@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,6 +89,7 @@ public class ResourceService
      * @param toRemove a resource to remove
      */
     @Transactional
+    @PreAuthorize("@resourceAuthorizationService.canRemove(#toRemove)")
     public void remove(Resource toRemove) {
         Objects.requireNonNull(toRemove);
         if (toRemove instanceof Document && !((Document) toRemove).getFiles().isEmpty()) {
@@ -160,6 +162,7 @@ public class ResourceService
      * @throws UnsupportedAssetOperationException If content saving is not supported for the specified resource
      */
     @Transactional
+    @PreAuthorize("@resourceAuthorizationService.canModify(#resource)")
     public void saveContent(Resource resource, InputStream content) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(content);
@@ -205,6 +208,7 @@ public class ResourceService
      * @throws UnsupportedAssetOperationException If the specified resource is not a Document
      */
     @Transactional
+    @PreAuthorize("@resourceAuthorizationService.canModify(#document)")
     public void addFileToDocument(Resource document, File file) {
         Objects.requireNonNull(document);
         Objects.requireNonNull(file);
@@ -233,6 +237,7 @@ public class ResourceService
      * @throws UnsupportedAssetOperationException If the specified resource is not a Document
      */
     @Transactional
+    @PreAuthorize("@resourceAuthorizationService.canRemove(#file)")
     public void removeFile(File file) {
         Objects.requireNonNull(file);
         final Document doc = file.getDocument();
@@ -258,6 +263,7 @@ public class ResourceService
      * @param vocabularies Set of identifiers of vocabularies to use as Term sources for the analysis. Possibly empty
      * @throws UnsupportedAssetOperationException If text analysis is not supported for the specified resource
      */
+    @PreAuthorize("@resourceAuthorizationService.canModify(#resource)")
     public void runTextAnalysis(Resource resource, Set<URI> vocabularies) {
         Objects.requireNonNull(resource);
         Objects.requireNonNull(vocabularies);
@@ -311,6 +317,7 @@ public class ResourceService
     }
 
     @Transactional
+    @PreAuthorize("@resourceAuthorizationService.canModify(#instance)")
     public Resource update(Resource instance) {
         final Optional<ApplicationEvent> evt = createFileOrDocumentLabelUpdateNotification(instance);
         final Resource result = repositoryService.update(instance);

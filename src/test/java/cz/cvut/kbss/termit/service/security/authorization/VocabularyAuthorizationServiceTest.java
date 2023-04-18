@@ -190,4 +190,13 @@ class VocabularyAuthorizationServiceTest {
         verify(aclBasedAuthService, never()).hasAccessLevel(any(), any(), any());
         verify(editableVocabularies, never()).isEditable(any(Vocabulary.class));
     }
+
+    @Test
+    void canRemoveFilesReturnsTrueWhenVocabularyExistsAndUserHasSecurityAccessBasedOnAccessControlList() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canRemoveFiles(vocabulary));
+        verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
+    }
 }
