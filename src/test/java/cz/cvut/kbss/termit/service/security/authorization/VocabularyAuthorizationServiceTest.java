@@ -4,7 +4,9 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.acl.AccessControlListBasedAuthorizationService;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.junit.jupiter.api.Test;
@@ -18,10 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class VocabularyAuthorizationServiceTest {
@@ -31,6 +31,9 @@ class VocabularyAuthorizationServiceTest {
 
     @Mock
     private AccessControlListBasedAuthorizationService aclBasedAuthService;
+
+    @Mock
+    private VocabularyRepositoryService vocabularyRepositoryService;
 
     @InjectMocks
     private VocabularyAuthorizationService sut;
@@ -113,5 +116,78 @@ class VocabularyAuthorizationServiceTest {
 
         assertTrue(sut.canRemove(vocabulary));
         verify(aclBasedAuthService).canRemove(user, vocabulary);
+    }
+
+    @Test
+    void canManageAccessChecksIfCurrentUserHasSecurityAccessBasedOnAccessControlList() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canManageAccess(vocabulary));
+        verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
+    }
+
+    @Test
+    void canCreateSnapshotChecksIfCurrentUserHasSecurityAccessBasedOnAccessControlList() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(false);
+
+        assertFalse(sut.canCreateSnapshot(vocabulary));
+        verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
+    }
+
+    @Test
+    void canCreateSnapshotChecksIfVocabularyIsEditableInCurrentWorkspace() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canCreateSnapshot(vocabulary));
+        verify(editableVocabularies).isEditable(vocabulary);
+    }
+
+    @Test
+    void canReimportReturnsTrueWhenVocabularyExistsAndUserHasSecurityAccessBasedOnAccessControlList() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        when(vocabularyRepositoryService.exists(vocabulary.getUri())).thenReturn(true);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canReimport(vocabulary.getUri()));
+        verify(vocabularyRepositoryService).exists(vocabulary.getUri());
+        verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
+    }
+
+    @Test
+    void canReimportChecksIfVocabularyWithSpecifiedIriIsEditableInCurrentWorkspace() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        when(vocabularyRepositoryService.exists(vocabulary.getUri())).thenReturn(true);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canReimport(vocabulary.getUri()));
+        verify(editableVocabularies).isEditable(vocabulary);
+    }
+
+    @Test
+    void canReimportReturnsFalseWhenVocabularyDoesNotExistAndCurrentUserIsNotEditor() {
+        user.addType(UserRole.RESTRICTED_USER.getType());
+        Environment.setCurrentUser(user);
+        when(vocabularyRepositoryService.exists(vocabulary.getUri())).thenReturn(false);
+
+        assertFalse(sut.canReimport(vocabulary.getUri()));
+        verify(aclBasedAuthService, never()).hasAccessLevel(any(), any(), any());
+        verify(editableVocabularies, never()).isEditable(any(Vocabulary.class));
+    }
+
+    @Test
+    void canReimportReturnsTrueWhenVocabularyDoesNotExistAndCurrentUserIsEditor() {
+        user.addType(UserRole.FULL_USER.getType());
+        Environment.setCurrentUser(user);
+        when(vocabularyRepositoryService.exists(vocabulary.getUri())).thenReturn(false);
+
+        assertTrue(sut.canReimport(vocabulary.getUri()));
+        verify(aclBasedAuthService, never()).hasAccessLevel(any(), any(), any());
+        verify(editableVocabularies, never()).isEditable(any(Vocabulary.class));
     }
 }

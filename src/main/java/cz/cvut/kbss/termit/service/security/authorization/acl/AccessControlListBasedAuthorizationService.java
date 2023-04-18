@@ -35,13 +35,22 @@ public class AccessControlListBasedAuthorizationService {
      * @return {@code true} if read access is authorized for the specified user, {@code false} otherwise
      */
     public boolean canRead(UserAccount user, HasIdentifier resource) {
-        Objects.requireNonNull(user);
-        Objects.requireNonNull(resource);
-
         return hasAccessLevel(AccessLevel.READ, user, resource);
     }
 
-    private boolean hasAccessLevel(AccessLevel expected, UserAccount user, HasIdentifier resource) {
+    /**
+     * Checks whether the specified user has the specified level of access to the specified resource.
+     *
+     * @param expected Expected access level
+     * @param user     User whose access to validate
+     * @param resource Target resource to which access is to be validated
+     * @return {@code true} if user has access to the target resource, {@code false} otherwise
+     */
+    public boolean hasAccessLevel(AccessLevel expected, UserAccount user, HasIdentifier resource) {
+        Objects.requireNonNull(expected);
+        Objects.requireNonNull(user);
+        Objects.requireNonNull(resource);
+
         if (user.isAdmin()) {
             // Admin has always full access
             return true;
@@ -67,9 +76,6 @@ public class AccessControlListBasedAuthorizationService {
      * @see #canRemove(UserAccount, HasIdentifier)
      */
     public boolean canModify(UserAccount user, HasIdentifier resource) {
-        Objects.requireNonNull(user);
-        Objects.requireNonNull(resource);
-
         return hasAccessLevel(AccessLevel.WRITE, user, resource);
     }
 
@@ -83,9 +89,6 @@ public class AccessControlListBasedAuthorizationService {
      * @return {@code true} if the specified user can remove the specified resource, {@code false} otherwise
      */
     public boolean canRemove(UserAccount user, HasIdentifier resource) {
-        Objects.requireNonNull(user);
-        Objects.requireNonNull(resource);
-
         return hasAccessLevel(AccessLevel.SECURITY, user, resource);
     }
 }

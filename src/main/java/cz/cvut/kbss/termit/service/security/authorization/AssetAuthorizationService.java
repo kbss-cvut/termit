@@ -2,6 +2,8 @@ package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.termit.model.Asset;
 
+import java.util.Optional;
+
 /**
  * Authorizes access to resources assets of the target type.
  * <p>
@@ -11,6 +13,18 @@ import cz.cvut.kbss.termit.model.Asset;
  * @param <T> Asset type to which access is to be authorized
  */
 public interface AssetAuthorizationService<T extends Asset<?>> {
+
+    /**
+     * Checks whether the current use can read the optionally provided asset.
+     *
+     * @param asset Asset wrapped in an optional
+     * @return {@code true} if read access is authorized for the current user or the argument is empty, {@code false}
+     * otherwise
+     * @see #canRead(Asset)
+     */
+    default boolean canRead(Optional<T> asset) {
+        return asset.isEmpty() || canRead(asset.get());
+    }
 
     /**
      * Checks whether the current user can read the specified asset.

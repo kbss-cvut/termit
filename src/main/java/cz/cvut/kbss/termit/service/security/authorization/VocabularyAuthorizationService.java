@@ -1,13 +1,17 @@
 package cz.cvut.kbss.termit.service.security.authorization;
 
+import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.authorization.acl.AccessControlListBasedAuthorizationService;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.Objects;
 
 /**
@@ -20,10 +24,14 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     private final EditableVocabularies editableVocabularies;
 
+    private final VocabularyRepositoryService vocabularyRepositoryService;
+
     public VocabularyAuthorizationService(AccessControlListBasedAuthorizationService aclAuthorizationService,
-                                          EditableVocabularies editableVocabularies) {
+                                          EditableVocabularies editableVocabularies,
+                                          VocabularyRepositoryService vocabularyRepositoryService) {
         this.aclAuthorizationService = aclAuthorizationService;
         this.editableVocabularies = editableVocabularies;
+        this.vocabularyRepositoryService = vocabularyRepositoryService;
     }
 
     /**
@@ -42,11 +50,60 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
         return user.isAdmin() || user.hasRole(UserRole.FULL_USER);
     }
 
+    /**
+     * Checks if the current user can create a snapshot of the specified vocabulary.
+     *
+     * @param asset Vocabulary whose snapshot is to be created
+     * @return {@code true} if the current user can create the snapshot, {@code false} otherwise
+     */
+    public boolean canCreateSnapshot(Vocabulary asset) {
+        Objects.requireNonNull(asset);
+        final UserAccount user = SecurityUtils.currentUser();
+        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user,
+                                                      asset) && editableVocabularies.isEditable(asset);
+    }
+
+    /**
+     * Checks if the current user can manage access to the specified vocabulary.
+     * <p>
+     * A use can manage access to a vocabulary when they have {@link AccessLevel#SECURITY} level access.
+     *
+     * @param asset Vocabulary to which access is checked
+     * @return {@code true} if current user can manage the ACL of the specified vocabulary, {@code false} otherwise
+     */
+    public boolean canManageAccess(Vocabulary asset) {
+        Objects.requireNonNull(asset);
+        final UserAccount user = SecurityUtils.currentUser();
+        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset);
+    }
+
+    /**
+     * Checks if the current user can reimport a vocabulary with the specified identifier.
+     *
+     * @param vocabularyIri Vocabulary identifier
+     * @return {@code true} if the current user can reimport the vocabulary or no such vocabulary exists and the user is
+     * authorized to create a new vocabulary, {@code false} otherwise
+     */
+    public boolean canReimport(URI vocabularyIri) {
+        final UserAccount user = SecurityUtils.currentUser();
+        if (vocabularyRepositoryService.exists(vocabularyIri)) {
+            final Vocabulary voc = new Vocabulary(vocabularyIri);
+            return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, new Vocabulary(
+                    vocabularyIri)) && editableVocabularies.isEditable(voc);
+        }
+        return canCreate();
+    }
+
     @Override
     public boolean canRead(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = SecurityUtils.currentUser();
         return aclAuthorizationService.canRead(user, asset) && editableVocabularies.isEditable(asset);
+    }
+
+    public boolean canRead(VocabularyDto dto) {
+        Objects.requireNonNull(dto);
+        return canRead(new Vocabulary(dto.getUri()));
     }
 
     @Override
