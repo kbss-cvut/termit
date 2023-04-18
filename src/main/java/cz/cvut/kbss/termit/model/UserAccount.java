@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import javax.validation.constraints.NotBlank;
@@ -194,7 +196,18 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
      */
     @JsonIgnore
     public boolean isAdmin() {
-        return types != null && types.contains(Vocabulary.s_c_administrator_termitu);
+        return hasType(Vocabulary.s_c_administrator_termitu);
+    }
+
+    /**
+     * Checks if this user account has the specified role.
+     *
+     * @param role Role to evaluate
+     * @return {@code true} if this account has a type corresponding to the specified role, {@code false} otherwise
+     */
+    @JsonIgnore
+    public boolean hasRole(UserRole role) {
+        return hasType(role.getType());
     }
 
     /**
@@ -257,9 +270,6 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
 
     @Override
     public String toString() {
-        return "UserAccount{" +
-                getFullName() +
-                ", username='" + username + '\'' +
-                '}';
+        return "UserAccount{" + getFullName() + ", username='" + username + '\'' + '}';
     }
 }

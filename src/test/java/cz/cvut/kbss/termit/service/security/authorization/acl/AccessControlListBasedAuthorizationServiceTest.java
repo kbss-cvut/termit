@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -21,8 +22,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AccessControlListBasedAuthorizationServiceTest {
@@ -86,8 +87,8 @@ class AccessControlListBasedAuthorizationServiceTest {
     void canReadReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(boolean expected,
                                                                                                  AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(false);
-        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
-        user.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu);
+        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType()));
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
         final RoleAccessControlRecord record = new RoleAccessControlRecord(accessLevel, role);
         record.setUri(Generator.generateUri());
         acl.addRecord(record);
@@ -96,6 +97,13 @@ class AccessControlListBasedAuthorizationServiceTest {
 
         assertEquals(expected, sut.canRead(user, vocabulary));
         verify(aclService).findFor(vocabulary);
+    }
+
+    @Test
+    void canReadReturnsTrueWhenSpecifiedUserIsAdmin() {
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.ADMIN.getType());
+        assertTrue(sut.canRead(user, Generator.generateVocabularyWithId()));
+        verify(aclService, never()).findFor(any());
     }
 
     @ParameterizedTest
@@ -144,8 +152,8 @@ class AccessControlListBasedAuthorizationServiceTest {
     void canModifyReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(boolean expected,
                                                                                                    AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(false);
-        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
-        user.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu);
+        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType()));
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
         final RoleAccessControlRecord record = new RoleAccessControlRecord(accessLevel, role);
         record.setUri(Generator.generateUri());
         acl.addRecord(record);
@@ -154,6 +162,13 @@ class AccessControlListBasedAuthorizationServiceTest {
 
         assertEquals(expected, sut.canModify(user, vocabulary));
         verify(aclService).findFor(vocabulary);
+    }
+
+    @Test
+    void canModifyReturnsTrueWhenSpecifiedUserIsAdmin() {
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.ADMIN.getType());
+        assertTrue(sut.canModify(user, Generator.generateVocabularyWithId()));
+        verify(aclService, never()).findFor(any());
     }
 
     @ParameterizedTest
@@ -202,8 +217,8 @@ class AccessControlListBasedAuthorizationServiceTest {
     void canRemoveReturnsCorrectResultWhenACLHasRoleRecordWithMatchingRoleWithSpecifiedAccessLevel(boolean expected,
                                                                                                    AccessLevel accessLevel) {
         final AccessControlList acl = Generator.generateAccessControlList(false);
-        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
-        user.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu);
+        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType()));
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
         final RoleAccessControlRecord record = new RoleAccessControlRecord(accessLevel, role);
         record.setUri(Generator.generateUri());
         acl.addRecord(record);
@@ -212,5 +227,12 @@ class AccessControlListBasedAuthorizationServiceTest {
 
         assertEquals(expected, sut.canRemove(user, vocabulary));
         verify(aclService).findFor(vocabulary);
+    }
+
+    @Test
+    void canRemoveReturnsTrueWhenSpecifiedUserIsAdmin() {
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.ADMIN.getType());
+        assertTrue(sut.canRemove(user, Generator.generateVocabularyWithId()));
+        verify(aclService, never()).findFor(any());
     }
 }

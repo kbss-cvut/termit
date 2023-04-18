@@ -4,16 +4,22 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.service.security.authorization.acl.AccessControlListBasedAuthorizationService;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,45 +29,89 @@ class VocabularyAuthorizationServiceTest {
     @Mock
     private EditableVocabularies editableVocabularies;
 
+    @Mock
+    private AccessControlListBasedAuthorizationService aclBasedAuthService;
+
     @InjectMocks
     private VocabularyAuthorizationService sut;
 
     private final UserAccount user = Generator.generateUserAccount();
 
-    @Test
-    void canEditVocabularyChecksIfVocabularyIsEditableInCurrentWorkspace() {
-        user.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu);
+    private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+
+    @ParameterizedTest
+    @MethodSource("getCanCreateResultAndParams")
+    void canCreateRequiresAtLeastEditorUser(boolean expected, UserRole role) {
+        user.addType(role.getType());
         Environment.setCurrentUser(user);
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        assertEquals(expected, sut.canCreate());
+    }
+
+    static Stream<Arguments> getCanCreateResultAndParams() {
+        return Stream.of(
+                Arguments.of(false, UserRole.RESTRICTED_USER),
+                Arguments.of(true, UserRole.FULL_USER),
+                Arguments.of(true, UserRole.ADMIN)
+        );
+    }
+
+    @Test
+    void canReadChecksIfVocabularyIsInCurrentWorkspace() {
+        Environment.setCurrentUser(user);
         when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.canRead(user, vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canRead(vocabulary));
+        verify(editableVocabularies).isEditable(vocabulary);
+    }
+
+    @Test
+    void canReadChecksIfCurrentUserHasAccessBasedOnAccessControlList() {
+        Environment.setCurrentUser(user);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.canRead(user, vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canRead(vocabulary));
+        verify(aclBasedAuthService).canRead(user, vocabulary);
+    }
+
+    @Test
+    void canModifyChecksIfVocabularyIsEditableInCurrentWorkspace() {
+        Environment.setCurrentUser(user);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.canModify(user, vocabulary)).thenReturn(true);
 
         assertTrue(sut.canModify(vocabulary));
         verify(editableVocabularies).isEditable(vocabulary);
     }
 
     @Test
-    void canEditVocabularyReturnsFalseWhenCurrentUserIsReader() {
-        user.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_omezeny_uzivatel_termitu);
+    void canModifyChecksIfCurrentUserHasAccessBasedOnAccessControlList() {
         Environment.setCurrentUser(user);
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-
-        assertFalse(sut.canModify(vocabulary));
-    }
-
-    @Test
-    void canEditVocabularyReturnsTrueWhenCurrentUserIsEditor() {
-        user.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu);
-        Environment.setCurrentUser(user);
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        when(editableVocabularies.isEditable(any(Vocabulary.class))).thenReturn(true);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.canModify(user, vocabulary)).thenReturn(true);
 
         assertTrue(sut.canModify(vocabulary));
+        verify(aclBasedAuthService).canModify(user, vocabulary);
     }
 
     @Test
-    void canCreateReturnsFalseWhenCurrentUserIsNotEditor() {
-        user.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_omezeny_uzivatel_termitu);
+    void canRemoveChecksIfVocabularyIsEditableInCurrentWorkspace() {
         Environment.setCurrentUser(user);
-        assertFalse(sut.canCreate());
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.canRemove(user, vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canRemove(vocabulary));
+        verify(editableVocabularies).isEditable(vocabulary);
+    }
+
+    @Test
+    void canRemoveChecksIfCurrentUserHasAccessBasedOnAccessControlList() {
+        Environment.setCurrentUser(user);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+        when(aclBasedAuthService.canRemove(user, vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canRemove(vocabulary));
+        verify(aclBasedAuthService).canRemove(user, vocabulary);
     }
 }

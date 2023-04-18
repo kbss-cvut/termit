@@ -42,6 +42,10 @@ public class AccessControlListBasedAuthorizationService {
     }
 
     private boolean hasAccessLevel(AccessLevel expected, UserAccount user, HasIdentifier resource) {
+        if (user.isAdmin()) {
+            // Admin has always full access
+            return true;
+        }
         final Optional<AccessControlList> optionalAcl = aclService.findFor(resource);
         if (optionalAcl.isPresent()) {
             final Set<AccessLevel> levels = optionalAcl.get().getRecords().stream().map(r -> r.getAccessLevelFor(user))
