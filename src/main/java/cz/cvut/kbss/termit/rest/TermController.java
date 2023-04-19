@@ -124,8 +124,8 @@ public class TermController extends BaseController {
                                      .contentLength(r.contentLength())
                                      .contentType(MediaType.parseMediaType(mediaType))
                                      .header(HttpHeaders.CONTENT_DISPOSITION,
-                                             "attachment; filename=\"" + IdentifierResolver.extractIdentifierFragment(
-                                                     vocabulary.getUri()) +
+                                             "attachment; filename=\"" + IdentifierResolver.normalizeToAscii(IdentifierResolver.extractIdentifierFragment(
+                                                     vocabulary.getUri())) +
                                                      r.getFileExtension().orElse("") + "\"")
                                      .body(r);
             } catch (IOException e) {
@@ -202,9 +202,9 @@ public class TermController extends BaseController {
                                                    defaultValue = "") List<URI> includeTerms) {
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, vocabularyIdFragment));
         return includeImported ?
-               termService
-                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+                termService
+                        .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
+                termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
     }
 
     /**
@@ -264,10 +264,10 @@ public class TermController extends BaseController {
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
         return idResolver.resolveIdentifier(idResolver
-                                                    .buildNamespace(
-                                                            getVocabularyUri(namespace, vocabIdFragment).toString(),
-                                                            config.getNamespace().getTerm().getSeparator()),
-                                            termIdFragment);
+                        .buildNamespace(
+                                getVocabularyUri(namespace, vocabIdFragment).toString(),
+                                config.getNamespace().getTerm().getSeparator()),
+                termIdFragment);
     }
 
     /**
@@ -469,7 +469,7 @@ public class TermController extends BaseController {
                                       @RequestParam(name = QueryParams.NAMESPACE, required = false)
                                               Optional<String> namespace) {
         termService.analyzeTermDefinition(getById(vocabularyIdFragment, termIdFragment, namespace),
-                                          getVocabularyUri(namespace, vocabularyIdFragment));
+                getVocabularyUri(namespace, vocabularyIdFragment));
     }
 
     @PutMapping(value = "/terms/{termIdFragment}/definition-source",
@@ -548,8 +548,8 @@ public class TermController extends BaseController {
                                                    required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
         return termService.getComments(termService.getRequiredReference(termUri),
-                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
-                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
+                from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
     /**
@@ -567,8 +567,8 @@ public class TermController extends BaseController {
                                      @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
         return termService.getComments(termService.getRequiredReference(termUri),
-                                       from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
-                                       to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
+                from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
+                to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
     /**
@@ -586,12 +586,12 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                                                                                QueryParams.NAMESPACE,
-                                                                                                IdentifierResolver.extractIdentifierNamespace(
-                                                                                                        comment.getUri()),
-                                                                                                IdentifierResolver.extractIdentifierFragment(
-                                                                                                        comment.getUri())))
+                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                             QueryParams.NAMESPACE,
+                                             IdentifierResolver.extractIdentifierNamespace(
+                                                     comment.getUri()),
+                                             IdentifierResolver.extractIdentifierFragment(
+                                                     comment.getUri())))
                              .build();
     }
 
@@ -612,12 +612,12 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                                                                                QueryParams.NAMESPACE,
-                                                                                                IdentifierResolver.extractIdentifierNamespace(
-                                                                                                        comment.getUri()),
-                                                                                                IdentifierResolver.extractIdentifierFragment(
-                                                                                                        comment.getUri())))
+                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                             QueryParams.NAMESPACE,
+                                             IdentifierResolver.extractIdentifierNamespace(
+                                                     comment.getUri()),
+                                             IdentifierResolver.extractIdentifierFragment(
+                                                     comment.getUri())))
                              .build();
     }
 
