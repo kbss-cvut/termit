@@ -18,26 +18,28 @@ CONSTRUCT {
               <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix ;
               <http://purl.org/ontology/bibo/status> ?status .
 } WHERE {
-    ?vocabulary pdp:má-glosář ?glossary ;
-                dc:title ?vocabularyLabel .
-    OPTIONAL {
-        ?glossary dc:title ?glossaryLabel .
+    GRAPH ?g {
+        ?vocabulary pdp:má-glosář ?glossary ;
+                    dc:title ?vocabularyLabel .
+        OPTIONAL {
+            ?glossary dc:title ?glossaryLabel .
+        }
+        OPTIONAL {
+            ?glossary owl:versionIRI ?versionIri .
+        }
+        OPTIONAL {
+            ?glossary dc:rights ?rights .
+        }
+        OPTIONAL {
+            ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
+                      <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
+        }
+        OPTIONAL {
+            ?glossary <http://purl.org/ontology/bibo/status> ?status .
+        }
     }
     OPTIONAL {
         ?vocabulary pdp:importuje-slovník/pdp:má-glosář ?imported .
-    }
-    OPTIONAL {
-        ?glossary owl:versionIRI ?versionIri .
-    }
-    OPTIONAL {
-        ?glossary dc:rights ?rights .
-    }
-    OPTIONAL {
-        ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
-                  <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
-    }
-    OPTIONAL {
-        ?glossary <http://purl.org/ontology/bibo/status> ?status .
     }
     OPTIONAL {
         ?createRecord a pdp:vytvoření-entity ;
@@ -47,10 +49,10 @@ CONSTRUCT {
         ?author pdp:má-křestní-jméno ?firstName ;
             pdp:má-příjmení ?lastName .
         {
-          SELECT (max(?createdDate) AS ?createdDateMax)
-          WHERE {   ?createRecord a pdp:vytvoření-entity ;
-                    pdp:má-změněnou-entitu ?vocabulary ;
-                    pdp:má-datum-a-čas-modifikace ?createdDate . }
+            SELECT (max(?createdDate) AS ?createdDateMax) ?vocabulary
+            WHERE {   ?createRecord a pdp:vytvoření-entity ;
+                      pdp:má-změněnou-entitu ?vocabulary ;
+                      pdp:má-datum-a-čas-modifikace ?createdDate . } GROUP BY ?vocabulary
         }
         FILTER(?createdDateMax = ?created)
     }
