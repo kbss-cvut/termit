@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.IRI;
@@ -10,6 +11,7 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.*;
 import org.eclipse.rdf4j.query.*;
+import org.eclipse.rdf4j.query.impl.SimpleDataset;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Repository;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,13 +46,15 @@ public class SKOSExporter {
 
     private final org.eclipse.rdf4j.repository.Repository repository;
     private final ValueFactory vf;
+    private final VocabularyContextMapper contextMapper;
 
     private final Model model = new LinkedHashModel();
 
     @Autowired
-    public SKOSExporter(EntityManager em) {
+    public SKOSExporter(EntityManager em, VocabularyContextMapper contextMapper) {
         this.repository = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
         vf = repository.getValueFactory();
+        this.contextMapper = contextMapper;
     }
 
     /**
@@ -77,6 +82,7 @@ public class SKOSExporter {
         try (final RepositoryConnection conn = repository.getConnection()) {
             final GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(GLOSSARY_EXPORT_QUERY));
             gq.setBinding("vocabulary", vf.createIRI(vocabulary.getUri().toString()));
+            gq.setBinding("g", vf.createIRI(contextMapper.getVocabularyContext(vocabulary.getUri()).toString()));
             evaluateAndAddToModel(gq);
             resolvePrefixes(vf.createIRI(vocabulary.getGlossary().getUri().toString()), conn);
         }
@@ -117,6 +123,7 @@ public class SKOSExporter {
         try (final RepositoryConnection conn = repository.getConnection()) {
             final GraphQuery gq = conn.prepareGraphQuery(Utils.loadQuery(TERMS_EXPORT_QUERY));
             gq.setBinding("vocabulary", vf.createIRI(vocabulary.getUri().toString()));
+            gq.setBinding("g", vf.createIRI(contextMapper.getVocabularyContext(vocabulary.getUri()).toString()));
             evaluateAndAddToModel(gq);
         }
     }

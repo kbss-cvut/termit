@@ -149,16 +149,17 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
+                IRI context = vf.createIRI(vocabulary.getUri().toString());
                 conn.begin();
-                conn.add(glossaryIri(vocabulary), OWL.VERSIONIRI, glossaryIri(vocabulary));
+                conn.add(glossaryIri(vocabulary), OWL.VERSIONIRI, glossaryIri(vocabulary), context);
                 conn.add(glossaryIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespacePrefix"),
-                        vf.createLiteral("termit:"));
+                        vf.createLiteral("termit:"), context);
                 conn.add(glossaryIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespaceUri"),
-                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_termit));
+                        vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_termit), context);
                 conn.add(glossaryIri(vocabulary), DCTERMS.RIGHTS,
-                        vf.createIRI("https://creativecommons.org/licenses/by-nc-nd/4.0"));
+                        vf.createIRI("https://creativecommons.org/licenses/by-nc-nd/4.0"), context);
                 conn.add(glossaryIri(vocabulary), vf.createIRI("http://purl.org/ontology/bibo/status"),
-                        vf.createLiteral("Specifikace", "cs"));
+                        vf.createLiteral("Specifikace", "cs"), context);
                 conn.commit();
             }
         });
@@ -233,10 +234,11 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
+                IRI context = vf.createIRI(vocabulary.getUri().toString());
                 conn.begin();
                 final IRI iri = vf.createIRI(t.getUri().toString());
-                conn.add(iri, SKOS.ALT_LABEL, vf.createLiteral("alternativní název", "cs"));
-                conn.add(iri, SKOS.ALT_LABEL, vf.createLiteral("alternativer Name", "de"));
+                conn.add(iri, SKOS.ALT_LABEL, vf.createLiteral("alternativní název", "cs"), context);
+                conn.add(iri, SKOS.ALT_LABEL, vf.createLiteral("alternativer Name", "de"), context);
                 conn.commit();
             }
         });

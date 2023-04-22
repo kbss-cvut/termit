@@ -21,68 +21,70 @@ CONSTRUCT {
         skos:broader ?whole ;
         skos:broader ?parentEvent .
 } WHERE {
-    ?term a skos:Concept ;
-        skos:inScheme ?glossary ;
-        skos:prefLabel ?prefLabel .
-    ?vocabulary pdp:má-glosář ?glossary .
-    OPTIONAL {
-        ?term ?skosProperty ?skosPropertyValue .
-        FILTER( ?skosProperty in ( dc:source, dc:references, skos:altLabel, skos:definition, skos:scopeNote, skos:changeNote, skos:editorialNote, skos:historyNote, skos:notation, skos:example, termit:je-draft ) )
-    }
-    OPTIONAL {
-        ?term skos:broader ?broader .
-        FILTER NOT EXISTS {
-            ?term skos:broader ?intermediate .
-            ?intermediate skos:broader ?broader .
-            FILTER (?broader != ?intermediate)
+    GRAPH ?g {
+        ?term a skos:Concept ;
+            skos:inScheme ?glossary ;
+            skos:prefLabel ?prefLabel .
+        ?vocabulary pdp:má-glosář ?glossary .
+        OPTIONAL {
+            ?term ?skosProperty ?skosPropertyValue .
+            FILTER( ?skosProperty in ( dc:source, dc:references, skos:altLabel, skos:definition, skos:scopeNote, skos:changeNote, skos:editorialNote, skos:historyNote, skos:notation, skos:example, termit:je-draft ) )
         }
-        FILTER NOT EXISTS {
-            ?term skos:broadMatch ?broader .
+        OPTIONAL {
+            ?term skos:broader ?broader .
+            FILTER NOT EXISTS {
+                ?term skos:broader ?intermediate .
+                ?intermediate skos:broader ?broader .
+                FILTER (?broader != ?intermediate)
+            }
+            FILTER NOT EXISTS {
+                ?term skos:broadMatch ?broader .
+            }
         }
-    }
-    OPTIONAL {
-        ?term skos:broadMatch ?broadMatch .
-        FILTER NOT EXISTS {
-            ?term skos:broadMatch ?intermediate2 .
-            ?intermediate2 skos:broadMatch ?broadMatch .
-            FILTER (?broadMatch != ?intermediate2)
+        OPTIONAL {
+            ?term skos:broadMatch ?broadMatch .
+            FILTER NOT EXISTS {
+                ?term skos:broadMatch ?intermediate2 .
+                ?intermediate2 skos:broadMatch ?broadMatch .
+                FILTER (?broadMatch != ?intermediate2)
+            }
         }
-    }
-    OPTIONAL {
-        ?term skos:related ?related .
-        FILTER NOT EXISTS {
-            ?term skos:relatedMatch ?related .
+        OPTIONAL {
+            ?term skos:related ?related .
+            FILTER NOT EXISTS {
+                ?term skos:relatedMatch ?related .
+            }
         }
-    }
-    OPTIONAL {
-        ?term skos:relatedMatch ?relatedMatch .
-    }
-    OPTIONAL {
-        ?term skos:exactMatch ?exactMatch .
-    }
-    OPTIONAL {
-    # This ensures only parent-less terms become top concepts of their glossaries
-        BIND(IF(EXISTS {?glossary skos:hasTopConcept ?term}, ?glossary, BNODE()) as ?topOf)
-        FILTER (!ISBLANK(?topOf))
-    }
-    OPTIONAL {
-        ?term a ?type .
-        FILTER (?type != skos:Concept)
-        FILTER(!STRSTARTS(STR(?type), str(owl:)))
-        FILTER NOT EXISTS {
-            ?term a ?intermediateType .
-            ?intermediateType rdfs:subClassOf ?type .
-            FILTER (?type != ?intermediateType)
+        OPTIONAL {
+            ?term skos:relatedMatch ?relatedMatch .
         }
-    }
-    OPTIONAL {
-        ?term rdfs:subClassOf ?superClass .
-        FILTER (!sameTerm(?term, ?superClass))
-        FILTER(!STRSTARTS(STR(?superClass), str(owl:)))
-        FILTER NOT EXISTS {
-            ?term rdfs:subClassOf ?intermediateSuperClass .
-            ?intermediateSuperClass rdfs:subClassOf ?superClass .
-            FILTER (!sameTerm(?term, ?superClass) && !sameTerm(?term, ?intermediateSuperClass) && !sameTerm(?superClass, ?intermediateSuperClass))
+        OPTIONAL {
+            ?term skos:exactMatch ?exactMatch .
+        }
+        OPTIONAL {
+            # This ensures only parent-less terms become top concepts of their glossaries
+            BIND(IF(EXISTS {?glossary skos:hasTopConcept ?term}, ?glossary, BNODE()) as ?topOf)
+            FILTER (!ISBLANK(?topOf))
+        }
+        OPTIONAL {
+            ?term a ?type .
+            FILTER (?type != skos:Concept)
+            FILTER(!STRSTARTS(STR(?type), str(owl:)))
+            FILTER NOT EXISTS {
+                ?term a ?intermediateType .
+                ?intermediateType rdfs:subClassOf ?type .
+                FILTER (?type != ?intermediateType)
+            }
+        }
+        OPTIONAL {
+            ?term rdfs:subClassOf ?superClass .
+            FILTER (!sameTerm(?term, ?superClass))
+            FILTER(!STRSTARTS(STR(?superClass), str(owl:)))
+            FILTER NOT EXISTS {
+                ?term rdfs:subClassOf ?intermediateSuperClass .
+                ?intermediateSuperClass rdfs:subClassOf ?superClass .
+                FILTER (!sameTerm(?term, ?superClass) && !sameTerm(?term, ?intermediateSuperClass) && !sameTerm(?superClass, ?intermediateSuperClass))
+            }
         }
     }
     OPTIONAL {
