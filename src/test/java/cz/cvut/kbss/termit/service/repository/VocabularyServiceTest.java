@@ -232,4 +232,31 @@ class VocabularyServiceTest {
         assertEquals(AccessLevel.READ, sut.getAccessLevel(vocabulary));
         verify(authorizationService).getAccessLevel(vocabulary);
     }
+
+    @Test
+    void findRequiredEnhancesResultWithAccessLevelOfCurrentUser() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.WRITE);
+        when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
+
+        final Vocabulary result = sut.findRequired(vocabulary.getUri());
+        assertInstanceOf(cz.cvut.kbss.termit.dto.VocabularyDto.class, result);
+        assertEquals(AccessLevel.WRITE, ((cz.cvut.kbss.termit.dto.VocabularyDto) result).getAccessLevel());
+        verify(repositoryService).findRequired(vocabulary.getUri());
+        verify(authorizationService).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void findEnhancesResultWithAccessLevelOfCurrentUser() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.WRITE);
+        when(repositoryService.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+
+        final Optional<Vocabulary> result = sut.find(vocabulary.getUri());
+        assertTrue(result.isPresent());
+        assertInstanceOf(cz.cvut.kbss.termit.dto.VocabularyDto.class, result.get());
+        assertEquals(AccessLevel.WRITE, ((cz.cvut.kbss.termit.dto.VocabularyDto) result.get()).getAccessLevel());
+        verify(repositoryService).find(vocabulary.getUri());
+        verify(authorizationService).getAccessLevel(vocabulary);
+    }
 }

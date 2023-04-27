@@ -113,13 +113,21 @@ public class VocabularyService
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Optional<Vocabulary> find(URI id) {
-        return repositoryService.find(id);
+        return repositoryService.find(id).map(v -> {
+            // Enhance vocabulary data with info on current user's access level
+            final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(v);
+            dto.setAccessLevel(getAccessLevel(v));
+            return dto;
+        });
     }
 
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Vocabulary findRequired(URI id) {
-        return repositoryService.findRequired(id);
+        // Enhance vocabulary data with info on current user's access level
+        final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(repositoryService.findRequired(id));
+        dto.setAccessLevel(getAccessLevel(dto));
+        return dto;
     }
 
     @Override
