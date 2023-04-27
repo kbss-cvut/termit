@@ -59,8 +59,21 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     public boolean canCreateSnapshot(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = SecurityUtils.currentUser();
-        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user,
-                                                      asset) && editableVocabularies.isEditable(asset);
+        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset) && editableVocabularies.isEditable(asset);
+    }
+
+    /**
+     * Checks if the current user can remove a snapshot of the specified vocabulary.
+     * <p>
+     * Snapshot removal is authorized based on the target vocabulary, not on the individual snapshots.
+     *
+     * @param asset Vocabulary whose snapshot is to be removed
+     * @return {@code true} if the current user can remove the vocabulary's snapshots, {@code false} otherwise
+     */
+    public boolean canRemoveSnapshot(Vocabulary asset) {
+        Objects.requireNonNull(asset);
+        final UserAccount user = SecurityUtils.currentUser();
+        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset) && editableVocabularies.isEditable(asset);
     }
 
     /**

@@ -199,4 +199,23 @@ class VocabularyAuthorizationServiceTest {
         assertTrue(sut.canRemoveFiles(vocabulary));
         verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
     }
+
+    @Test
+    void canRemoveSnapshotChecksIfCurrentUserHasSecurityAccessBasedOnAccessControlList() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(false);
+
+        assertFalse(sut.canRemoveSnapshot(vocabulary));
+        verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
+    }
+
+    @Test
+    void canRemoveSnapshotChecksIfVocabularyIsEditableInCurrentWorkspace() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+
+        assertTrue(sut.canRemoveSnapshot(vocabulary));
+        verify(editableVocabularies).isEditable(vocabulary);
+    }
 }
