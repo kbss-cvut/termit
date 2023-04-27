@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -121,8 +122,25 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         LOG.debug("Removing record {} from ACL {}.", record, toUpdate);
         assert toUpdate.getRecords() != null;
         toUpdate.getRecords().removeIf(acr -> Objects.equals(acr.getUri(), record.getUri()));
+        verifyUserRoleRecordsArePresent(toUpdate);
         // Explicitly update to remove orphans
         dao.update(toUpdate);
+    }
+
+    private void verifyUserRoleRecordsArePresent(AccessControlList acl) {
+        boolean readerFound = false;
+        boolean editorFound = false;
+        for (AccessControlRecord<?> record : acl.getRecords()) {
+            final String holderIri = record.getHolder().getUri().toString();
+            if (Objects.equals(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType(), holderIri)) {
+                readerFound = true;
+            } else if (Objects.equals(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType(), holderIri)) {
+                editorFound = true;
+            }
+        }
+        if (!readerFound || !editorFound) {
+            throw new UnsupportedOperationException("Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+        }
     }
 
     @Transactional
@@ -135,7 +153,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         Utils.emptyIfNull(acl.getRecords()).stream().filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
              .findAny().ifPresent(r -> {
                  LOG.debug("Updating access level from {} to {} in record {} in ACL {}.", r.getAccessLevel(),
-                           record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
+                         record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
                  r.setAccessLevel(record.getAccessLevel());
              });
     }

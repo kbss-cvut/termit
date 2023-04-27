@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserRole;
@@ -70,8 +71,10 @@ class RepositoryAccessControlListServiceTest {
     }
 
     @Test
-    void removeRecordsLoadsTargetAccessControlListRemovesSpecifiedRecordsAndUpdatesIt() {
+    void removeRecordLoadsTargetAccessControlListRemovesSpecifiedRecordsAndUpdatesIt() {
         final AccessControlList acl = generateAcl();
+        acl.addRecord(new RoleAccessControlRecord(AccessLevel.READ, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER)));
+        acl.addRecord(new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER)));
         final UserAccessControlRecord existingRecord = new UserAccessControlRecord();
         existingRecord.setUri(Generator.generateUri());
         existingRecord.setHolder(Generator.generateUserWithId());
@@ -90,7 +93,7 @@ class RepositoryAccessControlListServiceTest {
     }
 
     @Test
-    void updateRecordsLoadsTargetAccessControlListAndUpdatesSpecifiedRecords() {
+    void updateRecordLoadsTargetAccessControlListAndUpdatesSpecifiedRecords() {
         final AccessControlList acl = generateAcl();
         final UserAccessControlRecord existingRecord = new UserAccessControlRecord();
         existingRecord.setUri(Generator.generateUri());
@@ -159,8 +162,8 @@ class RepositoryAccessControlListServiceTest {
     void createForAddsRoleAccessLevelRecordsForReaderAndEditorBasedOnConfiguration() {
         final cz.cvut.kbss.termit.model.Vocabulary subject = Generator.generateVocabularyWithId();
         Environment.setCurrentUser(Generator.generateUserAccount());
-        final UserRole editor = new UserRole(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
-        final UserRole reader = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole editor = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+        final UserRole reader = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER);
         when(userRoleService.findAll()).thenReturn(List.of(reader, editor));
 
         final AccessControlList result = sut.createFor(subject);
@@ -169,5 +172,14 @@ class RepositoryAccessControlListServiceTest {
                 new RoleAccessControlRecord(configuration.getAcl().getDefaultReaderAccessLevel(), reader)
         ));
         verify(dao).persist(result);
+    }
+
+    @Test
+    void removeRecordThrowsUnsupportedOperationExceptionWhenAttemptingToRemoveRoleRecord() {
+        final AccessControlList acl = generateAcl();
+        final RoleAccessControlRecord toRemove = new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER));
+        acl.addRecord(toRemove);
+
+        assertThrows(UnsupportedOperationException.class, () -> sut.removeRecord(acl, toRemove));
     }
 }

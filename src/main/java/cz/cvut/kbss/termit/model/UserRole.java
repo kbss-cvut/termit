@@ -41,6 +41,10 @@ public class UserRole extends AccessControlAgent implements HasIdentifier {
         setUri(uri);
     }
 
+    public UserRole(cz.cvut.kbss.termit.security.model.UserRole roleConst) {
+        this(URI.create(roleConst.getType()));
+    }
+
     public MultilingualString getLabel() {
         return label;
     }
