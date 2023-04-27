@@ -7,9 +7,7 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -51,17 +49,30 @@ public class AccessControlListBasedAuthorizationService {
         Objects.requireNonNull(user);
         Objects.requireNonNull(resource);
 
+        return getAccessLevel(user, resource).includes(expected);
+    }
+
+    /**
+     * Gets the highest level of access of the specified user to the specified resource.
+     *
+     * @param user     User whose access level to resolve
+     * @param resource Target resource access to which is to be determined
+     * @return Highest level of access held by the specified user
+     */
+    public AccessLevel getAccessLevel(UserAccount user, HasIdentifier resource) {
+        Objects.requireNonNull(user);
+        Objects.requireNonNull(resource);
         if (user.isAdmin()) {
             // Admin has always full access
-            return true;
+            return AccessLevel.SECURITY;
         }
         final Optional<AccessControlList> optionalAcl = aclService.findFor(resource);
-        if (optionalAcl.isPresent()) {
-            final Set<AccessLevel> levels = optionalAcl.get().getRecords().stream().map(r -> r.getAccessLevelFor(user))
-                                                       .flatMap(Optional::stream).collect(Collectors.toSet());
-            return levels.stream().anyMatch(level -> level.includes(expected));
-        }
-        return false;
+        return optionalAcl.map(accessControlList -> accessControlList.getRecords().stream()
+                                                                     .map(r -> r.getAccessLevelFor(user))
+                                                                     .flatMap(Optional::stream)
+                                                                     .max(Comparator.comparing(AccessLevel::ordinal))
+                                                                     .orElse(AccessLevel.NONE))
+                          .orElse(AccessLevel.NONE);
     }
 
     /**

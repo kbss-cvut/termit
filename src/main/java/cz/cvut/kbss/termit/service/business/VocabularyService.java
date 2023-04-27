@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -33,6 +34,7 @@ import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
+import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -75,6 +77,8 @@ public class VocabularyService
 
     private final AccessControlListService aclService;
 
+    private final VocabularyAuthorizationService authorizationService;
+
     private final ApplicationContext context;
 
     private ApplicationEventPublisher eventPublisher;
@@ -84,12 +88,14 @@ public class VocabularyService
                              @Lazy AsyncTermService termService,
                              VocabularyContextMapper contextMapper,
                              AccessControlListService aclService,
+                             VocabularyAuthorizationService authorizationService,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
         this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.contextMapper = contextMapper;
         this.aclService = aclService;
+        this.authorizationService = authorizationService;
         this.context = context;
     }
 
@@ -389,6 +395,17 @@ public class VocabularyService
     public void updateAccessControlLevel(Vocabulary vocabulary, AccessControlRecord<?> update) {
         final AccessControlList acl = findRequiredAclForVocabulary(vocabulary);
         aclService.updateRecordAccessLevel(acl, update);
+    }
+
+    /**
+     * Gets the current user's level of access to the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary access to which is to be examined
+     * @return Access level of the current user
+     */
+    public AccessLevel getAccessLevel(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return authorizationService.getAccessLevel(vocabulary);
     }
 
     @Override

@@ -235,4 +235,41 @@ class AccessControlListBasedAuthorizationServiceTest {
         assertTrue(sut.canRemove(user, Generator.generateVocabularyWithId()));
         verify(aclService, never()).findFor(any());
     }
+
+    @Test
+    void getAccessLevelReturnsHighestAccessLevelOfSpecifiedUserToTargetResource() {
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType()));
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
+        final RoleAccessControlRecord roleRecord = new RoleAccessControlRecord(AccessLevel.READ, role);
+        roleRecord.setUri(Generator.generateUri());
+        acl.addRecord(roleRecord);
+        final UserGroup group = Generator.generateUserGroup();
+        group.addMember(user.toUser());
+        final UserGroupAccessControlRecord groupRecord = new UserGroupAccessControlRecord(AccessLevel.WRITE, group);
+        groupRecord.setUri(Generator.generateUri());
+        acl.addRecord(groupRecord);
+        final UserAccessControlRecord userRecord = new UserAccessControlRecord(AccessLevel.SECURITY, user.toUser());
+        userRecord.setUri(Generator.generateUri());
+        acl.addRecord(userRecord);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+
+        assertEquals(AccessLevel.SECURITY, sut.getAccessLevel(user, vocabulary));
+    }
+
+    @Test
+    void getAccessLevelReturnsSecurityForAdmin() {
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.ADMIN.getType());
+        assertEquals(AccessLevel.SECURITY, sut.getAccessLevel(user, Generator.generateVocabularyWithId()));
+        verify(aclService, never()).findFor(any());
+    }
+
+    @Test
+    void getAccessLevelReturnsNoneAccessLevelWhenTargetResourceLacksAccessControlList() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.empty());
+
+        assertEquals(AccessLevel.NONE, sut.getAccessLevel(user, vocabulary));
+    }
 }

@@ -148,4 +148,16 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
         final UserAccount user = SecurityUtils.currentUser();
         return aclAuthorizationService.canRemove(user, asset) && editableVocabularies.isEditable(asset);
     }
+
+    /**
+     * Gets the level of access the current user has to the specified vocabulary.
+     *
+     * @param asset Vocabulary access to which is to be determined
+     * @return Access level of the current user
+     */
+    public AccessLevel getAccessLevel(Vocabulary asset) {
+        Objects.requireNonNull(asset);
+        final UserAccount user = SecurityUtils.currentUser();
+        return editableVocabularies.isEditable(asset) ? aclAuthorizationService.getAccessLevel(user, asset) : AccessLevel.NONE;
+    }
 }

@@ -578,8 +578,19 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         record.setHolder(Generator.generateUserWithId());
 
         mockMvc.perform(put(PATH + "/" + FRAGMENT + "/acl/records/" + Generator.randomInt())
-                                .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
+                       .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isBadRequest());
         verify(serviceMock, never()).updateAccessControlLevel(any(Vocabulary.class), any(AccessControlRecord.class));
+    }
+
+    @Test
+    void getAccessLevelRetrievesAccessLevelToSpecifiedVocabulary() throws Exception {
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        when(serviceMock.getAccessLevel(vocabulary)).thenReturn(AccessLevel.SECURITY);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/access-level")).andReturn();
+        final AccessLevel result = readValue(mvcResult, AccessLevel.class);
+        assertEquals(AccessLevel.SECURITY, result);
+        verify(serviceMock).getAccessLevel(vocabulary);
     }
 }

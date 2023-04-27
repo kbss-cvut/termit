@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
+import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,9 @@ class VocabularyServiceTest {
 
     @Mock
     private AccessControlListService aclService;
+
+    @Mock
+    private VocabularyAuthorizationService authorizationService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -218,5 +222,14 @@ class VocabularyServiceTest {
         verify(repositoryService).persist(toPersist);
         verify(aclService).createFor(toPersist);
         assertEquals(acl.getUri(), toPersist.getAcl());
+    }
+
+    @Test
+    void getAccessLevelRetrievesAccessLevelFromVocabularyAuthorizationService() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.READ);
+
+        assertEquals(AccessLevel.READ, sut.getAccessLevel(vocabulary));
+        verify(authorizationService).getAccessLevel(vocabulary);
     }
 }

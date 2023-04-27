@@ -218,4 +218,22 @@ class VocabularyAuthorizationServiceTest {
         assertTrue(sut.canRemoveSnapshot(vocabulary));
         verify(editableVocabularies).isEditable(vocabulary);
     }
+
+    @Test
+    void getAccessLevelRetrievesCurrentUsersAccessLevelBasedOnAccessControlList() {
+        Environment.setCurrentUser(user);
+        when(aclBasedAuthService.getAccessLevel(user, vocabulary)).thenReturn(AccessLevel.WRITE);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
+
+        assertEquals(AccessLevel.WRITE, sut.getAccessLevel(vocabulary));
+        verify(aclBasedAuthService).getAccessLevel(user, vocabulary);
+    }
+
+    @Test
+    void getAccessLevelReturnsNoneWhenVocabularyIsNotEditableInCurrentWorkspace() {
+        Environment.setCurrentUser(user);
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(false);
+
+        assertEquals(AccessLevel.NONE, sut.getAccessLevel(vocabulary));
+    }
 }

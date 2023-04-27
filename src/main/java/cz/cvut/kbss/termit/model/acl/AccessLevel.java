@@ -9,6 +9,9 @@ import java.util.Set;
  * Levels of access to an asset.
  * <p>
  * The access levels are hierarchical, i.e., higher levels of access include lower (more restricted) levels.
+ * <p>
+ * Note that the order of the constants in this enum is significant and represents the level hierarchy, i.e., constants
+ * with higher ordinal number represent higher access level.
  */
 public enum AccessLevel {
     /**
