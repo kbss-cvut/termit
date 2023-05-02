@@ -24,7 +24,6 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
-import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -37,7 +36,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -72,7 +70,6 @@ public class ResourceController extends BaseController {
 
     @PutMapping(value = "/{normalizedName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void updateResource(@PathVariable String normalizedName,
                                @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
                                @RequestBody Resource resource) {
@@ -113,7 +110,6 @@ public class ResourceController extends BaseController {
 
     @PutMapping(value = "/{normalizedName}/content")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void saveContent(@PathVariable String normalizedName,
                             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
                             @RequestParam(name = "file") MultipartFile attachment) {
@@ -155,7 +151,6 @@ public class ResourceController extends BaseController {
     }
 
     @PostMapping(value = "/{normalizedName}/files", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> addFileToDocument(@PathVariable String normalizedName,
                                                   @RequestParam(name = QueryParams.NAMESPACE,
                                                                 required = false) Optional<String> namespace,
@@ -173,7 +168,6 @@ public class ResourceController extends BaseController {
 
     @DeleteMapping(value = "/{resourceName}/files/{fileName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeFileFromDocument(@PathVariable String resourceName,
                                        @RequestParam(name = QueryParams.NAMESPACE,
                                                      required = false) Optional<String> namespace,
@@ -194,7 +188,6 @@ public class ResourceController extends BaseController {
      */
     @PutMapping(value = "/{normalizedName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void runTextAnalysis(@PathVariable String normalizedName,
                                 @RequestParam(name = QueryParams.NAMESPACE,
                                               required = false) Optional<String> namespace,
