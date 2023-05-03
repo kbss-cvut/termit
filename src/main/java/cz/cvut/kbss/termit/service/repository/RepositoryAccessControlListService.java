@@ -14,6 +14,10 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@CacheConfig(cacheNames = "acls")
 @Service
 public class RepositoryAccessControlListService implements AccessControlListService {
 
@@ -57,6 +62,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         return dao.getReference(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 
+    @Cacheable(key = "#p0.uri")
     @Override
     public Optional<AccessControlList> findFor(HasIdentifier subject) {
         return dao.findFor(subject);
@@ -67,6 +73,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         return findFor(subject).map(dtoMapper::accessControlListToDto);
     }
 
+    @CachePut(key = "#p0.uri")
     @Transactional
     @Override
     public AccessControlList createFor(HasIdentifier subject) {
@@ -100,6 +107,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
                      editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultReaderAccessLevel(), editor)));
     }
 
+    @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
     public void addRecord(AccessControlList acl, AccessControlRecord<?> record) {
@@ -112,6 +120,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         dao.update(toUpdate);
     }
 
+    @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
     public void removeRecord(AccessControlList acl, AccessControlRecord<?> record) {
@@ -143,6 +152,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         }
     }
 
+    @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
     public void updateRecordAccessLevel(AccessControlList acl, AccessControlRecord<?> record) {

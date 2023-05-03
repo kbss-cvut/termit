@@ -159,4 +159,26 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         assertTrue(result.isPresent());
         assertEquals(acl.getUri(), result.get().getUri());
     }
+
+    @Test
+    void resolveSubjectOfReturnsIdentifierOfVocabularyWhoseAccessControlListIsPassedAsArgument() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = new AccessControlList();
+        transactional(() -> {
+            em.persist(acl, descriptorFactory.accessControlListDescriptor());
+            vocabulary.setAcl(acl.getUri());
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+        });
+
+        final Optional<URI> result = sut.resolveSubjectOf(acl);
+        assertTrue(result.isPresent());
+        assertEquals(vocabulary.getUri(), result.get());
+    }
+
+    @Test
+    void resolveSubjectOfReturnsEmptyOptionalWhenNoMatchingSubjectIsFound() {
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        final Optional<URI> result = sut.resolveSubjectOf(acl);
+        assertFalse(result.isPresent());
+    }
 }

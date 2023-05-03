@@ -30,9 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides descriptors for working with repository contexts.
@@ -49,7 +49,7 @@ public class DescriptorFactory {
      * <p>
      * They are based on the target entity class.
      */
-    private final Map<Class<?>, Descriptor> staticDescriptors = new HashMap<>();
+    private final Map<Class<?>, Descriptor> staticDescriptors = new ConcurrentHashMap<>();
 
     @Autowired
     public DescriptorFactory(EntityManagerFactory emf, VocabularyContextMapper contextMapper) {
