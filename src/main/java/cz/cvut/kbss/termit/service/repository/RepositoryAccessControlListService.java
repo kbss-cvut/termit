@@ -160,7 +160,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         Objects.requireNonNull(record);
         final AccessControlList toUpdate = findRequired(acl.getUri());
 
-        Utils.emptyIfNull(acl.getRecords()).stream().filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
+        Utils.emptyIfNull(toUpdate.getRecords()).stream().filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
              .findAny().ifPresent(r -> {
                  LOG.debug("Updating access level from {} to {} in record {} in ACL {}.", r.getAccessLevel(),
                          record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);

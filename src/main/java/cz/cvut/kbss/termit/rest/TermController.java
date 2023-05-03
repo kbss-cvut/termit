@@ -420,7 +420,7 @@ public class TermController extends BaseController {
                                                                                      required = false)
                                                                                Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
+        return termService.getDefinitionallyRelatedTargeting(termService.findRequired(termUri));
     }
 
     @GetMapping(value = "/terms/{termIdFragment}/def-related-target", produces = {
@@ -430,7 +430,7 @@ public class TermController extends BaseController {
                                                                        @RequestParam(
                                                                                name = QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
+        return termService.getDefinitionallyRelatedTargeting(termService.findRequired(termUri));
     }
 
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
@@ -442,7 +442,7 @@ public class TermController extends BaseController {
                                                                               required = false)
                                                                         Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
+        return termService.getDefinitionallyRelatedOf(termService.findRequired(termUri));
     }
 
     @GetMapping(value = "/terms/{termIdFragment}/def-related-of", produces = {
@@ -452,7 +452,7 @@ public class TermController extends BaseController {
                                                                 @RequestParam(name = QueryParams.NAMESPACE)
                                                                         String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
+        return termService.getDefinitionallyRelatedOf(termService.findRequired(termUri));
     }
 
     /**
@@ -514,7 +514,7 @@ public class TermController extends BaseController {
                                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                                required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        return termService.getChanges(termService.getRequiredReference(termUri));
+        return termService.getChanges(termService.findRequired(termUri));
     }
 
     /**
@@ -530,7 +530,7 @@ public class TermController extends BaseController {
                                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                                required = false) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        return termService.getChanges(termService.getRequiredReference(termUri));
+        return termService.getChanges(termService.findRequired(termUri));
     }
 
     /**
@@ -547,7 +547,7 @@ public class TermController extends BaseController {
                                      @RequestParam(name = QueryParams.NAMESPACE,
                                                    required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
-        return termService.getComments(termService.getRequiredReference(termUri),
+        return termService.getComments(termService.findRequired(termUri),
                                        from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
                                        to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
@@ -566,7 +566,7 @@ public class TermController extends BaseController {
                                      @RequestParam(name = "to", required = false) Optional<String> to,
                                      @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
-        return termService.getComments(termService.getRequiredReference(termUri),
+        return termService.getComments(termService.findRequired(termUri),
                                        from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
                                        to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
@@ -582,7 +582,7 @@ public class TermController extends BaseController {
                                            @RequestParam(name = QueryParams.NAMESPACE,
                                                          required = false) Optional<String> namespace,
                                            @RequestBody Comment comment) {
-        final Term term = termService.getRequiredReference(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
+        final Term term = termService.findRequired(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
@@ -608,7 +608,7 @@ public class TermController extends BaseController {
                                            @RequestParam(name = QueryParams.NAMESPACE,
                                                          required = false) String namespace,
                                            @RequestBody Comment comment) {
-        final Term term = termService.getRequiredReference(idResolver.resolveIdentifier(namespace, termIdFragment));
+        final Term term = termService.findRequired(idResolver.resolveIdentifier(namespace, termIdFragment));
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
@@ -628,7 +628,7 @@ public class TermController extends BaseController {
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace,
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
-        final Term term = termService.getRequiredReference(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
+        final Term term = termService.findRequired(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
         return getTermSnapshots(at, term);
     }
 
@@ -645,7 +645,7 @@ public class TermController extends BaseController {
     public ResponseEntity<?> getSnapshots(@PathVariable String termIdFragment,
                                           @RequestParam(name = QueryParams.NAMESPACE) String namespace,
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
-        final Term term = termService.getRequiredReference(idResolver.resolveIdentifier(namespace, termIdFragment));
+        final Term term = termService.findRequired(idResolver.resolveIdentifier(namespace, termIdFragment));
         return getTermSnapshots(at, term);
     }
 

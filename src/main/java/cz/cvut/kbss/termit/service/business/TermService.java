@@ -273,23 +273,27 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     /**
      * Gets a reference to a Term with the specified identifier.
+     * <p>
+     * Note that this method is not protected by ACL-based authorization and should thus not be used in without some
+     * other type of authorization.
      *
      * @param id Term identifier
      * @return Matching Term reference wrapped in an {@code Optional}
      */
-    @PostAuthorize("@termAuthorizationService.canRead(returnObject)")
     public Optional<Term> getReference(URI id) {
         return repositoryService.getReference(id);
     }
 
     /**
      * Gets a reference to a Term with the specified identifier.
+     * <p>
+     * Note that this method is not protected by ACL-based authorization and should thus not be used in without some
+     * other type of authorization.
      *
      * @param id Term identifier
      * @return Matching term reference
      * @throws NotFoundException When no matching term is found
      */
-    @PostAuthorize("@termAuthorizationService.canRead(returnObject)")
     public Term getRequiredReference(URI id) {
         return repositoryService.getRequiredReference(id);
     }

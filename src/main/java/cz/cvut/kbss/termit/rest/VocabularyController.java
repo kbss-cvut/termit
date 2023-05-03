@@ -280,7 +280,6 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.ok(vocabularyService.findSnapshots(vocabulary));
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @GetMapping(value = "/{fragment}/acl", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public AccessControlListDto getAccessControlList(@PathVariable String fragment,
                                                      @RequestParam(name = QueryParams.NAMESPACE,
@@ -290,7 +289,6 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getAccessControlList(vocabulary);
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PostMapping(value = "/{fragment}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addAccessControlRecord(@PathVariable String fragment,
@@ -303,7 +301,6 @@ public class VocabularyController extends BaseController {
         LOG.debug("Added access control record to ACL of vocabulary {}.", vocabulary);
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping(value = "/{fragment}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeAccessControlRecord(@PathVariable String fragment,
@@ -316,7 +313,6 @@ public class VocabularyController extends BaseController {
         LOG.debug("Removed access control record from ACL of vocabulary {}.", vocabulary);
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PutMapping(value = "/{fragment}/acl/records/{recordId}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)

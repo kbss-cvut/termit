@@ -356,6 +356,7 @@ public class VocabularyService
      * @return Access control list of the specified vocabulary
      */
     @Transactional(readOnly = true)
+    @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
     public AccessControlListDto getAccessControlList(Vocabulary vocabulary) {
         return aclService.findForAsDto(vocabulary).orElseThrow(
                 () -> new NotFoundException("Access control list for vocabulary " + vocabulary + " not found."));
