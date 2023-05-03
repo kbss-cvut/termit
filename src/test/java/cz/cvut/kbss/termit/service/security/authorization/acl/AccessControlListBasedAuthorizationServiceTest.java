@@ -21,8 +21,7 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -271,5 +270,28 @@ class AccessControlListBasedAuthorizationServiceTest {
         when(aclService.findFor(vocabulary)).thenReturn(Optional.empty());
 
         assertEquals(AccessLevel.NONE, sut.getAccessLevel(user, vocabulary));
+    }
+
+    @ParameterizedTest
+    @MethodSource("canReadAnonymouslyTestArguments")
+    void canReadAnonymouslyReturnsCorrectResultForUserSpecifiedReaderRoleAccessLevel(Boolean expected, AccessLevel accessLevel) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType()));
+        final RoleAccessControlRecord roleRecord = new RoleAccessControlRecord(accessLevel, role);
+        roleRecord.setUri(Generator.generateUri());
+        acl.addRecord(roleRecord);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+
+        assertEquals(expected, sut.canReadAnonymously(vocabulary));
+    }
+
+    static Stream<Arguments> canReadAnonymouslyTestArguments() {
+        return Stream.of(
+                Arguments.of(false, AccessLevel.NONE),
+                Arguments.of(true, AccessLevel.READ),
+                Arguments.of(true, AccessLevel.WRITE)
+                // Reader cannot have Security access
+        );
     }
 }
