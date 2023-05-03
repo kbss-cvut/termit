@@ -1189,4 +1189,28 @@ class TermControllerTest extends BaseControllerTestRunner {
     void getTermsReturnsNotAcceptableWhenAskingForUnsupportedMediaType() throws Exception {
         mockMvc.perform(get("/terms").accept(MediaType.APPLICATION_PDF_VALUE)).andExpect(status().isNotAcceptable());
     }
+
+    @Test
+    void getAllSanitizesFilenameInContentDispositionHeaderToAscii() throws Exception {
+        final String name = "metropolitní-plán";
+        final String sanitizedName = "metropolitni-plan";
+        final URI vocabularyUri = URI.create(Environment.BASE_URI + "/" + name);
+        when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), name))
+                .thenReturn(vocabularyUri);
+        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(vocabularyUri);
+        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
+        final TypeAwareByteArrayResource export = prepareTurtle();
+        when(termServiceMock.exportGlossary(vocabulary, new ExportConfig(ExportType.SKOS,
+                ExportFormat.TURTLE.getMediaType()))).thenReturn(
+                Optional.of(export));
+
+        final MvcResult mvcResult = mockMvc
+                .perform(get(URI.create(PATH + name + "/terms")).accept(ExportFormat.TURTLE.getMediaType())
+                                                                .queryParam("exportType", ExportType.SKOS.toString()))
+                .andReturn();
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
+                containsString("filename=\"" + sanitizedName + ExportFormat.TURTLE.getFileExtension() + "\""));
+    }
 }
