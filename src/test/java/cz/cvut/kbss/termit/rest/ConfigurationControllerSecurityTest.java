@@ -64,8 +64,7 @@ public class ConfigurationControllerSecurityTest extends BaseControllerTestRunne
         final ConfigurationDto config = new ConfigurationDto();
         config.setLanguage(Environment.LANGUAGE);
         config.setRoles(IntStream.range(0, 3).mapToObj(i -> {
-            final UserRole r = new UserRole();
-            r.setUri(Generator.generateUri());
+            final UserRole r = new UserRole(Generator.generateUri());
             r.setLabel(MultilingualString.create("Role - " + i, Environment.LANGUAGE));
             return r;
         }).collect(Collectors.toSet()));

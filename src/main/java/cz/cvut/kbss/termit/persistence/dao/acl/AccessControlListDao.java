@@ -100,4 +100,21 @@ public class AccessControlListDao {
             }
         }
     }
+
+    /**
+     * Gets identifier of the subject of the specified {@link AccessControlList}.
+     *
+     * @param acl ACL whose subject to resolve
+     * @return Identifier of the matching asset, empty {@code Optional} if no matching one is found
+     */
+    public Optional<URI> resolveSubjectOf(AccessControlList acl) {
+        Objects.requireNonNull(acl);
+        try {
+            return Optional.of(em.createNativeQuery("SELECT ?x WHERE { ?x ?hasAcl ?acl . }", URI.class)
+                                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                                 .setParameter("acl", acl).getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
+    }
 }

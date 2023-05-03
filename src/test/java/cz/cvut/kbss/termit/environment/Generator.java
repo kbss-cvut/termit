@@ -456,8 +456,7 @@ public class Generator {
                     break;
                 default:
                     r = new RoleAccessControlRecord();
-                    final UserRole role = new UserRole();
-                    role.setUri(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
+                    final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
                     r.setHolder(role);
                     break;
             }

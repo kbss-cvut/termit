@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -13,6 +14,10 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@CacheConfig(cacheNames = "acls")
 @Service
 public class RepositoryAccessControlListService implements AccessControlListService {
 
@@ -56,6 +62,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         return dao.getReference(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 
+    @Cacheable(key = "#p0.uri")
     @Override
     public Optional<AccessControlList> findFor(HasIdentifier subject) {
         return dao.findFor(subject);
@@ -66,6 +73,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         return findFor(subject).map(dtoMapper::accessControlListToDto);
     }
 
+    @CachePut(key = "#p0.uri")
     @Transactional
     @Override
     public AccessControlList createFor(HasIdentifier subject) {
@@ -99,6 +107,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
                      editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultReaderAccessLevel(), editor)));
     }
 
+    @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
     public void addRecord(AccessControlList acl, AccessControlRecord<?> record) {
@@ -111,6 +120,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         dao.update(toUpdate);
     }
 
+    @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
     public void removeRecord(AccessControlList acl, AccessControlRecord<?> record) {
@@ -121,10 +131,28 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         LOG.debug("Removing record {} from ACL {}.", record, toUpdate);
         assert toUpdate.getRecords() != null;
         toUpdate.getRecords().removeIf(acr -> Objects.equals(acr.getUri(), record.getUri()));
+        verifyUserRoleRecordsArePresent(toUpdate);
         // Explicitly update to remove orphans
         dao.update(toUpdate);
     }
 
+    private void verifyUserRoleRecordsArePresent(AccessControlList acl) {
+        boolean readerFound = false;
+        boolean editorFound = false;
+        for (AccessControlRecord<?> record : acl.getRecords()) {
+            final String holderIri = record.getHolder().getUri().toString();
+            if (Objects.equals(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType(), holderIri)) {
+                readerFound = true;
+            } else if (Objects.equals(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType(), holderIri)) {
+                editorFound = true;
+            }
+        }
+        if (!readerFound || !editorFound) {
+            throw new UnsupportedOperationException("Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+        }
+    }
+
+    @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
     public void updateRecordAccessLevel(AccessControlList acl, AccessControlRecord<?> record) {
@@ -132,10 +160,10 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         Objects.requireNonNull(record);
         final AccessControlList toUpdate = findRequired(acl.getUri());
 
-        Utils.emptyIfNull(acl.getRecords()).stream().filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
+        Utils.emptyIfNull(toUpdate.getRecords()).stream().filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
              .findAny().ifPresent(r -> {
                  LOG.debug("Updating access level from {} to {} in record {} in ACL {}.", r.getAccessLevel(),
-                           record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
+                         record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
                  r.setAccessLevel(record.getAccessLevel());
              });
     }

@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.AccessControlAgent;
+import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
 @OWLClass(iri = Vocabulary.s_c_zaznam_rizeni_pristupu)
@@ -42,6 +44,17 @@ public abstract class AccessControlRecord<T extends AccessControlAgent> extends 
     public void setHolder(T holder) {
         this.holder = holder;
     }
+
+    /**
+     * Gets access level for the specified user account, if possible.
+     * <p>
+     * If this record does not have any information about access level for the specified user, an empty {@link Optional}
+     * is returned.
+     *
+     * @param user User to get access level for
+     * @return Optional access level relevant for the specified user
+     */
+    public abstract Optional<AccessLevel> getAccessLevelFor(UserAccount user);
 
     @Override
     public boolean equals(Object o) {

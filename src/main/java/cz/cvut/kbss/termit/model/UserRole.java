@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
+import java.net.URI;
 import java.util.Objects;
 
 @OWLClass(iri = Vocabulary.s_c_uzivatelska_role)
@@ -32,6 +33,17 @@ public class UserRole extends AccessControlAgent implements HasIdentifier {
 
     @OWLAnnotationProperty(iri = Vocabulary.s_p_scopeNote)
     private MultilingualString description;
+
+    public UserRole() {
+    }
+
+    public UserRole(URI uri) {
+        setUri(uri);
+    }
+
+    public UserRole(cz.cvut.kbss.termit.security.model.UserRole roleConst) {
+        this(URI.create(roleConst.getType()));
+    }
 
     public MultilingualString getLabel() {
         return label;

@@ -16,6 +16,7 @@ package cz.cvut.kbss.termit.dto;
 
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.io.Serializable;
@@ -37,7 +38,7 @@ import java.util.Set;
                                                                               type = String.class),
                                                               @VariableResult(name = "score", type = Double.class)
                                                       })})
-public class FullTextSearchResult implements Serializable {
+public class FullTextSearchResult implements HasTypes, Serializable {
 
     @Id
     private URI uri;
@@ -111,10 +112,12 @@ public class FullTextSearchResult implements Serializable {
         this.draft = draft;
     }
 
+    @Override
     public Set<String> getTypes() {
         return types;
     }
 
+    @Override
     public void setTypes(Set<String> types) {
         this.types = types;
     }

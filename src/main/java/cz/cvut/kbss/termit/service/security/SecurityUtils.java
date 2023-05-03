@@ -70,6 +70,7 @@ public class SecurityUtils {
     public static UserAccount currentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
         assert context != null;
+
         final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
         return userDetails.getUser();
     }

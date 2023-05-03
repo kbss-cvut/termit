@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
@@ -279,22 +280,20 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.ok(vocabularyService.findSnapshots(vocabulary));
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @GetMapping(value = "/{fragment}/acl", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public AccessControlListDto getAccessControlList(@PathVariable String fragment,
                                                      @RequestParam(name = QueryParams.NAMESPACE,
-                                                                required = false) Optional<String> namespace) {
+                                                                   required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         return vocabularyService.getAccessControlList(vocabulary);
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PostMapping(value = "/{fragment}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addAccessControlRecord(@PathVariable String fragment,
                                        @RequestParam(name = QueryParams.NAMESPACE,
-                                                      required = false) Optional<String> namespace,
+                                                     required = false) Optional<String> namespace,
                                        @RequestBody AccessControlRecord<?> record) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
@@ -302,12 +301,11 @@ public class VocabularyController extends BaseController {
         LOG.debug("Added access control record to ACL of vocabulary {}.", vocabulary);
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping(value = "/{fragment}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeAccessControlRecord(@PathVariable String fragment,
                                           @RequestParam(name = QueryParams.NAMESPACE,
-                                                         required = false) Optional<String> namespace,
+                                                        required = false) Optional<String> namespace,
                                           @RequestBody AccessControlRecord<?> record) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
@@ -315,7 +313,6 @@ public class VocabularyController extends BaseController {
         LOG.debug("Removed access control record from ACL of vocabulary {}.", vocabulary);
     }
 
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PutMapping(value = "/{fragment}/acl/records/{recordId}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -330,5 +327,14 @@ public class VocabularyController extends BaseController {
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         vocabularyService.updateAccessControlLevel(vocabulary, record);
         LOG.debug("Updated access control record {} from ACL of vocabulary {}.", record, vocabulary);
+    }
+
+    @GetMapping(value = "/{fragment}/access-level")
+    public AccessLevel getAccessLevel(@PathVariable String fragment,
+                                      @RequestParam(name = QueryParams.NAMESPACE,
+                                                    required = false) Optional<String> namespace) {
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        return vocabularyService.getAccessLevel(vocabulary);
     }
 }

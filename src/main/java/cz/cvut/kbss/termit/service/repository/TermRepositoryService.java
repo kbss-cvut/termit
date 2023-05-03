@@ -30,7 +30,6 @@ import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.security.AuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
@@ -100,7 +99,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
-        AuthorizationService.verifySnapshotNotModified(original);
+        SnapshotProvider.verifySnapshotNotModified(original);
         termDao.detach(original);
         final AssertedInferredValueDifferentiator differentiator = new AssertedInferredValueDifferentiator();
         differentiator.differentiateRelatedTerms(instance, original);
@@ -134,7 +133,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     public void setStatus(Term term, TermStatus status) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(status);
-        AuthorizationService.verifySnapshotNotModified(term);
+        SnapshotProvider.verifySnapshotNotModified(term);
         if (status == TermStatus.CONFIRMED) {
             termDao.setAsConfirmed(term);
         } else {
@@ -180,7 +179,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         Objects.requireNonNull(instance);
         Objects.requireNonNull(parentTerm);
 
-        AuthorizationService.verifySnapshotNotModified(parentTerm);
+        SnapshotProvider.verifySnapshotNotModified(parentTerm);
         final URI vocabularyIri =
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
         prepareTermForPersist(instance, vocabularyIri);

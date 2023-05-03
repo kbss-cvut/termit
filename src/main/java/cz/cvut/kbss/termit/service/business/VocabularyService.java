@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -33,7 +34,8 @@ import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
-import cz.cvut.kbss.termit.service.security.AuthorizationService;
+import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +56,10 @@ import java.util.*;
 
 /**
  * Business logic concerning vocabularies.
+ * <p>
+ * Note that retrieval methods that take an instance of {@link Vocabulary} as argument do not have explicit
+ * authorization annotations. It is assumed that read access has already been authorized when the {@link Vocabulary}
+ * instance/reference was retrieved previously.
  */
 @Service
 public class VocabularyService
@@ -69,6 +77,8 @@ public class VocabularyService
 
     private final AccessControlListService aclService;
 
+    private final VocabularyAuthorizationService authorizationService;
+
     private final ApplicationContext context;
 
     private ApplicationEventPublisher eventPublisher;
@@ -78,16 +88,19 @@ public class VocabularyService
                              @Lazy AsyncTermService termService,
                              VocabularyContextMapper contextMapper,
                              AccessControlListService aclService,
+                             VocabularyAuthorizationService authorizationService,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
         this.changeRecordService = changeRecordService;
         this.termService = termService;
         this.contextMapper = contextMapper;
         this.aclService = aclService;
+        this.authorizationService = authorizationService;
         this.context = context;
     }
 
     @Override
+    @PostFilter("@vocabularyAuthorizationService.canRead(filterObject)")
     public List<VocabularyDto> findAll() {
         return repositoryService.findAll();
     }
@@ -97,29 +110,41 @@ public class VocabularyService
         return repositoryService.getLastModified();
     }
 
-
     @Override
+    @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Optional<Vocabulary> find(URI id) {
-        return repositoryService.find(id);
+        return repositoryService.find(id).map(v -> {
+            // Enhance vocabulary data with info on current user's access level
+            final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(v);
+            dto.setAccessLevel(getAccessLevel(v));
+            return dto;
+        });
     }
 
     @Override
+    @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Vocabulary findRequired(URI id) {
-        return repositoryService.findRequired(id);
+        // Enhance vocabulary data with info on current user's access level
+        final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(repositoryService.findRequired(id));
+        dto.setAccessLevel(getAccessLevel(dto));
+        return dto;
     }
 
     @Override
+    @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Optional<Vocabulary> getReference(URI id) {
         return repositoryService.getReference(id);
     }
 
     @Override
+    @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Vocabulary getRequiredReference(URI id) {
         return repositoryService.getRequiredReference(id);
     }
 
     @Override
     @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
     public void persist(Vocabulary instance) {
         repositoryService.persist(instance);
         final AccessControlList acl = aclService.createFor(instance);
@@ -128,6 +153,7 @@ public class VocabularyService
     }
 
     @Override
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#instance)")
     public Vocabulary update(Vocabulary instance) {
         return repositoryService.update(instance);
     }
@@ -138,6 +164,7 @@ public class VocabularyService
      * @param entity Base vocabulary, whose imports should be retrieved
      * @return Collection of (transitively) imported vocabularies
      */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#entity)")
     public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
         return repositoryService.getTransitivelyImportedVocabularies(entity);
     }
@@ -151,6 +178,7 @@ public class VocabularyService
      * @param entity Base vocabulary whose related vocabularies to return
      * @return Set of vocabulary identifiers
      */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#entity)")
     public Set<URI> getRelatedVocabularies(Vocabulary entity) {
         return repositoryService.getRelatedVocabularies(entity);
     }
@@ -164,7 +192,11 @@ public class VocabularyService
      * @param file   File from which to import the vocabulary
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyExistsException If a vocabulary with a glossary
+     *                                                                           matching the one in the imported data
+     *                                                                           already exists
      */
+    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
     public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
         return repositoryService.importVocabulary(rename, file);
     }
@@ -180,6 +212,7 @@ public class VocabularyService
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      */
+    @PreAuthorize("@vocabularyAuthorizationService.canReimport(#vocabularyIri)")
     public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
         return repositoryService.importVocabulary(vocabularyIri, file);
     }
@@ -206,10 +239,10 @@ public class VocabularyService
      * @param vocabulary Vocabulary to be analyzed
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
-        AuthorizationService.verifySnapshotNotModified(vocabulary);
+        SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
                 importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
@@ -244,6 +277,7 @@ public class VocabularyService
      *
      * @param asset Vocabulary to remove
      */
+    @PreAuthorize("@vocabularyAuthorizationService.canRemove(#asset)")
     public void remove(Vocabulary asset) {
         repositoryService.remove(asset);
     }
@@ -278,7 +312,7 @@ public class VocabularyService
      * @param vocabulary Vocabulary to snapshot
      */
     @Transactional
-    @PreAuthorize("@authorizationService.canEdit(#vocabulary)")
+    @PreAuthorize("@vocabularyAuthorizationService.canCreateSnapshot(#vocabulary)")
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
         eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
@@ -322,6 +356,7 @@ public class VocabularyService
      * @return Access control list of the specified vocabulary
      */
     @Transactional(readOnly = true)
+    @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
     public AccessControlListDto getAccessControlList(Vocabulary vocabulary) {
         return aclService.findForAsDto(vocabulary).orElseThrow(
                 () -> new NotFoundException("Access control list for vocabulary " + vocabulary + " not found."));
@@ -339,6 +374,7 @@ public class VocabularyService
      * @param record     Record to add to the target ACL
      */
     @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
     public void addAccessControlRecords(Vocabulary vocabulary, AccessControlRecord<?> record) {
         final AccessControlList acl = findRequiredAclForVocabulary(vocabulary);
         aclService.addRecord(acl, record);
@@ -348,9 +384,10 @@ public class VocabularyService
      * Removes the specified access control record from the access control list of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param record    Record to remove from the target ACL
+     * @param record     Record to remove from the target ACL
      */
     @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
     public void removeAccessControlRecord(Vocabulary vocabulary, AccessControlRecord<?> record) {
         final AccessControlList acl = findRequiredAclForVocabulary(vocabulary);
         aclService.removeRecord(acl, record);
@@ -363,9 +400,21 @@ public class VocabularyService
      * @param update     Access control record containing updated access level
      */
     @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
     public void updateAccessControlLevel(Vocabulary vocabulary, AccessControlRecord<?> update) {
         final AccessControlList acl = findRequiredAclForVocabulary(vocabulary);
         aclService.updateRecordAccessLevel(acl, update);
+    }
+
+    /**
+     * Gets the current user's level of access to the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary access to which is to be examined
+     * @return Access level of the current user
+     */
+    public AccessLevel getAccessLevel(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return authorizationService.getAccessLevel(vocabulary);
     }
 
     @Override

@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
+import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,9 @@ class VocabularyServiceTest {
 
     @Mock
     private AccessControlListService aclService;
+
+    @Mock
+    private VocabularyAuthorizationService authorizationService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -218,5 +222,41 @@ class VocabularyServiceTest {
         verify(repositoryService).persist(toPersist);
         verify(aclService).createFor(toPersist);
         assertEquals(acl.getUri(), toPersist.getAcl());
+    }
+
+    @Test
+    void getAccessLevelRetrievesAccessLevelFromVocabularyAuthorizationService() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.READ);
+
+        assertEquals(AccessLevel.READ, sut.getAccessLevel(vocabulary));
+        verify(authorizationService).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void findRequiredEnhancesResultWithAccessLevelOfCurrentUser() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.WRITE);
+        when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
+
+        final Vocabulary result = sut.findRequired(vocabulary.getUri());
+        assertInstanceOf(cz.cvut.kbss.termit.dto.VocabularyDto.class, result);
+        assertEquals(AccessLevel.WRITE, ((cz.cvut.kbss.termit.dto.VocabularyDto) result).getAccessLevel());
+        verify(repositoryService).findRequired(vocabulary.getUri());
+        verify(authorizationService).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void findEnhancesResultWithAccessLevelOfCurrentUser() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.WRITE);
+        when(repositoryService.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+
+        final Optional<Vocabulary> result = sut.find(vocabulary.getUri());
+        assertTrue(result.isPresent());
+        assertInstanceOf(cz.cvut.kbss.termit.dto.VocabularyDto.class, result.get());
+        assertEquals(AccessLevel.WRITE, ((cz.cvut.kbss.termit.dto.VocabularyDto) result.get()).getAccessLevel());
+        verify(repositoryService).find(vocabulary.getUri());
+        verify(authorizationService).getAccessLevel(vocabulary);
     }
 }
