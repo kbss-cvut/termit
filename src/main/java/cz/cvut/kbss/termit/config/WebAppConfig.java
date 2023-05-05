@@ -43,7 +43,6 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerTypePredicate;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
@@ -51,11 +50,9 @@ import org.springframework.web.servlet.mvc.ServletWrappingController;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 
 @Configuration
-@EnableWebMvc
 public class WebAppConfig implements WebMvcConfigurer {
 
     private final cz.cvut.kbss.termit.util.Configuration.Repository config;
@@ -149,26 +146,29 @@ public class WebAppConfig implements WebMvcConfigurer {
         return mapping;
     }
 
-    @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        final StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
-        converters.add(stringConverter);
-        converters.add(createJsonLdMessageConverter());
-        converters.add(createDefaultMessageConverter());
-        converters.add(new ResourceHttpMessageConverter());
+    @Bean
+    public HttpMessageConverter<?> stringMessageConverter() {
+        return new StringHttpMessageConverter(StandardCharsets.UTF_8);
     }
 
-    private HttpMessageConverter<?> createJsonLdMessageConverter() {
+    @Bean
+    public HttpMessageConverter<?> jsonLdMessageConverter() {
         final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(
                 jsonLdObjectMapper());
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.valueOf(JsonLd.MEDIA_TYPE)));
         return converter;
     }
 
-    private HttpMessageConverter<?> createDefaultMessageConverter() {
+    @Bean
+    public HttpMessageConverter<?> jsonMessageConverter() {
         final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setObjectMapper(objectMapper());
         return converter;
+    }
+
+    @Bean
+    public HttpMessageConverter<?> resourceMessageConverter() {
+        return new ResourceHttpMessageConverter();
     }
 
     @Override
