@@ -32,6 +32,9 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.json.ManageableIgnoreMixin;
 import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
 import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -182,5 +185,12 @@ public class WebAppConfig implements WebMvcConfigurer {
         registrationBean.setFilter(new DiagnosticsContextFilter());
         registrationBean.addUrlPatterns("/*");
         return registrationBean;
+    }
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI().components(new Components().addSecuritySchemes("bearer-key",
+                                                        new SecurityScheme().type(SecurityScheme.Type.HTTP)
+                                                                            .scheme("bearer").bearerFormat("JWT")));
     }
 }
