@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.model.LangString;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 
 import java.io.Serializable;
@@ -44,7 +45,7 @@ import java.util.Set;
                                                                                                      type = String.class)
                                                                              })})
 @OWLClass(iri = RDFS.RESOURCE)
-public class RdfsResource implements Serializable, HasTypes {
+public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
 
     @Id
     private URI uri;
@@ -72,10 +73,12 @@ public class RdfsResource implements Serializable, HasTypes {
         this.types = Collections.singleton(type);
     }
 
+    @Override
     public URI getUri() {
         return uri;
     }
 
+    @Override
     public void setUri(URI uri) {
         this.uri = uri;
     }
