@@ -150,6 +150,13 @@ public class SecurityUtils {
     }
 
     /**
+     * Resets the current security context.
+     */
+    public static void resetCurrentUser() {
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
      * Checks that the specified password corresponds to the current user's password.
      *
      * @param password The password to verify

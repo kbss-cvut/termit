@@ -45,7 +45,7 @@ public class AdminAccountGenerator {
             return;
         }
         LOG.info("Creating application admin account.");
-        final UserAccount admin = initAdminInstance();
+        final UserAccount admin = getDefaultAdminInstance();
         final String passwordPlain = generatePassword();
         admin.setPassword(passwordPlain);
         userService.persist(admin);
@@ -84,7 +84,7 @@ public class AdminAccountGenerator {
         return credentialsFile;
     }
 
-    private static UserAccount initAdminInstance() {
+    static UserAccount getDefaultAdminInstance() {
         final UserAccount admin = new UserAccount();
         admin.setUri(URI.create(Vocabulary.ONTOLOGY_IRI_termit + "/system-admin-user"));
         admin.setFirstName("System");

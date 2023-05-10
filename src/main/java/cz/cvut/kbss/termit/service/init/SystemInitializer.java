@@ -12,10 +12,8 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see
  * <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.service;
+package cz.cvut.kbss.termit.service.init;
 
-import cz.cvut.kbss.termit.service.init.AdminAccountGenerator;
-import cz.cvut.kbss.termit.service.init.VocabularyAccessControlListGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
