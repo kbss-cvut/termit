@@ -104,15 +104,15 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Matching vocabulary metadata."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{fragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Vocabulary getById(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                         example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                              @PathVariable String fragment,
+    @GetMapping(value = "/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public Vocabulary getById(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                         example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                              @PathVariable String localName,
                               @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                          example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                               @RequestParam(name = QueryParams.NAMESPACE,
                                             required = false) Optional<String> namespace) {
-        final URI id = resolveVocabularyUri(fragment, namespace);
+        final URI id = resolveVocabularyUri(localName, namespace);
         return vocabularyService.findRequired(id);
     }
 
@@ -122,15 +122,15 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{fragment}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Collection<URI> getImports(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                      @PathVariable String fragment,
+    @GetMapping(value = "/{localName}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public Collection<URI> getImports(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                 example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                      @PathVariable String localName,
                                       @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                  example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(localName, namespace));
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
 
@@ -140,15 +140,15 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{fragment}/related", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Collection<URI> getRelated(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                      @PathVariable String fragment,
+    @GetMapping(value = "/{localName}/related", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public Collection<URI> getRelated(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                 example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                      @PathVariable String localName,
                                       @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                  example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(localName, namespace));
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
 
@@ -182,22 +182,22 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
             @ApiResponse(responseCode = "409", description = "If the imported file contains invalid data.")
     })
-    @PostMapping("/{fragment}/import")
+    @PostMapping("/{localName}/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(
-            @Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-            @PathVariable String fragment,
+            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
             @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                        example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace,
             @Parameter(description = "File containing a SKOS glossary in RDF.")
             @RequestParam(name = "file") MultipartFile file) {
-        final URI vocabularyIri = resolveVocabularyUri(fragment, namespace);
+        final URI vocabularyIri = resolveVocabularyUri(localName, namespace);
         final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
         LOG.debug("Vocabulary {} re-imported.", vocabulary);
-        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import/" + fragment))
+        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import/" + localName))
                              .build();
     }
 
@@ -212,16 +212,16 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
 
     })
-    @GetMapping(value = "/{fragment}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/{localName}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(
-            @Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-            @PathVariable String fragment,
+            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
             @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                        example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChanges(vocabulary);
     }
 
@@ -231,17 +231,17 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "200", description = "List of aggregated change data."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{fragment}/history-of-content",
+    @GetMapping(value = "/{localName}/history-of-content",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AggregatedChangeInfo> getHistoryOfContent(
-            @Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-            @PathVariable String fragment,
+            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
             @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                        example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(fragment, namespace));
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChangesOfContent(vocabulary);
     }
 
@@ -252,19 +252,19 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION),
             @ApiResponse(responseCode = "409", description = "Provided metadata are invalid.")
     })
-    @PutMapping(value = "/{fragment}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PutMapping(value = "/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void updateVocabulary(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                            example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                 @PathVariable String fragment,
+    public void updateVocabulary(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                            example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                 @PathVariable String localName,
                                  @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                             example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                required = false) Optional<String> namespace,
                                  @Parameter(description = "Updated vocabulary data.")
                                  @RequestBody Vocabulary update) {
-        final URI vocabularyUri = resolveVocabularyUri(fragment, namespace);
+        final URI vocabularyUri = resolveVocabularyUri(localName, namespace);
         verifyRequestAndEntityIdentifier(update, vocabularyUri);
         vocabularyService.update(update);
         LOG.debug("Vocabulary {} updated.", update);
@@ -278,17 +278,17 @@ public class VocabularyController extends BaseController {
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Runs text analysis on the definitions of all terms in the vocabulary with the specified identifier.")
-    @PutMapping(value = "/{fragment}/terms/text-analysis")
+    @PutMapping(value = "/{localName}/terms/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void runTextAnalysisOnAllTerms(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                          @PathVariable String fragment,
+    public void runTextAnalysisOnAllTerms(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                     example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                          @PathVariable String localName,
                                           @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                      example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace) {
-        vocabularyService.runTextAnalysisOnAllTerms(getById(fragment, namespace));
+        vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
     }
 
     /**
@@ -309,7 +309,7 @@ public class VocabularyController extends BaseController {
     /**
      * Removes a vocabulary.
      *
-     * @param fragment  vocabulary name
+     * @param localName  vocabulary name
      * @param namespace (optional) vocabulary namespace
      * @see VocabularyService#remove(Vocabulary)  for details.
      */
@@ -321,17 +321,17 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "409",
                          description = "Unable to remove vocabulary. E.g., it contains terms, it is referenced by other vocabularies, etc.")
     })
-    @DeleteMapping(value = "/{fragment}")
+    @DeleteMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void removeVocabulary(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                            example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                 @PathVariable String fragment,
+    public void removeVocabulary(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                            example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                 @PathVariable String localName,
                                  @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                             example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary toRemove = vocabularyService.getRequiredReference(identifier);
         vocabularyService.remove(toRemove);
         LOG.debug("Vocabulary {} removed.", toRemove);
@@ -343,17 +343,17 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PreAuthorize("permitAll()")    // TODO Authorize?
-    @GetMapping(value = "/{fragment}/validate",
+    @GetMapping(value = "/{localName}/validate",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<ValidationResult> validateVocabulary(
-            @Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-            @PathVariable String fragment,
+            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
             @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                        example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         return vocabularyService.validateContents(vocabulary);
     }
@@ -364,22 +364,22 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "201", description = "Snapshot successfully created."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @PostMapping("/{fragment}/versions")
+    @PostMapping("/{localName}/versions")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createSnapshot(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                          example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                               @PathVariable String fragment,
+    public ResponseEntity<Void> createSnapshot(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                          example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                               @PathVariable String localName,
                                                @Parameter(
                                                        description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                        example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                                @RequestParam(name = QueryParams.NAMESPACE,
                                                              required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
         LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
         return ResponseEntity.created(
-                locationWithout(generateLocation(snapshot.getUri()), "/" + fragment + "/versions")).build();
+                locationWithout(generateLocation(snapshot.getUri()), "/" + localName + "/versions")).build();
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -389,10 +389,10 @@ public class VocabularyController extends BaseController {
                          description = "A list of snapshots or a snapshot valid at the requested datetime."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{fragment}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<?> getSnapshots(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                          @PathVariable String fragment,
+    @GetMapping(value = "/{localName}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<?> getSnapshots(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                     example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                          @PathVariable String localName,
                                           @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                      example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
@@ -401,7 +401,7 @@ public class VocabularyController extends BaseController {
                                                   description = "Timestamp at which the returned valid was valid. ISO-formatted datetime.",
                                                   example = "2023-01-01T00:00:00")
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         if (at.isPresent()) {
             final Instant instant = RestUtils.parseTimestamp(at.get());
@@ -416,16 +416,16 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Access control list instance."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{fragment}/acl", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = "/{localName}/acl", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public AccessControlListDto getAccessControlList(
-            @Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-            @PathVariable String fragment,
+            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
             @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                        example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         return vocabularyService.getAccessControlList(vocabulary);
     }
@@ -436,18 +436,18 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "204", description = "Record successfully added."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @PostMapping(value = "/{fragment}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PostMapping(value = "/{localName}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addAccessControlRecord(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                  example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                       @PathVariable String fragment,
+    public void addAccessControlRecord(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                  example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                       @PathVariable String localName,
                                        @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                   example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                        @RequestParam(name = QueryParams.NAMESPACE,
                                                      required = false) Optional<String> namespace,
                                        @Parameter(description = "Access control record to add.")
                                        @RequestBody AccessControlRecord<?> record) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         vocabularyService.addAccessControlRecords(vocabulary, record);
         LOG.debug("Added access control record to ACL of vocabulary {}.", vocabulary);
@@ -459,18 +459,18 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "204", description = "Record successfully removed."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @DeleteMapping(value = "/{fragment}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @DeleteMapping(value = "/{localName}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeAccessControlRecord(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                          @PathVariable String fragment,
+    public void removeAccessControlRecord(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                     example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                          @PathVariable String localName,
                                           @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                      example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace,
                                           @Parameter(description = "Access control record to remove.")
                                           @RequestBody AccessControlRecord<?> record) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         vocabularyService.removeAccessControlRecord(vocabulary, record);
         LOG.debug("Removed access control record from ACL of vocabulary {}.", vocabulary);
@@ -482,25 +482,25 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "204", description = "Access level successfully updated."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @PutMapping(value = "/{fragment}/acl/records/{recordIdFragment}",
+    @PutMapping(value = "/{localName}/acl/records/{recordLocalName}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateAccessControlLevel(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                    example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                         @PathVariable String fragment,
+    public void updateAccessControlLevel(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                    example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                         @PathVariable String localName,
                                          @Parameter(
                                                  description = "Locally unique part of the access control record identifier.")
-                                         @PathVariable String recordIdFragment,
+                                         @PathVariable String recordLocalName,
                                          @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                     example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                          @RequestParam(name = QueryParams.NAMESPACE,
                                                        required = false) Optional<String> namespace,
                                          @Parameter(description = "Access control record to remove.")
                                          @RequestBody AccessControlRecord<?> record) {
-        if (!record.getUri().toString().contains(recordIdFragment)) {
+        if (!record.getUri().toString().contains(recordLocalName)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Change record identifier does not match URL.");
         }
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         vocabularyService.updateAccessControlLevel(vocabulary, record);
         LOG.debug("Updated access control record {} from ACL of vocabulary {}.", record, vocabulary);
@@ -512,15 +512,15 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "200", description = "Access level."),
             @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
     })
-    @GetMapping(value = "/{fragment}/access-level")
-    public AccessLevel getAccessLevel(@Parameter(description = VocabularyControllerDoc.ID_FRAGMENT_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_FRAGMENT_EXAMPLE)
-                                      @PathVariable String fragment,
+    @GetMapping(value = "/{localName}/access-level")
+    public AccessLevel getAccessLevel(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                 example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                      @PathVariable String localName,
                                       @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
                                                  example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         return vocabularyService.getAccessLevel(vocabulary);
     }
@@ -529,8 +529,8 @@ public class VocabularyController extends BaseController {
      * A couple of constants for the {@link VocabularyController} API documentation.
      */
     private static final class VocabularyControllerDoc {
-        private static final String ID_FRAGMENT_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
-        private static final String ID_FRAGMENT_EXAMPLE = "datovy-mpp-3.4";
+        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
+        private static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
         private static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
         private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/";
         private static final String ID_NOT_FOUND_DESCRIPTION = "Vocabulary with the specified identifier not found.";
