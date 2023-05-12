@@ -91,7 +91,8 @@ public class VocabularyController extends BaseController {
     })
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createVocabulary(@RequestBody Vocabulary vocabulary) {
+    public ResponseEntity<Void> createVocabulary(@Parameter(description = "Metadata of the vocabulary to create.")
+                                                 @RequestBody Vocabulary vocabulary) {
         vocabularyService.persist(vocabulary);
         LOG.debug("Vocabulary {} created.", vocabulary);
         return ResponseEntity.created(generateLocation(vocabulary.getUri())).build();
