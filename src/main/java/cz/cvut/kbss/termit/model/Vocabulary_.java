@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.metamodel.*;
-import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.resource.Document;
 
 import java.net.URI;
@@ -22,7 +21,7 @@ public abstract class Vocabulary_ extends Asset_ {
 
     public static volatile SetAttribute<Vocabulary, URI> importedVocabularies;
 
-    public static volatile SingularAttribute<Vocabulary, AccessControlList> acl;
+    public static volatile SingularAttribute<Vocabulary, URI> acl;
 
     public static volatile PropertiesSpecification<Vocabulary, Map, String, String> properties;
 
