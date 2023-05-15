@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
 
-@Tag(name = "Workspaces", description = "Workspace management API.")
+@Tag(name = "Workspaces", description = "Workspace management API")
 @RestController
 @RequestMapping(WorkspaceController.PATH)
 public class WorkspaceController {

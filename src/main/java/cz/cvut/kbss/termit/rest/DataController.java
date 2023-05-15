@@ -20,6 +20,12 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +37,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
-/**
- * Provides access to general data from repository.
- * <p>
- * Note that this endpoint is currently not secured.
- */
+@Tag(name = "Data", description = "Extra-domain data access API")
 @RestController
 @RequestMapping("/data")
 public class DataController {
@@ -49,32 +51,45 @@ public class DataController {
         this.dataService = dataService;
     }
 
+    @Operation(description = "Gets all unique RDF properties used by the data in the system.")
+    @ApiResponse(responseCode = "200", description = "List of RDFS resources representing properties.")
     @GetMapping(value = "/properties", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getProperties() {
         return dataService.findAllProperties();
     }
 
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Creates a new unmapped RDF property in the repository.")
+    @ApiResponse(responseCode = "201", description = "Property successfully created.")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     @PostMapping(value = "/properties", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<Void> createProperty(@RequestBody RdfsResource property) {
+    public ResponseEntity<Void> createProperty(@Parameter(description = "Property metadata.")
+                                               @RequestBody RdfsResource property) {
         dataService.persistProperty(property);
         LOG.debug("Created property {}.", property);
         return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
     }
 
-    /**
-     * Gets basic metadata for a RDFS resource with the specified identifier.
-     *
-     * @param id Resource identifier
-     * @return Metadata
-     */
+    @Operation(description = "Gets basic metadata for a RDFS resource with the specified IRI.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "RDSF resource metadata."),
+            @ApiResponse(responseCode = "404", description = "Resource not found.")
+    })
     @GetMapping(value = "/resource", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public RdfsResource getById(@RequestParam("iri") URI id) {
+    public RdfsResource getById(@Parameter(description = "Identifier of the resource to retrieve.")
+                                @RequestParam("iri") URI id) {
         return dataService.find(id).orElseThrow(() -> NotFoundException.create("Resource", id));
     }
 
+    @Operation(
+            description = "Gets the label of a RDFS resource with the specified IRI. The label is in the configured system language.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "RDSF resource label."),
+            @ApiResponse(responseCode = "404", description = "Resource not found.")
+    })
     @GetMapping(value = "/label")
-    public String getLabel(@RequestParam("iri") URI id) {
+    public String getLabel(@Parameter(description = "Resource identifier.")
+                           @RequestParam("iri") URI id) {
         return dataService.getLabel(id).orElseThrow(
                 () -> new NotFoundException("Resource with id " + id + " not found or it has no matching label."));
     }
