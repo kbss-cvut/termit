@@ -72,9 +72,7 @@ public class VocabularyController extends BaseController {
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets all vocabularies managed by the system.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of vocabularies ordered by label.")
-    })
+    @ApiResponse(responseCode = "200", description = "List of vocabularies ordered by label.")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<List<VocabularyDto>> getAll(ServletWebRequest webRequest) {
         if (webRequest.checkNotModified(vocabularyService.getLastModified())) {
@@ -99,17 +97,17 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets detail of a vocabulary with the specified identifier.")
+               description = "Gets detail of the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Matching vocabulary metadata."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Vocabulary getById(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                         example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public Vocabulary getById(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                         example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                               @PathVariable String localName,
-                              @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                         example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                              @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                         example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                               @RequestParam(name = QueryParams.NAMESPACE,
                                             required = false) Optional<String> namespace) {
         final URI id = resolveVocabularyUri(localName, namespace);
@@ -120,17 +118,18 @@ public class VocabularyController extends BaseController {
                description = "Gets identifiers of vocabularies imported (including transitive imports) by the vocabulary with the specified identification.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Collection<URI> getImports(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public Collection<URI> getImports(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                 example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                       @PathVariable String localName,
-                                      @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                      @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                 example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(localName, namespace));
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(
+                resolveVocabularyUri(localName, namespace));
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
 
@@ -138,17 +137,18 @@ public class VocabularyController extends BaseController {
                description = "Gets identifiers of vocabularies whose terms are in a SKOS relationship with terms from the specified vocabulary.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/related", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Collection<URI> getRelated(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public Collection<URI> getRelated(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                 example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                       @PathVariable String localName,
-                                      @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                      @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                 example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(localName, namespace));
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(
+                resolveVocabularyUri(localName, namespace));
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
 
@@ -185,11 +185,11 @@ public class VocabularyController extends BaseController {
     @PostMapping("/{localName}/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(
-            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
-            @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace,
             @Parameter(description = "File containing a SKOS glossary in RDF.")
@@ -209,19 +209,20 @@ public class VocabularyController extends BaseController {
                description = "Gets a list of changes made to metadata of vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List of change records."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
 
     })
     @GetMapping(value = "/{localName}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(
-            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
-            @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(localName, namespace));
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(
+                resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChanges(vocabulary);
     }
 
@@ -229,19 +230,20 @@ public class VocabularyController extends BaseController {
                description = "Gets summary info about changes made to the content of the vocabulary (term creation, editing).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List of aggregated change data."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/history-of-content",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AggregatedChangeInfo> getHistoryOfContent(
-            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
-            @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(resolveVocabularyUri(localName, namespace));
+        final Vocabulary vocabulary = vocabularyService.getRequiredReference(
+                resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChangesOfContent(vocabulary);
     }
 
@@ -249,17 +251,17 @@ public class VocabularyController extends BaseController {
                description = "Updates metadata of vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Vocabulary successfully updated."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
             @ApiResponse(responseCode = "409", description = "Provided metadata are invalid.")
     })
     @PutMapping(value = "/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void updateVocabulary(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                            example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public void updateVocabulary(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                  @PathVariable String localName,
-                                 @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                            example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                 @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                            example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                required = false) Optional<String> namespace,
                                  @Parameter(description = "Updated vocabulary data.")
@@ -281,11 +283,11 @@ public class VocabularyController extends BaseController {
     @PutMapping(value = "/{localName}/terms/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void runTextAnalysisOnAllTerms(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public void runTextAnalysisOnAllTerms(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                     example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                           @PathVariable String localName,
-                                          @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                          @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                     example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace) {
         vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
@@ -309,7 +311,7 @@ public class VocabularyController extends BaseController {
     /**
      * Removes a vocabulary.
      *
-     * @param localName  vocabulary name
+     * @param localName vocabulary name
      * @param namespace (optional) vocabulary namespace
      * @see VocabularyService#remove(Vocabulary)  for details.
      */
@@ -317,18 +319,18 @@ public class VocabularyController extends BaseController {
                description = "Removes vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Vocabulary successfully removed."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
             @ApiResponse(responseCode = "409",
                          description = "Unable to remove vocabulary. E.g., it contains terms, it is referenced by other vocabularies, etc.")
     })
     @DeleteMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void removeVocabulary(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                            example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public void removeVocabulary(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                  @PathVariable String localName,
-                                 @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                            example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                 @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                            example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
@@ -340,17 +342,17 @@ public class VocabularyController extends BaseController {
     @Operation(description = "Validates the terms in a vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "A collection of validation results."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PreAuthorize("permitAll()")    // TODO Authorize?
     @GetMapping(value = "/{localName}/validate",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<ValidationResult> validateVocabulary(
-            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
-            @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
@@ -362,18 +364,19 @@ public class VocabularyController extends BaseController {
                description = "Creates a snapshot of the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Snapshot successfully created."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PostMapping("/{localName}/versions")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createSnapshot(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                          example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                               @PathVariable String localName,
-                                               @Parameter(
-                                                       description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                       example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                               @RequestParam(name = QueryParams.NAMESPACE,
-                                                             required = false) Optional<String> namespace) {
+    public ResponseEntity<Void> createSnapshot(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(
+                    description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                          required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
         final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
@@ -387,18 +390,19 @@ public class VocabularyController extends BaseController {
     @ApiResponses({
             @ApiResponse(responseCode = "200",
                          description = "A list of snapshots or a snapshot valid at the requested datetime."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "400", description = "Provided timestamp is invalid."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<?> getSnapshots(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public ResponseEntity<?> getSnapshots(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                     example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                           @PathVariable String localName,
-                                          @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                          @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                     example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace,
                                           @Parameter(
-                                                  description = "Timestamp at which the returned valid was valid. ISO-formatted datetime.",
+                                                  description = "Timestamp at which the returned version was valid. ISO-formatted datetime.",
                                                   example = "2023-01-01T00:00:00")
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
@@ -414,15 +418,15 @@ public class VocabularyController extends BaseController {
                description = "Gets the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Access control list instance."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/acl", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public AccessControlListDto getAccessControlList(
-            @Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
-            @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
@@ -434,15 +438,15 @@ public class VocabularyController extends BaseController {
                description = "Adds the specified access control record to the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Record successfully added."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PostMapping(value = "/{localName}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addAccessControlRecord(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                  example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public void addAccessControlRecord(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                  example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                        @PathVariable String localName,
-                                       @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                  example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                       @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                  example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                        @RequestParam(name = QueryParams.NAMESPACE,
                                                      required = false) Optional<String> namespace,
                                        @Parameter(description = "Access control record to add.")
@@ -457,15 +461,15 @@ public class VocabularyController extends BaseController {
                description = "Removes the specified access control record from the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Record successfully removed."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @DeleteMapping(value = "/{localName}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeAccessControlRecord(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public void removeAccessControlRecord(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                     example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                           @PathVariable String localName,
-                                          @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                     example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                          @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                     example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace,
                                           @Parameter(description = "Access control record to remove.")
@@ -480,19 +484,19 @@ public class VocabularyController extends BaseController {
                description = "Updates access level of specified access control record in the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Access level successfully updated."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PutMapping(value = "/{localName}/acl/records/{recordLocalName}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateAccessControlLevel(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                    example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public void updateAccessControlLevel(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                          @PathVariable String localName,
                                          @Parameter(
                                                  description = "Locally unique part of the access control record identifier.")
                                          @PathVariable String recordLocalName,
-                                         @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                    example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                         @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                          @RequestParam(name = QueryParams.NAMESPACE,
                                                        required = false) Optional<String> namespace,
                                          @Parameter(description = "Access control record to remove.")
@@ -510,14 +514,14 @@ public class VocabularyController extends BaseController {
                description = "Gets the access level of the current user to the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Access level."),
-            @ApiResponse(responseCode = "404", description = VocabularyControllerDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/access-level")
-    public AccessLevel getAccessLevel(@Parameter(description = VocabularyControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+    public AccessLevel getAccessLevel(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                 example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                       @PathVariable String localName,
-                                      @Parameter(description = VocabularyControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                 example = VocabularyControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                      @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                 example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
@@ -528,7 +532,7 @@ public class VocabularyController extends BaseController {
     /**
      * A couple of constants for the {@link VocabularyController} API documentation.
      */
-    private static final class VocabularyControllerDoc {
+    private static final class ApiDoc {
         private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
         private static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
         private static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";

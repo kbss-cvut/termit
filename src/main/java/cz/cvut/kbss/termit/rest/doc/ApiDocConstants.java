@@ -1,9 +1,9 @@
 package cz.cvut.kbss.termit.rest.doc;
 
 /**
- * Common constants for the Open API documentation of the TermIt REST API.
+ * Common constants for the Open API documentation of the system REST API.
  */
-public class ApiDocsConstants {
+public class ApiDocConstants {
 
     /**
      * Description of the {@link cz.cvut.kbss.termit.util.Constants.QueryParams#PAGE_SIZE} query parameter.
@@ -15,7 +15,7 @@ public class ApiDocsConstants {
      */
     public static final String PAGE_NO_DESCRIPTION = "Page number.";
 
-    private ApiDocsConstants() {
+    private ApiDocConstants() {
         throw new AssertionError();
     }
 }

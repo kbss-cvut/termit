@@ -17,7 +17,7 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
-import cz.cvut.kbss.termit.rest.doc.ApiDocsConstants;
+import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.AssetService;
 import cz.cvut.kbss.termit.util.Constants;
@@ -60,11 +60,11 @@ public class AssetController {
                description = "Gets recently edited assets with info on the change.")
     @ApiResponse(responseCode = "200", description = "List of changed assets.")
     @GetMapping(value = "/last-edited", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<RecentlyModifiedAsset> getLastEdited(@Parameter(description = ApiDocsConstants.PAGE_SIZE_DESCRIPTION)
+    public List<RecentlyModifiedAsset> getLastEdited(@Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
                                                      @RequestParam(name = Constants.QueryParams.PAGE_SIZE,
                                                                    required = false,
                                                                    defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
-                                                     @Parameter(description = ApiDocsConstants.PAGE_NO_DESCRIPTION)
+                                                     @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
                                                      @RequestParam(name = Constants.QueryParams.PAGE, required = false,
                                                                    defaultValue = DEFAULT_PAGE) Integer pageNo,
                                                      @Parameter(
@@ -81,11 +81,11 @@ public class AssetController {
     @ApiResponse(responseCode = "200", description = "List of recent comments.")
     @GetMapping(value = "/last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getLastCommented(
-            @Parameter(description = ApiDocsConstants.PAGE_SIZE_DESCRIPTION)
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE_SIZE,
                           required = false,
                           defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
-            @Parameter(description = ApiDocsConstants.PAGE_NO_DESCRIPTION)
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE,
                           required = false,
                           defaultValue = DEFAULT_PAGE) Integer pageNo) {
@@ -99,10 +99,10 @@ public class AssetController {
     @GetMapping(value = "/last-commented-in-reaction-to-mine",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getLastReactingCommentsToMine(
-            @Parameter(description = ApiDocsConstants.PAGE_SIZE_DESCRIPTION)
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false,
                           defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
-            @Parameter(description = ApiDocsConstants.PAGE_NO_DESCRIPTION)
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE, required = false,
                           defaultValue = DEFAULT_PAGE) Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
@@ -114,10 +114,10 @@ public class AssetController {
     @ApiResponse(responseCode = "200", description = "List of matching comments.")
     @GetMapping(value = "/my-last-commented", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RecentlyCommentedAsset> getMyLastCommented(
-            @Parameter(description = ApiDocsConstants.PAGE_SIZE_DESCRIPTION)
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false,
                           defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
-            @Parameter(description = ApiDocsConstants.PAGE_NO_DESCRIPTION)
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE, required = false,
                           defaultValue = DEFAULT_PAGE) Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
