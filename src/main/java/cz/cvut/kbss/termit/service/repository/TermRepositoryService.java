@@ -20,8 +20,8 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.DisabledOperationException;
-import cz.cvut.kbss.termit.exception.TermRemovalException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -403,21 +403,21 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * </ul>
      *
      * @param instance The instance to be removed, not {@code null}
-     * @throws TermRemovalException If the specified term cannot be removed
+     * @throws AssetRemovalException If the specified term cannot be removed
      */
     @Override
     protected void preRemove(@NotNull Term instance) {
         super.preRemove(instance);
         final List<TermOccurrences> ai = getOccurrenceInfo(instance);
         if (!ai.isEmpty()) {
-            throw new TermRemovalException(
+            throw new AssetRemovalException(
                     "Cannot delete the term. It is used for annotating resources: " +
                             ai.stream().map(TermOccurrences::getResourceLabel).collect(
                                     joining(",")));
         }
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
-            throw new TermRemovalException(
+            throw new AssetRemovalException(
                     "Cannot delete the term. It is a parent of other terms: " + subTerms
                             .stream().map(t -> t.getUri().toString())
                             .collect(joining(",")));
@@ -430,7 +430,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
                             || s.equalsIgnoreCase(SKOS.historyNote.toString())
                             || s.equalsIgnoreCase(SKOS.note.toString()))).collect(toList());
             if (!properties.isEmpty()) {
-                throw new TermRemovalException(
+                throw new AssetRemovalException(
                         "Cannot delete the term. It is linked to another term through properties "
                                 + String.join(",", properties));
             }

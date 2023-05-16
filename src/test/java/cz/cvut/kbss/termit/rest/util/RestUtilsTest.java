@@ -27,8 +27,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.Cookie;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -82,12 +80,6 @@ class RestUtilsTest {
 
         final Optional<String> result = RestUtils.getCookie(mockRequest, "unknown-cookie");
         assertFalse(result.isPresent());
-    }
-
-    @Test
-    void urlEncodeEncodesSpecifiedStringWithUTF8URLEncoding() throws Exception {
-        final String value = Generator.generateUri().toString();
-        assertEquals(URLEncoder.encode(value, StandardCharsets.UTF_8.name()), RestUtils.urlEncode(value));
     }
 
     @Test

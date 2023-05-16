@@ -2,6 +2,10 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.jmx.AppAdminBean;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Administration", description = "Application administration API")
 @RestController
 @RequestMapping("/admin")
 @Profile("!test")
@@ -27,6 +32,9 @@ public class AdminController {
         this.adminBean = adminBean;
     }
 
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Evicts all application caches. Useful, for example, when data were modified manually in the repository.")
+    @ApiResponse(responseCode = "204", description = "Caches evicted.")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping("/cache")
     @ResponseStatus(HttpStatus.NO_CONTENT)

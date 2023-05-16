@@ -3,7 +3,6 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
-import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -11,6 +10,7 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -22,6 +22,12 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +36,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.NotAcceptableStatusException;
 
@@ -43,6 +48,7 @@ import java.util.Set;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 
+@Tag(name = "Terms", description = "Term management API")
 @RestController
 @RequestMapping("/")
 public class TermController extends BaseController {
@@ -67,35 +73,46 @@ public class TermController extends BaseController {
      * This method also allows to export the terms into CSV or Excel by using HTTP content type negotiation or filter
      * terms by a search string.
      *
-     * @param vocabularyIdFragment Vocabulary name
-     * @param namespace            Vocabulary namespace. Optional
-     * @param searchString         String to filter term labels by. Optional
-     * @param includeImported      Whether to include imported vocabularies when searching for terms. Does not apply to
-     *                             term export. Optional, defaults to false
-     * @param exportType           Type of the export. Optional
-     * @param properties           A set of properties representing references to terms from other vocabularies to take
-     *                             into account in export. Relevant only for term export. Optional
-     * @param acceptType           MIME type accepted by the client, relevant only for term export
+     * @param localName       Vocabulary name
+     * @param namespace       Vocabulary namespace. Optional
+     * @param searchString    String to filter term labels by. Optional
+     * @param includeImported Whether to include imported vocabularies when searching for terms. Does not apply to term
+     *                        export. Optional, defaults to false
+     * @param exportType      Type of the export. Optional
+     * @param properties      A set of properties representing references to terms from other vocabularies to take into
+     *                        account in export. Relevant only for term export. Optional
+     * @param acceptType      MIME type accepted by the client, relevant only for term export
      * @return List of terms of the specific vocabulary
      */
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets terms from the vocabulary with the specified identifier.")
+    @ApiResponse(responseCode = "200", description = "List of vocabulary terms.")
+    @GetMapping(value = "/vocabularies/{localName}/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE,
                             JsonLd.MEDIA_TYPE,
                             Constants.MediaType.CSV,
                             Constants.MediaType.EXCEL,
                             Constants.MediaType.TURTLE,
                             Constants.MediaType.RDF_XML})
-    public ResponseEntity<?> getAll(@PathVariable String vocabularyIdFragment,
-                                    @RequestParam(name = QueryParams.NAMESPACE,
-                                                  required = false) Optional<String> namespace,
-                                    @RequestParam(name = "searchString", required = false) String searchString,
-                                    @RequestParam(name = "includeImported", required = false) boolean includeImported,
-                                    @RequestParam(name = "exportType", required = false) ExportType exportType,
-                                    @RequestParam(name = "property", required = false,
-                                                  defaultValue = "") Set<String> properties,
-                                    @RequestHeader(value = HttpHeaders.ACCEPT, required = false,
-                                                   defaultValue = MediaType.ALL_VALUE) String acceptType) {
-        final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
+    public ResponseEntity<?> getAll(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "String by which filter the terms (label).")
+            @RequestParam(name = "searchString", required = false) String searchString,
+            @Parameter(description = "Whether to include terms from imported vocabularies.")
+            @RequestParam(name = "includeImported", required = false) boolean includeImported,
+            @Parameter(description = "Type of export (applicable if HTTP accept type is neither JSON nor JSON-LD).")
+            @RequestParam(name = "exportType", required = false) ExportType exportType,
+            @Parameter(description = "Identifiers of properties to include in the export.")
+            @RequestParam(name = "property", required = false,
+                          defaultValue = "") Set<String> properties,
+            @Parameter(
+                    description = "HTTP Accept header. If its value is not JSON or JSON-LD, the request is interpreted as data export.")
+            @RequestHeader(value = HttpHeaders.ACCEPT, required = false,
+                           defaultValue = MediaType.ALL_VALUE) String acceptType) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
             return ResponseEntity.ok(includeImported ?
@@ -124,8 +141,9 @@ public class TermController extends BaseController {
                                      .contentLength(r.contentLength())
                                      .contentType(MediaType.parseMediaType(mediaType))
                                      .header(HttpHeaders.CONTENT_DISPOSITION,
-                                             "attachment; filename=\"" + IdentifierResolver.normalizeToAscii(IdentifierResolver.extractIdentifierFragment(
-                                                     vocabulary.getUri())) +
+                                             "attachment; filename=\"" + IdentifierResolver.normalizeToAscii(
+                                                     IdentifierResolver.extractIdentifierFragment(
+                                                             vocabulary.getUri())) +
                                                      r.getFileExtension().orElse("") + "\"")
                                      .body(r);
             } catch (IOException e) {
@@ -147,21 +165,33 @@ public class TermController extends BaseController {
      * given pref label exists in the given vocabulary for the given language. If not, this method returns the number of
      * terms in the specified vocabulary in a special response header.
      *
-     * @param vocabularyIdFragment vocabulary id fragment
-     * @param namespace            vocabulary namespace
-     * @param prefLabel            the label to check, optional
-     * @param language             language to check existence in, optional
+     * @param localName vocabulary id fragment
+     * @param namespace vocabulary namespace
+     * @param prefLabel the label to check, optional
+     * @param language  language to check existence in, optional
      * @return OK response when term exists and label check was performed, Not Found otherwise. If no label to check was
      * passed, an empty OK response with header containing total number of terms is returned
      */
+    @Operation(
+            description = "Checks if a term with the specified label (in the specified language) exists in the vocabulary with the specified identifier. If no label is provided, this method checks for the number of terms in the target vocabulary.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200",
+                         description = "Term with matching label already exists. If no label was specified, a header contains the total number of terms in the vocabulary."),
+            @ApiResponse(responseCode = "404",
+                         description = "Vocabulary with specified identifier not found. Or no term with matching label exists.")
+    })
     @PreAuthorize("permitAll()")
-    @RequestMapping(method = RequestMethod.HEAD, value = "/vocabularies/{vocabularyIdFragment}/terms")
-    public ResponseEntity<Void> checkTerms(@PathVariable String vocabularyIdFragment,
-                                           @RequestParam(name = QueryParams.NAMESPACE,
-                                                         required = false) Optional<String> namespace,
-                                           @RequestParam(name = "prefLabel", required = false) String prefLabel,
-                                           @RequestParam(name = "language", required = false) String language) {
-        final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
+    @RequestMapping(method = RequestMethod.HEAD, value = "/vocabularies/{localName}/terms")
+    public ResponseEntity<Void> checkTerms(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Label for whose existence to check.")
+            @RequestParam(name = "prefLabel", required = false) String prefLabel,
+            @Parameter(description = "Language of the label.")
+            @RequestParam(name = "language", required = false) String language) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = termService.getRequiredVocabularyReference(vocabularyUri);
         if (prefLabel != null) {
             final boolean exists = termService.existsInVocabulary(prefLabel, vocabulary, language);
@@ -182,210 +212,264 @@ public class TermController extends BaseController {
      * Optionally, the terms can be filtered by the specified search string, so that only roots with descendants with
      * label matching the specified string are returned.
      *
-     * @param vocabularyIdFragment Vocabulary name
-     * @param namespace            Vocabulary namespace. Optional
-     * @param pageSize             Limit the number of elements in the returned page. Optional
-     * @param pageNo               Number of the page to return. Optional
-     * @param includeImported      Whether a transitive closure of vocabulary imports should be used when getting the
-     *                             root terms. Optional, defaults to {@code false}
+     * @param localName       Vocabulary name
+     * @param namespace       Vocabulary namespace. Optional
+     * @param pageSize        Limit the number of elements in the returned page. Optional
+     * @param pageNo          Number of the page to return. Optional
+     * @param includeImported Whether a transitive closure of vocabulary imports should be used when getting the root
+     *                        terms. Optional, defaults to {@code false}
      * @return List of root terms of the specific vocabulary
      */
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/roots",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets root terms (terms without parent) from the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of root vocabulary terms."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/terms/roots",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<TermDto> getAllRoots(@PathVariable String vocabularyIdFragment,
-                                     @RequestParam(name = QueryParams.NAMESPACE,
-                                                   required = false) Optional<String> namespace,
-                                     @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
-                                     @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo,
-                                     @RequestParam(name = "includeImported", required = false) boolean includeImported,
-                                     @RequestParam(name = "includeTerms", required = false,
-                                                   defaultValue = "") List<URI> includeTerms) {
-        final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, vocabularyIdFragment));
+    public List<TermDto> getAllRoots(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+            @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo,
+            @Parameter(description = "Whether to include terms from imported vocabularies.")
+            @RequestParam(name = "includeImported", required = false) boolean includeImported,
+            @Parameter(
+                    description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
+            @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
+        final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
         return includeImported ?
-                termService
-                        .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-                termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+               termService
+                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
+               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
     }
 
-    /**
-     * Creates a new root term in the specified vocabulary.
-     *
-     * @param vocabularyIdFragment Vocabulary name
-     * @param namespace            Vocabulary namespace. Optional
-     * @param term                 Vocabulary term that will be created
-     * @return Response with {@code Location} header.
-     * @see #createSubTerm(String, String, Optional, Term)
-     */
-    @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Creates a new root terms in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Term created."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary not found."),
+            @ApiResponse(responseCode = "409", description = "Term data invalid.")
+    })
+    @PostMapping(value = "/vocabularies/{localName}/terms",
                  consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createRootTerm(@PathVariable String vocabularyIdFragment,
-                                               @RequestParam(name = QueryParams.NAMESPACE, required = false)
-                                                       Optional<String> namespace,
-                                               @RequestBody Term term) {
-        final URI vocabularyUri = getVocabularyUri(namespace, vocabularyIdFragment);
+    public ResponseEntity<Void> createRootTerm(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "The new term.")
+            @RequestBody Term term) {
+        final URI vocabularyUri = getVocabularyUri(namespace, localName);
         termService.persistRoot(term, getVocabulary(vocabularyUri));
 
         LOG.debug("Root term {} created in vocabulary {}.", term, vocabularyUri);
         return ResponseEntity.created(generateLocation(term.getUri(), config.getNamespace().getVocabulary())).build();
     }
 
-    /**
-     * Gets term by its identifier fragment and vocabulary in which it is.
-     *
-     * @param vocabularyIdFragment Vocabulary identifier fragment
-     * @param termIdFragment       Term identifier fragment
-     * @param namespace            Vocabulary identifier namespace. Optional
-     * @return Matching term
-     * @throws NotFoundException If term does not exist
-     */
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets the term with the specified local name from the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Term detail."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Term getById(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                        @PathVariable("termIdFragment") String termIdFragment,
-                        @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+    public Term getById(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.findRequired(termUri);
     }
 
-    /**
-     * Gets term by its identifier.
-     * <p>
-     * This is a convenience method for accessing a Term without using its Vocabulary.
-     *
-     * @see #getById(String, String)
-     */
-    @GetMapping(value = "/terms/{termIdFragment}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public Term getById(@PathVariable("termIdFragment") String termIdFragment,
-                        @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Term detail."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public Term getById(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.findRequired(termUri);
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
-        return idResolver.resolveIdentifier(idResolver
-                        .buildNamespace(
-                                getVocabularyUri(namespace, vocabIdFragment).toString(),
-                                config.getNamespace().getTerm().getSeparator()),
-                termIdFragment);
+        return idResolver.resolveIdentifier(idResolver.buildNamespace(
+                                                    getVocabularyUri(namespace, vocabIdFragment).toString(),
+                                                    config.getNamespace().getTerm().getSeparator()),
+                                            termIdFragment);
     }
 
-    /**
-     * Updates the specified term.
-     *
-     * @param vocabularyIdFragment Vocabulary identifier fragment
-     * @param termIdFragment       Term identifier fragment
-     * @param namespace            Vocabulary identifier namespace. Optional
-     * @param term                 The updated term
-     * @throws NotFoundException If term does not exist
-     */
-    @PutMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Updates the term with the specified local name from the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Term successfully updated."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary not found."),
+            @ApiResponse(responseCode = "409", description = "Term data invalid.")
+    })
+    @PutMapping(value = "/vocabularies/{localName}/terms/{termLocalName}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void update(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                       @PathVariable("termIdFragment") String termIdFragment,
-                       @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-                       @RequestBody Term term) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+    public void update(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Updated term data.")
+            @RequestBody Term term) {
+        final URI termUri = getTermUri(localName, termLocalName, namespace);
         verifyRequestAndEntityIdentifier(term, termUri);
         termService.update(term);
         LOG.debug("Term {} updated.", term);
     }
 
-    /**
-     * Updates the specified term.
-     * <p>
-     * This is a convenience method for accessing a Term without using its Vocabulary.
-     *
-     * @see #update(String, String, Optional, Term)
-     */
-    @PutMapping(value = "/terms/{termIdFragment}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Updates the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Term successfully updated."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION),
+            @ApiResponse(responseCode = "409", description = "Term data invalid.")
+    })
+    @PutMapping(value = "/terms/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void update(@PathVariable("termIdFragment") String termIdFragment,
-                       @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-                       @RequestBody Term term) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+    public void update(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @Parameter(description = "Updated term data.")
+            @RequestBody Term term) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         verifyRequestAndEntityIdentifier(term, termUri);
         termService.update(term);
         LOG.debug("Term {} updated.", term);
     }
 
-    /**
-     * Removes a term.
-     *
-     * @param vocabularyIdFragment vocabulary name
-     * @param termIdFragment       term id fragment
-     * @param namespace            (optional) vocabulary namespace
-     * @see TermService#remove(Term)  for details.
-     */
-    @DeleteMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}")
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Removes the term with the specified local name from the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Term successfully removed."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary not found."),
+            @ApiResponse(responseCode = "409", description = "Unable to remove term.")
+    })
+    @DeleteMapping(value = "/vocabularies/{localName}/terms/{termLocalName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void removeTerm(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                           @PathVariable("termIdFragment") String termIdFragment,
-                           @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+    public void removeTerm(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        final URI termUri = getTermUri(localName, termLocalName, namespace);
         termService.remove(termService.findRequired(termUri));
         LOG.debug("Term {} removed.", termUri);
     }
 
-    /**
-     * Returns terms not occurring in any document content or definition.
-     */
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/unused-terms",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets terms from the vocabulary with the specified identifier that are not used in any document of definition")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Unused terms."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/unused-terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<URI> getUnusedTermsInVocabulary(
-            @PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace
-    ) {
-        return termService.getUnusedTermsInVocabulary(getVocabulary(getVocabularyUri(namespace, vocabularyIdFragment)));
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        return termService.getUnusedTermsInVocabulary(getVocabulary(getVocabularyUri(namespace, localName)));
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets sub-terms of the term with the specified local name in the vocabulary with the specified identifier")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sub-terms."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getSubTerms(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                                  @PathVariable("termIdFragment") String termIdFragment,
-                                  @RequestParam(name = QueryParams.NAMESPACE,
-                                                required = false) Optional<String> namespace) {
-        final Term parent = getById(vocabularyIdFragment, termIdFragment, namespace);
+    public List<Term> getSubTerms(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        final Term parent = getById(localName, termLocalName, namespace);
         return termService.findSubTerms(parent);
     }
 
     /**
      * A convenience endpoint for getting subterms of a Term without using its Vocabulary.
      */
-    @GetMapping(value = "/terms/{termIdFragment}/subterms",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets subterms of the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Term successfully updated."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getSubTerms(@PathVariable("termIdFragment") String termIdFragment,
-                                  @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final Term parent = getById(termIdFragment, namespace);
+    public List<Term> getSubTerms(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+        final Term parent = getById(localName, namespace);
         return termService.findSubTerms(parent);
     }
 
-    /**
-     * Creates a new term under the specified parent Term in the specified vocabulary.
-     *
-     * @param vocabularyIdFragment Vocabulary name
-     * @param parentIdFragment     Parent term identifier fragment
-     * @param namespace            Vocabulary namespace. Optional
-     * @param newTerm              Vocabulary term that will be created
-     * @return Response with {@code Location} header.
-     * @see #createRootTerm(String, Optional, Term)
-     */
-    @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/subterms",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Creates a new sub-term of the term with the specified local name in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Sub-term created."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or parent term not found."),
+            @ApiResponse(responseCode = "409", description = "Term metadata invalid.")
+    })
+    @PostMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
                  produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createSubTerm(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                                              @PathVariable("termIdFragment") String parentIdFragment,
-                                              @RequestParam(name = QueryParams.NAMESPACE,
-                                                            required = false) Optional<String> namespace,
-                                              @RequestBody Term newTerm) {
-        final Term parent = getById(vocabularyIdFragment, parentIdFragment, namespace);
+    public ResponseEntity<Void> createSubTerm(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "The new term.")
+            @RequestBody Term newTerm) {
+        final Term parent = getById(localName, termLocalName, namespace);
         termService.persistChild(newTerm, parent);
         LOG.debug("Child term {} of parent {} created.", newTerm, parent);
-        return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), parentIdFragment)).build();
+        return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), termLocalName)).build();
     }
 
     private URI createSubTermLocation(URI childUri, String parentIdFragment) {
@@ -393,65 +477,107 @@ public class TermController extends BaseController {
         return URI.create(u.replace("/" + parentIdFragment + "/subterms", ""));
     }
 
-    /**
-     * Creates a new term under the specified parent Term.
-     *
-     * @see #createSubTerm(String, String, Optional, Term)
-     */
-    @PostMapping(value = "/terms/{termIdFragment}/subterms",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Creates a new sub-term of the term with the specified local identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Sub-term created."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION),
+            @ApiResponse(responseCode = "409", description = "Term metadata invalid.")
+    })
+    @PostMapping(value = "/terms/{localName}/subterms",
                  produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createSubTerm(@PathVariable("termIdFragment") String parentIdFragment,
-                                              @RequestParam(name = QueryParams.NAMESPACE,
-                                                            required = false) String namespace,
-                                              @RequestBody Term newTerm) {
-        final Term parent = getById(parentIdFragment, namespace);
+    public ResponseEntity<Void> createSubTerm(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @RequestBody Term newTerm) {
+        final Term parent = getById(localName, namespace);
         termService.persistChild(newTerm, parent);
         LOG.debug("Child term {} of parent {} created.", newTerm, parent);
-        return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), parentIdFragment)).build();
+        return ResponseEntity.created(createSubTermLocation(newTerm.getUri(), localName)).build();
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-target", produces = {
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of all other terms that are related via definition to the term with the specified local name in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Definition-related terms."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/def-related-target", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
-    public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(@PathVariable String vocabularyIdFragment,
-                                                                       @PathVariable String termIdFragment,
-                                                                       @RequestParam(name = QueryParams.NAMESPACE,
-                                                                                     required = false)
-                                                                               Optional<String> namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+    public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.getDefinitionallyRelatedTargeting(termService.findRequired(termUri));
     }
 
-    @GetMapping(value = "/terms/{termIdFragment}/def-related-target", produces = {
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of all other terms that appear in the definition of the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Definition-related terms."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}/def-related-target", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
-    public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(@PathVariable String termIdFragment,
-                                                                       @RequestParam(
-                                                                               name = QueryParams.NAMESPACE) String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+    public List<TermOccurrence> getDefinitionallyRelatedTermsTargeting(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.getDefinitionallyRelatedTargeting(termService.findRequired(termUri));
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/def-related-of", produces = {
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of all other terms whose definition contains the term with the specified local name in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Definition-related terms."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/def-related-of", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
-    public List<TermOccurrence> getDefinitionallyRelatedTermsOf(@PathVariable String vocabularyIdFragment,
-                                                                @PathVariable String termIdFragment,
-                                                                @RequestParam(name = QueryParams.NAMESPACE,
-                                                                              required = false)
-                                                                        Optional<String> namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+    public List<TermOccurrence> getDefinitionallyRelatedTermsOf(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.getDefinitionallyRelatedOf(termService.findRequired(termUri));
     }
 
-    @GetMapping(value = "/terms/{termIdFragment}/def-related-of", produces = {
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of all other terms whose definition contains the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Definition-related terms."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}/def-related-of", produces = {
             MediaType.APPLICATION_JSON_VALUE,
             JsonLd.MEDIA_TYPE})
-    public List<TermOccurrence> getDefinitionallyRelatedTermsOf(@PathVariable String termIdFragment,
-                                                                @RequestParam(name = QueryParams.NAMESPACE)
-                                                                        String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+    public List<TermOccurrence> getDefinitionallyRelatedTermsOf(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.getDefinitionallyRelatedOf(termService.findRequired(termUri));
     }
 
@@ -461,59 +587,111 @@ public class TermController extends BaseController {
      * This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed automatically
      * when specific conditions are fulfilled.
      */
-    @PutMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/text-analysis")
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Runs text analysis on the definition of  term with the specified local name in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Definition-related terms."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+    })
+    @PutMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void runTextAnalysisOnTerm(@PathVariable String vocabularyIdFragment,
-                                      @PathVariable String termIdFragment,
-                                      @RequestParam(name = QueryParams.NAMESPACE, required = false)
-                                              Optional<String> namespace) {
-        termService.analyzeTermDefinition(getById(vocabularyIdFragment, termIdFragment, namespace),
-                getVocabularyUri(namespace, vocabularyIdFragment));
+    public void runTextAnalysisOnTerm(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        termService.analyzeTermDefinition(getById(localName, termLocalName, namespace),
+                                          getVocabularyUri(namespace, localName));
     }
 
-    @PutMapping(value = "/terms/{termIdFragment}/definition-source",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Sets the source of definition of the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Definition source set."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @PutMapping(value = "/terms/{localName}/definition-source",
                 consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void setTermDefinitionSource(@PathVariable String termIdFragment,
-                                        @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-                                        @RequestBody TermDefinitionSource definitionSource) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+    public void setTermDefinitionSource(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @Parameter(description = "Definition source to set.")
+            @RequestBody TermDefinitionSource definitionSource) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         termService.setTermDefinitionSource(termService.findRequired(termUri), definitionSource);
         LOG.debug("Definition source of term {} set to {}.", termUri, definitionSource);
     }
 
-    @DeleteMapping(value = "/terms/{termIdFragment}/definition-source")
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Removes source of definition of the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Definition source removed."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @DeleteMapping(value = "/terms/{localName}/definition-source")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void removeTermDefinitionSource(@PathVariable String termIdFragment,
+    public void removeTermDefinitionSource(@Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                                                      example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                                           @PathVariable String localName,
+                                           @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                                                      example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
                                            @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         final Term term = termService.findRequired(termUri);
         termService.removeTermDefinitionSource(term);
         LOG.debug("Definition source of term {} removed.", term);
     }
 
-    @PutMapping(value = "terms/{termIdFragment}/status", consumes = MediaType.ALL_VALUE)
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Sets status of the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Term status successfully set."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @PutMapping(value = "terms/{localName}/status", consumes = MediaType.ALL_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void updateStatus(@PathVariable String termIdFragment,
-                             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-                             @RequestBody String status) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+    public void updateStatus(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @Parameter(description = "The status to set.")
+            @RequestBody String status) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         final Term t = termService.findRequired(termUri);
         termService.setStatus(t, TermStatus.valueOf(status));
         LOG.debug("Status of term {} set to '{}'.", t, status);
     }
 
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/history",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of changes made to metadata of the term with the specified local name in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of change records."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/history",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<AbstractChangeRecord> getHistory(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                                                 @PathVariable("termIdFragment") String termIdFragment,
-                                                 @RequestParam(name = QueryParams.NAMESPACE,
-                                                               required = false) Optional<String> namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+    public List<AbstractChangeRecord> getHistory(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.getChanges(termService.findRequired(termUri));
     }
 
@@ -524,29 +702,46 @@ public class TermController extends BaseController {
      *
      * @see #getHistory(String, String, Optional)
      */
-    @GetMapping(value = "/terms/{termIdFragment}/history",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of changes made to metadata of the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of change records."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}/history",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<AbstractChangeRecord> getHistory(@PathVariable("termIdFragment") String termIdFragment,
-                                                 @RequestParam(name = QueryParams.NAMESPACE,
-                                                               required = false) String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+    public List<AbstractChangeRecord> getHistory(@Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                                                            example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                                                 @PathVariable String localName,
+                                                 @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                                                            example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.getChanges(termService.findRequired(termUri));
     }
 
-    /**
-     * Gets comments for the specified term.
-     *
-     * @return List of comments
-     */
-    @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of comments on the term with the specified local name in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of comments."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+    })
+    @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                                     @PathVariable("termIdFragment") String termIdFragment,
-                                     @RequestParam(name = "from", required = false) Optional<String> from,
-                                     @RequestParam(name = "to", required = false) Optional<String> to,
-                                     @RequestParam(name = QueryParams.NAMESPACE,
-                                                   required = false) Optional<String> namespace) {
-        final URI termUri = getTermUri(vocabularyIdFragment, termIdFragment, namespace);
+    public List<Comment> getComments(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Datetime (ISO-formatted) of the oldest comment to retrieve.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
+            @RequestParam(name = "from", required = false) Optional<String> from,
+            @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
+            @RequestParam(name = "to", required = false) Optional<String> to) {
+        final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.getComments(termService.findRequired(termUri),
                                        from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
                                        to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
@@ -559,39 +754,62 @@ public class TermController extends BaseController {
      *
      * @see #getComments(String, String, Optional, Optional, Optional)
      */
-    @GetMapping(value = "/terms/{termIdFragment}/comments",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of comments on the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of comments."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Comment> getComments(@PathVariable("termIdFragment") String termIdFragment,
-                                     @RequestParam(name = "from", required = false) Optional<String> from,
-                                     @RequestParam(name = "to", required = false) Optional<String> to,
-                                     @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
-        final URI termUri = idResolver.resolveIdentifier(namespace, termIdFragment);
+    public List<Comment> getComments(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @Parameter(description = "Datetime (ISO-formatted) of the oldest comment to retrieve.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
+            @RequestParam(name = "from", required = false) Optional<String> from,
+            @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
+            @RequestParam(name = "to", required = false) Optional<String> to) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.getComments(termService.findRequired(termUri),
                                        from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
                                        to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
 
-    /**
-     * Adds the specified comment to the specified term.
-     */
-    @PostMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Adds a comment to the term with the specified local name in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Comment successfully added."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+
+    })
+    @PostMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/comments",
                  consumes = {MediaType.APPLICATION_JSON_VALUE,
                              JsonLd.MEDIA_TYPE})
-    public ResponseEntity<Void> addComment(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
-                                           @PathVariable("termIdFragment") String termIdFragment,
-                                           @RequestParam(name = QueryParams.NAMESPACE,
-                                                         required = false) Optional<String> namespace,
-                                           @RequestBody Comment comment) {
-        final Term term = termService.findRequired(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
+    public ResponseEntity<Void> addComment(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Comment to add.")
+            @RequestBody Comment comment) {
+        final Term term = termService.findRequired(getTermUri(localName, termLocalName, namespace));
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                             QueryParams.NAMESPACE,
-                                             IdentifierResolver.extractIdentifierNamespace(
-                                                     comment.getUri()),
-                                             IdentifierResolver.extractIdentifierFragment(
-                                                     comment.getUri())))
+                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                                                                                QueryParams.NAMESPACE,
+                                                                                                IdentifierResolver.extractIdentifierNamespace(
+                                                                                                        comment.getUri()),
+                                                                                                IdentifierResolver.extractIdentifierFragment(
+                                                                                                        comment.getUri())))
                              .build();
     }
 
@@ -602,33 +820,58 @@ public class TermController extends BaseController {
      *
      * @see #addComment(String, String, Optional, Comment)
      */
-    @PostMapping(value = "/terms/{termIdFragment}/comments", consumes = {MediaType.APPLICATION_JSON_VALUE,
-                                                                         JsonLd.MEDIA_TYPE})
-    public ResponseEntity<Void> addComment(@PathVariable("termIdFragment") String termIdFragment,
-                                           @RequestParam(name = QueryParams.NAMESPACE,
-                                                         required = false) String namespace,
-                                           @RequestBody Comment comment) {
-        final Term term = termService.findRequired(idResolver.resolveIdentifier(namespace, termIdFragment));
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Adds a comment to the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Comment successfully added."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+
+    })
+    @PostMapping(value = "/terms/{localName}/comments", consumes = {MediaType.APPLICATION_JSON_VALUE,
+                                                                    JsonLd.MEDIA_TYPE})
+    public ResponseEntity<Void> addComment(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @Parameter(description = "Comment to add.")
+            @RequestBody Comment comment) {
+        final Term term = termService.findRequired(idResolver.resolveIdentifier(namespace, localName));
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                             QueryParams.NAMESPACE,
-                                             IdentifierResolver.extractIdentifierNamespace(
-                                                     comment.getUri()),
-                                             IdentifierResolver.extractIdentifierFragment(
-                                                     comment.getUri())))
+                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                                                                                QueryParams.NAMESPACE,
+                                                                                                IdentifierResolver.extractIdentifierNamespace(
+                                                                                                        comment.getUri()),
+                                                                                                IdentifierResolver.extractIdentifierFragment(
+                                                                                                        comment.getUri())))
                              .build();
     }
 
-    @GetMapping(value = "vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/versions",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of snapshots of the term with the specified local name in the vocabulary with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200",
+                         description = "A list of snapshots or a snapshot valid at the requested datetime."),
+            @ApiResponse(responseCode = "404", description = "Vocabulary or term term not found.")
+
+    })
+    @GetMapping(value = "vocabularies/{localName}/terms/{termLocalName}/versions",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<?> getSnapshots(@PathVariable String vocabularyIdFragment,
-                                          @PathVariable String termIdFragment,
-                                          @RequestParam(name = QueryParams.NAMESPACE,
-                                                        required = false) Optional<String> namespace,
-                                          @RequestParam(name = "at", required = false) Optional<String> at) {
-        final Term term = termService.findRequired(getTermUri(vocabularyIdFragment, termIdFragment, namespace));
+    public ResponseEntity<?> getSnapshots(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String termLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = "Timestamp (ISO formatted) at which the returned version was valid.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
+            @RequestParam(name = "at", required = false) Optional<String> at) {
+        final Term term = termService.findRequired(getTermUri(localName, termLocalName, namespace));
         return getTermSnapshots(at, term);
     }
 
@@ -640,31 +883,40 @@ public class TermController extends BaseController {
         return ResponseEntity.ok(termService.findSnapshots(term));
     }
 
-    @GetMapping(value = "/terms/{termIdFragment}/versions",
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of snapshots of the term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200",
+                         description = "A list of snapshots or a snapshot valid at the requested datetime."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+
+    })
+    @GetMapping(value = "/terms/{localName}/versions",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public ResponseEntity<?> getSnapshots(@PathVariable String termIdFragment,
-                                          @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-                                          @RequestParam(name = "at", required = false) Optional<String> at) {
-        final Term term = termService.findRequired(idResolver.resolveIdentifier(namespace, termIdFragment));
+    public ResponseEntity<?> getSnapshots(
+            @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+            @Parameter(description = "Timestamp (ISO-formatted) at which the returned version was valid.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
+            @RequestParam(name = "at", required = false) Optional<String> at) {
+        final Term term = termService.findRequired(idResolver.resolveIdentifier(namespace, localName));
         return getTermSnapshots(at, term);
     }
 
-    /**
-     * Get all root terms from all vocabularies
-     * <p>
-     * Optionally, the terms can be filtered by the specified search string, so that only roots with descendants with
-     * label matching the specified string are returned.
-     *
-     * @param pageSize     Limit the number of elements in the returned page. Optional
-     * @param pageNo       Number of the page to return. Optional
-     * @param includeTerms List of terms to include in the results. Optional
-     * @return List of root terms across all vocabularies
-     */
-    @GetMapping(value = "/terms/roots",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of root terms from all vocabularies.")
+    @ApiResponse(responseCode = "200", description = "A list of terms.")
+    @GetMapping(value = "/terms/roots", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<TermDto> getAllRoots(
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
             @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo,
+            @Parameter(description = "List of identifiers of terms that should be included in the result.")
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
         return termService.findAllRoots(createPageRequest(pageSize, pageNo), includeTerms);
     }
@@ -675,9 +927,32 @@ public class TermController extends BaseController {
      * @param searchString String to filter term labels by.
      * @return List of terms of the specific vocabulary.
      */
-    @GetMapping(value = "/terms",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<TermDto> getAll(@RequestParam String searchString) {
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets terms whose label matches the specified search string, regardless of their vocabulary.")
+    @ApiResponse(responseCode = "200", description = "A list of matching terms.")
+    @GetMapping(value = "/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<TermDto> getAll(@Parameter(description = "String by which the terms should be filtered.")
+                                @RequestParam String searchString) {
         return termService.findAll(searchString);
+    }
+
+    /**
+     * A couple of constants for the {@link TermController} API documentation.
+     */
+    public static final class ApiDoc {
+        public static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
+        public static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
+        public static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
+        public static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/";
+        public static final String ID_TERM_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the vocabulary identifier) unique part of the term identifier.";
+        public static final String ID_TERM_LOCAL_NAME_EXAMPLE = "struktura";
+        public static final String ID_STANDALONE_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace) unique part of the term identifier.";
+        public static final String ID_STANDALONE_NAMESPACE_DESCRIPTION = "Term identifier namespace";
+        public static final String ID_STANDALONE_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/datovy-mpp-3.4/pojem/";
+        public static final String ID_STANDALONE_NOT_FOUND_DESCRIPTION = "Term with the specified identifier not found.";
+
+        private ApiDoc() {
+            throw new AssertionError();
+        }
     }
 }
