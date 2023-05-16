@@ -3,6 +3,8 @@ package cz.cvut.kbss.termit.rest.readonly;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyVocabulary;
 import cz.cvut.kbss.termit.rest.BaseController;
+import cz.cvut.kbss.termit.rest.VocabularyController;
+import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.readonly.ReadOnlyVocabularyService;
@@ -50,13 +52,15 @@ public class ReadOnlyVocabularyController extends BaseController {
     @Operation(description = "Gets detail of the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Matching vocabulary metadata."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ReadOnlyVocabulary getById(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @Parameter(description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
         return vocabularyService.findRequired(
                 resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName));
@@ -69,13 +73,15 @@ public class ReadOnlyVocabularyController extends BaseController {
             description = "Gets identifiers of vocabularies imported (including transitive imports) by the vocabulary with the specified identification.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Collection<URI> getTransitiveImports(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @Parameter(description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
         final ReadOnlyVocabulary vocabulary = getById(localName, namespace);
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
@@ -86,17 +92,19 @@ public class ReadOnlyVocabularyController extends BaseController {
             @ApiResponse(responseCode = "200",
                          description = "A list of snapshots or a snapshot valid at the requested datetime."),
             @ApiResponse(responseCode = "400", description = "Provided timestamp is invalid."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = VocabularyController.ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @Parameter(description = VocabularyController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = VocabularyController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @Parameter(description = VocabularyController.ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = VocabularyController.ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace,
             @Parameter(
                     description = "Timestamp at which the returned valid was valid. ISO-formatted datetime.",
-                    example = "2023-01-01T00:00:00")
+                    example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "at", required = false) Optional<String> at) {
         final ReadOnlyVocabulary vocabulary = getById(localName, namespace);
         if (at.isPresent()) {
@@ -104,16 +112,5 @@ public class ReadOnlyVocabularyController extends BaseController {
             return ResponseEntity.ok(vocabularyService.findVersionValidAt(vocabulary, instant));
         }
         return ResponseEntity.ok(vocabularyService.findSnapshots(vocabulary));
-    }
-
-    /**
-     * A couple of constants for the {@link ReadOnlyVocabularyController} API documentation.
-     */
-    private static final class ApiDoc {
-        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
-        private static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
-        private static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
-        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/";
-        private static final String ID_NOT_FOUND_DESCRIPTION = "Vocabulary with the specified identifier not found.";
     }
 }

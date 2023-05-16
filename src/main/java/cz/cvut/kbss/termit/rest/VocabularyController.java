@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -403,7 +404,7 @@ public class VocabularyController extends BaseController {
                                                         required = false) Optional<String> namespace,
                                           @Parameter(
                                                   description = "Timestamp at which the returned version was valid. ISO-formatted datetime.",
-                                                  example = "2023-01-01T00:00:00")
+                                                  example = ApiDocConstants.DATETIME_EXAMPLE)
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
@@ -532,11 +533,15 @@ public class VocabularyController extends BaseController {
     /**
      * A couple of constants for the {@link VocabularyController} API documentation.
      */
-    private static final class ApiDoc {
-        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
-        private static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
-        private static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
-        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/";
-        private static final String ID_NOT_FOUND_DESCRIPTION = "Vocabulary with the specified identifier not found.";
+    public static final class ApiDoc {
+        public static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
+        public static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
+        public static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
+        public static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/";
+        public static final String ID_NOT_FOUND_DESCRIPTION = "Vocabulary with the specified identifier not found.";
+
+        private ApiDoc() {
+            throw new AssertionError();
+        }
     }
 }

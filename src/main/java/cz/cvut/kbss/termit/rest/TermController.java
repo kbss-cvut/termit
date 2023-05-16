@@ -224,7 +224,7 @@ public class TermController extends BaseController {
                description = "Gets root terms (terms without parent) from the vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List of root vocabulary terms."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
     })
     @GetMapping(value = "/vocabularies/{localName}/terms/roots",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -516,8 +516,7 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace
-    ) {
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.getDefinitionallyRelatedTargeting(termService.findRequired(termUri));
     }
@@ -736,9 +735,11 @@ public class TermController extends BaseController {
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-            @Parameter(description = "Datetime (ISO-formatted) of the oldest comment to retrieve.")
+            @Parameter(description = "Datetime (ISO-formatted) of the oldest comment to retrieve.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "from", required = false) Optional<String> from,
-            @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.")
+            @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "to", required = false) Optional<String> to) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         return termService.getComments(termService.findRequired(termUri),
@@ -768,9 +769,11 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-            @Parameter(description = "Datetime (ISO-formatted) of the oldest comment to retrieve.")
+            @Parameter(description = "Datetime (ISO-formatted) of the oldest comment to retrieve.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "from", required = false) Optional<String> from,
-            @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.")
+            @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "to", required = false) Optional<String> to) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.getComments(termService.findRequired(termUri),
@@ -865,8 +868,8 @@ public class TermController extends BaseController {
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-            @Parameter(description = "Timestamp at which the returned version was valid. ISO-formatted datetime.",
-                       example = "2023-01-01T00:00:00")
+            @Parameter(description = "Timestamp (ISO formatted) at which the returned version was valid.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "at", required = false) Optional<String> at) {
         final Term term = termService.findRequired(getTermUri(localName, termLocalName, namespace));
         return getTermSnapshots(at, term);
@@ -897,8 +900,8 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-            @Parameter(description = "Timestamp at which the returned version was valid. ISO-formatted datetime.",
-                       example = "2023-01-01T00:00:00")
+            @Parameter(description = "Timestamp (ISO-formatted) at which the returned version was valid.",
+                       example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "at", required = false) Optional<String> at) {
         final Term term = termService.findRequired(idResolver.resolveIdentifier(namespace, localName));
         return getTermSnapshots(at, term);
@@ -936,16 +939,20 @@ public class TermController extends BaseController {
     /**
      * A couple of constants for the {@link TermController} API documentation.
      */
-    private static final class ApiDoc {
-        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
-        private static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
-        private static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
-        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/";
-        private static final String ID_TERM_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the vocabulary identifier) unique part of the term identifier.";
-        private static final String ID_TERM_LOCAL_NAME_EXAMPLE = "struktura";
-        private static final String ID_STANDALONE_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace) unique part of the term identifier.";
-        private static final String ID_STANDALONE_NAMESPACE_DESCRIPTION = "Term identifier namespace";
-        private static final String ID_STANDALONE_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/datovy-mpp-3.4/pojem/";
-        private static final String ID_STANDALONE_NOT_FOUND_DESCRIPTION = "Term with the specified identifier not found.";
+    public static final class ApiDoc {
+        public static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
+        public static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
+        public static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
+        public static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/";
+        public static final String ID_TERM_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the vocabulary identifier) unique part of the term identifier.";
+        public static final String ID_TERM_LOCAL_NAME_EXAMPLE = "struktura";
+        public static final String ID_STANDALONE_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace) unique part of the term identifier.";
+        public static final String ID_STANDALONE_NAMESPACE_DESCRIPTION = "Term identifier namespace";
+        public static final String ID_STANDALONE_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/datovy-mpp-3.4/pojem/";
+        public static final String ID_STANDALONE_NOT_FOUND_DESCRIPTION = "Term with the specified identifier not found.";
+
+        private ApiDoc() {
+            throw new AssertionError();
+        }
     }
 }

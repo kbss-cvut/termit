@@ -15,6 +15,11 @@ public class ApiDocConstants {
      */
     public static final String PAGE_NO_DESCRIPTION = "Page number.";
 
+    /**
+     * Example of a ISO-formatted datetime accepted by the API when specifying datetime range.
+     */
+    public static final String DATETIME_EXAMPLE = "2023-01-01T00:00:00";
+
     private ApiDocConstants() {
         throw new AssertionError();
     }
