@@ -34,7 +34,9 @@ import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
 import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,6 +61,9 @@ import java.util.Properties;
 public class WebAppConfig implements WebMvcConfigurer {
 
     private final cz.cvut.kbss.termit.util.Configuration.Repository config;
+
+    @Value("${application.version:development}")
+    private String version;
 
     public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config) {
         this.config = config.getRepository();
@@ -190,7 +195,11 @@ public class WebAppConfig implements WebMvcConfigurer {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI().components(new Components().addSecuritySchemes("bearer-key",
-                                                        new SecurityScheme().type(SecurityScheme.Type.HTTP)
-                                                                            .scheme("bearer").bearerFormat("JWT")));
+                                                                            new SecurityScheme().type(
+                                                                                                        SecurityScheme.Type.HTTP)
+                                                                                                .scheme("bearer")
+                                                                                                .bearerFormat("JWT")))
+                            .info(new Info().title("TermIt REST API").description("TermIt REST API definition.")
+                                            .version(version));
     }
 }
