@@ -669,7 +669,7 @@ public class TermController extends BaseController {
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
             @Parameter(description = "The status to set.")
-            @RequestBody String status) {  // TODO Use TermStatus as param type?
+            @RequestBody String status) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         final Term t = termService.findRequired(termUri);
         termService.setStatus(t, TermStatus.valueOf(status));
