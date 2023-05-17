@@ -55,6 +55,7 @@ import org.springframework.web.servlet.mvc.ServletWrappingController;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 
 @Configuration
@@ -142,15 +143,13 @@ public class WebAppConfig implements WebMvcConfigurer {
         return controller;
     }
 
-    /**
-     * @return Returns the SimpleUrlHandlerMapping.
-     */
     @Bean
-    public SimpleUrlHandlerMapping sparqlQueryControllerMapping() {
+    public SimpleUrlHandlerMapping sparqlQueryControllerMapping() throws Exception {
         SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
-        Properties urlProperties = new Properties();
-        urlProperties.put(Constants.REST_MAPPING_PATH + "/query", "sparqlEndpointProxyServlet");
-        mapping.setMappings(urlProperties);
+        mapping.setOrder(0);
+        final Map<String, Object> urlMap = Collections.singletonMap(Constants.REST_MAPPING_PATH + "/query",
+                                                                    sparqlEndpointController());
+        mapping.setUrlMap(urlMap);
         return mapping;
     }
 
