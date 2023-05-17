@@ -25,10 +25,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RepositoryAccessControlListServiceTest {
@@ -181,5 +182,22 @@ class RepositoryAccessControlListServiceTest {
         acl.addRecord(toRemove);
 
         assertThrows(UnsupportedOperationException.class, () -> sut.removeRecord(acl, toRemove));
+    }
+
+    @Test
+    void cloneCreatesAndPersistsNewAccessControlListWithSameRecordsAsProvidedOriginal() {
+        final AccessControlList original = Generator.generateAccessControlList(true);
+        final URI newAclUri = Generator.generateUri();
+        doAnswer(inv -> {
+            final AccessControlList arg = inv.getArgument(0, AccessControlList.class);
+            arg.setUri(newAclUri);
+            return null;
+        }).when(dao).persist(any(AccessControlList.class));
+
+        final AccessControlList result = sut.clone(original);
+        assertNotNull(result);
+        assertEquals(newAclUri, result.getUri());
+        verify(dao).persist(result);
+        assertEquals(original.getRecords(), result.getRecords());
     }
 }

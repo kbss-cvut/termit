@@ -25,6 +25,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @CacheConfig(cacheNames = "acls")
 @Service
@@ -116,6 +117,17 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         dao.remove(acl);
     }
 
+    @Override
+    public AccessControlList clone(AccessControlList original) {
+        Objects.requireNonNull(original);
+        LOG.debug("Creating a new ACL by cloning {}.", original);
+        final AccessControlList clone = new AccessControlList();
+        clone.setRecords(Utils.emptyIfNull(original.getRecords()).stream().map(AccessControlRecord::copy)
+                              .collect(Collectors.toSet()));
+        dao.persist(clone);
+        return clone;
+    }
+
     @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
@@ -157,7 +169,8 @@ public class RepositoryAccessControlListService implements AccessControlListServ
             }
         }
         if (!readerFound || !editorFound) {
-            throw new UnsupportedOperationException("Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+            throw new UnsupportedOperationException(
+                    "Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
         }
     }
 
@@ -172,7 +185,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         Utils.emptyIfNull(toUpdate.getRecords()).stream().filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
              .findAny().ifPresent(r -> {
                  LOG.debug("Updating access level from {} to {} in record {} in ACL {}.", r.getAccessLevel(),
-                         record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
+                           record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
                  r.setAccessLevel(record.getAccessLevel());
              });
     }

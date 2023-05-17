@@ -73,6 +73,16 @@ public interface AccessControlListService {
     void remove(AccessControlList acl);
 
     /**
+     * Creates a new {@link AccessControlList} by cloning the specified one.
+     * <p>
+     * The new ACL thus contains records for the same holders as the original and with the same access levels.
+     *
+     * @param original ACL to clone
+     * @return The new ACL
+     */
+    AccessControlList clone(AccessControlList original);
+
+    /**
      * Adds the specified record to the specified target {@link AccessControlList}.
      *
      * @param acl    Target ACL

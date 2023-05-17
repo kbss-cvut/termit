@@ -24,4 +24,9 @@ public class RoleAccessControlRecord extends AccessControlRecord<UserRole> {
         assert getHolder() != null;
         return user.hasType(getHolder().getUri().toString()) ? Optional.of(getAccessLevel()) : Optional.empty();
     }
+
+    @Override
+    public RoleAccessControlRecord copy() {
+        return new RoleAccessControlRecord(getAccessLevel(), getHolder());
+    }
 }

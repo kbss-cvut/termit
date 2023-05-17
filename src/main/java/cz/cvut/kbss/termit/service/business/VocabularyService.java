@@ -318,11 +318,19 @@ public class VocabularyService
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
         eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
+        cloneAccessControlList(s, vocabulary);
         return s;
     }
 
     private SnapshotCreator getSnapshotCreator() {
         return context.getBean(SnapshotCreator.class);
+    }
+
+    private void cloneAccessControlList(Snapshot snapshot, Vocabulary original) {
+        final AccessControlList currentAcl = findRequiredAclForVocabulary(original);
+        final AccessControlList snapshotAcl = aclService.clone(currentAcl);
+        final Vocabulary snapshotVocabulary = repositoryService.findRequired(snapshot.getUri());
+        snapshotVocabulary.setAcl(snapshotAcl.getUri());
     }
 
     /**

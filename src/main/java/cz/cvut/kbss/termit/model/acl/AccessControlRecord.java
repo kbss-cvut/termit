@@ -56,6 +56,15 @@ public abstract class AccessControlRecord<T extends AccessControlAgent> extends 
      */
     public abstract Optional<AccessLevel> getAccessLevelFor(UserAccount user);
 
+    /**
+     * Creates a copy of this record, initializing it with the same holder and access level.
+     * <p>
+     * The identifier is not copied.
+     *
+     * @return Copy of this instance
+     */
+    public abstract AccessControlRecord<T> copy();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
