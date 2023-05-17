@@ -12,7 +12,6 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
-import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
@@ -258,7 +257,6 @@ public class TermController extends BaseController {
     })
     @PostMapping(value = "/vocabularies/{localName}/terms",
                  consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createRootTerm(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -327,7 +325,6 @@ public class TermController extends BaseController {
     @PutMapping(value = "/vocabularies/{localName}/terms/{termLocalName}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void update(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -352,7 +349,6 @@ public class TermController extends BaseController {
     })
     @PutMapping(value = "/terms/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void update(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
@@ -377,7 +373,6 @@ public class TermController extends BaseController {
     })
     @DeleteMapping(value = "/vocabularies/{localName}/terms/{termLocalName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeTerm(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -456,7 +451,6 @@ public class TermController extends BaseController {
     })
     @PostMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
                  produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createSubTerm(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -486,7 +480,6 @@ public class TermController extends BaseController {
     })
     @PostMapping(value = "/terms/{localName}/subterms",
                  produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createSubTerm(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
@@ -595,7 +588,6 @@ public class TermController extends BaseController {
     })
     @PutMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void runTextAnalysisOnTerm(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -616,7 +608,6 @@ public class TermController extends BaseController {
     @PutMapping(value = "/terms/{localName}/definition-source",
                 consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void setTermDefinitionSource(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
@@ -639,7 +630,6 @@ public class TermController extends BaseController {
     })
     @DeleteMapping(value = "/terms/{localName}/definition-source")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeTermDefinitionSource(@Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                                                       example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
                                            @PathVariable String localName,
@@ -660,7 +650,6 @@ public class TermController extends BaseController {
     })
     @PutMapping(value = "terms/{localName}/status", consumes = MediaType.ALL_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void updateStatus(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)

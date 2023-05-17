@@ -55,6 +55,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Vocabulary management REST API.
+ *
+ * Note that most endpoints are now secured only by requiring the user to be authenticated, authorization is done
+ * on service level based on ACL.
+ */
 @Tag(name = "Vocabularies", description = "Vocabulary management API")
 @RestController
 @RequestMapping("/vocabularies")
@@ -257,7 +263,6 @@ public class VocabularyController extends BaseController {
     })
     @PutMapping(value = "/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void updateVocabulary(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                                             example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                  @PathVariable String localName,
@@ -283,7 +288,6 @@ public class VocabularyController extends BaseController {
                description = "Runs text analysis on the definitions of all terms in the vocabulary with the specified identifier.")
     @PutMapping(value = "/{localName}/terms/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void runTextAnalysisOnAllTerms(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                                                      example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                           @PathVariable String localName,
@@ -326,7 +330,6 @@ public class VocabularyController extends BaseController {
     })
     @DeleteMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeVocabulary(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                                             example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                  @PathVariable String localName,
@@ -368,7 +371,6 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PostMapping("/{localName}/versions")
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createSnapshot(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
