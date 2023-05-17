@@ -66,6 +66,13 @@ public interface AccessControlListService {
     AccessControlList createFor(HasIdentifier subject);
 
     /**
+     * Removes the specified access control list and its records.
+     *
+     * @param acl The ACL to remove
+     */
+    void remove(AccessControlList acl);
+
+    /**
      * Adds the specified record to the specified target {@link AccessControlList}.
      *
      * @param acl    Target ACL

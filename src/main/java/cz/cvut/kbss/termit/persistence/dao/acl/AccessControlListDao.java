@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao.acl;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -33,8 +34,11 @@ public class AccessControlListDao {
      * @return Matching ACL instance wrapped in an {@link Optional}, empty {@link Optional} if no such ACL exists
      */
     public Optional<AccessControlList> find(URI id) {
-        return Optional.ofNullable(
-                em.find(AccessControlList.class, id, descriptorFactory.accessControlListDescriptor()));
+        return Optional.ofNullable(em.find(AccessControlList.class, id, descriptor()));
+    }
+
+    private Descriptor descriptor() {
+        return descriptorFactory.accessControlListDescriptor();
     }
 
     /**
@@ -45,7 +49,7 @@ public class AccessControlListDao {
      */
     public Optional<AccessControlList> getReference(URI id) {
         return Optional.ofNullable(
-                em.getReference(AccessControlList.class, id, descriptorFactory.accessControlListDescriptor()));
+                em.getReference(AccessControlList.class, id, descriptor()));
     }
 
     /**
@@ -61,7 +65,7 @@ public class AccessControlListDao {
                     em.createNativeQuery("SELECT ?acl WHERE { ?subject ?hasAcl ?acl . }", AccessControlList.class)
                       .setParameter("subject", subject.getUri())
                       .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
-                      .setDescriptor(descriptorFactory.accessControlListDescriptor())
+                      .setDescriptor(descriptor())
                       .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
@@ -75,7 +79,7 @@ public class AccessControlListDao {
      */
     public void persist(AccessControlList acl) {
         Objects.requireNonNull(acl);
-        em.persist(acl, descriptorFactory.accessControlListDescriptor());
+        em.persist(acl, descriptor());
     }
 
     /**
@@ -90,7 +94,7 @@ public class AccessControlListDao {
         final AccessControlList original = em.find(AccessControlList.class, acl.getUri());
         assert original != null;
         removeOrphanRecords(original, acl);
-        em.merge(acl, descriptorFactory.accessControlListDescriptor());
+        em.merge(acl, descriptor());
     }
 
     private void removeOrphanRecords(AccessControlList original, AccessControlList update) {
@@ -98,6 +102,19 @@ public class AccessControlListDao {
             if (update.getRecords().stream().noneMatch(rr -> Objects.equals(r.getUri(), rr.getUri()))) {
                 em.remove(r);
             }
+        }
+    }
+
+    /**
+     * Removes the specified access control list and all its records.
+     *
+     * @param acl Access control list to remove
+     */
+    public void remove(AccessControlList acl) {
+        Objects.requireNonNull(acl);
+        final AccessControlList toRemove = em.find(AccessControlList.class, acl.getUri(), descriptor());
+        if (toRemove != null) {
+            em.remove(toRemove);
         }
     }
 

@@ -259,4 +259,15 @@ class VocabularyServiceTest {
         verify(repositoryService).find(vocabulary.getUri());
         verify(authorizationService).getAccessLevel(vocabulary);
     }
+
+    @Test
+    void removeRemovesAccessControlList() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = Generator.generateAccessControlList(true);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+
+        sut.remove(vocabulary);
+        verify(repositoryService).remove(vocabulary);
+        verify(aclService).remove(acl);
+    }
 }

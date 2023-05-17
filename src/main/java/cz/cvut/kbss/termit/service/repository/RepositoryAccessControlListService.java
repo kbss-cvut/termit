@@ -110,6 +110,15 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
+    public void remove(AccessControlList acl) {
+        Objects.requireNonNull(acl);
+        LOG.debug("Removing ACL {}.", acl);
+        dao.remove(acl);
+    }
+
+    @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
+    @Transactional
+    @Override
     public void addRecord(AccessControlList acl, AccessControlRecord<?> record) {
         Objects.requireNonNull(acl);
         Objects.requireNonNull(record);

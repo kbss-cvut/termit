@@ -277,8 +277,10 @@ public class VocabularyService
      *
      * @param asset Vocabulary to remove
      */
+    @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#asset)")
     public void remove(Vocabulary asset) {
+        aclService.findFor(asset).ifPresent(aclService::remove);
         repositoryService.remove(asset);
     }
 
@@ -294,7 +296,7 @@ public class VocabularyService
     /**
      * Gets the number of terms in the specified vocabulary.
      * <p>
-     * Note that this methods counts the terms regardless of their hierarchical position.
+     * Note that this method counts the terms regardless of their hierarchical position.
      *
      * @param vocabulary Vocabulary whose terms should be counted
      * @return Number of terms in the vocabulary, 0 for empty or unknown vocabulary
