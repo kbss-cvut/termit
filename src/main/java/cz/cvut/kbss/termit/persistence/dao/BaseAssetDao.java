@@ -57,11 +57,12 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
     public Page<RecentlyCommentedAsset> findLastCommented(Pageable pageSpec) {
         try {
             return new PageImpl<>((List<RecentlyCommentedAsset>) em
-                    .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?myLastCommentUri ?type"
+                    .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?myLastCommentUri ?vocabulary ?type"
                                                + " WHERE { ?lastCommentUri a ?commentType ;"
                                                + "           ?hasEntity ?entity ."
                                                + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
                                                + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
+                                               + "  OPTIONAL { ?entity ?inVocabulary ?vocabulary . }"
                                                + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
                                                + "  BIND(?cls as ?type) "
                                                + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
@@ -71,11 +72,12 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                                + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
                                                + "        } GROUP BY ?entity"
                                                + "  }"
-                                               + "  FILTER (?lastCommented = ?max )"
+                                               + "  FILTER (?lastCommented = ?max)"
                                                + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
                     .setParameter("cls", typeUri)
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                    .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                     .setFirstResult((int) pageSpec.getOffset())

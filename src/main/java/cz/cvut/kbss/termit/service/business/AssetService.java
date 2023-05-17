@@ -56,7 +56,7 @@ public class AssetService {
      * @return Page of recently added/edited assets
      */
     public Page<RecentlyModifiedAsset> findLastEdited(Pageable pageSpec) {
-        return sanitizeUnauthorized(assetDao.findLastEdited(pageSpec));
+        return sanitizeUnauthorizedAssets(assetDao.findLastEdited(pageSpec));
     }
 
     /**
@@ -69,7 +69,7 @@ public class AssetService {
      * @param input Input elements to sanitize
      * @return Sanitized input
      */
-    private Page<RecentlyModifiedAsset> sanitizeUnauthorized(Page<RecentlyModifiedAsset> input) {
+    private Page<RecentlyModifiedAsset> sanitizeUnauthorizedAssets(Page<RecentlyModifiedAsset> input) {
         input.get().filter(ra -> !vocabularyAuthorizationService.canRead(
                      new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
              .forEach(ra -> ra.setLabel(MASK));
@@ -83,7 +83,24 @@ public class AssetService {
      * @return Page of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findLastCommented(Pageable pageSpec) {
-        return termRepositoryService.findLastCommented(pageSpec);
+        return sanitizeUnauthorizedComments(termRepositoryService.findLastCommented(pageSpec));
+    }
+
+    /**
+     * Sanitizes elements of the provided input if the current user has no read access to them.
+     * <p>
+     * To preserve consistent paging functionality, this method does not remove the elements, only scrambles the content
+     * of the comment. If the user attempts to access the asset, they will get a forbidden response (secured by the
+     * corresponding authorization services).
+     *
+     * @param input Input elements to sanitize
+     * @return Sanitized input
+     */
+    private Page<RecentlyCommentedAsset> sanitizeUnauthorizedComments(Page<RecentlyCommentedAsset> input) {
+        input.get().filter(ra -> !vocabularyAuthorizationService.canRead(
+                     new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
+             .forEach(ra -> ra.getLastComment().setContent(MASK));
+        return input;
     }
 
     /**

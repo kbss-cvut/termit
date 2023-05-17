@@ -22,6 +22,7 @@ import java.util.Set;
             @VariableResult(name = "entity", type = URI.class),
             @VariableResult(name = "lastCommentUri", type = URI.class),
             @VariableResult(name = "myLastCommentUri", type = URI.class),
+            @VariableResult(name = "vocabulary", type = URI.class),
             @VariableResult(name = "type", type = String.class)
         })})
 public class RecentlyCommentedAsset implements Serializable {
@@ -41,16 +42,20 @@ public class RecentlyCommentedAsset implements Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_muj_posledni_komentar)
     private Comment myLastComment;
 
+    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
+    private URI vocabulary;
+
     @Types
     private Set<String> types;
 
     public RecentlyCommentedAsset() {
     }
 
-    public RecentlyCommentedAsset(URI entity, URI lastCommentUri, URI myLastCommentUri, String type) {
+    public RecentlyCommentedAsset(URI entity, URI lastCommentUri, URI myLastCommentUri, URI vocabulary, String type) {
         this.uri = entity;
         this.lastCommentUri = lastCommentUri;
         this.myLastCommentUri = myLastCommentUri;
+        this.vocabulary = vocabulary;
         this.types = new HashSet<>(Collections.singleton(type));
     }
 
@@ -102,6 +107,14 @@ public class RecentlyCommentedAsset implements Serializable {
     public RecentlyCommentedAsset setMyLastComment(Comment myLastComment) {
         this.myLastComment = myLastComment;
         return this;
+    }
+
+    public URI getVocabulary() {
+        return vocabulary;
+    }
+
+    public void setVocabulary(URI vocabulary) {
+        this.vocabulary = vocabulary;
     }
 
     @Override

@@ -41,6 +41,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -133,7 +134,7 @@ class AssetServiceTest {
             final Term term = Generator.generateTermWithId();
             Comment comment = Generator.generateComment(author, term);
             RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), null,
-                                                                    SKOS.CONCEPT);
+                                                                    Generator.generateUri(), SKOS.CONCEPT);
             comment.setCreated(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             comment.setAuthor(author);
             comment.setAsset(term.getUri());
@@ -199,5 +200,22 @@ class AssetServiceTest {
         assertEquals(allExpected.size(), result.getSize());
         result.get().filter(ra -> ra.hasType(SKOS.CONCEPT))
               .forEach(ra -> assertEquals(AssetService.MASK, ra.getLabel()));
+    }
+
+    @Test
+    void findLastCommentedMasksLabelsAndCommentForAssetsThatCurrentUserIsNotAuthorizedToRead() {
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
+        allExpected.sort(
+                Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        when(termService.findLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
+        final URI forbiddenVocabulary = allExpected.get(Generator.randomIndex(allExpected)).getVocabulary();
+        when(vocabularyAuthorizationService.canRead(any(cz.cvut.kbss.termit.model.Vocabulary.class))).thenReturn(true);
+        when(vocabularyAuthorizationService.canRead(
+                new cz.cvut.kbss.termit.model.Vocabulary(forbiddenVocabulary))).thenReturn(false);
+
+        final Page<RecentlyCommentedAsset> result = sut.findLastCommented(Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(allExpected.size(), result.getSize());
+        result.get().filter(ra -> forbiddenVocabulary.equals(ra.getVocabulary()))
+              .forEach(ra -> assertEquals(AssetService.MASK, ra.getLastComment().getContent()));
     }
 }
