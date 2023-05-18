@@ -99,7 +99,10 @@ public class AssetService {
     private Page<RecentlyCommentedAsset> sanitizeUnauthorizedComments(Page<RecentlyCommentedAsset> input) {
         input.get().filter(ra -> !vocabularyAuthorizationService.canRead(
                      new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
-             .forEach(ra -> ra.getLastComment().setContent(MASK));
+             .forEach(ra -> {
+                 ra.setLabel(MASK);
+                 ra.getLastComment().setContent(MASK);
+             });
         return input;
     }
 

@@ -111,11 +111,11 @@ class AssetControllerTest extends BaseControllerTestRunner {
     }
 
     private static List<RecentlyCommentedAsset> generateRecentlyCommentedAssetRecords() {
-        return IntStream.range(0, 5).mapToObj(i ->
-                                                      new RecentlyCommentedAsset(Generator.generateUri(),
-                                                                                 Generator.generateUri(), null,
-                                                                                 Generator.generateUri(),
-                                                                                 SKOS.CONCEPT))
+        return IntStream.range(0, 5).mapToObj(i -> new RecentlyCommentedAsset(Generator.generateUri(),
+                                                                              "Term " + Generator.randomInt(0, 1000),
+                                                                              Generator.generateUri(), null,
+                                                                              Generator.generateUri(),
+                                                                              SKOS.CONCEPT))
                         .collect(Collectors.toList());
     }
 

@@ -133,7 +133,9 @@ class AssetServiceTest {
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = Generator.generateTermWithId();
             Comment comment = Generator.generateComment(author, term);
-            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), null,
+            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(),
+                                                                    term.getLabel().get(Environment.LANGUAGE),
+                                                                    comment.getUri(), null,
                                                                     Generator.generateUri(), SKOS.CONCEPT);
             comment.setCreated(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             comment.setAuthor(author);
@@ -216,6 +218,9 @@ class AssetServiceTest {
         final Page<RecentlyCommentedAsset> result = sut.findLastCommented(Constants.DEFAULT_PAGE_SPEC);
         assertEquals(allExpected.size(), result.getSize());
         result.get().filter(ra -> forbiddenVocabulary.equals(ra.getVocabulary()))
-              .forEach(ra -> assertEquals(AssetService.MASK, ra.getLastComment().getContent()));
+              .forEach(ra -> {
+                  assertEquals(AssetService.MASK, ra.getLabel());
+                  assertEquals(AssetService.MASK, ra.getLastComment().getContent());
+              });
     }
 }
