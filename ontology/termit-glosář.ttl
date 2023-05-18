@@ -488,6 +488,15 @@ termit-pojem:pouze-pro-čtení
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Read-only"@en , "Pouze pro čtení"@cs .
 
+termit-pojem:zakázaný
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Forbidden"@en , "Zakázaný"@cs .
+
 # TODO consider moving this into a separate namespace (e.g., termit/rizeni-pristupu)
 
 termit-pojem:seznam-řízení-přístupu

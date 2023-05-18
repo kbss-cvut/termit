@@ -72,7 +72,10 @@ public class AssetService {
     private Page<RecentlyModifiedAsset> sanitizeUnauthorizedAssets(Page<RecentlyModifiedAsset> input) {
         input.get().filter(ra -> !vocabularyAuthorizationService.canRead(
                      new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
-             .forEach(ra -> ra.setLabel(MASK));
+             .forEach(ra -> {
+                 ra.setLabel(MASK);
+                 ra.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_zakazany);
+             });
         return input;
     }
 
@@ -102,6 +105,7 @@ public class AssetService {
              .forEach(ra -> {
                  ra.setLabel(MASK);
                  ra.getLastComment().setContent(MASK);
+                 ra.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_zakazany);
              });
         return input;
     }

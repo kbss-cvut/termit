@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.dto;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import java.io.Serializable;
@@ -22,7 +23,7 @@ import java.util.Set;
             @VariableResult(name = "vocabulary", type = URI.class),
             @VariableResult(name = "type", type = String.class)
         })})
-public class RecentlyCommentedAsset implements Serializable {
+public class RecentlyCommentedAsset implements HasTypes, Serializable {
 
     @Id
     private URI uri;
@@ -76,10 +77,12 @@ public class RecentlyCommentedAsset implements Serializable {
         this.label = label;
     }
 
+    @Override
     public Set<String> getTypes() {
         return types;
     }
 
+    @Override
     public void setTypes(Set<String> types) {
         this.types = types;
     }
