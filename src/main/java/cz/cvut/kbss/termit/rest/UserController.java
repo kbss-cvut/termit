@@ -76,7 +76,7 @@ public class UserController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates the current users's account.")
+               description = "Updates the current user's account.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Update successful."),
             @ApiResponse(responseCode = "409", description = "Update data are invalid.")
