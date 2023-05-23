@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlRecordDto;
 import cz.cvut.kbss.termit.dto.acl.AccessHolderDto;
@@ -45,10 +46,12 @@ public abstract class DtoMapper {
         dto.setTypes(Collections.singleton(type));
         switch (type) {
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatel_termitu:
-                dto.setLabel(MultilingualString.create(((User) holder).getFullName(), config.getPersistence().getLanguage()));
+                dto.setLabel(MultilingualString.create(((User) holder).getFullName(),
+                                                       config.getPersistence().getLanguage()));
                 break;
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup:
-                dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(), config.getPersistence().getLanguage()));
+                dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(),
+                                                       config.getPersistence().getLanguage()));
                 break;
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatelska_role:
                 dto.setLabel(((UserRole) holder).getLabel());
@@ -57,6 +60,12 @@ public abstract class DtoMapper {
                 throw new IllegalArgumentException("Unsupported access holder type " + holder);
         }
         return dto;
+    }
+
+    public RdfsResource assetToRdfsResource(Asset<?> asset) {
+        final AssetToRdfsResourceMapper mapper = new AssetToRdfsResourceMapper(config.getPersistence().getLanguage());
+        asset.accept(mapper);
+        return mapper.getRdfsResource();
     }
 
     // Setter for test environment setup purposes
