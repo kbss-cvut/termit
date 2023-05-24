@@ -23,7 +23,7 @@ class AssetToRdfsResourceMapper implements AssetVisitor {
     @Override
     public void visitTerm(AbstractTerm term) {
         this.rdfsResource = new RdfsResource(term.getUri(), term.getLabel(), term.getDefinition(), SKOS.CONCEPT);
-        Utils.emptyIfNull(term.getTypes()).forEach(t -> rdfsResource.addType(t));
+        rdfsResource.getTypes().addAll(Utils.emptyIfNull(term.getTypes()));
     }
 
     @Override

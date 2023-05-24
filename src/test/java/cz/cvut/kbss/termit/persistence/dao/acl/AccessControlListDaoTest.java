@@ -200,7 +200,7 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findResourcesByAgentWithSecurityAccessReturnsResourcesWhenUserHasSecurityAccess() {
+    void findAssetsByAgentWithSecurityAccessReturnsResourcesWhenUserHasSecurityAccess() {
         final User user = Generator.generateUserWithId();
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Vocabulary otherVocabulary = Generator.generateVocabularyWithId();
@@ -215,7 +215,7 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
             em.persist(otherVocabulary, descriptorFactory.vocabularyDescriptor(otherVocabulary));
         });
 
-        final List<? extends Asset<?>> result = sut.findResourcesByAgentWithSecurityAccess(user);
+        final List<? extends Asset<?>> result = sut.findAssetsByAgentWithSecurityAccess(user);
         assertThat(result, containsSameEntities(List.of(vocabulary)));
     }
 }

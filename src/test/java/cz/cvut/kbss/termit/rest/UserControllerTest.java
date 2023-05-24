@@ -12,6 +12,9 @@
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -31,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -71,11 +75,11 @@ class UserControllerTest extends BaseControllerTestRunner {
     @Test
     void getAllReturnsAllUsers() throws Exception {
         final List<UserAccount> users = IntStream.range(0, 5).mapToObj(i -> Generator.generateUserAccount())
-                .collect(Collectors.toList());
+                                                 .collect(Collectors.toList());
         when(userService.findAll()).thenReturn(users);
 
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL).accept(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isOk()).andReturn();
+                                           .andExpect(status().isOk()).andReturn();
         final List<UserAccount> result = readValue(mvcResult, new TypeReference<List<UserAccount>>() {
         });
         assertEquals(users, result);
@@ -86,8 +90,8 @@ class UserControllerTest extends BaseControllerTestRunner {
         final UserUpdateDto dto = dtoForUpdate();
 
         mockMvc.perform(
-                put(BASE_URL + "/current").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isNoContent());
+                       put(BASE_URL + "/current").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNoContent());
         verify(userService).updateCurrent(dto);
     }
 
@@ -106,29 +110,32 @@ class UserControllerTest extends BaseControllerTestRunner {
     void unlockUnlocksUser() throws Exception {
         final String newPassword = "newPassword";
 
-        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(user.getUri());
+        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(
+                user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(delete(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/lock")
-                .content(newPassword))
-                .andExpect(status().isNoContent());
+                                .content(newPassword))
+               .andExpect(status().isNoContent());
         verify(userService).unlock(user, newPassword);
     }
 
     @Test
     void enableEnablesUser() throws Exception {
-        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(user.getUri());
+        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(
+                user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(post(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/status"))
-                .andExpect(status().isNoContent());
+               .andExpect(status().isNoContent());
         verify(userService).enable(user);
     }
 
     @Test
     void disableDisablesUser() throws Exception {
-        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(user.getUri());
+        when(idResolverMock.resolveIdentifier(eq(configuration.getNamespace().getUser()), any())).thenReturn(
+                user.getUri());
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(delete(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/status"))
-                .andExpect(status().isNoContent());
+               .andExpect(status().isNoContent());
         verify(userService).disable(user);
     }
 
@@ -136,7 +143,7 @@ class UserControllerTest extends BaseControllerTestRunner {
     void existsChecksForUsernameExistence() throws Exception {
         when(userService.exists(user.getUsername())).thenReturn(true);
         final MvcResult mvcResult = mockMvc.perform(get(BASE_URL + "/username").param("username", user.getUsername()))
-                .andReturn();
+                                           .andReturn();
         final Boolean result = readValue(mvcResult, Boolean.class);
         assertTrue(result);
     }
@@ -152,5 +159,24 @@ class UserControllerTest extends BaseControllerTestRunner {
                .andExpect(status().isNoContent());
         verify(idResolverMock).resolveIdentifier(namespace, extractIdentifierFragment(user.getUri()));
         verify(userService).changeRole(user, Vocabulary.s_c_omezeny_uzivatel);
+    }
+
+    @Test
+    void getManagedAssetsRetrievesManagedAssetsForUserWithSpecifiedUri() throws Exception {
+        final String namespace = Vocabulary.s_c_uzivatel_termitu + "/";
+        when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
+        when(userService.getRequiredReference(user.getUri())).thenReturn(user);
+        final List<RdfsResource> resources = Collections.singletonList(
+                new RdfsResource(Generator.generateUri(), MultilingualString.create("Test term", Environment.LANGUAGE),
+                                 null,
+                                 SKOS.CONCEPT));
+        when(userService.getManagedAssets(user)).thenReturn(resources);
+        final MvcResult mvcResult = mockMvc.perform(
+                get(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/managed-assets")
+                        .queryParam(Constants.QueryParams.NAMESPACE, namespace)).andReturn();
+        final List<RdfsResource> result = readValue(mvcResult, new TypeReference<List<RdfsResource>>() {
+        });
+        assertEquals(resources, result);
+        verify(userService).getManagedAssets(user);
     }
 }

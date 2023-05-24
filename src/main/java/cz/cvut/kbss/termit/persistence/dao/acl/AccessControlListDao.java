@@ -153,7 +153,7 @@ public class AccessControlListDao {
      * @param agent Agent whose access is examined
      * @return List of matching assets
      */
-    public List<? extends Asset<?>> findResourcesByAgentWithSecurityAccess(@NonNull AccessControlAgent agent) {
+    public List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@NonNull AccessControlAgent agent) {
         Objects.requireNonNull(agent);
         return em.createNativeQuery("SELECT ?a WHERE { " +
                                             "?a a ?type ; " +
