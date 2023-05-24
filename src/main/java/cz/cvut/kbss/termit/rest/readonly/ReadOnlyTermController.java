@@ -112,6 +112,14 @@ public class ReadOnlyTermController extends BaseController {
         return termService.findSubTerms(parent);
     }
 
+    @GetMapping(value = "/terms/{localName}/subterms",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<ReadOnlyTerm> getSubTerms(@PathVariable String localName,
+                                          @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+        final ReadOnlyTerm parent = getById(localName, namespace);
+        return termService.findSubTerms(parent);
+    }
+
     @GetMapping(value = "/vocabularies/{vocabularyIdFragment}/terms/{termIdFragment}/comments",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Comment> getComments(@PathVariable("vocabularyIdFragment") String vocabularyIdFragment,
