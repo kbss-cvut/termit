@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.model.util.HasTypes;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -70,7 +71,14 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
         if (comment != null) {
             this.comment = MultilingualString.create(comment.getValue(), comment.getLanguage().orElse(null));
         }
-        this.types = Collections.singleton(type);
+        this.types = new HashSet<>(Collections.singleton(type));
+    }
+
+    public RdfsResource(URI uri, MultilingualString label, MultilingualString comment, String type) {
+        this.uri = uri;
+        this.label = label;
+        this.comment = comment;
+        this.types = new HashSet<>(Collections.singleton(type));
     }
 
     @Override

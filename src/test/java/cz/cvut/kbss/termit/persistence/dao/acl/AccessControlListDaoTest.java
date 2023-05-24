@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao.acl;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
@@ -195,5 +197,25 @@ class AccessControlListDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.remove(acl));
         assertNull(em.find(AccessControlList.class, acl.getUri()));
         acl.getRecords().forEach(r -> assertNull(em.find(AccessControlRecord.class, r.getUri())));
+    }
+
+    @Test
+    void findAssetsByAgentWithSecurityAccessReturnsResourcesWhenUserHasSecurityAccess() {
+        final User user = Generator.generateUserWithId();
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary otherVocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = new AccessControlList();
+        final UserAccessControlRecord record = new UserAccessControlRecord(AccessLevel.SECURITY, user);
+        acl.addRecord(record);
+        transactional(() -> {
+            em.persist(user);
+            em.persist(acl, descriptorFactory.accessControlListDescriptor());
+            vocabulary.setAcl(acl.getUri());
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            em.persist(otherVocabulary, descriptorFactory.vocabularyDescriptor(otherVocabulary));
+        });
+
+        final List<? extends Asset<?>> result = sut.findAssetsByAgentWithSecurityAccess(user);
+        assertThat(result, containsSameEntities(List.of(vocabulary)));
     }
 }

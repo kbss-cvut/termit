@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.rest.handler;
 
 /**
- * Contains information about an error and can be send to client as JSON to let him know what is wrong.
+ * Contains information about an error and can be sent to client as JSON to let him know what is wrong.
  */
 public class ErrorInfo {
 

@@ -3,15 +3,20 @@ package cz.cvut.kbss.termit.persistence.dao.acl;
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.termit.model.AccessControlAgent;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -133,5 +138,37 @@ public class AccessControlListDao {
         } catch (NoResultException e) {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Resolves assets to which the specified agent has security-level access ({@link AccessLevel#SECURITY}).
+     * <p>
+     * This means finding records referencing the specified holder and having security access level and retrieving the
+     * assets that is associated with the {@link AccessControlList} containing the records.
+     * <p>
+     * Note that currently, only vocabularies can have an ACL assigned, so the resulting list will contain only {@link
+     * cz.cvut.kbss.termit.model.Vocabulary} instances. Also note that currently, only individual users can have
+     * security-level access. This method reflects it and does not check user group records, for example.
+     *
+     * @param agent Agent whose access is examined
+     * @return List of matching assets
+     */
+    public List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@NonNull AccessControlAgent agent) {
+        Objects.requireNonNull(agent);
+        return em.createNativeQuery("SELECT ?a WHERE { " +
+                                            "?a a ?type ; " +
+                                            "?hasAcl ?acl . " +
+                                            "?acl ?hasRecord ?record . " +
+                                            "?record ?hasAccessLevel ?accessLevel ; " +
+                                            "?hasHolder ?agent . " +
+                                            "}", cz.cvut.kbss.termit.model.Vocabulary.class)
+                 .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
+                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                 .setParameter("hasRecord", URI.create(Vocabulary.s_p_ma_zaznam_rizeni_pristupu))
+                 .setParameter("hasAccessLevel", URI.create(Vocabulary.s_p_ma_uroven_pristupovych_opravneni))
+                 .setParameter("accessLevel", URI.create(AccessLevel.SECURITY.getIri()))
+                 .setParameter("hasHolder", URI.create(Vocabulary.s_p_ma_drzitele_pristupovych_opravneni))
+                 .setParameter("agent", agent)
+                 .getResultList();
     }
 }
