@@ -138,7 +138,8 @@ public class SKOSImporter {
 
         glossaryIri = resolveGlossaryIriFromImportedData(model);
         LOG.trace("Importing glossary {}.", glossaryIri);
-        insertTopConceptAssertions();
+        removeTopConceptOfAssertions();
+        insertHasTopConceptAssertions();
 
         final String vocabularyIriFromData = resolveVocabularyIriFromImportedData();
         if (vocabularyIri != null && !vocabularyIri.toString().equals(vocabularyIriFromData)) {
@@ -242,8 +243,13 @@ public class SKOSImporter {
                 config.getNamespace().getTerm().getSeparator());
     }
 
-    private void insertTopConceptAssertions() {
-        LOG.trace("Generating top concept assertions.");
+    private void removeTopConceptOfAssertions() {
+        LOG.trace("Removing explicit skos:topConceptOf statements.");
+        model.remove(null, SKOS.TOP_CONCEPT_OF, null);
+    }
+
+    private void insertHasTopConceptAssertions() {
+        LOG.trace("Generating skos:hasTopConcept assertions.");
         final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream().map
                                                   (Statement::getSubject)
                                           .collect(Collectors.toList());

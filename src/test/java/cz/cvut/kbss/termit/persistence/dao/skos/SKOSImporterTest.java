@@ -391,4 +391,24 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         assertNotNull(result.getDocument());
         assertEquals(document, result.getDocument());
     }
+
+    @Test
+    void importSkipsAssertedTopConceptOfStatements() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(VOCABULARY_IRI, Constants.MediaType.TURTLE, persister,
+                                 Environment.loadFile("data/test-glossary-with-topconceptof.ttl"),
+                                 Environment.loadFile("data/test-vocabulary.ttl"));
+        });
+        transactional(() -> {
+            try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
+                final List<Value> terms = Iterations.stream(conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null))
+                                                    .map(Statement::getObject).collect(Collectors.toList());
+                assertEquals(1, terms.size());
+                assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_uzivatel_termitu)));
+                assertFalse(conn.hasStatement(vf.createIRI(Vocabulary.s_c_uzivatel_termitu), SKOS.TOP_CONCEPT_OF, null,
+                                              false));
+            }
+        });
+    }
 }
