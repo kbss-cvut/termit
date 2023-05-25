@@ -1,6 +1,5 @@
 package cz.cvut.kbss.termit.rest;
 
-import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SnapshotService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -11,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -38,7 +36,6 @@ public class SnapshotController extends BaseController {
             @ApiResponse(responseCode = "204", description = "Snapshot successfully deleted."),
             @ApiResponse(responseCode = "404", description = "Snapshot with the specified identifier not found.")
     })
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeSnapshot(@Parameter(
