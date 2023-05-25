@@ -182,6 +182,7 @@ public class SKOSImporter {
         final Optional<Vocabulary> possibleVocabulary = vocabularyDao.find(newVocabulary.getUri());
         possibleVocabulary.ifPresent(toRemove -> {
             newVocabulary.setDocument(toRemove.getDocument());
+            newVocabulary.setAcl(toRemove.getAcl());
             vocabularyDao.forceRemove(toRemove);
         });
     }

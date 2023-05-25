@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
@@ -369,10 +370,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     void importConnectsExistingDocumentToReimportedVocabulary() {
         final Document document = Generator.generateDocumentWithId();
         transactional(() -> {
-            final cz.cvut.kbss.termit.model.Vocabulary existing = em.find(cz.cvut.kbss.termit.model.Vocabulary.class,
-                                                                          VOCABULARY_IRI,
-                                                                          descriptorFactory.vocabularyDescriptor(
-                                                                                  VOCABULARY_IRI));
+            final cz.cvut.kbss.termit.model.Vocabulary existing = findVocabulary();
             existing.setDocument(document);
             em.persist(document, descriptorFactory.documentDescriptor(VOCABULARY_IRI));
         });
@@ -382,13 +380,17 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             sut.importVocabulary(VOCABULARY_IRI, Constants.MediaType.TURTLE, persister,
                                  Environment.loadFile("data/test-glossary.ttl"));
         });
-        final cz.cvut.kbss.termit.model.Vocabulary result = em.find(cz.cvut.kbss.termit.model.Vocabulary.class,
-                                                                    VOCABULARY_IRI,
-                                                                    descriptorFactory.vocabularyDescriptor(
-                                                                            VOCABULARY_IRI));
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertNotNull(result.getDocument());
         assertEquals(document, result.getDocument());
+    }
+
+    private cz.cvut.kbss.termit.model.Vocabulary findVocabulary() {
+        return em.find(cz.cvut.kbss.termit.model.Vocabulary.class,
+                       VOCABULARY_IRI,
+                       descriptorFactory.vocabularyDescriptor(
+                               VOCABULARY_IRI));
     }
 
     @Test
@@ -423,5 +425,24 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
         assertTrue(result.isPresent());
         assertThat(result.get().getDescription(), not(emptyOrNullString()));
+    }
+
+    @Test
+    void importConnectsExistingAccessControlListToImportedVocabulary() {
+        transactional(() -> {
+            final cz.cvut.kbss.termit.model.Vocabulary existing = findVocabulary();
+            final AccessControlList acl = Generator.generateAccessControlList(false);
+            existing.setAcl(acl.getUri());
+            em.persist(acl, descriptorFactory.accessControlListDescriptor());
+        });
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(VOCABULARY_IRI, Constants.MediaType.TURTLE, persister,
+                                 Environment.loadFile("data/test-glossary.ttl"));
+        });
+
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
+        assertNotNull(result);
+        assertNotNull(result.getAcl());
     }
 }
