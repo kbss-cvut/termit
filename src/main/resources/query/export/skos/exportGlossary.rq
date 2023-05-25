@@ -9,6 +9,7 @@ CONSTRUCT {
               a skos:ConceptScheme ;
               a pdp:glosář ;
               dc:title ?label ;
+              dc:description ?description ;
               dc:creator ?fullName ;
               dc:created ?created ;
               dc:rights ?rights ;
@@ -23,6 +24,9 @@ CONSTRUCT {
                     dc:title ?vocabularyLabel .
         OPTIONAL {
             ?glossary dc:title ?glossaryLabel .
+        }
+        OPTIONAL {
+            ?vocabulary dc:description ?description .
         }
         OPTIONAL {
             ?glossary owl:versionIRI ?versionIri .

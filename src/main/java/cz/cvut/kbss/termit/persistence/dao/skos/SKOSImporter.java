@@ -119,10 +119,10 @@ public class SKOSImporter {
     }
 
     private Vocabulary importVocabulary(final boolean rename,
-                                       final URI vocabularyIri,
-                                       final String mediaType,
-                                       final Consumer<Vocabulary> persist,
-                                       final InputStream... inputStreams) {
+                                        final URI vocabularyIri,
+                                        final String mediaType,
+                                        final Consumer<Vocabulary> persist,
+                                        final InputStream... inputStreams) {
         if (inputStreams.length == 0) {
             throw new IllegalArgumentException("No input provided for importing vocabulary.");
         }
@@ -311,16 +311,6 @@ public class SKOSImporter {
         return glossaries.iterator().next();
     }
 
-    private void setVocabularyLabelFromGlossary(final Vocabulary vocabulary) {
-        final Set<Statement> labels = model.filter(getGlossaryUri(), DCTERMS.TITLE, null);
-        labels.stream().filter(s -> {
-            assert s.getObject() instanceof Literal;
-            return Objects.equals(config.getPersistence().getLanguage(),
-                                  ((Literal) s.getObject()).getLanguage()
-                                                           .orElse(config.getPersistence().getLanguage()));
-        }).findAny().ifPresent(s -> vocabulary.setLabel(s.getObject().stringValue()));
-    }
-
     private Vocabulary createVocabulary(boolean rename, final URI vocabularyIri, final String vocabularyIriFromData) {
         URI newVocabularyIri;
         if (vocabularyIri == null) {
@@ -338,6 +328,7 @@ public class SKOSImporter {
         vocabulary.setGlossary(glossary);
         vocabulary.setModel(new cz.cvut.kbss.termit.model.Model());
         setVocabularyLabelFromGlossary(vocabulary);
+        setVocabularyDescriptionFromGlossary(vocabulary);
         return vocabulary;
     }
 
@@ -362,5 +353,26 @@ public class SKOSImporter {
             }
         }
         return newGlossaryIri;
+    }
+
+    private void setVocabularyLabelFromGlossary(final Vocabulary vocabulary) {
+        handleGlossaryStringProperty(DCTERMS.TITLE, s -> vocabulary.setLabel(s.getObject().stringValue()));
+    }
+
+    private void handleGlossaryStringProperty(IRI property, Consumer<? super Statement> consumer) {
+        final Set<Statement> labels = model.filter(getGlossaryUri(), property, null);
+        labels.stream().filter(s -> {
+            assert s.getObject() instanceof Literal;
+            return Objects.equals(config.getPersistence().getLanguage(),
+                                  ((Literal) s.getObject()).getLanguage()
+                                                           .orElse(config.getPersistence().getLanguage()));
+        }).findAny().ifPresent(consumer);
+    }
+
+    private void setVocabularyDescriptionFromGlossary(final Vocabulary vocabulary) {
+        handleGlossaryStringProperty(DCTERMS.DESCRIPTION, s -> {
+            vocabulary.setDescription(s.getObject().stringValue());
+            model.remove(s);
+        });
     }
 }

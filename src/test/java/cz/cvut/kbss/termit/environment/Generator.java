@@ -192,6 +192,7 @@ public class Generator {
         vocabulary.setGlossary(new Glossary());
         vocabulary.setModel(new Model());
         vocabulary.setLabel("Vocabulary" + randomInt());
+        vocabulary.setDescription("Description of vocabulary " + vocabulary.getLabel());
         return vocabulary;
     }
 

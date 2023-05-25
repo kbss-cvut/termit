@@ -41,8 +41,7 @@ import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -410,5 +409,19 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                               false));
             }
         });
+    }
+
+    @Test
+    void importMovesDescriptionFromGlossaryToVocabulary() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(VOCABULARY_IRI, Constants.MediaType.TURTLE, persister,
+                                 Environment.loadFile("data/test-glossary.ttl"),
+                                 Environment.loadFile("data/test-vocabulary.ttl"));
+        });
+
+        final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
+        assertTrue(result.isPresent());
+        assertThat(result.get().getDescription(), not(emptyOrNullString()));
     }
 }
