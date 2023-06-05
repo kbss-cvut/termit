@@ -238,7 +238,7 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to be analyzed
      */
-    @Transactional(readOnly = true)
+    @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
@@ -255,7 +255,7 @@ public class VocabularyService
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public void runTextAnalysisOnAllVocabularies() {
         LOG.debug("Analyzing definitions of all terms in all vocabularies.");
         final Map<TermDto, URI> termsToContexts = new HashMap<>();

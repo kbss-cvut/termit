@@ -378,16 +378,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term Term update data
      * @return The updated term
      */
-    @Transactional
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public Term update(Term term) {
         Objects.requireNonNull(term);
         final Term original = repositoryService.findRequired(term.getUri());
-        if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
-            analyzeTermDefinition(term, term.getVocabulary());
-        }
-        final Term result = repositoryService.update(term);
         // Ensure the change is merged into the repo before analyzing other terms
+        final Term result = repositoryService.update(term);
+        if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
+            analyzeTermDefinition(term, original.getVocabulary());
+        }
         if (!Objects.equals(original.getLabel(), term.getLabel())) {
             vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(original.getVocabulary()));
         }
