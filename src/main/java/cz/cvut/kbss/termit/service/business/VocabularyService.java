@@ -102,7 +102,9 @@ public class VocabularyService
     @Override
     @PostFilter("@vocabularyAuthorizationService.canRead(filterObject)")
     public List<VocabularyDto> findAll() {
-        return repositoryService.findAll();
+        // PostFilter modifies the data in-place, which caused unwanted updates to the cache (since we are caching
+        // the whole list in VocabularyRepositoryService)
+        return new ArrayList<>(repositoryService.findAll());
     }
 
     @Override
