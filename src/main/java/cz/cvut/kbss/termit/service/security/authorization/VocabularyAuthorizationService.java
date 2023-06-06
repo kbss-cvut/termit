@@ -25,7 +25,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     private final EditableVocabularies editableVocabularies;
 
     private final VocabularyRepositoryService vocabularyRepositoryService;
-    
+
     private final SecurityUtils securityUtils;
 
     public VocabularyAuthorizationService(AccessControlListBasedAuthorizationService aclAuthorizationService,
@@ -56,6 +56,10 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
 
     /**
      * Checks if the current user can create a snapshot of the specified vocabulary.
+     * <p>
+     * Currently, creation of snapshots requires admin privileges, because otherwise it could happen that a user would
+     * have security access to the snapshot vocabulary, but not to other related vocabularies whose snapshot would be
+     * created by cascading the operation. Requiring admin access is more restrictive but safe in this regard.
      *
      * @param asset Vocabulary whose snapshot is to be created
      * @return {@code true} if the current user can create the snapshot, {@code false} otherwise
@@ -63,13 +67,15 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     public boolean canCreateSnapshot(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = securityUtils.getCurrentUser();
-        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset) && editableVocabularies.isEditable(asset);
+        return user.isAdmin() && editableVocabularies.isEditable(asset);
     }
 
     /**
      * Checks if the current user can remove a snapshot of the specified vocabulary.
      * <p>
-     * Snapshot removal is authorized based on the target vocabulary, not on the individual snapshots.
+     * Currently, removal of snapshots requires admin privileges, because otherwise it could happen that a user would
+     * have security access to the snapshot vocabulary, but not to other related vocabularies whose snapshot would be
+     * removed by cascading the operation. Requiring admin access is more restrictive but safe in this regard.
      *
      * @param asset Vocabulary whose snapshot is to be removed
      * @return {@code true} if the current user can remove the vocabulary's snapshots, {@code false} otherwise
@@ -77,7 +83,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     public boolean canRemoveSnapshot(Vocabulary asset) {
         Objects.requireNonNull(asset);
         final UserAccount user = securityUtils.getCurrentUser();
-        return aclAuthorizationService.hasAccessLevel(AccessLevel.SECURITY, user, asset) && editableVocabularies.isEditable(asset);
+        return user.isAdmin() && editableVocabularies.isEditable(asset);
     }
 
     /**
@@ -168,6 +174,7 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
             return aclAuthorizationService.canReadAnonymously(asset) ? AccessLevel.READ : AccessLevel.NONE;
         }
         final UserAccount user = securityUtils.getCurrentUser();
-        return editableVocabularies.isEditable(asset) ? aclAuthorizationService.getAccessLevel(user, asset) : AccessLevel.NONE;
+        return editableVocabularies.isEditable(asset) ? aclAuthorizationService.getAccessLevel(user, asset) :
+               AccessLevel.NONE;
     }
 }
