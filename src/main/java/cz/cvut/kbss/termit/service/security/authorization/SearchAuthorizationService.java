@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;

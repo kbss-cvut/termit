@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.junit.jupiter.api.Test;
