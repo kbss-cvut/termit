@@ -16,6 +16,8 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -27,12 +29,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -68,5 +68,16 @@ public class SearchController extends BaseController {
             @Parameter(description = "Identifiers of vocabularies in which to search.")
             @RequestParam(name = "vocabulary", required = false) Set<URI> vocabularies) {
         return searchService.fullTextSearchOfTerms(searchString, Utils.emptyIfNull(vocabularies));
+    }
+
+    @Operation(description = "Runs a faceted search using the specified search parameters over all terms.")
+    @ApiResponse(responseCode = "200", description = "Search results.")
+    @PreAuthorize("permitAll()")
+    @PostMapping(value = "/faceted/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE},
+                 consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public List<FacetedSearchResult> facetedTermSearch(@Parameter(description = "Search parameters.")
+                                                       @RequestBody Collection<SearchParam> searchParams) {
+        // TODO
+        return null;
     }
 }

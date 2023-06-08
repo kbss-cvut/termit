@@ -195,4 +195,11 @@ public class RestExceptionHandler {
         return new ResponseEntity<>(ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()),
                                     HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> unsupportedSearchFacetException(HttpServletRequest request,
+                                                                     UnsupportedSearchFacetException e) {
+        logException(e);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
+    }
 }
