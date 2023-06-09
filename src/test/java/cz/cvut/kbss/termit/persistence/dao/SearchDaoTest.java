@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -22,6 +23,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
@@ -29,7 +31,6 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,59 +39,67 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper.getOwlClassForEntity;
-import static org.junit.jupiter.api.Assertions.*;
+import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * This class tests the default full text search functionality.
  * <p>
  * Repository-tailored queries stored in corresponding profiles should be used in production.
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SearchDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
 
     @Autowired
+    private DescriptorFactory descriptorFactory;
+
+    @Autowired
     private SearchDao sut;
+
+    private static boolean initialized = false;
 
     private User user;
 
     private Vocabulary vocabulary;
 
+    private static List<Term> terms;
+    private static List<Vocabulary> vocabularies;
+
     @BeforeEach
     void setUp() {
         this.user = Generator.generateUserWithId();
-        transactional(() -> em.persist(user));
+        this.vocabulary = Generator.generateVocabularyWithId();
+        if (!initialized) {
+            transactional(() -> {
+                em.persist(user);
+                em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+                terms = generateTerms();
+                terms.forEach(t -> em.persist(t, descriptorFactory.termDescriptor(t)));
+                vocabularies = generateVocabularies();
+                vocabularies.forEach(v -> em.persist(v, descriptorFactory.vocabularyDescriptor(v)));
+            });
+            initialized = true;
+        }
         Environment.setCurrentUser(user);
     }
 
     @Test
     void defaultFullTextSearchFindsTermsWithMatchingLabel() {
-        final List<Term> terms = generateAndPersistTerms();
         final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
                                                .collect(Collectors.toList());
 
-        final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
-        assertEquals(matching.size(), result.size());
-        for (FullTextSearchResult item : result) {
-            assertTrue(item.getTypes().contains(getOwlClassForEntity(Term.class)));
-            assertTrue(matching.stream().anyMatch(t -> t.getUri().equals(item.getUri())));
-        }
-    }
-
-    private List<Term> generateAndPersistTerms() {
-        final List<Term> terms = generateTerms();
-        transactional(() -> {
-            em.persist(vocabulary);
-            terms.forEach(em::persist);
-        });
-        return terms;
+        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> termResults = allResults.stream().filter(r -> r.hasType(SKOS.CONCEPT)).collect(
+                Collectors.toList());
+        assertEquals(matching.size(), termResults.size());
+        assertThat(termResults, containsSameEntities(matching));
     }
 
     private List<Term> generateTerms() {
-        this.vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = new ArrayList<>(10);
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = new Term();
@@ -98,6 +107,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
             term.setPrimaryLabel(Generator.randomBoolean() ? "Matching label " + i : "Unknown label " + i);
             vocabulary.getGlossary().addRootTerm(term);
             term.setVocabulary(vocabulary.getUri());
+            term.setDraft(Generator.randomBoolean());
             terms.add(term);
         }
         return terms;
@@ -105,16 +115,15 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Test
     void defaultFullTextSearchFindsVocabulariesWithMatchingLabel() {
-        final List<Vocabulary> vocabularies = generateVocabularies();
-        transactional(() -> vocabularies.forEach(em::persist));
         final Collection<Vocabulary> matching = vocabularies.stream().filter(v -> v.getLabel().contains("Matching"))
                                                             .collect(Collectors.toList());
-        final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
-        assertEquals(matching.size(), result.size());
-        for (FullTextSearchResult item : result) {
-            assertTrue(item.getTypes().contains(getOwlClassForEntity(Vocabulary.class)));
-            assertTrue(matching.stream().anyMatch(t -> t.getUri().equals(item.getUri())));
-        }
+        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> vocabularyResults = allResults.stream()
+                                                                       .filter(r -> r.hasType(
+                                                                               cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
+                                                                       .collect(Collectors.toList());
+        assertEquals(matching.size(), vocabularyResults.size());
+        assertThat(vocabularyResults, containsSameEntities(matching));
     }
 
     private List<Vocabulary> generateVocabularies() {
@@ -131,13 +140,6 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Test
     void defaultFullTextSearchFindsVocabulariesAndTermsWithMatchingLabel() {
-        final List<Term> terms = generateTerms();
-        final List<Vocabulary> vocabularies = generateVocabularies();
-        transactional(() -> {
-            em.persist(vocabulary);
-            terms.forEach(em::persist);
-            vocabularies.forEach(em::persist);
-        });
         final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
                                                     .collect(Collectors.toList());
         final Collection<Vocabulary> matchingVocabularies = vocabularies.stream()
@@ -146,7 +148,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
         final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
         assertEquals(matchingTerms.size() + matchingVocabularies.size(), result.size());
         for (FullTextSearchResult item : result) {
-            if (item.getTypes().contains(getOwlClassForEntity(Term.class))) {
+            if (item.hasType(SKOS.CONCEPT)) {
                 assertTrue(matchingTerms.stream().anyMatch(t -> t.getUri().equals(item.getUri())));
             } else {
                 assertTrue(matchingVocabularies.stream().anyMatch(v -> v.getUri().equals(item.getUri())));
@@ -156,20 +158,14 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Test
     void defaultFullTextSearchIncludesDraftStatusInResult() {
-        final List<Term> terms = generateTerms();
-        transactional(() -> {
-            em.persist(vocabulary);
-            terms.forEach(t -> {
-                t.setDraft(Generator.randomBoolean());
-                em.persist(t);
-            });
-        });
         final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
                                                .collect(Collectors.toList());
 
-        final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
-        assertEquals(matching.size(), result.size());
-        for (FullTextSearchResult ftsResult : result) {
+        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> termResults = allResults.stream()
+                                                                 .filter(r -> r.hasType(SKOS.CONCEPT))
+                                                                 .collect(Collectors.toList());
+        for (FullTextSearchResult ftsResult : termResults) {
             final Optional<Term> term = matching.stream().filter(t -> t.getUri().equals(ftsResult.getUri()))
                                                 .findFirst();
             assertTrue(term.isPresent());
@@ -179,14 +175,13 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Test
     void defaultFullTextSearchReturnsEmptyListForEmptyInputString() {
-        generateAndPersistTerms();
         final List<FullTextSearchResult> result = sut.fullTextSearch("");
         assertTrue(result.isEmpty());
     }
 
     @Test
     void defaultFullTextSearchSkipsSnapshots() {
-        final String matchingLabel = "Matching";
+        final String matchingLabel = "Snapshot";
         final Vocabulary v = Generator.generateVocabularyWithId();
         v.setLabel(matchingLabel + " 0");
         final Vocabulary snapshot = Generator.generateVocabularyWithId();
