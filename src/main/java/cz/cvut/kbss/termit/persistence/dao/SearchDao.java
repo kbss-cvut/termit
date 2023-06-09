@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Repository
 @Profile("!lucene")
@@ -131,7 +132,36 @@ public class SearchDao {
      * @return List of matching terms, ordered by label
      */
     public List<FacetedSearchResult> facetedTermSearch(@NonNull Collection<SearchParam> searchParams) {
-        // TODO
-        return null;
+        Objects.requireNonNull(searchParams);
+        LOG.trace("Running faceted term search for search parameters: {}", searchParams);
+        final StringBuilder queryStr = new StringBuilder(
+                "SELECT DISTINCT ?t WHERE { ?t a ?term ; ?hasLabel ?label .\n");
+        int i = 0;
+        for (SearchParam p : searchParams) {
+            final String variable = "?v" + i++;
+            queryStr.append("?t ").append(Utils.uriToString(p.getProperty())).append(" ").append(variable)
+                    .append(" . ");
+            switch (p.getMatchType()) {
+                case IRI:
+                    queryStr.append("FILTER (").append(variable).append(" IN (")
+                            .append(p.getValue().stream().map(v -> Utils.uriToString(URI.create(v))).collect(
+                                    Collectors.joining(","))).append("))\n");
+                    break;
+                case EXACT_MATCH:
+                    queryStr.append("FILTER (STR(").append(variable).append(") = \"")
+                            .append(p.getValue().iterator().next()).append("\")\n");
+                    break;
+                case SUBSTRING:
+                    queryStr.append("FILTER (CONTAINS(LCASE(STR(").append(variable).append(")), LCASE(\"")
+                            .append(p.getValue().iterator().next()).append("\")))\n");
+                    break;
+            }
+        }
+        queryStr.append("FILTER NOT EXISTS { ?t a ?snapshot . }} ORDER BY ?label");
+        return em.createNativeQuery(queryStr.toString(), FacetedSearchResult.class)
+                 .setParameter("term", URI.create(SKOS.CONCEPT))
+                 .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
+                 .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
+                 .getResultList();
     }
 }

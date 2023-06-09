@@ -10,6 +10,8 @@ public enum MatchType {
     IRI,
     /**
      * Matches the specified value as a substring of the string representation of a property value in the repository.
+     *
+     * Note that this match is not case-sensitive.
      */
     SUBSTRING,
     /**

@@ -77,8 +77,8 @@ class SearchServiceTest {
 
     @Test
     void facetedTermSearchValidatesEachSearchParamBeforeInvokingSearch() {
-        final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Generator.generateUriString(), MatchType.IRI);
-        final SearchParam spTwo = new SearchParam(URI.create(SKOS.NOTATION), "will be removed", MatchType.SUBSTRING);
+        final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()), MatchType.IRI);
+        final SearchParam spTwo = new SearchParam(URI.create(SKOS.NOTATION), Set.of("will be removed"), MatchType.SUBSTRING);
         spTwo.setValue(null);
         assertThrows(ValidationException.class, () -> sut.facetedTermSearch(List.of(spOne, spTwo)));
         verify(searchDao, never()).facetedTermSearch(anyCollection());
@@ -86,7 +86,7 @@ class SearchServiceTest {
 
     @Test
     void facetedTermSearchExecutesSearchOnDaoAndReturnsResults() {
-        final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Generator.generateUriString(), MatchType.IRI);
+        final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()), MatchType.IRI);
         final FacetedSearchResult item = new FacetedSearchResult();
         item.setUri(Generator.generateUri());
         item.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));

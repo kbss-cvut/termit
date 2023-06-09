@@ -38,6 +38,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -105,8 +106,8 @@ class SearchControllerTest extends BaseControllerTestRunner {
         term.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
         when(searchServiceMock.facetedTermSearch(anyCollection())).thenReturn(List.of(term));
         final List<SearchParam> searchParams = List.of(
-                new SearchParam(URI.create(SKOS.NOTATION), "LA_", MatchType.EXACT_MATCH),
-                new SearchParam(URI.create(RDF.TYPE), Generator.generateUri().toString(), MatchType.IRI));
+                new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH),
+                new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUri().toString()), MatchType.IRI));
         final MvcResult mvcResult = mockMvc.perform(
                 post(PATH + "/faceted/terms").content(toJson(searchParams)).contentType(
                         MediaType.APPLICATION_JSON)).andReturn();

@@ -15,8 +15,12 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.MatchType;
+import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -24,6 +28,7 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
@@ -32,17 +37,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.net.URI;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.hasItem;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This class tests the default full text search functionality.
@@ -50,6 +54,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Repository-tailored queries stored in corresponding profiles should be used in production.
  */
 class SearchDaoTest extends BaseDaoTestRunner {
+
+    private static final String[] TYPES = {"http://onto.fel.cvut.cz/ontologies/ufo/event",
+                                           "http://onto.fel.cvut.cz/ontologies/ufo/object",
+                                           "http://onto.fel.cvut.cz/ontologies/ufo/relator"};
 
     @Autowired
     private EntityManager em;
@@ -102,12 +110,18 @@ class SearchDaoTest extends BaseDaoTestRunner {
     private List<Term> generateTerms() {
         final List<Term> terms = new ArrayList<>(10);
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
+            final boolean b = Generator.randomBoolean();
             final Term term = new Term();
             term.setUri(Generator.generateUri());
-            term.setPrimaryLabel(Generator.randomBoolean() ? "Matching label " + i : "Unknown label " + i);
+            term.setPrimaryLabel(b ? "Matching label " + i : "Unknown label " + i);
             vocabulary.getGlossary().addRootTerm(term);
             term.setVocabulary(vocabulary.getUri());
-            term.setDraft(Generator.randomBoolean());
+            term.setDraft(b);
+            term.addType(TYPES[Generator.randomIndex(TYPES)]);
+            term.setNotations(Set.of(String.valueOf(
+                    Constants.LETTERS.charAt(Generator.randomInt(0, Constants.LETTERS.length())))));
+            term.setExamples(Set.of(MultilingualString.create(b ? "Matching" : "Unknown" + " example " + i,
+                                                              Environment.LANGUAGE)));
             terms.add(term);
         }
         return terms;
@@ -204,5 +218,55 @@ class SearchDaoTest extends BaseDaoTestRunner {
             connection.add(vf.createIRI(asset.getUri().toString()), RDF.TYPE, vf.createIRI(
                     cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_objektu));
         }
+    }
+
+    @Test
+    void facetedTermSearchReturnsTermsMatchingIriSearchParamWithSpecifiedTypes() {
+        final SearchParam param = new SearchParam(URI.create(RDF.TYPE.stringValue()), Set.of(TYPES[0], TYPES[1]),
+                                                  MatchType.IRI);
+        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(param));
+        assertFalse(result.isEmpty());
+        result.forEach(r -> assertThat(r.getTypes(), anyOf(hasItem(TYPES[0]), hasItem(TYPES[1]))));
+    }
+
+    @Test
+    void facetedTermSearchReturnsTermsMatchingExactMatchSearchParamWithSpecifiedValue() {
+        final SearchParam param = new SearchParam(URI.create(SKOS.NOTATION),
+                                                  Set.of(terms.get(0).getNotations().iterator().next()),
+                                                  MatchType.EXACT_MATCH);
+        final List<Term> matchingTerms = terms.stream()
+                                              .filter(t -> !Collections.disjoint(t.getNotations(), param.getValue()))
+                                              .collect(Collectors.toList());
+        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(param));
+        assertFalse(result.isEmpty());
+        assertThat(result, containsSameEntities(matchingTerms));
+    }
+
+    @Test
+    void facetedTermSearchReturnsTermsMatchingSubstringSearchParamWithSpecifiedValue() {
+        final SearchParam param = new SearchParam(URI.create(SKOS.EXAMPLE),
+                                                  Set.of("matching"),
+                                                  MatchType.SUBSTRING);
+        final List<Term> matchingTerms = terms.stream().filter(t -> t.getExamples().iterator().next().get()
+                                                                     .startsWith("Matching"))
+                                              .collect(Collectors.toList());
+        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(param));
+        assertFalse(result.isEmpty());
+        assertThat(result, containsSameEntities(matchingTerms));
+    }
+
+    @Test
+    void facetedTermSearchReturnsResultsMatchingMultipleSearchParameters() {
+        final SearchParam typeParam = new SearchParam(URI.create(RDF.TYPE.stringValue()), Set.of(TYPES[0], TYPES[1]),
+                                                      MatchType.IRI);
+        final SearchParam substringParam = new SearchParam(URI.create(SKOS.EXAMPLE),
+                                                           Set.of("matching"),
+                                                           MatchType.SUBSTRING);
+        final List<Term> matchingTerms = terms.stream().filter(t -> t.getExamples().iterator().next().get()
+                                                                     .startsWith("Matching") && (t.hasType(
+                                                      TYPES[0]) || t.hasType(TYPES[1])))
+                                              .collect(Collectors.toList());
+        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(typeParam, substringParam));
+        assertThat(result, containsSameEntities(matchingTerms));
     }
 }

@@ -22,9 +22,9 @@ public class SearchParam {
     }
 
     // For test purposes
-    public SearchParam(URI property, String value, MatchType matchType) {
+    public SearchParam(URI property, Set<String> value, MatchType matchType) {
         this.property = Objects.requireNonNull(property);
-        this.value = Set.of(value);
+        this.value = value;
         this.matchType = Objects.requireNonNull(matchType);
     }
 
