@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.springframework.lang.NonNull;
@@ -37,5 +38,18 @@ public class SearchAuthorizationService {
             assert instance.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik);
             return vocabularyAuthorizationService.canRead(new Vocabulary(instance.getUri()));
         }
+    }
+
+    /**
+     * Checks if the current user has read access to the specified faceted term search result.
+     * <p>
+     * Authorization is based on vocabulary ACL.
+     *
+     * @param instance Faceted search result to authorize access to
+     * @return {@code true} if the current user can read the specified instance, {@code false} otherwise
+     */
+    public boolean canRead(@NonNull FacetedSearchResult instance) {
+        Objects.requireNonNull(instance);
+        return vocabularyAuthorizationService.canRead(new Vocabulary(instance.getVocabulary()));
     }
 }

@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
@@ -49,7 +50,7 @@ public class LuceneSearchDao extends SearchDao {
     }
 
     @Override
-    public List<FullTextSearchResult> fullTextSearch(String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(@NonNull String searchString) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
@@ -83,7 +84,7 @@ public class LuceneSearchDao extends SearchDao {
     }
 
     @Override
-    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(String searchString) {
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@NonNull String searchString) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();

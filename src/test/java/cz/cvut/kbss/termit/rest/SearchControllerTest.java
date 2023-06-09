@@ -15,7 +15,14 @@
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.RDF;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.MatchType;
+import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -25,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.net.URI;
@@ -33,9 +41,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -86,5 +96,23 @@ class SearchControllerTest extends BaseControllerTestRunner {
                                 .param("vocabulary", vocabularyIri.toString()))
                .andExpect(status().isOk()).andReturn();
         verify(searchServiceMock).fullTextSearchOfTerms(searchString, Collections.singleton(vocabularyIri));
+    }
+
+    @Test
+    void facetedTermSearchPassesSearchParametersToSearchService() throws Exception {
+        final FacetedSearchResult term = new FacetedSearchResult();
+        term.setUri(Generator.generateUri());
+        term.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
+        when(searchServiceMock.facetedTermSearch(anyCollection())).thenReturn(List.of(term));
+        final List<SearchParam> searchParams = List.of(
+                new SearchParam(URI.create(SKOS.NOTATION), "LA_", MatchType.EXACT_MATCH),
+                new SearchParam(URI.create(RDF.TYPE), Generator.generateUri().toString(), MatchType.IRI));
+        final MvcResult mvcResult = mockMvc.perform(
+                post(PATH + "/faceted/terms").content(toJson(searchParams)).contentType(
+                        MediaType.APPLICATION_JSON)).andReturn();
+        final List<FacetedSearchResult> result = readValue(mvcResult, new TypeReference<List<FacetedSearchResult>>() {
+        });
+        assertEquals(List.of(term), result);
+        verify(searchServiceMock).facetedTermSearch(searchParams);
     }
 }

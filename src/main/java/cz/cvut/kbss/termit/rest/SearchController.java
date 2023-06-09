@@ -15,8 +15,8 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
+import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SearchService;
@@ -77,7 +77,6 @@ public class SearchController extends BaseController {
                  consumes = {MediaType.APPLICATION_JSON_VALUE})
     public List<FacetedSearchResult> facetedTermSearch(@Parameter(description = "Search parameters.")
                                                        @RequestBody Collection<SearchParam> searchParams) {
-        // TODO
-        return null;
+        return searchService.facetedTermSearch(searchParams);
     }
 }

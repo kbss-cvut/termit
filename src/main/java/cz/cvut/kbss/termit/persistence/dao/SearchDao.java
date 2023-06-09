@@ -17,7 +17,9 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -25,10 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -70,7 +74,7 @@ public class SearchDao {
      * @return List of matching results
      * @see #fullTextSearchIncludingSnapshots(String)
      */
-    public List<FullTextSearchResult> fullTextSearch(String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(@NonNull String searchString) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
@@ -93,7 +97,7 @@ public class SearchDao {
      * @return List of matching results
      * @see #fullTextSearchIncludingSnapshots(String)
      */
-    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(String searchString) {
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@NonNull String searchString) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
@@ -116,5 +120,18 @@ public class SearchDao {
     protected String queryIncludingSnapshots() {
         // This string has to match the filter string in the query
         return ftsQuery.replace("FILTER NOT EXISTS { ?entity a ?snapshot . }", "");
+    }
+
+    /**
+     * Executes a faceted search among terms using the specified search parameters.
+     * <p>
+     * Only current versions of terms are searched.
+     *
+     * @param searchParams Search parameters (facets)
+     * @return List of matching terms, ordered by label
+     */
+    public List<FacetedSearchResult> facetedTermSearch(@NonNull Collection<SearchParam> searchParams) {
+        // TODO
+        return null;
     }
 }
