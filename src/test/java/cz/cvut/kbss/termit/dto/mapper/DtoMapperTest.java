@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -16,6 +17,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -73,5 +75,14 @@ class DtoMapperTest {
                 Arguments.of(rTwo, Vocabulary.s_c_Usergroup),
                 Arguments.of(rThree, Vocabulary.s_c_uzivatelska_role)
         );
+    }
+
+    @Test
+    void accessControlRecordToDtoCopiesTypesOfUserHolder() {
+        final UserAccessControlRecord record = new UserAccessControlRecord(AccessLevel.SECURITY,
+                                                                           Generator.generateUserWithId());
+        record.getHolder().addType(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType());
+        final AccessControlRecordDto result = sut.accessControlRecordToDto(record);
+        assertThat(result.getHolder().getTypes(), hasItems(record.getHolder().getTypes().toArray(new String[]{})));
     }
 }

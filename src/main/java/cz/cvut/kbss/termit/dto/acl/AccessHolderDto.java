@@ -7,6 +7,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
@@ -14,7 +15,7 @@ import java.util.Set;
 
 @OWLClass(iri = Vocabulary.s_c_Agent)
 @NonEntity
-public class AccessHolderDto {
+public class AccessHolderDto implements HasTypes {
 
     @Id
     private URI uri;
@@ -41,10 +42,12 @@ public class AccessHolderDto {
         this.label = label;
     }
 
+    @Override
     public Set<String> getTypes() {
         return types;
     }
 
+    @Override
     public void setTypes(Set<String> types) {
         this.types = types;
     }

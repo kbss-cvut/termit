@@ -17,6 +17,8 @@ import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Mapper(componentModel = "spring")
 public abstract class DtoMapper {
@@ -43,10 +45,13 @@ public abstract class DtoMapper {
         final AccessHolderDto dto = new AccessHolderDto();
         dto.setUri(holder.getUri());
         final String type = EntityToOwlClassMapper.getOwlClassForEntity(holder.getClass());
-        dto.setTypes(Collections.singleton(type));
+        dto.setTypes(new HashSet<>(Set.of(type)));
         switch (type) {
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatel_termitu:
-                dto.setLabel(MultilingualString.create(((User) holder).getFullName(),
+                final User user = (User) holder;
+                assert user.getTypes() != null;
+                user.getTypes().forEach(dto::addType);
+                dto.setLabel(MultilingualString.create(user.getFullName(),
                                                        config.getPersistence().getLanguage()));
                 break;
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup:
