@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
@@ -61,6 +62,10 @@ public class Vocabulary extends Asset<String> implements HasTypes, SupportsSnaps
 
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
     private Set<URI> importedVocabularies;
+
+    @JsonIgnore
+    @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_seznam_rizeni_pristupu, fetch = FetchType.EAGER)
+    private URI acl;
 
     @Properties(fetchType = FetchType.EAGER)
     private Map<String, Set<String>> properties;
@@ -123,6 +128,14 @@ public class Vocabulary extends Asset<String> implements HasTypes, SupportsSnaps
 
     public void setImportedVocabularies(Set<URI> importedVocabularies) {
         this.importedVocabularies = importedVocabularies;
+    }
+
+    public URI getAcl() {
+        return acl;
+    }
+
+    public void setAcl(URI acl) {
+        this.acl = acl;
     }
 
     public Map<String, Set<String>> getProperties() {

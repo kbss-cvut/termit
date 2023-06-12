@@ -270,7 +270,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                     TermDto.class)
                                                  .setParameter("context", context(vocabulary))
                                                  .setParameter("type", typeUri)
-                                                 .setParameter("vocabulary", vocabulary)
+                                                 .setParameter("vocabulary", vocabulary.getUri())
                                                  .setParameter("hasLabel", LABEL_PROP)
                                                  .setParameter("inVocabulary",
                                                                URI.create(
@@ -374,7 +374,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                       .setParameter("imports",
                                                     URI.create(
                                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                                      .setParameter("vocabulary", vocabulary)
+                                      .setParameter("vocabulary", vocabulary.getUri())
                                       .setParameter("labelLang", config.getLanguage());
         return executeQueryAndLoadSubTerms(query);
     }
@@ -697,7 +697,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("inVocabulary",
                                    URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                     .setParameter("vocabulary", vocabulary)
+                     .setParameter("vocabulary", vocabulary.getUri())
                      .setParameter("searchString", label,
                                    languageTag != null ? languageTag : config.getLanguage()).getSingleResult();
         } catch (RuntimeException e) {

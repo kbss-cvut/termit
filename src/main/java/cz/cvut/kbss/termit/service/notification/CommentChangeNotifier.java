@@ -79,7 +79,7 @@ public class CommentChangeNotifier {
         variables.put("to", LocalDate.ofInstant(to, ZoneId.systemDefault()));
         variables.put("commentedAssets", assetsWithComments);
         return Optional.of(Message.to(resolveNotificationRecipients(comments).stream().map(
-                              AbstractUser::getUsername).toArray(String[]::new))
+                              User::getUsername).toArray(String[]::new))
                       .content(messageComposer.composeMessage(COMMENT_CHANGES_TEMPLATE, variables))
                       .subject("TermIt News").build());
     }
@@ -132,7 +132,7 @@ public class CommentChangeNotifier {
         admins.addAll(resolveTermVocabularyAuthors(commentChanges));
         LOG.trace(
                 "Found the following potential recipients: {}. Filtering out inactive users and invalid email addresses.",
-                admins.stream().map(AbstractUser::getUsername).collect(Collectors.toList()));
+                admins.stream().map(UserAccount::getUsername).collect(Collectors.toList()));
         return admins.stream().filter(u -> u.isEnabled() && Utils.isValidEmail(u.getUsername()))
                      .map(UserAccount::toUser).collect(Collectors.toList());
     }

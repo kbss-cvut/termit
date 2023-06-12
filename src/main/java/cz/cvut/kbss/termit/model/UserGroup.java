@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @OWLClass(iri = Vocabulary.s_c_Usergroup)
-public class UserGroup extends AbstractEntity {
+public class UserGroup extends AccessControlAgent {
 
     /**
      * Namespace of UserGroup identifiers.

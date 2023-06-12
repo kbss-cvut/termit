@@ -14,11 +14,15 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.LoginAttemptsThresholdExceeded;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
@@ -36,6 +40,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,6 +58,12 @@ class UserServiceTest {
 
     @Mock
     private SecurityUtils securityUtilsMock;
+
+    @Mock
+    private AccessControlListService aclService;
+
+    @Spy
+    private DtoMapper dtoMapper = Environment.getDtoMapper();
 
     @InjectMocks
     private UserService sut;
@@ -334,12 +345,9 @@ class UserServiceTest {
         final UserAccount ua = Generator.generateUserAccount();
         ua.addType(Vocabulary.s_c_omezeny_uzivatel_termitu);
         final UserAccount current = Generator.generateUserAccount();
-        final UserRole rOne = new UserRole();
-        rOne.setUri(URI.create(Vocabulary.s_c_administrator_termitu));
-        final UserRole rTwo = new UserRole();
-        rTwo.setUri(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
-        final UserRole rThree = new UserRole();
-        rThree.setUri(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
+        final UserRole rOne = new UserRole(URI.create(Vocabulary.s_c_administrator_termitu));
+        final UserRole rTwo = new UserRole(URI.create(Vocabulary.s_c_plny_uzivatel_termitu));
+        final UserRole rThree = new UserRole(URI.create(Vocabulary.s_c_omezeny_uzivatel_termitu));
         final List<UserRole> roles = Arrays.asList(rOne, rTwo, rThree);
 
         when(securityUtilsMock.getCurrentUser()).thenReturn(current);
@@ -349,5 +357,17 @@ class UserServiceTest {
         verify(repositoryServiceMock).update(captor.capture());
         assertThat(captor.getValue().getTypes(), hasItem(Vocabulary.s_c_administrator_termitu));
         assertThat(captor.getValue().getTypes(), not(hasItem(Vocabulary.s_c_omezeny_uzivatel_termitu)));
+    }
+
+    @Test
+    void getManagedAssetsRetrievesManagedAssetsForSpecifiedUserAndReturnsThemAsRdfsResources() {
+        final UserAccount ua = Generator.generateUserAccount();
+        final List<cz.cvut.kbss.termit.model.Vocabulary> assets = List.of(Generator.generateVocabularyWithId(),
+                                                                          Generator.generateVocabularyWithId());
+        when(aclService.findAssetsByAgentWithSecurityAccess(any(User.class))).thenReturn((List) assets);
+
+        final List<RdfsResource> result = sut.getManagedAssets(ua);
+        verify(aclService).findAssetsByAgentWithSecurityAccess(ua.toUser());
+        assertThat(result, containsSameEntities(assets));
     }
 }

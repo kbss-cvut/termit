@@ -20,6 +20,10 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +36,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Set;
 
+@Tag(name = "Search", description = "Search API")
 @RestController
 @RequestMapping("/search")
 public class SearchController extends BaseController {
@@ -44,16 +49,23 @@ public class SearchController extends BaseController {
         this.searchService = searchService;
     }
 
+    @Operation(description = "Runs full-text search over asset labels, definitions and descriptions.")
+    @ApiResponse(responseCode = "200", description = "Search results.")
     @PreAuthorize("permitAll()")
     @GetMapping(value = "/fts", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<FullTextSearchResult> fullTextSearch(@RequestParam(name = "searchString") String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(@Parameter(description = "Search string.")
+                                                     @RequestParam(name = "searchString") String searchString) {
         return searchService.fullTextSearch(searchString);
     }
 
+    @Operation(description = "Runs full-text search over terms, matching their labels, definitions and scope notes.")
+    @ApiResponse(responseCode = "200", description = "Search results.")
     @PreAuthorize("permitAll()")
     @GetMapping(value = "/fts/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<FullTextSearchResult> fullTextSearchTerms(
+            @Parameter(description = "Search string.")
             @RequestParam(name = "searchString") String searchString,
+            @Parameter(description = "Identifiers of vocabularies in which to search.")
             @RequestParam(name = "vocabulary", required = false) Set<URI> vocabularies) {
         return searchService.fullTextSearchOfTerms(searchString, Utils.emptyIfNull(vocabularies));
     }

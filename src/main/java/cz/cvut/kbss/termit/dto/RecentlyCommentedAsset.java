@@ -1,13 +1,10 @@
 package cz.cvut.kbss.termit.dto;
 
-import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
-import cz.cvut.kbss.jopa.model.annotations.Id;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
-import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
-import cz.cvut.kbss.jopa.model.annotations.Transient;
-import cz.cvut.kbss.jopa.model.annotations.Types;
-import cz.cvut.kbss.jopa.model.annotations.VariableResult;
+import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import java.io.Serializable;
 import java.net.URI;
@@ -20,14 +17,19 @@ import java.util.Set;
     classes = {@ConstructorResult(targetClass = RecentlyCommentedAsset.class,
         variables = {
             @VariableResult(name = "entity", type = URI.class),
+            @VariableResult(name = "label", type = String.class),
             @VariableResult(name = "lastCommentUri", type = URI.class),
             @VariableResult(name = "myLastCommentUri", type = URI.class),
+            @VariableResult(name = "vocabulary", type = URI.class),
             @VariableResult(name = "type", type = String.class)
         })})
-public class RecentlyCommentedAsset implements Serializable {
+public class RecentlyCommentedAsset implements HasTypes, Serializable {
 
     @Id
     private URI uri;
+
+    @OWLAnnotationProperty(iri = RDFS.LABEL)
+    private String label;
 
     @Transient
     private URI lastCommentUri;
@@ -41,16 +43,21 @@ public class RecentlyCommentedAsset implements Serializable {
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_muj_posledni_komentar)
     private Comment myLastComment;
 
+    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
+    private URI vocabulary;
+
     @Types
     private Set<String> types;
 
     public RecentlyCommentedAsset() {
     }
 
-    public RecentlyCommentedAsset(URI entity, URI lastCommentUri, URI myLastCommentUri, String type) {
+    public RecentlyCommentedAsset(URI entity, String label, URI lastCommentUri, URI myLastCommentUri, URI vocabulary, String type) {
         this.uri = entity;
+        this.label = label;
         this.lastCommentUri = lastCommentUri;
         this.myLastCommentUri = myLastCommentUri;
+        this.vocabulary = vocabulary;
         this.types = new HashSet<>(Collections.singleton(type));
     }
 
@@ -62,10 +69,20 @@ public class RecentlyCommentedAsset implements Serializable {
         this.uri = uri;
     }
 
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    @Override
     public Set<String> getTypes() {
         return types;
     }
 
+    @Override
     public void setTypes(Set<String> types) {
         this.types = types;
     }
@@ -104,10 +121,18 @@ public class RecentlyCommentedAsset implements Serializable {
         return this;
     }
 
+    public URI getVocabulary() {
+        return vocabulary;
+    }
+
+    public void setVocabulary(URI vocabulary) {
+        this.vocabulary = vocabulary;
+    }
+
     @Override
     public String toString() {
         return "RecentlyCommentedAsset{" +
-            "uri=" + uri +
+                label + " " + Utils.uriToString(uri) +
             ", comment=" + lastComment +
             ", myLastComment=" + myLastComment +
             ", types=" + types +

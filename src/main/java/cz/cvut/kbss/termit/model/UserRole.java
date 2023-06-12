@@ -1,32 +1,32 @@
 /**
  * TermIt Copyright (C) 2019 Czech Technical University in Prague
  * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
  * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
 import java.util.Objects;
 
 @OWLClass(iri = Vocabulary.s_c_uzivatelska_role)
-public class UserRole implements HasIdentifier {
-
-    @Id
-    private URI uri;
+public class UserRole extends AccessControlAgent implements HasIdentifier {
 
     @OWLAnnotationProperty(iri = Vocabulary.s_p_prefLabel)
     private MultilingualString label;
@@ -34,14 +34,15 @@ public class UserRole implements HasIdentifier {
     @OWLAnnotationProperty(iri = Vocabulary.s_p_scopeNote)
     private MultilingualString description;
 
-    @Override
-    public URI getUri() {
-        return uri;
+    public UserRole() {
     }
 
-    @Override
-    public void setUri(URI uri) {
-        this.uri = uri;
+    public UserRole(URI uri) {
+        setUri(uri);
+    }
+
+    public UserRole(cz.cvut.kbss.termit.security.model.UserRole roleConst) {
+        this(URI.create(roleConst.getType()));
     }
 
     public MultilingualString getLabel() {
@@ -69,16 +70,16 @@ public class UserRole implements HasIdentifier {
             return false;
         }
         UserRole userRole = (UserRole) o;
-        return Objects.equals(uri, userRole.uri);
+        return Objects.equals(getUri(), userRole.getUri());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uri);
+        return Objects.hash(getUri());
     }
 
     @Override
     public String toString() {
-        return "UserRole{" + label + " <" + uri + ">}";
+        return "UserRole{" + label + Utils.uriToString(getUri()) + "}";
     }
 }

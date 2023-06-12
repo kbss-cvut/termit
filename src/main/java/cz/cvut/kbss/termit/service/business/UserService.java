@@ -14,6 +14,8 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.event.LoginAttemptsThresholdExceeded;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -31,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +41,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * User account-related business logic.
@@ -51,14 +55,20 @@ public class UserService {
 
     private final UserRoleRepositoryService userRoleRepositoryService;
 
+    private final AccessControlListService aclService;
+
     private final SecurityUtils securityUtils;
+
+    private final DtoMapper dtoMapper;
 
     @Autowired
     public UserService(UserRepositoryService repositoryService, UserRoleRepositoryService userRoleRepositoryService,
-                       SecurityUtils securityUtils) {
+                       AccessControlListService aclService, SecurityUtils securityUtils, DtoMapper dtoMapper) {
         this.repositoryService = repositoryService;
         this.userRoleRepositoryService = userRoleRepositoryService;
+        this.aclService = aclService;
         this.securityUtils = securityUtils;
+        this.dtoMapper = dtoMapper;
     }
 
     /**
@@ -92,10 +102,20 @@ public class UserService {
     }
 
     /**
+     * Gets a reference (with empty attribute values) to the user with the specified id.
+     * @param id User identifier
+     * @return Reference to the matching user account
+     * @throws NotFoundException When no matching account is found
+     */
+    public UserAccount getRequiredReference(URI id) {
+        return repositoryService.getRequiredReference(id);
+    }
+
+    /**
      * Retrieves currently logged-in user.
-     *
-     * It also updates last seen timestamp of the current user. While this is a side effect in a get method, it is a simpler
-     * solution that emitting some kind of event and using that.
+     * <p>
+     * It also updates last seen timestamp of the current user. While this is a side effect in a get method, it is a
+     * simpler solution that emitting some kind of event and using that.
      *
      * @return Currently logged-in user's account
      */
@@ -262,5 +282,20 @@ public class UserService {
      */
     public boolean exists(String username) {
         return repositoryService.exists(username);
+    }
+
+    /**
+     * Gets a list of assets the specified user manages.
+     * <p>
+     * By managing it is meant that the user has {@link cz.cvut.kbss.termit.model.acl.AccessLevel#SECURITY} access level
+     * to them.
+     *
+     * @param user User whose access to check
+     * @return List of RDFS resources representing the managed assets
+     */
+    public List<RdfsResource> getManagedAssets(@NonNull UserAccount user) {
+        Objects.requireNonNull(user);
+        return aclService.findAssetsByAgentWithSecurityAccess(user.toUser()).stream()
+                         .map(dtoMapper::assetToRdfsResource).collect(Collectors.toList());
     }
 }

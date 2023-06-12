@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.*;
+import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.model.assignment.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
@@ -136,6 +137,7 @@ public class Generator {
         user.setFirstName("Firstname" + randomInt());
         user.setLastName("Lastname" + randomInt());
         user.setUsername("user" + randomInt() + "@kbss.felk.cvut.cz");
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
         return user;
     }
 
@@ -191,6 +193,7 @@ public class Generator {
         vocabulary.setGlossary(new Glossary());
         vocabulary.setModel(new Model());
         vocabulary.setLabel("Vocabulary" + randomInt());
+        vocabulary.setDescription("Description of vocabulary " + vocabulary.getLabel());
         return vocabulary;
     }
 
@@ -429,5 +432,36 @@ public class Generator {
                 URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup + "_instance" + Generator.randomInt()));
         group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
         return group;
+    }
+
+    public static AccessControlList generateAccessControlList(boolean withRecords) {
+        final AccessControlList acl = new AccessControlList();
+        acl.setUri(Generator.generateUri());
+        if (withRecords) {
+            acl.setRecords(new HashSet<>(generateAccessControlRecords()));
+        }
+        return acl;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static List<AccessControlRecord<?>> generateAccessControlRecords() {
+        final List<AccessControlRecord<?>> result = IntStream.range(0, 5).mapToObj(i -> {
+            final AccessControlRecord r;
+            if (Generator.randomBoolean()) {
+                r = new UserAccessControlRecord();
+                r.setHolder(Generator.generateUserWithId());
+            } else {
+                r = new UserGroupAccessControlRecord();
+                r.setHolder(generateUserGroup());
+            }
+            r.setUri(Generator.generateUri());
+            r.setAccessLevel(AccessLevel.values()[Generator.randomIndex(AccessLevel.values())]);
+            return (AccessControlRecord<?>) r;
+        }).collect(Collectors.toList());
+        final RoleAccessControlRecord rr = new RoleAccessControlRecord();
+        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
+        rr.setHolder(role);
+        result.add(rr);
+        return result;
     }
 }

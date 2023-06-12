@@ -3,6 +3,9 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.ConfigurationDto;
 import cz.cvut.kbss.termit.service.config.ConfigurationProvider;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import static cz.cvut.kbss.termit.rest.ConfigurationController.PATH;
 
+@Tag(name = "Configuration", description = "Application configuration API")
 @RestController
 @RequestMapping(PATH)
 public class ConfigurationController {
@@ -25,6 +29,8 @@ public class ConfigurationController {
         this.configProvider = configProvider;
     }
 
+    @Operation(description = "Gets information about application configuration relevant to the client.")
+    @ApiResponse(responseCode = "200", description = "Application configuration data.")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ConfigurationDto getConfiguration(Authentication auth) {
         final ConfigurationDto result = configProvider.getConfiguration();

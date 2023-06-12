@@ -17,6 +17,8 @@
  */
 package cz.cvut.kbss.termit.model.util;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.net.URI;
 
 /**
@@ -24,6 +26,7 @@ import java.net.URI;
  * <p>
  * Specifies getter and setter for instance identifier, so that generic entity-processing routines can be written.
  */
+@JsonIgnoreProperties({"persistenceContext"})  // Ensure JOPA persistenceContext is ignored by Swagger/Springdoc
 public interface HasIdentifier {
 
     URI getUri();

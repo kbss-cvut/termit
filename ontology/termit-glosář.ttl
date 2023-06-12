@@ -313,7 +313,7 @@ termit-pojem:má-cíl  a  <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
-                ", \"Has target"@en , "Má cíl"@cs .
+                "Has target"@en , "Má cíl"@cs .
 
 termit-pojem:má-slovník-pro-analýzu
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
@@ -487,3 +487,140 @@ termit-pojem:pouze-pro-čtení
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Read-only"@en , "Pouze pro čtení"@cs .
+
+termit-pojem:zakázaný
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Forbidden"@en , "Zakázaný"@cs .
+
+# TODO consider moving this into a separate namespace (e.g., termit/rizeni-pristupu)
+
+termit-pojem:seznam-řízení-přístupu
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access control list"@en , "Seznam pro řízení přístupu"@cs .
+
+termit-pojem:má-seznam-řízení-přístupu
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has access control list"@en , "Má seznam pro řízení přístupu"@cs .
+
+termit-pojem:záznam-řízení-přístupu
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access control record"@en , "Záznam pro řízení přístupu"@cs .
+
+termit-pojem:záznam-řízení-přístupu-uživatele
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "User access control record"@en , "Záznam pro řízení přístupu uživatele"@cs .
+
+termit-pojem:záznam-řízení-přístupu-uživatelské-skupiny
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "User group access control record"@en , "Záznam pro řízení přístupu uživatelské skupiny"@cs .
+
+termit-pojem:záznam-řízení-přístupu-uživatelské-role
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "User role access control record"@en , "Záznam pro řízení přístupu uživatelské role"@cs .
+
+termit-pojem:má-záznam-řízení-přístupu
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has access control record"@en , "Má záznam pro řízení přístupu"@cs .
+
+termit-pojem:má-držitele-přístupových-oprávnění
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/vztah> , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has access level holder"@en , "Má držitele přístupových oprávnění"@cs .
+
+termit-pojem:má-úroveň-přístupových-oprávnění
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has access level"@en , "Má úroveň přístupových oprávnění"@cs .
+
+termit-pojem:úroveň-přístupových-oprávnění
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level"@en , "Úroveň přístupových oprávnění"@cs .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/žádná>
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level - None"@en , "Úroveň přístupových oprávnění - Žádná"@cs .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/čtení>
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level - Read"@en , "Úroveň přístupových oprávnění - Čtení"@cs .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/zápis>
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level - Write"@en , "Úroveň přístupových oprávnění - Zápis"@cs .
+
+<http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/správa>
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Access level - Security"@en , "Úroveň přístupových oprávnění - Správa"@cs .

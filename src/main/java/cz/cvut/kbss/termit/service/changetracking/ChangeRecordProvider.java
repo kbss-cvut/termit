@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.service.changetracking;
 
-import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import java.util.List;
  *
  * @param <T> Type of asset to get changes for
  */
-public interface ChangeRecordProvider<T extends Asset> {
+public interface ChangeRecordProvider<T extends HasIdentifier> {
 
     /**
      * Gets change records of the specified asset.

@@ -57,27 +57,34 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
     public Page<RecentlyCommentedAsset> findLastCommented(Pageable pageSpec) {
         try {
             return new PageImpl<>((List<RecentlyCommentedAsset>) em
-                    .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?myLastCommentUri ?type"
-                                               + " WHERE { ?lastCommentUri a ?commentType ;"
-                                               + "           ?hasEntity ?entity ."
-                                               + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
-                                               + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
-                                               + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
-                                               + "  BIND(?cls as ?type) "
-                                               + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
-                                               + "           ?comment2 ?hasEntity ?entity ."
-                                               + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
-                                               + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
-                                               + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
-                                               + "        } GROUP BY ?entity"
-                                               + "  }"
-                                               + "  FILTER (?lastCommented = ?max )"
-                                               + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
+                    .createNativeQuery(
+                            "SELECT DISTINCT ?entity ?label ?lastCommentUri ?myLastCommentUri ?vocabulary ?type"
+                                    + " WHERE { ?lastCommentUri a ?commentType ;"
+                                    + "           ?hasEntity ?entity ."
+                                    + "  ?entity ?hasLabel ?label ."
+                                    + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
+                                    + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
+                                    + "  OPTIONAL { ?entity ?inVocabulary ?vocabulary . }"
+                                    + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
+                                    + "  BIND(?cls as ?type) "
+                                    + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
+                                    + "           ?comment2 ?hasEntity ?entity ."
+                                    + "           OPTIONAL { ?comment2 ?hasModifiedTime ?modified2 . }"
+                                    + "           OPTIONAL { ?comment2 ?hasCreatedTime ?created2 . }"
+                                    + "           BIND(COALESCE(?modified2,?created2) AS ?lastCommented2) "
+                                    + "        } GROUP BY ?entity"
+                                    + "  }"
+                                    + "  FILTER (?lastCommented = ?max)"
+                                    + "  FILTER (lang(?label) = ?language)"
+                                    + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
                     .setParameter("cls", typeUri)
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                    .setParameter("hasLabel", labelProperty())
+                    .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                    .setParameter("language", config.getLanguage())
                     .setFirstResult((int) pageSpec.getOffset())
                     .setMaxResults(pageSpec.getPageSize()).getResultStream()
                     .map(r -> {
@@ -99,9 +106,10 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
     public Page<RecentlyCommentedAsset> findLastCommentedInReaction(User author, Pageable pageSpec) {
         try {
             return new PageImpl<>((List<RecentlyCommentedAsset>) em
-                    .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?myLastCommentUri ?type"
+                    .createNativeQuery("SELECT DISTINCT ?entity ?label ?lastCommentUri ?myLastCommentUri ?type"
                                                + " WHERE { ?lastCommentUri a ?commentType ;"
                                                + "           ?hasEntity ?entity ."
+                                               + "  ?entity ?hasLabel ?label ."
                                                + "         ?myLastCommentUri ?hasEntity ?entity ;"
                                                + "                           ?hasAuthor ?author . "
                                                + "         OPTIONAL { ?myLastCommentUri ?hasModifiedTime ?modifiedByMe . } "
@@ -117,6 +125,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                                + "  }"
                                                + "  FILTER (?lastCommentedByMe = ?maxByMe )"
                                                + "  FILTER(?myLastCommentUri != ?lastCommentUri)"
+                                               + "  FILTER (lang(?label) = ?language)"
                                                + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
                                                + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
                                                + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
@@ -133,9 +142,11 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("cls", typeUri)
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                    .setParameter("hasLabel", labelProperty())
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                     .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_creator))
+                    .setParameter("language", config.getLanguage())
                     .setParameter("author", author)
                     .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())
                     .getResultStream()
@@ -159,10 +170,11 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
     public Page<RecentlyCommentedAsset> findMyLastCommented(User author, Pageable pageSpec) {
         try {
             return new PageImpl<>((List<RecentlyCommentedAsset>) em
-                    .createNativeQuery("SELECT DISTINCT ?entity ?lastCommentUri ?myLastCommentUri ?type"
+                    .createNativeQuery("SELECT DISTINCT ?entity ?label ?lastCommentUri ?myLastCommentUri ?type"
                                                + " WHERE { ?lastCommentUri a ?commentType ;"
                                                + "           ?hasEntity ?entity ."
-                                               + "        FILTER EXISTS{ ?x ?hasModifiedEntity ?entity ;"
+                                               + "  ?entity ?hasLabel ?label ."
+                                               + "        FILTER EXISTS { ?x ?hasModifiedEntity ?entity ;"
                                                + "           ?hasEditor ?author .}"
                                                + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
                                                + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
@@ -176,15 +188,18 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                                + "        } GROUP BY ?entity"
                                                + "  }"
                                                + "  FILTER (?lastCommented = ?max )"
+                                               + "  FILTER (lang(?label) = ?language)"
                                                + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
                     .setParameter("cls", typeUri)
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
+                    .setParameter("hasLabel", labelProperty())
                     .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
                     .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                     .setParameter("author", author)
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                    .setParameter("language", config.getLanguage())
                     .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())
                     .getResultStream()
                     .map(r -> {
@@ -198,7 +213,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
     }
 
     /**
-     * Identifier of an RDF property representing this assets label.
+     * Identifier of an RDF property representing this asset's label.
      *
      * @return RDF property identifier
      */

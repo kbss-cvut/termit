@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.dto;
 
 import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -12,6 +13,7 @@ import java.util.Set;
 /**
  * Represents configuration data provided by the server to client.
  */
+@NonEntity
 @OWLClass(iri = Vocabulary.s_c_konfigurace)
 public class ConfigurationDto implements Serializable {
 

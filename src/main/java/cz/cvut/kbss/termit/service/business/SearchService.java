@@ -18,6 +18,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.FullTextSearchResult;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -42,6 +43,7 @@ public class SearchService {
      * @param searchString String to search by
      * @return Matching assets
      */
+    @PostFilter("@searchAuthorizationService.canRead(filterObject)")
     public List<FullTextSearchResult> fullTextSearch(String searchString) {
         return searchDao.fullTextSearch(searchString);
     }
@@ -53,6 +55,7 @@ public class SearchService {
      * @param vocabularies URIs of vocabularies to search in, or null, if all vocabularies shall be searched
      * @return Matching terms
      */
+    @PostFilter("@searchAuthorizationService.canRead(filterObject)")
     public List<FullTextSearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies) {
         Objects.requireNonNull(vocabularies);
         // Search including snapshots, as the selected vocabularies may be snapshots

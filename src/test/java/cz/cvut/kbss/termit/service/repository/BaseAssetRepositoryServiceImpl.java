@@ -17,31 +17,31 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
-import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Validator;
 
-public class BaseAssetRepositoryServiceImpl extends BaseAssetRepositoryService<Vocabulary, Vocabulary> {
+public class BaseAssetRepositoryServiceImpl extends BaseAssetRepositoryService<Term, Term> {
 
-    private final VocabularyDao dao;
+    private final TermDao dao;
 
     @Autowired
-    public BaseAssetRepositoryServiceImpl(VocabularyDao dao, Validator validator, SecurityUtils securityUtils) {
+    public BaseAssetRepositoryServiceImpl(TermDao dao, Validator validator, SecurityUtils securityUtils) {
         super(validator);
         this.dao = dao;
     }
 
     @Override
-    protected BaseAssetDao<Vocabulary> getPrimaryDao() {
+    protected BaseAssetDao<Term> getPrimaryDao() {
         return dao;
     }
 
     @Override
-    protected Vocabulary mapToDto(Vocabulary entity) {
+    protected Term mapToDto(Term entity) {
         return entity;
     }
 }

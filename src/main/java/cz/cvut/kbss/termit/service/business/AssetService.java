@@ -17,9 +17,11 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,14 +30,23 @@ import org.springframework.stereotype.Service;
 @Service
 public class AssetService {
 
+    /**
+     * Mask used to sanitize strings the current user is unauthorized to read.
+     */
+    static final String MASK = "**********";
+
     private final TermRepositoryService termRepositoryService;
 
     private final AssetDao assetDao;
 
+    private final VocabularyAuthorizationService vocabularyAuthorizationService;
+
     @Autowired
-    public AssetService(TermRepositoryService termRepositoryService, AssetDao assetDao) {
+    public AssetService(TermRepositoryService termRepositoryService, AssetDao assetDao,
+                        VocabularyAuthorizationService vocabularyAuthorizationService) {
         this.termRepositoryService = termRepositoryService;
         this.assetDao = assetDao;
+        this.vocabularyAuthorizationService = vocabularyAuthorizationService;
     }
 
     /**
@@ -45,7 +56,27 @@ public class AssetService {
      * @return Page of recently added/edited assets
      */
     public Page<RecentlyModifiedAsset> findLastEdited(Pageable pageSpec) {
-        return assetDao.findLastEdited(pageSpec);
+        return sanitizeUnauthorizedAssets(assetDao.findLastEdited(pageSpec));
+    }
+
+    /**
+     * Sanitizes elements of the provided input if the current user has no read access to them.
+     * <p>
+     * To preserve consistent paging functionality, this method does not remove the elements, only scrambles their
+     * label. If the user attempts to access them, they will get a forbidden response (secured by the corresponding
+     * authorization services).
+     *
+     * @param input Input elements to sanitize
+     * @return Sanitized input
+     */
+    private Page<RecentlyModifiedAsset> sanitizeUnauthorizedAssets(Page<RecentlyModifiedAsset> input) {
+        input.get().filter(ra -> !vocabularyAuthorizationService.canRead(
+                     new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
+             .forEach(ra -> {
+                 ra.setLabel(MASK);
+                 ra.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_zakazany);
+             });
+        return input;
     }
 
     /**
@@ -55,7 +86,28 @@ public class AssetService {
      * @return Page of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findLastCommented(Pageable pageSpec) {
-        return termRepositoryService.findLastCommented(pageSpec);
+        return sanitizeUnauthorizedComments(termRepositoryService.findLastCommented(pageSpec));
+    }
+
+    /**
+     * Sanitizes elements of the provided input if the current user has no read access to them.
+     * <p>
+     * To preserve consistent paging functionality, this method does not remove the elements, only scrambles the content
+     * of the comment. If the user attempts to access the asset, they will get a forbidden response (secured by the
+     * corresponding authorization services).
+     *
+     * @param input Input elements to sanitize
+     * @return Sanitized input
+     */
+    private Page<RecentlyCommentedAsset> sanitizeUnauthorizedComments(Page<RecentlyCommentedAsset> input) {
+        input.get().filter(ra -> !vocabularyAuthorizationService.canRead(
+                     new Vocabulary(ra.getVocabulary() != null ? ra.getVocabulary() : ra.getUri())))
+             .forEach(ra -> {
+                 ra.setLabel(MASK);
+                 ra.getLastComment().setContent(MASK);
+                 ra.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_zakazany);
+             });
+        return input;
     }
 
     /**

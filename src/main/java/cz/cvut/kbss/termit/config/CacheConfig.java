@@ -1,6 +1,10 @@
 package cz.cvut.kbss.termit.config;
 
+import cz.cvut.kbss.termit.persistence.dao.acl.AccessControlListDao;
+import cz.cvut.kbss.termit.service.cache.AccessControlListCacheKeyGenerator;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.KeyGenerator;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
@@ -15,4 +19,9 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 @EnableCaching
 public class CacheConfig {
+
+    @Bean
+    public KeyGenerator accessControlListCacheKeyGenerator(AccessControlListDao aclDao) {
+        return new AccessControlListCacheKeyGenerator(aclDao);
+    }
 }

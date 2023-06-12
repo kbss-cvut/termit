@@ -19,11 +19,10 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
-import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,10 +60,10 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
     public static class Config {
 
         @Bean
-        public BaseAssetRepositoryServiceImpl baseRepositoryAssetService(VocabularyDao vocabularyDao,
+        public BaseAssetRepositoryServiceImpl baseRepositoryAssetService(TermDao dao,
                                                                          Validator validator,
                                                                          SecurityUtils securityUtils) {
-            return new BaseAssetRepositoryServiceImpl(vocabularyDao, validator, securityUtils);
+            return new BaseAssetRepositoryServiceImpl(dao, validator, securityUtils);
         }
 
         @Bean
@@ -92,7 +91,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
             .collect(Collectors.toList());
         AtomicInteger i = new AtomicInteger(0);
-        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),"cs")));
+        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),Environment.LANGUAGE)));
         transactional(() -> terms.forEach(em::persist));
 
         final List<Comment> comments = terms.stream().map(t -> Generator.generateComment(author,t)).collect(
@@ -112,7 +111,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
             .collect(Collectors.toList());
         AtomicInteger i = new AtomicInteger(0);
-        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),"cs")));
+        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),Environment.LANGUAGE)));
         transactional(() -> terms.forEach(em::persist));
 
         final List<PersistChangeRecord> persistRecords = terms.stream().map(Generator::generatePersistChange)
@@ -138,7 +137,7 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
         final List<Term> terms = IntStream.range(0, 5).mapToObj(i -> Generator.generateTermWithId())
             .collect(Collectors.toList());
         AtomicInteger i = new AtomicInteger(0);
-        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),"cs")));
+        terms.forEach( t -> t.setLabel(MultilingualString.create("Term " + i.incrementAndGet(),Environment.LANGUAGE)));
         transactional(() -> terms.forEach(em::persist));
 
         final List<PersistChangeRecord> persistRecords = terms.stream().map(Generator::generatePersistChange)
@@ -170,8 +169,8 @@ class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void persistThrowsValidationExceptionWhenIdentifierDoesNotMatchValidationPattern() {
-        final Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(URI.create("http://example.org/test-vocabulary?test=0&test1=2"));
-        assertThrows(ValidationException.class, () -> sut.persist(vocabulary));
+        final Term term = Generator.generateTerm();
+        term.setUri(URI.create("http://example.org/test-vocabulary?test=0&test1=2"));
+        assertThrows(ValidationException.class, () -> sut.persist(term));
     }
 }
