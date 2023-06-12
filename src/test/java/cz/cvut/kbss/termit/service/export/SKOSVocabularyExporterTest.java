@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.export;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
@@ -298,9 +299,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final List<Term> terms = generateTerms(vocabulary);
         final Term withRelated = terms.get(0);
         final Term related = terms.get(terms.size() - 1);
-        withRelated.setProperties(Collections
-                                          .singletonMap(SKOS.RELATED.stringValue(),
-                                                        Collections.singleton(related.getUri().toString())));
+        withRelated.setRelated(Set.of(new TermInfo(related)));
         // This is normally inferred
         withRelated.setVocabulary(vocabulary.getUri());
         transactional(() -> em.merge(withRelated, descriptorFactory.termDescriptor(withRelated)));
@@ -359,11 +358,11 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final List<Term> terms = generateTerms(vocabulary);
         final Term rdfsSubclass = terms.get(0);
         final String supertype = Generator.generateUri().toString();
-        rdfsSubclass.setProperties(
-                Collections.singletonMap(RDFS.SUBCLASSOF.stringValue(), Collections.singleton(supertype)));
-        // This is normally inferred
-        rdfsSubclass.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(rdfsSubclass, descriptorFactory.termDescriptor(rdfsSubclass)));
+        transactional(() -> {
+            insertPropertyAssertion(rdfsSubclass, RDFS.SUBCLASSOF.stringValue(), supertype);
+            // Simulate inference
+            Generator.addTermInVocabularyRelationship(rdfsSubclass, vocabulary.getUri(), em);
+        });
 
         final TypeAwareResource result = sut.exportGlossary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
@@ -372,17 +371,26 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
                                               vf.createIRI(supertype))));
     }
 
+    private void insertPropertyAssertion(Term subject, String property, String value) {
+        final Repository repo = em.unwrap(Repository.class);
+        final ValueFactory vf = repo.getValueFactory();
+        try (final RepositoryConnection conn = repo.getConnection()) {
+            conn.add(vf.createIRI(subject.getUri().toString()), vf.createIRI(property), vf.createIRI(value),
+                     vf.createIRI(vocabulary.getUri().toString()));
+        }
+    }
+
     @Test
     void exportGlossaryExportsPartOfAsBroader() throws Exception {
         final List<Term> terms = generateTerms(vocabulary);
         final Term partOf = terms.get(0);
         final Term hasPart = terms.get(1);
-        hasPart.setProperties(
-                Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_part,
-                                         Collections.singleton(partOf.getUri().toString())));
-        // This is normally inferred
-        hasPart.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(hasPart, descriptorFactory.termDescriptor(hasPart)));
+        transactional(() -> {
+            insertPropertyAssertion(hasPart, cz.cvut.kbss.termit.util.Vocabulary.s_p_has_part,
+                                    partOf.getUri().toString());
+            // Simulate inference
+            Generator.addTermInVocabularyRelationship(hasPart, vocabulary.getUri(), em);
+        });
 
         final TypeAwareResource result = sut.exportGlossary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
@@ -396,12 +404,12 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         final List<Term> terms = generateTerms(vocabulary);
         final Term participant = terms.get(0);
         final Term parent = terms.get(1);
-        parent.setProperties(
-                Collections.singletonMap(cz.cvut.kbss.termit.util.Vocabulary.s_p_has_participant,
-                                         Collections.singleton(participant.getUri().toString())));
-        // This is normally inferred
-        parent.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(parent, descriptorFactory.termDescriptor(parent)));
+        transactional(() -> {
+            insertPropertyAssertion(parent, cz.cvut.kbss.termit.util.Vocabulary.s_p_has_participant,
+                                    participant.getUri().toString());
+            // Simulate inference
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
+        });
 
         final TypeAwareResource result = sut.exportGlossary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
@@ -430,12 +438,11 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
     void exportGlossarySkipsOwlConstructsUsedAsTermSuperTypes() throws Exception {
         final List<Term> terms = generateTerms(vocabulary);
         final Term withOwl = terms.get(Generator.randomIndex(terms));
-        withOwl.setProperties(Collections
-                                      .singletonMap(RDFS.SUBCLASSOF.stringValue(),
-                                                    Collections.singleton(OWL.OBJECTPROPERTY.stringValue())));
-        // This is normally inferred
-        withOwl.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.merge(withOwl, descriptorFactory.termDescriptor(withOwl)));
+        transactional(() -> {
+            insertPropertyAssertion(withOwl, RDFS.SUBCLASSOF.stringValue(), OWL.OBJECTPROPERTY.stringValue());
+            // Simulate inference
+            Generator.addTermInVocabularyRelationship(withOwl, vocabulary.getUri(), em);
+        });
 
         final TypeAwareResource result = sut.exportGlossary(vocabulary, exportConfig());
         final Model model = loadAsModel(result);
