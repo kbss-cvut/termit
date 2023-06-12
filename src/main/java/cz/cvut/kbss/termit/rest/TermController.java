@@ -243,9 +243,9 @@ public class TermController extends BaseController {
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
         return includeImported ?
-               termService
-                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+                termService
+                        .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
+                termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -793,12 +793,12 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                                                                                QueryParams.NAMESPACE,
-                                                                                                IdentifierResolver.extractIdentifierNamespace(
-                                                                                                        comment.getUri()),
-                                                                                                IdentifierResolver.extractIdentifierFragment(
-                                                                                                        comment.getUri())))
+                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                             QueryParams.NAMESPACE,
+                                             IdentifierResolver.extractIdentifierNamespace(
+                                                     comment.getUri()),
+                                             IdentifierResolver.extractIdentifierFragment(
+                                                     comment.getUri())))
                              .build();
     }
 
@@ -831,12 +831,12 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                                                                                QueryParams.NAMESPACE,
-                                                                                                IdentifierResolver.extractIdentifierNamespace(
-                                                                                                        comment.getUri()),
-                                                                                                IdentifierResolver.extractIdentifierFragment(
-                                                                                                        comment.getUri())))
+                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                             QueryParams.NAMESPACE,
+                                             IdentifierResolver.extractIdentifierNamespace(
+                                                     comment.getUri()),
+                                             IdentifierResolver.extractIdentifierFragment(
+                                                     comment.getUri())))
                              .build();
     }
 
