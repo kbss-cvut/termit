@@ -16,7 +16,7 @@ import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.security.AuthorizationService;
+import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -142,7 +142,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         super.preUpdate(instance);
         final Vocabulary original = findRequired(instance.getUri());
         verifyVocabularyImports(instance, original);
-        AuthorizationService.verifySnapshotNotModified(original);
+        // ACL reference does not change, but it can be missing in case the instance arrived from client
+        instance.setAcl(original.getAcl());
+        SnapshotProvider.verifySnapshotNotModified(original);
     }
 
     /**
@@ -163,7 +165,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    @PreAuthorize("@authorizationService.canEdit(#instance)")
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#instance)")
     @CacheEvict(allEntries = true)
     @Override
     @Transactional
@@ -223,7 +225,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getLastModified();
     }
 
-    @PreAuthorize("@authorizationService.canEdit(#instance)")
+    @PreAuthorize("@vocabularyAuthorizationService.canRemove(#instance)")
     @CacheEvict(allEntries = true)
     @Override
     public void remove(Vocabulary instance) {

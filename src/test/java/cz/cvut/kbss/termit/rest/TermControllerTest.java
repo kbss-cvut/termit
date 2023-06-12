@@ -808,7 +808,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final List<AbstractChangeRecord> records = generateChangeRecords(term);
         when(termServiceMock.getChanges(term)).thenReturn(records);
 
@@ -838,7 +838,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        when(termServiceMock.getRequiredReference(termUri)).thenReturn(term);
+        when(termServiceMock.findRequired(termUri)).thenReturn(term);
         final List<AbstractChangeRecord> records = generateChangeRecords(term);
         when(termServiceMock.getChanges(term)).thenReturn(records);
 
@@ -872,7 +872,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
         when(termServiceMock.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
 
@@ -891,7 +891,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
         when(termServiceMock.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
         final Instant from = Utils.timestamp().minus(Generator.randomInt(50, 100), ChronoUnit.DAYS);
@@ -923,7 +923,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
         when(termServiceMock.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
 
@@ -944,7 +944,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
         when(termServiceMock.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
         final Instant from = Utils.timestamp().minus(Generator.randomInt(50, 100), ChronoUnit.DAYS);
@@ -967,7 +967,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         comment.setUri(Generator.generateUri());
 
@@ -983,7 +983,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolutionForStandalone();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
         final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
@@ -1000,7 +1000,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     @Test
     void addCommentStandaloneAddsSpecifiedCommentToSpecifiedTerm() throws Exception {
         final Term term = generateTermForStandalone();
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         comment.setUri(Generator.generateUri());
 
@@ -1023,7 +1023,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     @Test
     void addCommentStandaloneReturnsLocationHeaderWithGeneratedIdentifier() throws Exception {
         final Term term = generateTermForStandalone();
-        when(termServiceMock.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
         final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
@@ -1128,7 +1128,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     @Test
     void getSnapshotsStandaloneReturnsListOfTermSnapshotsWhenFilterInstantIsNotProvided() throws Exception {
         final Term term = generateTermForStandalone();
-        when(termServiceMock.getRequiredReference(TERM_URI)).thenReturn(term);
+        when(termServiceMock.findRequired(TERM_URI)).thenReturn(term);
         final List<Snapshot> snapshots = IntStream.range(0, 5).mapToObj(i -> {
             final Snapshot snapshot = new Snapshot();
             snapshot.setUri(Generator.generateUri());
@@ -1154,7 +1154,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     @Test
     void getSnapshotsReturnsVocabularySnapshotValidAtSpecifiedInstant() throws Exception {
         final Term term = generateTermForStandalone();
-        when(termServiceMock.getRequiredReference(TERM_URI)).thenReturn(term);
+        when(termServiceMock.findRequired(TERM_URI)).thenReturn(term);
         final Term snapshot = new Term();
         final Instant instant = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         snapshot.setUri(URI.create(term.getUri().toString() + "/version/" + instant));
@@ -1176,7 +1176,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     @Test
     void getSnapshotsThrowsBadRequestWhenAtIsNotValidInstantString() throws Exception {
         final Term term = generateTermForStandalone();
-        when(termServiceMock.getRequiredReference(TERM_URI)).thenReturn(term);
+        when(termServiceMock.findRequired(TERM_URI)).thenReturn(term);
         final Instant instant = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         mockMvc.perform(get("/terms/" + TERM_NAME + "/versions").param(QueryParams.NAMESPACE, NAMESPACE)
                                                                 .param("at", Date.from(instant).toString()))

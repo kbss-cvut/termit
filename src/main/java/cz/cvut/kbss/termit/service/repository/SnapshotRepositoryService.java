@@ -5,6 +5,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.persistence.dao.SnapshotDao;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotRemover;
 import cz.cvut.kbss.termit.service.business.SnapshotService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class SnapshotRepositoryService implements SnapshotService {
 
     @Transactional
     @Override
+    @PreAuthorize("@snapshotAuthorizationService.canRemove(#snapshot)")
     public void remove(Snapshot snapshot) {
         Objects.requireNonNull(snapshot);
         remover.removeSnapshot(snapshot);

@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-public class ChangeRecordService implements ChangeRecordProvider<Asset<?>> {
+public class ChangeRecordService implements ChangeRecordProvider<HasIdentifier> {
 
     private final ChangeRecordDao changeRecordDao;
 
@@ -22,7 +22,7 @@ public class ChangeRecordService implements ChangeRecordProvider<Asset<?>> {
     }
 
     @Override
-    public List<AbstractChangeRecord> getChanges(Asset<?> asset) {
+    public List<AbstractChangeRecord> getChanges(HasIdentifier asset) {
         return changeRecordDao.findAll(asset);
     }
 
@@ -36,7 +36,7 @@ public class ChangeRecordService implements ChangeRecordProvider<Asset<?>> {
      * @param asset Asset whose authors to get
      * @return A set of zero or more authors of the specified asset
      */
-    public Set<User> getAuthors(Asset<?> asset) {
+    public Set<User> getAuthors(HasIdentifier asset) {
         return changeRecordDao.getAuthors(asset);
     }
 }

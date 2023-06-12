@@ -15,10 +15,15 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.util.Configuration;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Tag(name = "Languages", description = "Taxonomies/languages available in the system")
 @RestController
 @RequestMapping("/language")
 public class LanguageController extends BaseController {
@@ -40,12 +46,19 @@ public class LanguageController extends BaseController {
         this.service = service;
     }
 
-    /**
-     * @return List of types
-     */
+    @Operation(description = "Gets ontological types that can be used to classify terms.")
+    @ApiResponse(responseCode = "200", description = "Ontological types collection.")
     @PreAuthorize("permitAll()")    // No need to secure this
     @GetMapping(value = "/types", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Term> getAll() {
         return service.getTypes();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets access levels that can be used to authorize user actions.")
+    @ApiResponse(responseCode = "200", description = "List of available access levels.")
+    @GetMapping(value = "/accessLevels", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RdfsResource> getAccessLevels() {
+        return service.getAccessLevels();
     }
 }

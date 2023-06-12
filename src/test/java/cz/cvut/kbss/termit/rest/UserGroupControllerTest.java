@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.model.AbstractUser;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -77,7 +76,7 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
         final List<User> users = List.of(Generator.generateUserWithId(), Generator.generateUserWithId());
         users.forEach(u -> when(groupService.findRequiredUser(u.getUri())).thenReturn(u));
         mockMvc.perform(post(UserGroupController.PATH + "/" + fragment + "/members")
-                                .content(toJson(users.stream().map(AbstractUser::getUri).collect(Collectors.toList())))
+                                .content(toJson(users.stream().map(User::getUri).collect(Collectors.toList())))
                                 .contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isNoContent());
         users.forEach(u -> verify(groupService).findRequiredUser(u.getUri()));
@@ -95,7 +94,7 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
         target.setMembers(new HashSet<>(users));
         users.forEach(u -> when(groupService.findRequiredUser(u.getUri())).thenReturn(u));
         mockMvc.perform(delete(UserGroupController.PATH + "/" + fragment + "/members")
-                                .content(toJson(users.stream().map(AbstractUser::getUri).collect(Collectors.toList())))
+                                .content(toJson(users.stream().map(User::getUri).collect(Collectors.toList())))
                                 .contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isNoContent());
         users.forEach(u -> verify(groupService).findRequiredUser(u.getUri()));

@@ -126,7 +126,7 @@ public class IdentifierResolver {
             final URI tempUri = URI.create(comps);
             try {
                 return new URI(tempUri.getScheme(), tempUri.getAuthority(), tempUri.getPath(), null,
-                        tempUri.getFragment());
+                               tempUri.getFragment());
             } catch (URISyntaxException e) {
                 // Shouldn't happen, URI has been already validated using URI.create
                 throw new TermItException(e);
@@ -155,16 +155,25 @@ public class IdentifierResolver {
      * components to a namespace which is derived from baseUri by appending namespace separator defined by
      * namespaceSeparator.
      *
-     * @param baseUri Base identifier namespace
+     * @param baseUri            Base identifier namespace
      * @param namespaceSeparator Separator to add to {@code baseUri} before {@code label}
-     * @param label   Components to normalize and add to the identifier
+     * @param label              Components to normalize and add to the identifier
      * @return Generated identifier
      */
     public URI generateDerivedIdentifier(URI baseUri, String namespaceSeparator, String label) {
-        return generateIdentifier(buildNamespace(baseUri.toString(),
-                        namespaceSeparator),
-                label
-        );
+        return generateIdentifier(buildNamespace(baseUri.toString(), namespaceSeparator), label);
+    }
+
+    /**
+     * Generates a synthetic identifier using the specified base URL.
+     *
+     * This particular implementation uses the current system time in millis to generate the locally unique part of the identifier.
+     *
+     * @param base URL base
+     * @return Synthetic identifier containing the specified base
+     */
+    public static URI generateSyntheticIdentifier(String base) {
+        return URI.create(base + "_instance" + System.currentTimeMillis());
     }
 
     /**

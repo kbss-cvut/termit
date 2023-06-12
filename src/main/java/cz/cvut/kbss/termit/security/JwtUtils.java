@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.IncompleteJwtException;
 import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
-import cz.cvut.kbss.termit.model.AbstractUser;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -62,7 +61,7 @@ public class JwtUtils {
      * @param user User info
      * @return Generated JWT hash
      */
-    public String generateToken(AbstractUser user, Collection<? extends GrantedAuthority> authorities) {
+    public String generateToken(UserAccount user, Collection<? extends GrantedAuthority> authorities) {
         final Instant issued = issueTimestamp();
         return Jwts.builder().setSubject(user.getUsername())
                    .setId(user.getUri().toString())

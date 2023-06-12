@@ -2,13 +2,11 @@ package cz.cvut.kbss.termit.model.changetracking;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import cz.cvut.kbss.jopa.model.annotations.*;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Objects;
@@ -87,13 +85,5 @@ public class AbstractChangeRecord extends AbstractEntity {
                 ", timestamp=" + timestamp +
                 ", author=" + author +
                 ", changedEntity=" + changedEntity;
-    }
-
-    public static Field getAuthorField() {
-        try {
-            return AbstractChangeRecord.class.getDeclaredField("author");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"author\" field.", e);
-        }
     }
 }

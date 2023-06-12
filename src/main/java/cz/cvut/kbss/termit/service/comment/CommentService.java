@@ -118,7 +118,8 @@ public class CommentService {
      * @param comment Comment to remove
      */
     @Transactional
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "') || @securityUtils.currentUser() == #comment.author")
+    // currentUser is UserAccount, comment.author is User, so we have to compare their identifiers
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "') || @securityUtils.currentUser().uri == #comment.author.uri")
     public void remove(Comment comment) {
         Objects.requireNonNull(comment);
         dao.remove(comment);

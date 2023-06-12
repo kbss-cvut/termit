@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.service.jmx;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.rest.dto.HealthInfo;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.Postman;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -74,5 +75,18 @@ public class AppAdminBean implements SelfNaming {
     @Override
     public ObjectName getObjectName() throws MalformedObjectNameException {
         return new ObjectName("bean:name=" + beanName);
+    }
+
+    /**
+     * Gets health info of the application.
+     * <p>
+     * This method provides basic info on the status of the system.
+     *
+     * TODO Resolve status of services used by TermIt (repository, annotace, mail server - if configured)
+     *
+     * @return Health info object
+     */
+    public HealthInfo getHealthInfo() {
+        return HealthInfo.up();
     }
 }

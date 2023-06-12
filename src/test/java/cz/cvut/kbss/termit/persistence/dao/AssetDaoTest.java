@@ -12,6 +12,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,15 +49,15 @@ class AssetDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findRecentlyEditedLoadsSpecifiedCountOfRecentlyEditedResources() {
+    void findRecentlyEditedLoadsSpecifiedCountOfRecentlyEditedAssets() {
         enableRdfsInference(em);
-        final List<Resource> resources = IntStream.range(0, 10).mapToObj(i -> Generator.generateResourceWithId())
+        final List<Vocabulary> vocabularies = IntStream.range(0, 10).mapToObj(i -> Generator.generateVocabularyWithId())
                                                   .collect(Collectors.toList());
-        transactional(() -> resources.forEach(em::persist));
-        final List<PersistChangeRecord> persistRecords = resources.stream().map(Generator::generatePersistChange)
+        transactional(() -> vocabularies.forEach(em::persist));
+        final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
                                                                   .collect(Collectors.toList());
         setOldCreated(persistRecords.subList(0, 5));
-        final List<URI> recent = resources.subList(5, resources.size()).stream().map(Resource::getUri)
+        final List<URI> recent = vocabularies.subList(5, vocabularies.size()).stream().map(Vocabulary::getUri)
                                           .collect(Collectors.toList());
         transactional(() -> persistRecords.forEach(em::persist));
 
@@ -69,13 +70,13 @@ class AssetDaoTest extends BaseDaoTestRunner {
     @Test
     void findRecentlyEditedUsesLastModifiedDateWhenAvailable() {
         enableRdfsInference(em);
-        final List<Resource> resources = IntStream.range(0, 10).mapToObj(i -> Generator.generateResourceWithId())
+        final List<Vocabulary> vocabularies = IntStream.range(0, 10).mapToObj(i -> Generator.generateVocabularyWithId())
                                                   .collect(Collectors.toList());
-        transactional(() -> resources.forEach(em::persist));
-        final List<PersistChangeRecord> persistRecords = resources.stream().map(Generator::generatePersistChange)
+        transactional(() -> vocabularies.forEach(em::persist));
+        final List<PersistChangeRecord> persistRecords = vocabularies.stream().map(Generator::generatePersistChange)
                                                                   .collect(Collectors.toList());
         setOldCreated(persistRecords);
-        final List<Resource> recent = resources.subList(5, resources.size());
+        final List<Vocabulary> recent = vocabularies.subList(5, vocabularies.size());
         final List<UpdateChangeRecord> updateRecords = recent.stream().map(Generator::generateUpdateChange)
                                                              .collect(Collectors.toList());
         transactional(() -> {
@@ -85,7 +86,7 @@ class AssetDaoTest extends BaseDaoTestRunner {
         em.getEntityManagerFactory().getCache().evictAll();
 
         final Pageable pageSpec = PageRequest.of(0, 3);
-        final List<URI> recentUris = recent.stream().map(Resource::getUri).collect(Collectors.toList());
+        final List<URI> recentUris = recent.stream().map(Vocabulary::getUri).collect(Collectors.toList());
         final Page<RecentlyModifiedAsset> result = sut.findLastEdited(pageSpec);
         assertEquals(pageSpec.getPageSize(), result.getNumberOfElements());
         assertTrue(recentUris
@@ -113,16 +114,17 @@ class AssetDaoTest extends BaseDaoTestRunner {
     @Test
     void findRecentlyEditedCorrectlyHandlesDifferentTypesOfAssets() {
         enableRdfsInference(em);
-        final Resource resource = Generator.generateResourceWithId();
+        final Document document = Generator.generateDocumentWithId();
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.setDocument(document);
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
-            em.persist(resource);
+            em.persist(document);
             em.persist(vocabulary);
             em.persist(term);
         });
         final Map<Asset<?>, AbstractChangeRecord> changes = new HashMap<>();
-        changes.put(resource, Generator.generatePersistChange(resource));
+        changes.put(document, Generator.generatePersistChange(document));
         changes.put(vocabulary, Generator.generatePersistChange(vocabulary));
         changes.put(term, Generator.generatePersistChange(term));
         transactional(() -> changes.values().forEach(em::persist));
@@ -141,19 +143,19 @@ class AssetDaoTest extends BaseDaoTestRunner {
     @Test
     void findRecentlyEditedByUserReturnsAssetsEditedBySpecifiedUser() {
         enableRdfsInference(em);
-        final List<Resource> mineResources = IntStream.range(0, 5).mapToObj(i -> Generator.generateResourceWithId())
+        final List<Vocabulary> myVocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
                                                       .collect(Collectors.toList());
-        final List<PersistChangeRecord> persistRecords = mineResources.stream().map(Generator::generatePersistChange)
+        final List<PersistChangeRecord> persistRecords = myVocabularies.stream().map(Generator::generatePersistChange)
                                                                       .collect(Collectors.toList());
-        final List<Resource> othersResources = IntStream.range(0, 5).mapToObj(i -> Generator.generateResourceWithId())
+        final List<Vocabulary> otherVocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
                                                         .collect(Collectors.toList());
         final User otherUser = Generator.generateUserWithId();
         transactional(() -> {
-            mineResources.forEach(em::persist);
-            othersResources.forEach(em::persist);
+            myVocabularies.forEach(em::persist);
+            otherVocabularies.forEach(em::persist);
             em.persist(otherUser);
         });
-        final List<PersistChangeRecord> otherPersistRecords = othersResources.stream().map(r -> {
+        final List<PersistChangeRecord> otherPersistRecords = otherVocabularies.stream().map(r -> {
             final PersistChangeRecord rec = Generator.generatePersistChange(r);
             rec.setAuthor(otherUser);
             return rec;
@@ -166,7 +168,7 @@ class AssetDaoTest extends BaseDaoTestRunner {
         final Pageable pageSpec = PageRequest.of(0, 3);
         final Page<RecentlyModifiedAsset> result = sut.findLastEditedBy(user, pageSpec);
         assertFalse(result.isEmpty());
-        final Set<URI> mineUris = mineResources.stream().map(Resource::getUri).collect(Collectors.toSet());
+        final Set<URI> mineUris = myVocabularies.stream().map(Vocabulary::getUri).collect(Collectors.toSet());
         assertTrue(
                 mineUris.containsAll(result.stream().map(RecentlyModifiedAsset::getUri).collect(Collectors.toList())));
     }

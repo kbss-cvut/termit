@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.stereotype.Repository;
 
@@ -54,7 +55,7 @@ public class ChangeRecordDao {
      * @param asset The changed asset
      * @return List of change records ordered by timestamp (descending)
      */
-    public List<AbstractChangeRecord> findAll(Asset<?> asset) {
+    public List<AbstractChangeRecord> findAll(HasIdentifier asset) {
         Objects.requireNonNull(asset);
         try {
             final Descriptor descriptor = new EntityDescriptor();
@@ -82,7 +83,7 @@ public class ChangeRecordDao {
      * @param asset Asset whose authors to get
      * @return A set (possibly empty) of users
      */
-    public Set<User> getAuthors(Asset<?> asset) {
+    public Set<User> getAuthors(HasIdentifier asset) {
         Objects.requireNonNull(asset);
         try {
             return new HashSet<>(em.createNativeQuery("SELECT ?author WHERE {" +
@@ -91,7 +92,7 @@ public class ChangeRecordDao {
                                            "?hasAuthor ?author }", User.class)
                                    .setParameter("persistRecord", URI.create(Vocabulary.s_c_vytvoreni_entity))
                                    .setParameter("hasChangedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                                   .setParameter("asset", asset)
+                                   .setParameter("asset", asset.getUri())
                                    .setParameter("hasAuthor", URI.create(Vocabulary.s_p_ma_editora))
                                    .getResultList());
         } catch (RuntimeException e) {

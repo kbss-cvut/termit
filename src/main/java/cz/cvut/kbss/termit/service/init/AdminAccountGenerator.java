@@ -1,21 +1,4 @@
-/**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * <p>
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-package cz.cvut.kbss.termit.service;
+package cz.cvut.kbss.termit.service.init;
 
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
@@ -23,13 +6,8 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -40,45 +18,41 @@ import java.util.Collections;
 import java.util.Random;
 
 @Service
-@Profile("!test")
-public class SystemInitializer {
+public class AdminAccountGenerator {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SystemInitializer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminAccountGenerator.class);
 
     private static final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
     private static final int PASSWORD_LENGTH = 8;
 
-    private final Configuration config;
     private final UserRepositoryService userService;
-    private final PlatformTransactionManager txManager;
 
-    @Autowired
-    public SystemInitializer(Configuration config, UserRepositoryService userService,
-                             PlatformTransactionManager txManager) {
-        this.config = config;
+    private final Configuration.Admin adminConfig;
+
+    public AdminAccountGenerator(UserRepositoryService userService, Configuration config) {
         this.userService = userService;
-        this.txManager = txManager;
+        this.adminConfig = config.getAdmin();
     }
 
-    @PostConstruct
-    void initSystemAdmin() {    // Package-private for testing purposes
+    /**
+     * Generates a system administrator account, if it already does not exist.
+     *
+     * The admin credentials are written out to standard output and also generated into a configurable file.
+     */
+    public void initSystemAdmin() {
         if (userService.doesAdminExist()) {
             LOG.info("An admin account already exists.");
             return;
         }
         LOG.info("Creating application admin account.");
-        final UserAccount admin = initAdminInstance();
+        final UserAccount admin = getDefaultAdminInstance();
         final String passwordPlain = generatePassword();
         admin.setPassword(passwordPlain);
-        final TransactionTemplate tx = new TransactionTemplate(txManager);
-        tx.execute(status -> {
-            userService.persist(admin);
-            return null;
-        });
+        userService.persist(admin);
         LOG.info("----------------------------------------------");
         LOG.info("Admin credentials are: {}/{}", admin.getUsername(), passwordPlain);
         LOG.info("----------------------------------------------");
-        final File directory = new File(config.getAdmin().getCredentialsLocation());
+        final File directory = new File(adminConfig.getCredentialsLocation());
         try {
             if (!directory.exists()) {
                 Files.createDirectories(directory.toPath());
@@ -89,20 +63,20 @@ public class SystemInitializer {
             }
             LOG.debug("Writing admin credentials into file: {}", credentialsFile);
             Files.write(credentialsFile.toPath(),
-                    Collections.singletonList(admin.getUsername() + "/" + passwordPlain),
-                    StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+                        Collections.singletonList(admin.getUsername() + "/" + passwordPlain),
+                        StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             LOG.error("Unable to create admin credentials file.", e);
         }
     }
 
     private File createHiddenFile() throws IOException {
-        final File credentialsFile = new File(config.getAdmin().getCredentialsLocation() + File.separator +
-                config.getAdmin().getCredentialsFile());
+        final File credentialsFile = new File(adminConfig.getCredentialsLocation() + File.separator +
+                                                      adminConfig.getCredentialsFile());
         final boolean result = credentialsFile.createNewFile();
         if (!result) {
             LOG.error("Unable to create admin credentials file {}. Admin credentials won't be saved in any file!",
-                    config.getAdmin().getCredentialsFile());
+                      adminConfig.getCredentialsFile());
             return null;
         }
         // Hidden attribute on Windows
@@ -110,7 +84,7 @@ public class SystemInitializer {
         return credentialsFile;
     }
 
-    private static UserAccount initAdminInstance() {
+    static UserAccount getDefaultAdminInstance() {
         final UserAccount admin = new UserAccount();
         admin.setUri(URI.create(Vocabulary.ONTOLOGY_IRI_termit + "/system-admin-user"));
         admin.setFirstName("System");

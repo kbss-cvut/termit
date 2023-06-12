@@ -70,6 +70,7 @@ public class SecurityUtils {
     public static UserAccount currentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
         assert context != null;
+
         final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
         return userDetails.getUser();
     }
@@ -146,6 +147,13 @@ public class SecurityUtils {
         final TermItUserDetails updateDetails =
                 (TermItUserDetails) userDetailsService.loadUserByUsername(getCurrentUser().getUsername());
         setCurrentUser(updateDetails);
+    }
+
+    /**
+     * Resets the current security context.
+     */
+    public static void resetCurrentUser() {
+        SecurityContextHolder.clearContext();
     }
 
     /**

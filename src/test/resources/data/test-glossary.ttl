@@ -10,6 +10,8 @@ termit:glosář  a        owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slo
                 " Martin Ledvinka" , "Michal Med" ;
         <http://purl.org/dc/terms/title>
                 "Vocabulary of system TermIt - glossary"@en , "Slovník systému TermIt - glosář"@cs ;
+        <http://purl.org/dc/terms/description>
+                "This is a test version of the vocabulary of TermIt"@en , "Toto je testovací verze slovníku systému TermIt"@cs ;
         <http://purl.org/dc/terms/created>
                 "25.04.2019" ;
         owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/glosář/verze/1.1.1> .

@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.repository.Repository;
@@ -61,7 +62,15 @@ public class Environment {
 
     private static ObjectMapper jsonLdObjectMapper;
 
-    private static final DtoMapper DTO_MAPPER = new DtoMapperImpl();
+    private static final DtoMapper DTO_MAPPER = initDtoMapper();
+
+    private static DtoMapper initDtoMapper() {
+        final DtoMapperImpl dtoMapper = new DtoMapperImpl();
+        final Configuration config = new Configuration();
+        config.getPersistence().setLanguage(LANGUAGE);
+        dtoMapper.setConfig(config);
+        return dtoMapper;
+    }
 
     /**
      * Initializes security context with the specified user.

@@ -25,9 +25,14 @@ public class SecurityConstants {
     public static final String USERNAME_PARAM = "username";
 
     /**
-     * URL used for logging into the application
+     * URL path used for logging into the application.
      */
-    public static final String SECURITY_CHECK_URI = "/j_spring_security_check";
+    public static final String LOGIN_PATH = "/login";
+
+    /**
+     * URL path used for logging out of the application.
+     */
+    public static final String LOGOUT_PATH = "/logout";
 
     /**
      * String prefix added to JWT tokens in the Authorization header.

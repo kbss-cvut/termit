@@ -1,18 +1,26 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
+import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
+import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,10 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,6 +51,12 @@ class VocabularyServiceTest {
 
     @Mock
     private VocabularyContextMapper contextMapper;
+
+    @Mock
+    private AccessControlListService aclService;
+
+    @Mock
+    private VocabularyAuthorizationService authorizationService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -93,7 +104,12 @@ class VocabularyServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final SnapshotCreator snapshotCreator = mock(SnapshotCreator.class);
         when(appContext.getBean(SnapshotCreator.class)).thenReturn(snapshotCreator);
-        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(Generator.generateSnapshot(vocabulary));
+        final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
+        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(snapshot);
+        final Vocabulary snapshotVoc = new Vocabulary(snapshot.getUri());
+        when(repositoryService.findRequired(snapshotVoc.getUri())).thenReturn(snapshotVoc);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(Generator.generateAccessControlList(false)));
+        when(aclService.clone(any())).thenReturn(Generator.generateAccessControlList(false));
 
         final Snapshot result = sut.createSnapshot(vocabulary);
         assertNotNull(result);
@@ -106,7 +122,12 @@ class VocabularyServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final SnapshotCreator snapshotCreator = mock(SnapshotCreator.class);
         when(appContext.getBean(SnapshotCreator.class)).thenReturn(snapshotCreator);
-        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(Generator.generateSnapshot(vocabulary));
+        final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
+        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(snapshot);
+        final Vocabulary snapshotVoc = new Vocabulary(snapshot.getUri());
+        when(repositoryService.findRequired(snapshotVoc.getUri())).thenReturn(snapshotVoc);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(Generator.generateAccessControlList(false)));
+        when(aclService.clone(any())).thenReturn(Generator.generateAccessControlList(false));
 
         sut.createSnapshot(vocabulary);
         final ArgumentCaptor<VocabularyCreatedEvent> captor = ArgumentCaptor.forClass(VocabularyCreatedEvent.class);
@@ -128,11 +149,156 @@ class VocabularyServiceTest {
     @Test
     void persistPublishesVocabularyCreatedEvent() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(aclService.createFor(vocabulary)).thenReturn(Generator.generateAccessControlList(false));
 
         sut.persist(vocabulary);
         verify(repositoryService).persist(vocabulary);
         final ArgumentCaptor<VocabularyCreatedEvent> captor = ArgumentCaptor.forClass(VocabularyCreatedEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
         assertNotNull(captor.getValue());
+    }
+
+    @Test
+    void getAccessControlListRetrievesACLForSpecifiedVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        when(aclService.findForAsDto(vocabulary)).thenReturn(
+                Optional.of(Environment.getDtoMapper().accessControlListToDto(acl)));
+
+        final AccessControlListDto result = sut.getAccessControlList(vocabulary);
+        assertEquals(acl.getUri(), result.getUri());
+        verify(aclService).findForAsDto(vocabulary);
+    }
+
+    @Test
+    void getAccessControlListThrowsNotFoundExceptionWhenNoACLIsFoundForSpecifiedVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        assertThrows(NotFoundException.class, () -> sut.getAccessControlList(vocabulary));
+        verify(aclService).findForAsDto(vocabulary);
+    }
+
+    @Test
+    void addAccessControlRecordRetrievesACLForVocabularyAndAddsSpecifiedRecordToIt() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+        final UserAccessControlRecord record = generateAccessControlRecord();
+
+        sut.addAccessControlRecords(vocabulary, record);
+        verify(aclService).findFor(vocabulary);
+        verify(aclService).addRecord(acl, record);
+    }
+
+    @NotNull
+    private UserAccessControlRecord generateAccessControlRecord() {
+        final UserAccessControlRecord record = new UserAccessControlRecord();
+        record.setHolder(Generator.generateUserWithId());
+        record.setAccessLevel(AccessLevel.SECURITY);
+        return record;
+    }
+
+    @Test
+    void removeAccessControlRecordRetrievesACLForVocabularyAndRemovesSpecifiedRecordFromIt() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+        final UserAccessControlRecord record = generateAccessControlRecord();
+        record.setUri(Generator.generateUri());
+
+        sut.removeAccessControlRecord(vocabulary, record);
+        verify(aclService).findFor(vocabulary);
+        verify(aclService).removeRecord(acl, record);
+    }
+
+    @Test
+    void updateAccessControlLevelRetrievesACLForVocabularyAndUpdatesSpecifiedRecord() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+        final UserAccessControlRecord record = generateAccessControlRecord();
+        record.setUri(Generator.generateUri());
+
+        sut.updateAccessControlLevel(vocabulary, record);
+        verify(aclService).findFor(vocabulary);
+        verify(aclService).updateRecordAccessLevel(acl, record);
+    }
+
+    @Test
+    void persistCreatesAccessControlListAndSetsItOnVocabularyInstance() {
+        final AccessControlList acl = Generator.generateAccessControlList(true);
+        final Vocabulary toPersist = Generator.generateVocabulary();
+        when(aclService.createFor(toPersist)).thenReturn(acl);
+
+        sut.persist(toPersist);
+        verify(repositoryService).persist(toPersist);
+        verify(aclService).createFor(toPersist);
+        assertEquals(acl.getUri(), toPersist.getAcl());
+    }
+
+    @Test
+    void getAccessLevelRetrievesAccessLevelFromVocabularyAuthorizationService() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.READ);
+
+        assertEquals(AccessLevel.READ, sut.getAccessLevel(vocabulary));
+        verify(authorizationService).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void findRequiredEnhancesResultWithAccessLevelOfCurrentUser() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.WRITE);
+        when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
+
+        final Vocabulary result = sut.findRequired(vocabulary.getUri());
+        assertInstanceOf(cz.cvut.kbss.termit.dto.VocabularyDto.class, result);
+        assertEquals(AccessLevel.WRITE, ((cz.cvut.kbss.termit.dto.VocabularyDto) result).getAccessLevel());
+        verify(repositoryService).findRequired(vocabulary.getUri());
+        verify(authorizationService).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void findEnhancesResultWithAccessLevelOfCurrentUser() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(authorizationService.getAccessLevel(vocabulary)).thenReturn(AccessLevel.WRITE);
+        when(repositoryService.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+
+        final Optional<Vocabulary> result = sut.find(vocabulary.getUri());
+        assertTrue(result.isPresent());
+        assertInstanceOf(cz.cvut.kbss.termit.dto.VocabularyDto.class, result.get());
+        assertEquals(AccessLevel.WRITE, ((cz.cvut.kbss.termit.dto.VocabularyDto) result.get()).getAccessLevel());
+        verify(repositoryService).find(vocabulary.getUri());
+        verify(authorizationService).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void removeRemovesAccessControlList() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = Generator.generateAccessControlList(true);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+
+        sut.remove(vocabulary);
+        verify(repositoryService).remove(vocabulary);
+        verify(aclService).remove(acl);
+    }
+
+    @Test
+    void createSnapshotClonesAccessControlListForNewVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList originalAcl = Generator.generateAccessControlList(true);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(originalAcl));
+        final AccessControlList cloneAcl = Generator.generateAccessControlList(true);
+        when(aclService.clone(originalAcl)).thenReturn(cloneAcl);
+        final SnapshotCreator snapshotCreator = mock(SnapshotCreator.class);
+        when(appContext.getBean(SnapshotCreator.class)).thenReturn(snapshotCreator);
+        final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
+        final Vocabulary snapshotVoc = Generator.generateVocabulary();
+        snapshotVoc.setUri(snapshot.getUri());
+        when(repositoryService.findRequired(snapshotVoc.getUri())).thenReturn(snapshotVoc);
+        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(snapshot);
+
+        sut.createSnapshot(vocabulary);
+        verify(aclService).clone(originalAcl);
+        assertEquals(cloneAcl.getUri(), snapshotVoc.getAcl());
     }
 }

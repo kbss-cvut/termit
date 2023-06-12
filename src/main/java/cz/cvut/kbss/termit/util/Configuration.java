@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.util;
 
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
 
@@ -61,6 +62,7 @@ public class Configuration {
     private Workspace workspace = new Workspace();
     private Cors cors = new Cors();
     private Schedule schedule = new Schedule();
+    private ACL acl = new ACL();
     private Mail mail = new Mail();
 
     public String getUrl() {
@@ -189,6 +191,14 @@ public class Configuration {
 
     public void setSchedule(Schedule schedule) {
         this.schedule = schedule;
+    }
+
+    public ACL getAcl() {
+        return acl;
+    }
+
+    public void setAcl(ACL acl) {
+        this.acl = acl;
     }
 
     public Mail getMail() {
@@ -717,6 +727,39 @@ public class Configuration {
 
         public void setSender(String sender) {
             this.sender = sender;
+        }
+    }
+
+    /**
+     * Configuration for initialization of new {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s.
+     */
+    @org.springframework.context.annotation.Configuration
+    public static class ACL {
+
+        /**
+         * Default access level for users in editor role.
+         */
+        private AccessLevel defaultEditorAccessLevel = AccessLevel.READ;
+
+        /**
+         * Default access level for users in editor role.
+         */
+        private AccessLevel defaultReaderAccessLevel = AccessLevel.READ;
+
+        public AccessLevel getDefaultEditorAccessLevel() {
+            return defaultEditorAccessLevel;
+        }
+
+        public void setDefaultEditorAccessLevel(AccessLevel defaultEditorAccessLevel) {
+            this.defaultEditorAccessLevel = defaultEditorAccessLevel;
+        }
+
+        public AccessLevel getDefaultReaderAccessLevel() {
+            return defaultReaderAccessLevel;
+        }
+
+        public void setDefaultReaderAccessLevel(AccessLevel defaultReaderAccessLevel) {
+            this.defaultReaderAccessLevel = defaultReaderAccessLevel;
         }
     }
 }

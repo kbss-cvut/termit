@@ -26,8 +26,11 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,11 +42,14 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -55,6 +61,9 @@ class AssetServiceTest {
 
     @Mock
     private TermRepositoryService termService;
+
+    @Mock
+    private VocabularyAuthorizationService vocabularyAuthorizationService;
 
     @InjectMocks
     private AssetService sut;
@@ -80,7 +89,7 @@ class AssetServiceTest {
                 case 1:
                     final Term term = Generator.generateTermWithId();
                     rma = new RecentlyModifiedAsset(term.getUri(), term.getLabel().get(Environment.LANGUAGE),
-                                                    Utils.timestamp(), author.getUri(), null,
+                                                    Utils.timestamp(), author.getUri(), Generator.generateUri(),
                                                     SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity);
                     break;
                 case 2:
@@ -99,6 +108,7 @@ class AssetServiceTest {
 
     @Test
     void findLastEditedReturnsRecentlyEditedAssets() {
+        when(vocabularyAuthorizationService.canRead(any(cz.cvut.kbss.termit.model.Vocabulary.class))).thenReturn(true);
         final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedAssets(6);
         when(assetDao.findLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
         final PageRequest pageSpec = PageRequest.of(0, 10);
@@ -126,8 +136,10 @@ class AssetServiceTest {
         for (int i = 0; i < Generator.randomInt(5, 10); i++) {
             final Term term = Generator.generateTermWithId();
             Comment comment = Generator.generateComment(author, term);
-            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(), comment.getUri(), null,
-                                                                    SKOS.CONCEPT);
+            RecentlyCommentedAsset rca = new RecentlyCommentedAsset(term.getUri(),
+                                                                    term.getLabel().get(Environment.LANGUAGE),
+                                                                    comment.getUri(), null,
+                                                                    Generator.generateUri(), SKOS.CONCEPT);
             comment.setCreated(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             comment.setAuthor(author);
             comment.setAsset(term.getUri());
@@ -173,5 +185,78 @@ class AssetServiceTest {
                 new PageImpl<>(allExpected));
         final Page<RecentlyCommentedAsset> result = sut.findLastCommentedInReactionToMine(PageRequest.of(0, 10));
         assertEquals(allExpected, result.getContent());
+    }
+
+    @Test
+    void findLastEditedMasksLabelsOfAssetsThatCurrentUserIsNotAuthorizedToRead() {
+        final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedWithForbiddenTerms();
+
+        final Page<RecentlyModifiedAsset> result = sut.findLastEdited(Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(allExpected.size(), result.getSize());
+        result.get().filter(ra -> ra.hasType(SKOS.CONCEPT))
+              .forEach(ra -> assertEquals(AssetService.MASK, ra.getLabel()));
+    }
+
+    @NotNull
+    private List<RecentlyModifiedAsset> generateRecentlyModifiedWithForbiddenTerms() {
+        final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedAssets(6);
+        when(assetDao.findLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
+        allExpected.forEach(ra -> {
+            if (ra.hasType(SKOS.CONCEPT)) {
+                when(vocabularyAuthorizationService.canRead(
+                        new cz.cvut.kbss.termit.model.Vocabulary(ra.getVocabulary()))).thenReturn(false);
+            } else {
+                when(vocabularyAuthorizationService.canRead(
+                        new cz.cvut.kbss.termit.model.Vocabulary(ra.getUri()))).thenReturn(true);
+            }
+        });
+        return allExpected;
+    }
+
+    @Test
+    void findLastEditedAddsForbiddenTypeToAssetsThatCurrentUserIsNotAuthorizedToRead() {
+        final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedWithForbiddenTerms();
+
+        final Page<RecentlyModifiedAsset> result = sut.findLastEdited(Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(allExpected.size(), result.getSize());
+        result.get().filter(ra -> ra.hasType(SKOS.CONCEPT))
+              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_zakazany)));
+    }
+
+    @Test
+    void findLastCommentedMasksLabelsAndCommentForAssetsThatCurrentUserIsNotAuthorizedToRead() {
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
+        allExpected.sort(
+                Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        when(termService.findLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
+        final URI forbiddenVocabulary = allExpected.get(Generator.randomIndex(allExpected)).getVocabulary();
+        when(vocabularyAuthorizationService.canRead(any(cz.cvut.kbss.termit.model.Vocabulary.class))).thenReturn(true);
+        when(vocabularyAuthorizationService.canRead(
+                new cz.cvut.kbss.termit.model.Vocabulary(forbiddenVocabulary))).thenReturn(false);
+
+        final Page<RecentlyCommentedAsset> result = sut.findLastCommented(Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(allExpected.size(), result.getSize());
+        result.get().filter(ra -> forbiddenVocabulary.equals(ra.getVocabulary()))
+              .forEach(ra -> {
+                  assertEquals(AssetService.MASK, ra.getLabel());
+                  assertEquals(AssetService.MASK, ra.getLastComment().getContent());
+              });
+    }
+
+    @Test
+    void findLastCommentedAddsForbiddenTypeToCommentsForAssetsThatCurrentUserIsNotAuthorizedToRead() {
+        final List<RecentlyCommentedAsset> allExpected = generateRecentlyCommentedAssets();
+        allExpected.sort(
+                Comparator.comparing((RecentlyCommentedAsset a) -> a.getLastComment().getCreated()).reversed());
+        when(termService.findLastCommented(any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
+        final URI forbiddenVocabulary = allExpected.get(Generator.randomIndex(allExpected)).getVocabulary();
+        when(vocabularyAuthorizationService.canRead(any(cz.cvut.kbss.termit.model.Vocabulary.class))).thenReturn(true);
+        when(vocabularyAuthorizationService.canRead(
+                new cz.cvut.kbss.termit.model.Vocabulary(forbiddenVocabulary))).thenReturn(false);
+
+        final Page<RecentlyCommentedAsset> result = sut.findLastCommented(Constants.DEFAULT_PAGE_SPEC);
+        assertEquals(allExpected.size(), result.getSize());
+        result.get().filter(ra -> forbiddenVocabulary.equals(ra.getVocabulary()))
+              .forEach(ra -> assertThat(ra.getTypes(), hasItem(Vocabulary.s_c_zakazany)));
     }
 }

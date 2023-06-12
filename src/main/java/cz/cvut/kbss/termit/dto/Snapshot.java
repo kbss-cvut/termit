@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.dto;
 
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.io.Serializable;
@@ -21,7 +22,7 @@ import static cz.cvut.kbss.termit.util.Utils.uriToString;
                                                               @VariableResult(name = "type", type = String.class)
                                                       })})
 @OWLClass(iri = Vocabulary.s_c_verze_objektu)
-public class Snapshot implements HasIdentifier, Serializable {
+public class Snapshot implements HasIdentifier, HasTypes, Serializable {
 
     @Id
     private URI uri;
@@ -71,10 +72,12 @@ public class Snapshot implements HasIdentifier, Serializable {
         this.versionOf = versionOf;
     }
 
+    @Override
     public Set<String> getTypes() {
         return types;
     }
 
+    @Override
     public void setTypes(Set<String> types) {
         this.types = types;
     }

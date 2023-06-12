@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
  * REST controller which originally received the request. There, it is caught by this handler, logged and a reasonable
  * error message is returned to the user.
  */
-@ControllerAdvice
+@RestControllerAdvice
 public class RestExceptionHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestExceptionHandler.class);
@@ -174,15 +174,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> termRemovalException(HttpServletRequest request,
-                                                          TermRemovalException e) {
-        logException(e);
-        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidParameter(HttpServletRequest request,
-                                                      InvalidParameterException e) {
+    public ResponseEntity<ErrorInfo> invalidParameter(HttpServletRequest request, InvalidParameterException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNPROCESSABLE_ENTITY);
     }

@@ -14,6 +14,8 @@
  */
 package cz.cvut.kbss.termit.model.util;
 
+import cz.cvut.kbss.termit.util.Utils;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -63,9 +65,6 @@ public interface HasTypes {
      * @return {@code true} if the type is present on this instance, {@code false} otherwise
      */
     default boolean hasType(String type) {
-        if (getTypes() == null) {
-            return false;
-        }
-        return getTypes().contains(type);
+        return Utils.emptyIfNull(getTypes()).contains(type);
     }
 }

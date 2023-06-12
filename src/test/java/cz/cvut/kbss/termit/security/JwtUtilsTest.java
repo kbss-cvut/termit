@@ -20,7 +20,6 @@ import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.exception.IncompleteJwtException;
 import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.exception.TokenExpiredException;
-import cz.cvut.kbss.termit.model.AbstractUser;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -80,7 +79,7 @@ class JwtUtilsTest {
         verifyJWToken(jwtToken, user, authorities);
     }
 
-    private void verifyJWToken(String token, AbstractUser user, Collection<? extends GrantedAuthority> authorities) {
+    private void verifyJWToken(String token, UserAccount user, Collection<? extends GrantedAuthority> authorities) {
         final Claims claims = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(config.getJwt().getSecretKey()
                                                                                           .getBytes(
                                                                                                   StandardCharsets.UTF_8)))

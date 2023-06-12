@@ -1,7 +1,9 @@
 package cz.cvut.kbss.termit.service.snapshot;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 
 import java.time.Instant;
 import java.util.List;
@@ -35,4 +37,18 @@ public interface SnapshotProvider<T extends Asset<?>> {
      * @return Version of the asset valid at the specified instant
      */
     Optional<T> findVersionValidAt(T asset, Instant at);
+
+    /**
+     * Checks that the specified asset being modified is not a snapshot.
+     * <p>
+     * If it is, a {@link SnapshotNotEditableException} is thrown.
+     *
+     * @param asset Asset to check for being a snapshot
+     * @throws SnapshotNotEditableException If the specified asset is a snapshot
+     */
+    static void verifySnapshotNotModified(SupportsSnapshots asset) {
+        if (asset.isSnapshot()) {
+            throw SnapshotNotEditableException.create(asset);
+        }
+    }
 }

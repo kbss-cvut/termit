@@ -13,6 +13,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.comment.Comment;
+import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
@@ -59,6 +60,9 @@ class TermServiceTest {
 
     @Mock
     private VocabularyService vocabularyService;
+
+    @Mock
+    private VocabularyContextMapper vocabularyContextMapper;
 
     @Mock
     private TermRepositoryService termRepositoryService;
@@ -281,6 +285,7 @@ class TermServiceTest {
 
     @Test
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
+        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term toAnalyze = generateTermWithId();
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
         verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
@@ -288,6 +293,7 @@ class TermServiceTest {
 
     @Test
     void persistChildInvokesTextAnalysisOnPersistedChildTerm() {
+        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
@@ -297,6 +303,7 @@ class TermServiceTest {
 
     @Test
     void persistRootInvokesTextAnalysisOnPersistedRootTerm() {
+        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term toPersist = generateTermWithId();
         sut.persistRoot(toPersist, vocabulary);
         verify(textAnalysisService).analyzeTermDefinition(toPersist, vocabulary.getUri());
@@ -304,7 +311,8 @@ class TermServiceTest {
 
     @Test
     void updateInvokesTextAnalysisOnUpdatedTerm() {
-        final Term original = generateTermWithId();
+        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
+        final Term original = generateTermWithId(vocabulary.getUri());
         final Term toUpdate = new Term();
         toUpdate.setUri(original.getUri());
         final String newDefinition = "This term has acquired a new definition";
@@ -435,6 +443,7 @@ class TermServiceTest {
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
         when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
 
         sut.persistChild(childToPersist, parent);
         final InOrder inOrder = inOrder(termRepositoryService, vocabularyService);
