@@ -6,6 +6,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
 import java.util.Objects;
@@ -43,6 +44,9 @@ public class FacetedSearchResult extends Asset<MultilingualString> implements Ha
     @Inferred
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
+
+    @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
+    private Boolean draft;
 
     @Types
     private Set<String> types;
@@ -111,6 +115,14 @@ public class FacetedSearchResult extends Asset<MultilingualString> implements Ha
 
     public void setVocabulary(URI vocabulary) {
         this.vocabulary = vocabulary;
+    }
+
+    public Boolean isDraft() {
+        return draft == null || draft;
+    }
+
+    public void setDraft(Boolean draft) {
+        this.draft = draft;
     }
 
     public Set<String> getTypes() {
