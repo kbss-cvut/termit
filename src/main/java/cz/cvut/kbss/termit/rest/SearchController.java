@@ -18,6 +18,7 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -91,6 +92,9 @@ public class SearchController extends BaseController {
                                                                      required = false) Integer pageNo,
                                                        @Parameter(description = "Search parameters.")
                                                        @RequestBody Collection<SearchParam> searchParams) {
+        if (searchParams.isEmpty()) {
+            throw new UnsupportedSearchFacetException("Search params must be provided for faceted search.");
+        }
         return searchService.facetedTermSearch(searchParams, RestUtils.createPageRequest(pageSize, pageNo));
     }
 }

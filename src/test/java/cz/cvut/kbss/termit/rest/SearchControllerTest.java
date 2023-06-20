@@ -46,6 +46,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -139,5 +140,12 @@ class SearchControllerTest extends BaseControllerTestRunner {
                         MediaType.APPLICATION_JSON).param(Constants.QueryParams.PAGE, Integer.toString(pageNo)).param(
                         Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize))).andExpect(status().isOk());
         verify(searchServiceMock).facetedTermSearch(searchParams, PageRequest.of(pageNo, pageSize));
+    }
+
+    @Test
+    void facetedSearchThrowsBadRequestWhenNoSearchParamsAreProvided() throws Exception {
+        mockMvc.perform(post(PATH + "/faceted/terms").content("[]").contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isBadRequest());
+        verify(searchServiceMock, never()).facetedTermSearch(anyCollection(), any());
     }
 }
