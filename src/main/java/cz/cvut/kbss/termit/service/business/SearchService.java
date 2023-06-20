@@ -20,6 +20,7 @@ import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.stereotype.Service;
@@ -76,12 +77,15 @@ public class SearchService {
      * The search treats the parameters as conjunction, so the result has to match all the search parameters.
      *
      * @param searchParams Search parameters
+     * @param pageSpec     Page specifying result number and position
      * @return List of matching terms, sorted by label
      */
     @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<FacetedSearchResult> facetedTermSearch(@NonNull Collection<SearchParam> searchParams) {
+    public List<FacetedSearchResult> facetedTermSearch(@NonNull Collection<SearchParam> searchParams,
+                                                       @NonNull Pageable pageSpec) {
         Objects.requireNonNull(searchParams);
+        Objects.requireNonNull(pageSpec);
         searchParams.forEach(SearchParam::validate);
-        return searchDao.facetedTermSearch(searchParams);
+        return searchDao.facetedTermSearch(searchParams, pageSpec);
     }
 }

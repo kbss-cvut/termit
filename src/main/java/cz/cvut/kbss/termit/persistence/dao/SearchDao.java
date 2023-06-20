@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
@@ -129,10 +130,13 @@ public class SearchDao {
      * Only current versions of terms are searched.
      *
      * @param searchParams Search parameters (facets)
+     * @param pageSpec     Specification of the page of results to return
      * @return List of matching terms, ordered by label
      */
-    public List<FacetedSearchResult> facetedTermSearch(@NonNull Collection<SearchParam> searchParams) {
+    public List<FacetedSearchResult> facetedTermSearch(@NonNull Collection<SearchParam> searchParams,
+                                                       @NonNull Pageable pageSpec) {
         Objects.requireNonNull(searchParams);
+        Objects.requireNonNull(pageSpec);
         LOG.trace("Running faceted term search for search parameters: {}", searchParams);
         final StringBuilder queryStr = new StringBuilder(
                 "SELECT DISTINCT ?t WHERE { ?t a ?term ; ?hasLabel ?label .\n");
@@ -162,6 +166,8 @@ public class SearchDao {
                  .setParameter("term", URI.create(SKOS.CONCEPT))
                  .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
                  .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
+                 .setFirstResult((int) pageSpec.getOffset())
+                 .setMaxResults(pageSpec.getPageSize())
                  .getResultList();
     }
 }

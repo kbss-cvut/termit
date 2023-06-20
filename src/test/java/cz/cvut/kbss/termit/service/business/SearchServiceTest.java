@@ -11,11 +11,14 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
+import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
 import java.util.Collections;
@@ -80,8 +83,8 @@ class SearchServiceTest {
         final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()), MatchType.IRI);
         final SearchParam spTwo = new SearchParam(URI.create(SKOS.NOTATION), Set.of("will be removed"), MatchType.SUBSTRING);
         spTwo.setValue(null);
-        assertThrows(ValidationException.class, () -> sut.facetedTermSearch(List.of(spOne, spTwo)));
-        verify(searchDao, never()).facetedTermSearch(anyCollection());
+        assertThrows(ValidationException.class, () -> sut.facetedTermSearch(List.of(spOne, spTwo), Constants.DEFAULT_PAGE_SPEC));
+        verify(searchDao, never()).facetedTermSearch(anyCollection(), any());
     }
 
     @Test
@@ -92,10 +95,11 @@ class SearchServiceTest {
         item.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
         item.setVocabulary(Generator.generateUri());
         item.setTypes(new HashSet<>(spOne.getValue()));
-        when(searchDao.facetedTermSearch(anyCollection())).thenReturn(List.of(item));
+        when(searchDao.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(item));
+        final Pageable pageSpec = PageRequest.of(2, 100);
 
-        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(spOne));
+        final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(spOne), pageSpec);
         assertEquals(List.of(item), result);
-        verify(searchDao).facetedTermSearch(Set.of(spOne));
+        verify(searchDao).facetedTermSearch(Set.of(spOne), pageSpec);
     }
 }

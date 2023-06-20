@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.service.business.SearchService;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -73,6 +76,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
                                                  "test", "test", 1.0));
         when(searchServiceMock.fullTextSearch(any())).thenReturn(expected);
         final String searchString = "test";
+
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/fts").param("searchString", searchString))
                                            .andExpect(status().isOk()).andReturn();
         final List<FullTextSearchResult> result = readValue(mvcResult, new TypeReference<List<FullTextSearchResult>>() {
@@ -92,6 +96,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
                                                         Vocabulary.s_c_term, "test", "test", 1.0));
         when(searchServiceMock.fullTextSearchOfTerms(any(), any())).thenReturn(expected);
         final String searchString = "test";
+
         mockMvc.perform(get(PATH + "/fts/terms")
                                 .param("searchString", searchString)
                                 .param("vocabulary", vocabularyIri.toString()))
@@ -104,16 +109,35 @@ class SearchControllerTest extends BaseControllerTestRunner {
         final FacetedSearchResult term = new FacetedSearchResult();
         term.setUri(Generator.generateUri());
         term.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
-        when(searchServiceMock.facetedTermSearch(anyCollection())).thenReturn(List.of(term));
+        when(searchServiceMock.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(term));
         final List<SearchParam> searchParams = List.of(
                 new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH),
                 new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUri().toString()), MatchType.IRI));
+
         final MvcResult mvcResult = mockMvc.perform(
                 post(PATH + "/faceted/terms").content(toJson(searchParams)).contentType(
                         MediaType.APPLICATION_JSON)).andReturn();
         final List<FacetedSearchResult> result = readValue(mvcResult, new TypeReference<List<FacetedSearchResult>>() {
         });
         assertEquals(List.of(term), result);
-        verify(searchServiceMock).facetedTermSearch(searchParams);
+        verify(searchServiceMock).facetedTermSearch(searchParams, Constants.DEFAULT_PAGE_SPEC);
+    }
+
+    @Test
+    void facetedSearchPassesSpecifiedPageSpecificationToService() throws Exception {
+        final FacetedSearchResult term = new FacetedSearchResult();
+        term.setUri(Generator.generateUri());
+        term.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
+        when(searchServiceMock.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(term));
+        final List<SearchParam> searchParams = List.of(
+                new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH));
+        final int pageNo = Generator.randomInt(0, 5);
+        final int pageSize = Generator.randomInt(100, 1000);
+
+        mockMvc.perform(
+                post(PATH + "/faceted/terms").content(toJson(searchParams)).contentType(
+                        MediaType.APPLICATION_JSON).param(Constants.QueryParams.PAGE, Integer.toString(pageNo)).param(
+                        Constants.QueryParams.PAGE_SIZE, Integer.toString(pageSize))).andExpect(status().isOk());
+        verify(searchServiceMock).facetedTermSearch(searchParams, PageRequest.of(pageNo, pageSize));
     }
 }

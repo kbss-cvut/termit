@@ -18,9 +18,12 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
+import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
+import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,7 +32,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.Collection;
@@ -75,8 +83,14 @@ public class SearchController extends BaseController {
     @PreAuthorize("permitAll()")
     @PostMapping(value = "/faceted/terms", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE},
                  consumes = {MediaType.APPLICATION_JSON_VALUE})
-    public List<FacetedSearchResult> facetedTermSearch(@Parameter(description = "Search parameters.")
+    public List<FacetedSearchResult> facetedTermSearch(@Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                                                       @RequestParam(name = Constants.QueryParams.PAGE_SIZE,
+                                                                     required = false) Integer pageSize,
+                                                       @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                                                       @RequestParam(name = Constants.QueryParams.PAGE,
+                                                                     required = false) Integer pageNo,
+                                                       @Parameter(description = "Search parameters.")
                                                        @RequestBody Collection<SearchParam> searchParams) {
-        return searchService.facetedTermSearch(searchParams);
+        return searchService.facetedTermSearch(searchParams, RestUtils.createPageRequest(pageSize, pageNo));
     }
 }
