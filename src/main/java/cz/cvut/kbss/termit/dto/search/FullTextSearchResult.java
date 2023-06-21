@@ -12,10 +12,11 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see
  * <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.dto;
+package cz.cvut.kbss.termit.dto.search;
 
 import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -38,7 +39,7 @@ import java.util.Set;
                                                                               type = String.class),
                                                               @VariableResult(name = "score", type = Double.class)
                                                       })})
-public class FullTextSearchResult implements HasTypes, Serializable {
+public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializable {
 
     @Id
     private URI uri;
@@ -80,10 +81,12 @@ public class FullTextSearchResult implements HasTypes, Serializable {
         this.score = score;
     }
 
+    @Override
     public URI getUri() {
         return uri;
     }
 
+    @Override
     public void setUri(URI uri) {
         this.uri = uri;
     }

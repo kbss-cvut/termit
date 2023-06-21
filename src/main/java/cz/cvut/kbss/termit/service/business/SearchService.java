@@ -15,13 +15,18 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
+import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -63,5 +68,24 @@ public class SearchService {
                         .filter(r -> r.getTypes().contains(SKOS.CONCEPT))
                         .filter(r -> vocabularies.contains(r.getVocabulary()))
                         .collect(Collectors.toList());
+    }
+
+    /**
+     * Executes a faceted search of terms based on the specified search parameters.
+     * <p>
+     * The search parameters define facets by which terms should be searched together with corresponding search values.
+     * The search treats the parameters as conjunction, so the result has to match all the search parameters.
+     *
+     * @param searchParams Search parameters
+     * @param pageSpec     Page specifying result number and position
+     * @return List of matching terms, sorted by label
+     */
+    @PostFilter("@searchAuthorizationService.canRead(filterObject)")
+    public List<FacetedSearchResult> facetedTermSearch(@NonNull Collection<SearchParam> searchParams,
+                                                       @NonNull Pageable pageSpec) {
+        Objects.requireNonNull(searchParams);
+        Objects.requireNonNull(pageSpec);
+        searchParams.forEach(SearchParam::validate);
+        return searchDao.facetedTermSearch(searchParams, pageSpec);
     }
 }

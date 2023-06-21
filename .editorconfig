@@ -20,3 +20,5 @@ ij_any_array_initializer_wrap = normal
 ij_any_align_multiline_array_initializer_expression = true
 ij_java_annotation_parameter_wrap = normal
 ij_java_align_multiline_annotation_parameters = true
+ij_java_class_count_to_use_import_on_demand = 100
+ij_java_names_count_to_use_import_on_demand = 100
