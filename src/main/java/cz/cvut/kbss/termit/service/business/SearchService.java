@@ -75,6 +75,9 @@ public class SearchService {
      * <p>
      * The search parameters define facets by which terms should be searched together with corresponding search values.
      * The search treats the parameters as conjunction, so the result has to match all the search parameters.
+     * <p>
+     * Note: cannot use full paging support, as it is not supported by Spring Security -
+     * <a href="https://github.com/spring-projects/spring-security/issues/3410">https://github.com/spring-projects/spring-security/issues/3410</a>
      *
      * @param searchParams Search parameters
      * @param pageSpec     Page specifying result number and position
