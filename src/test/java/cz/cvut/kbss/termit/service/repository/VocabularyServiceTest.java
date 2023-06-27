@@ -104,7 +104,12 @@ class VocabularyServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final SnapshotCreator snapshotCreator = mock(SnapshotCreator.class);
         when(appContext.getBean(SnapshotCreator.class)).thenReturn(snapshotCreator);
-        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(Generator.generateSnapshot(vocabulary));
+        final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
+        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(snapshot);
+        final Vocabulary snapshotVoc = new Vocabulary(snapshot.getUri());
+        when(repositoryService.findRequired(snapshotVoc.getUri())).thenReturn(snapshotVoc);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(Generator.generateAccessControlList(false)));
+        when(aclService.clone(any())).thenReturn(Generator.generateAccessControlList(false));
 
         final Snapshot result = sut.createSnapshot(vocabulary);
         assertNotNull(result);
@@ -117,7 +122,12 @@ class VocabularyServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final SnapshotCreator snapshotCreator = mock(SnapshotCreator.class);
         when(appContext.getBean(SnapshotCreator.class)).thenReturn(snapshotCreator);
-        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(Generator.generateSnapshot(vocabulary));
+        final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
+        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(snapshot);
+        final Vocabulary snapshotVoc = new Vocabulary(snapshot.getUri());
+        when(repositoryService.findRequired(snapshotVoc.getUri())).thenReturn(snapshotVoc);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(Generator.generateAccessControlList(false)));
+        when(aclService.clone(any())).thenReturn(Generator.generateAccessControlList(false));
 
         sut.createSnapshot(vocabulary);
         final ArgumentCaptor<VocabularyCreatedEvent> captor = ArgumentCaptor.forClass(VocabularyCreatedEvent.class);
@@ -152,7 +162,8 @@ class VocabularyServiceTest {
     void getAccessControlListRetrievesACLForSpecifiedVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = Generator.generateAccessControlList(false);
-        when(aclService.findForAsDto(vocabulary)).thenReturn(Optional.of(Environment.getDtoMapper().accessControlListToDto(acl)));
+        when(aclService.findForAsDto(vocabulary)).thenReturn(
+                Optional.of(Environment.getDtoMapper().accessControlListToDto(acl)));
 
         final AccessControlListDto result = sut.getAccessControlList(vocabulary);
         assertEquals(acl.getUri(), result.getUri());
@@ -258,5 +269,36 @@ class VocabularyServiceTest {
         assertEquals(AccessLevel.WRITE, ((cz.cvut.kbss.termit.dto.VocabularyDto) result.get()).getAccessLevel());
         verify(repositoryService).find(vocabulary.getUri());
         verify(authorizationService).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void removeRemovesAccessControlList() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList acl = Generator.generateAccessControlList(true);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
+
+        sut.remove(vocabulary);
+        verify(repositoryService).remove(vocabulary);
+        verify(aclService).remove(acl);
+    }
+
+    @Test
+    void createSnapshotClonesAccessControlListForNewVocabulary() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final AccessControlList originalAcl = Generator.generateAccessControlList(true);
+        when(aclService.findFor(vocabulary)).thenReturn(Optional.of(originalAcl));
+        final AccessControlList cloneAcl = Generator.generateAccessControlList(true);
+        when(aclService.clone(originalAcl)).thenReturn(cloneAcl);
+        final SnapshotCreator snapshotCreator = mock(SnapshotCreator.class);
+        when(appContext.getBean(SnapshotCreator.class)).thenReturn(snapshotCreator);
+        final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
+        final Vocabulary snapshotVoc = Generator.generateVocabulary();
+        snapshotVoc.setUri(snapshot.getUri());
+        when(repositoryService.findRequired(snapshotVoc.getUri())).thenReturn(snapshotVoc);
+        when(snapshotCreator.createSnapshot(any(Vocabulary.class))).thenReturn(snapshot);
+
+        sut.createSnapshot(vocabulary);
+        verify(aclService).clone(originalAcl);
+        assertEquals(cloneAcl.getUri(), snapshotVoc.getAcl());
     }
 }

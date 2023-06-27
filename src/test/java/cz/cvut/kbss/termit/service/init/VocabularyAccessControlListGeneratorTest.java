@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +30,7 @@ class VocabularyAccessControlListGeneratorTest {
     private EntityManager em;
 
     @Mock
-    private VocabularyService vocabularyService;
+    private VocabularyRepositoryService vocabularyService;
 
     @Mock
     private AccessControlListService aclService;

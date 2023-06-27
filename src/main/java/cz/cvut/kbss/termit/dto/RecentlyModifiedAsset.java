@@ -5,6 +5,8 @@ import cz.cvut.kbss.jopa.model.annotations.*;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.io.Serializable;
@@ -22,7 +24,7 @@ import java.util.*;
                 @VariableResult(name = "type", type = String.class),
                 @VariableResult(name = "changeType", type = String.class),
         })})
-public class RecentlyModifiedAsset implements Serializable {
+public class RecentlyModifiedAsset implements HasIdentifier, HasTypes, Serializable {
 
     @Id
     private URI uri;
@@ -58,10 +60,12 @@ public class RecentlyModifiedAsset implements Serializable {
         this.types = new HashSet<>(Arrays.asList(type, changeType));
     }
 
+    @Override
     public URI getUri() {
         return uri;
     }
 
+    @Override
     public void setUri(URI uri) {
         this.uri = uri;
     }
@@ -106,10 +110,12 @@ public class RecentlyModifiedAsset implements Serializable {
         this.vocabulary = vocabulary;
     }
 
+    @Override
     public Set<String> getTypes() {
         return types;
     }
 
+    @Override
     public void setTypes(Set<String> types) {
         this.types = types;
     }

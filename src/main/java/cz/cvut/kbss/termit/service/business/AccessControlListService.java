@@ -1,11 +1,15 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.model.AccessControlAgent;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import org.springframework.lang.NonNull;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -66,6 +70,23 @@ public interface AccessControlListService {
     AccessControlList createFor(HasIdentifier subject);
 
     /**
+     * Removes the specified access control list and its records.
+     *
+     * @param acl The ACL to remove
+     */
+    void remove(AccessControlList acl);
+
+    /**
+     * Creates a new {@link AccessControlList} by cloning the specified one.
+     * <p>
+     * The new ACL thus contains records for the same holders as the original and with the same access levels.
+     *
+     * @param original ACL to clone
+     * @return The new ACL
+     */
+    AccessControlList clone(AccessControlList original);
+
+    /**
      * Adds the specified record to the specified target {@link AccessControlList}.
      *
      * @param acl    Target ACL
@@ -91,4 +112,13 @@ public interface AccessControlListService {
      * @param record Updated access control record
      */
     void updateRecordAccessLevel(AccessControlList acl, AccessControlRecord<?> record);
+
+    /**
+     * Gets a list of assets to which the specified agent has security-level access ({@link
+     * cz.cvut.kbss.termit.model.acl.AccessLevel#SECURITY}).
+     *
+     * @param agent Agent whose access to examine
+     * @return List of matching assets
+     */
+    List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@NonNull AccessControlAgent agent);
 }

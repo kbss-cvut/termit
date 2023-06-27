@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.9</version>
+        <version>2.7.12</version>
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>2.16.3</version>
+    <version>2.17.0</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -26,8 +26,9 @@
     <properties>
         <java.version>11</java.version>
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
-        <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
-        <cz.cvut.kbss.jopa.version>0.21.1</cz.cvut.kbss.jopa.version>
+        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+        <org.springdoc.version>1.7.0</org.springdoc.version>
+        <cz.cvut.kbss.jopa.version>0.22.1</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.12.3</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.7</org.aspectj.version>
 
@@ -257,7 +258,7 @@
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
-            <version>0.64.0</version>
+            <version>0.64.6</version>
         </dependency>
 
         <!-- Logging -->
@@ -311,6 +312,18 @@
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- REST API documentation -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>${org.springdoc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-security</artifactId>
+            <version>${org.springdoc.version}</version>
         </dependency>
 
         <!-- Test dependencies -->

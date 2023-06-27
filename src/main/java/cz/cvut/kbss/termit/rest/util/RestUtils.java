@@ -14,7 +14,6 @@
  */
 package cz.cvut.kbss.termit.rest.util;
 
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Constants;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,10 +23,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
@@ -129,21 +125,6 @@ public class RestUtils {
         Objects.requireNonNull(queryParam);
         return ServletUriComponentsBuilder.fromCurrentContextPath().queryParam(queryParam, queryValue).path(path)
                                           .buildAndExpand(pathValues).toUri();
-    }
-
-    /**
-     * Encodes the specifies value with an URL encoder, using {@link StandardCharsets#UTF_8}.
-     *
-     * @param value The value to encode
-     * @return Encoded string
-     */
-    public static String urlEncode(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            // Unlikely
-            throw new TermItException("Encoding not found.", e);
-        }
     }
 
     /**

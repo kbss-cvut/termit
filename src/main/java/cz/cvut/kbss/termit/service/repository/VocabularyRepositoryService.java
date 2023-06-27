@@ -142,6 +142,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         super.preUpdate(instance);
         final Vocabulary original = findRequired(instance.getUri());
         verifyVocabularyImports(instance, original);
+        // ACL reference does not change, but it can be missing in case the instance arrived from client
+        instance.setAcl(original.getAcl());
         SnapshotProvider.verifySnapshotNotModified(original);
     }
 

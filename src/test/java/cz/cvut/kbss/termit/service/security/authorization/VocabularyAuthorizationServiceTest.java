@@ -140,18 +140,19 @@ class VocabularyAuthorizationServiceTest {
     }
 
     @Test
-    void canCreateSnapshotChecksIfCurrentUserHasSecurityAccessBasedOnAccessControlList() {
+    void canCreateSnapshotRequiresCurrentUserToBeAdmin() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(false);
+        user.addType(UserRole.ADMIN.getType());
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
 
-        assertFalse(sut.canCreateSnapshot(vocabulary));
-        verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
+        assertTrue(sut.canCreateSnapshot(vocabulary));
+        verify(aclBasedAuthService, never()).hasAccessLevel(any(), eq(user), eq(vocabulary));
     }
 
     @Test
     void canCreateSnapshotChecksIfVocabularyIsEditableInCurrentWorkspace() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        user.addType(UserRole.ADMIN.getType());
         when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
 
         assertTrue(sut.canCreateSnapshot(vocabulary));
@@ -213,18 +214,19 @@ class VocabularyAuthorizationServiceTest {
     }
 
     @Test
-    void canRemoveSnapshotChecksIfCurrentUserHasSecurityAccessBasedOnAccessControlList() {
+    void canRemoveSnapshotRequiresCurrentUserToBeAdmin() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(false);
+        user.addType(UserRole.ADMIN.getType());
+        when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
 
-        assertFalse(sut.canRemoveSnapshot(vocabulary));
-        verify(aclBasedAuthService).hasAccessLevel(AccessLevel.SECURITY, user, vocabulary);
+        assertTrue(sut.canRemoveSnapshot(vocabulary));
+        verify(aclBasedAuthService, never()).hasAccessLevel(any(), eq(user), eq(vocabulary));
     }
 
     @Test
     void canRemoveSnapshotChecksIfVocabularyIsEditableInCurrentWorkspace() {
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(aclBasedAuthService.hasAccessLevel(AccessLevel.SECURITY, user, vocabulary)).thenReturn(true);
+        user.addType(UserRole.ADMIN.getType());
         when(editableVocabularies.isEditable(vocabulary)).thenReturn(true);
 
         assertTrue(sut.canRemoveSnapshot(vocabulary));

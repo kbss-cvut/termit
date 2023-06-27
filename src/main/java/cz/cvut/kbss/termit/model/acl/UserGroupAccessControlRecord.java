@@ -27,4 +27,9 @@ public class UserGroupAccessControlRecord extends AccessControlRecord<UserGroup>
         return Utils.emptyIfNull(getHolder().getMembers()).stream().anyMatch(u -> u.getUri().equals(user.getUri())) ?
                Optional.of(getAccessLevel()) : Optional.empty();
     }
+
+    @Override
+    public UserGroupAccessControlRecord copy() {
+        return new UserGroupAccessControlRecord(getAccessLevel(), getHolder());
+    }
 }

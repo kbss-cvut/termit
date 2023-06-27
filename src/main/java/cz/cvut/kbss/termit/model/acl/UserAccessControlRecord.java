@@ -27,4 +27,9 @@ public class UserAccessControlRecord extends AccessControlRecord<User> {
 
         return getHolder().getUri().equals(user.getUri()) ? Optional.of(getAccessLevel()) : Optional.empty();
     }
+
+    @Override
+    public UserAccessControlRecord copy() {
+        return new UserAccessControlRecord(getAccessLevel(), getHolder());
+    }
 }

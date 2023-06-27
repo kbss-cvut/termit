@@ -5,7 +5,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import java.util.Optional;
 
 /**
- * Authorizes access to resources assets of the target type.
+ * Authorizes access to assets of the target type.
  * <p>
  * This class provides custom authorization logic that cannot be (at least not easily) done using SpEL. Instead, methods
  * of this class should be invoked by authorization mechanisms such as {@link org.springframework.security.access.prepost.PreAuthorize}.

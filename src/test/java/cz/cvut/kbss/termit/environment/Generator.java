@@ -52,12 +52,21 @@ public class Generator {
     }
 
     /**
-     * Generates a (pseudo) random URI, usable for test individuals.
+     * Generates a (pseudo) random URI.
      *
      * @return Random URI
      */
     public static URI generateUri() {
         return URI.create(Environment.BASE_URI + "/randomInstance" + randomInt());
+    }
+
+    /**
+     * Generates a (pseudo) random URI and returns it as a string.
+     *
+     * @return Random URI string
+     */
+    public static String generateUriString() {
+        return generateUri().toString();
     }
 
     /**
@@ -137,6 +146,7 @@ public class Generator {
         user.setFirstName("Firstname" + randomInt());
         user.setLastName("Lastname" + randomInt());
         user.setUsername("user" + randomInt() + "@kbss.felk.cvut.cz");
+        user.addType(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType());
         return user;
     }
 
@@ -192,6 +202,7 @@ public class Generator {
         vocabulary.setGlossary(new Glossary());
         vocabulary.setModel(new Model());
         vocabulary.setLabel("Vocabulary" + randomInt());
+        vocabulary.setDescription("Description of vocabulary " + vocabulary.getLabel());
         return vocabulary;
     }
 
@@ -443,26 +454,23 @@ public class Generator {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static List<AccessControlRecord<?>> generateAccessControlRecords() {
-        return IntStream.range(0, 5).mapToObj(i -> {
+        final List<AccessControlRecord<?>> result = IntStream.range(0, 5).mapToObj(i -> {
             final AccessControlRecord r;
-            switch (randomInt(0, 3)) {
-                case 0:
-                    r = new UserAccessControlRecord();
-                    r.setHolder(Generator.generateUserWithId());
-                    break;
-                case 1:
-                    r = new UserGroupAccessControlRecord();
-                    r.setHolder(generateUserGroup());
-                    break;
-                default:
-                    r = new RoleAccessControlRecord();
-                    final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
-                    r.setHolder(role);
-                    break;
+            if (Generator.randomBoolean()) {
+                r = new UserAccessControlRecord();
+                r.setHolder(Generator.generateUserWithId());
+            } else {
+                r = new UserGroupAccessControlRecord();
+                r.setHolder(generateUserGroup());
             }
             r.setUri(Generator.generateUri());
             r.setAccessLevel(AccessLevel.values()[Generator.randomIndex(AccessLevel.values())]);
             return (AccessControlRecord<?>) r;
         }).collect(Collectors.toList());
+        final RoleAccessControlRecord rr = new RoleAccessControlRecord();
+        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
+        rr.setHolder(role);
+        result.add(rr);
+        return result;
     }
 }

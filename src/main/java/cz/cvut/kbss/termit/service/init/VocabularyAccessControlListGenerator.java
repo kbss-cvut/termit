@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.service.init;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
-import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,12 +21,12 @@ public class VocabularyAccessControlListGenerator {
 
     private final EntityManager em;
 
-    private final VocabularyService vocabularyService;
+    private final VocabularyRepositoryService vocabularyService;
 
     private final AccessControlListService aclService;
 
     public VocabularyAccessControlListGenerator(EntityManager em,
-                                                VocabularyService vocabularyService,
+                                                VocabularyRepositoryService vocabularyService,
                                                 AccessControlListService aclService) {
         this.em = em;
         this.vocabularyService = vocabularyService;
@@ -36,10 +36,10 @@ public class VocabularyAccessControlListGenerator {
     /**
      * Creates {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s for {@link cz.cvut.kbss.termit.model.Vocabulary}s
      * that do not have them.
-     *
+     * <p>
      * This is basically a data migration method that ensures all vocabularies have an ACL. It may be removed in the
      * next major release of TermIt when it is deemed not necessary.
-     *
+     * <p>
      * This method is asynchronous to prevent slowing down the system startup.
      */
     @Async
@@ -57,9 +57,10 @@ public class VocabularyAccessControlListGenerator {
     }
 
     private List<URI> resolveVocabulariesWithoutAcl() {
-        return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?v a ?vocabulary . FILTER NOT EXISTS { ?v ?hasAcl ?acl . } }", URI.class)
-                .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
-                .getResultList();
+        return em.createNativeQuery(
+                         "SELECT DISTINCT ?v WHERE { ?v a ?vocabulary . FILTER NOT EXISTS { ?v ?hasAcl ?acl . } }", URI.class)
+                 .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                 .getResultList();
     }
 }

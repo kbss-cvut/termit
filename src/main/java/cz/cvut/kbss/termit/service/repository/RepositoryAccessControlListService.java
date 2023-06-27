@@ -4,6 +4,8 @@ import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
+import cz.cvut.kbss.termit.model.AccessControlAgent;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -18,6 +20,7 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +28,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @CacheConfig(cacheNames = "acls")
 @Service
@@ -110,6 +114,26 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
+    public void remove(AccessControlList acl) {
+        Objects.requireNonNull(acl);
+        LOG.debug("Removing ACL {}.", acl);
+        dao.remove(acl);
+    }
+
+    @Override
+    public AccessControlList clone(AccessControlList original) {
+        Objects.requireNonNull(original);
+        LOG.debug("Creating a new ACL by cloning {}.", original);
+        final AccessControlList clone = new AccessControlList();
+        clone.setRecords(Utils.emptyIfNull(original.getRecords()).stream().map(AccessControlRecord::copy)
+                              .collect(Collectors.toSet()));
+        dao.persist(clone);
+        return clone;
+    }
+
+    @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
+    @Transactional
+    @Override
     public void addRecord(AccessControlList acl, AccessControlRecord<?> record) {
         Objects.requireNonNull(acl);
         Objects.requireNonNull(record);
@@ -148,7 +172,8 @@ public class RepositoryAccessControlListService implements AccessControlListServ
             }
         }
         if (!readerFound || !editorFound) {
-            throw new UnsupportedOperationException("Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+            throw new UnsupportedOperationException(
+                    "Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
         }
     }
 
@@ -163,8 +188,14 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         Utils.emptyIfNull(toUpdate.getRecords()).stream().filter(acr -> Objects.equals(acr.getUri(), record.getUri()))
              .findAny().ifPresent(r -> {
                  LOG.debug("Updating access level from {} to {} in record {} in ACL {}.", r.getAccessLevel(),
-                         record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
+                           record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
                  r.setAccessLevel(record.getAccessLevel());
              });
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@NonNull AccessControlAgent agent) {
+        return dao.findAssetsByAgentWithSecurityAccess(agent);
     }
 }

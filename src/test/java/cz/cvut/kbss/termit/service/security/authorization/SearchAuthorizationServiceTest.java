@@ -1,7 +1,8 @@
 package cz.cvut.kbss.termit.service.security.authorization;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
+import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import org.junit.jupiter.api.Test;
@@ -45,5 +46,15 @@ class SearchAuthorizationServiceTest {
                                                                   (double) Generator.randomInt());
         assertFalse(sut.canRead(res));
         verify(vocabularyAuthorizationService).canRead(new Vocabulary(res.getUri()));
+    }
+
+    @Test
+    void canReadChecksIfVocabularyIsReadableForFacetedSearchTermResult() {
+        final FacetedSearchResult res = new FacetedSearchResult();
+        res.setUri(Generator.generateUri());
+        res.setVocabulary(Generator.generateUri());
+        when(vocabularyAuthorizationService.canRead(any(Vocabulary.class))).thenReturn(true);
+        assertTrue(sut.canRead(res));
+        verify(vocabularyAuthorizationService).canRead(new Vocabulary(res.getVocabulary()));
     }
 }

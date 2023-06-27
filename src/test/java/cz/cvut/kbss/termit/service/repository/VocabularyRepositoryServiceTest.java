@@ -361,4 +361,23 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.setLabel("Updated label");
         assertThrows(SnapshotNotEditableException.class, () -> sut.update(vocabulary));
     }
+
+    @Test
+    void updateEnsuresReferenceToAccessControlListIsPreserved() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        vocabulary.setAcl(Generator.generateUri());
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+
+        final Vocabulary update = new Vocabulary(vocabulary.getUri());
+        update.setModel(vocabulary.getModel());
+        update.setGlossary(vocabulary.getGlossary());
+        update.setLabel("Updated label");
+        // Intentionally leave ACL null, this is how it would arrive from the client
+
+        transactional(() -> sut.update(update));
+
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertEquals(update.getLabel(), result.getLabel());
+        assertEquals(vocabulary.getAcl(), result.getAcl());
+    }
 }

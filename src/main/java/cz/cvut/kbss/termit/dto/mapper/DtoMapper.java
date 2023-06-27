@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlRecordDto;
 import cz.cvut.kbss.termit.dto.acl.AccessHolderDto;
@@ -16,6 +17,8 @@ import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Mapper(componentModel = "spring")
 public abstract class DtoMapper {
@@ -42,13 +45,18 @@ public abstract class DtoMapper {
         final AccessHolderDto dto = new AccessHolderDto();
         dto.setUri(holder.getUri());
         final String type = EntityToOwlClassMapper.getOwlClassForEntity(holder.getClass());
-        dto.setTypes(Collections.singleton(type));
+        dto.setTypes(new HashSet<>(Set.of(type)));
         switch (type) {
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatel_termitu:
-                dto.setLabel(MultilingualString.create(((User) holder).getFullName(), config.getPersistence().getLanguage()));
+                final User user = (User) holder;
+                assert user.getTypes() != null;
+                user.getTypes().forEach(dto::addType);
+                dto.setLabel(MultilingualString.create(user.getFullName(),
+                                                       config.getPersistence().getLanguage()));
                 break;
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup:
-                dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(), config.getPersistence().getLanguage()));
+                dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(),
+                                                       config.getPersistence().getLanguage()));
                 break;
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatelska_role:
                 dto.setLabel(((UserRole) holder).getLabel());
@@ -57,6 +65,12 @@ public abstract class DtoMapper {
                 throw new IllegalArgumentException("Unsupported access holder type " + holder);
         }
         return dto;
+    }
+
+    public RdfsResource assetToRdfsResource(Asset<?> asset) {
+        final AssetToRdfsResourceMapper mapper = new AssetToRdfsResourceMapper(config.getPersistence().getLanguage());
+        asset.accept(mapper);
+        return mapper.getRdfsResource();
     }
 
     // Setter for test environment setup purposes

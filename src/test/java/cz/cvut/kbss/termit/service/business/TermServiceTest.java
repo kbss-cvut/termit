@@ -312,7 +312,7 @@ class TermServiceTest {
     @Test
     void updateInvokesTextAnalysisOnUpdatedTerm() {
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
-        final Term original = generateTermWithId();
+        final Term original = generateTermWithId(vocabulary.getUri());
         final Term toUpdate = new Term();
         toUpdate.setUri(original.getUri());
         final String newDefinition = "This term has acquired a new definition";

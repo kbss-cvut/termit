@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.init;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,6 @@ public class AdminAccountGenerator {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminAccountGenerator.class);
 
-    private static final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
     private static final int PASSWORD_LENGTH = 8;
 
     private final UserRepositoryService userService;
@@ -45,7 +45,7 @@ public class AdminAccountGenerator {
             return;
         }
         LOG.info("Creating application admin account.");
-        final UserAccount admin = initAdminInstance();
+        final UserAccount admin = getDefaultAdminInstance();
         final String passwordPlain = generatePassword();
         admin.setPassword(passwordPlain);
         userService.persist(admin);
@@ -84,7 +84,7 @@ public class AdminAccountGenerator {
         return credentialsFile;
     }
 
-    private static UserAccount initAdminInstance() {
+    static UserAccount getDefaultAdminInstance() {
         final UserAccount admin = new UserAccount();
         admin.setUri(URI.create(Vocabulary.ONTOLOGY_IRI_termit + "/system-admin-user"));
         admin.setFirstName("System");
@@ -101,7 +101,7 @@ public class AdminAccountGenerator {
             if (random.nextBoolean()) {
                 sb.append(random.nextInt(10));
             } else {
-                char c = LETTERS.charAt(random.nextInt(LETTERS.length()));
+                char c = Constants.LETTERS.charAt(random.nextInt(Constants.LETTERS.length()));
                 sb.append(random.nextBoolean() ? c : Character.toUpperCase(c));
             }
         }

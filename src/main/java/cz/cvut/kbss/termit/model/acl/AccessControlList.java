@@ -19,7 +19,7 @@ import java.util.Set;
 public class AccessControlList extends AbstractEntity {
 
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_zaznam_rizeni_pristupu, fetch = FetchType.EAGER,
-                       cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+                       cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private Set<AccessControlRecord<?>> records;
 
     public Set<AccessControlRecord<?>> getRecords() {

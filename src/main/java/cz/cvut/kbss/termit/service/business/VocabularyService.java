@@ -102,7 +102,9 @@ public class VocabularyService
     @Override
     @PostFilter("@vocabularyAuthorizationService.canRead(filterObject)")
     public List<VocabularyDto> findAll() {
-        return repositoryService.findAll();
+        // PostFilter modifies the data in-place, which caused unwanted updates to the cache (since we are caching
+        // the whole list in VocabularyRepositoryService)
+        return new ArrayList<>(repositoryService.findAll());
     }
 
     @Override
@@ -238,7 +240,7 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to be analyzed
      */
-    @Transactional(readOnly = true)
+    @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
@@ -255,7 +257,7 @@ public class VocabularyService
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public void runTextAnalysisOnAllVocabularies() {
         LOG.debug("Analyzing definitions of all terms in all vocabularies.");
         final Map<TermDto, URI> termsToContexts = new HashMap<>();
@@ -277,8 +279,10 @@ public class VocabularyService
      *
      * @param asset Vocabulary to remove
      */
+    @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#asset)")
     public void remove(Vocabulary asset) {
+        aclService.findFor(asset).ifPresent(aclService::remove);
         repositoryService.remove(asset);
     }
 
@@ -294,7 +298,7 @@ public class VocabularyService
     /**
      * Gets the number of terms in the specified vocabulary.
      * <p>
-     * Note that this methods counts the terms regardless of their hierarchical position.
+     * Note that this method counts the terms regardless of their hierarchical position.
      *
      * @param vocabulary Vocabulary whose terms should be counted
      * @return Number of terms in the vocabulary, 0 for empty or unknown vocabulary
@@ -316,11 +320,19 @@ public class VocabularyService
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
         eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
+        cloneAccessControlList(s, vocabulary);
         return s;
     }
 
     private SnapshotCreator getSnapshotCreator() {
         return context.getBean(SnapshotCreator.class);
+    }
+
+    private void cloneAccessControlList(Snapshot snapshot, Vocabulary original) {
+        final AccessControlList currentAcl = findRequiredAclForVocabulary(original);
+        final AccessControlList snapshotAcl = aclService.clone(currentAcl);
+        final Vocabulary snapshotVocabulary = repositoryService.findRequired(snapshot.getUri());
+        snapshotVocabulary.setAcl(snapshotAcl.getUri());
     }
 
     /**
