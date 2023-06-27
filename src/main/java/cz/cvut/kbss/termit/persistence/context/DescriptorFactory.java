@@ -14,18 +14,21 @@
  */
 package cz.cvut.kbss.termit.persistence.context;
 
-import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
-import cz.cvut.kbss.jopa.model.metamodel.FieldSpecification;
-import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Glossary_;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.UserGroup;
+import cz.cvut.kbss.termit.model.UserGroup_;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.Vocabulary_;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
-import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessControlList_;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord_;
 import cz.cvut.kbss.termit.model.resource.Document;
-import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.resource.Document_;
+import cz.cvut.kbss.termit.model.resource.File_;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -40,8 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class DescriptorFactory {
 
-    private final EntityManagerFactory emf;
-
     private final VocabularyContextMapper contextMapper;
 
     /**
@@ -52,8 +53,7 @@ public class DescriptorFactory {
     private final Map<Class<?>, Descriptor> staticDescriptors = new ConcurrentHashMap<>();
 
     @Autowired
-    public DescriptorFactory(EntityManagerFactory emf, VocabularyContextMapper contextMapper) {
-        this.emf = emf;
+    public DescriptorFactory(VocabularyContextMapper contextMapper) {
         this.contextMapper = contextMapper;
     }
 
@@ -78,12 +78,6 @@ public class DescriptorFactory {
         return new EntityDescriptor(contextMapper.getVocabularyContext(vocabularyUri));
     }
 
-    public <T> FieldSpecification<? super T, ?> fieldSpec(Class<T> entityCls, String attribute) {
-        Objects.requireNonNull(entityCls);
-        Objects.requireNonNull(attribute);
-        return emf.getMetamodel().entity(entityCls).getFieldSpecification(attribute);
-    }
-
     /**
      * Creates a JOPA descriptor for a vocabulary with the specified identifier.
      * <p>
@@ -98,9 +92,8 @@ public class DescriptorFactory {
     public Descriptor vocabularyDescriptor(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "glossary"), glossaryDescriptor(vocabularyUri));
-        descriptor.addAttributeDescriptor(fieldSpec(Vocabulary.class, "document"),
-                                          documentDescriptor(vocabularyUri));
+        descriptor.addAttributeDescriptor(Vocabulary_.glossary, glossaryDescriptor(vocabularyUri));
+        descriptor.addAttributeDescriptor(Vocabulary_.document, documentDescriptor(vocabularyUri));
         return descriptor;
     }
 
@@ -135,7 +128,7 @@ public class DescriptorFactory {
     public Descriptor documentDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         final Descriptor fileDescriptor = fileDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(fieldSpec(Document.class, "files"), fileDescriptor);
+        descriptor.addAttributeDescriptor(Document_.files, fileDescriptor);
         return descriptor;
     }
 
@@ -170,8 +163,8 @@ public class DescriptorFactory {
     public Descriptor fileDescriptor(URI vocabularyUri) {
         final Descriptor descriptor = assetDescriptor(vocabularyUri);
         final Descriptor docDescriptor = assetDescriptor(vocabularyUri);
-        docDescriptor.addAttributeDescriptor(fieldSpec(Document.class, "files"), assetDescriptor(vocabularyUri));
-        descriptor.addAttributeDescriptor(fieldSpec(File.class, "document"), docDescriptor);
+        docDescriptor.addAttributeDescriptor(Document_.files, assetDescriptor(vocabularyUri));
+        descriptor.addAttributeDescriptor(File_.document, docDescriptor);
         return descriptor;
     }
 
@@ -204,7 +197,7 @@ public class DescriptorFactory {
      */
     public Descriptor glossaryDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(fieldSpec(Glossary.class, "rootTerms"), termDescriptor(vocabularyUri));
+        descriptor.addAttributeDescriptor(Glossary_.rootTerms, termDescriptor(vocabularyUri));
         return descriptor;
     }
 
@@ -239,13 +232,13 @@ public class DescriptorFactory {
     public Descriptor termDescriptor(URI vocabularyUri) {
         final EntityDescriptor descriptor = assetDescriptor(vocabularyUri);
         final EntityDescriptor externalParentDescriptor = new EntityDescriptor();
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "externalParentTerms"), externalParentDescriptor);
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "parentTerms"), descriptor);
+        descriptor.addAttributeDescriptor(Term_.externalParentTerms, externalParentDescriptor);
+        descriptor.addAttributeDescriptor(Term_.parentTerms, descriptor);
         final EntityDescriptor exactMatchTermsDescriptor = new EntityDescriptor();
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "exactMatchTerms"), exactMatchTermsDescriptor);
+        descriptor.addAttributeDescriptor(Term_.exactMatchTerms, exactMatchTermsDescriptor);
         final EntityDescriptor relatedDescriptor = new EntityDescriptor(vocabularyUri);
-        descriptor.addAttributeDescriptor(fieldSpec(Term.class, "related"), relatedDescriptor);
-        descriptor.addAttributeContext(fieldSpec(Term.class, "relatedMatch"), null);
+        descriptor.addAttributeDescriptor(Term_.related, relatedDescriptor);
+        descriptor.addAttributeContext(Term_.relatedMatch, null);
         return descriptor;
     }
 
@@ -274,7 +267,7 @@ public class DescriptorFactory {
     public Descriptor userGroupDescriptor() {
         return staticDescriptors.computeIfAbsent(UserGroup.class, (cls) -> {
             final EntityDescriptor descriptor = new EntityDescriptor(URI.create(StaticContexts.USER_GROUPS));
-            descriptor.addAttributeContext(emf.getMetamodel().entity(UserGroup.class).getAttribute("members"), null);
+            descriptor.addAttributeContext(UserGroup_.members, null);
             return descriptor;
         });
     }
@@ -290,10 +283,8 @@ public class DescriptorFactory {
         return staticDescriptors.computeIfAbsent(AccessControlList.class, (cls) -> {
             final EntityDescriptor descriptor = new EntityDescriptor(URI.create(StaticContexts.ACCESS_CONTROL_LISTS));
             final EntityDescriptor recordsDesc = new EntityDescriptor(URI.create(StaticContexts.ACCESS_CONTROL_LISTS));
-            recordsDesc.addAttributeContext(emf.getMetamodel().entity(AccessControlRecord.class).getAttribute("holder"),
-                                            null);
-            descriptor.addAttributeDescriptor(
-                    emf.getMetamodel().entity(AccessControlList.class).getAttribute("records"), recordsDesc);
+            recordsDesc.addAttributeContext(AccessControlRecord_.holder, null);
+            descriptor.addAttributeDescriptor(AccessControlList_.records, recordsDesc);
             return descriptor;
         });
     }

@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.Term_;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
@@ -19,7 +20,6 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
-import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
@@ -34,14 +34,36 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TermDaoTest extends BaseTermDaoTestRunner {
@@ -187,7 +209,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllBySearchStringReturnsTermsWithMatchingLabelWhichAreNotRoots() {
-        enableRdfsInference(em);
         final List<Term> terms = generateTerms(4);
         addTermsAndSave(new HashSet<>(terms), vocabulary);
         final Term root = terms.get(Generator.randomIndex(terms));
@@ -202,6 +223,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             em.persist(child, descriptorFactory.termDescriptor(vocabulary));
             em.persist(matchingDesc, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(child, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(matchingDesc, vocabulary.getUri(), em);
         });
 
         final List<TermDto> result = sut.findAll("plan", vocabulary);
@@ -437,21 +460,15 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             directTerms.get(1).setExternalParentTerms(Collections.singleton(parentTerms.get(1)));
             // Parents are in different contexts, so we have to deal with that
             em.merge(directTerms.get(0), descriptorFactory.termDescriptor(vocabulary)
-                                                          .addAttributeDescriptor(descriptorFactory
-                                                                                          .fieldSpec(Term.class,
-                                                                                                     "externalParentTerms"),
+                                                          .addAttributeDescriptor(Term_.externalParentTerms,
                                                                                   descriptorFactory.vocabularyDescriptor(
                                                                                           parent)));
             em.merge(directTerms.get(1), descriptorFactory.termDescriptor(vocabulary)
-                                                          .addAttributeDescriptor(descriptorFactory
-                                                                                          .fieldSpec(Term.class,
-                                                                                                     "externalParentTerms"),
+                                                          .addAttributeDescriptor(Term_.externalParentTerms,
                                                                                   descriptorFactory.vocabularyDescriptor(
                                                                                           parent)));
             em.merge(parentTerms.get(0), descriptorFactory.termDescriptor(parent)
-                                                          .addAttributeDescriptor(descriptorFactory
-                                                                                          .fieldSpec(Term.class,
-                                                                                                     "externalParentTerms"),
+                                                          .addAttributeDescriptor(Term_.externalParentTerms,
                                                                                   descriptorFactory.vocabularyDescriptor(
                                                                                           grandParent)));
             vocabulary.getGlossary().removeRootTerm(directTerms.get(0));
@@ -584,7 +601,6 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
     @Test
     void findAllLoadsSubTermsForResults() {
-        enableRdfsInference(em);
         final Term parent = persistParentWithChild();
 
         final List<Term> result = sut.findAllFull(vocabulary);
@@ -606,6 +622,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
             em.persist(child, descriptorFactory.termDescriptor(vocabulary));
+            // Simulate inference
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(child, vocabulary.getUri(), em);
         });
         return parent;
     }
@@ -709,7 +728,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             final ValueFactory vf = conn.getValueFactory();
             final IRI subject = vf.createIRI(term.getUri().toString());
             final IRI hasSource = vf.createIRI(DC.Terms.SOURCE);
-            final List<Statement> sourceStatements = Iterations.asList(conn.getStatements(subject, hasSource, null));
+            final List<Statement> sourceStatements = conn.getStatements(subject, hasSource, null).stream().collect(
+                    Collectors.toList());
             assertEquals(term.getSources().size(), sourceStatements.size());
             sourceStatements.forEach(ss -> {
                 assertTrue(term.getSources().contains(ss.getObject().stringValue()));
@@ -770,7 +790,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         transactional(() -> em.persist(childToReturn, descriptorFactory.termDescriptor(childToReturn)));
 
         final List<TermDto> results = sut
-                .findAllRoots(vocabulary, PageRequest.of(0, terms.size() / 2), Collections.singleton(childToReturn.getUri()));
+                .findAllRoots(vocabulary, PageRequest.of(0, terms.size() / 2),
+                              Collections.singleton(childToReturn.getUri()));
         assertFalse(results.isEmpty());
         assertThat(results, hasItem(new TermDto(childToReturn)));
     }
