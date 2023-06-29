@@ -32,16 +32,14 @@ This section briefly lists the main technologies and principles used (or planned
 
 - Spring Boot 2, Spring Framework 5, Spring Security, Spring Data (paging, filtering)
 - Jackson 2.13
-- [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson)* - Java - JSON-LD (de)serialization library
+- [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson) - Java - JSON-LD (de)serialization library
 - [JOPA](https://github.com/kbss-cvut/jopa) - persistence library for the Semantic Web
-- JUnit 5* (RT used 4), Mockito 4* (RT used 1), Hamcrest 2* (RT used 1)
-- Servlet API 4* (RT used 3.0.1)
-- JSON Web Tokens* (CSRF protection not necessary for JWT)
+- JUnit 5 (RT used 4), Mockito 4 (RT used 1), Hamcrest 2 (RT used 1)
+- Servlet API 4 (RT used 3.0.1)
+- JSON Web Tokens (CSRF protection not necessary for JWT)
 - SLF4J + Logback
-- CORS* (for separate frontend)
-- Java bean validation (JSR 380)*
-
-_* Technology not used in [INBAS RT](https://github.com/kbss-cvut/reporting-tool)_
+- CORS (for separate frontend)
+- Java bean validation (JSR 380)
 
 
 ## Ontology
@@ -63,20 +61,23 @@ the [JavaMelody Spring Boot Starter docs](https://github.com/javamelody/javamelo
 
 ## Documentation
 
-TermIt REST API is tentatively documented on [SwaggerHub](https://app.swaggerhub.com/apis/ledvima1/TermIt/) under the
-appropriate version.
+TermIt REST API is available for each instance via [Swagger UI](https://swagger.io/tools/swagger-ui/). It is accessible
+at `http://SERVER_URL/PATH/swagger-ui/index.html`, where `SERVER_URL` is the URL of the server at which TermIt backend
+is running and `PATH` is the context path. A link to the API documentation is also available in the footer of the TermIt UI.
 
 Build configuration and deployment is described in [setup.md](doc/setup.md).
 
-## Dockerization
+## Docker
 
-The docker image of TermIt backend can be built by
+The Docker image of TermIt backend alone can be built by
 `docker build -t termit-server .`
 
 Then, TermIt can be run and exposed at the port 8080 as
 `sudo docker run -e REPOSITORY_URL=<GRAPHDB_REPOSITORY_URL> -p 8080:8080 termit-server`
 
 An optional argument is `<GRAPHDB_REPOSITORY_URL>` pointing to the RDF4J/GraphDB repository.
+
+TermIt Docker images are also published to [DockerHub](https://hub.docker.com/r/kbsscvut/termit).
 
 ## Links
 
