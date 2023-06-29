@@ -52,12 +52,21 @@ public class Generator {
     }
 
     /**
-     * Generates a (pseudo) random URI, usable for test individuals.
+     * Generates a (pseudo) random URI.
      *
      * @return Random URI
      */
     public static URI generateUri() {
         return URI.create(Environment.BASE_URI + "/randomInstance" + randomInt());
+    }
+
+    /**
+     * Generates a (pseudo) random URI and returns it as a string.
+     *
+     * @return Random URI string
+     */
+    public static String generateUriString() {
+        return generateUri().toString();
     }
 
     /**

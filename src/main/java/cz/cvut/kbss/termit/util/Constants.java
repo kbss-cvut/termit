@@ -34,6 +34,11 @@ import java.util.stream.Stream;
 public class Constants {
 
     /**
+     * Letters of the (English) alphabet.
+     */
+    public static final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
+
+    /**
      * URL path to the application's REST API.
      */
     public static final String REST_MAPPING_PATH = "/rest";

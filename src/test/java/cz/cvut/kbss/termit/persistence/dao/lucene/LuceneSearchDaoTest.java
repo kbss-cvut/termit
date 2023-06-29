@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao.lucene;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
-import cz.cvut.kbss.termit.dto.FullTextSearchResult;
+import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

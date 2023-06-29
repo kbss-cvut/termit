@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.dto;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.environment.Generator;
 import org.junit.jupiter.api.Test;
 
