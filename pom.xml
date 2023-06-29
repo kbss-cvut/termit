@@ -28,7 +28,7 @@
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>1.7.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>1.0.0-SNAPSHOT</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>1.0.0</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.12.3</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.19</org.aspectj.version>
 
@@ -130,7 +130,7 @@
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.1.5</version>
+            <version>0.2.0</version>
         </dependency>
 
         <!-- Spring -->
