@@ -77,7 +77,7 @@ Then, TermIt can be run and exposed at the port 8080 as
 
 An optional argument is `<GRAPHDB_REPOSITORY_URL>` pointing to the RDF4J/GraphDB repository.
 
-TermIt Docker images are also build and published to [DockerHub](https://hub.docker.com/r/kbsscvut/termit).
+TermIt Docker images are also published to [DockerHub](https://hub.docker.com/r/kbsscvut/termit).
 
 ## Links
 
