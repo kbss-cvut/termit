@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.termit.config.SecurityConfig;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
