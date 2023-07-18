@@ -14,6 +14,7 @@ import cz.cvut.kbss.termit.model.comment.CommentReaction;
 import cz.cvut.kbss.termit.model.comment.Comment_;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,7 +79,10 @@ class CommentServiceTest extends BaseServiceTestRunner {
         transactional(() -> {
             final EntityDescriptor descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
             descriptor.addAttributeContext(Comment_.author, null);
-            comments.forEach(c -> em.persist(c, descriptor));
+            comments.forEach(c -> {
+                em.persist(c, descriptor);
+                c.setCreated(Utils.timestamp().minusSeconds(5));
+            });
         });
 
         final List<Comment> result = sut.findAll(asset);
