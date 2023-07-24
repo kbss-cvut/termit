@@ -92,7 +92,10 @@ class CommentDaoTest extends BaseDaoTestRunner {
     @Test
     void updateSetsLastModifiedValue() {
         final Comment comment = generateComment(Generator.generateUri());
-        transactional(() -> em.persist(comment, createDescriptor()));
+        transactional(() -> {
+            em.persist(comment, createDescriptor());
+            comment.setCreated(Utils.timestamp().minus(1, ChronoUnit.DAYS));
+        });
 
         comment.setContent("Updated content.");
         transactional(() -> sut.update(comment));
@@ -232,8 +235,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllByAssetAndTimeIntervalAllowsMissingAsset() {
         final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
-                                                .collect(
-                                                        Collectors.toList());
+                                                .collect(Collectors.toList());
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {
@@ -253,8 +255,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllByAssetAndTimeIntervalReturnsCommentsEditedInSpecifiedTimeInterval() {
         final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
-                                                .collect(
-                                                        Collectors.toList());
+                                                .collect(Collectors.toList());
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {
