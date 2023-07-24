@@ -51,7 +51,7 @@ public class LanguageController extends BaseController {
     @PreAuthorize("permitAll()")    // No need to secure this
     @GetMapping(value = "/types", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<Term> getAll() {
-        return service.getTypes();
+        return service.getTermTypes();
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

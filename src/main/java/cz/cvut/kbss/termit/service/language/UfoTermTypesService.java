@@ -21,7 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
@@ -30,7 +30,6 @@ import org.apache.jena.vocabulary.SKOS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -39,19 +38,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Jena-based implementation of {@link LanguageService}.
- *
- * It uses Jena to load and access languages not stored in the application main repository.
+ * Provides UFO-compliant language for classification of terms.
+ * <p>
+ * It uses Jena to load and term types from the provided configuration file.
  */
-@Qualifier("jena")
 @Service
-public class LanguageServiceJena extends LanguageService {
+public class UfoTermTypesService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LanguageServiceJena.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UfoTermTypesService.class);
+
+    private final ClassPathResource languageTtlUrl;
 
     @Autowired
-    public LanguageServiceJena(DataRepositoryService dataService, ClassPathResource languageTtlUrl) {
-        super(dataService, languageTtlUrl);
+    public UfoTermTypesService(ClassPathResource languageTtlUrl) {
+        this.languageTtlUrl = languageTtlUrl;
     }
 
     /**
@@ -62,7 +62,7 @@ public class LanguageServiceJena extends LanguageService {
     public List<Term> getTypes() {
         try {
             final Model m = ModelFactory.createOntologyModel();
-            m.read(resource.getURL().toString(), "text/turtle");
+            m.read(languageTtlUrl.getURL().toString(), Constants.MediaType.TURTLE);
 
             final List<Term> terms = new ArrayList<>();
             m.listSubjectsWithProperty(RDF.type, ResourceFactory.createResource(Vocabulary.s_c_term))

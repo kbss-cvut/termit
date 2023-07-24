@@ -18,7 +18,7 @@ import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.List;
@@ -27,27 +27,30 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A service that fetches parts of UFO-compliant languages for the use in TermIt.
+ * A service that fetches parts of languages for the use in TermIt.
  * <p>
  * A language in this context means a formal set of concepts with well-defined meaning and relationships.
  */
-public abstract class LanguageService {
+@Service
+public class LanguageService {
 
     private final DataRepositoryService dataService;
 
-    protected final ClassPathResource resource;
+    private final UfoTermTypesService termTypesService;
 
-    public LanguageService(DataRepositoryService dataService, ClassPathResource languageTtlUrl) {
+    public LanguageService(DataRepositoryService dataService, UfoTermTypesService termTypesService) {
         this.dataService = dataService;
-        this.resource = languageTtlUrl;
+        this.termTypesService = termTypesService;
     }
 
     /**
-     * Gets all UFO-based types.
+     * Gets all available term types.
      *
-     * @return all types
+     * @return List of available term types
      */
-    public abstract List<Term> getTypes();
+    public List<Term> getTermTypes() {
+        return termTypesService.getTypes();
+    }
 
     /**
      * Gets resources representing access levels.
