@@ -54,13 +54,24 @@ public class LanguageService {
 
     /**
      * Gets resources representing access levels.
-     *
+     * <p>
      * The resources correspond to individuals mapped by {@link cz.cvut.kbss.termit.model.acl.AccessLevel}.
+     *
      * @return List of resources
      */
     public List<RdfsResource> getAccessLevels() {
         return Stream.of(AccessLevel.values()).map(al -> dataService.find(URI.create(al.getIri())))
                      .flatMap(Optional::stream)
                      .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets a list of possible states a term can have.
+     *
+     * @return List of resources representing available term states
+     */
+    public List<RdfsResource> getTermStates() {
+        // TODO
+        return null;
     }
 }

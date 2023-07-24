@@ -22,14 +22,17 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.Vocabulary;
-import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.SKOS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +53,7 @@ public class UfoTermTypesService {
     private final ClassPathResource languageTtlUrl;
 
     @Autowired
-    public UfoTermTypesService(ClassPathResource languageTtlUrl) {
+    public UfoTermTypesService(@Qualifier("termTypesLanguage") ClassPathResource languageTtlUrl) {
         this.languageTtlUrl = languageTtlUrl;
     }
 
@@ -65,7 +68,7 @@ public class UfoTermTypesService {
             m.read(languageTtlUrl.getURL().toString(), Constants.MediaType.TURTLE);
 
             final List<Term> terms = new ArrayList<>();
-            m.listSubjectsWithProperty(RDF.type, ResourceFactory.createResource(Vocabulary.s_c_term))
+            m.listSubjectsWithProperty(RDF.type, SKOS.Concept)
              .forEachRemaining(c -> {
                  final Term t = new Term();
                  t.setUri(URI.create(c.getURI()));

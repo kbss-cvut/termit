@@ -26,9 +26,9 @@ class UfoTermTypesServiceTest {
 
     @Test
     void getTypesForBasicLanguage() throws IOException {
-        final URL url = ClassLoader.getSystemResource("languages/language.ttl");
+        final URL url = ClassLoader.getSystemResource("languages/types.ttl");
         when(languageTtlUrl.getURL()).thenReturn(url);
         List<Term> result = sut.getTypes();
-        assertEquals(8, result.size());
+        assertEquals(10, result.size());
     }
 }
