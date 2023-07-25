@@ -113,8 +113,8 @@ public class SearchDao {
         return q.setParameter("term", URI.create(SKOS.CONCEPT))
                 .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
                 .setParameter("inVocabulary",
-                              URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                .setParameter("isDraft", URI.create(Vocabulary.s_p_je_draft))
+                        URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+                .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
                 .setParameter("langTag", config.getLanguage(), null)
                 .setParameter("searchString", searchString, null);
     }
