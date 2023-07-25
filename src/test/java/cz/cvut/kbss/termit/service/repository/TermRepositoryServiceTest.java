@@ -18,7 +18,6 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -36,7 +35,6 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
-import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -53,8 +51,18 @@ import java.util.List;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TermRepositoryServiceTest extends BaseServiceTestRunner {
@@ -650,29 +658,17 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void setStatusToDraftSetsTermDraftFlagToTrueAndUpdatesIt() {
+    void setStateToDraftSetsTermStateAndUpdatesIt() {
         final Term term = generateTermWithId();
         term.setGlossary(vocabulary.getGlossary().getUri());
         term.setVocabulary(vocabulary.getUri());
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
-        sut.setStatus(term, TermStatus.DRAFT);
+        final URI state = Generator.randomItem(Generator.TERM_STATES);
+        sut.setState(term, state);
 
         final Term result = em.find(Term.class, term.getUri());
         assertNotNull(result);
-        assertTrue(result.isDraft());
-    }
-
-    @Test
-    void setStatusToConfirmedSetsTermDraftFlagToFalseAndUpdatesIt() {
-        final Term term = generateTermWithId();
-        term.setGlossary(vocabulary.getGlossary().getUri());
-        term.setVocabulary(vocabulary.getUri());
-        transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
-        sut.setStatus(term, TermStatus.CONFIRMED);
-
-        final Term result = em.find(Term.class, term.getUri());
-        assertNotNull(result);
-        assertFalse(result.isDraft());
+        assertEquals(state, result.getState());
     }
 
     @Test
@@ -681,18 +677,19 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         term.setGlossary(vocabulary.getGlossary().getUri());
         term.setVocabulary(vocabulary.getUri());
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
-        sut.setStatus(term, TermStatus.DRAFT);
+        final URI state = Generator.randomItem(Generator.TERM_STATES);
+        sut.setState(term, state);
 
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
                 assertTrue(conn.hasStatement(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft), null, false,
-                                             vf.createIRI(vocabulary.getUri().toString())));
+                                cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu), null, false,
+                        vf.createIRI(vocabulary.getUri().toString())));
                 assertEquals(1,
-                             Iterations.asList(conn.getStatements(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft), null)).size());
+                        conn.getStatements(vf.createIRI(term.getUri().toString()), vf.createIRI(
+                                cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu), null).stream().count());
             }
         });
     }

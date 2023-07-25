@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
@@ -35,7 +34,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.NotAcceptableStatusException;
 
 import java.io.IOException;
@@ -643,12 +653,12 @@ public class TermController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Sets status of the term with the specified identifier.")
+               description = "Sets state of the term with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Term status successfully set."),
+            @ApiResponse(responseCode = "204", description = "Term state successfully set."),
             @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
     })
-    @PutMapping(value = "terms/{localName}/status", consumes = MediaType.ALL_VALUE)
+    @PutMapping(value = "terms/{localName}/state", consumes = MediaType.ALL_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateStatus(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
@@ -657,12 +667,13 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-            @Parameter(description = "The status to set.")
-            @RequestBody String status) {
+            @Parameter(description = "The state to set.")
+            @RequestBody String state) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        final URI stateUri = URI.create(state);
         final Term t = termService.findRequired(termUri);
-        termService.setStatus(t, TermStatus.valueOf(status));
-        LOG.debug("Status of term {} set to '{}'.", t, status);
+        termService.setState(t, stateUri);
+        LOG.debug("State of term {} set to {}.", t, Utils.uriToString(stateUri));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

@@ -39,7 +39,15 @@ import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -203,41 +211,26 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Marks the specified term as draft.
+     * Sets state of the specified term to the specified value.
      *
-     * @param term Term to mark as draft
+     * @param term  Term whose state to update
+     * @param state State to set
      */
-    public void setAsDraft(Term term) {
-        Objects.requireNonNull(term);
-        setTermDraftStatusTo(term, true);
-    }
-
-
-    private void setTermDraftStatusTo(Term term, boolean draft) {
+    public void setState(Term term, URI state) {
         evictPossiblyCachedReferences(term);
         em.createNativeQuery("DELETE {" +
-                                     "?t ?hasStatus ?oldDraft ." +
-                                     "} INSERT {" +
-                                     "GRAPH ?g {" +
-                                     "?t ?hasStatus ?newDraft ." +
-                                     "}} WHERE {" +
-                                     "OPTIONAL {?t ?hasStatus ?oldDraft .}" +
-                                     "GRAPH ?g {" +
-                                     "?t ?inScheme ?glossary ." +
-                                     "}}").setParameter("t", term)
-          .setParameter("hasStatus", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft))
+                  "?t ?hasState ?oldState ." +
+                  "} INSERT {" +
+                  "GRAPH ?g {" +
+                  "?t ?hasState ?newState ." +
+                  "}} WHERE {" +
+                  "OPTIONAL {?t ?hasState ?oldState .}" +
+                  "GRAPH ?g {" +
+                  "?t ?inScheme ?glossary ." +
+                  "}}").setParameter("t", term)
+          .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu))
           .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
-          .setParameter("newDraft", draft).executeUpdate();
-    }
-
-    /**
-     * Marks the specified term as confirmed.
-     *
-     * @param term Term to mark as confirmed
-     */
-    public void setAsConfirmed(Term term) {
-        Objects.requireNonNull(term);
-        setTermDraftStatusTo(term, false);
+          .setParameter("newState", state).executeUpdate();
     }
 
     private void evictCachedSubTerms(Set<? extends AbstractTerm> originalParents,

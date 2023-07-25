@@ -1,7 +1,13 @@
 package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.Inferred;
+import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Transient;
+import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
@@ -45,9 +51,6 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
     private URI state;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
-    private Boolean draft;
-
     @Types
     private Set<String> types;
 
@@ -64,7 +67,6 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
             this.definition = new MultilingualString(other.getDefinition().getValue());
         }
         this.state = other.state;
-        this.draft = other.draft;
         this.glossary = other.glossary;
         this.vocabulary = other.vocabulary;
         if (other.getSubTerms() != null) {
@@ -124,14 +126,6 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
 
     public void setState(URI state) {
         this.state = state;
-    }
-
-    public Boolean isDraft() {
-        return draft == null || draft;
-    }
-
-    public void setDraft(Boolean draft) {
-        this.draft = draft;
     }
 
     @Override

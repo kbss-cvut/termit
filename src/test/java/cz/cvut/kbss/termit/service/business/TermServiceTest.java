@@ -2,7 +2,6 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -49,8 +48,17 @@ import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TermServiceTest {
@@ -492,11 +500,11 @@ class TermServiceTest {
     }
 
     @Test
-    void setStatusSetsStatusViaRepositoryService() {
+    void setStateSetsStateViaRepositoryService() {
         final Term term = generateTermWithId();
 
-        sut.setStatus(term, TermStatus.DRAFT);
-        verify(termRepositoryService).setStatus(term, TermStatus.DRAFT);
+        sut.setState(term, Generator.TERM_STATES[2]);
+        verify(termRepositoryService).setState(term, Generator.TERM_STATES[2]);
     }
 
     @Test

@@ -1136,7 +1136,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
         final List<TermDto> rootsBefore = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC,
-                                                           Collections.emptyList());
+                Collections.emptyList());
         assertEquals(1, rootsBefore.size());
         assertTrue(rootsBefore.get(0).getSubTerms().stream().anyMatch(ti -> ti.getUri().equals(term.getUri())));
 
@@ -1145,5 +1145,26 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<TermDto> roots = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, roots.size());
         assertThat(roots.get(0).getSubTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+    }
+
+    @Test
+    void setStateUpdatesStateOfSpecifiedTerm() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setState(Generator.TERM_STATES[0]);
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            term.setGlossary(vocabulary.getGlossary().getUri());
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+
+        transactional(() -> sut.setState(term, Generator.TERM_STATES[1]));
+        final Term result = em.find(Term.class, term.getUri());
+        assertEquals(Generator.TERM_STATES[1], result.getState());
+        assertFalse(em.createNativeQuery("ASK WHERE { ?x ?hasState ?oldState . }", Boolean.class)
+                      .setParameter("x", term)
+                      .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu))
+                      .setParameter("oldState", Generator.TERM_STATES[0]).getSingleResult());
     }
 }

@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -33,7 +32,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -490,8 +494,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     @Transactional
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
-    public void setStatus(Term term, TermStatus status) {
-        repositoryService.setStatus(term, status);
+    public void setState(Term term, URI state) {
+        repositoryService.setState(term, state);
     }
 
     /**

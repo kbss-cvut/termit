@@ -17,7 +17,6 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
@@ -44,7 +43,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.validation.Validator;
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -130,15 +133,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Transactional
-    public void setStatus(Term term, TermStatus status) {
+    public void setState(Term term, URI state) {
         Objects.requireNonNull(term);
-        Objects.requireNonNull(status);
+        Objects.requireNonNull(state);
         SnapshotProvider.verifySnapshotNotModified(term);
-        if (status == TermStatus.CONFIRMED) {
-            termDao.setAsConfirmed(term);
-        } else {
-            termDao.setAsDraft(term);
-        }
+        // TODO Check for state validity?
+        termDao.setState(term, state);
     }
 
     @Transactional
