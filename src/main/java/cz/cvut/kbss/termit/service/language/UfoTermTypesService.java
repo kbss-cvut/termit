@@ -14,6 +14,7 @@
  */
 package cz.cvut.kbss.termit.service.language;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.LanguageRetrievalException;
 import cz.cvut.kbss.termit.model.Term;
@@ -25,8 +26,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
@@ -45,9 +45,9 @@ import java.util.stream.Collectors;
 @Service
 public class UfoTermTypesService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UfoTermTypesService.class);
-
     private final ClassPathResource languageTtlUrl;
+
+    private List<Term> cache;
 
     @Autowired
     public UfoTermTypesService(@Qualifier("termTypesLanguage") ClassPathResource languageTtlUrl) {
@@ -60,6 +60,20 @@ public class UfoTermTypesService {
      * @return List of types as {@code Term}s
      */
     public List<Term> getTypes() {
+        if (cache == null) {
+            cache = loadTermTypes();
+        }
+        return cache.stream().map(t -> {
+            final Term copy = new Term(t.getUri());
+            copy.setLabel(new MultilingualString(t.getLabel().getValue()));
+            copy.setDescription(new MultilingualString(t.getDescription().getValue()));
+            copy.setSubTerms(t.getSubTerms().stream().map(ti -> new TermInfo(ti.getUri())).collect(Collectors.toSet()));
+            return copy;
+        }).collect(Collectors.toList());
+    }
+
+    @NotNull
+    private List<Term> loadTermTypes() {
         try {
             final Model model = Rio.parse(languageTtlUrl.getInputStream(), RDFFormat.TURTLE);
             return model.filter(null, RDF.TYPE, SKOS.CONCEPT)

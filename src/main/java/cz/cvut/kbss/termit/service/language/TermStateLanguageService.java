@@ -14,12 +14,14 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,8 @@ public class TermStateLanguageService {
 
     private final ClassPathResource termStatesLanguageTtl;
 
+    private List<RdfsResource> cache;
+
     public TermStateLanguageService(@Qualifier("termStatesLanguage") ClassPathResource termStatesLanguageTtl) {
         this.termStatesLanguageTtl = termStatesLanguageTtl;
     }
@@ -43,6 +47,14 @@ public class TermStateLanguageService {
      * @return List of resources representing possible term states
      */
     public List<RdfsResource> getTermStates() {
+        if (cache == null) {
+            this.cache = loadTermStates();
+        }
+        return cache.stream().map(RdfsResource::new).collect(Collectors.toList());
+    }
+
+    @NotNull
+    private List<RdfsResource> loadTermStates() {
         try {
             final ValueFactory vf = SimpleValueFactory.getInstance();
             final Model model = Rio.parse(termStatesLanguageTtl.getInputStream(), RDFFormat.TURTLE);
