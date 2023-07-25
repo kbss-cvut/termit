@@ -334,3 +334,11 @@ termit-pojem:úroveň-přístupových-oprávnění
 
 <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/správa>
         a               owl:NamedIndividual .
+
+termit-pojem:úvodní-stav-pojmu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
+
+termit-pojem:koncový-stav-pojmu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
