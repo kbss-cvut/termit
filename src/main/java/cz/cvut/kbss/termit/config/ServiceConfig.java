@@ -77,6 +77,11 @@ public class ServiceConfig {
         return new ClassPathResource("languages/types.ttl");
     }
 
+    @Bean("termStatesLanguage")
+    public ClassPathResource termStatesLanguageFile() {
+        return new ClassPathResource("languages/states.ttl");
+    }
+
     @Bean
     ChangeTrackingAspect changeTrackingAspect() {
         // Need to create the aspect as a bean, so that it can be injected into

@@ -87,6 +87,11 @@ public class TestServiceConfig {
         return new ClassPathResource("languages/types.ttl");
     }
 
+    @Bean("termStatesLanguage")
+    public ClassPathResource termStatesLanguageFile() {
+        return new ClassPathResource("languages/states.ttl");
+    }
+
     @Bean
     ChangeTrackingAspect changeTrackingAspect() {
         return Aspects.aspectOf(ChangeTrackingAspect.class);

@@ -38,9 +38,13 @@ public class LanguageService {
 
     private final UfoTermTypesService termTypesService;
 
-    public LanguageService(DataRepositoryService dataService, UfoTermTypesService termTypesService) {
+    private final TermStateLanguageService termStatesService;
+
+    public LanguageService(DataRepositoryService dataService, UfoTermTypesService termTypesService,
+                           TermStateLanguageService termStatesService) {
         this.dataService = dataService;
         this.termTypesService = termTypesService;
+        this.termStatesService = termStatesService;
     }
 
     /**
@@ -71,7 +75,6 @@ public class LanguageService {
      * @return List of resources representing available term states
      */
     public List<RdfsResource> getTermStates() {
-        // TODO
-        return null;
+        return termStatesService.getTermStates();
     }
 }
