@@ -139,7 +139,10 @@ class CommentDaoTest extends BaseDaoTestRunner {
         final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).collect(
                 Collectors.toList());
         final EntityDescriptor descriptor = createDescriptor();
-        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
+        transactional(() -> comments.forEach(c -> {
+            em.persist(c, descriptor);
+            c.setCreated(Utils.timestamp().minusSeconds(10));
+        }));
         final Comment anotherComment = generateComment(Generator.generateUri());
         transactional(() -> em.persist(anotherComment, descriptor));
 
