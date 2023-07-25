@@ -39,9 +39,9 @@ public class CsvTermExporter {
         consolidateAndExportMulti(sb, t.getRelatedMatch(), t.getInverseRelatedMatch(),
                                   ti -> ti.getUri().toString());
         consolidateAndExportMulti(sb, t.getExactMatchTerms(), t.getInverseExactMatchTerms(),
-                                  ti -> ti.getUri().toString());
+                ti -> ti.getUri().toString());
         sb.append(',')
-          .append(TabularTermExportUtils.draftToStatus(t));
+          .append(t.getState() != null ? CsvUtils.sanitizeString(t.getState().toString()) : "");
         exportCollection(sb, t.getNotations(), String::toString);
         exportCollection(sb, t.getExamples(),
                          str -> TabularTermExportUtils.exportMultilingualString(str, Function.identity(), true));

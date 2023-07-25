@@ -42,6 +42,9 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    private URI state;
+
     @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
     private Boolean draft;
 
@@ -60,6 +63,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         if (other.getDefinition() != null) {
             this.definition = new MultilingualString(other.getDefinition().getValue());
         }
+        this.state = other.state;
         this.draft = other.draft;
         this.glossary = other.glossary;
         this.vocabulary = other.vocabulary;
@@ -112,6 +116,14 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
 
     public void setVocabulary(URI vocabulary) {
         this.vocabulary = vocabulary;
+    }
+
+    public URI getState() {
+        return state;
+    }
+
+    public void setState(URI state) {
+        this.state = state;
     }
 
     public Boolean isDraft() {

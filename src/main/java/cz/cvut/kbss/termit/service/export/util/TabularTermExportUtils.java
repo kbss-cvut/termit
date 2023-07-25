@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.service.export.util;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.CsvUtils;
 
 import java.util.function.Function;
@@ -16,10 +15,6 @@ public class TabularTermExportUtils {
 
     private TabularTermExportUtils() {
         throw new AssertionError();
-    }
-
-    public static String draftToStatus(Term t) {
-        return t.isDraft() ? "DRAFT" : "CONFIRMED";
     }
 
     /**
