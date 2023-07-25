@@ -1,34 +1,30 @@
 /**
- * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * TermIt Copyright (C) 2019 Czech Technical University in Prague
+ * <p>
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ * <p>
+ * You should have received a copy of the GNU General Public License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.language;
 
-import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.exception.CannotFetchTypesException;
+import cz.cvut.kbss.termit.exception.LanguageRetrievalException;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.util.Constants;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
-import org.apache.jena.vocabulary.SKOS;
+import cz.cvut.kbss.termit.util.Utils;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.SKOS;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +32,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Provides UFO-compliant language for classification of terms.
@@ -64,42 +61,22 @@ public class UfoTermTypesService {
      */
     public List<Term> getTypes() {
         try {
-            final Model m = ModelFactory.createOntologyModel();
-            m.read(languageTtlUrl.getURL().toString(), Constants.MediaType.TURTLE);
-
-            final List<Term> terms = new ArrayList<>();
-            m.listSubjectsWithProperty(RDF.type, SKOS.Concept)
-             .forEachRemaining(c -> {
-                 final Term t = new Term();
-                 t.setUri(URI.create(c.getURI()));
-                 t.setLabel(create(c,RDFS.label));
-                 t.setDescription(create(c,RDFS.comment));
-                 t.setSubTerms(c.listProperties(SKOS.narrower)
-                                .mapWith(s -> new TermInfo(URI.create(s.getObject().asResource().getURI()))).toSet());
-                 terms.add(t);
-             });
-            return terms;
-        } catch (Exception e) {
-            LOG.error("Unable to retrieve types.", e);
-            throw new CannotFetchTypesException(e);
+            final Model model = Rio.parse(languageTtlUrl.getInputStream(), RDFFormat.TURTLE);
+            return model.filter(null, RDF.TYPE, SKOS.CONCEPT)
+                        .stream().map(s -> {
+                        final org.eclipse.rdf4j.model.Resource type = s.getSubject();
+                        final Term term = new Term(URI.create(type.stringValue()));
+                        final Model statements = model.filter(type, null, null);
+                        term.setLabel(Utils.resolveTranslations(type, org.eclipse.rdf4j.model.vocabulary.RDFS.LABEL, statements));
+                        term.setDescription(Utils.resolveTranslations(type, org.eclipse.rdf4j.model.vocabulary.RDFS.COMMENT, statements));
+                        term.setSubTerms(statements.filter(type, SKOS.NARROWER, null).stream()
+                                                   .filter(st -> st.getObject().isIRI())
+                                                   .map(st -> new TermInfo(URI.create(st.getObject().stringValue())))
+                                                   .collect(Collectors.toSet()));
+                        return term;
+                    }).collect(Collectors.toList());
+        } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
+            throw new LanguageRetrievalException("Unable to load term types from file " + languageTtlUrl.getPath(), e);
         }
-    }
-
-    /**
-     * Creates a multilingual string from language variants of property values of a resource.
-     *
-     * @param resource source resource of the property
-     * @param property property, value of which are used to construct the multilingual string
-     */
-    private MultilingualString create(final Resource resource, final Property property) {
-        final MultilingualString s = new MultilingualString();
-        resource.listProperties(property).forEachRemaining( st -> {
-            if (st.getLanguage() != null) {
-                s.set(st.getLanguage(), st.getObject().asLiteral().getLexicalForm());
-            } else {
-                LOG.debug("Ignoring statement {}, no language tag found.", st);
-            }
-        });
-        return s;
     }
 }

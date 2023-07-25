@@ -1,11 +1,9 @@
 package cz.cvut.kbss.termit.service.language;
 
-import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.RdfsResource;
-import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.LanguageRetrievalException;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -50,29 +48,18 @@ public class TermStateLanguageService {
             final Model model = Rio.parse(termStatesLanguageTtl.getInputStream(), RDFFormat.TURTLE);
             return model.filter(null, RDF.TYPE, vf.createIRI(Vocabulary.s_c_stav_pojmu))
                         .stream().map(s -> {
-                        final Resource type = s.getSubject();
+                        final Resource state = s.getSubject();
                         final RdfsResource res = new RdfsResource();
-                        res.setUri(URI.create(type.stringValue()));
-                        final Model statements = model.filter(type, null, null);
-                        res.setTypes(statements.filter(type, RDF.TYPE, null).stream()
+                        res.setUri(URI.create(state.stringValue()));
+                        final Model statements = model.filter(state, null, null);
+                        res.setTypes(statements.filter(state, RDF.TYPE, null).stream()
                                                .map(ts -> ts.getObject().stringValue()).collect(Collectors.toSet()));
-                        res.setLabel(extractString(type, RDFS.LABEL, statements));
-                        res.setComment(extractString(type, RDFS.COMMENT, statements));
+                        res.setLabel(Utils.resolveTranslations(state, RDFS.LABEL, statements));
+                        res.setComment(Utils.resolveTranslations(state, RDFS.COMMENT, statements));
                         return res;
                     }).collect(Collectors.toList());
         } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
-            throw new TermItException("Unable to load term states language file.", e);
+            throw new LanguageRetrievalException("Unable to load term states language from file " + termStatesLanguageTtl.getPath(), e);
         }
-    }
-
-    private MultilingualString extractString(Resource subj, IRI property, Model model) {
-        final MultilingualString s = new MultilingualString();
-        model.filter(subj, property, null).forEach(st -> {
-            if (st.getObject().isLiteral()) {
-                ((Literal) st.getObject()).getLanguage()
-                                          .ifPresent(lang -> s.set(lang, ((Literal) st.getObject()).getLabel()));
-            }
-        });
-        return s;
     }
 }

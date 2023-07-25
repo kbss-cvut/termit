@@ -18,14 +18,11 @@
 package cz.cvut.kbss.termit.exception;
 
 /**
- * Exception thrown whenever the types cannot be fetched.
+ * Exception thrown when a language (e.g., types, states) cannot be loaded.
  */
-public class CannotFetchTypesException extends TermItException {
+public class LanguageRetrievalException extends TermItException {
 
-    protected CannotFetchTypesException() {
-    }
-
-    public CannotFetchTypesException(Throwable cause) {
-        super(cause);
+    public LanguageRetrievalException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
