@@ -114,7 +114,7 @@ termit:glosář  a        owl:Ontology , <http://www.w3.org/2004/02/skos/core#Co
         owl:imports     <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/glosář> , <https://slovník.gov.cz/datový/pracovní-prostor/glosář> , <http://rdfs.org/sioc/ns#> , <http://www.w3.org/ns/activitystreams#> , <http://purl.org/vocab/vann/> ;
         owl:versionIRI  <http://onto.fel.cvut.cz/ontologies/application/termit/glosář/verze/1.1.2> ;
         <http://www.w3.org/2004/02/skos/core#hasTopConcept>
-                termit-pojem:je-selektorem-definice-termu , termit-pojem:přiřazení-termu , termit-pojem:má-cíl , termit-pojem:selektor-definice , termit-pojem:je-přiřazením-termu , termit-pojem:má-suffix-text-quote , termit-pojem:záznam-o-textové-analýze , termit-pojem:má-přesný-text-quote , termit-pojem:selektor , termit-pojem:má-koncovou-pozici , termit-pojem:má-prefix-text-quote , termit-pojem:má-slovník-pro-analýzu , termit-pojem:uživatel-termitu , termit-pojem:cíl , termit-pojem:má-selektor , termit-pojem:má-zdroj-definice-termu , termit-pojem:má-analyzovaný-zdroj , termit-pojem:má-startovní-pozici, termit-pojem:je-draft .
+                termit-pojem:je-selektorem-definice-termu , termit-pojem:přiřazení-termu , termit-pojem:má-cíl , termit-pojem:selektor-definice , termit-pojem:je-přiřazením-termu , termit-pojem:má-suffix-text-quote , termit-pojem:záznam-o-textové-analýze , termit-pojem:má-přesný-text-quote , termit-pojem:selektor , termit-pojem:má-koncovou-pozici , termit-pojem:má-prefix-text-quote , termit-pojem:má-slovník-pro-analýzu , termit-pojem:uživatel-termitu , termit-pojem:cíl , termit-pojem:má-selektor , termit-pojem:má-zdroj-definice-termu , termit-pojem:má-analyzovaný-zdroj , termit-pojem:má-startovní-pozici , termit-pojem:úvodní-stav-pojmu , termit-pojem:koncový-stav-pojmu .
 
 termit-pojem:má-koncovou-pozici
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
@@ -151,15 +151,6 @@ termit-pojem:má-zdroj-definice-termu
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "má zdroj definice termu"@cs .
-
-termit-pojem:je-draft
-        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
-        <http://www.w3.org/2004/02/skos/core#broader>
-                <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
-        <http://www.w3.org/2004/02/skos/core#inScheme>
-                termit:glosář ;
-        <http://www.w3.org/2004/02/skos/core#prefLabel>
-                "je draft"@cs .
 
 termit-pojem:selektor
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
