@@ -16,8 +16,22 @@ package cz.cvut.kbss.termit.rest.handler;
 
 import cz.cvut.kbss.jopa.exceptions.OWLPersistenceException;
 import cz.cvut.kbss.jsonld.exception.JsonLdException;
+import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
+import cz.cvut.kbss.termit.exception.AuthorizationException;
+import cz.cvut.kbss.termit.exception.DisabledOperationException;
+import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.exception.ResourceExistsException;
+import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
+import cz.cvut.kbss.termit.exception.SuppressibleLogging;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
-import cz.cvut.kbss.termit.exception.*;
+import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
+import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import org.slf4j.Logger;
@@ -193,12 +207,19 @@ public class RestExceptionHandler {
                                                                   SnapshotNotEditableException e) {
         logException(e);
         return new ResponseEntity<>(ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()),
-                                    HttpStatus.CONFLICT);
+                HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> unsupportedSearchFacetException(HttpServletRequest request,
                                                                      UnsupportedSearchFacetException e) {
+        logException(e);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> invalidLanguageConstantException(HttpServletRequest request,
+                                                                      InvalidLanguageConstantException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
     }

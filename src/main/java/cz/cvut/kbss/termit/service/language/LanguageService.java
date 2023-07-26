@@ -15,13 +15,16 @@
 package cz.cvut.kbss.termit.service.language;
 
 import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
+import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,5 +79,17 @@ public class LanguageService {
      */
     public List<RdfsResource> getTermStates() {
         return termStatesService.getTermStates();
+    }
+
+    /**
+     * Checks whether the specified identifier represents a known term state.
+     *
+     * @param state State identifier to validate
+     * @throws InvalidLanguageConstantException If the specified identifier is not a state
+     */
+    public void verifyStateExists(URI state) {
+        if (state != null && getTermStates().stream().noneMatch(u -> Objects.equals(u.getUri(), state))) {
+            throw new InvalidLanguageConstantException("Unknown term state " + Utils.uriToString(state));
+        }
     }
 }

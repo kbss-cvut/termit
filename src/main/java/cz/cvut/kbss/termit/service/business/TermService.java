@@ -17,6 +17,7 @@ import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
+import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -64,6 +65,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     private final CommentService commentService;
 
+    private final LanguageService languageService;
+
     private final Configuration config;
 
     @Autowired
@@ -71,7 +74,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
                        VocabularyContextMapper vocabularyContextMapper,
                        TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
                        TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
-                       CommentService commentService, Configuration config) {
+                       CommentService commentService, LanguageService languageService, Configuration config) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -80,6 +83,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         this.termOccurrenceService = termOccurrenceService;
         this.changeRecordService = changeRecordService;
         this.commentService = commentService;
+        this.languageService = languageService;
         this.config = config;
     }
 
@@ -312,12 +316,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                             () -> new NotFoundException(
-                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
-                                                  Comparator.nullsLast(Comparator.naturalOrder())))
-                     .collect(Collectors.toList());
+                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                              () -> new NotFoundException(
+                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
+                              Comparator.nullsLast(Comparator.naturalOrder())))
+                      .collect(Collectors.toList());
     }
 
     /**
@@ -386,6 +390,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public Term update(Term term) {
         Objects.requireNonNull(term);
         final Term original = repositoryService.findRequired(term.getUri());
+        languageService.verifyStateExists(term.getState());
         // Ensure the change is merged into the repo before analyzing other terms
         final Term result = repositoryService.update(term);
         if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
@@ -487,14 +492,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Updates the specified term's status to the specified value.
+     * Updates the specified term's state to the specified new value.
      *
-     * @param term   Term to update
-     * @param status New status
+     * @param term  Term to update
+     * @param state New state
      */
     @Transactional
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void setState(Term term, URI state) {
+        languageService.verifyStateExists(state);
         repositoryService.setState(term, state);
     }
 

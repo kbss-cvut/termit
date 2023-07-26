@@ -20,6 +20,7 @@ import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
+import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -86,6 +87,9 @@ class TermServiceTest {
 
     @Mock
     private CommentService commentService;
+
+    @Mock
+    private LanguageService languageService;
 
     @Spy
     private Configuration configuration = new Configuration();
@@ -321,8 +325,7 @@ class TermServiceTest {
     void updateInvokesTextAnalysisOnUpdatedTerm() {
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term original = generateTermWithId(vocabulary.getUri());
-        final Term toUpdate = new Term();
-        toUpdate.setUri(original.getUri());
+        final Term toUpdate = new Term(original.getUri());
         final String newDefinition = "This term has acquired a new definition";
         toUpdate.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
@@ -461,10 +464,8 @@ class TermServiceTest {
 
     @Test
     void updateInvokesTextAnalysisOnAllTermsInTermsVocabularyWhenLabelHasChanged() {
-        final Term original = generateTermWithId();
-        original.setVocabulary(vocabulary.getUri());
-        final Term update = new Term();
-        update.setUri(original.getUri());
+        final Term original = generateTermWithId(vocabulary.getUri());
+        final Term update = new Term(original.getUri());
         update.setLabel(new MultilingualString(original.getLabel().getValue()));
         update.setDefinition(new MultilingualString(original.getDefinition().getValue()));
         update.setDescription(new MultilingualString(original.getDescription().getValue()));
@@ -505,6 +506,17 @@ class TermServiceTest {
 
         sut.setState(term, Generator.TERM_STATES[2]);
         verify(termRepositoryService).setState(term, Generator.TERM_STATES[2]);
+    }
+
+    @Test
+    void setStateVerifiesThatStateExists() {
+        final Term term = generateTermWithId();
+        final URI state = Generator.randomItem(Generator.TERM_STATES);
+
+        sut.setState(term, state);
+        final InOrder inOrder = inOrder(languageService, termRepositoryService);
+        inOrder.verify(languageService).verifyStateExists(state);
+        inOrder.verify(termRepositoryService).setState(term, state);
     }
 
     @Test
@@ -579,5 +591,21 @@ class TermServiceTest {
 
         final Term result = sut.findVersionValidAt(term, instant);
         assertThat(result.getRelated(), hasItems(related, inverseRelated));
+    }
+
+    @Test
+    void updateVerifiesThatStateExistsTermState() {
+        final Term original = generateTermWithId(vocabulary.getUri());
+        when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
+        final Term update = new Term(original.getUri());
+        update.setLabel(new MultilingualString(original.getLabel().getValue()));
+        update.setDefinition(new MultilingualString(original.getDefinition().getValue()));
+        update.setDescription(new MultilingualString(original.getDescription().getValue()));
+        update.setVocabulary(vocabulary.getUri());
+        update.setState(Generator.randomItem(Generator.TERM_STATES));
+        sut.update(update);
+        final InOrder inOrder = inOrder(languageService, termRepositoryService);
+        inOrder.verify(languageService).verifyStateExists(update.getState());
+        inOrder.verify(termRepositoryService).update(update);
     }
 }
