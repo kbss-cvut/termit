@@ -92,4 +92,16 @@ public class LanguageService {
             throw new InvalidLanguageConstantException("Unknown term state " + Utils.uriToString(state));
         }
     }
+
+    /**
+     * Gets the initial term state.
+     * <p>
+     * That is, gets the state that a new term should be assigned by default. Note that the state language may not
+     * specify an initial state.
+     *
+     * @return Optional initial term state
+     */
+    public Optional<RdfsResource> getInitialTermState() {
+        return termStatesService.getInitialState();
+    }
 }

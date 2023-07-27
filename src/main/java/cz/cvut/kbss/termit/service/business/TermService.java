@@ -360,6 +360,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void persistRoot(Term term, Vocabulary owner) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(owner);
+        languageService.getInitialTermState().ifPresent(is -> term.setState(is.getUri()));
         repositoryService.addRootTermToVocabulary(term, owner);
         analyzeTermDefinition(term, owner.getUri());
         vocabularyService.runTextAnalysisOnAllTerms(owner);
@@ -375,6 +376,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void persistChild(Term child, Term parent) {
         Objects.requireNonNull(child);
         Objects.requireNonNull(parent);
+        languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
         analyzeTermDefinition(child, parent.getVocabulary());
         vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(parent.getVocabulary()));

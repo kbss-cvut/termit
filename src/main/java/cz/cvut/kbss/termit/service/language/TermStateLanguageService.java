@@ -21,8 +21,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -73,5 +73,18 @@ public class TermStateLanguageService {
         } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
             throw new LanguageRetrievalException("Unable to load term states language from file " + termStatesLanguageTtl.getPath(), e);
         }
+    }
+
+    /**
+     * Gets the initial term state.
+     * <p>
+     * That is, gets the state that a new term should be assigned by default. Note that the state language may not
+     * specify an initial state.
+     *
+     * @return Optional initial term state
+     */
+    public Optional<RdfsResource> getInitialState() {
+        return getTermStates().stream().filter(s -> s.getTypes().contains(Vocabulary.s_c_uvodni_stav_pojmu))
+                              .findFirst();
     }
 }
