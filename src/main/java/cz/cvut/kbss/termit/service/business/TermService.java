@@ -427,7 +427,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
         Objects.requireNonNull(term);
-        if (term.getDefinition().isEmpty()) {
+        if (term.getDefinition() == null || term.getDefinition().isEmpty()) {
             return;
         }
         LOG.debug("Analyzing definition of term {}.", term);

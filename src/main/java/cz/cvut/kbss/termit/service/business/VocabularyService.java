@@ -249,8 +249,7 @@ public class VocabularyService
         getTransitivelyImportedVocabularies(vocabulary).forEach(
                 importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
         final Map<TermDto, URI> termsToContexts = new HashMap<>(allTerms.size());
-        allTerms.stream().filter(t -> t.getDefinition() != null)
-                .forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
+        allTerms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
         termService.asyncAnalyzeTermDefinitions(termsToContexts);
     }
 
@@ -263,8 +262,7 @@ public class VocabularyService
         final Map<TermDto, URI> termsToContexts = new HashMap<>();
         repositoryService.findAll().forEach(v -> {
             List<TermDto> terms = termService.findAll(new Vocabulary(v.getUri()));
-            terms.stream().filter(t -> t.getDefinition() != null)
-                 .forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
+            terms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
             termService.asyncAnalyzeTermDefinitions(termsToContexts);
         });
     }
