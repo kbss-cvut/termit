@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -34,6 +35,7 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -194,13 +196,19 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Evicts possibly cached instance loaded from the default context, as well as references to the instance from sub
-     * terms.
+     * terms and parents.
      *
      * @param term Entity to evict
      */
     private void evictPossiblyCachedReferences(Term term) {
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
+        em.getEntityManagerFactory().getCache().evict(TermInfo.class, term.getUri(), null);
+        Utils.emptyIfNull(term.getParentTerms()).forEach(pt -> {
+            em.getEntityManagerFactory().getCache().evict(Term.class, pt.getUri(), null);
+            em.getEntityManagerFactory().getCache().evict(TermDto.class, pt.getUri(), null);
+            subTermsCache.evict(pt.getUri());
+        });
         term.setSubTerms(getSubTerms(term));
         // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
         Utils.emptyIfNull(term.getSubTerms())
@@ -741,5 +749,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                     postLoad(t);
                     return t;
                 });
+    }
+
+    @EventListener
+    public void onEvictCache(EvictCacheEvent evt) {
+
+        subTermsCache.evictAll();
     }
 }
