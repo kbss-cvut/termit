@@ -137,7 +137,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         Objects.requireNonNull(term);
         Objects.requireNonNull(state);
         SnapshotProvider.verifySnapshotNotModified(term);
-        // TODO Check for state validity?
         termDao.setState(term, state);
     }
 
@@ -387,8 +386,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional
     @Override
     public void remove(Term instance) {
-
-
         super.remove(instance);
     }
 

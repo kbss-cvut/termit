@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -41,15 +42,19 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -518,6 +523,40 @@ class TermServiceTest {
         final InOrder inOrder = inOrder(languageService, termRepositoryService);
         inOrder.verify(languageService).verifyStateExists(state);
         inOrder.verify(termRepositoryService).setState(term, state);
+    }
+
+    @Test
+    void setStateThrowsInvalidTermStateExceptionWhenAttemptingToSetTerminalStateToTermWhoseChildrenAreNotInTerminal() {
+        final Term term = generateTermWithId();
+        term.setSubTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
+        final List<RdfsResource> states = Stream.of(Generator.TERM_STATES)
+                                                .map(uri -> new RdfsResource(uri, MultilingualString.create("State " + Generator.randomInt(0, 100), Environment.LANGUAGE), null, cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                .collect(Collectors.toList());
+        final RdfsResource terminalState = states.get(states.size() - 1);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        assertThat(term.getSubTerms().size(), lessThan(Generator.TERM_STATES.length));
+        final Iterator<TermInfo> it = term.getSubTerms().iterator();
+        int i = 0;
+        while (it.hasNext()) {
+            it.next().setState(Generator.TERM_STATES[i++]);
+        }
+        when(languageService.getTermStates()).thenReturn(states);
+        assertThrows(InvalidTermStateException.class, () -> sut.setState(term, terminalState.getUri()));
+        verify(termRepositoryService, never()).setState(eq(term), any(URI.class));
+    }
+
+    @Test
+    void setStateThrowsInvalidTermStateExceptionWhenAttemptingToSetTerminalStateToTermWhoseChildrenHaveNoState() {
+        final Term term = generateTermWithId();
+        term.setSubTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
+        final List<RdfsResource> states = Stream.of(Generator.TERM_STATES)
+                                                .map(uri -> new RdfsResource(uri, MultilingualString.create("State " + Generator.randomInt(0, 100), Environment.LANGUAGE), null, cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                .collect(Collectors.toList());
+        final RdfsResource terminalState = states.get(states.size() - 1);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        when(languageService.getTermStates()).thenReturn(states);
+        assertThrows(InvalidTermStateException.class, () -> sut.setState(term, terminalState.getUri()));
+        verify(termRepositoryService, never()).setState(eq(term), any(URI.class));
     }
 
     @Test

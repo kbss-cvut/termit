@@ -1,8 +1,10 @@
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -22,6 +24,7 @@ import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -503,7 +507,22 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void setState(Term term, URI state) {
         languageService.verifyStateExists(state);
+        checkForInvalidTerminalStateAssignment(term, state);
         repositoryService.setState(term, state);
+    }
+
+    private void checkForInvalidTerminalStateAssignment(Term term, URI state) {
+        final List<RdfsResource> states = languageService.getTermStates();
+        final Predicate<URI> isStateTerminal = (URI s) -> states.stream().filter(r -> r.getUri().equals(s)).findFirst()
+                                                                .map(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu))
+                                                                .orElse(false);
+        if (!isStateTerminal.test(state)) {
+            return;
+        }
+        if (Utils.emptyIfNull(term.getSubTerms()).stream()
+                 .anyMatch(Predicate.not(ti -> isStateTerminal.test(ti.getState())))) {
+            throw new InvalidTermStateException("Cannot set state of term " + term + " to terminal when at least one of its sub-terms is not in terminal state.", "error.term.state.terminal.liveChildren");
+        }
     }
 
     /**

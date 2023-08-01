@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.DisabledOperationException;
 import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
+import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
@@ -222,5 +223,14 @@ public class RestExceptionHandler {
                                                                       InvalidLanguageConstantException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
+                                                               InvalidTermStateException e) {
+        logException(e);
+        return new ResponseEntity<>(
+                ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
+                HttpStatus.CONFLICT);
     }
 }
