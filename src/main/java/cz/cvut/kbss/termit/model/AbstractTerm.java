@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.Inferred;
 import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
@@ -138,6 +139,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.types = types;
     }
 
+    @JsonIgnore
     @Override
     public boolean isSnapshot() {
         return hasType(Vocabulary.s_c_verze_pojmu);
