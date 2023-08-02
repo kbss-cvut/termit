@@ -68,7 +68,7 @@ public class ExcelTermExporter {
                               .map(this::termInfoPrefixedUri)
                               .distinct()
                               .collect(Collectors.joining(TabularTermExportUtils.STRING_DELIMITER)));
-        row.createCell(13).setCellValue(TabularTermExportUtils.draftToStatus(t));
+        row.createCell(13).setCellValue(t.getState() != null ? t.getState().toString() : "");
         row.createCell(14)
            .setCellValue(String.join(TabularTermExportUtils.STRING_DELIMITER, Utils.emptyIfNull(t.getNotations())));
         row.createCell(15).setCellValue(Utils.emptyIfNull(t.getExamples()).stream()

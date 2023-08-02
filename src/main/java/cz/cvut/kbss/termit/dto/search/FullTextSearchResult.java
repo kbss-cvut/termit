@@ -31,7 +31,7 @@ import java.util.Set;
                                                               @VariableResult(name = "entity", type = URI.class),
                                                               @VariableResult(name = "label", type = String.class),
                                                               @VariableResult(name = "vocabularyUri", type = URI.class),
-                                                              @VariableResult(name = "draft", type = Boolean.class),
+                                                              @VariableResult(name = "state", type = URI.class),
                                                               @VariableResult(name = "type", type = String.class),
                                                               @VariableResult(name = "snippetField",
                                                                               type = String.class),
@@ -60,8 +60,8 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
-    private Boolean draft;
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    private URI state;
 
     @Types
     private Set<String> types;
@@ -69,12 +69,12 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
     public FullTextSearchResult() {
     }
 
-    public FullTextSearchResult(URI uri, String label, URI vocabulary, Boolean draft, String type, String snippetField,
+    public FullTextSearchResult(URI uri, String label, URI vocabulary, URI state, String type, String snippetField,
                                 String snippetText, Double score) {
         this.uri = uri;
         this.label = label;
         this.vocabulary = vocabulary;
-        this.draft = draft == null || draft;
+        this.state = state;
         this.types = Collections.singleton(type);
         this.snippetField = snippetField;
         this.snippetText = snippetText;
@@ -107,12 +107,12 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
         this.vocabulary = vocabulary;
     }
 
-    public Boolean isDraft() {
-        return draft;
+    public URI getState() {
+        return state;
     }
 
-    public void setDraft(Boolean draft) {
-        this.draft = draft;
+    public void setState(URI state) {
+        this.state = state;
     }
 
     @Override

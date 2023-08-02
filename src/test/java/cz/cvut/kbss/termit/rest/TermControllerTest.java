@@ -6,7 +6,6 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.Snapshot;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -52,11 +51,19 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
+import static cz.cvut.kbss.termit.environment.Generator.TERM_STATES;
 import static cz.cvut.kbss.termit.environment.Generator.generateComment;
 import static cz.cvut.kbss.termit.environment.Generator.generateComments;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
@@ -66,9 +73,21 @@ import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE_SIZE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.lessThan;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -1113,16 +1132,16 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void updateStatusSetsTermStatusToSpecifiedValue() throws Exception {
+    void updateStateSetsTermStateToSpecifiedValue() throws Exception {
         final Term term = generateTermForStandalone();
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
 
-        mockMvc.perform(put("/terms/" + TERM_NAME + "/status").queryParam(QueryParams.NAMESPACE, NAMESPACE)
-                                                              .content(TermStatus.DRAFT.toString())
-                                                              .contentType(MediaType.TEXT_PLAIN))
+        mockMvc.perform(put("/terms/" + TERM_NAME + "/state").queryParam(QueryParams.NAMESPACE, NAMESPACE)
+                                                             .content(Generator.TERM_STATES[1].toString())
+                                                             .contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
         verify(termServiceMock).findRequired(TERM_URI);
-        verify(termServiceMock).setStatus(term, TermStatus.DRAFT);
+        verify(termServiceMock).setState(term, TERM_STATES[1]);
     }
 
     @Test

@@ -45,8 +45,8 @@ public class FacetedSearchResult extends Asset<MultilingualString> implements Ha
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
-    private Boolean draft;
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    private URI state;
 
     @Types
     private Set<String> types;
@@ -117,12 +117,12 @@ public class FacetedSearchResult extends Asset<MultilingualString> implements Ha
         this.vocabulary = vocabulary;
     }
 
-    public Boolean isDraft() {
-        return draft == null || draft;
+    public URI getState() {
+        return state;
     }
 
-    public void setDraft(Boolean draft) {
-        this.draft = draft;
+    public void setState(URI state) {
+        this.state = state;
     }
 
     public Set<String> getTypes() {

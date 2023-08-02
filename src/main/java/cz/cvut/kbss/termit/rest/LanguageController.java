@@ -48,10 +48,10 @@ public class LanguageController extends BaseController {
 
     @Operation(description = "Gets ontological types that can be used to classify terms.")
     @ApiResponse(responseCode = "200", description = "Ontological types collection.")
-    @PreAuthorize("permitAll()")    // No need to secure this
+    @PreAuthorize("permitAll()")
     @GetMapping(value = "/types", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getAll() {
-        return service.getTypes();
+    public List<Term> getTermTypes() {
+        return service.getTermTypes();
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -60,5 +60,13 @@ public class LanguageController extends BaseController {
     @GetMapping(value = "/accessLevels", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getAccessLevels() {
         return service.getAccessLevels();
+    }
+
+    @Operation(description = "Gets available term state options.")
+    @ApiResponse(responseCode = "200", description = "Term state options.")
+    @PreAuthorize("permitAll()")
+    @GetMapping(value = "/states", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RdfsResource> getTermStates() {
+        return service.getTermStates();
     }
 }

@@ -131,7 +131,7 @@ public class Constants {
                     "Pojmy se stejným významem", "Stav pojmu", "Notace", "Příklady", "Reference"),
             DEFAULT_LANGUAGE,
             List.of("Identifier", "Label", "Synonyms", "Search strings", "Definition", "Scope note", "Type", "Source",
-                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "Status",
+                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "State",
                     "Notation", "Example", "References")
     );
 

@@ -28,7 +28,7 @@ CONSTRUCT {
         ?vocabulary pdp:má-glosář ?glossary .
         OPTIONAL {
             ?term ?skosProperty ?skosPropertyValue .
-            FILTER( ?skosProperty in ( dc:source, dc:references, skos:altLabel, skos:definition, skos:scopeNote, skos:changeNote, skos:editorialNote, skos:historyNote, skos:notation, skos:example, termit:je-draft ) )
+            FILTER( ?skosProperty in ( dc:source, dc:references, skos:altLabel, skos:definition, skos:scopeNote, skos:changeNote, skos:editorialNote, skos:historyNote, skos:notation, skos:example, pdp:má-stav-pojmu ) )
         }
         OPTIONAL {
             ?term skos:broader ?broader .

@@ -1,17 +1,9 @@
-@prefix a-popis-dat: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
-@prefix dc: <http://purl.org/dc/elements/1.1/> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix ufo: <http://onto.fel.cvut.cz/ontologies/ufo/> .
-@prefix wot: <http://xmlns.com/wot/0.1/> .
-@prefix xml: <http://www.w3.org/XML/1998/namespace> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-ufo:individual a a-popis-dat:term ;
+ufo:individual a skos:Concept ;
     rdfs:label "Individuál"@cs,
         "Individual"@en ;
     skos:narrower ufo:event,
@@ -19,7 +11,7 @@ ufo:individual a a-popis-dat:term ;
         ufo:object,
         ufo:relator .
 
-ufo:type a a-popis-dat:term ;
+ufo:type a skos:Concept ;
     rdfs:label "Typ"@cs,
         "Type"@en ;
     skos:narrower ufo:event-type,
@@ -27,36 +19,36 @@ ufo:type a a-popis-dat:term ;
         ufo:object-type,
         ufo:relator-type .
 
-ufo:event a a-popis-dat:term ;
+ufo:event a skos:Concept ;
     rdfs:label "Událost"@cs,
         "Event"@en ;
     rdfs:comment "An event, perdurant in the ontological sense. Events do not change its properties over time."@en .
 
-ufo:event-type a a-popis-dat:term ;
+ufo:event-type a skos:Concept ;
     rdfs:label "Typ události"@cs,
         "Event Type"@en .
 
-ufo:intrinsic-trope a a-popis-dat:term ;
+ufo:intrinsic-trope a skos:Concept ;
     rdfs:label "Vlastnost"@cs,
         "Aspect"@en .
 
-ufo:intrinsic-trope-type a a-popis-dat:term ;
+ufo:intrinsic-trope-type a skos:Concept ;
     rdfs:label "Typ vlastnosti"@cs,
         "Aspect Type"@en .
 
-ufo:object a a-popis-dat:term ;
+ufo:object a skos:Concept ;
     rdfs:label "Objekt"@cs,
         "Object"@en ;
     rdfs:comment "Object is any identifiable endurant entity existence of which is not directly dependent on an existence of another entity."@en .
 
-ufo:object-type a a-popis-dat:term ;
+ufo:object-type a skos:Concept ;
     rdfs:label "Typ objektu"@cs,
         "Object Type"@en .
 
-ufo:relator a a-popis-dat:term ;
+ufo:relator a skos:Concept ;
     rdfs:label "Vztah"@cs,
         "Relator"@en .
 
-ufo:relator-type a a-popis-dat:term ;
+ufo:relator-type a skos:Concept ;
     rdfs:label "Typ vztahu"@cs,
         "Relation"@en .

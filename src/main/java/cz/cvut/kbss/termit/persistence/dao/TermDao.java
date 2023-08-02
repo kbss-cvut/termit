@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -34,12 +35,21 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -186,13 +196,19 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Evicts possibly cached instance loaded from the default context, as well as references to the instance from sub
-     * terms.
+     * terms and parents.
      *
      * @param term Entity to evict
      */
     private void evictPossiblyCachedReferences(Term term) {
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
+        em.getEntityManagerFactory().getCache().evict(TermInfo.class, term.getUri(), null);
+        Utils.emptyIfNull(term.getParentTerms()).forEach(pt -> {
+            em.getEntityManagerFactory().getCache().evict(Term.class, pt.getUri(), null);
+            em.getEntityManagerFactory().getCache().evict(TermDto.class, pt.getUri(), null);
+            subTermsCache.evict(pt.getUri());
+        });
         term.setSubTerms(getSubTerms(term));
         // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
         Utils.emptyIfNull(term.getSubTerms())
@@ -203,41 +219,26 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Marks the specified term as draft.
+     * Sets state of the specified term to the specified value.
      *
-     * @param term Term to mark as draft
+     * @param term  Term whose state to update
+     * @param state State to set
      */
-    public void setAsDraft(Term term) {
-        Objects.requireNonNull(term);
-        setTermDraftStatusTo(term, true);
-    }
-
-
-    private void setTermDraftStatusTo(Term term, boolean draft) {
+    public void setState(Term term, URI state) {
         evictPossiblyCachedReferences(term);
         em.createNativeQuery("DELETE {" +
-                                     "?t ?hasStatus ?oldDraft ." +
-                                     "} INSERT {" +
-                                     "GRAPH ?g {" +
-                                     "?t ?hasStatus ?newDraft ." +
-                                     "}} WHERE {" +
-                                     "OPTIONAL {?t ?hasStatus ?oldDraft .}" +
-                                     "GRAPH ?g {" +
-                                     "?t ?inScheme ?glossary ." +
-                                     "}}").setParameter("t", term)
-          .setParameter("hasStatus", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft))
+                  "?t ?hasState ?oldState ." +
+                  "} INSERT {" +
+                  "GRAPH ?g {" +
+                  "?t ?hasState ?newState ." +
+                  "}} WHERE {" +
+                  "OPTIONAL {?t ?hasState ?oldState .}" +
+                  "GRAPH ?g {" +
+                  "?t ?inScheme ?glossary ." +
+                  "}}").setParameter("t", term)
+          .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu))
           .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
-          .setParameter("newDraft", draft).executeUpdate();
-    }
-
-    /**
-     * Marks the specified term as confirmed.
-     *
-     * @param term Term to mark as confirmed
-     */
-    public void setAsConfirmed(Term term) {
-        Objects.requireNonNull(term);
-        setTermDraftStatusTo(term, false);
+          .setParameter("newState", state).executeUpdate();
     }
 
     private void evictCachedSubTerms(Set<? extends AbstractTerm> originalParents,
@@ -748,5 +749,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                     postLoad(t);
                     return t;
                 });
+    }
+
+    @EventListener
+    public void onEvictCache(EvictCacheEvent evt) {
+
+        subTermsCache.evictAll();
     }
 }
