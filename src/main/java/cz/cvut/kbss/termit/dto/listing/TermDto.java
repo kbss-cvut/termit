@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "subTerms"})
-@JsonIgnoreProperties({"definition"})
+@JsonIgnoreProperties({"definition", "persistenceContext"})
 public class TermDto extends AbstractTerm {
 
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
