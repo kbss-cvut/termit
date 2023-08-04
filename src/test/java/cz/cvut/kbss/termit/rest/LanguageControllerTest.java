@@ -41,8 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class LanguageControllerTest extends BaseControllerTestRunner {
 
-    private static final String PATH = "/language";
-
     @Mock
     private LanguageService serviceMock;
 
@@ -58,7 +56,8 @@ class LanguageControllerTest extends BaseControllerTestRunner {
     void getTermTypesReturnsLanguageOfTermTypes() throws Exception {
         final List<Term> types = List.of(Generator.generateTermWithId(), Generator.generateTermWithId());
         when(serviceMock.getTermTypes()).thenReturn(types);
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/types")).andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(get(LanguageController.PATH + "/types")).andExpect(status().isOk())
+                                           .andReturn();
         assertEquals(types, readValue(mvcResult, new TypeReference<List<Term>>() {
         }));
         verify(serviceMock).getTermTypes();
@@ -71,7 +70,8 @@ class LanguageControllerTest extends BaseControllerTestRunner {
                 new RdfsResource(Generator.generateUri(), MultilingualString.create("Terminal state", Environment.LANGUAGE), MultilingualString.create("Empty comment", Environment.LANGUAGE), Vocabulary.s_c_koncovy_stav_pojmu)
         );
         when(serviceMock.getTermStates()).thenReturn(states);
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/states")).andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(get(LanguageController.PATH + "/states")).andExpect(status().isOk())
+                                           .andReturn();
         assertEquals(states, readValue(mvcResult, new TypeReference<List<RdfsResource>>() {
         }));
         verify(serviceMock).getTermStates();

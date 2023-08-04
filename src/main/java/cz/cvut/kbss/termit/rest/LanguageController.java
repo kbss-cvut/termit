@@ -35,8 +35,10 @@ import java.util.List;
 
 @Tag(name = "Languages", description = "Taxonomies/languages available in the system")
 @RestController
-@RequestMapping("/language")
+@RequestMapping(LanguageController.PATH)
 public class LanguageController extends BaseController {
+
+    public static final String PATH = "/language";
 
     private final LanguageService service;
 
