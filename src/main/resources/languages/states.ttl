@@ -4,9 +4,9 @@
 @prefix pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/> .
 @prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
 
-termit-pojem:nový-pojem a pdp:stav-pojmu , termit-pojem:úvodní-stav-pojmu ;
-    rdfs:label "Nový pojem"@cs , "New term"@en ;
-    rdfs:comment "Pojem, který ještě nebyl schválen k publikaci."@cs , "A new term that has not yet been confirmed for publication."@en .
+termit-pojem:navrhovaný-pojem a pdp:stav-pojmu , termit-pojem:úvodní-stav-pojmu ;
+    rdfs:label "Navrhovaný pojem"@cs , "Proposed term"@en ;
+    rdfs:comment "Pojem, který ještě nebyl schválen k publikaci."@cs , "A proposed term that has not been confirmed for publication, yet."@en .
 
 termit-pojem:publikovaný-pojem a pdp:stav-pojmu ;
     rdfs:label "Publikovaný pojem"@cs , "Published term"@en ;
