@@ -671,4 +671,31 @@ class TermServiceTest {
         verify(languageService).getInitialTermState();
         assertEquals(Generator.TERM_STATES[0], toPersist.getState());
     }
+
+    @Test
+    void updateThrowsInvalidTermStateExceptionWhenAttemptingToSetTerminalStateToTermWithNonTerminalChild() {
+        final Term term = generateTermWithId();
+        term.setSubTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
+        final List<RdfsResource> states = Stream.of(Generator.TERM_STATES)
+                                                .map(uri -> new RdfsResource(uri, MultilingualString.create("State " + Generator.randomInt(0, 100), Environment.LANGUAGE), null, cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                .collect(Collectors.toList());
+        final RdfsResource terminalState = states.get(states.size() - 1);
+        terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
+        assertThat(term.getSubTerms().size(), lessThan(Generator.TERM_STATES.length));
+        final Iterator<TermInfo> it = term.getSubTerms().iterator();
+        int i = 0;
+        while (it.hasNext()) {
+            it.next().setState(Generator.TERM_STATES[i++]);
+        }
+        final Term original = new Term(term.getUri());
+        original.setLabel(new MultilingualString(term.getLabel().getValue()));
+        original.setDefinition(new MultilingualString(term.getDefinition().getValue()));
+        original.setSubTerms(term.getSubTerms().stream().map(TermInfo::new).collect(Collectors.toSet()));
+        term.setState(terminalState.getUri());
+
+        when(languageService.getTermStates()).thenReturn(states);
+        when(termRepositoryService.findRequired(term.getUri())).thenReturn(original);
+        assertThrows(InvalidTermStateException.class, () -> sut.update(term));
+        verify(termRepositoryService, never()).update(term);
+    }
 }

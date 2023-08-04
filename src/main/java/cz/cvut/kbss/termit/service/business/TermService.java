@@ -397,6 +397,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(term);
         final Term original = repositoryService.findRequired(term.getUri());
         languageService.verifyStateExists(term.getState());
+        checkForInvalidTerminalStateAssignment(original, term.getState());
         // Ensure the change is merged into the repo before analyzing other terms
         final Term result = repositoryService.update(term);
         if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
