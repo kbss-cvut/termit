@@ -82,9 +82,14 @@ public class TestServiceConfig {
         };
     }
 
-    @Bean
-    public ClassPathResource languageSpecification() {
-        return new ClassPathResource("languages/language.ttl");
+    @Bean("termTypesLanguage")
+    public ClassPathResource termTypesLanguageFile() {
+        return new ClassPathResource("languages/types.ttl");
+    }
+
+    @Bean("termStatesLanguage")
+    public ClassPathResource termStatesLanguageFile() {
+        return new ClassPathResource("languages/states.ttl");
     }
 
     @Bean

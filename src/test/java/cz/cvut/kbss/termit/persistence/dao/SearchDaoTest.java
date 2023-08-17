@@ -118,12 +118,14 @@ class SearchDaoTest extends BaseDaoTestRunner {
             term.setPrimaryLabel(b ? "Matching label " + i : "Unknown label " + i);
             vocabulary.getGlossary().addRootTerm(term);
             term.setVocabulary(vocabulary.getUri());
-            term.setDraft(b);
+            if (b) {
+                term.setState(Generator.generateUri());
+            }
             term.addType(TYPES[Generator.randomIndex(TYPES)]);
             term.setNotations(Set.of(String.valueOf(
                     Constants.LETTERS.charAt(Generator.randomInt(0, Constants.LETTERS.length())))));
             term.setExamples(Set.of(MultilingualString.create(b ? "Matching" : "Unknown" + " example " + i,
-                                                              Environment.LANGUAGE)));
+                    Environment.LANGUAGE)));
             terms.add(term);
         }
         terms.sort(Comparator.comparing(Term::getPrimaryLabel));
@@ -174,7 +176,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void defaultFullTextSearchIncludesDraftStatusInResult() {
+    void defaultFullTextSearchIncludesTermStateInResult() {
         final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
                                                .collect(Collectors.toList());
 
@@ -186,7 +188,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
             final Optional<Term> term = matching.stream().filter(t -> t.getUri().equals(ftsResult.getUri()))
                                                 .findFirst();
             assertTrue(term.isPresent());
-            assertEquals(term.get().isDraft(), ftsResult.isDraft());
+            assertEquals(term.get().getState(), ftsResult.getState());
         }
     }
 

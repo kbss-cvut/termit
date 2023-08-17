@@ -6,7 +6,12 @@ import com.vladsch.flexmark.util.ast.Node;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.util.Statements;
 import org.eclipse.rdf4j.model.util.Values;
 import org.jsoup.Jsoup;
@@ -21,7 +26,15 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -249,6 +262,25 @@ public class Utils {
     }
 
     /**
+     * Extracts translations of values of the specified property of the specified subject.
+     *
+     * @param subject  Subject whose property values to extract
+     * @param property Property whose values to extract
+     * @param model    Model containing data to process
+     * @return {@code MultilingualString} instance containing all available property value translations
+     */
+    public static MultilingualString resolveTranslations(Resource subject, IRI property, Model model) {
+        final MultilingualString s = new MultilingualString();
+        model.filter(subject, property, null).forEach(st -> {
+            if (st.getObject().isLiteral()) {
+                ((Literal) st.getObject()).getLanguage()
+                                          .ifPresent(lang -> s.set(lang, ((Literal) st.getObject()).getLabel()));
+            }
+        });
+        return s;
+    }
+
+    /**
      * Returns a timestamp representing the current time instant, truncated to milliseconds for simpler manipulation.
      *
      * @return Current instant truncated to millis
@@ -335,9 +367,6 @@ public class Utils {
         if (str == null) {
             return;
         }
-        // TODO Rewrite to entrySet.removeIf once JOPA MultilingualString.getValue does not return unmodifiable Map
-        final Set<String> langsToRemove = str.getValue().entrySet().stream().filter(e -> e.getValue().isBlank())
-                                             .map(Map.Entry::getKey).collect(Collectors.toSet());
-        langsToRemove.forEach(str::remove);
+        str.getValue().entrySet().removeIf(e -> e.getValue().isBlank());
     }
 }

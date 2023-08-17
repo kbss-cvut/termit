@@ -29,9 +29,9 @@ class SearchAuthorizationServiceTest {
     @Test
     void canReadChecksIfVocabularyIsReadableForTermResult() {
         final FullTextSearchResult res = new FullTextSearchResult(Generator.generateUri(), "test string",
-                                                                  Generator.generateUri(), false,
-                                                                  SKOS.CONCEPT, "label", "test",
-                                                                  (double) Generator.randomInt());
+                Generator.generateUri(), Generator.generateUri(),
+                SKOS.CONCEPT, "label", "test",
+                (double) Generator.randomInt());
         when(vocabularyAuthorizationService.canRead(any(Vocabulary.class))).thenReturn(true);
         assertTrue(sut.canRead(res));
         verify(vocabularyAuthorizationService).canRead(new Vocabulary(res.getVocabulary()));
@@ -40,10 +40,10 @@ class SearchAuthorizationServiceTest {
     @Test
     void canReadChecksIfVocabularyIsReadableForVocabularyResult() {
         final FullTextSearchResult res = new FullTextSearchResult(Generator.generateUri(), "test label",
-                                                                  null, false,
-                                                                  cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik,
-                                                                  "label", "test",
-                                                                  (double) Generator.randomInt());
+                null, null,
+                cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik,
+                "label", "test",
+                (double) Generator.randomInt());
         assertFalse(sut.canRead(res));
         verify(vocabularyAuthorizationService).canRead(new Vocabulary(res.getUri()));
     }

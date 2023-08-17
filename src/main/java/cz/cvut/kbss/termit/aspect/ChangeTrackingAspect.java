@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.net.URI;
+
 /**
  * Records changes to assets based on modification operations.
  */
@@ -42,9 +44,9 @@ public class ChangeTrackingAspect {
     public void updateOperation() {
     }
 
-    @Pointcut(value = "execution(private void setTermDraftStatusTo(..)) && target(cz.cvut.kbss.termit.persistence.dao.TermDao)" +
+    @Pointcut(value = "execution(public void setState(..)) && target(cz.cvut.kbss.termit.persistence.dao.TermDao)" +
             "&& @args(cz.cvut.kbss.termit.model.changetracking.Audited, *)")
-    public void termDraftStatusUpdateOperation() {
+    public void termStateUpdateOperation() {
     }
 
     @After(value = "persistOperation() && args(asset)")
@@ -65,15 +67,15 @@ public class ChangeTrackingAspect {
         changeTracker.recordUpdateEvent(asset, helperDao.findStored(asset));
     }
 
-    @After(value = "termDraftStatusUpdateOperation() && args(asset, draft)", argNames = "asset, draft")
-    public void recordTermDraftStatusUpdate(Term asset, Boolean draft) {
+    @Before(value = "termStateUpdateOperation() && args(asset, state)", argNames = "asset, state")
+    public void recordTermStateUpdate(Term asset, URI state) {
         LOG.trace("Recording update of asset {}.", asset);
         final Term original = new Term();
         original.setUri(asset.getUri());
-        original.setDraft(!draft);
+        original.setState(helperDao.findStored(asset).getState());
         final Term update = new Term();
         update.setUri(asset.getUri());
-        update.setDraft(draft);
+        update.setState(state);
         changeTracker.recordUpdateEvent(update, original);
     }
 }

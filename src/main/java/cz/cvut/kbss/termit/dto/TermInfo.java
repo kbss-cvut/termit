@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * Represents basic data about a {@link Term}.
  * <p>
- * This is not a full blown entity and should not be used to modify data.
+ * This is not a full-blown entity and should not be used to modify data.
  */
 @OWLClass(iri = SKOS.CONCEPT)
 public class TermInfo implements Serializable, HasIdentifier, HasTypes {
@@ -48,6 +48,9 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
     @Inferred
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
+
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    private URI state;
 
     @Types
     private Set<String> types;
@@ -65,6 +68,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         assert term.getLabel() != null;
         this.label = new MultilingualString(term.getLabel().getValue());
         this.vocabulary = term.getVocabulary();
+        this.state = term.getState();
     }
 
     public TermInfo(TermInfo other) {
@@ -73,6 +77,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         assert other.getLabel() != null;
         this.label = new MultilingualString(other.getLabel().getValue());
         this.vocabulary = other.getVocabulary();
+        this.state = other.getState();
         this.types = new HashSet<>(Utils.emptyIfNull(other.getTypes()));
     }
 
@@ -100,6 +105,14 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
 
     public void setVocabulary(URI vocabulary) {
         this.vocabulary = vocabulary;
+    }
+
+    public URI getState() {
+        return state;
+    }
+
+    public void setState(URI state) {
+        this.state = state;
     }
 
     @Override

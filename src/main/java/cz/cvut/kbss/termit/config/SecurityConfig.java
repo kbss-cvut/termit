@@ -15,22 +15,28 @@
 package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import cz.cvut.kbss.termit.security.*;
+import cz.cvut.kbss.termit.security.AuthenticationSuccess;
+import cz.cvut.kbss.termit.security.JwtAuthenticationFilter;
+import cz.cvut.kbss.termit.security.JwtAuthorizationFilter;
+import cz.cvut.kbss.termit.security.JwtUtils;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
@@ -44,7 +50,7 @@ import java.util.Collections;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
 
@@ -77,14 +83,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.config = config;
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) {
-        auth.authenticationProvider(authenticationProvider);
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         LOG.debug("Using internal security mechanisms.");
+        final AuthenticationManager authManager = buildAuthenticationManager(http);
         http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf()
             .disable()
             .authorizeRequests().antMatchers("/**").permitAll()
@@ -92,14 +94,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .and().cors().configurationSource(corsConfigurationSource()).and().csrf().disable()
             .logout().logoutUrl(SecurityConstants.LOGOUT_PATH).logoutSuccessHandler(authenticationSuccessHandler)
             .and()
-            .addFilter(authenticationFilter())
-            .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtUtils, userDetailsService,
-                                                  objectMapper));
+            .authenticationManager(authManager)
+            .addFilter(authenticationFilter(authManager))
+            .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, userDetailsService, objectMapper));
+        return http.build();
     }
 
-    private JwtAuthenticationFilter authenticationFilter() throws Exception {
-        final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager(),
-                                                                                         jwtUtils);
+    private AuthenticationManager buildAuthenticationManager(HttpSecurity http) throws Exception {
+        final AuthenticationManagerBuilder ab = http.getSharedObject(AuthenticationManagerBuilder.class);
+        ab.authenticationProvider(authenticationProvider);
+        return ab.build();
+    }
+
+    private JwtAuthenticationFilter authenticationFilter(AuthenticationManager authenticationManager) {
+        final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager, jwtUtils);
         authenticationFilter.setFilterProcessesUrl(SecurityConstants.LOGIN_PATH);
         authenticationFilter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
         authenticationFilter.setAuthenticationFailureHandler(authenticationFailureHandler);

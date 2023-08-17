@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.12</version>
+        <version>2.7.13</version>
     </parent>
 
     <artifactId>termit</artifactId>
@@ -28,9 +28,9 @@
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>1.7.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>0.22.1</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.12.3</cz.cvut.kbss.jsonld.version>
-        <org.aspectj.version>1.9.7</org.aspectj.version>
+        <cz.cvut.kbss.jopa.version>1.0.0</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.13.2</cz.cvut.kbss.jsonld.version>
+        <org.aspectj.version>1.9.19</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
@@ -122,7 +122,7 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>3.7.7</version>
+            <version>4.3.2</version>
         </dependency>
 
 
@@ -130,7 +130,7 @@
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.1.5</version>
+            <version>0.2.0</version>
         </dependency>
 
         <!-- Spring -->
@@ -405,13 +405,6 @@
 
         <!-- Profiles for storages. Important for correct full text search functionality -->
         <profile>
-            <id>rdf4j</id>
-            <properties>
-                <profile.name>rdf4j</profile.name>
-                <spring.profiles.active>lucene</spring.profiles.active>
-            </properties>
-        </profile>
-        <profile>
             <id>graphdb</id>
             <properties>
                 <profile.name>graphdb</profile.name>
@@ -509,15 +502,6 @@
                 <groupId>cz.cvut.kbss.jopa</groupId>
                 <artifactId>jopa-maven-plugin</artifactId>
                 <version>${cz.cvut.kbss.jopa.version}</version>
-                <configuration>
-                    <package>cz.cvut.kbss.termit.util</package>
-                    <output-directory>${project.basedir}/src/main/generated-sources</output-directory>
-                    <ontology-iri>http://onto.fel.cvut.cz/ontologies/application/termit</ontology-iri>
-                    <mapping-file>${project.basedir}/src/main/resources/mapping</mapping-file>
-                    <whole-ontology-as-ics>true</whole-ontology-as-ics>
-                    <vocabulary-only>true</vocabulary-only>
-                    <ignore-failed-imports>true</ignore-failed-imports>
-                </configuration>
                 <executions>
                     <execution>
                         <id>generate-vocabulary</id>
@@ -525,6 +509,25 @@
                         <goals>
                             <goal>owl2java-transform</goal>
                         </goals>
+                        <configuration>
+                            <package>cz.cvut.kbss.termit.util</package>
+                            <output-directory>${project.basedir}/src/main/generated-sources</output-directory>
+                            <ontology-iri>http://onto.fel.cvut.cz/ontologies/application/termit</ontology-iri>
+                            <mapping-file>${project.basedir}/src/main/resources/mapping</mapping-file>
+                            <whole-ontology-as-ics>true</whole-ontology-as-ics>
+                            <vocabulary-only>true</vocabulary-only>
+                            <ignore-failed-imports>true</ignore-failed-imports>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-static-metamodel</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>modelgen</goal>
+                        </goals>
+                        <configuration>
+                            <source-package>cz.cvut.kbss.termit.model</source-package>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -564,7 +567,8 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>src/main/generated-sources</source>
+                                <source>${project.basedir}/src/main/generated-sources</source>
+                                <source>${project.build.directory}/generated-sources/static-metamodel/</source>
                             </sources>
                         </configuration>
                     </execution>

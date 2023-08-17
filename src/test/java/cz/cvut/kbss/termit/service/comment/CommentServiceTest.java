@@ -11,9 +11,10 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.comment.CommentReaction;
-import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.model.comment.Comment_;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommentServiceTest extends BaseServiceTestRunner {
 
@@ -34,9 +40,6 @@ class CommentServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private Configuration config;
-
-    @Autowired
-    private DescriptorFactory descriptorFactory;
 
     @Autowired
     private CommentService sut;
@@ -74,10 +77,12 @@ class CommentServiceTest extends BaseServiceTestRunner {
             return c;
         }).collect(Collectors.toList());
         transactional(() -> {
-            final EntityDescriptor descriptor = new EntityDescriptor(
-                    URI.create(config.getComments().getContext()));
-            descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
-            comments.forEach(c -> em.persist(c, descriptor));
+            final EntityDescriptor descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
+            descriptor.addAttributeContext(Comment_.author, null);
+            comments.forEach(c -> {
+                em.persist(c, descriptor);
+                c.setCreated(Utils.timestamp().minusSeconds(5));
+            });
         });
 
         final List<Comment> result = sut.findAll(asset);
@@ -105,9 +110,8 @@ class CommentServiceTest extends BaseServiceTestRunner {
         comment.setAsset(asset.getUri());
         comment.setAuthor(author);
         transactional(() -> {
-            final EntityDescriptor descriptor = new EntityDescriptor(
-                    URI.create(config.getComments().getContext()));
-            descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
+            final EntityDescriptor descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
+            descriptor.addAttributeContext(Comment_.author, null);
             em.persist(comment, descriptor);
         });
         return comment;
@@ -146,9 +150,8 @@ class CommentServiceTest extends BaseServiceTestRunner {
         comment.setAuthor(differentUser);
         transactional(() -> {
             em.persist(differentUser);
-            final EntityDescriptor descriptor = new EntityDescriptor(
-                    URI.create(config.getComments().getContext()));
-            descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
+            final EntityDescriptor descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
+            descriptor.addAttributeContext(Comment_.author, null);
             em.persist(comment, descriptor);
         });
 

@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.environment.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.cvut.kbss.termit.config.SecurityConfig;
 import cz.cvut.kbss.termit.security.AuthenticationFailure;
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.JwtUtils;
@@ -23,6 +24,7 @@ import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationProvider;
 
 import static org.mockito.Mockito.mock;
@@ -32,6 +34,7 @@ import static org.mockito.Mockito.mock;
  * cz.cvut.kbss.termit.rest.UserController}).
  */
 @TestConfiguration
+@Import(SecurityConfig.class)
 public class TestRestSecurityConfig {
 
     @Bean

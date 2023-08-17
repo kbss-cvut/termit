@@ -62,7 +62,7 @@ public class TestPersistenceFactory {
         properties.put(PREFER_MULTILINGUAL_STRING, Boolean.TRUE.toString());
         // OPTIMIZATION: Always use statement retrieval with unbound property. Should spare repository queries
         properties.put(Rdf4jOntoDriverProperties.LOAD_ALL_THRESHOLD, "1");
-        properties.put(Rdf4jOntoDriverProperties.REPOSITORY_CONFIG, "classpath:rdf4j-memory-spin-rdfs.ttl");
+        properties.put(Rdf4jOntoDriverProperties.REPOSITORY_CONFIG, "classpath:rdf4j-memory-rdfs.ttl");
         properties.put(Rdf4jOntoDriverProperties.INFERENCE_IN_DEFAULT_CONTEXT, Boolean.TRUE.toString());
         this.emf = Persistence.createEntityManagerFactory("termitTestPU", properties);
     }
