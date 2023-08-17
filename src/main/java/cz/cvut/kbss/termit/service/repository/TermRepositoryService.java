@@ -20,7 +20,6 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
-import cz.cvut.kbss.termit.exception.DisabledOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -365,16 +364,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional(readOnly = true)
     public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
         return termOccurrenceDao.findAllDefinitionalOf(instance);
-    }
-
-    /**
-     * Gets all unused (unassigned to, neither occurring in a resource) terms in the given vocabulary
-     *
-     * @param vocabulary - IRI of the vocabulary in which the terms are
-     * @return List of definitionally related terms of the specified term
-     */
-    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
-        throw new DisabledOperationException("This method is disabled, not working correctly.");
     }
 
     /**

@@ -526,16 +526,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         }
     }
 
-    /**
-     * Gets terms not occurring in any resources or other terms definitions.
-     *
-     * @return List of term identifiers
-     */
-    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        return repositoryService.getUnusedTermsInVocabulary(vocabulary);
-    }
-
     @Override
     public List<AbstractChangeRecord> getChanges(Term term) {
         Objects.requireNonNull(term);
