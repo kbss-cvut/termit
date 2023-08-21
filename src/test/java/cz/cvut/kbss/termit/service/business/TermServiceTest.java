@@ -51,7 +51,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
-import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThan;
@@ -338,16 +337,6 @@ class TermServiceTest {
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
         sut.update(toUpdate);
         verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
-    }
-
-    @Test
-    void getUnusedTermsReturnsUnusedTermsInVocabulary() {
-        final List<URI> terms = Collections.singletonList(Generator.generateUri());
-        final Vocabulary vocabulary = generateVocabulary();
-        when(termRepositoryService.getUnusedTermsInVocabulary(vocabulary)).thenReturn(terms);
-        final List<URI> result = sut.getUnusedTermsInVocabulary(vocabulary);
-        assertEquals(terms, result);
-        verify(termRepositoryService).getUnusedTermsInVocabulary(vocabulary);
     }
 
     @Test

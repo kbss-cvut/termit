@@ -19,7 +19,6 @@ import cz.cvut.kbss.jsonld.exception.JsonLdException;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
-import cz.cvut.kbss.termit.exception.DisabledOperationException;
 import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
@@ -155,13 +154,6 @@ public class RestExceptionHandler {
     @ExceptionHandler(UnsupportedOperationException.class)
     public ResponseEntity<ErrorInfo> unsupportedAssetOperationException(HttpServletRequest request,
                                                                         UnsupportedOperationException e) {
-        logException(e);
-        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(DisabledOperationException.class)
-    public ResponseEntity<ErrorInfo> disabledOperationException(HttpServletRequest request,
-                                                                DisabledOperationException e) {
         logException(e);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }

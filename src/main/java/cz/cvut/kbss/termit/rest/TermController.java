@@ -396,22 +396,6 @@ public class TermController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets terms from the vocabulary with the specified identifier that are not used in any document of definition")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Unused terms."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
-    })
-    @GetMapping(value = "/vocabularies/{localName}/unused-terms",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<URI> getUnusedTermsInVocabulary(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        return termService.getUnusedTermsInVocabulary(getVocabulary(getVocabularyUri(namespace, localName)));
-    }
-
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets sub-terms of the term with the specified local name in the vocabulary with the specified identifier")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Sub-terms."),
