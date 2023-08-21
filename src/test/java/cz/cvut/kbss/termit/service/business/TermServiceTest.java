@@ -216,7 +216,7 @@ class TermServiceTest {
             final Term child = generateTermWithId();
             when(termRepositoryService.find(child.getUri())).thenReturn(Optional.of(child));
             return child;
-        }).collect(Collectors.toList());
+        }).toList();
         parent.setSubTerms(children.stream().map(TermInfo::new).collect(Collectors.toSet()));
 
         final List<Term> result = sut.findSubTerms(parent);
@@ -562,7 +562,7 @@ class TermServiceTest {
 
     @Test
     void findConsolidatesParentTerms() {
-        final Term term = spy(generateTermWithId());
+        final Term term = generateTermWithId();
         when(termRepositoryService.find(term.getUri())).thenReturn(Optional.of(term));
 
         final Optional<Term> result = sut.find(term.getUri());

@@ -21,8 +21,6 @@ import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
@@ -31,6 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -83,7 +82,7 @@ public class SecurityUtils {
     public UserAccount getCurrentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
         assert context != null && context.getAuthentication().isAuthenticated();
-        if (context.getAuthentication().getPrincipal() instanceof KeycloakPrincipal) {
+        if (context.getAuthentication().getPrincipal() instanceof OAuth2User) {
             return resolveAccountFromKeycloakPrincipal(context);
         } else {
             return currentUser();
@@ -91,16 +90,15 @@ public class SecurityUtils {
     }
 
     private UserAccount resolveAccountFromKeycloakPrincipal(SecurityContext context) {
-        final KeycloakPrincipal<?> principal = (KeycloakPrincipal<?>) context.getAuthentication().getPrincipal();
-        final AccessToken keycloakToken = principal.getKeycloakSecurityContext().getToken();
+        final OAuth2User principal = (OAuth2User) context.getAuthentication().getPrincipal();
         final UserAccount account = new UserAccount();
-        account.setFirstName(keycloakToken.getGivenName());
-        account.setLastName(keycloakToken.getFamilyName());
-        account.setUsername(keycloakToken.getPreferredUsername());
+        account.setFirstName(principal.getAttribute("givenName"));
+        account.setLastName(principal.getAttribute("familyName"));
+        account.setUsername(principal.getName());
         context.getAuthentication().getAuthorities().stream().filter(ga -> UserRole.doesRoleExist(ga.getAuthority()))
                .map(ga -> UserRole.fromRoleName(ga.getAuthority()))
                .filter(r -> !r.getType().isEmpty()).forEach(r -> account.addType(r.getType()));
-        account.setUri(idResolver.generateIdentifier(configuration.getUser(), keycloakToken.getSubject()));
+        account.setUri(idResolver.generateIdentifier(configuration.getUser(), principal.getName()));
         return account;
     }
 

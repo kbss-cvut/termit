@@ -118,14 +118,14 @@ class RestUtilsTest {
         final Date date = new Date();
         final ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                                                         () -> RestUtils.parseTimestamp(date.toString()));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
     void parseTimestampThrowsResponseStatusExceptionWithStatus400ForNullArgument() {
         final ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                                                         () -> RestUtils.parseTimestamp(null));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
