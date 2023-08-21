@@ -45,7 +45,9 @@ keycloak:
     enabled: false
 termit:
     repository:
-        url: http://localhost:7200/repositories/termit
+        url: https://graphdb.onto.fel.cvut.cz/repositories/termit-dev
+        username: termit
+        password: vl8dcetermiti3t2
         # if empty, repository.url will be used
         publicUrl:
     persistence:

@@ -35,7 +35,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;

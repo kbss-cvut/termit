@@ -24,7 +24,7 @@ import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.net.URI;
 import java.time.Instant;

@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.13</version>
+        <version>3.1.2</version>
     </parent>
 
     <artifactId>termit</artifactId>
@@ -24,11 +24,11 @@
     </repositories>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>1.7.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>1.0.0</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>1.1.0</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.13.2</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.19</org.aspectj.version>
 
@@ -42,7 +42,7 @@
             <dependency>
                 <groupId>org.keycloak.bom</groupId>
                 <artifactId>keycloak-adapter-bom</artifactId>
-                <version>19.0.1</version>
+                <version>22.0.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -82,7 +82,7 @@
         <dependency>
             <groupId>org.mitre.dsmiley.httpproxy</groupId>
             <artifactId>smiley-http-proxy-servlet</artifactId>
-            <version>1.12.1</version>
+            <version>2.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core -->
@@ -122,7 +122,7 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>4.3.2</version>
+            <version>4.3.4</version>
         </dependency>
 
 
@@ -163,6 +163,11 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aspects</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.2.1</version>
         </dependency>
 
         <!-- Keycloak -->
@@ -226,8 +231,8 @@
 
         <!-- Servlet-API -->
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -237,14 +242,14 @@
             <artifactId>hibernate-validator</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>javax.el-api</artifactId>
-            <version>3.0.0</version>
+            <groupId>jakarta.el</groupId>
+            <artifactId>jakarta.el-api</artifactId>
+            <version>5.0.1</version>
         </dependency>
         <dependency>
-            <groupId>org.glassfish.web</groupId>
-            <artifactId>javax.el</artifactId>
-            <version>2.2.6</version>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
+            <version>5.0.0-M1</version>
         </dependency>
 
         <!-- jsoup for HTML/XML processing -->
@@ -301,12 +306,9 @@
 
         <!-- Caching -->
         <dependency>
-            <groupId>javax.cache</groupId>
-            <artifactId>cache-api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>
+            <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>

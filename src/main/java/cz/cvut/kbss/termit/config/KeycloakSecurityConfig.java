@@ -1,6 +1,5 @@
 package cz.cvut.kbss.termit.config;
 
-
 import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
 import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
@@ -12,9 +11,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
@@ -24,7 +25,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 @KeycloakConfiguration
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 class KeycloakSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakSecurityConfig.class);
@@ -53,14 +54,23 @@ class KeycloakSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         LOG.debug("Using Keycloak security.");
         super.configure(http);
-        http.authorizeRequests().antMatchers("/rest/query").permitAll()
-            .and().cors().configurationSource(corsConfigurationSource())
-            .and().csrf().disable()
-            .authorizeRequests().antMatchers("/**").permitAll();
-
+        http.authorizeRequests((auth) -> auth.requestMatchers("/rest/query").permitAll()
+                                             .requestMatchers("/**").permitAll())
+            .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
+            .csrf(AbstractHttpConfigurer::disable);
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
         return SecurityConfig.createCorsConfiguration(config.getCors());
+    }
+
+    @Override
+    public void init(WebSecurity builder) throws Exception {
+
+    }
+
+    @Override
+    public void configure(WebSecurity builder) throws Exception {
+
     }
 }
