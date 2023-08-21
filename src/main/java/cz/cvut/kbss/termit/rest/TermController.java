@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
@@ -35,7 +34,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.NotAcceptableStatusException;
 
 import java.io.IOException;
@@ -69,8 +79,8 @@ public class TermController extends BaseController {
     /**
      * Get all terms from vocabulary with the specified identification.
      * <p>
-     * This method also allows to export the terms into CSV or Excel by using HTTP content type negotiation or filter
-     * terms by a search string.
+     * This method also allows exporting the terms into additional data formats (e.g., Excel, Turtle, RDF/XML) by using
+     * HTTP content type negotiation or filter terms by a search string.
      *
      * @param localName       Vocabulary name
      * @param namespace       Vocabulary namespace. Optional
@@ -84,12 +94,12 @@ public class TermController extends BaseController {
      * @return List of terms of the specific vocabulary
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets terms from the vocabulary with the specified identifier.")
+               description = "Gets terms from the vocabulary with the specified identifier. " +
+                       "HTTP content negotiation can be used to export the terms in supported formats (e.g., Turtle, RDF/XML, Excel).")
     @ApiResponse(responseCode = "200", description = "List of vocabulary terms.")
     @GetMapping(value = "/vocabularies/{localName}/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE,
                             JsonLd.MEDIA_TYPE,
-                            Constants.MediaType.CSV,
                             Constants.MediaType.EXCEL,
                             Constants.MediaType.TURTLE,
                             Constants.MediaType.RDF_XML})
@@ -243,9 +253,9 @@ public class TermController extends BaseController {
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
         return includeImported ?
-                termService
-                        .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-                termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+               termService
+                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
+               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -383,22 +393,6 @@ public class TermController extends BaseController {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         termService.remove(termService.findRequired(termUri));
         LOG.debug("Term {} removed.", termUri);
-    }
-
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets terms from the vocabulary with the specified identifier that are not used in any document of definition")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Unused terms."),
-            @ApiResponse(responseCode = "404", description = "Vocabulary not found.")
-    })
-    @GetMapping(value = "/vocabularies/{localName}/unused-terms",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<URI> getUnusedTermsInVocabulary(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        return termService.getUnusedTermsInVocabulary(getVocabulary(getVocabularyUri(namespace, localName)));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -643,12 +637,12 @@ public class TermController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Sets status of the term with the specified identifier.")
+               description = "Sets state of the term with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Term status successfully set."),
+            @ApiResponse(responseCode = "204", description = "Term state successfully set."),
             @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
     })
-    @PutMapping(value = "terms/{localName}/status", consumes = MediaType.ALL_VALUE)
+    @PutMapping(value = "terms/{localName}/state", consumes = MediaType.ALL_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateStatus(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
@@ -657,12 +651,13 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-            @Parameter(description = "The status to set.")
-            @RequestBody String status) {
+            @Parameter(description = "The state to set.")
+            @RequestBody String state) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        final URI stateUri = URI.create(state);
         final Term t = termService.findRequired(termUri);
-        termService.setStatus(t, TermStatus.valueOf(status));
-        LOG.debug("Status of term {} set to '{}'.", t, status);
+        termService.setState(t, stateUri);
+        LOG.debug("State of term {} set to {}.", t, Utils.uriToString(stateUri));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -793,12 +788,12 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                             QueryParams.NAMESPACE,
-                                             IdentifierResolver.extractIdentifierNamespace(
-                                                     comment.getUri()),
-                                             IdentifierResolver.extractIdentifierFragment(
-                                                     comment.getUri())))
+                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                                                                                QueryParams.NAMESPACE,
+                                                                                                IdentifierResolver.extractIdentifierNamespace(
+                                                                                                        comment.getUri()),
+                                                                                                IdentifierResolver.extractIdentifierFragment(
+                                                                                                        comment.getUri())))
                              .build();
     }
 
@@ -831,12 +826,12 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                             QueryParams.NAMESPACE,
-                                             IdentifierResolver.extractIdentifierNamespace(
-                                                     comment.getUri()),
-                                             IdentifierResolver.extractIdentifierFragment(
-                                                     comment.getUri())))
+                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                                                                                QueryParams.NAMESPACE,
+                                                                                                IdentifierResolver.extractIdentifierNamespace(
+                                                                                                        comment.getUri()),
+                                                                                                IdentifierResolver.extractIdentifierFragment(
+                                                                                                        comment.getUri())))
                              .build();
     }
 

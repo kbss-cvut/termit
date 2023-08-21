@@ -84,7 +84,7 @@ public class DataController {
     @Operation(
             description = "Gets the label of a RDFS resource with the specified IRI. The label is in the configured system language.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "RDSF resource label."),
+            @ApiResponse(responseCode = "200", description = "RDFS resource label."),
             @ApiResponse(responseCode = "404", description = "Resource not found.")
     })
     @GetMapping(value = "/label")

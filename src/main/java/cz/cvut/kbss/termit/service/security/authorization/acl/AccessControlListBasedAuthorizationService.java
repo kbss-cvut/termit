@@ -7,6 +7,8 @@ import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -18,6 +20,8 @@ import java.util.Optional;
  */
 @Service
 public class AccessControlListBasedAuthorizationService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AccessControlListBasedAuthorizationService.class);
 
     private final AccessControlListService aclService;
 
@@ -52,6 +56,9 @@ public class AccessControlListBasedAuthorizationService {
     public boolean canReadAnonymously(HasIdentifier resource) {
         Objects.requireNonNull(resource);
         final Optional<AccessControlList> optionalAcl = aclService.findFor(resource);
+        if (optionalAcl.isEmpty()) {
+            LOG.warn("Asset {} is missing an ACL.", resource);
+        }
         final Optional<AccessControlRecord<?>> record = optionalAcl.flatMap(acl -> acl.getRecords().stream()
                                                                                       .filter(r -> r.getHolder()
                                                                                                     .getUri()

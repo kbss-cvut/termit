@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
@@ -13,8 +12,6 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -64,10 +61,10 @@ public class TermRepositoryServiceSnapshotsTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void setStatusOnSnapshotThrowsSnapshotNotEditableException() {
+    void setStateOnSnapshotThrowsSnapshotNotEditableException() {
         final Term snapshot = generateAndPersistSnapshot();
 
-        assertThrows(SnapshotNotEditableException.class, () -> sut.setStatus(snapshot, TermStatus.CONFIRMED));
+        assertThrows(SnapshotNotEditableException.class, () -> sut.setState(snapshot, Generator.TERM_STATES[0]));
     }
 
     @Test

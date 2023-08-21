@@ -1,4 +1,4 @@
-FROM maven:3-eclipse-temurin-11 as build
+FROM maven:3-eclipse-temurin-17 as build
 
 WORKDIR /termit
 
@@ -12,7 +12,7 @@ COPY src src
 
 RUN mvn package -B -P graphdb,standalone -DskipTests=true
 
-FROM eclipse-temurin:11-jdk-alpine as runtime
+FROM eclipse-temurin:17-jdk-alpine as runtime
 COPY --from=build  /termit/target/termit.jar termit.jar
 
 EXPOSE 8080

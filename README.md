@@ -13,7 +13,7 @@ An **asset** is an object of one of the main domain types managed by the system 
 
 ## Required Technologies
 
-- JDK 11 or newer
+- JDK 17 or newer
 - Apache Maven 3.6.x or newer
 
 
@@ -30,7 +30,7 @@ See the [docs folder](doc/index.md) for additional information on implementation
 
 This section briefly lists the main technologies and principles used (or planned to be used) in the application.
 
-- Spring Boot 2, Spring Framework 5, Spring Security, Spring Data (paging, filtering)
+- Spring Boot 3, Spring Framework 6, Spring Security, Spring Data (paging, filtering)
 - Jackson 2.13
 - [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson) - Java - JSON-LD (de)serialization library
 - [JOPA](https://github.com/kbss-cvut/jopa) - persistence library for the Semantic Web
@@ -77,7 +77,7 @@ Then, TermIt can be run and exposed at the port 8080 as
 
 An optional argument is `<GRAPHDB_REPOSITORY_URL>` pointing to the RDF4J/GraphDB repository.
 
-TermIt Docker images are also build and published to [DockerHub](https://hub.docker.com/r/kbsscvut/termit).
+TermIt Docker images are also published to [DockerHub](https://hub.docker.com/r/kbsscvut/termit).
 
 ## Links
 

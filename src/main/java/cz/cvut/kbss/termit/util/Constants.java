@@ -131,7 +131,7 @@ public class Constants {
                     "Pojmy se stejným významem", "Stav pojmu", "Notace", "Příklady", "Reference"),
             DEFAULT_LANGUAGE,
             List.of("Identifier", "Label", "Synonyms", "Search strings", "Definition", "Scope note", "Type", "Source",
-                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "Status",
+                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "State",
                     "Notation", "Example", "References")
     );
 
@@ -183,7 +183,6 @@ public class Constants {
      * Additional media types not covered by {@link org.springframework.http.MediaType}.
      */
     public static final class MediaType {
-        public static final String CSV = "text/csv";
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";

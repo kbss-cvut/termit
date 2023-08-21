@@ -15,6 +15,7 @@
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.environment.Generator;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -23,6 +24,7 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,8 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 class UtilsTest {
@@ -228,5 +232,31 @@ class UtilsTest {
         Utils.pruneBlankTranslations(str);
         assertEquals(1, str.getValue().size());
         assertEquals("test", str.get("en"));
+    }
+
+    @Test
+    void resolveTranslationsExtractsPropertyValuesWithLanguageTagsFromSpecifiedModel() {
+        final Model model = new LinkedHashModel();
+        final ValueFactory vf = SimpleValueFactory.getInstance();
+        final IRI subject = vf.createIRI(Generator.generateUriString());
+        final IRI property = RDFS.LABEL;
+        final MultilingualString expected = MultilingualString.create("English", "en").set("cs", "Česky");
+        expected.getValue().forEach((lang, v) -> model.add(subject, property, vf.createLiteral(v, lang)));
+
+        assertEquals(expected, Utils.resolveTranslations(subject, property, model));
+    }
+
+    @Test
+    void resolveTranslationsSkipsLanguageLessAndNonLiteralValues() {
+        final Model model = new LinkedHashModel();
+        final ValueFactory vf = SimpleValueFactory.getInstance();
+        final IRI subject = vf.createIRI(Generator.generateUriString());
+        final IRI property = RDFS.LABEL;
+        model.add(subject, property, vf.createLiteral("Language-less string"));
+        model.add(subject, property, vf.createIRI(Generator.generateUriString()));
+
+        final MultilingualString result = Utils.resolveTranslations(subject, property, model);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 }

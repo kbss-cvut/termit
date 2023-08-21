@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.JwtException;
 import cz.cvut.kbss.termit.rest.ConfigurationController;
+import cz.cvut.kbss.termit.rest.LanguageController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
@@ -49,7 +50,9 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private static final Set<String> PUBLIC_ENDPOINTS = new HashSet<>(Arrays.asList(
             REST_MAPPING_PATH + PUBLIC_API_PATH,
-            "data/label"    // DataController.getLabel
+            REST_MAPPING_PATH + LanguageController.PATH + "/types",
+            REST_MAPPING_PATH + LanguageController.PATH + "/states",
+            REST_MAPPING_PATH + "/data/label"    // DataController.getLabel
     ));
 
     private final JwtUtils jwtUtils;

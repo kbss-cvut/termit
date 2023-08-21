@@ -20,9 +20,27 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.model.*;
-import cz.cvut.kbss.termit.model.acl.*;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Model;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.UserGroup;
+import cz.cvut.kbss.termit.model.UserRole;
+import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserGroupAccessControlRecord;
+import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
@@ -39,11 +57,22 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Generator {
+
+    public static URI[] TERM_STATES = new URI[]{
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/new-term"),
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/published-term"),
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cancelled-term")
+    };
 
     private static final Random random = new Random();
 
@@ -122,6 +151,17 @@ public class Generator {
         assert arr != null;
         assert arr.length > 0;
         return random.nextInt(arr.length);
+    }
+
+    /**
+     * Returns a (pseudo)random element from the specified array.
+     *
+     * @param arr Array to select random element from
+     * @param <T> Element type
+     * @return Random array element
+     */
+    public static <T> T randomItem(T[] arr) {
+        return arr[randomIndex(arr)];
     }
 
     /**
@@ -234,8 +274,8 @@ public class Generator {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Environment.LANGUAGE));
         term.setDefinition(MultilingualString
-                                   .create("Normative definition of term " + term.getLabel().get(),
-                                           Environment.LANGUAGE));
+                .create("Normative definition of term " + term.getLabel().get(),
+                        Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
         if (Generator.randomBoolean()) {
             term.setSources(Collections.singleton("PSP/c-1/p-2/b-c"));
@@ -355,8 +395,8 @@ public class Generator {
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(term.getUri().toString()),
-                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                     vf.createIRI(vocabularyIri.toString()));
+                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                    vf.createIRI(vocabularyIri.toString()));
         }
     }
 
@@ -429,7 +469,7 @@ public class Generator {
             for (AbstractTerm r : related) {
                 // Don't put it into any specific context to make it look like inference
                 conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(relationship),
-                         vf.createIRI(source.getUri().toString()));
+                        vf.createIRI(source.getUri().toString()));
             }
             conn.commit();
         }

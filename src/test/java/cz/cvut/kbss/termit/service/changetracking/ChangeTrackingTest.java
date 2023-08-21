@@ -4,7 +4,6 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -28,9 +27,13 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ChangeTrackingTest extends BaseServiceTestRunner {
 
@@ -233,8 +236,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void updatingTermDraftStatusCreatesUpdateChangeRecord() {
-        enableRdfsInference(em);
+    void updatingTermStateCreatesUpdateChangeRecord() {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
@@ -244,11 +246,11 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
-        termService.setStatus(term, TermStatus.CONFIRMED);
+        termService.setState(term, Generator.randomItem(Generator.TERM_STATES));
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft),
-                     ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu),
+                ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
     }
 }

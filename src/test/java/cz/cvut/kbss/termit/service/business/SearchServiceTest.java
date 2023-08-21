@@ -66,7 +66,7 @@ class SearchServiceTest {
                 Generator.generateUri(),
                 "test",
                 vocabulary,
-                true,
+                Generator.generateUri(),
                 SKOS.CONCEPT,
                 "test",
                 "test",

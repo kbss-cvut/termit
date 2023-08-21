@@ -17,11 +17,9 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
-import cz.cvut.kbss.termit.exception.DisabledOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -44,7 +42,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.validation.Validator;
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -130,15 +132,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Transactional
-    public void setStatus(Term term, TermStatus status) {
+    public void setState(Term term, URI state) {
         Objects.requireNonNull(term);
-        Objects.requireNonNull(status);
+        Objects.requireNonNull(state);
         SnapshotProvider.verifySnapshotNotModified(term);
-        if (status == TermStatus.CONFIRMED) {
-            termDao.setAsConfirmed(term);
-        } else {
-            termDao.setAsDraft(term);
-        }
+        termDao.setState(term, state);
     }
 
     @Transactional
@@ -369,16 +367,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets all unused (unassigned to, neither occurring in a resource) terms in the given vocabulary
-     *
-     * @param vocabulary - IRI of the vocabulary in which the terms are
-     * @return List of definitionally related terms of the specified term
-     */
-    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
-        throw new DisabledOperationException("This method is disabled, not working correctly.");
-    }
-
-    /**
      * Removes a term if it: - does not have children, - is not related to any resource, - is not related to any term
      * occurrences.
      *
@@ -387,8 +375,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional
     @Override
     public void remove(Term instance) {
-
-
         super.remove(instance);
     }
 

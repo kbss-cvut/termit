@@ -9,7 +9,7 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.comment.Comment;
-import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.model.comment.Comment_;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
@@ -26,33 +26,28 @@ import java.util.Optional;
 @Repository
 public class CommentDao {
 
-    private final Descriptor loadingDescriptor;
-    private final Descriptor savingDescriptor;
-
     private final EntityManager em;
+    private final String commentContext;
 
     @Autowired
-    public CommentDao(EntityManager em, DescriptorFactory descriptorFactory, Configuration config) {
+    public CommentDao(EntityManager em, Configuration config) {
         this.em = em;
-        this.loadingDescriptor = createLoadingDescriptor(config.getComments().getContext(), descriptorFactory);
-        this.savingDescriptor = createSavingDescriptor(config.getComments().getContext(), descriptorFactory);
+        this.commentContext = config.getComments().getContext();
     }
 
-    private Descriptor createLoadingDescriptor(String context, DescriptorFactory descriptorFactory) {
-        final EntityDescriptor descriptor = new EntityDescriptor(URI.create(context), false);
-        descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
+    private Descriptor createLoadingDescriptor() {
+        final EntityDescriptor descriptor = new EntityDescriptor(URI.create(commentContext), false);
+        descriptor.addAttributeContext(Comment_.author, null);
         // Reaction are inferred, therefore possibly in the 'implicit' context (GraphDB)
-        descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "reactions"), null);
+        descriptor.addAttributeContext(Comment_.reactions, null);
         return descriptor;
     }
 
-    private Descriptor createSavingDescriptor(String context, DescriptorFactory descriptorFactory) {
-        final EntityDescriptor descriptor = new EntityDescriptor(URI.create(context));
-        descriptor.addAttributeContext(descriptorFactory.fieldSpec(Comment.class, "author"), null);
+    private Descriptor createSavingDescriptor() {
+        final EntityDescriptor descriptor = new EntityDescriptor(URI.create(commentContext));
+        descriptor.addAttributeContext(Comment_.author, null);
         // Reaction are inferred, therefore possibly in the 'implicit' context (GraphDB)
-        descriptor.addAttributeDescriptor(descriptorFactory.fieldSpec(Comment.class, "reactions"),
-                                          new FieldDescriptor((URI) null,
-                                                              descriptorFactory.fieldSpec(Comment.class, "reactions")));
+        descriptor.addAttributeDescriptor(Comment_.reactions, new FieldDescriptor((URI) null, Comment_.reactions));
         return descriptor;
     }
 
@@ -90,16 +85,18 @@ public class CommentDao {
                                                                            "?c ?hasModified ?mod . " +
                                                                            "FILTER (?mod >= ?from && ?mod < ?to) " +
                                                                            "} } ORDER BY ?mod", Comment.class)
-                    .setParameter("type", URI.create(Vocabulary.s_c_Comment))
-                    .setParameter("hasTopic", URI.create(Vocabulary.s_p_topic))
-                    .setParameter("hasCreated", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                    .setParameter("hasModified", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace));
+                                                .setParameter("type", URI.create(Vocabulary.s_c_Comment))
+                                                .setParameter("hasTopic", URI.create(Vocabulary.s_p_topic))
+                                                .setParameter("hasCreated",
+                                                              URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
+                                                .setParameter("hasModified", URI.create(
+                                                        Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace));
             if (asset != null) {
                 query.setParameter("asset", asset);
             }
             return query.setParameter("from", from != null ? from : Constants.EPOCH_TIMESTAMP)
                         .setParameter("to", to != null ? to : Utils.timestamp())
-                        .setDescriptor(loadingDescriptor).getResultList();
+                        .setDescriptor(createLoadingDescriptor()).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -114,7 +111,7 @@ public class CommentDao {
     public Optional<Comment> find(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.find(Comment.class, id, loadingDescriptor));
+            return Optional.ofNullable(em.find(Comment.class, id, createLoadingDescriptor()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -128,7 +125,7 @@ public class CommentDao {
     public void persist(Comment comment) {
         Objects.requireNonNull(comment);
         try {
-            em.persist(comment, savingDescriptor);
+            em.persist(comment, createSavingDescriptor());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -142,7 +139,7 @@ public class CommentDao {
     public void update(Comment comment) {
         Objects.requireNonNull(comment);
         try {
-            em.merge(comment, savingDescriptor);
+            em.merge(comment, createSavingDescriptor());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
