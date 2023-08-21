@@ -79,8 +79,8 @@ public class TermController extends BaseController {
     /**
      * Get all terms from vocabulary with the specified identification.
      * <p>
-     * This method also allows to export the terms into CSV or Excel by using HTTP content type negotiation or filter
-     * terms by a search string.
+     * This method also allows exporting the terms into additional data formats (e.g., Excel, Turtle, RDF/XML) by using
+     * HTTP content type negotiation or filter terms by a search string.
      *
      * @param localName       Vocabulary name
      * @param namespace       Vocabulary namespace. Optional
@@ -94,12 +94,12 @@ public class TermController extends BaseController {
      * @return List of terms of the specific vocabulary
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets terms from the vocabulary with the specified identifier.")
+               description = "Gets terms from the vocabulary with the specified identifier. " +
+                       "HTTP content negotiation can be used to export the terms in supported formats (e.g., Turtle, RDF/XML, Excel).")
     @ApiResponse(responseCode = "200", description = "List of vocabulary terms.")
     @GetMapping(value = "/vocabularies/{localName}/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE,
                             JsonLd.MEDIA_TYPE,
-                            Constants.MediaType.CSV,
                             Constants.MediaType.EXCEL,
                             Constants.MediaType.TURTLE,
                             Constants.MediaType.RDF_XML})
@@ -253,9 +253,9 @@ public class TermController extends BaseController {
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
         return includeImported ?
-                termService
-                        .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-                termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+               termService
+                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
+               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -788,12 +788,12 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                             QueryParams.NAMESPACE,
-                                             IdentifierResolver.extractIdentifierNamespace(
-                                                     comment.getUri()),
-                                             IdentifierResolver.extractIdentifierFragment(
-                                                     comment.getUri())))
+                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                                                                                QueryParams.NAMESPACE,
+                                                                                                IdentifierResolver.extractIdentifierNamespace(
+                                                                                                        comment.getUri()),
+                                                                                                IdentifierResolver.extractIdentifierFragment(
+                                                                                                        comment.getUri())))
                              .build();
     }
 
@@ -826,12 +826,12 @@ public class TermController extends BaseController {
         termService.addComment(comment, term);
         LOG.debug("Comment added to term {}.", term);
         return ResponseEntity.created(RestUtils
-                                     .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
-                                             QueryParams.NAMESPACE,
-                                             IdentifierResolver.extractIdentifierNamespace(
-                                                     comment.getUri()),
-                                             IdentifierResolver.extractIdentifierFragment(
-                                                     comment.getUri())))
+                                              .createLocationFromCurrentContextWithPathAndQuery("/comments/{name}",
+                                                                                                QueryParams.NAMESPACE,
+                                                                                                IdentifierResolver.extractIdentifierNamespace(
+                                                                                                        comment.getUri()),
+                                                                                                IdentifierResolver.extractIdentifierFragment(
+                                                                                                        comment.getUri())))
                              .build();
     }
 

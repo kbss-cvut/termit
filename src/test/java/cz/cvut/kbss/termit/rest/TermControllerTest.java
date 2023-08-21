@@ -333,51 +333,6 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void getAllExportsTermsToCsvWhenAcceptMediaTypeIsSetToCsv() throws Exception {
-        when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(URI.create(VOCABULARY_URI));
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final String content = String.join(",", Constants.EXPORT_COLUMN_LABELS.get(Constants.DEFAULT_LANGUAGE));
-        final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
-                                                                                 ExportFormat.CSV.getMediaType(),
-                                                                                 ExportFormat.CSV.getFileExtension());
-        when(termServiceMock.exportGlossary(eq(vocabulary), any(ExportConfig.class))).thenReturn(Optional.of(export));
-
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())
-                                                              .queryParam("exportType", ExportType.SKOS.toString()))
-               .andExpect(status().isOk());
-        verify(termServiceMock).exportGlossary(vocabulary,
-                                               new ExportConfig(ExportType.SKOS, ExportFormat.CSV.getMediaType()));
-    }
-
-    @Test
-    void getAllReturnsCsvAsAttachmentWhenAcceptMediaTypeIsCsv() throws Exception {
-        when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(URI.create(VOCABULARY_URI));
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final String content = String.join(",", Constants.EXPORT_COLUMN_LABELS.get(Constants.DEFAULT_LANGUAGE));
-        final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
-                                                                                 ExportFormat.CSV.getMediaType(),
-                                                                                 ExportFormat.CSV.getFileExtension());
-        when(termServiceMock.exportGlossary(vocabulary, new ExportConfig(ExportType.SKOS,
-                                                                         ExportFormat.CSV.getMediaType()))).thenReturn(
-                Optional.of(export));
-
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())
-                                                               .queryParam("exportType", ExportType.SKOS.toString()))
-                .andReturn();
-        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
-        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
-                   containsString("filename=\"" + VOCABULARY_NAME + ExportFormat.CSV.getFileExtension() + "\""));
-        assertEquals(content, mvcResult.getResponse().getContentAsString());
-    }
-
-    @Test
     void getAllExportsTermsToExcelWhenAcceptMediaTypeIsExcel() throws Exception {
         initNamespaceAndIdentifierResolution();
         final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
