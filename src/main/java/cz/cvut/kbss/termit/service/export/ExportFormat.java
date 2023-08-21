@@ -4,7 +4,6 @@ import cz.cvut.kbss.termit.util.Constants;
 
 public enum ExportFormat {
 
-    CSV(Constants.MediaType.CSV, ".csv"),
     EXCEL(Constants.MediaType.EXCEL, ".xlsx"),
     TURTLE(Constants.MediaType.TURTLE, ".ttl"),
     RDF_XML(Constants.MediaType.RDF_XML, ".rdf");

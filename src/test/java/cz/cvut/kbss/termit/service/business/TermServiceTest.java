@@ -107,9 +107,9 @@ class TermServiceTest {
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
         final TypeAwareByteArrayResource resource = new TypeAwareByteArrayResource("test".getBytes(),
-                ExportFormat.CSV.getMediaType(),
-                ExportFormat.CSV.getFileExtension());
-        final ExportConfig exportConfig = new ExportConfig(ExportType.SKOS, ExportFormat.CSV.getMediaType());
+                ExportFormat.EXCEL.getMediaType(),
+                ExportFormat.EXCEL.getFileExtension());
+        final ExportConfig exportConfig = new ExportConfig(ExportType.SKOS, ExportFormat.EXCEL.getMediaType());
         when(exporters.exportGlossary(vocabulary, exportConfig)).thenReturn(Optional.of(resource));
         final Optional<TypeAwareResource> result = sut.exportGlossary(vocabulary, exportConfig);
         assertTrue(result.isPresent());
