@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SnapshotService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -19,6 +21,7 @@ import static cz.cvut.kbss.termit.util.Constants.QueryParams.NAMESPACE;
 @Tag(name = "Snapshots", description = "Snapshot management API")
 @RestController
 @RequestMapping(SnapshotController.PATH)
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class SnapshotController extends BaseController {
 
     public static final String PATH = "/snapshots";

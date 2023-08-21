@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.rest.dto.AssetType;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +36,7 @@ import java.net.URI;
 @Tag(name = "Identifiers", description = "Identifier generation API")
 @RestController
 @RequestMapping("/identifiers")
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class IdentifierController extends BaseController {
 
     @Autowired

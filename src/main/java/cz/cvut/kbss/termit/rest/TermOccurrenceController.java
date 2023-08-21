@@ -22,6 +22,7 @@ import java.net.URI;
 @Tag(name = "Term occurrences", description = "Term occurrence management API")
 @RestController
 @RequestMapping(TermOccurrenceController.PATH)
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class TermOccurrenceController extends BaseController {
 
     private static final Logger LOG = LoggerFactory.getLogger(TermOccurrenceController.class);
