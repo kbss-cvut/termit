@@ -66,7 +66,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         return dao.getReference(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 
-    @Cacheable(key = "#p0.uri", unless = "#result.empty()")
+    @Cacheable(key = "#p0.uri", unless = "#result == null")
     @Override
     public Optional<AccessControlList> findFor(HasIdentifier subject) {
         return dao.findFor(subject);
