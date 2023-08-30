@@ -461,27 +461,22 @@
                         <artifactId>aspectjtools</artifactId>
                         <version>${org.aspectj.version}</version>
                     </dependency>
-                    <dependency>
-                        <groupId>org.aspectj</groupId>
-                        <artifactId>aspectjrt</artifactId>
-                        <version>${org.aspectj.version}</version>
-                    </dependency>
                 </dependencies>
                 <executions>
                     <execution>
                         <id>main</id>
                         <phase>process-classes</phase>
                         <goals>
+                            <!-- Weave all main classes -->
                             <goal>compile</goal>
-                            <!-- use this goal to weave all your main classes -->
                         </goals>
                     </execution>
                     <execution>
                         <id>test</id>
                         <phase>process-test-classes</phase>
                         <goals>
+                            <!-- Weave all test classes -->
                             <goal>test-compile</goal>
-                            <!-- use this goal to weave all your test classes -->
                         </goals>
                     </execution>
                 </executions>
