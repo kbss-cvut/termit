@@ -108,7 +108,7 @@ public enum UserRole {
     }
 
     /**
-     * Checks whether a role with the specifeid name exists.
+     * Checks whether a role with the specified name exists.
      *
      * @param name Role name
      * @return Role existence status

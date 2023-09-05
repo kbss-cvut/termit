@@ -16,9 +16,9 @@ package cz.cvut.kbss.termit.service.security;
 
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,12 +92,11 @@ public class SecurityUtils {
     private UserAccount resolveAccountFromKeycloakPrincipal(SecurityContext context) {
         final OAuth2User principal = (OAuth2User) context.getAuthentication().getPrincipal();
         final UserAccount account = new UserAccount();
-        account.setFirstName(principal.getAttribute("givenName"));
-        account.setLastName(principal.getAttribute("familyName"));
+        account.setFirstName(principal.getAttribute("given_name"));
+        account.setLastName(principal.getAttribute("family_name"));
         account.setUsername(principal.getName());
-        context.getAuthentication().getAuthorities().stream().filter(ga -> UserRole.doesRoleExist(ga.getAuthority()))
-               .map(ga -> UserRole.fromRoleName(ga.getAuthority()))
-               .filter(r -> !r.getType().isEmpty()).forEach(r -> account.addType(r.getType()));
+        HierarchicalRoleBasedAuthorityMapper.resolveUserRolesFromAuthorities(
+                context.getAuthentication().getAuthorities()).forEach(r -> account.addType(r.getType()));
         account.setUri(idResolver.generateIdentifier(configuration.getUser(), principal.getName()));
         return account;
     }
@@ -110,8 +109,8 @@ public class SecurityUtils {
      */
     public static boolean authenticated() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        return context.getAuthentication() != null &&
-                context.getAuthentication().getDetails() instanceof TermItUserDetails;
+        return context.getAuthentication() != null && context.getAuthentication()
+                                                             .getDetails() instanceof TermItUserDetails;
     }
 
     /**
@@ -142,8 +141,8 @@ public class SecurityUtils {
      * Reloads the current user's data from the database.
      */
     public void updateCurrentUser() {
-        final TermItUserDetails updateDetails =
-                (TermItUserDetails) userDetailsService.loadUserByUsername(getCurrentUser().getUsername());
+        final TermItUserDetails updateDetails = (TermItUserDetails) userDetailsService.loadUserByUsername(
+                getCurrentUser().getUsername());
         setCurrentUser(updateDetails);
     }
 

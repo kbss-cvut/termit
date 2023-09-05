@@ -11,16 +11,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
@@ -31,21 +29,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-@ConditionalOnProperty(prefix = "keycloak", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "oidc")
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-class KeycloakSecurityConfig {
+class OAuth2SecurityConfig {
 
-    private static final Logger LOG = LoggerFactory.getLogger(KeycloakSecurityConfig.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OAuth2SecurityConfig.class);
 
     private final AuthenticationSuccess authenticationSuccessHandler;
 
     private final cz.cvut.kbss.termit.util.Configuration config;
 
     @Autowired
-    public KeycloakSecurityConfig(AuthenticationSuccess authenticationSuccessHandler,
-                                  cz.cvut.kbss.termit.util.Configuration config) {
+    public OAuth2SecurityConfig(AuthenticationSuccess authenticationSuccessHandler,
+                                cz.cvut.kbss.termit.util.Configuration config) {
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.config = config;
     }
@@ -58,8 +56,7 @@ class KeycloakSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         LOG.debug("Using Keycloak security.");
-        http.oauth2Login(Customizer.withDefaults())
-            .oauth2ResourceServer(
+        http.oauth2ResourceServer(
                     (auth) -> auth.jwt((jwt) -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())))
             .authorizeHttpRequests((auth) -> auth.requestMatchers("/rest/query").permitAll()
                                                  .requestMatchers("/**").permitAll())
@@ -76,17 +73,16 @@ class KeycloakSecurityConfig {
 
     private Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor() {
         return source -> {
-            final Collection<SimpleGrantedAuthority> authorities = new GrantedAuthoritiesExtractor().convert(
-                    source);
-            return new OAuth2AuthenticationToken(new DefaultOAuth2User(authorities, source.getClaims(), "name"),
-                                                 authorities, null);
+            final Collection<SimpleGrantedAuthority> authorities = new GrantedAuthoritiesExtractor().convert(source);
+            return new JwtAuthenticationToken(source, authorities);
         };
     }
 
-    static class GrantedAuthoritiesExtractor implements Converter<Jwt, Collection<SimpleGrantedAuthority>> {
+    private class GrantedAuthoritiesExtractor implements Converter<Jwt, Collection<SimpleGrantedAuthority>> {
         public Collection<SimpleGrantedAuthority> convert(Jwt jwt) {
             final List<SimpleGrantedAuthority> allAuths = (
-                    (Map<String, Collection<?>>) jwt.getClaims().getOrDefault("realm_access", Collections.emptyMap())
+                    (Map<String, Collection<?>>) jwt.getClaims().getOrDefault(
+                            OAuth2SecurityConfig.this.config.getSecurity().getRoleClaim(), Collections.emptyMap())
             ).getOrDefault("roles", Collections.emptyList())
              .stream()
              .map(Object::toString)

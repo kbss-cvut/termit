@@ -64,6 +64,7 @@ public class Configuration {
     private Schedule schedule = new Schedule();
     private ACL acl = new ACL();
     private Mail mail = new Mail();
+    private Security security = new Security();
 
     public String getUrl() {
         return url;
@@ -207,6 +208,14 @@ public class Configuration {
 
     public void setMail(Mail mail) {
         this.mail = mail;
+    }
+
+    public Security getSecurity() {
+        return security;
+    }
+
+    public void setSecurity(Security security) {
+        this.security = security;
     }
 
     @org.springframework.context.annotation.Configuration
@@ -760,6 +769,40 @@ public class Configuration {
 
         public void setDefaultReaderAccessLevel(AccessLevel defaultReaderAccessLevel) {
             this.defaultReaderAccessLevel = defaultReaderAccessLevel;
+        }
+    }
+
+    @org.springframework.context.annotation.Configuration
+    public static class Security {
+
+        public enum ProviderType {
+            INTERNAL, OIDC
+        }
+
+        /**
+         * Determines whether an internal security mechanism or an external OIDC service will be used for authentication.
+         */
+        private ProviderType provider = ProviderType.INTERNAL;
+
+        /**
+         * Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt user roles.
+         */
+        private String roleClaim = "realm_access";
+
+        public ProviderType getProvider() {
+            return provider;
+        }
+
+        public void setProvider(ProviderType provider) {
+            this.provider = provider;
+        }
+
+        public String getRoleClaim() {
+            return roleClaim;
+        }
+
+        public void setRoleClaim(String roleClaim) {
+            this.roleClaim = roleClaim;
         }
     }
 }
