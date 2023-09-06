@@ -29,6 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -76,9 +77,10 @@ public class SecurityUtils {
     private UserAccount resolveAccountFromOAuthPrincipal(SecurityContext context) {
         final Jwt principal = (Jwt) context.getAuthentication().getPrincipal();
         final UserAccount account = new UserAccount();
-        account.setFirstName(principal.getClaimAsString("given_name"));
-        account.setLastName(principal.getClaimAsString("family_name"));
-        account.setUsername(principal.getClaimAsString("preferred_username"));
+        final OidcUserInfo userInfo = new OidcUserInfo(principal.getClaims());
+        account.setFirstName(userInfo.getGivenName());
+        account.setLastName(userInfo.getFamilyName());
+        account.setUsername(userInfo.getPreferredUsername());
         HierarchicalRoleBasedAuthorityMapper.resolveUserRolesFromAuthorities(
                 context.getAuthentication().getAuthorities()).forEach(r -> account.addType(r.getType()));
         account.setUri(idResolver.generateIdentifier(configuration.getUser(), account.getFullName()));
@@ -93,7 +95,6 @@ public class SecurityUtils {
      */
     public static boolean authenticated() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        // TODO Anonymous authentication?
         return context.getAuthentication() != null && context.getAuthentication().getDetails() != null;
     }
 
