@@ -56,8 +56,6 @@ public class Environment {
 
     public static final String LANGUAGE = Constants.DEFAULT_LANGUAGE;
 
-    private static UserAccount currentUser;
-
     private static ObjectMapper objectMapper;
 
     private static ObjectMapper jsonLdObjectMapper;
@@ -78,7 +76,6 @@ public class Environment {
      * @param user User to set as currently authenticated
      */
     public static void setCurrentUser(UserAccount user) {
-        currentUser = user;
         final TermItUserDetails userDetails = new TermItUserDetails(user, new HashSet<>());
         SecurityContext context = new SecurityContextImpl();
         context.setAuthentication(new AuthenticationToken(userDetails.getAuthorities(), userDetails));
@@ -99,14 +96,19 @@ public class Environment {
     }
 
     public static UserAccount getCurrentUser() {
-        return currentUser;
+        final SecurityContext context = SecurityContextHolder.getContext();
+        if (context == null || context.getAuthentication() == null) {
+            return null;
+        }
+
+        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+        return userDetails.getUser();
     }
 
     /**
      * Resets security context, removing any previously set data.
      */
     public static void resetCurrentUser() {
-        currentUser = null;
         SecurityContextHolder.clearContext();
     }
 
@@ -180,9 +182,10 @@ public class Environment {
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
             conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/popis-dat-model.ttl"), BASE_URI,
-                    RDFFormat.TURTLE);
+                     RDFFormat.TURTLE);
             conn.add(new File("ontology/termit-model.ttl"), BASE_URI, RDFFormat.TURTLE);
-            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "", RDFFormat.RDFXML);
+            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "",
+                     RDFFormat.RDFXML);
             conn.commit();
         } catch (IOException e) {
             throw new RuntimeException("Unable to load TermIt model for import.", e);

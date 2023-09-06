@@ -44,15 +44,18 @@ public class RepositoryAccessControlListService implements AccessControlListServ
 
     private final DtoMapper dtoMapper;
 
+    private final SecurityUtils securityUtils;
+
     private final Configuration.ACL aclConfig;
 
     public RepositoryAccessControlListService(AccessControlListDao dao, ChangeRecordService changeRecordService,
                                               UserRoleRepositoryService userRoleService,
-                                              DtoMapper dtoMapper, Configuration config) {
+                                              DtoMapper dtoMapper, SecurityUtils securityUtils, Configuration config) {
         this.dao = dao;
         this.changeRecordService = changeRecordService;
         this.userRoleService = userRoleService;
         this.dtoMapper = dtoMapper;
+        this.securityUtils = securityUtils;
         this.aclConfig = config.getAcl();
     }
 
@@ -93,7 +96,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     private void setInitialAccessControlRecords(HasIdentifier subject, AccessControlList acl) {
         // Add current user - author in case the subject is just being created
         if (SecurityUtils.authenticated()) {
-            acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, SecurityUtils.currentUser().toUser()));
+            acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, securityUtils.getCurrentUser().toUser()));
         }
         // Add possible authors in case the subject already existed
         changeRecordService.getAuthors(subject)

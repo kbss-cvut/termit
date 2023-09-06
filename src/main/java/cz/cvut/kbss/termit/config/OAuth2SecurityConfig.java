@@ -33,7 +33,7 @@ import java.util.Map;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-class OAuth2SecurityConfig {
+public class OAuth2SecurityConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(OAuth2SecurityConfig.class);
 
@@ -55,7 +55,7 @@ class OAuth2SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        LOG.debug("Using Keycloak security.");
+        LOG.debug("Using OAuth2/OIDC security.");
         http.oauth2ResourceServer(
                     (auth) -> auth.jwt((jwt) -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())))
             .authorizeHttpRequests((auth) -> auth.requestMatchers("/rest/query").permitAll()

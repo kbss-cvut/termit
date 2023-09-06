@@ -113,7 +113,7 @@ class JwtAuthorizationFilterTest {
         generateJwtIntoRequest();
 
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
-        assertEquals(user, SecurityUtils.currentUser());
+        assertEquals(user, Environment.getCurrentUser());
     }
 
     private void generateJwtIntoRequest() {

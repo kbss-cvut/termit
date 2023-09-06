@@ -780,7 +780,10 @@ public class Configuration {
         }
 
         /**
-         * Determines whether an internal security mechanism or an external OIDC service will be used for authentication.
+         * Determines whether an internal security mechanism or an external OIDC service will be used for
+         * authentication.
+         * <p>
+         * In case na OIDC service is selected, it should be configured using standard Spring Boot OAuth2 properties.
          */
         private ProviderType provider = ProviderType.INTERNAL;
 

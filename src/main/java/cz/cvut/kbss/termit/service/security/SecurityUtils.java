@@ -29,7 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -55,23 +55,6 @@ public class SecurityUtils {
         this.passwordEncoder = passwordEncoder;
         this.idResolver = idResolver;
         this.configuration = configuration.getNamespace();
-        // Ensures security context is propagated to additionally spun threads, e.g., used by @Async methods
-        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-    }
-
-    /**
-     * This is a statically accessible variant of the {@link #getCurrentUser()} method.
-     * <p>
-     * It allows to access the currently logged-in user without injecting {@code SecurityUtils} as a bean.
-     *
-     * @return Currently logged-in user
-     */
-    public static UserAccount currentUser() {
-        final SecurityContext context = SecurityContextHolder.getContext();
-        assert context != null;
-
-        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
-        return userDetails.getUser();
     }
 
     /**
@@ -82,22 +65,23 @@ public class SecurityUtils {
     public UserAccount getCurrentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
         assert context != null && context.getAuthentication().isAuthenticated();
-        if (context.getAuthentication().getPrincipal() instanceof OAuth2User) {
-            return resolveAccountFromKeycloakPrincipal(context);
+        if (context.getAuthentication().getPrincipal() instanceof Jwt) {
+            return resolveAccountFromOAuthPrincipal(context);
         } else {
-            return currentUser();
+            final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+            return userDetails.getUser();
         }
     }
 
-    private UserAccount resolveAccountFromKeycloakPrincipal(SecurityContext context) {
-        final OAuth2User principal = (OAuth2User) context.getAuthentication().getPrincipal();
+    private UserAccount resolveAccountFromOAuthPrincipal(SecurityContext context) {
+        final Jwt principal = (Jwt) context.getAuthentication().getPrincipal();
         final UserAccount account = new UserAccount();
-        account.setFirstName(principal.getAttribute("given_name"));
-        account.setLastName(principal.getAttribute("family_name"));
-        account.setUsername(principal.getName());
+        account.setFirstName(principal.getClaimAsString("given_name"));
+        account.setLastName(principal.getClaimAsString("family_name"));
+        account.setUsername(principal.getClaimAsString("preferred_username"));
         HierarchicalRoleBasedAuthorityMapper.resolveUserRolesFromAuthorities(
                 context.getAuthentication().getAuthorities()).forEach(r -> account.addType(r.getType()));
-        account.setUri(idResolver.generateIdentifier(configuration.getUser(), principal.getName()));
+        account.setUri(idResolver.generateIdentifier(configuration.getUser(), account.getFullName()));
         return account;
     }
 
@@ -109,8 +93,8 @@ public class SecurityUtils {
      */
     public static boolean authenticated() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        return context.getAuthentication() != null && context.getAuthentication()
-                                                             .getDetails() instanceof TermItUserDetails;
+        // TODO Anonymous authentication?
+        return context.getAuthentication() != null && context.getAuthentication().getDetails() != null;
     }
 
     /**
@@ -144,13 +128,6 @@ public class SecurityUtils {
         final TermItUserDetails updateDetails = (TermItUserDetails) userDetailsService.loadUserByUsername(
                 getCurrentUser().getUsername());
         setCurrentUser(updateDetails);
-    }
-
-    /**
-     * Resets the current security context.
-     */
-    public static void resetCurrentUser() {
-        SecurityContextHolder.clearContext();
     }
 
     /**
