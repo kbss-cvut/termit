@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.context.SecurityContext;
@@ -95,7 +96,7 @@ public class SecurityUtils {
      */
     public static boolean authenticated() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        return context.getAuthentication() != null && context.getAuthentication().getDetails() != null;
+        return context.getAuthentication() != null && !(context.getAuthentication() instanceof AnonymousAuthenticationToken);
     }
 
     /**

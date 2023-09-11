@@ -41,6 +41,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import java.util.Collections;
 import java.util.List;
@@ -131,6 +132,8 @@ class SecurityUtilsTest {
     void isAuthenticatedReturnsFalseForAnonymousRequest() {
         final AnonymousAuthenticationToken token = new AnonymousAuthenticationToken("anonymousUser", "anonymousUser",
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS")));
+        token.setDetails(new WebAuthenticationDetails("0.0.0.0", null));
+        token.setAuthenticated(true);
         SecurityContextHolder.setContext(new SecurityContextImpl(token));
         assertFalse(sut.isAuthenticated());
     }
