@@ -30,7 +30,7 @@
         <org.springdoc.version>1.7.0</org.springdoc.version>
         <cz.cvut.kbss.jopa.version>1.1.2</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.13.2</cz.cvut.kbss.jsonld.version>
-        <org.aspectj.version>1.9.19</org.aspectj.version>
+        <org.aspectj.version>1.9.20</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
@@ -277,7 +277,7 @@
         <dependency>
             <groupId>net.bull.javamelody</groupId>
             <artifactId>javamelody-spring-boot-starter</artifactId>
-            <version>1.92.0</version>
+            <version>2.0.0</version>
         </dependency>
 
         <!-- Caching -->
