@@ -7,6 +7,7 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 
 import java.util.Collection;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Maps TermIt roles to Spring Security authorities.
@@ -18,10 +19,14 @@ public class HierarchicalRoleBasedAuthorityMapper implements GrantedAuthoritiesM
 
     @Override
     public Collection<SimpleGrantedAuthority> mapAuthorities(Collection<? extends GrantedAuthority> authorities) {
-        return authorities.stream().map(a -> {
-                              final UserRole role = UserRole.fromRoleName(a.getAuthority());
-                              return role.getGranted();
-                          }).flatMap(roles -> roles.stream().map(r -> new SimpleGrantedAuthority(r.getName())))
-                          .collect(Collectors.toSet());
+        return resolveUserRolesFromAuthorities(authorities)
+                .map(UserRole::getGranted)
+                .flatMap(roles -> roles.stream().map(r -> new SimpleGrantedAuthority(r.getName())))
+                .collect(Collectors.toSet());
+    }
+
+    public static Stream<UserRole> resolveUserRolesFromAuthorities(Collection<? extends GrantedAuthority> authorities) {
+        return authorities.stream().filter(a -> UserRole.doesRoleExist(a.getAuthority()))
+                          .map(a -> UserRole.fromRoleName(a.getAuthority()));
     }
 }

@@ -44,6 +44,7 @@ import java.util.Optional;
 @Tag(name = "Users", description = "User management API")
 @RestController
 @RequestMapping(UserController.PATH)
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class UserController extends BaseController {
 
     public static final String PATH = "/users";

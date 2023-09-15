@@ -23,7 +23,7 @@ import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 
 /**
  * Base repository service implementation for asset managing services.

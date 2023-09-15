@@ -41,9 +41,9 @@ spring:
 javamelody:
     init-parameters:
         authorized-users: admin:kral0vnat3rm1t1st3
-keycloak:
-    enabled: false
 termit:
+    security:
+        provider: "internal"
     repository:
         url: http://localhost:7200/repositories/termit
         # if empty, repository.url will be used

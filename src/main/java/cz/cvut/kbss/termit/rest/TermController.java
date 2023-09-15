@@ -11,6 +11,7 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
@@ -60,6 +61,7 @@ import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 @Tag(name = "Terms", description = "Term management API")
 @RestController
 @RequestMapping("/")
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class TermController extends BaseController {
 
     private static final Logger LOG = LoggerFactory.getLogger(TermController.class);

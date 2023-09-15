@@ -7,6 +7,8 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,7 +16,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.stream.Stream;
 
@@ -27,6 +31,10 @@ class SnapshotAuthorizationServiceTest {
 
     @Mock
     private VocabularyAuthorizationService vocabularyAuthorizationService;
+
+    @Spy
+    private SecurityUtils securityUtils = new SecurityUtils(null, new BCryptPasswordEncoder(), null,
+                                                            new Configuration());
 
     @InjectMocks
     private SnapshotAuthorizationService sut;

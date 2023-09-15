@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 
 @Service
 public class UserRepositoryService extends BaseRepositoryService<UserAccount, UserAccount> {

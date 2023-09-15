@@ -9,6 +9,7 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.persistence.dao.acl.AccessControlListDao;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.net.URI;
 import java.util.List;
@@ -45,6 +47,10 @@ class RepositoryAccessControlListServiceTest {
 
     @Spy
     private Configuration configuration = new Configuration();
+
+    @Spy
+    private SecurityUtils securityUtils = new SecurityUtils(null, new BCryptPasswordEncoder(), null,
+                                                            new Configuration());
 
     @InjectMocks
     private RepositoryAccessControlListService sut;
@@ -74,8 +80,10 @@ class RepositoryAccessControlListServiceTest {
     @Test
     void removeRecordLoadsTargetAccessControlListRemovesSpecifiedRecordsAndUpdatesIt() {
         final AccessControlList acl = generateAcl();
-        acl.addRecord(new RoleAccessControlRecord(AccessLevel.READ, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER)));
-        acl.addRecord(new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER)));
+        acl.addRecord(new RoleAccessControlRecord(AccessLevel.READ, new UserRole(
+                cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER)));
+        acl.addRecord(new RoleAccessControlRecord(AccessLevel.WRITE,
+                                                  new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER)));
         final UserAccessControlRecord existingRecord = new UserAccessControlRecord();
         existingRecord.setUri(Generator.generateUri());
         existingRecord.setHolder(Generator.generateUserWithId());
@@ -178,7 +186,8 @@ class RepositoryAccessControlListServiceTest {
     @Test
     void removeRecordThrowsUnsupportedOperationExceptionWhenAttemptingToRemoveRoleRecord() {
         final AccessControlList acl = generateAcl();
-        final RoleAccessControlRecord toRemove = new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER));
+        final RoleAccessControlRecord toRemove = new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(
+                cz.cvut.kbss.termit.security.model.UserRole.FULL_USER));
         acl.addRecord(toRemove);
 
         assertThrows(UnsupportedOperationException.class, () -> sut.removeRecord(acl, toRemove));

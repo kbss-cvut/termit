@@ -23,7 +23,7 @@ import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
 
 @OWLClass(iri = Vocabulary.s_c_selektor_fragmentem)

@@ -26,7 +26,9 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.persistence.dao.AssetDao;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -36,11 +38,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.net.URI;
 import java.time.Instant;
@@ -51,7 +55,9 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AssetServiceTest {
@@ -64,6 +70,10 @@ class AssetServiceTest {
 
     @Mock
     private VocabularyAuthorizationService vocabularyAuthorizationService;
+
+    @Spy
+    private SecurityUtils securityUtils = new SecurityUtils(null, new BCryptPasswordEncoder(), null,
+                                                            new Configuration());
 
     @InjectMocks
     private AssetService sut;
@@ -79,25 +89,25 @@ class AssetServiceTest {
         for (int i = 0; i < count; i++) {
             RecentlyModifiedAsset rma = null;
             switch (i % 3) {
-                case 0:
+                case 0 -> {
                     final Resource resource = Generator.generateResourceWithId();
                     rma = new RecentlyModifiedAsset(resource.getUri(), resource.getLabel(), Utils.timestamp(),
                                                     author.getUri(), null,
-                                                    cz.cvut.kbss.termit.util.Vocabulary.s_c_resource,
+                                                    Vocabulary.s_c_resource,
                                                     Vocabulary.s_c_vytvoreni_entity);
-                    break;
-                case 1:
+                }
+                case 1 -> {
                     final Term term = Generator.generateTermWithId();
                     rma = new RecentlyModifiedAsset(term.getUri(), term.getLabel().get(Environment.LANGUAGE),
                                                     Utils.timestamp(), author.getUri(), Generator.generateUri(),
                                                     SKOS.CONCEPT, Vocabulary.s_c_vytvoreni_entity);
-                    break;
-                case 2:
+                }
+                case 2 -> {
                     final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
                     rma = new RecentlyModifiedAsset(vocabulary.getUri(), vocabulary.getLabel(), Utils.timestamp(),
                                                     author.getUri(), null,
                                                     Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
-                    break;
+                }
             }
             rma.setModified(Instant.ofEpochMilli(System.currentTimeMillis() - i * 1000L));
             rma.setEditor(author);

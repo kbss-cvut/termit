@@ -22,7 +22,7 @@ import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 
 public class BaseRepositoryServiceImpl extends BaseRepositoryService<UserAccount, UserAccount> {
 

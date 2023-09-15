@@ -17,6 +17,7 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -36,6 +37,7 @@ import java.util.List;
 @Tag(name = "Languages", description = "Taxonomies/languages available in the system")
 @RestController
 @RequestMapping(LanguageController.PATH)
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class LanguageController extends BaseController {
 
     public static final String PATH = "/language";

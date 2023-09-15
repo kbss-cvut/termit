@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.validation;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
 import java.lang.annotation.*;
 
 /**
@@ -15,7 +15,7 @@ import java.lang.annotation.*;
 @Repeatable(PrimaryNotBlank.List.class)
 public @interface PrimaryNotBlank {
 
-    String message() default "{javax.validation.constraints.NotBlank.message}";
+    String message() default "{jakarta.validation.constraints.NotBlank.message}";
 
     Class<?>[] groups() default {};
 

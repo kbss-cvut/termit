@@ -64,6 +64,7 @@ import java.util.Optional;
 @Tag(name = "Vocabularies", description = "Vocabulary management API")
 @RestController
 @RequestMapping("/vocabularies")
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class VocabularyController extends BaseController {
 
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyController.class);

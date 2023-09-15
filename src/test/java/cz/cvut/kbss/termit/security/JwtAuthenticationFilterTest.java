@@ -40,7 +40,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import javax.servlet.FilterChain;
+import jakarta.servlet.FilterChain;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
