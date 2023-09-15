@@ -58,9 +58,6 @@ public class MainPersistenceFactory {
 
     @PostConstruct
     private void init() {
-        // Allow Apache HTTP client used by RDF4J to use a larger connection pool
-        // Temporary, should be configurable via JOPA
-        System.setProperty("http.maxConnections", "20");
         final Map<String, String> properties = defaultParams();
         properties.put(ONTOLOGY_PHYSICAL_URI_KEY, configuration.getRepository().getUrl());
         properties.put(DATA_SOURCE_CLASS, configuration.getPersistence().getDriver());
