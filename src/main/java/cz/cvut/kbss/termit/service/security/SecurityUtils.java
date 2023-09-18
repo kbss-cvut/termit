@@ -84,7 +84,7 @@ public class SecurityUtils {
         account.setUsername(userInfo.getPreferredUsername());
         HierarchicalRoleBasedAuthorityMapper.resolveUserRolesFromAuthorities(
                 context.getAuthentication().getAuthorities()).forEach(r -> account.addType(r.getType()));
-        account.setUri(idResolver.generateIdentifier(configuration.getUser(), account.getFullName()));
+        account.setUri(idResolver.generateIdentifier(configuration.getUser(), userInfo.getSubject()));
         return account;
     }
 

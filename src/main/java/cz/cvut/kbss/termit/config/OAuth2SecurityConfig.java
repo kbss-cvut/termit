@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "oidc")
 @Configuration
 @EnableWebSecurity
@@ -58,8 +60,8 @@ public class OAuth2SecurityConfig {
         LOG.debug("Using OAuth2/OIDC security.");
         http.oauth2ResourceServer(
                     (auth) -> auth.jwt((jwt) -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor())))
-            .authorizeHttpRequests((auth) -> auth.requestMatchers("/rest/query").permitAll()
-                                                 .requestMatchers("/**").permitAll())
+            .authorizeHttpRequests((auth) -> auth.requestMatchers(antMatcher("/rest/query")).permitAll()
+                                                 .requestMatchers(antMatcher("/**")).permitAll())
             .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)

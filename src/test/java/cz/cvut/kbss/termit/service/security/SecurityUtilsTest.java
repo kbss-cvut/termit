@@ -45,6 +45,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -113,7 +114,7 @@ class SecurityUtilsTest {
         Environment.setCurrentUser(user);
         final String password = "differentPassword";
         final ValidationException ex = assertThrows(ValidationException.class,
-                () -> sut.verifyCurrentUserPassword(password));
+                                                    () -> sut.verifyCurrentUserPassword(password));
         assertThat(ex.getMessage(), containsString("does not match"));
     }
 
@@ -131,7 +132,9 @@ class SecurityUtilsTest {
     @Test
     void isAuthenticatedReturnsFalseForAnonymousRequest() {
         final AnonymousAuthenticationToken token = new AnonymousAuthenticationToken("anonymousUser", "anonymousUser",
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS")));
+                                                                                    Collections.singleton(
+                                                                                            new SimpleGrantedAuthority(
+                                                                                                    "ROLE_ANONYMOUS")));
         token.setDetails(new WebAuthenticationDetails("0.0.0.0", null));
         token.setAuthenticated(true);
         SecurityContextHolder.setContext(new SecurityContextImpl(token));
@@ -148,15 +151,18 @@ class SecurityUtilsTest {
     void getCurrentUserSupportsOidcJwtAuthenticationTokens() {
         config.getNamespace().setUser(Vocabulary.s_c_uzivatel_termitu);
         final UserAccount user = Generator.generateUserAccount();
-        user.setUri(idResolver.generateIdentifier(config.getNamespace().getUser(), user.getFullName()));
-        final Jwt jwt = Jwt.withTokenValue("12345").claim("given_name", user.getFirstName())
-                .claim("family_name", user.getLastName())
-                .claim("preferred_username", user.getUsername())
-                .issuedAt(Utils.timestamp())
-                .expiresAt(Utils.timestamp().plusSeconds(30))
-                .header("alg", "RS256").build();
-        SecurityContextHolder.setContext(new SecurityContextImpl(new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority(
-                UserRole.FULL_USER.getName())))));
+        final String subject = UUID.randomUUID().toString();
+        user.setUri(idResolver.generateIdentifier(config.getNamespace().getUser(), subject));
+        final Jwt jwt = Jwt.withTokenValue("12345").subject(subject)
+                           .claim("given_name", user.getFirstName())
+                           .claim("family_name", user.getLastName())
+                           .claim("preferred_username", user.getUsername())
+                           .issuedAt(Utils.timestamp())
+                           .expiresAt(Utils.timestamp().plusSeconds(30))
+                           .header("alg", "RS256").build();
+        SecurityContextHolder.setContext(
+                new SecurityContextImpl(new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority(
+                        UserRole.FULL_USER.getName())))));
 
         final UserAccount result = sut.getCurrentUser();
         assertEquals(user, result);
