@@ -16,14 +16,13 @@ package cz.cvut.kbss.termit.service.security;
 
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.context.SecurityContext;
@@ -31,6 +30,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -56,23 +57,6 @@ public class SecurityUtils {
         this.passwordEncoder = passwordEncoder;
         this.idResolver = idResolver;
         this.configuration = configuration.getNamespace();
-        // Ensures security context is propagated to additionally spun threads, e.g., used by @Async methods
-        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-    }
-
-    /**
-     * This is a statically accessible variant of the {@link #getCurrentUser()} method.
-     * <p>
-     * It allows to access the currently logged-in user without injecting {@code SecurityUtils} as a bean.
-     *
-     * @return Currently logged-in user
-     */
-    public static UserAccount currentUser() {
-        final SecurityContext context = SecurityContextHolder.getContext();
-        assert context != null;
-
-        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
-        return userDetails.getUser();
     }
 
     /**
@@ -83,24 +67,24 @@ public class SecurityUtils {
     public UserAccount getCurrentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
         assert context != null && context.getAuthentication().isAuthenticated();
-        if (context.getAuthentication().getPrincipal() instanceof KeycloakPrincipal) {
-            return resolveAccountFromKeycloakPrincipal(context);
+        if (context.getAuthentication().getPrincipal() instanceof Jwt) {
+            return resolveAccountFromOAuthPrincipal(context);
         } else {
-            return currentUser();
+            final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+            return userDetails.getUser();
         }
     }
 
-    private UserAccount resolveAccountFromKeycloakPrincipal(SecurityContext context) {
-        final KeycloakPrincipal<?> principal = (KeycloakPrincipal<?>) context.getAuthentication().getPrincipal();
-        final AccessToken keycloakToken = principal.getKeycloakSecurityContext().getToken();
+    private UserAccount resolveAccountFromOAuthPrincipal(SecurityContext context) {
+        final Jwt principal = (Jwt) context.getAuthentication().getPrincipal();
         final UserAccount account = new UserAccount();
-        account.setFirstName(keycloakToken.getGivenName());
-        account.setLastName(keycloakToken.getFamilyName());
-        account.setUsername(keycloakToken.getPreferredUsername());
-        context.getAuthentication().getAuthorities().stream().filter(ga -> UserRole.doesRoleExist(ga.getAuthority()))
-               .map(ga -> UserRole.fromRoleName(ga.getAuthority()))
-               .filter(r -> !r.getType().isEmpty()).forEach(r -> account.addType(r.getType()));
-        account.setUri(idResolver.generateIdentifier(configuration.getUser(), keycloakToken.getSubject()));
+        final OidcUserInfo userInfo = new OidcUserInfo(principal.getClaims());
+        account.setFirstName(userInfo.getGivenName());
+        account.setLastName(userInfo.getFamilyName());
+        account.setUsername(userInfo.getPreferredUsername());
+        HierarchicalRoleBasedAuthorityMapper.resolveUserRolesFromAuthorities(
+                context.getAuthentication().getAuthorities()).forEach(r -> account.addType(r.getType()));
+        account.setUri(idResolver.generateIdentifier(configuration.getUser(), userInfo.getSubject()));
         return account;
     }
 
@@ -112,8 +96,7 @@ public class SecurityUtils {
      */
     public static boolean authenticated() {
         final SecurityContext context = SecurityContextHolder.getContext();
-        return context.getAuthentication() != null &&
-                context.getAuthentication().getDetails() instanceof TermItUserDetails;
+        return context.getAuthentication() != null && !(context.getAuthentication() instanceof AnonymousAuthenticationToken);
     }
 
     /**
@@ -144,16 +127,9 @@ public class SecurityUtils {
      * Reloads the current user's data from the database.
      */
     public void updateCurrentUser() {
-        final TermItUserDetails updateDetails =
-                (TermItUserDetails) userDetailsService.loadUserByUsername(getCurrentUser().getUsername());
+        final TermItUserDetails updateDetails = (TermItUserDetails) userDetailsService.loadUserByUsername(
+                getCurrentUser().getUsername());
         setCurrentUser(updateDetails);
-    }
-
-    /**
-     * Resets the current security context.
-     */
-    public static void resetCurrentUser() {
-        SecurityContextHolder.clearContext();
     }
 
     /**

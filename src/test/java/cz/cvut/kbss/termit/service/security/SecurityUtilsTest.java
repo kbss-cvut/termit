@@ -19,7 +19,11 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,12 +39,20 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,6 +64,9 @@ class SecurityUtilsTest {
 
     @Spy
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Spy
+    private IdentifierResolver idResolver = new IdentifierResolver();
 
     @Spy
     private Configuration config = new Configuration();
@@ -99,7 +114,7 @@ class SecurityUtilsTest {
         Environment.setCurrentUser(user);
         final String password = "differentPassword";
         final ValidationException ex = assertThrows(ValidationException.class,
-                () -> sut.verifyCurrentUserPassword(password));
+                                                    () -> sut.verifyCurrentUserPassword(password));
         assertThat(ex.getMessage(), containsString("does not match"));
     }
 
@@ -117,7 +132,11 @@ class SecurityUtilsTest {
     @Test
     void isAuthenticatedReturnsFalseForAnonymousRequest() {
         final AnonymousAuthenticationToken token = new AnonymousAuthenticationToken("anonymousUser", "anonymousUser",
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS")));
+                                                                                    Collections.singleton(
+                                                                                            new SimpleGrantedAuthority(
+                                                                                                    "ROLE_ANONYMOUS")));
+        token.setDetails(new WebAuthenticationDetails("0.0.0.0", null));
+        token.setAuthenticated(true);
         SecurityContextHolder.setContext(new SecurityContextImpl(token));
         assertFalse(sut.isAuthenticated());
     }
@@ -126,5 +145,26 @@ class SecurityUtilsTest {
     void isAuthenticatedWorksInStaticVersion() {
         Environment.setCurrentUser(user);
         assertTrue(SecurityUtils.authenticated());
+    }
+
+    @Test
+    void getCurrentUserSupportsOidcJwtAuthenticationTokens() {
+        config.getNamespace().setUser(Vocabulary.s_c_uzivatel_termitu);
+        final UserAccount user = Generator.generateUserAccount();
+        final String subject = UUID.randomUUID().toString();
+        user.setUri(idResolver.generateIdentifier(config.getNamespace().getUser(), subject));
+        final Jwt jwt = Jwt.withTokenValue("12345").subject(subject)
+                           .claim("given_name", user.getFirstName())
+                           .claim("family_name", user.getLastName())
+                           .claim("preferred_username", user.getUsername())
+                           .issuedAt(Utils.timestamp())
+                           .expiresAt(Utils.timestamp().plusSeconds(30))
+                           .header("alg", "RS256").build();
+        SecurityContextHolder.setContext(
+                new SecurityContextImpl(new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority(
+                        UserRole.FULL_USER.getName())))));
+
+        final UserAccount result = sut.getCurrentUser();
+        assertEquals(user, result);
     }
 }

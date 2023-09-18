@@ -14,9 +14,9 @@ package cz.cvut.kbss.termit.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
 import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.aspectj.lang.Aspects;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -46,13 +46,11 @@ public class ServiceConfig {
     public RestTemplate restTemplate(@Qualifier("objectMapper") ObjectMapper objectMapper) {
         final RestTemplate restTemplate = new RestTemplate();
 
-        // Using LaxRedirectStrategy to allow redirects of POST, PUT and DELETE requests
-        // Introduced here because text analysis invocations (POST) were redirected and the resulting documents were
-        // malformed (contained the redirect page instead of the result).
+        // HttpClient 5 default redirect strategy automatically follows POST redirects as well
         final HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
         final HttpClient httpClient = HttpClientBuilder.create()
-                .setRedirectStrategy(new LaxRedirectStrategy())
-                .build();
+                                                       .setRedirectStrategy(new DefaultRedirectStrategy())
+                                                       .build();
         factory.setHttpClient(httpClient);
         restTemplate.setRequestFactory(factory);
 

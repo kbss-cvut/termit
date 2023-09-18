@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;

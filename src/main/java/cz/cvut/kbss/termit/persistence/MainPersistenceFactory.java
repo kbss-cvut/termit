@@ -27,8 +27,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,9 +58,6 @@ public class MainPersistenceFactory {
 
     @PostConstruct
     private void init() {
-        // Allow Apache HTTP client used by RDF4J to use a larger connection pool
-        // Temporary, should be configurable via JOPA
-        System.setProperty("http.maxConnections", "20");
         final Map<String, String> properties = defaultParams();
         properties.put(ONTOLOGY_PHYSICAL_URI_KEY, configuration.getRepository().getUrl());
         properties.put(DATA_SOURCE_CLASS, configuration.getPersistence().getDriver());

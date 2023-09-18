@@ -20,8 +20,12 @@ public class SnapshotAuthorizationService {
 
     private final VocabularyAuthorizationService vocabularyAuthorizationService;
 
-    public SnapshotAuthorizationService(VocabularyAuthorizationService vocabularyAuthorizationService) {
+    private final SecurityUtils securityUtils;
+
+    public SnapshotAuthorizationService(VocabularyAuthorizationService vocabularyAuthorizationService,
+                                        SecurityUtils securityUtils) {
         this.vocabularyAuthorizationService = vocabularyAuthorizationService;
+        this.securityUtils = securityUtils;
     }
 
     /**
@@ -40,7 +44,7 @@ public class SnapshotAuthorizationService {
     }
 
     private boolean isUserAtLeastEditor() {
-        final UserAccount user = SecurityUtils.currentUser();
+        final UserAccount user = securityUtils.getCurrentUser();
         return user.isAdmin() || user.hasRole(UserRole.FULL_USER);
     }
 }

@@ -17,22 +17,19 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
-import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.net.URI;
 import java.util.Objects;
 
-import static cz.cvut.kbss.termit.util.Constants.*;
+import static cz.cvut.kbss.termit.util.Constants.QueryParams;
 
 /**
  * Base for application REST controllers.
  * <p>
  * Will be used to define general security for the public API.
  */
-@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class BaseController {
 
     protected final IdentifierResolver idResolver;

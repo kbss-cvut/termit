@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -48,6 +49,7 @@ import java.util.Set;
 @Tag(name = "Search", description = "Search API")
 @RestController
 @RequestMapping("/search")
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class SearchController extends BaseController {
 
     private final SearchService searchService;

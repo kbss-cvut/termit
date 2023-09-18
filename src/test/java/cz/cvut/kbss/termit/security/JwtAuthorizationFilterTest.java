@@ -46,7 +46,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import javax.servlet.FilterChain;
+import jakarta.servlet.FilterChain;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
@@ -113,7 +113,7 @@ class JwtAuthorizationFilterTest {
         generateJwtIntoRequest();
 
         sut.doFilterInternal(mockRequest, mockResponse, chainMock);
-        assertEquals(user, SecurityUtils.currentUser());
+        assertEquals(user, Environment.getCurrentUser());
     }
 
     private void generateJwtIntoRequest() {

@@ -25,7 +25,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -118,14 +118,14 @@ class RestUtilsTest {
         final Date date = new Date();
         final ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                                                         () -> RestUtils.parseTimestamp(date.toString()));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
     void parseTimestampThrowsResponseStatusExceptionWithStatus400ForNullArgument() {
         final ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                                                         () -> RestUtils.parseTimestamp(null));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test

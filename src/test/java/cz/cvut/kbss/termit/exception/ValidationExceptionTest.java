@@ -21,8 +21,8 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.validation.ValidationResult;
 import org.junit.jupiter.api.Test;
 
-import javax.validation.Validation;
-import javax.validation.Validator;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;

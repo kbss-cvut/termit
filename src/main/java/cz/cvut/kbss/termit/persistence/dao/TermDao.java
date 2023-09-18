@@ -141,7 +141,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Loads terms whose exact match to the specified term is inferred due to the symmetric of SKOS exactMatch.
+     * Loads terms whose exact match to the specified term is inferred due to the symmetry of SKOS exactMatch.
      *
      * @param term Term to load related terms for
      */

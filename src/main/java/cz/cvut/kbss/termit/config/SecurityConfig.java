@@ -33,9 +33,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -46,10 +47,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.Collections;
 
-@ConditionalOnProperty(prefix = "keycloak", name = "enabled", havingValue = "false", matchIfMissing = true)
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
+@ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
@@ -87,13 +90,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         LOG.debug("Using internal security mechanisms.");
         final AuthenticationManager authManager = buildAuthenticationManager(http);
-        http.authorizeRequests().antMatchers("/rest/query").permitAll().and().cors().and().csrf()
-            .disable()
-            .authorizeRequests().antMatchers("/**").permitAll()
-            .and().exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-            .and().cors().configurationSource(corsConfigurationSource()).and().csrf().disable()
-            .logout().logoutUrl(SecurityConstants.LOGOUT_PATH).logoutSuccessHandler(authenticationSuccessHandler)
-            .and()
+        http.authorizeHttpRequests((auth) -> auth.requestMatchers(antMatcher("/rest/query")).permitAll()
+                                                 .requestMatchers(antMatcher("/**")).permitAll())
+            .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .exceptionHandling(ehc -> ehc.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+            .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)
+                                  .logoutSuccessHandler(authenticationSuccessHandler))
             .authenticationManager(authManager)
             .addFilter(authenticationFilter(authManager))
             .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, userDetailsService, objectMapper));
@@ -107,7 +110,8 @@ public class SecurityConfig {
     }
 
     private JwtAuthenticationFilter authenticationFilter(AuthenticationManager authenticationManager) {
-        final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager, jwtUtils);
+        final JwtAuthenticationFilter authenticationFilter = new JwtAuthenticationFilter(authenticationManager,
+                                                                                         jwtUtils);
         authenticationFilter.setFilterProcessesUrl(SecurityConstants.LOGIN_PATH);
         authenticationFilter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
         authenticationFilter.setAuthenticationFailureHandler(authenticationFailureHandler);

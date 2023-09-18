@@ -24,7 +24,7 @@ import cz.cvut.kbss.termit.validation.ValidationResult;
 import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
