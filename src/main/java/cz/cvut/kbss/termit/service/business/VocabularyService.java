@@ -198,9 +198,14 @@ public class VocabularyService
      *                                                                           matching the one in the imported data
      *                                                                           already exists
      */
+    @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
     public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
-        return repositoryService.importVocabulary(rename, file);
+        final Vocabulary imported = repositoryService.importVocabulary(rename, file);
+        final AccessControlList acl = aclService.createFor(imported);
+        imported.setAcl(acl.getUri());
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(imported));
+        return imported;
     }
 
     /**
