@@ -28,7 +28,7 @@
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>2.2.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>1.1.2</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>1.1.3</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.13.2</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.20</org.aspectj.version>
 
