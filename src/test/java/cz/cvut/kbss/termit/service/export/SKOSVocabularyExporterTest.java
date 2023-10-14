@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -71,7 +72,9 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(author);
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(Generator.generatePersistChange(vocabulary));
+            final PersistChangeRecord record = Generator.generatePersistChange(vocabulary);
+            record.setAuthor(author);
+            em.persist(record);
         });
     }
 

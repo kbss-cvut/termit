@@ -53,7 +53,7 @@ public class Glossary extends AbstractEntity {
     public void addRootTerm(Term rootTerm) {
         Objects.requireNonNull(rootTerm);
         if (rootTerms == null) {
-            this.rootTerms = new HashSet<>();
+            setRootTerms(new HashSet<>());
         }
         rootTerms.add(rootTerm.getUri());
     }
