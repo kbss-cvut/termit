@@ -84,7 +84,7 @@ public class OAuth2SecurityConfig {
         public Collection<SimpleGrantedAuthority> convert(Jwt jwt) {
             final List<SimpleGrantedAuthority> allAuths = (
                     (Map<String, Collection<?>>) jwt.getClaims().getOrDefault(
-                            OAuth2SecurityConfig.this.config.getSecurity().roleClaim(), Collections.emptyMap())
+                            OAuth2SecurityConfig.this.config.getSecurity().getRoleClaim(), Collections.emptyMap())
             ).getOrDefault("roles", Collections.emptyList())
              .stream()
              .map(Object::toString)

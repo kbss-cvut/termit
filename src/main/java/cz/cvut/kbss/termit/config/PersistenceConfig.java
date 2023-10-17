@@ -45,7 +45,7 @@ public class PersistenceConfig {
     public VocabularyContextMapper vocabularyContextMapper(cz.cvut.kbss.termit.util.Configuration config,
                                                            VocabularyContextMapper wrapped,
                                                            EditableVocabularies editableVocabularies) {
-        if (config.getWorkspace().allVocabulariesEditable()) {
+        if (config.getWorkspace().isAllVocabulariesEditable()) {
             return wrapped;
         }
         return new WorkspaceVocabularyContextMapper(wrapped, editableVocabularies);

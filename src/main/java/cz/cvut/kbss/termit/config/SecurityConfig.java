@@ -127,9 +127,9 @@ public class SecurityConfig {
         // Since we are using cookie-based sessions, we have to specify the URL of the clients (CORS allowed origins)
         final CorsConfiguration corsConfiguration = new CorsConfiguration().applyPermitDefaultValues();
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-        corsConfiguration.setAllowedOrigins(Arrays.asList(corsConfig.allowedOrigins().split(",")));
-        if (corsConfig.allowedOriginPatterns() != null) {
-            corsConfiguration.setAllowedOriginPatterns(Arrays.asList(corsConfig.allowedOriginPatterns().split(",")));
+        corsConfiguration.setAllowedOrigins(Arrays.asList(corsConfig.getAllowedOrigins().split(",")));
+        if (corsConfig.getAllowedOriginPatterns() != null) {
+            corsConfiguration.setAllowedOriginPatterns(Arrays.asList(corsConfig.getAllowedOriginPatterns().split(",")));
         }
         corsConfiguration.addExposedHeader(HttpHeaders.AUTHORIZATION);
         corsConfiguration.addExposedHeader(HttpHeaders.LOCATION);

@@ -36,7 +36,7 @@ public class EditableVocabularies implements Serializable {
 
     public EditableVocabularies(Configuration configuration,
                                 ObjectProvider<EditableVocabulariesHolder> editableVocabularies) {
-        this.allVocabulariesEditable = configuration.getWorkspace().allVocabulariesEditable();
+        this.allVocabulariesEditable = configuration.getWorkspace().isAllVocabulariesEditable();
         this.editableVocabularies = editableVocabularies;
     }
 

@@ -177,8 +177,8 @@ class RepositoryAccessControlListServiceTest {
 
         final AccessControlList result = sut.createFor(subject);
         assertThat(result.getRecords(), hasItems(
-                new RoleAccessControlRecord(configuration.getAcl().defaultEditorAccessLevel(), editor),
-                new RoleAccessControlRecord(configuration.getAcl().defaultReaderAccessLevel(), reader)
+                new RoleAccessControlRecord(configuration.getAcl().getDefaultEditorAccessLevel(), editor),
+                new RoleAccessControlRecord(configuration.getAcl().getDefaultReaderAccessLevel(), reader)
         ));
         verify(dao).persist(result);
     }

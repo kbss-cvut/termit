@@ -50,7 +50,7 @@ public class VocabularyRepositoryServiceWorkspaceTest {
 
     @Test
     void findAllAddsReadOnlyTypeToNotEditedVocabulariesWhenNotAllVocabulariesAreEditable() {
-        configuration.setWorkspace(new Configuration.Workspace(false));
+        configuration.getWorkspace().setAllVocabulariesEditable(false);
         final List<Vocabulary> vocabularies = IntStream.range(0, 5).mapToObj(i -> Generator.generateVocabularyWithId())
                                                        .collect(Collectors.toList());
         when(dao.findAll()).thenReturn(vocabularies);
@@ -69,7 +69,7 @@ public class VocabularyRepositoryServiceWorkspaceTest {
 
     @Test
     void findAddsReadOnlyTypeToNotEditedVocabulary() {
-        configuration.setWorkspace(new Configuration.Workspace(false));
+        configuration.getWorkspace().setAllVocabulariesEditable(false);
         final Vocabulary editable = Generator.generateVocabularyWithId();
         final Vocabulary readOnly = Generator.generateVocabularyWithId();
         when(dao.find(editable.getUri())).thenReturn(Optional.of(editable));
