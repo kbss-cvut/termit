@@ -21,7 +21,9 @@ import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.mock;
  */
 @TestConfiguration
 @Import(SecurityConfig.class)
+@EnableConfigurationProperties(Configuration.class)
 public class TestRestSecurityConfig {
 
     @Bean

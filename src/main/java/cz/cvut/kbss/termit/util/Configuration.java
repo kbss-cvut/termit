@@ -15,10 +15,11 @@
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,9 +32,9 @@ import java.util.Set;
  * The configuration can be also set via <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
  * environment variables</a>. These override any statically configured values.
  */
-@org.springframework.context.annotation.Configuration
 @ConfigurationProperties("termit")
 @Primary
+@Valid
 public class Configuration {
     /**
      * TermIt frontend URL.
@@ -218,8 +219,6 @@ public class Configuration {
         this.security = security;
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "persistence")
     public static class Persistence {
         /**
          * OntoDriver class for the repository.
@@ -249,8 +248,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "repository")
     public static class Repository {
         /**
          * URL of the main application repository.
@@ -305,8 +302,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "changetracking")
     public static class ChangeTracking {
         Context context = new Context();
 
@@ -336,8 +331,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "comments")
     public static class Comments {
         /**
          * IRI of the repository context used to store comments (discussion to assets).
@@ -354,8 +347,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "namespace")
     public static class Namespace {
         /**
          * Namespace for vocabulary identifiers.
@@ -468,8 +459,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "admin")
     public static class Admin {
         /**
          * Specifies the folder in which admin credentials are saved when its account is generated.
@@ -499,8 +488,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "file")
     public static class File {
         /**
          * Specifies root directory in which document files are stored.
@@ -517,8 +504,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "jwt")
     public static class Jwt {
         /**
          * Secret key used when hashing a JWT.
@@ -535,8 +520,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "textanalysis")
     public static class TextAnalysis {
         /**
          * URL of the text analysis service.
@@ -586,8 +569,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "glossary")
     public static class Glossary {
         /**
          * IRI path to append to vocabulary IRI to get glossary identifier.
@@ -604,7 +585,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class PublicView {
         /**
          * Unmapped properties allowed to appear in the SKOS export.
@@ -621,7 +601,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Workspace {
 
         /**
@@ -644,7 +623,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Cors {
         /**
          * A comma-separated list of allowed origins for CORS.
@@ -678,7 +656,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Schedule {
 
         private Cron cron = new Cron();
@@ -722,7 +699,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Mail {
 
         /**
@@ -742,7 +718,6 @@ public class Configuration {
     /**
      * Configuration for initialization of new {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s.
      */
-    @org.springframework.context.annotation.Configuration
     public static class ACL {
 
         /**
@@ -772,7 +747,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Security {
 
         public enum ProviderType {
