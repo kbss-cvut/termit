@@ -47,7 +47,7 @@ class EditableVocabulariesTest {
 
     @Test
     void isEditableReturnsTrueForUnregisteredVocabularyWhenAllVocabulariesAreEditable() {
-        configuration.getWorkspace().setAllVocabulariesEditable(true);
+        configuration.setWorkspace(new Configuration.Workspace(true));
         this.sut = new EditableVocabularies(configuration, appContext.getBeanProvider(EditableVocabulariesHolder.class));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 
@@ -56,7 +56,7 @@ class EditableVocabulariesTest {
 
     @Test
     void isEditableReturnsFalseForUnregisteredVocabularyWhenAllVocabulariesAreNotEditable() {
-        configuration.getWorkspace().setAllVocabulariesEditable(false);
+        configuration.setWorkspace(new Configuration.Workspace(false));
         this.sut = new EditableVocabularies(configuration, appContext.getBeanProvider(EditableVocabulariesHolder.class));
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
 

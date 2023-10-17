@@ -106,12 +106,12 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         roles.stream().filter(ur -> cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType().equals(ur.getUri()
                                                                                                              .toString()))
              .findAny().ifPresent(
-                     editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultEditorAccessLevel(), editor)));
+                     editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.defaultEditorAccessLevel(), editor)));
         roles.stream()
              .filter(ur -> cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType().equals(ur.getUri()
                                                                                                           .toString()))
              .findAny().ifPresent(
-                     editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultReaderAccessLevel(), editor)));
+                     editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.defaultReaderAccessLevel(), editor)));
     }
 
     @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")

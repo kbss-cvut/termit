@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
+import org.springframework.lang.NonNull;
 
 import java.util.Optional;
 import java.util.Set;
@@ -601,58 +602,35 @@ public class Configuration {
         }
     }
 
-    public static class Workspace {
+    /**
+     * Workspace configuration.
+     *
+     * @param allVocabulariesEditable Whether all vocabularies in the repository are editable. Allows running TermIt in
+     *                                two modes - one is that all vocabularies represent the current version and can be
+     *                                edited. The other mode is that working copies of vocabularies are created and the
+     *                                user only selects a subset of these working copies to edit (the so-called
+     *                                workspace), while all other vocabularies are read-only for them.
+     */
+    public record Workspace(@NotNull boolean allVocabulariesEditable) {
 
-        /**
-         * Whether all vocabularies in the repository are editable.
-         * <p>
-         * Allows running TermIt in two modes - one is that all vocabularies represent the current version and can be
-         * edited. The other mode is that working copies of vocabularies are created and the user only selects a subset
-         * of these working copies to edit (the so-called workspace), while all other vocabularies are read-only for
-         * them.
-         */
-        @NotNull
-        private boolean allVocabulariesEditable = true;
-
-        public boolean isAllVocabulariesEditable() {
-            return allVocabulariesEditable;
-        }
-
-        public void setAllVocabulariesEditable(boolean allVocabulariesEditable) {
-            this.allVocabulariesEditable = allVocabulariesEditable;
+        public Workspace() {
+            this(true);
         }
     }
 
-    public static class Cors {
-        /**
-         * A comma-separated list of allowed origins for CORS.
-         */
-        @NotNull
-        private String allowedOrigins = "http://localhost:3000";
+    /**
+     * CORS configuration.
+     *
+     * @param allowedOrigins        A comma-separated list of allowed origins for CORS.
+     * @param allowedOriginPatterns A comma-separated list of allowed origin patterns for CORS. This allows a more
+     *                              dynamic configuration of allowed origins that {@link #allowedOrigins} which contains
+     *                              exact origin URLs. It is useful, for example, for Netlify preview builds of the
+     *                              frontend which use a generated subdomain URL.
+     */
+    public record Cors(@NonNull String allowedOrigins, String allowedOriginPatterns) {
 
-        /**
-         * A comma-separated list of allowed origin patterns for CORS.
-         * <p>
-         * This allows a more dynamic configuration of allowed origins that {@link #allowedOrigins} which contains exact
-         * origin URLs. It is useful, for example, for Netlify preview builds of the frontend which use a generated
-         * subdomain URL.
-         */
-        private String allowedOriginPatterns;
-
-        public String getAllowedOrigins() {
-            return allowedOrigins;
-        }
-
-        public void setAllowedOrigins(String allowedOrigins) {
-            this.allowedOrigins = allowedOrigins;
-        }
-
-        public String getAllowedOriginPatterns() {
-            return allowedOriginPatterns;
-        }
-
-        public void setAllowedOriginPatterns(String allowedOriginPatterns) {
-            this.allowedOriginPatterns = allowedOriginPatterns;
+        public Cors() {
+            this("http://localhost:3000", null);
         }
     }
 
@@ -699,87 +677,48 @@ public class Configuration {
         }
     }
 
-    public static class Mail {
+    /**
+     * Additional email configuration (on top of the Spring-specific mail server config)
+     *
+     * @param sender Human-readable name to use as email sender.
+     */
+    public record Mail(String sender) {
 
-        /**
-         * Human-readable name to use as email sender.
-         */
-        private String sender;
-
-        public String getSender() {
-            return sender;
-        }
-
-        public void setSender(String sender) {
-            this.sender = sender;
+        public Mail() {
+            this(null);
         }
     }
 
     /**
      * Configuration for initialization of new {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s.
+     *
+     * @param defaultEditorAccessLevel Default access level for users in editor role.
+     * @param defaultReaderAccessLevel Default access level for users in reader role.
      */
-    public static class ACL {
+    public record ACL(AccessLevel defaultEditorAccessLevel, AccessLevel defaultReaderAccessLevel) {
 
-        /**
-         * Default access level for users in editor role.
-         */
-        private AccessLevel defaultEditorAccessLevel = AccessLevel.READ;
-
-        /**
-         * Default access level for users in editor role.
-         */
-        private AccessLevel defaultReaderAccessLevel = AccessLevel.READ;
-
-        public AccessLevel getDefaultEditorAccessLevel() {
-            return defaultEditorAccessLevel;
-        }
-
-        public void setDefaultEditorAccessLevel(AccessLevel defaultEditorAccessLevel) {
-            this.defaultEditorAccessLevel = defaultEditorAccessLevel;
-        }
-
-        public AccessLevel getDefaultReaderAccessLevel() {
-            return defaultReaderAccessLevel;
-        }
-
-        public void setDefaultReaderAccessLevel(AccessLevel defaultReaderAccessLevel) {
-            this.defaultReaderAccessLevel = defaultReaderAccessLevel;
+        public ACL() {
+            this(AccessLevel.READ, AccessLevel.READ);
         }
     }
 
-    public static class Security {
+    /**
+     * TermIt security configuration.
+     *
+     * @param provider  Determines whether an internal security mechanism or an external OIDC service will be used for
+     *                  authentication. In case na OIDC service is selected, it should be configured using standard
+     *                  Spring Boot OAuth2 properties.
+     * @param roleClaim Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt
+     *                  user roles.
+     */
+    public record Security(ProviderType provider, String roleClaim) {
 
         public enum ProviderType {
             INTERNAL, OIDC
         }
 
-        /**
-         * Determines whether an internal security mechanism or an external OIDC service will be used for
-         * authentication.
-         * <p>
-         * In case na OIDC service is selected, it should be configured using standard Spring Boot OAuth2 properties.
-         */
-        private ProviderType provider = ProviderType.INTERNAL;
-
-        /**
-         * Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt user roles.
-         */
-        private String roleClaim = "realm_access";
-
-        public ProviderType getProvider() {
-            return provider;
-        }
-
-        public void setProvider(ProviderType provider) {
-            this.provider = provider;
-        }
-
-        public String getRoleClaim() {
-            return roleClaim;
-        }
-
-        public void setRoleClaim(String roleClaim) {
-            this.roleClaim = roleClaim;
+        public Security() {
+            this(ProviderType.INTERNAL, "realm_access");
         }
     }
 }

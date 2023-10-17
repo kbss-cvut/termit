@@ -85,7 +85,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     // Cache only if all vocabularies are editable
-    @Cacheable(condition = "@configuration.workspace.allVocabulariesEditable")
+    @Cacheable(condition = "@configuration.workspace.allVocabulariesEditable()")
     @Override
     public List<VocabularyDto> findAll() {
         return super.findAll();
@@ -94,7 +94,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Override
     protected Vocabulary postLoad(@NotNull Vocabulary instance) {
         super.postLoad(instance);
-        if (!config.getWorkspace().isAllVocabulariesEditable() && !editableVocabularies.isEditable(instance)) {
+        if (!config.getWorkspace().allVocabulariesEditable() && !editableVocabularies.isEditable(instance)) {
             instance.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
         }
         return instance;
