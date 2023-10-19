@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.config;
 
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
-import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
 import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.util.oidc.OidcGrantedAuthoritiesExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +25,6 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
@@ -75,21 +72,9 @@ public class OAuth2SecurityConfig {
 
     private Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor() {
         return source -> {
-            final Collection<SimpleGrantedAuthority> authorities = new GrantedAuthoritiesExtractor().convert(source);
+            final Collection<SimpleGrantedAuthority> authorities = new OidcGrantedAuthoritiesExtractor(
+                    config.getSecurity()).convert(source);
             return new JwtAuthenticationToken(source, authorities);
         };
-    }
-
-    private class GrantedAuthoritiesExtractor implements Converter<Jwt, Collection<SimpleGrantedAuthority>> {
-        public Collection<SimpleGrantedAuthority> convert(Jwt jwt) {
-            final List<SimpleGrantedAuthority> allAuths = (
-                    (Map<String, Collection<?>>) jwt.getClaims().getOrDefault(
-                            OAuth2SecurityConfig.this.config.getSecurity().getRoleClaim(), Collections.emptyMap())
-            ).getOrDefault("roles", Collections.emptyList())
-             .stream()
-             .map(Object::toString)
-             .map(SimpleGrantedAuthority::new).toList();
-            return new HierarchicalRoleBasedAuthorityMapper().mapAuthorities(allAuths);
-        }
     }
 }
