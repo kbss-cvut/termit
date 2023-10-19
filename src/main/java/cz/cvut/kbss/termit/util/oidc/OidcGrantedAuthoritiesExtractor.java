@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.util.oidc;
 
 import cz.cvut.kbss.termit.util.Configuration;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,7 +19,7 @@ public class OidcGrantedAuthoritiesExtractor implements Converter<Jwt, Collectio
     }
 
     @Override
-    public Collection<SimpleGrantedAuthority> convert(@NotNull Jwt source) {
+    public Collection<SimpleGrantedAuthority> convert(Jwt source) {
         final String rolesClaim = config.getRoleClaim();
         final String[] parts = rolesClaim.split("\\.");
         assert parts.length > 0;
@@ -31,7 +30,8 @@ public class OidcGrantedAuthoritiesExtractor implements Converter<Jwt, Collectio
             Map<String, Object> map = source.getClaimAsMap(parts[0]);
             for (int i = 1; i < parts.length - 1; i++) {
                 if (map.containsKey(parts[i]) && !(map.get(parts[i]) instanceof Map)) {
-                    throw new IllegalArgumentException("Access token does not contain roles under the expected claim '" + rolesClaim + "'.");
+                    throw new IllegalArgumentException(
+                            "Access token does not contain roles under the expected claim '" + rolesClaim + "'.");
                 }
                 map = (Map<String, Object>) map.getOrDefault(parts[i], Collections.emptyMap());
             }
