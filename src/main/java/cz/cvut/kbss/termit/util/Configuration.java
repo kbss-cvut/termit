@@ -763,8 +763,10 @@ public class Configuration {
 
         /**
          * Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt user roles.
+         *
+         * Supports nested objects via dot notation.
          */
-        private String roleClaim = "realm_access";
+        private String roleClaim = "realm_access.roles";
 
         public ProviderType getProvider() {
             return provider;
