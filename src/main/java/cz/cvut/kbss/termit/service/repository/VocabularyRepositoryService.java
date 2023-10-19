@@ -85,7 +85,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     // Cache only if all vocabularies are editable
-    @Cacheable(condition = "@configuration.workspace.allVocabulariesEditable")
+    @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable")
     @Override
     public List<VocabularyDto> findAll() {
         return super.findAll();
