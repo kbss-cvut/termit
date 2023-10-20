@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,7 +38,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Allows registration for anyone.
+ *
+ * Available only if internal security is used.
  */
+@ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
 @Tag(name = "Registration", description = "User self-registration API")
 @RestController
 @RequestMapping("/users")
