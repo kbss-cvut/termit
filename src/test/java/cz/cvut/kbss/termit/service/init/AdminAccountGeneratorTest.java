@@ -96,6 +96,13 @@ class AdminAccountGeneratorTest {
     }
 
     @Test
+    void doesGenerateAdminWhenOIDCSecurityIsUsed() {
+        config.getSecurity().setProvider(Configuration.Security.ProviderType.OIDC);
+        sut.initSystemAdmin();
+        verify(userService, never()).persist(any(UserAccount.class));
+    }
+
+    @Test
     void savesAdminLoginCredentialsIntoHiddenFileInUserHome() throws Exception {
         doAnswer(arg -> {
             final UserAccount account = arg.getArgument(0, UserAccount.class);
