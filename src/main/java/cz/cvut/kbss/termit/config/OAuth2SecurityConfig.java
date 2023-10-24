@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.config;
 
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
+import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.util.oidc.OidcGrantedAuthoritiesExtractor;
 import org.slf4j.Logger;
@@ -74,7 +75,8 @@ public class OAuth2SecurityConfig {
         return source -> {
             final Collection<SimpleGrantedAuthority> authorities = new OidcGrantedAuthoritiesExtractor(
                     config.getSecurity()).convert(source);
-            return new JwtAuthenticationToken(source, authorities);
+            return new JwtAuthenticationToken(source,
+                                              new HierarchicalRoleBasedAuthorityMapper().mapAuthorities(authorities));
         };
     }
 }
