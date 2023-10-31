@@ -29,12 +29,13 @@ import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -45,12 +46,12 @@ import java.util.stream.Collectors;
 @Service
 public class UfoTermTypesService {
 
-    private final ClassPathResource languageTtlUrl;
+    private final Resource languageTtlUrl;
 
     private List<Term> cache;
 
     @Autowired
-    public UfoTermTypesService(@Qualifier("termTypesLanguage") ClassPathResource languageTtlUrl) {
+    public UfoTermTypesService(@Qualifier("termTypesLanguage") Resource languageTtlUrl) {
         this.languageTtlUrl = languageTtlUrl;
     }
 
@@ -81,16 +82,21 @@ public class UfoTermTypesService {
                         final org.eclipse.rdf4j.model.Resource type = s.getSubject();
                         final Term term = new Term(URI.create(type.stringValue()));
                         final Model statements = model.filter(type, null, null);
-                        term.setLabel(Utils.resolveTranslations(type, org.eclipse.rdf4j.model.vocabulary.RDFS.LABEL, statements));
-                        term.setDescription(Utils.resolveTranslations(type, org.eclipse.rdf4j.model.vocabulary.RDFS.COMMENT, statements));
-                        term.setSubTerms(statements.filter(type, SKOS.NARROWER, null).stream()
+                        term.setLabel(Utils.resolveTranslations(type, SKOS.PREF_LABEL, statements));
+                        term.setDescription(Utils.resolveTranslations(type, SKOS.SCOPE_NOTE, statements));
+                        final Set<URI> subTerms = statements.filter(type, SKOS.NARROWER, null).stream()
                                                    .filter(st -> st.getObject().isIRI())
-                                                   .map(st -> new TermInfo(URI.create(st.getObject().stringValue())))
-                                                   .collect(Collectors.toSet()));
+                                                   .map(st -> URI.create(st.getObject().stringValue()))
+                                                   .collect(Collectors.toSet());
+                        model.filter(null, SKOS.BROADER, type).stream()
+                                  .filter(st -> st.getSubject().isIRI())
+                                  .map(st -> URI.create(st.getSubject().stringValue()))
+                                  .forEach(subTerms::add);
+                        term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
                         return term;
                     }).collect(Collectors.toList());
         } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
-            throw new LanguageRetrievalException("Unable to load term types from file " + languageTtlUrl.getPath(), e);
+            throw new LanguageRetrievalException("Unable to load term types from file " + languageTtlUrl.getFilename(), e);
         }
     }
 }

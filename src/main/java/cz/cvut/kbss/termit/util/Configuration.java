@@ -66,6 +66,7 @@ public class Configuration {
     private ACL acl = new ACL();
     private Mail mail = new Mail();
     private Security security = new Security();
+    private Language language = new Language();
 
     public String getUrl() {
         return url;
@@ -218,6 +219,15 @@ public class Configuration {
     public void setSecurity(Security security) {
         this.security = security;
     }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
+
 
     public static class Persistence {
         /**
@@ -763,7 +773,7 @@ public class Configuration {
 
         /**
          * Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt user roles.
-         *
+         * <p>
          * Supports nested objects via dot notation.
          */
         private String roleClaim = "realm_access.roles";
@@ -782,6 +792,53 @@ public class Configuration {
 
         public void setRoleClaim(String roleClaim) {
             this.roleClaim = roleClaim;
+        }
+    }
+
+    public static class Language {
+
+        /**
+         * Path to a file containing definition of the language of types terms can be classified with.
+         * <p>
+         * The file must be in Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel,
+         * scopeNote and broader/narrower).
+         */
+        private LanguageSource types = new LanguageSource();
+
+        /**
+         * Path to a file containing definition of the language of states terms can be in with. The file must be in
+         * Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
+         * broader/narrower).
+         */
+        private LanguageSource states = new LanguageSource();
+
+        public LanguageSource getTypes() {
+            return types;
+        }
+
+        public void setTypes(LanguageSource types) {
+            this.types = types;
+        }
+
+        public LanguageSource getStates() {
+            return states;
+        }
+
+        public void setStates(LanguageSource states) {
+            this.states = states;
+        }
+
+        public static class LanguageSource {
+
+            private String source;
+
+            public String getSource() {
+                return source;
+            }
+
+            public void setSource(String source) {
+                this.source = source;
+            }
         }
     }
 }

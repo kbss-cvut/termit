@@ -14,14 +14,20 @@ package cz.cvut.kbss.termit.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
 import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
+import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.tika.utils.StringUtils;
 import org.aspectj.lang.Aspects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -36,6 +42,8 @@ import java.util.Arrays;
 
 @Configuration
 public class ServiceConfig {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ServiceConfig.class);
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -71,12 +79,27 @@ public class ServiceConfig {
     }
 
     @Bean("termTypesLanguage")
-    public ClassPathResource termTypesLanguageFile() {
+    public Resource termTypesLanguageFile(cz.cvut.kbss.termit.util.Configuration config) {
+        if (!StringUtils.isBlank(config.getLanguage().getTypes().getSource())) {
+            return createFileSystemResource(config.getLanguage().getTypes().getSource(), "types");
+        }
         return new ClassPathResource("languages/types.ttl");
     }
 
+    private Resource createFileSystemResource(String path, String type) {
+        final FileSystemResource source = new FileSystemResource(path);
+        if (!source.exists()) {
+            throw new ResourceNotFoundException(type + " language file '" + path + "' not found.");
+        }
+        LOG.info("Will load term {} from '{}'.", type, path);
+        return source;
+    }
+
     @Bean("termStatesLanguage")
-    public ClassPathResource termStatesLanguageFile() {
+    public Resource termStatesLanguageFile(cz.cvut.kbss.termit.util.Configuration config) {
+        if (!StringUtils.isBlank(config.getLanguage().getStates().getSource())) {
+            return createFileSystemResource(config.getLanguage().getStates().getSource(), "states");
+        }
         return new ClassPathResource("languages/states.ttl");
     }
 
