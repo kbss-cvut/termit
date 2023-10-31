@@ -9,7 +9,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
@@ -66,8 +66,8 @@ public class TermStateLanguageService {
                         final Model statements = model.filter(state, null, null);
                         res.setTypes(statements.filter(state, RDF.TYPE, null).stream()
                                                .map(ts -> ts.getObject().stringValue()).collect(Collectors.toSet()));
-                        res.setLabel(Utils.resolveTranslations(state, RDFS.LABEL, statements));
-                        res.setComment(Utils.resolveTranslations(state, RDFS.COMMENT, statements));
+                        res.setLabel(Utils.resolveTranslations(state, SKOS.PREF_LABEL, statements));
+                        res.setComment(Utils.resolveTranslations(state, SKOS.SCOPE_NOTE, statements));
                         return res;
                     }).collect(Collectors.toList());
         } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
