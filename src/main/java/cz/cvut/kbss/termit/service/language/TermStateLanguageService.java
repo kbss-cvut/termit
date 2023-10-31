@@ -5,7 +5,6 @@ import cz.cvut.kbss.termit.exception.LanguageRetrievalException;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -16,7 +15,7 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -33,11 +32,11 @@ import java.util.stream.Collectors;
 @Service
 public class TermStateLanguageService {
 
-    private final ClassPathResource termStatesLanguageTtl;
+    private final Resource termStatesLanguageTtl;
 
     private List<RdfsResource> cache;
 
-    public TermStateLanguageService(@Qualifier("termStatesLanguage") ClassPathResource termStatesLanguageTtl) {
+    public TermStateLanguageService(@Qualifier("termStatesLanguage") Resource termStatesLanguageTtl) {
         this.termStatesLanguageTtl = termStatesLanguageTtl;
     }
 
@@ -60,7 +59,7 @@ public class TermStateLanguageService {
             final Model model = Rio.parse(termStatesLanguageTtl.getInputStream(), RDFFormat.TURTLE);
             return model.filter(null, RDF.TYPE, vf.createIRI(Vocabulary.s_c_stav_pojmu))
                         .stream().map(s -> {
-                        final Resource state = s.getSubject();
+                        final org.eclipse.rdf4j.model.Resource state = s.getSubject();
                         final RdfsResource res = new RdfsResource();
                         res.setUri(URI.create(state.stringValue()));
                         final Model statements = model.filter(state, null, null);
@@ -71,7 +70,8 @@ public class TermStateLanguageService {
                         return res;
                     }).collect(Collectors.toList());
         } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
-            throw new LanguageRetrievalException("Unable to load term states language from file " + termStatesLanguageTtl.getPath(), e);
+            throw new LanguageRetrievalException(
+                    "Unable to load term states language from file " + termStatesLanguageTtl.getFilename(), e);
         }
     }
 

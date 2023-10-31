@@ -81,19 +81,25 @@ public class ServiceConfig {
     @Bean("termTypesLanguage")
     public Resource termTypesLanguageFile(cz.cvut.kbss.termit.util.Configuration config) {
         if (!StringUtils.isBlank(config.getLanguage().getTypes().getSource())) {
-            final FileSystemResource source = new FileSystemResource(config.getLanguage().getTypes().getSource());
-            if (!source.exists()) {
-                throw new ResourceNotFoundException(
-                        "Types language file '" + config.getLanguage().getTypes().getSource() + "' not found.");
-            }
-            LOG.info("Will load term types from '{}'.", config.getLanguage().getTypes().getSource());
-            return source;
+            return createFileSystemResource(config.getLanguage().getTypes().getSource(), "types");
         }
         return new ClassPathResource("languages/types.ttl");
     }
 
+    private Resource createFileSystemResource(String path, String type) {
+        final FileSystemResource source = new FileSystemResource(path);
+        if (!source.exists()) {
+            throw new ResourceNotFoundException(type + " language file '" + path + "' not found.");
+        }
+        LOG.info("Will load term {} from '{}'.", type, path);
+        return source;
+    }
+
     @Bean("termStatesLanguage")
-    public ClassPathResource termStatesLanguageFile() {
+    public Resource termStatesLanguageFile(cz.cvut.kbss.termit.util.Configuration config) {
+        if (!StringUtils.isBlank(config.getLanguage().getStates().getSource())) {
+            return createFileSystemResource(config.getLanguage().getStates().getSource(), "states");
+        }
         return new ClassPathResource("languages/states.ttl");
     }
 
