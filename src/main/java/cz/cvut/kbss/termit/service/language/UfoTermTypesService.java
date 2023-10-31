@@ -29,7 +29,7 @@ import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -45,12 +45,12 @@ import java.util.stream.Collectors;
 @Service
 public class UfoTermTypesService {
 
-    private final ClassPathResource languageTtlUrl;
+    private final Resource languageTtlUrl;
 
     private List<Term> cache;
 
     @Autowired
-    public UfoTermTypesService(@Qualifier("termTypesLanguage") ClassPathResource languageTtlUrl) {
+    public UfoTermTypesService(@Qualifier("termTypesLanguage") Resource languageTtlUrl) {
         this.languageTtlUrl = languageTtlUrl;
     }
 
@@ -90,7 +90,7 @@ public class UfoTermTypesService {
                         return term;
                     }).collect(Collectors.toList());
         } catch (IOException | RDFParseException | UnsupportedRDFormatException e) {
-            throw new LanguageRetrievalException("Unable to load term types from file " + languageTtlUrl.getPath(), e);
+            throw new LanguageRetrievalException("Unable to load term types from file " + languageTtlUrl.getFilename(), e);
         }
     }
 }

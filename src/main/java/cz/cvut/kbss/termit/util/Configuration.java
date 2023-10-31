@@ -66,6 +66,7 @@ public class Configuration {
     private ACL acl = new ACL();
     private Mail mail = new Mail();
     private Security security = new Security();
+    private Language language = new Language();
 
     public String getUrl() {
         return url;
@@ -218,6 +219,15 @@ public class Configuration {
     public void setSecurity(Security security) {
         this.security = security;
     }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
+
 
     public static class Persistence {
         /**
@@ -782,6 +792,37 @@ public class Configuration {
 
         public void setRoleClaim(String roleClaim) {
             this.roleClaim = roleClaim;
+        }
+    }
+
+    public static class Language {
+
+        /**
+         * Path to a file containing definition of the language of types terms can be classified with.
+         *
+         * The file must be in Turtle format.
+         */
+        private LanguageSource types = new LanguageSource();
+
+        public LanguageSource getTypes() {
+            return types;
+        }
+
+        public void setTypes(LanguageSource types) {
+            this.types = types;
+        }
+
+        public static class LanguageSource {
+
+            private String source;
+
+            public String getSource() {
+                return source;
+            }
+
+            public void setSource(String source) {
+                this.source = source;
+            }
         }
     }
 }
