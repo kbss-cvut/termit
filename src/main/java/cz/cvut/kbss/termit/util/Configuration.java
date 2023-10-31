@@ -800,10 +800,17 @@ public class Configuration {
         /**
          * Path to a file containing definition of the language of types terms can be classified with.
          * <p>
-         * The file must be in Turtle format. The term definitions must use SKOS terminology for attributes. Hierarchy
-         * must be constructed top-down (i.e., using the {@code skos:narrower} property).
+         * The file must be in Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel,
+         * scopeNote and broader/narrower).
          */
         private LanguageSource types = new LanguageSource();
+
+        /**
+         * Path to a file containing definition of the language of states terms can be in with. The file must be in
+         * Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
+         * broader/narrower).
+         */
+        private LanguageSource states = new LanguageSource();
 
         public LanguageSource getTypes() {
             return types;
@@ -811,6 +818,14 @@ public class Configuration {
 
         public void setTypes(LanguageSource types) {
             this.types = types;
+        }
+
+        public LanguageSource getStates() {
+            return states;
+        }
+
+        public void setStates(LanguageSource states) {
+            this.states = states;
         }
 
         public static class LanguageSource {
