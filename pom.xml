@@ -575,6 +575,32 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- use mvn license:check to check for missing license headers, mvn license:format to add license headers -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                    <header>header.txt</header>
+                    <excludes>
+                        <exclude>.github/**</exclude>
+                        <exclude>src/test/resources/**</exclude>
+                        <exclude>src/main/resources/**</exclude>
+                        <exclude>license.txt</exclude>
+                        <exclude>README.md</exclude>
+                        <exclude>**/*.txt</exclude>
+                        <exclude>**/*.md</exclude>
+                        <exclude>**/*.yml</exclude>
+                        <exclude>**/*.ttl</exclude>
+                        <exclude>**/*.sh</exclude>
+                        <exclude>pom.xml</exclude>
+                        <exclude>.editorconfig</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>de.qaware.maven</groupId>
                 <artifactId>go-offline-maven-plugin</artifactId>
