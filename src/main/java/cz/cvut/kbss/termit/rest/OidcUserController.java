@@ -65,6 +65,15 @@ public class OidcUserController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets all users of the system.")
+    @ApiResponse(responseCode = "200", description = "List of users ordered by name.")
+    @PreAuthorize("hasAnyRole('" + SecurityConstants.ROLE_ADMIN + "', '" + SecurityConstants.ROLE_FULL_USER + "')")
+    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<UserAccount> getAll() {
+        return userService.findAll();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets the currently logged-in user.")
     @ApiResponse(responseCode = "200", description = "Metadata of the current user's account.")
     @GetMapping(value = UserController.CURRENT_USER_PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
