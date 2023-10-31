@@ -20,6 +20,8 @@ import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.tika.utils.StringUtils;
 import org.aspectj.lang.Aspects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,6 +42,8 @@ import java.util.Arrays;
 
 @Configuration
 public class ServiceConfig {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ServiceConfig.class);
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -82,6 +86,8 @@ public class ServiceConfig {
                 throw new ResourceNotFoundException(
                         "Types language file '" + config.getLanguage().getTypes().getSource() + "' not found.");
             }
+            LOG.info("Will load term types from '{}'.", config.getLanguage().getTypes().getSource());
+            return source;
         }
         return new ClassPathResource("languages/types.ttl");
     }

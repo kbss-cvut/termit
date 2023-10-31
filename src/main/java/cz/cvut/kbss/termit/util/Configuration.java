@@ -773,7 +773,7 @@ public class Configuration {
 
         /**
          * Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt user roles.
-         *
+         * <p>
          * Supports nested objects via dot notation.
          */
         private String roleClaim = "realm_access.roles";
@@ -799,8 +799,9 @@ public class Configuration {
 
         /**
          * Path to a file containing definition of the language of types terms can be classified with.
-         *
-         * The file must be in Turtle format.
+         * <p>
+         * The file must be in Turtle format. The term definitions must use SKOS terminology for attributes. Hierarchy
+         * must be constructed top-down (i.e., using the {@code skos:narrower} property).
          */
         private LanguageSource types = new LanguageSource();
 
