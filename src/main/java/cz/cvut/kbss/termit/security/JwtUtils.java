@@ -24,7 +24,13 @@ import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
-import io.jsonwebtoken.*;
+import cz.cvut.kbss.termit.util.Utils;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
@@ -40,7 +46,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -55,7 +66,8 @@ public class JwtUtils {
     @Autowired
     public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
         this.objectMapper = objectMapper;
-        this.key = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+        this.key = Utils.isBlank(config.getJwt().getSecretKey()) ? Keys.secretKeyFor(SIGNATURE_ALGORITHM) :
+                         Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -171,8 +183,9 @@ public class JwtUtils {
 
     /**
      * Gets URI of the user represented by the specified token.
-     *
+     * <p>
      * Note that it is expected
+     *
      * @param token JSON Web Token
      * @return User identifier
      */

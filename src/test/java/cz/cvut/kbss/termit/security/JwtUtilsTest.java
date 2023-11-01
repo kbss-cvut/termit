@@ -76,6 +76,15 @@ class JwtUtilsTest {
     }
 
     @Test
+    void constructorInitializesKeyWithRandomSecretWhenNoneIsConfigured() {
+        final Configuration localConfig = new Configuration();
+        localConfig.getJwt().setSecretKey("");
+        this.sut = new JwtUtils(Environment.getObjectMapper(), localConfig);
+        final String jwtToken = sut.generateToken(user, Collections.emptyList());
+        assertNotNull(jwtToken);
+    }
+
+    @Test
     void generateTokenCreatesJwtForUserWithoutAuthorities() {
         final Collection<? extends GrantedAuthority> authorities = Collections.singleton(DEFAULT_AUTHORITY);
         final String jwtToken = sut.generateToken(user, authorities);

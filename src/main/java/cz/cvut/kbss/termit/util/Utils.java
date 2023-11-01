@@ -329,6 +329,18 @@ public class Utils {
     }
 
     /**
+     * Checks whether the specified string is blank.
+     * <p>
+     * {@code null} is considered blank, too.
+     *
+     * @param input Input to check
+     * @return {@code true} if the specified string is blank or null, {@code false} otherwise
+     */
+    public static boolean isBlank(String input) {
+        return input == null || input.isBlank();
+    }
+
+    /**
      * Checks if the specified string is a valid email address.
      *
      * @param str String to validate

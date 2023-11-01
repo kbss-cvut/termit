@@ -21,10 +21,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
 import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
+import cz.cvut.kbss.termit.util.Utils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.apache.tika.utils.StringUtils;
 import org.aspectj.lang.Aspects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +86,7 @@ public class ServiceConfig {
 
     @Bean("termTypesLanguage")
     public Resource termTypesLanguageFile(cz.cvut.kbss.termit.util.Configuration config) {
-        if (!StringUtils.isBlank(config.getLanguage().getTypes().getSource())) {
+        if (!Utils.isBlank(config.getLanguage().getTypes().getSource())) {
             return createFileSystemResource(config.getLanguage().getTypes().getSource(), "types");
         }
         return new ClassPathResource("languages/types.ttl");
@@ -103,7 +103,7 @@ public class ServiceConfig {
 
     @Bean("termStatesLanguage")
     public Resource termStatesLanguageFile(cz.cvut.kbss.termit.util.Configuration config) {
-        if (!StringUtils.isBlank(config.getLanguage().getStates().getSource())) {
+        if (!Utils.isBlank(config.getLanguage().getStates().getSource())) {
             return createFileSystemResource(config.getLanguage().getStates().getSource(), "states");
         }
         return new ClassPathResource("languages/states.ttl");

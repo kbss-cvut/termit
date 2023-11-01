@@ -521,7 +521,6 @@ public class Configuration {
         /**
          * Secret key used when hashing a JWT.
          */
-        @NotNull
         String secretKey;
 
         public String getSecretKey() {
