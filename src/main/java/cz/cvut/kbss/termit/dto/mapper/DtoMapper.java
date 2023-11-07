@@ -30,6 +30,7 @@ import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -66,8 +67,7 @@ public abstract class DtoMapper {
         switch (type) {
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatel_termitu:
                 final User user = (User) holder;
-                assert user.getTypes() != null;
-                user.getTypes().forEach(dto::addType);
+                Utils.emptyIfNull(user.getTypes()).forEach(dto::addType);
                 dto.setLabel(MultilingualString.create(user.getFullName(),
                                                        config.getPersistence().getLanguage()));
                 break;
