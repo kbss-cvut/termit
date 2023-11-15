@@ -5,13 +5,13 @@
 @prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
 
 termit-pojem:navrhovaný-pojem a pdp:stav-pojmu , termit-pojem:úvodní-stav-pojmu ;
-    rdfs:label "Navrhovaný pojem"@cs , "Proposed term"@en ;
-    rdfs:comment "Pojem, který ještě nebyl schválen k publikaci."@cs , "A proposed term that has not been confirmed for publication, yet."@en .
+    skos:prefLabel "Navrhovaný pojem"@cs , "Proposed term"@en ;
+    skos:scopeNote "Pojem, který ještě nebyl schválen k publikaci."@cs , "A proposed term that has not been confirmed for publication, yet."@en .
 
 termit-pojem:publikovaný-pojem a pdp:stav-pojmu ;
-    rdfs:label "Publikovaný pojem"@cs , "Published term"@en ;
-    rdfs:comment "Pojem, který byl publikován a používá se."@cs , "A published term that is in use."@en .
+    skos:prefLabel "Publikovaný pojem"@cs , "Published term"@en ;
+    skos:scopeNote "Pojem, který byl publikován a používá se."@cs , "A published term that is in use."@en .
 
 termit-pojem:zrušený-pojem a pdp:stav-pojmu , termit-pojem:koncový-stav-pojmu ;
-    rdfs:label "Zrušený pojem"@cs , "Cancelled term"@en ;
-    rdfs:comment "Pojem, který byl zrušen a již by se neměl používat."@cs , "A term that has been cancelled and should not be used anymore."@en .
+    skos:prefLabel "Zrušený pojem"@cs , "Cancelled term"@en ;
+    skos:scopeNote "Pojem, který byl zrušen a již by se neměl používat."@cs , "A term that has been cancelled and should not be used anymore."@en .

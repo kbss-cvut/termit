@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.security;
 
@@ -21,7 +24,13 @@ import cz.cvut.kbss.termit.exception.TokenExpiredException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.util.Configuration;
-import io.jsonwebtoken.*;
+import cz.cvut.kbss.termit.util.Utils;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
@@ -37,7 +46,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -52,7 +66,8 @@ public class JwtUtils {
     @Autowired
     public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
         this.objectMapper = objectMapper;
-        this.key = Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+        this.key = Utils.isBlank(config.getJwt().getSecretKey()) ? Keys.secretKeyFor(SIGNATURE_ALGORITHM) :
+                         Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -168,8 +183,9 @@ public class JwtUtils {
 
     /**
      * Gets URI of the user represented by the specified token.
-     *
+     * <p>
      * Note that it is expected
+     *
      * @param token JSON Web Token
      * @return User identifier
      */

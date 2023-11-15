@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
@@ -32,6 +35,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,6 +45,12 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Controller for user management.
+ *
+ * Enabled when internal security is used.
+ */
+@ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
 @Tag(name = "Users", description = "User management API")
 @RestController
 @RequestMapping(UserController.PATH)
@@ -216,10 +226,10 @@ public class UserController extends BaseController {
     /**
      * A couple of constants for the {@link UserController} API documentation.
      */
-    private static final class UserControllerDoc {
-        private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default user namespace) unique part of the user account identifier.";
-        private static final String ID_LOCAL_NAME_EXAMPLE = "system-administrator";
-        private static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default user identifier namespace.";
-        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/uzivatel/";
+    static final class UserControllerDoc {
+        static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default user namespace) unique part of the user account identifier.";
+        static final String ID_LOCAL_NAME_EXAMPLE = "system-administrator";
+        static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default user identifier namespace.";
+        static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/uzivatel/";
     }
 }
