@@ -29,7 +29,7 @@
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>2.2.0</org.springdoc.version>
         <cz.cvut.kbss.jopa.version>1.1.4</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.14.0</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jsonld.version>0.14.1</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.20</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
