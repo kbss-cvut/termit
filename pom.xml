@@ -419,10 +419,6 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <aspectLibraries>
-<!--                        <aspectLibrary>-->
-<!--                            <groupId>cz.cvut.kbss.jopa</groupId>-->
-<!--                            <artifactId>jopa-impl</artifactId>-->
-<!--                        </aspectLibrary>-->
                         <aspectLibrary>
                             <groupId>org.springframework</groupId>
                             <artifactId>spring-aspects</artifactId>
