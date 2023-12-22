@@ -1,27 +1,39 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
 import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
+import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
+import cz.cvut.kbss.termit.util.Utils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.aspectj.lang.Aspects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -36,6 +48,8 @@ import java.util.Arrays;
 
 @Configuration
 public class ServiceConfig {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ServiceConfig.class);
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -71,12 +85,27 @@ public class ServiceConfig {
     }
 
     @Bean("termTypesLanguage")
-    public ClassPathResource termTypesLanguageFile() {
+    public Resource termTypesLanguageFile(cz.cvut.kbss.termit.util.Configuration config) {
+        if (!Utils.isBlank(config.getLanguage().getTypes().getSource())) {
+            return createFileSystemResource(config.getLanguage().getTypes().getSource(), "types");
+        }
         return new ClassPathResource("languages/types.ttl");
     }
 
+    private Resource createFileSystemResource(String path, String type) {
+        final FileSystemResource source = new FileSystemResource(path);
+        if (!source.exists()) {
+            throw new ResourceNotFoundException(type + " language file '" + path + "' not found.");
+        }
+        LOG.info("Will load term {} from '{}'.", type, path);
+        return source;
+    }
+
     @Bean("termStatesLanguage")
-    public ClassPathResource termStatesLanguageFile() {
+    public Resource termStatesLanguageFile(cz.cvut.kbss.termit.util.Configuration config) {
+        if (!Utils.isBlank(config.getLanguage().getStates().getSource())) {
+            return createFileSystemResource(config.getLanguage().getStates().getSource(), "states");
+        }
         return new ClassPathResource("languages/states.ttl");
     }
 

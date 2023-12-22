@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.init;
 
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -27,19 +44,23 @@ public class AdminAccountGenerator {
 
     private final UserRepositoryService userService;
 
-    private final Configuration.Admin adminConfig;
+    private final Configuration config;
 
     public AdminAccountGenerator(UserRepositoryService userService, Configuration config) {
         this.userService = userService;
-        this.adminConfig = config.getAdmin();
+        this.config = config;
     }
 
     /**
      * Generates a system administrator account, if it already does not exist.
-     *
+     * <p>
      * The admin credentials are written out to standard output and also generated into a configurable file.
      */
     public void initSystemAdmin() {
+        if (config.getSecurity().getProvider() == Configuration.Security.ProviderType.OIDC) {
+            LOG.info("Using OIDC authentication. Skipping system admin account generation.");
+            return;
+        }
         if (userService.doesAdminExist()) {
             LOG.info("An admin account already exists.");
             return;
@@ -52,7 +73,7 @@ public class AdminAccountGenerator {
         LOG.info("----------------------------------------------");
         LOG.info("Admin credentials are: {}/{}", admin.getUsername(), passwordPlain);
         LOG.info("----------------------------------------------");
-        final File directory = new File(adminConfig.getCredentialsLocation());
+        final File directory = new File(config.getAdmin().getCredentialsLocation());
         try {
             if (!directory.exists()) {
                 Files.createDirectories(directory.toPath());
@@ -71,12 +92,12 @@ public class AdminAccountGenerator {
     }
 
     private File createHiddenFile() throws IOException {
-        final File credentialsFile = new File(adminConfig.getCredentialsLocation() + File.separator +
-                                                      adminConfig.getCredentialsFile());
+        final File credentialsFile = new File(config.getAdmin().getCredentialsLocation() + File.separator +
+                                                      config.getAdmin().getCredentialsFile());
         final boolean result = credentialsFile.createNewFile();
         if (!result) {
             LOG.error("Unable to create admin credentials file {}. Admin credentials won't be saved in any file!",
-                      adminConfig.getCredentialsFile());
+                      config.getAdmin().getCredentialsFile());
             return null;
         }
         // Hidden attribute on Windows

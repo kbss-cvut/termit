@@ -1,10 +1,9 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix ufo: <http://onto.fel.cvut.cz/ontologies/ufo/> .
 
 ufo:individual a skos:Concept ;
-    rdfs:label "Individuál"@cs,
+    skos:prefLabel "Individuál"@cs,
         "Individual"@en ;
     skos:narrower ufo:event,
         ufo:intrinsic-trope,
@@ -12,7 +11,7 @@ ufo:individual a skos:Concept ;
         ufo:relator .
 
 ufo:type a skos:Concept ;
-    rdfs:label "Typ"@cs,
+    skos:prefLabel "Typ"@cs,
         "Type"@en ;
     skos:narrower ufo:event-type,
         ufo:intrinsic-trope-type,
@@ -20,35 +19,35 @@ ufo:type a skos:Concept ;
         ufo:relator-type .
 
 ufo:event a skos:Concept ;
-    rdfs:label "Událost"@cs,
+    skos:prefLabel "Událost"@cs,
         "Event"@en ;
-    rdfs:comment "An event, perdurant in the ontological sense. Events do not change its properties over time."@en .
+    skos:scopeNote "An event, perdurant in the ontological sense. Events do not change its properties over time."@en .
 
 ufo:event-type a skos:Concept ;
-    rdfs:label "Typ události"@cs,
+    skos:prefLabel "Typ události"@cs,
         "Event Type"@en .
 
 ufo:intrinsic-trope a skos:Concept ;
-    rdfs:label "Vlastnost"@cs,
+    skos:prefLabel "Vlastnost"@cs,
         "Aspect"@en .
 
 ufo:intrinsic-trope-type a skos:Concept ;
-    rdfs:label "Typ vlastnosti"@cs,
+    skos:prefLabel "Typ vlastnosti"@cs,
         "Aspect Type"@en .
 
 ufo:object a skos:Concept ;
-    rdfs:label "Objekt"@cs,
+    skos:prefLabel "Objekt"@cs,
         "Object"@en ;
-    rdfs:comment "Object is any identifiable endurant entity existence of which is not directly dependent on an existence of another entity."@en .
+    skos:scopeNote "Object is any identifiable endurant entity existence of which is not directly dependent on an existence of another entity."@en .
 
 ufo:object-type a skos:Concept ;
-    rdfs:label "Typ objektu"@cs,
+    skos:prefLabel "Typ objektu"@cs,
         "Object Type"@en .
 
 ufo:relator a skos:Concept ;
-    rdfs:label "Vztah"@cs,
+    skos:prefLabel "Vztah"@cs,
         "Relator"@en .
 
 ufo:relator-type a skos:Concept ;
-    rdfs:label "Typ vztahu"@cs,
+    skos:prefLabel "Typ vztahu"@cs,
         "Relation"@en .

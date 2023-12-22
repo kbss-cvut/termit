@@ -1,8 +1,26 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.config;
 
 import cz.cvut.kbss.termit.security.AuthenticationSuccess;
 import cz.cvut.kbss.termit.security.HierarchicalRoleBasedAuthorityMapper;
 import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.util.oidc.OidcGrantedAuthoritiesExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +43,6 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
@@ -75,21 +90,10 @@ public class OAuth2SecurityConfig {
 
     private Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor() {
         return source -> {
-            final Collection<SimpleGrantedAuthority> authorities = new GrantedAuthoritiesExtractor().convert(source);
-            return new JwtAuthenticationToken(source, authorities);
+            final Collection<SimpleGrantedAuthority> authorities = new OidcGrantedAuthoritiesExtractor(
+                    config.getSecurity()).convert(source);
+            return new JwtAuthenticationToken(source,
+                                              new HierarchicalRoleBasedAuthorityMapper().mapAuthorities(authorities));
         };
-    }
-
-    private class GrantedAuthoritiesExtractor implements Converter<Jwt, Collection<SimpleGrantedAuthority>> {
-        public Collection<SimpleGrantedAuthority> convert(Jwt jwt) {
-            final List<SimpleGrantedAuthority> allAuths = (
-                    (Map<String, Collection<?>>) jwt.getClaims().getOrDefault(
-                            OAuth2SecurityConfig.this.config.getSecurity().getRoleClaim(), Collections.emptyMap())
-            ).getOrDefault("roles", Collections.emptyList())
-             .stream()
-             .map(Object::toString)
-             .map(SimpleGrantedAuthority::new).toList();
-            return new HierarchicalRoleBasedAuthorityMapper().mapAuthorities(allAuths);
-        }
     }
 }

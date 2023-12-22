@@ -1,24 +1,28 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,9 +35,9 @@ import java.util.Set;
  * The configuration can be also set via <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
  * environment variables</a>. These override any statically configured values.
  */
-@org.springframework.context.annotation.Configuration
 @ConfigurationProperties("termit")
 @Primary
+@Valid
 public class Configuration {
     /**
      * TermIt frontend URL.
@@ -65,6 +69,7 @@ public class Configuration {
     private ACL acl = new ACL();
     private Mail mail = new Mail();
     private Security security = new Security();
+    private Language language = new Language();
 
     public String getUrl() {
         return url;
@@ -218,8 +223,15 @@ public class Configuration {
         this.security = security;
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "persistence")
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
+
+
     public static class Persistence {
         /**
          * OntoDriver class for the repository.
@@ -249,8 +261,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "repository")
     public static class Repository {
         /**
          * URL of the main application repository.
@@ -305,8 +315,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "changetracking")
     public static class ChangeTracking {
         Context context = new Context();
 
@@ -336,8 +344,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "comments")
     public static class Comments {
         /**
          * IRI of the repository context used to store comments (discussion to assets).
@@ -354,8 +360,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "namespace")
     public static class Namespace {
         /**
          * Namespace for vocabulary identifiers.
@@ -468,8 +472,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "admin")
     public static class Admin {
         /**
          * Specifies the folder in which admin credentials are saved when its account is generated.
@@ -499,8 +501,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "file")
     public static class File {
         /**
          * Specifies root directory in which document files are stored.
@@ -517,13 +517,10 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "jwt")
     public static class Jwt {
         /**
          * Secret key used when hashing a JWT.
          */
-        @NotNull
         String secretKey;
 
         public String getSecretKey() {
@@ -535,8 +532,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "textanalysis")
     public static class TextAnalysis {
         /**
          * URL of the text analysis service.
@@ -586,8 +581,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "glossary")
     public static class Glossary {
         /**
          * IRI path to append to vocabulary IRI to get glossary identifier.
@@ -604,7 +597,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class PublicView {
         /**
          * Unmapped properties allowed to appear in the SKOS export.
@@ -621,7 +613,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Workspace {
 
         /**
@@ -644,7 +635,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Cors {
         /**
          * A comma-separated list of allowed origins for CORS.
@@ -678,7 +668,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Schedule {
 
         private Cron cron = new Cron();
@@ -722,7 +711,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Mail {
 
         /**
@@ -742,7 +730,6 @@ public class Configuration {
     /**
      * Configuration for initialization of new {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s.
      */
-    @org.springframework.context.annotation.Configuration
     public static class ACL {
 
         /**
@@ -772,7 +759,6 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
     public static class Security {
 
         public enum ProviderType {
@@ -789,8 +775,10 @@ public class Configuration {
 
         /**
          * Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt user roles.
+         * <p>
+         * Supports nested objects via dot notation.
          */
-        private String roleClaim = "realm_access";
+        private String roleClaim = "realm_access.roles";
 
         public ProviderType getProvider() {
             return provider;
@@ -806,6 +794,53 @@ public class Configuration {
 
         public void setRoleClaim(String roleClaim) {
             this.roleClaim = roleClaim;
+        }
+    }
+
+    public static class Language {
+
+        /**
+         * Path to a file containing definition of the language of types terms can be classified with.
+         * <p>
+         * The file must be in Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel,
+         * scopeNote and broader/narrower).
+         */
+        private LanguageSource types = new LanguageSource();
+
+        /**
+         * Path to a file containing definition of the language of states terms can be in with. The file must be in
+         * Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
+         * broader/narrower).
+         */
+        private LanguageSource states = new LanguageSource();
+
+        public LanguageSource getTypes() {
+            return types;
+        }
+
+        public void setTypes(LanguageSource types) {
+            this.types = types;
+        }
+
+        public LanguageSource getStates() {
+            return states;
+        }
+
+        public void setStates(LanguageSource states) {
+            this.states = states;
+        }
+
+        public static class LanguageSource {
+
+            private String source;
+
+            public String getSource() {
+                return source;
+            }
+
+            public void setSource(String source) {
+                this.source = source;
+            }
         }
     }
 }
