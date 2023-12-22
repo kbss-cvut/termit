@@ -21,6 +21,16 @@
             <id>kbss</id>
             <url>https://kbss.felk.cvut.cz/m2repo</url>
         </repository>
+        <repository>
+            <id>central-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
     </repositories>
 
     <properties>
