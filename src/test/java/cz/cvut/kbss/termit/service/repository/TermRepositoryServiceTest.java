@@ -511,7 +511,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final Term inverseRelated = Generator.generateTermWithId(vocabulary.getUri());
         term.setGlossary(vocabulary.getGlossary().getUri());
         related.setGlossary(vocabulary.getGlossary().getUri());
-        term.addRelatedTerm(new TermInfo(related));
         vocabulary.getGlossary().addRootTerm(term);
         transactional(() -> {
             em.persist(related, descriptorFactory.termDescriptor(vocabulary));
@@ -521,6 +520,11 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
             Generator.addTermInVocabularyRelationship(related, vocabulary.getUri(), em);
             generateRelatedInverse(term, inverseRelated, SKOS.RELATED);
+        });
+        // Assign the term separately so that it already exists in the repository
+        transactional(() -> {
+            term.addRelatedTerm(new TermInfo(related));
+            em.merge(term, descriptorFactory.termDescriptor(vocabulary));
         });
 
         term.addRelatedTerm(new TermInfo(inverseRelated));

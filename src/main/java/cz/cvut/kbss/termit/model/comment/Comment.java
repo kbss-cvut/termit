@@ -110,12 +110,12 @@ public class Comment extends AbstractEntity {
 
     @PrePersist
     public void prePersist() {
-        this.created = Utils.timestamp();
+        setCreated(Utils.timestamp());
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.modified = Utils.timestamp();
+        setModified(Utils.timestamp());
     }
 
     @Override
