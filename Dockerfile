@@ -26,6 +26,7 @@ RUN mvn -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies
 
 COPY ontology ontology
 COPY profile profile
+COPY jopa-config jopa-config
 COPY src src
 
 RUN mvn package -B -P graphdb,standalone -DskipTests=true
