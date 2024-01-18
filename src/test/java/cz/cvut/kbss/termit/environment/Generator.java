@@ -51,6 +51,7 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -479,8 +480,7 @@ public class Generator {
 
     public static UserGroup generateUserGroup() {
         final UserGroup group = new UserGroup();
-        group.setUri(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup + "_instance" + Generator.randomInt()));
+        group.setUri(IdentifierResolver.generateSyntheticIdentifier(cz.cvut.kbss.termit.util.Vocabulary.s_c_sioc_Usergroup));
         group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
         return group;
     }

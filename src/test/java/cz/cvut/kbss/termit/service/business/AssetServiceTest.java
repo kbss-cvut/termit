@@ -96,7 +96,7 @@ class AssetServiceTest {
                     final Resource resource = Generator.generateResourceWithId();
                     rma = new RecentlyModifiedAsset(resource.getUri(), resource.getLabel(), Utils.timestamp(),
                                                     author.getUri(), null,
-                                                    Vocabulary.s_c_resource,
+                                                    Vocabulary.s_c_ddo_resource,
                                                     Vocabulary.s_c_vytvoreni_entity);
                 }
                 case 1 -> {

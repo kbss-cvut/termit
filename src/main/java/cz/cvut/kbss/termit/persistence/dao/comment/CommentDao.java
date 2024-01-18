@@ -199,7 +199,7 @@ public class CommentDao {
                  .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                  .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                  .setParameter("hasCreationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                 .setParameter("hasEditor", URI.create(Vocabulary.s_p_has_creator))
+                 .setParameter("hasEditor", URI.create(Vocabulary.s_p_sioc_has_creator))
                  .setParameter("author", author.getUri())
                  .setParameter("hasAsset", URI.create(Vocabulary.s_p_topic))
                  .setMaxResults(limit)

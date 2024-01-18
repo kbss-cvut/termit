@@ -174,10 +174,9 @@ public class Vocabulary extends Asset<String> implements HasTypes, SupportsSnaps
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Vocabulary)) {
+        if (!(o instanceof Vocabulary that)) {
             return false;
         }
-        Vocabulary that = (Vocabulary) o;
         return Objects.equals(getUri(), that.getUri());
     }
 

@@ -77,13 +77,12 @@ public class UpdateChangeRecord extends AbstractChangeRecord {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UpdateChangeRecord)) {
+        if (!(o instanceof UpdateChangeRecord that)) {
             return false;
         }
-        if (!super.equals(o)) {
+        if (!super.equals(that)) {
             return false;
         }
-        UpdateChangeRecord that = (UpdateChangeRecord) o;
         return changedAttribute.equals(that.changedAttribute);
     }
 

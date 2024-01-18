@@ -81,10 +81,9 @@ public class TextAnalysisRecord extends AbstractEntity {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TextAnalysisRecord)) {
+        if (!(o instanceof TextAnalysisRecord that)) {
             return false;
         }
-        TextAnalysisRecord that = (TextAnalysisRecord) o;
         return Objects.equals(date, that.date) &&
                 Objects.equals(analyzedResource, that.analyzedResource) &&
                 Objects.equals(vocabularies, that.vocabularies);

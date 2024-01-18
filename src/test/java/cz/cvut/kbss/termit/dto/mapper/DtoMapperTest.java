@@ -89,7 +89,7 @@ class DtoMapperTest {
         rThree.setUri(Generator.generateUri());
         return Stream.of(
                 Arguments.of(rOne, Vocabulary.s_c_uzivatel_termitu),
-                Arguments.of(rTwo, Vocabulary.s_c_Usergroup),
+                Arguments.of(rTwo, Vocabulary.s_c_sioc_Usergroup),
                 Arguments.of(rThree, Vocabulary.s_c_uzivatelska_role)
         );
     }

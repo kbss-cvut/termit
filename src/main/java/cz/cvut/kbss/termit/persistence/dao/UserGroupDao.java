@@ -41,7 +41,7 @@ public class UserGroupDao extends BaseDao<UserGroup> {
     public void persist(UserGroup entity) {
         Objects.requireNonNull(entity);
         if (entity.getUri() == null) {
-            entity.setUri(IdentifierResolver.generateSyntheticIdentifier(Vocabulary.s_c_Usergroup));
+            entity.setUri(IdentifierResolver.generateSyntheticIdentifier(Vocabulary.s_c_sioc_Usergroup));
         }
         super.persist(entity);
     }

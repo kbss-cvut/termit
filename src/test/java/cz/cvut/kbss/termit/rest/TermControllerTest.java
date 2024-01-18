@@ -257,7 +257,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void getTermReturnsTermWithUnmappedProperties() throws Exception {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
-        final String customProperty = Vocabulary.s_p_has_dataset;
+        final String customProperty = Vocabulary.s_p_ddo_has_dataset;
         final String value = "Test";
         term.setProperties(Collections.singletonMap(customProperty, Collections.singleton(value)));
         term.setUri(termUri);
@@ -977,7 +977,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
-        final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comment/";
         comment.setUri(URI.create(namespace + name));
 
         final MvcResult mvcResult = mockMvc
@@ -1017,7 +1017,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
-        final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comment/";
         comment.setUri(URI.create(namespace + name));
 
         final MvcResult mvcResult = mockMvc

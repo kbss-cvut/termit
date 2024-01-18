@@ -179,7 +179,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
                 conn.add(glossaryIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespacePrefix"),
                          vf.createLiteral("termit:"), vf.createIRI(vocabulary.getUri().toString()));
                 conn.add(glossaryIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespaceUri"),
-                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_termit),
+                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT),
                          vf.createIRI(vocabulary.getUri().toString()));
                 conn.add(glossaryIri(vocabulary), DCTERMS.RIGHTS,
                          vf.createIRI("https://creativecommons.org/licenses/by-nc-nd/4.0"),

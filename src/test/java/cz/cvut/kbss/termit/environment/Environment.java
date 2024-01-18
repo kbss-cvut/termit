@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 
 public class Environment {
 
-    public static final String BASE_URI = Vocabulary.ONTOLOGY_IRI_termit;
+    public static final String BASE_URI = Vocabulary.ONTOLOGY_IRI_TERMIT;
 
     public static final String LANGUAGE = Constants.DEFAULT_LANGUAGE;
 

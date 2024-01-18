@@ -87,10 +87,9 @@ public abstract class AccessControlRecord<T extends AccessControlAgent> extends 
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AccessControlRecord)) {
+        if (!(o instanceof AccessControlRecord<?> that)) {
             return false;
         }
-        AccessControlRecord<?> that = (AccessControlRecord<?>) o;
         return accessLevel == that.accessLevel && Objects.equals(holder, that.holder);
     }
 

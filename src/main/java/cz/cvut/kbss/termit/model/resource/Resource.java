@@ -75,10 +75,9 @@ public class Resource extends Asset<String> implements Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Resource)) {
+        if (!(o instanceof Resource resource)) {
             return false;
         }
-        Resource resource = (Resource) o;
         return Objects.equals(getUri(), resource.getUri());
     }
 

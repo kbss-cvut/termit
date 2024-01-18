@@ -27,20 +27,20 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_Usergroup)
+@OWLClass(iri = Vocabulary.s_c_sioc_Usergroup)
 public class UserGroup extends AccessControlAgent {
 
     /**
      * Namespace of UserGroup identifiers.
      */
-    public static final String NAMESPACE = "http://rdfs.org/sioc/ns#";
+    public static final String NAMESPACE = Vocabulary.ONTOLOGY_IRI_SIOC;
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
     private String label;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_member_A, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_member, fetch = FetchType.EAGER)
     private Set<User> members;
 
     public String getLabel() {

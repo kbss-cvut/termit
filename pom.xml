@@ -500,10 +500,11 @@
                             <package>cz.cvut.kbss.termit.util</package>
                             <output-directory>${project.basedir}/src/main/generated-sources</output-directory>
                             <ontology-iri>http://onto.fel.cvut.cz/ontologies/application/termit</ontology-iri>
-                            <mapping-file>${project.basedir}/src/main/resources/mapping</mapping-file>
+                            <mapping-file>${project.basedir}/jopa-config/mapping</mapping-file>
                             <whole-ontology-as-ics>true</whole-ontology-as-ics>
                             <vocabulary-only>true</vocabulary-only>
                             <ignore-failed-imports>true</ignore-failed-imports>
+                            <prefix-mapping-file>${project.basedir}/jopa-config/prefixes</prefix-mapping-file>
                         </configuration>
                     </execution>
                     <execution>

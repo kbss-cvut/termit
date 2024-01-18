@@ -23,13 +23,11 @@ import cz.cvut.kbss.jopa.model.annotations.Inferred;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.SupportsStorage;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Objects;
@@ -103,10 +101,9 @@ public class Document extends Resource implements SupportsStorage {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Document)) {
+        if (!(o instanceof Document document)) {
             return false;
         }
-        Document document = (Document) o;
         return Objects.equals(getUri(), document.getUri());
     }
 

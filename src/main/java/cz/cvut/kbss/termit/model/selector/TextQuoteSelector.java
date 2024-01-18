@@ -82,10 +82,9 @@ public class TextQuoteSelector extends Selector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TextQuoteSelector)) {
+        if (!(o instanceof TextQuoteSelector selector)) {
             return false;
         }
-        TextQuoteSelector selector = (TextQuoteSelector) o;
         return Objects.equals(exactMatch, selector.exactMatch) &&
                 Objects.equals(prefix, selector.prefix) &&
                 Objects.equals(suffix, selector.suffix);

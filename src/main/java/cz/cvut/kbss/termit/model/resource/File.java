@@ -63,10 +63,9 @@ public class File extends Resource implements SupportsStorage {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof File)) {
+        if (!(o instanceof File file)) {
             return false;
         }
-        File file = (File) o;
         return Objects.equals(getUri(), file.getUri());
     }
 

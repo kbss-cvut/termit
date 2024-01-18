@@ -82,10 +82,9 @@ public class CommentReaction extends AbstractEntity implements HasTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof CommentReaction)) {
+        if (!(o instanceof CommentReaction reaction)) {
             return false;
         }
-        CommentReaction reaction = (CommentReaction) o;
         return Objects.equals(actor, reaction.actor) &&
                 Objects.equals(object, reaction.object) &&
                 Objects.equals(types, reaction.types);

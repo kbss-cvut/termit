@@ -107,7 +107,7 @@ public class AdminAccountGenerator {
 
     static UserAccount getDefaultAdminInstance() {
         final UserAccount admin = new UserAccount();
-        admin.setUri(URI.create(Vocabulary.ONTOLOGY_IRI_termit + "/system-admin-user"));
+        admin.setUri(URI.create(Vocabulary.ONTOLOGY_IRI_TERMIT + "/system-admin-user"));
         admin.setFirstName("System");
         admin.setLastName("Administrator");
         admin.setUsername("termit-admin@kbss.felk.cvut.cz");
