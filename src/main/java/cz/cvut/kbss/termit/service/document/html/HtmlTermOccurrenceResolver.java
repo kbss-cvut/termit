@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.service.document.html;
 
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
@@ -43,10 +42,14 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Resolves term occurrences from RDFa-annotated HTML document.
@@ -93,11 +96,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     @Override
     public InputStream getContent() {
         assert document != null;
-        try {
-            return new ByteArrayInputStream(document.toString().getBytes(StandardCharsets.UTF_8.name()));
-        } catch (UnsupportedEncodingException e) {
-            throw new TermItException("Fatal error, unable to find encoding UTF-8.", e);
-        }
+        return new ByteArrayInputStream(document.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     private static Map<String, String> resolvePrefixes(Document document) {
@@ -212,10 +211,9 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         if (source instanceof Term) {
             return true;
         }
-        if (!(source instanceof File)) {
+        if (!(source instanceof File sourceFile)) {
             return false;
         }
-        final File sourceFile = (File) source;
         if (sourceFile.getLabel().endsWith("html") || sourceFile.getLabel().endsWith("htm")) {
             return true;
         }
