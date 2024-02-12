@@ -68,8 +68,8 @@ public class AnnotationGenerator {
         LOG.debug("Resolving annotations of file {}.", source);
         occurrenceResolver.parseContent(content, source);
         final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
-        occurrenceSaver.saveOccurrences(occurrences, source);
         saveAnnotatedContent(source, occurrenceResolver.getContent());
+        occurrenceSaver.saveOccurrences(occurrences, source);
         LOG.trace("Finished generating annotations for file {}.", source);
     }
 
