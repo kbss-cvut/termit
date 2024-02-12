@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -382,5 +383,27 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertEquals(update.getLabel(), result.getLabel());
         assertEquals(vocabulary.getAcl(), result.getAcl());
+    }
+
+    @Test
+    void importCreatesDocumentAssociatedWithVocabulary() {
+        final String skos =
+                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
+                        "@prefix dc : <http://purl.org/dc/terms/> . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
+
+
+        final MultipartFile mf = new MockMultipartFile(
+                "file",
+                "thesaurus",
+                "text/turtle",
+                skos.getBytes(StandardCharsets.UTF_8)
+        );
+
+        final Vocabulary v = sut.importVocabulary(true, mf);
+        assertNotNull(v.getDocument());
+        assertNotNull(em.find(Document.class, v.getDocument().getUri()));
+        assertEquals("Document for " + v.getLabel(), v.getDocument().getLabel());
     }
 }
