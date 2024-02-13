@@ -73,6 +73,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
 
     private Map<String, String> prefixes;
 
+    private final Set<String> existingTermIds = new HashSet<>();
+
     @Autowired
     HtmlTermOccurrenceResolver(TermRepositoryService termService, HtmlSelectorGenerators selectorGenerators,
                                DocumentManager documentManager, Configuration config) {
@@ -182,11 +184,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             return Optional.empty();
         }
         final URI termUri = URI.create(termId);
-        if (!termService.exists(termUri)) {
-            throw new AnnotationGenerationException(
-                    "Term with id " + Utils.uriToString(
-                            termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
-        }
+        verifyTermExists(rdfaElem, termUri, termId);
         final TermOccurrence occurrence = createOccurrence(termUri, source);
         occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem));
         final String strScore = rdfaElem.attr("score");
@@ -200,6 +198,18 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             }
         }
         return Optional.of(occurrence);
+    }
+
+    private void verifyTermExists(Element rdfaElem, URI termUri, String termId) {
+        if (existingTermIds.contains(termId)) {
+            return;
+        }
+        if (!termService.exists(termUri)) {
+            throw new AnnotationGenerationException(
+                    "Term with id " + Utils.uriToString(
+                            termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
+        }
+        existingTermIds.add(termId);
     }
 
     @Override
