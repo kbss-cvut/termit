@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
  * class.
  */
 @Component
-interface TermOccurrenceResolvers {
+public interface TermOccurrenceResolvers {
 
     @Lookup
     HtmlTermOccurrenceResolver htmlTermOccurrenceResolver();
