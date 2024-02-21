@@ -407,4 +407,19 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         assertNotNull(em.find(Document.class, v.getDocument().getUri()));
         assertEquals("Document for " + v.getLabel(), v.getDocument().getLabel());
     }
+
+    @Test
+    void updateSavesLabelInNewLanguage() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+        final MultilingualString expected = new MultilingualString(vocabulary.getLabel().getValue());
+
+        final String newCsName = "Nový název";
+        expected.set("cs", newCsName);
+        vocabulary.getLabel().set("cs", newCsName);
+        sut.update(vocabulary);
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertNotNull(result);
+        assertEquals(expected, result.getLabel());
+    }
 }

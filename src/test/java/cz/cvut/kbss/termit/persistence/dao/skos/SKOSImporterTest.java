@@ -52,6 +52,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -467,5 +468,23 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertNotNull(result.getAcl());
+    }
+
+    @Test
+    void importImportsVocabularyLabelAndDescriptionInAllDeclaredLanguages() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(VOCABULARY_IRI, Constants.MediaType.TURTLE, persister,
+                                 Environment.loadFile("data/test-glossary.ttl"),
+                                 Environment.loadFile("data/test-vocabulary.ttl"));
+        });
+        final Set<String> languages = Set.of("en", "cs");
+
+        final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
+        assertTrue(result.isPresent());
+        languages.forEach(lang -> {
+            assertThat(result.get().getLabel().get(lang), not(emptyOrNullString()));
+            assertThat(result.get().getDescription().get(lang), not(emptyOrNullString()));
+        });
     }
 }
