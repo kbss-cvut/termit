@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.dto.readonly;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
@@ -36,13 +37,13 @@ import java.util.Set;
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 @OWLClass(iri = Vocabulary.s_c_slovnik)
-public class ReadOnlyVocabulary extends Asset<String> implements HasIdentifier, Serializable {
+public class ReadOnlyVocabulary extends Asset<MultilingualString> implements HasIdentifier, Serializable {
 
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
-    private String label;
+    private MultilingualString label;
 
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
-    private String description;
+    private MultilingualString description;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_importuje_slovnik, fetch = FetchType.EAGER)
     private Set<URI> importedVocabularies;
@@ -71,19 +72,19 @@ public class ReadOnlyVocabulary extends Asset<String> implements HasIdentifier, 
         }
     }
 
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
     }
 
-    public String getDescription() {
+    public MultilingualString getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(MultilingualString description) {
         this.description = description;
     }
 
@@ -100,10 +101,9 @@ public class ReadOnlyVocabulary extends Asset<String> implements HasIdentifier, 
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ReadOnlyVocabulary)) {
+        if (!(o instanceof ReadOnlyVocabulary that)) {
             return false;
         }
-        ReadOnlyVocabulary that = (ReadOnlyVocabulary) o;
         return Objects.equals(getUri(), that.getUri());
     }
 

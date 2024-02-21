@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -26,7 +27,12 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -105,8 +111,8 @@ public class SKOSImporter {
      * @param persist      Consumer of the imported vocabulary, used to save the imported data
      * @param inputStreams Streams containing the imported SKOS data
      * @return The imported vocabulary
-     * @throws VocabularyExistsException If a vocabulary/glossary with the same identifier already exists and {@code
-     *                                   rename} is set to {@code false}
+     * @throws VocabularyExistsException If a vocabulary/glossary with the same identifier already exists and
+     *                                   {@code rename} is set to {@code false}
      * @throws IllegalArgumentException  Indicates invalid input data, e.g., no input streams, missing language tags
      *                                   etc.
      */
@@ -268,22 +274,17 @@ public class SKOSImporter {
 
     private void insertHasTopConceptAssertions() {
         LOG.trace("Generating skos:hasTopConcept assertions.");
-        final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT).stream().map
-                                                  (Statement::getSubject)
-                                          .collect(Collectors.toList());
+        final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT)
+                                          .stream().map(Statement::getSubject).toList();
         terms.forEach(t -> {
-            final List<Value> broader = model.filter(t, SKOS.BROADER, null).stream().map
-                                                     (Statement::getObject)
-                                             .collect(Collectors.toList());
+            final List<Value> broader = model.filter(t, SKOS.BROADER, null)
+                                             .stream().map(Statement::getObject).toList();
             final boolean hasBroader = broader.stream()
-                                              .anyMatch(p -> model.contains((Resource) p, RDF
-                                                      .TYPE, SKOS.CONCEPT));
-            final List<Value> narrower = model.filter(null, SKOS.NARROWER, t).stream().map
-                                                      (Statement::getObject)
-                                              .collect(Collectors.toList());
+                                              .anyMatch(p -> model.contains((Resource) p, RDF.TYPE, SKOS.CONCEPT));
+            final List<Value> narrower = model.filter(null, SKOS.NARROWER, t)
+                                              .stream().map(Statement::getObject).toList();
             final boolean isNarrower = narrower.stream()
-                                               .anyMatch(p -> model.contains((Resource) p, RDF
-                                                       .TYPE, SKOS.CONCEPT));
+                                               .anyMatch(p -> model.contains((Resource) p, RDF.TYPE, SKOS.CONCEPT));
             if (!hasBroader && !isNarrower) {
                 model.add(glossaryIri, SKOS.HAS_TOP_CONCEPT, t);
             }
@@ -374,23 +375,20 @@ public class SKOSImporter {
     }
 
     private void setVocabularyLabelFromGlossary(final Vocabulary vocabulary) {
-        handleGlossaryStringProperty(DCTERMS.TITLE, s -> vocabulary.setLabel(s.getObject().stringValue()));
+        handleGlossaryStringProperty(DCTERMS.TITLE, vocabulary::setLabel);
     }
 
-    private void handleGlossaryStringProperty(IRI property, Consumer<? super Statement> consumer) {
-        final Set<Statement> labels = model.filter(getGlossaryUri(), property, null);
-        labels.stream().filter(s -> {
-            assert s.getObject() instanceof Literal;
-            return Objects.equals(config.getPersistence().getLanguage(),
-                                  ((Literal) s.getObject()).getLanguage()
-                                                           .orElse(config.getPersistence().getLanguage()));
-        }).findAny().ifPresent(consumer);
+    private void handleGlossaryStringProperty(IRI property, Consumer<MultilingualString> consumer) {
+        final Set<Statement> values = model.filter(getGlossaryUri(), property, null);
+        final MultilingualString mls = new MultilingualString();
+        values.stream().filter(s -> s.getObject().isLiteral()).forEach(s -> {
+            final Literal obj = (Literal) s.getObject();
+            mls.set(obj.getLanguage().orElseGet(() -> config.getPersistence().getLanguage()), obj.getLabel());
+        });
+        consumer.accept(mls);
     }
 
     private void setVocabularyDescriptionFromGlossary(final Vocabulary vocabulary) {
-        handleGlossaryStringProperty(DCTERMS.DESCRIPTION, s -> {
-            vocabulary.setDescription(s.getObject().stringValue());
-            model.remove(s);
-        });
+        handleGlossaryStringProperty(DCTERMS.DESCRIPTION, vocabulary::setDescription);
     }
 }

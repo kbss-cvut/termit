@@ -22,8 +22,6 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
-import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
@@ -47,7 +45,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.web.WebAppConfiguration;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -59,7 +62,10 @@ import static cz.cvut.kbss.termit.environment.Environment.loadFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // Needed for the request-scoped occurrence resolver bean to work
 @WebAppConfiguration
@@ -108,11 +114,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
                                  .create("Územní plán hlavního města Prahy",
                                          cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         final User author = Generator.generateUserWithId();
-        this.vocabulary = new cz.cvut.kbss.termit.model.Vocabulary();
-        vocabulary.setLabel("Test Vocabulary");
-        vocabulary.setGlossary(new Glossary());
-        vocabulary.setModel(new Model());
-        vocabulary.setUri(Generator.generateUri());
+        this.vocabulary = Generator.generateVocabularyWithId();
         this.document = new cz.cvut.kbss.termit.model.resource.Document();
         document.setLabel("metropolitan-plan");
         document.setUri(Generator.generateUri());
