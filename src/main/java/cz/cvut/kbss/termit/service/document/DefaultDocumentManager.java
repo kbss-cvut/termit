@@ -304,6 +304,10 @@ public class DefaultDocumentManager implements DocumentManager {
         tempOriginal.setLabel(event.getOriginalName());
 
         final java.io.File originalDirectory = resolveDocumentDirectory(tempOriginal);
+        if (!originalDirectory.exists()) {
+            LOG.debug("Directory of document {} does not exist. Nothing to move.", tempOriginal);
+            return;
+        }
 
         final Document tempNewDocument = new Document();
         tempNewDocument.setUri(event.getSource().getUri());

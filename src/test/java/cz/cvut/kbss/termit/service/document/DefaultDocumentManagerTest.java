@@ -724,4 +724,14 @@ class DefaultDocumentManagerTest extends BaseServiceTestRunner {
         final org.springframework.core.io.Resource result = sut.getAsResource(file, Instant.EPOCH);
         assertEquals(physicalFile, result.getFile());
     }
+
+    @Test
+    void onDocumentRenameDoesNothingWhenOldDocumentDirectoryDoesNotExist() throws Exception {
+        final String oldDirLabel = document.getLabel();
+
+        final String newDirLabel = "mpp";
+        document.setLabel(newDirLabel);
+        assertDoesNotThrow(
+                () -> sut.onDocumentRename(new DocumentRenameEvent(document, oldDirLabel, document.getLabel())));
+    }
 }
