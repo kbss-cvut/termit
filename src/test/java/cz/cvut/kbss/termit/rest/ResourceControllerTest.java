@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -65,8 +66,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -415,5 +425,17 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         assertEquals(HTML_CONTENT, resultContent);
         assertEquals(MediaType.TEXT_HTML_VALUE, mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_TYPE));
         verify(resourceServiceMock).getContent(file, at);
+    }
+
+    /**
+     * Bug #258
+     */
+    @Test
+    void updateResourceHandlesDeserializationOfDocumentFromJsonLd() throws Exception {
+        final Document document = Generator.generateDocumentWithId();
+        document.setUri(URI.create(RESOURCE_NAMESPACE + RESOURCE_NAME));
+        mockMvc.perform(put(PATH + "/" + RESOURCE_NAME).content(toJsonLd(document)).contentType(JsonLd.MEDIA_TYPE))
+               .andExpect(status().isNoContent());
+        verify(resourceServiceMock).update(document);
     }
 }
