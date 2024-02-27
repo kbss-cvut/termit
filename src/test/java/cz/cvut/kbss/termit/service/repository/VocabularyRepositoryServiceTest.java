@@ -98,7 +98,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         vocabulary.setPrimaryLabel("");
         final ValidationException exception = assertThrows(ValidationException.class, () -> sut.persist(vocabulary));
-        assertThat(exception.getMessage(), containsString("label must not be blank"));
+        assertThat(exception.getMessage(),
+                   containsString("label in the primary configured language must not be blank"));
     }
 
     @Test
@@ -109,7 +110,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
-        assertThat(result.getUri().toString(), containsString(IdentifierResolver.normalize(vocabulary.getPrimaryLabel())));
+        assertThat(result.getUri().toString(),
+                   containsString(IdentifierResolver.normalize(vocabulary.getPrimaryLabel())));
     }
 
     @Test
