@@ -230,7 +230,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + "/" + RESOURCE_NAME + "/files").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
                 .andExpect(status().isOk()).andReturn();
-        final List<File> result = readValue(mvcResult, new TypeReference<List<File>>() {
+        final List<File> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(new ArrayList<>(document.getFiles()), result);
         verify(resourceServiceMock).getFiles(document);
@@ -400,7 +400,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
                 .perform(get(PATH + "/" + RESOURCE_NAME + "/history").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
                 .andExpect(status().isOk())
                 .andReturn();
-        final List<AbstractChangeRecord> result = readValue(mvcResult, new TypeReference<List<AbstractChangeRecord>>() {
+        final List<AbstractChangeRecord> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertNotNull(result);
         assertEquals(records, result);
@@ -434,7 +434,9 @@ class ResourceControllerTest extends BaseControllerTestRunner {
     void updateResourceHandlesDeserializationOfDocumentFromJsonLd() throws Exception {
         final Document document = Generator.generateDocumentWithId();
         document.setUri(URI.create(RESOURCE_NAMESPACE + RESOURCE_NAME));
-        mockMvc.perform(put(PATH + "/" + RESOURCE_NAME).content(toJsonLd(document)).contentType(JsonLd.MEDIA_TYPE))
+        when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
+        mockMvc.perform(put(PATH + "/" + RESOURCE_NAME).queryParam(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
+                                                       .content(toJsonLd(document)).contentType(JsonLd.MEDIA_TYPE))
                .andExpect(status().isNoContent());
         verify(resourceServiceMock).update(document);
     }
