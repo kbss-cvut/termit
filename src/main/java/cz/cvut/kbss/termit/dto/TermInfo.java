@@ -133,10 +133,9 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TermInfo)) {
+        if (!(o instanceof TermInfo termInfo)) {
             return false;
         }
-        TermInfo termInfo = (TermInfo) o;
         return Objects.equals(uri, termInfo.uri);
     }
 
@@ -147,6 +146,6 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
 
     @Override
     public String toString() {
-        return "TermInfo{" + label + "<" + uri + ">" + '}';
+        return "TermInfo{" + label + " " + Utils.uriToString(uri) + '}';
     }
 }
