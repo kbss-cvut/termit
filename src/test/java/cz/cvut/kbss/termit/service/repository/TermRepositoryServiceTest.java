@@ -146,7 +146,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         final ValidationException exception =
                 assertThrows(
                         ValidationException.class, () -> sut.addRootTermToVocabulary(term, vocabulary));
-        assertThat(exception.getMessage(), containsString("label must not be blank"));
+        assertThat(exception.getMessage(),
+                   containsString("label in the primary configured language must not be blank"));
     }
 
     @Test
@@ -692,11 +693,11 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             try (final RepositoryConnection conn = repo.getConnection()) {
                 final ValueFactory vf = conn.getValueFactory();
                 assertTrue(conn.hasStatement(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu), null, false,
-                        vf.createIRI(vocabulary.getUri().toString())));
+                                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu), null, false,
+                                             vf.createIRI(vocabulary.getUri().toString())));
                 assertEquals(1,
-                        conn.getStatements(vf.createIRI(term.getUri().toString()), vf.createIRI(
-                                cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu), null).stream().count());
+                             conn.getStatements(vf.createIRI(term.getUri().toString()), vf.createIRI(
+                                     cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu), null).stream().count());
             }
         });
     }
@@ -777,8 +778,8 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         sut.remove(term);
         assertNull(em.find(Term.class, term.getUri()));
         assertFalse(em.createNativeQuery("ASK { ?glossary ?hasTopConcept ?term . }", Boolean.class)
-                            .setParameter("glossary", vocabulary.getGlossary())
-                            .setParameter("hasTopConcept", URI.create(SKOS.HAS_TOP_CONCEPT))
-                            .setParameter("term", term).getSingleResult());
+                      .setParameter("glossary", vocabulary.getGlossary())
+                      .setParameter("hasTopConcept", URI.create(SKOS.HAS_TOP_CONCEPT))
+                      .setParameter("term", term).getSingleResult());
     }
 }

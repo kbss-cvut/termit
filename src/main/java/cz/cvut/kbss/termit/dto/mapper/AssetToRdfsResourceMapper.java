@@ -46,9 +46,8 @@ class AssetToRdfsResourceMapper implements AssetVisitor {
     @Override
     public void visitVocabulary(Vocabulary vocabulary) {
         this.rdfsResource = new RdfsResource(vocabulary.getUri(),
-                                             MultilingualString.create(vocabulary.getLabel(), language),
-                                             vocabulary.getDescription() != null ?
-                                             MultilingualString.create(vocabulary.getDescription(), language) : null,
+                                             vocabulary.getLabel(),
+                                             vocabulary.getDescription(),
                                              cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik);
     }
 

@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
@@ -86,7 +87,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFor(v))));
 
         final List<Vocabulary> result = sut.findAll();
-        vocabularies.sort(Comparator.comparing(Vocabulary::getLabel));
+        vocabularies.sort(Comparator.comparing(Vocabulary::getPrimaryLabel));
         for (int i = 0; i < vocabularies.size(); i++) {
             assertEquals(vocabularies.get(i).getUri(), result.get(i).getUri());
         }
@@ -113,12 +114,12 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(vocabulary, descriptor));
 
         final String newName = "Updated vocabulary name";
-        vocabulary.setLabel(newName);
+        vocabulary.setLabel(MultilingualString.create(newName, Environment.LANGUAGE));
         transactional(() -> sut.update(vocabulary));
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(), descriptor);
         assertNotNull(result);
-        assertEquals(newName, result.getLabel());
+        assertEquals(newName, result.getLabel().get(Environment.LANGUAGE));
     }
 
     @Test
@@ -131,19 +132,16 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(1, vocabularies.size());
 
         final String newName = "Updated vocabulary name";
-        vocabulary.setLabel(newName);
+        vocabulary.setLabel(MultilingualString.create(newName, Environment.LANGUAGE));
         transactional(() -> sut.update(vocabulary));
         final List<Vocabulary> result = sut.findAll();
         assertEquals(1, result.size());
-        assertEquals(newName, result.get(0).getLabel());
+        assertEquals(newName, result.get(0).getLabel().get(Environment.LANGUAGE));
     }
 
     @Test
     void updateWorksCorrectlyInContextsForDocumentVocabulary() {
-        final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        vocabulary.setLabel("test-vocabulary");
-        vocabulary.setGlossary(new Glossary());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         vocabulary.setModel(new Model());
         final Document doc = new Document();
         doc.setLabel("test-document");
@@ -162,11 +160,11 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         });
 
         final String newComment = "New comment";
-        vocabulary.setDescription(newComment);
+        vocabulary.setDescription(MultilingualString.create(newComment, Environment.LANGUAGE));
         transactional(() -> sut.update(vocabulary));
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(), vocabularyDescriptor);
-        assertEquals(newComment, result.getDescription());
+        assertEquals(newComment, result.getDescription().get(Environment.LANGUAGE));
     }
 
     @Test
@@ -346,11 +344,11 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary voc = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
         final String newLabel = "New vocabulary label";
-        voc.setLabel(newLabel);
+        voc.setLabel(MultilingualString.create(newLabel, Environment.LANGUAGE));
         transactional(() -> sut.update(voc));
         final Optional<Vocabulary> result = sut.find(voc.getUri());
         assertTrue(result.isPresent());
-        assertEquals(newLabel, result.get().getLabel());
+        assertEquals(newLabel, result.get().getLabel().get(Environment.LANGUAGE));
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
     }
@@ -458,8 +456,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     void getTermCountRetrievesNumberOfTermsInVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
-                                          .collect(
-                                                  Collectors.toList());
+                                          .toList();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> {
@@ -631,8 +628,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     void forceRemoveRemovesVocabularyGlossaryModelAndAllTerms() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
-                                          .collect(
-                                                  Collectors.toList());
+                                          .toList();
         final Document doc = Generator.generateDocumentWithId();
         vocabulary.setDocument(doc);
         transactional(() -> {

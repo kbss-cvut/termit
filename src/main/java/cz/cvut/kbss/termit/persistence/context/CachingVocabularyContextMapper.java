@@ -94,7 +94,7 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
     @Override
     public URI getVocabularyContext(URI vocabularyUri) {
         if (!contexts.containsKey(vocabularyUri)) {
-            LOG.debug("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
+            LOG.trace("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
                       uriToString(vocabularyUri));
             return vocabularyUri;
         }

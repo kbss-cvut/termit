@@ -107,7 +107,8 @@ class AssetServiceTest {
                 }
                 case 2 -> {
                     final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
-                    rma = new RecentlyModifiedAsset(vocabulary.getUri(), vocabulary.getLabel(), Utils.timestamp(),
+                    rma = new RecentlyModifiedAsset(vocabulary.getUri(),
+                                                    vocabulary.getLabel().get(Environment.LANGUAGE), Utils.timestamp(),
                                                     author.getUri(), null,
                                                     Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
                 }

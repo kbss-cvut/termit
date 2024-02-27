@@ -21,8 +21,6 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -45,8 +43,17 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ResourceDaoTest extends BaseDaoTestRunner {
@@ -193,11 +200,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
 
     @Test
     void updateEvictsCachedVocabularyToPreventIssuesWithStaleReferencesBetweenContexts() {
-        final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        vocabulary.setLabel("vocabulary");
-        vocabulary.setGlossary(new Glossary());
-        vocabulary.setModel(new Model());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Document document = Generator.generateDocumentWithId();
         vocabulary.setDocument(document);
         document.setVocabulary(vocabulary.getUri());
@@ -257,12 +260,8 @@ class ResourceDaoTest extends BaseDaoTestRunner {
     void updateVocabularyDocumentWorksCorrectlyWithContexts() {
         enableRdfsInference(em);
         final Document doc = Generator.generateDocumentWithId();
-        final Vocabulary voc = new Vocabulary();
-        voc.setUri(Generator.generateUri());
-        voc.setLabel("Test vocabulary");
+        final Vocabulary voc = Generator.generateVocabularyWithId();
         voc.setDocument(doc);
-        voc.setGlossary(new Glossary());
-        voc.setModel(new Model());
 
         transactional(() -> {
             em.persist(voc, descriptorFactory.vocabularyDescriptor(voc));
@@ -334,11 +333,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
     @Test
     void removeFileUpdatesParentDocumentInVocabularyContext() {
         final Document document = Generator.generateDocumentWithId();
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = new cz.cvut.kbss.termit.model.Vocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        vocabulary.setLabel("Vocabulary");
-        vocabulary.setGlossary(new Glossary());
-        vocabulary.setModel(new Model());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         vocabulary.setDocument(document);
         document.setVocabulary(vocabulary.getUri());
         final File file = new File();

@@ -139,7 +139,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     protected void prePersist(@NotNull Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getLabel()));
+            instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
         }
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
@@ -274,7 +274,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         if (!vocabularies.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
-                            + vocabularies.stream().map(Vocabulary::getLabel).collect(Collectors.joining(", ")));
+                            + vocabularies.stream().map(Vocabulary::getPrimaryLabel).collect(Collectors.joining(", ")));
         }
         if (!vocabularyDao.isEmpty(instance)) {
             throw new AssetRemovalException("Vocabulary cannot be removed. It contains terms.");

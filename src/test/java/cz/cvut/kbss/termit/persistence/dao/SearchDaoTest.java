@@ -43,7 +43,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -52,7 +58,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * This class tests the default full text search functionality.
@@ -128,7 +136,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
             term.setNotations(Set.of(String.valueOf(
                     Constants.LETTERS.charAt(Generator.randomInt(0, Constants.LETTERS.length())))));
             term.setExamples(Set.of(MultilingualString.create(b ? "Matching" : "Unknown" + " example " + i,
-                    Environment.LANGUAGE)));
+                                                              Environment.LANGUAGE)));
             terms.add(term);
         }
         terms.sort(Comparator.comparing(Term::getPrimaryLabel));
@@ -137,7 +145,8 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Test
     void defaultFullTextSearchFindsVocabulariesWithMatchingLabel() {
-        final Collection<Vocabulary> matching = vocabularies.stream().filter(v -> v.getLabel().contains("Matching"))
+        final Collection<Vocabulary> matching = vocabularies.stream()
+                                                            .filter(v -> v.getPrimaryLabel().contains("Matching"))
                                                             .collect(Collectors.toList());
         final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
         final List<FullTextSearchResult> vocabularyResults = allResults.stream()
@@ -154,7 +163,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
         vocabularies.forEach(v -> {
             v.setUri(Generator.generateUri());
             if (Generator.randomBoolean()) {
-                v.setLabel("Matching label " + Generator.randomInt());
+                v.setPrimaryLabel("Matching label " + Generator.randomInt());
             }
         });
         return vocabularies;
@@ -163,10 +172,11 @@ class SearchDaoTest extends BaseDaoTestRunner {
     @Test
     void defaultFullTextSearchFindsVocabulariesAndTermsWithMatchingLabel() {
         final Collection<Term> matchingTerms = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
-                                                    .collect(Collectors.toList());
+                                                    .toList();
         final Collection<Vocabulary> matchingVocabularies = vocabularies.stream()
-                                                                        .filter(v -> v.getLabel().contains("Matching"))
-                                                                        .collect(Collectors.toList());
+                                                                        .filter(v -> v.getPrimaryLabel()
+                                                                                      .contains("Matching"))
+                                                                        .toList();
         final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
         assertEquals(matchingTerms.size() + matchingVocabularies.size(), result.size());
         for (FullTextSearchResult item : result) {
@@ -181,12 +191,12 @@ class SearchDaoTest extends BaseDaoTestRunner {
     @Test
     void defaultFullTextSearchIncludesTermStateInResult() {
         final Collection<Term> matching = terms.stream().filter(t -> t.getPrimaryLabel().contains("Matching"))
-                                               .collect(Collectors.toList());
+                                               .toList();
 
         final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
         final List<FullTextSearchResult> termResults = allResults.stream()
                                                                  .filter(r -> r.hasType(SKOS.CONCEPT))
-                                                                 .collect(Collectors.toList());
+                                                                 .toList();
         for (FullTextSearchResult ftsResult : termResults) {
             final Optional<Term> term = matching.stream().filter(t -> t.getUri().equals(ftsResult.getUri()))
                                                 .findFirst();
@@ -205,9 +215,9 @@ class SearchDaoTest extends BaseDaoTestRunner {
     void defaultFullTextSearchSkipsSnapshots() {
         final String matchingLabel = "Snapshot";
         final Vocabulary v = Generator.generateVocabularyWithId();
-        v.setLabel(matchingLabel + " 0");
+        v.setPrimaryLabel(matchingLabel + " 0");
         final Vocabulary snapshot = Generator.generateVocabularyWithId();
-        snapshot.setLabel(matchingLabel + " 1");
+        snapshot.setPrimaryLabel(matchingLabel + " 1");
         transactional(() -> {
             em.persist(v);
             em.persist(snapshot);

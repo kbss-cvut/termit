@@ -112,9 +112,9 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), RDF.TYPE, SKOS.CONCEPT_SCHEME)));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), RDF.TYPE, OWL.ONTOLOGY)));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), DCTERMS.TITLE,
-                                                     vf.createLiteral(vocabulary.getLabel(), lang()))));
+                                                     vf.createLiteral(vocabulary.getPrimaryLabel(), lang()))));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), DCTERMS.DESCRIPTION,
-                                                     vf.createLiteral(vocabulary.getDescription(), lang()))));
+                                                     vf.createLiteral(vocabulary.getDescription().get(lang()), lang()))));
     }
 
     private static ExportConfig exportConfig() {
