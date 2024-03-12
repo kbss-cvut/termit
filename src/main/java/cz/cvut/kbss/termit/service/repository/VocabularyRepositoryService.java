@@ -139,7 +139,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     protected void prePersist(@NotNull Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
+            instance.setUri(
+                    idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
         }
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
@@ -170,7 +171,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                                                  Constants.DEFAULT_DOCUMENT_IRI_COMPONENT));
         doc.setLabel(
                 new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
-                                                                                          vocabulary.getLabel()));
+                                                                                          vocabulary.getPrimaryLabel()));
         vocabulary.setDocument(doc);
     }
 

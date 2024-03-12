@@ -407,7 +407,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary v = sut.importVocabulary(true, mf);
         assertNotNull(v.getDocument());
         assertNotNull(em.find(Document.class, v.getDocument().getUri()));
-        assertEquals("Document for " + v.getLabel(), v.getDocument().getLabel());
+        assertEquals("Document for " + v.getLabel().get(Constants.DEFAULT_LANGUAGE), v.getDocument().getLabel());
     }
 
     @Test
