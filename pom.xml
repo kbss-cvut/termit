@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.2</version>
+        <version>3.2.3</version>
     </parent>
 
     <artifactId>termit</artifactId>
@@ -51,7 +51,7 @@
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>2.2.0</org.springdoc.version>
         <cz.cvut.kbss.jopa.version>2.0.0-SNAPSHOT</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.14.1</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jsonld.version>0.14.2</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.20</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
