@@ -71,7 +71,7 @@ public abstract class DtoMapper {
                 dto.setLabel(MultilingualString.create(user.getFullName(),
                                                        config.getPersistence().getLanguage()));
                 break;
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup:
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_sioc_Usergroup:
                 dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(),
                                                        config.getPersistence().getLanguage()));
                 break;

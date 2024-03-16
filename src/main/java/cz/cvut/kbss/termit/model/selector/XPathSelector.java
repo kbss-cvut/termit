@@ -54,10 +54,9 @@ public class XPathSelector extends Selector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof XPathSelector)) {
+        if (!(o instanceof XPathSelector that)) {
             return false;
         }
-        XPathSelector that = (XPathSelector) o;
         return Objects.equals(value, that.value);
     }
 

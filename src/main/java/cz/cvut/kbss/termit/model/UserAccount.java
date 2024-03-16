@@ -56,7 +56,7 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
     @OWLDataProperty(iri = Vocabulary.s_p_ma_heslo)
     private String password;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_last_activity_date)
+    @OWLDataProperty(iri = Vocabulary.s_p_sioc_last_activity_date)
     private Instant lastSeen;
 
     @Types
@@ -255,10 +255,9 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UserAccount)) {
+        if (!(o instanceof UserAccount that)) {
             return false;
         }
-        UserAccount that = (UserAccount) o;
         return Objects.equals(getUri(), that.getUri()) && Objects.equals(username, that.username);
     }
 

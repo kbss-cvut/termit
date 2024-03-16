@@ -70,7 +70,7 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
                                      "FILTER NOT EXISTS { ?g ?basedOnVersion ?canonical . } " +
                                      "}}")
           .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
-          .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
+          .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_d_sgov_pracovni_prostor_pojem_vychazi_z_verze))
           .getResultStream().forEach(row -> {
               assert row instanceof Object[];
               assert ((Object[]) row).length == 2;
@@ -94,7 +94,7 @@ public class CachingVocabularyContextMapper extends DefaultVocabularyContextMapp
     @Override
     public URI getVocabularyContext(URI vocabularyUri) {
         if (!contexts.containsKey(vocabularyUri)) {
-            LOG.debug("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
+            LOG.trace("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",
                       uriToString(vocabularyUri));
             return vocabularyUri;
         }

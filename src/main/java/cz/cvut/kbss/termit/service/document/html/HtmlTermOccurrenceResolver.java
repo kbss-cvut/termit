@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.service.document.html;
 
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
@@ -28,6 +27,7 @@ import cz.cvut.kbss.termit.service.document.TermOccurrenceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -43,10 +43,15 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Resolves term occurrences from RDFa-annotated HTML document.
@@ -68,7 +73,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
 
     private Map<String, String> prefixes;
 
-    private Map<String, List<Element>> annotatedElements;
+    private final Set<String> existingTermIds = new HashSet<>();
 
     @Autowired
     HtmlTermOccurrenceResolver(TermRepositoryService termService, HtmlSelectorGenerators selectorGenerators,
@@ -93,11 +98,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     @Override
     public InputStream getContent() {
         assert document != null;
-        try {
-            return new ByteArrayInputStream(document.toString().getBytes(StandardCharsets.UTF_8.name()));
-        } catch (UnsupportedEncodingException e) {
-            throw new TermItException("Fatal error, unable to find encoding UTF-8.", e);
-        }
+        return new ByteArrayInputStream(document.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     private static Map<String, String> resolvePrefixes(Document document) {
@@ -113,18 +114,6 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             }
         });
         return map;
-    }
-
-    private void mapRDFaTermOccurrenceAnnotations() {
-        this.annotatedElements = new LinkedHashMap<>();
-        final Elements elements = document.getElementsByAttribute(Constants.RDFa.ABOUT);
-        for (Element element : elements) {
-            if (isNotTermOccurrence(element)) {
-                continue;
-            }
-            annotatedElements.computeIfAbsent(element.attr(Constants.RDFa.ABOUT), key -> new ArrayList<>())
-                             .add(element);
-        }
     }
 
     private boolean isNotTermOccurrence(Element rdfaElem) {
@@ -160,14 +149,22 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     @Override
     public List<TermOccurrence> findTermOccurrences() {
         assert document != null;
-        if (annotatedElements == null) {
-            mapRDFaTermOccurrenceAnnotations();
-        }
-        final List<TermOccurrence> result = new ArrayList<>(annotatedElements.size());
+        final Set<String> visited = new HashSet<>();
+        final Elements elements = document.getElementsByAttribute(Constants.RDFa.ABOUT);
+        final List<TermOccurrence> result = new ArrayList<>(elements.size());
         final Double scoreThreshold = Double.parseDouble(config.getTextAnalysis().getTermOccurrenceMinScore());
-        for (List<Element> elements : annotatedElements.values()) {
-            LOG.trace("Processing RDFa annotated elements {}.", elements);
-            final Optional<TermOccurrence> occurrence = resolveAnnotation(elements, source);
+        for (Element element : elements) {
+            if (isNotTermOccurrence(element)) {
+                continue;
+            }
+            final String about = element.attr(Constants.RDFa.ABOUT);
+            if (visited.contains(about)) {
+                continue;
+            }
+            visited.add(about);
+
+            LOG.trace("Processing RDFa annotated element {}.", element);
+            final Optional<TermOccurrence> occurrence = resolveAnnotation(element, source);
             occurrence.ifPresent(to -> {
                 if (to.getScore() != null && to.getScore() > scoreThreshold) {
                     LOG.trace("Found term occurrence {}.", to);
@@ -180,21 +177,17 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return result;
     }
 
-    private Optional<TermOccurrence> resolveAnnotation(List<Element> rdfaElem, Asset<?> source) {
-        assert !rdfaElem.isEmpty();
-        final String termId = fullIri(rdfaElem.get(0).attr(Constants.RDFa.RESOURCE));
+    private Optional<TermOccurrence> resolveAnnotation(Element rdfaElem, Asset<?> source) {
+        final String termId = fullIri(rdfaElem.attr(Constants.RDFa.RESOURCE));
         if (termId.isEmpty()) {
             LOG.trace("No term identifier found in RDFa element {}. Skipping it.", rdfaElem);
             return Optional.empty();
         }
         final URI termUri = URI.create(termId);
-        if (!termService.exists(termUri)) {
-            throw new AnnotationGenerationException(
-                    "Term with id " + termId + " denoted by RDFa element " + rdfaElem + " not found.");
-        }
+        verifyTermExists(rdfaElem, termUri, termId);
         final TermOccurrence occurrence = createOccurrence(termUri, source);
-        occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem.toArray(new Element[0])));
-        final String strScore = rdfaElem.get(0).attr("score");
+        occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem));
+        final String strScore = rdfaElem.attr("score");
         if (!strScore.isEmpty()) {
             try {
                 final Double score = Double.parseDouble(strScore);
@@ -207,15 +200,26 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return Optional.of(occurrence);
     }
 
+    private void verifyTermExists(Element rdfaElem, URI termUri, String termId) {
+        if (existingTermIds.contains(termId)) {
+            return;
+        }
+        if (!termService.exists(termUri)) {
+            throw new AnnotationGenerationException(
+                    "Term with id " + Utils.uriToString(
+                            termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
+        }
+        existingTermIds.add(termId);
+    }
+
     @Override
     public boolean supports(Asset<?> source) {
         if (source instanceof Term) {
             return true;
         }
-        if (!(source instanceof File)) {
+        if (!(source instanceof File sourceFile)) {
             return false;
         }
-        final File sourceFile = (File) source;
         if (sourceFile.getLabel().endsWith("html") || sourceFile.getLabel().endsWith("htm")) {
             return true;
         }

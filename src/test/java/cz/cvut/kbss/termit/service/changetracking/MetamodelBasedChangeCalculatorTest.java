@@ -54,7 +54,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         original.getModel().setUri(Generator.generateUri());
         original.getGlossary().setUri(Generator.generateUri());
         final Vocabulary changed = cloneOf(original);
-        changed.setLabel("Updated label");
+        changed.setLabel(MultilingualString.create("Updated label", Environment.LANGUAGE));
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());
@@ -273,7 +273,7 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         original.getModel().setUri(Generator.generateUri());
         original.getGlossary().setUri(Generator.generateUri());
         final Vocabulary changed = cloneOf(original);
-        changed.setLabel("Updated label");
+        changed.setLabel(MultilingualString.create("Updated label", Environment.LANGUAGE));
 
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertEquals(1, result.size());

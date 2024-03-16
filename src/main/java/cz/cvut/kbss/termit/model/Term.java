@@ -20,8 +20,14 @@ package cz.cvut.kbss.termit.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
+import cz.cvut.kbss.jopa.model.annotations.Inferred;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.Properties;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
@@ -32,12 +38,15 @@ import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 
 import java.net.URI;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @Configurable
 @Audited
@@ -222,12 +231,12 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         Objects.requireNonNull(term);
         if (!Objects.equals(getGlossary(), term.getGlossary())) {
             if (externalParentTerms == null) {
-                this.externalParentTerms = new HashSet<>();
+                setExternalParentTerms(new HashSet<>());
             }
             externalParentTerms.add(term);
         } else {
             if (parentTerms == null) {
-                this.parentTerms = new HashSet<>();
+                setParentTerms(new HashSet<>());
             }
             parentTerms.add(term);
         }
@@ -244,7 +253,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     public void addRelatedTerm(TermInfo ti) {
         Objects.requireNonNull(ti);
         if (related == null) {
-            this.related = new LinkedHashSet<>();
+            setRelated(new LinkedHashSet<>());
         }
         related.add(ti);
     }
@@ -268,7 +277,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     public void addRelatedMatchTerm(TermInfo ti) {
         Objects.requireNonNull(ti);
         if (relatedMatch == null) {
-            this.relatedMatch = new LinkedHashSet<>();
+            setRelatedMatch(new LinkedHashSet<>());
         }
         relatedMatch.add(ti);
     }
@@ -292,7 +301,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     public void addExactMatch(TermInfo term) {
         Objects.requireNonNull(term);
         if (exactMatchTerms == null) {
-            this.exactMatchTerms = new HashSet<>();
+            setExactMatchTerms(new HashSet<>());
         }
         exactMatchTerms.add(term);
     }
@@ -371,7 +380,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     public void consolidateParents() {
         if (externalParentTerms != null && !externalParentTerms.isEmpty()) {
             if (parentTerms == null) {
-                parentTerms = new LinkedHashSet<>();
+                setParentTerms(new LinkedHashSet<>());
             }
             parentTerms.addAll(externalParentTerms);
         }

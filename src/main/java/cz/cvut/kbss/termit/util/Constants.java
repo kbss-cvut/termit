@@ -65,8 +65,8 @@ public class Constants {
     /**
      * Path to directory containing queries used by the system.
      * <p>
-     * The path should be relative to the classpath, so that queries from it can be loaded using {@link
-     * ClassLoader#getResourceAsStream(String)}.
+     * The path should be relative to the classpath, so that queries from it can be loaded using
+     * {@link ClassLoader#getResourceAsStream(String)}.
      */
     public static final String QUERY_DIRECTORY = "query";
 
@@ -89,8 +89,15 @@ public class Constants {
     public static final String DEFAULT_MODEL_IRI_COMPONENT = "model";
 
     /**
+     * Default identifier component for {@link cz.cvut.kbss.termit.model.resource.Document}.
+     * <p>
+     * This component is appended to the containing vocabulary identifier to form the document identifier.
+     */
+    public static final String DEFAULT_DOCUMENT_IRI_COMPONENT = "document";
+
+    /**
      * Default language when none is specified in configuration.
-     *
+     * <p>
      * Used mainly for resolving internationalized templates.
      */
     public static final String DEFAULT_LANGUAGE = "en";

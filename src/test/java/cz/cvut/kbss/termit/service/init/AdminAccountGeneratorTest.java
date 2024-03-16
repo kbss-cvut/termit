@@ -50,7 +50,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AdminAccountGeneratorTest {
 
-    private static final URI ADMIN_URI = URI.create(Vocabulary.ONTOLOGY_IRI_termit + "/system-admin-user");
+    private static final URI ADMIN_URI = URI.create(Vocabulary.ONTOLOGY_IRI_TERMIT + "/system-admin-user");
 
     @Spy
     private Configuration config = new Configuration();

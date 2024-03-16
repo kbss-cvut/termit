@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CommentControllerTest extends BaseControllerTestRunner {
 
     private static final String PATH = "/comments/";
-    private static final String NAMESPACE = Vocabulary.ONTOLOGY_IRI_glosar + "/comments/";
+    private static final String NAMESPACE = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comments/";
     private static final String NAME = "Comment_" + Generator.randomInt();
 
     @Mock

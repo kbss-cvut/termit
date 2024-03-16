@@ -63,7 +63,7 @@ public class DefaultVocabularyContextMapper implements VocabularyContextMapper {
                              "}}", URI.class)
                      .setParameter("type", URI.create(Vocabulary.s_c_slovnik))
                      .setParameter("vocabulary", vocabularyUri)
-                     .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_vychazi_z_verze))
+                     .setParameter("basedOnVersion", URI.create(Vocabulary.s_p_d_sgov_pracovni_prostor_pojem_vychazi_z_verze))
                      .getSingleResult();
         } catch (NoResultException e) {
             LOG.debug("No context mapped for vocabulary {}, returning the vocabulary IRI as context identifier.",

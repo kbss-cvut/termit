@@ -42,11 +42,11 @@ public class Comment extends AbstractEntity {
     private URI asset;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLDataProperty(iri = Vocabulary.s_p_content_A)
+    @OWLDataProperty(iri = Vocabulary.s_p_sioc_content)
     private String content;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_creator, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_creator, fetch = FetchType.EAGER)
     private User author;
 
     @ParticipationConstraints(nonEmpty = true)
@@ -110,12 +110,12 @@ public class Comment extends AbstractEntity {
 
     @PrePersist
     public void prePersist() {
-        this.created = Utils.timestamp();
+        setCreated(Utils.timestamp());
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.modified = Utils.timestamp();
+        setModified(Utils.timestamp());
     }
 
     @Override
@@ -123,10 +123,9 @@ public class Comment extends AbstractEntity {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Comment)) {
+        if (!(o instanceof Comment comment)) {
             return false;
         }
-        Comment comment = (Comment) o;
         return Objects.equals(asset, comment.asset) &&
                 Objects.equals(content, comment.content) &&
                 Objects.equals(author, comment.author) &&

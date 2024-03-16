@@ -54,10 +54,9 @@ public class FragmentSelector extends Selector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FragmentSelector)) {
+        if (!(o instanceof FragmentSelector that)) {
             return false;
         }
-        FragmentSelector that = (FragmentSelector) o;
         return Objects.equals(value, that.value);
     }
 

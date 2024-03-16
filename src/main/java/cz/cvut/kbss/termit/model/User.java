@@ -108,10 +108,9 @@ public class User extends AccessControlAgent implements HasTypes, Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof User)) {
+        if (!(o instanceof User that)) {
             return false;
         }
-        User that = (User) o;
         return Objects.equals(getUri(), that.getUri()) && Objects.equals(username, that.username);
     }
 

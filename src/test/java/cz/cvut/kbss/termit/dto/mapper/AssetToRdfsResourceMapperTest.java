@@ -58,7 +58,7 @@ class AssetToRdfsResourceMapperTest {
         final Vocabulary v = Generator.generateVocabularyWithId();
         v.accept(sut);
         assertEquals(sut.getRdfsResource().getUri(), v.getUri());
-        assertEquals(sut.getRdfsResource().getLabel(), MultilingualString.create(v.getLabel(), Environment.LANGUAGE));
+        assertEquals(sut.getRdfsResource().getLabel(), v.getLabel());
         assertThat(sut.getRdfsResource().getTypes(), hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik));
     }
 

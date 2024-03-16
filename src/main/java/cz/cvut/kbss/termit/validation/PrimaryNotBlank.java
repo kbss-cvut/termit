@@ -32,7 +32,7 @@ import java.lang.annotation.*;
 @Repeatable(PrimaryNotBlank.List.class)
 public @interface PrimaryNotBlank {
 
-    String message() default "{jakarta.validation.constraints.NotBlank.message}";
+    String message() default "{jakarta.validation.constraints.PrimaryNotBlank.message}";
 
     Class<?>[] groups() default {};
 

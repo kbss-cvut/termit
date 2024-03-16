@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.notification;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -27,13 +28,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.awt.geom.GeneralPath;
 import java.lang.reflect.Field;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,16 +46,20 @@ class MessageAssetFactoryTest {
     @Mock
     private DataRepositoryService dataService;
 
+    @Spy
+    private Configuration config = new Configuration();
+
     @InjectMocks
     private MessageAssetFactory sut;
 
     @Test
     void createUsesVocabularyTitleAndLinkBuilderGeneratedLinkToConstructMessageAsset() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        Environment.injectConfiguration(vocabulary, config);
         when(linkBuilder.linkTo(vocabulary)).thenReturn(vocabulary.getUri().toString());
 
         final MessageAssetFactory.MessageAsset result = sut.create(vocabulary);
-        assertEquals(vocabulary.getLabel(), result.getLabel());
+        assertEquals(vocabulary.getLabel().get(Environment.LANGUAGE), result.getLabel());
         assertEquals(vocabulary.getUri().toString(), result.getLink());
     }
 

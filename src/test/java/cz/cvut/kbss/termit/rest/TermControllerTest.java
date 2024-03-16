@@ -136,7 +136,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void setUp() {
         super.setUp(sut);
         this.vocabulary = Generator.generateVocabulary();
-        vocabulary.setLabel(VOCABULARY_NAME);
+        vocabulary.setLabel(MultilingualString.create(VOCABULARY_NAME, Environment.LANGUAGE));
         vocabulary.setUri(URI.create(VOCABULARY_URI));
     }
 
@@ -257,7 +257,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void getTermReturnsTermWithUnmappedProperties() throws Exception {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
-        final String customProperty = Vocabulary.s_p_has_dataset;
+        final String customProperty = Vocabulary.s_p_ddo_has_dataset;
         final String value = "Test";
         term.setProperties(Collections.singletonMap(customProperty, Collections.singleton(value)));
         term.setUri(termUri);
@@ -341,7 +341,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + parent.getLabel().get(Environment.LANGUAGE) +
                                      "/subterms"))
                 .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(children.size(), result.size());
         assertTrue(children.containsAll(result));
@@ -539,16 +539,17 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     private TypeAwareByteArrayResource prepareTurtle() {
-        final String content = "@base <http://example.org/> .\n" +
-                "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n" +
-                "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n" +
-                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
-                "@prefix rel: <http://www.perceive.net/schemas/relationship/> .\n" +
-                "\n" +
-                "<#spiderman>\n" +
-                "    rel:enemyOf <#green-goblin> ;\n" +
-                "    a foaf:Person ;\n" +
-                "    foaf:name \"Spiderman\", .";
+        final String content = """
+                @base <http://example.org/> .
+                @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+                @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+                @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+                @prefix rel: <http://www.perceive.net/schemas/relationship/> .
+
+                <#spiderman>
+                    rel:enemyOf <#green-goblin> ;
+                    a foaf:Person ;
+                    foaf:name "Spiderman", .""";
         return new TypeAwareByteArrayResource(content.getBytes(), ExportFormat.TURTLE.getMediaType(),
                                               ExportFormat.TURTLE.getFileExtension());
     }
@@ -977,7 +978,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
-        final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comment/";
         comment.setUri(URI.create(namespace + name));
 
         final MvcResult mvcResult = mockMvc
@@ -1017,7 +1018,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
-        final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comment/";
         comment.setUri(URI.create(namespace + name));
 
         final MvcResult mvcResult = mockMvc

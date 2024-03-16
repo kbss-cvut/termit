@@ -51,6 +51,7 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -243,8 +244,9 @@ public class Generator {
                 new cz.cvut.kbss.termit.model.Vocabulary();
         vocabulary.setGlossary(new Glossary());
         vocabulary.setModel(new Model());
-        vocabulary.setLabel("Vocabulary" + randomInt());
-        vocabulary.setDescription("Description of vocabulary " + vocabulary.getLabel());
+        vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), Environment.LANGUAGE));
+        vocabulary.setDescription(MultilingualString.create(
+                "Description of vocabulary " + vocabulary.getLabel().get(Environment.LANGUAGE), Environment.LANGUAGE));
         return vocabulary;
     }
 
@@ -276,8 +278,8 @@ public class Generator {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Environment.LANGUAGE));
         term.setDefinition(MultilingualString
-                .create("Normative definition of term " + term.getLabel().get(),
-                        Environment.LANGUAGE));
+                                   .create("Normative definition of term " + term.getLabel().get(Environment.LANGUAGE),
+                                           Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
         if (Generator.randomBoolean()) {
             term.setSources(Collections.singleton("PSP/c-1/p-2/b-c"));
@@ -397,8 +399,8 @@ public class Generator {
         try (RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(term.getUri().toString()),
-                    vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
-                    vf.createIRI(vocabularyIri.toString()));
+                     vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku),
+                     vf.createIRI(vocabularyIri.toString()));
         }
     }
 
@@ -471,7 +473,7 @@ public class Generator {
             for (AbstractTerm r : related) {
                 // Don't put it into any specific context to make it look like inference
                 conn.add(vf.createIRI(r.getUri().toString()), vf.createIRI(relationship),
-                        vf.createIRI(source.getUri().toString()));
+                         vf.createIRI(source.getUri().toString()));
             }
             conn.commit();
         }
@@ -480,7 +482,7 @@ public class Generator {
     public static UserGroup generateUserGroup() {
         final UserGroup group = new UserGroup();
         group.setUri(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup + "_instance" + Generator.randomInt()));
+                IdentifierResolver.generateSyntheticIdentifier(cz.cvut.kbss.termit.util.Vocabulary.s_c_sioc_Usergroup));
         group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
         return group;
     }

@@ -79,7 +79,7 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
 
     @Override
     protected void prePersist(UserAccount instance) {
-        validate(instance);
+        super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver
                     .generateIdentifier(cfgNamespace.getUser(), instance.getFirstName(), instance.getLastName()));

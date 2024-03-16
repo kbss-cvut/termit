@@ -30,7 +30,7 @@ public class StaticContexts {
     /**
      * Repository context for storing {@link cz.cvut.kbss.termit.model.UserGroup} instances.
      */
-    public static final String USER_GROUPS = Vocabulary.s_c_Usergroup;
+    public static final String USER_GROUPS = Vocabulary.s_c_sioc_Usergroup;
 
     /**
      * Repository context for storing {@link cz.cvut.kbss.termit.model.acl.AccessControlList} instances.

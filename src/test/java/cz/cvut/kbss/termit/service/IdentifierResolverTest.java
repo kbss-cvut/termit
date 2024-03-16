@@ -283,7 +283,7 @@ class IdentifierResolverTest {
 
     @Test
     void generateSyntheticIdentifierGeneratesIdentifierForBaseContainingHash() {
-        final String base = Vocabulary.s_c_Usergroup;
+        final String base = Vocabulary.s_c_sioc_Usergroup;
         assertThat(base, containsString("#"));
         final URI result = IdentifierResolver.generateSyntheticIdentifier(base);
         assertThat(result.toString(), containsString(base));

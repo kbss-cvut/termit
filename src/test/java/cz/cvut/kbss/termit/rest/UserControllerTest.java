@@ -161,10 +161,10 @@ class UserControllerTest extends BaseControllerTestRunner {
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(put(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/role")
                                 .queryParam(Constants.QueryParams.NAMESPACE, namespace)
-                                .content(Vocabulary.s_c_omezeny_uzivatel).contentType(MediaType.TEXT_PLAIN))
+                                .content(Vocabulary.s_c_omezeny_uzivatel_termitu).contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
         verify(idResolverMock).resolveIdentifier(namespace, extractIdentifierFragment(user.getUri()));
-        verify(userService).changeRole(user, Vocabulary.s_c_omezeny_uzivatel);
+        verify(userService).changeRole(user, Vocabulary.s_c_omezeny_uzivatel_termitu);
     }
 
     @Test

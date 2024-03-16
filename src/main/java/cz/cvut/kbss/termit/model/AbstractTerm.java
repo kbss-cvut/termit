@@ -172,10 +172,9 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractTerm)) {
+        if (!(o instanceof AbstractTerm that)) {
             return false;
         }
-        AbstractTerm that = (AbstractTerm) o;
         return Objects.equals(getUri(), that.getUri());
     }
 

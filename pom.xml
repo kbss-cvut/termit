@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.5</version>
+        <version>3.2.3</version>
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>3.0.2</version>
+    <version>3.0.3</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -21,15 +21,37 @@
             <id>kbss</id>
             <url>https://kbss.felk.cvut.cz/m2repo</url>
         </repository>
+        <repository>
+            <id>central-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
     </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <properties>
         <java.version>17</java.version>
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>2.2.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>1.1.4</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.14.0</cz.cvut.kbss.jsonld.version>
+        <cz.cvut.kbss.jopa.version>2.0.0-SNAPSHOT</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.14.2</cz.cvut.kbss.jsonld.version>
         <org.aspectj.version>1.9.20</org.aspectj.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
@@ -110,15 +132,14 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>4.3.7</version>
+            <version>4.3.8</version>
         </dependency>
-
 
         <!-- Spring declarative transactions with JOPA -->
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.2.0</version>
+            <version>0.3.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Spring -->
@@ -394,6 +415,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <parameters>true</parameters>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.hibernate.validator</groupId>
@@ -420,14 +442,11 @@
                     <target>${java.version}</target>
                     <aspectLibraries>
                         <aspectLibrary>
-                            <groupId>cz.cvut.kbss.jopa</groupId>
-                            <artifactId>jopa-impl</artifactId>
-                        </aspectLibrary>
-                        <aspectLibrary>
                             <groupId>org.springframework</groupId>
                             <artifactId>spring-aspects</artifactId>
                         </aspectLibrary>
                     </aspectLibraries>
+                    <parameters>true</parameters>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -482,10 +501,11 @@
                             <package>cz.cvut.kbss.termit.util</package>
                             <output-directory>${project.basedir}/src/main/generated-sources</output-directory>
                             <ontology-iri>http://onto.fel.cvut.cz/ontologies/application/termit</ontology-iri>
-                            <mapping-file>${project.basedir}/src/main/resources/mapping</mapping-file>
+                            <mapping-file>${project.basedir}/jopa-config/mapping</mapping-file>
                             <whole-ontology-as-ics>true</whole-ontology-as-ics>
                             <vocabulary-only>true</vocabulary-only>
                             <ignore-failed-imports>true</ignore-failed-imports>
+                            <prefix-mapping-file>${project.basedir}/jopa-config/prefixes</prefix-mapping-file>
                         </configuration>
                     </execution>
                     <execution>

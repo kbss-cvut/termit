@@ -124,10 +124,9 @@ public class ValidationResult {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Term)) {
+        if (!(o instanceof Term term)) {
             return false;
         }
-        Term term = (Term) o;
         return Objects.equals(getId(), term.getUri());
     }
 

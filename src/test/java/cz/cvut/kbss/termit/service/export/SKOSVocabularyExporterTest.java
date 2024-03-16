@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -88,7 +89,9 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(author);
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
-            em.persist(Generator.generatePersistChange(vocabulary));
+            final PersistChangeRecord record = Generator.generatePersistChange(vocabulary);
+            record.setAuthor(author);
+            em.persist(record);
         });
     }
 
@@ -109,9 +112,9 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), RDF.TYPE, SKOS.CONCEPT_SCHEME)));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), RDF.TYPE, OWL.ONTOLOGY)));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), DCTERMS.TITLE,
-                                                     vf.createLiteral(vocabulary.getLabel(), lang()))));
+                                                     vf.createLiteral(vocabulary.getPrimaryLabel(), lang()))));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), DCTERMS.DESCRIPTION,
-                                                     vf.createLiteral(vocabulary.getDescription(), lang()))));
+                                                     vf.createLiteral(vocabulary.getDescription().get(lang()), lang()))));
     }
 
     private static ExportConfig exportConfig() {
@@ -176,7 +179,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
                 conn.add(glossaryIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespacePrefix"),
                          vf.createLiteral("termit:"), vf.createIRI(vocabulary.getUri().toString()));
                 conn.add(glossaryIri(vocabulary), vf.createIRI("http://purl.org/vocab/vann/preferredNamespaceUri"),
-                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_termit),
+                         vf.createIRI(cz.cvut.kbss.termit.util.Vocabulary.ONTOLOGY_IRI_TERMIT),
                          vf.createIRI(vocabulary.getUri().toString()));
                 conn.add(glossaryIri(vocabulary), DCTERMS.RIGHTS,
                          vf.createIRI("https://creativecommons.org/licenses/by-nc-nd/4.0"),

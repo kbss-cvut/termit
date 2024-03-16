@@ -96,7 +96,7 @@ class AssetServiceTest {
                     final Resource resource = Generator.generateResourceWithId();
                     rma = new RecentlyModifiedAsset(resource.getUri(), resource.getLabel(), Utils.timestamp(),
                                                     author.getUri(), null,
-                                                    Vocabulary.s_c_resource,
+                                                    Vocabulary.s_c_ddo_resource,
                                                     Vocabulary.s_c_vytvoreni_entity);
                 }
                 case 1 -> {
@@ -107,7 +107,8 @@ class AssetServiceTest {
                 }
                 case 2 -> {
                     final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabularyWithId();
-                    rma = new RecentlyModifiedAsset(vocabulary.getUri(), vocabulary.getLabel(), Utils.timestamp(),
+                    rma = new RecentlyModifiedAsset(vocabulary.getUri(),
+                                                    vocabulary.getLabel().get(Environment.LANGUAGE), Utils.timestamp(),
                                                     author.getUri(), null,
                                                     Vocabulary.s_c_slovnik, Vocabulary.s_c_vytvoreni_entity);
                 }

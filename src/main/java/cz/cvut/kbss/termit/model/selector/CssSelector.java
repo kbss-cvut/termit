@@ -54,10 +54,9 @@ public class CssSelector extends Selector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof CssSelector)) {
+        if (!(o instanceof CssSelector that)) {
             return false;
         }
-        CssSelector that = (CssSelector) o;
         return Objects.equals(value, that.value);
     }
 

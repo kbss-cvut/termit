@@ -25,6 +25,6 @@ public class VocabularyTest {
     @Test
     // @todo until https://github.com/kbss-cvut/jopa/issues/85 is resolved
     public void ensureContentHasCorrectUrl() {
-        Assert.equals("http://rdfs.org/sioc/ns#content", Vocabulary.s_p_content_A);
+        Assert.equals("http://rdfs.org/sioc/ns#content", Vocabulary.s_p_sioc_content);
     }
 }

@@ -32,7 +32,6 @@ import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
@@ -53,14 +52,22 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SKOSImporterTest extends BaseDaoTestRunner {
@@ -195,7 +202,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
                 existingStatementCountInDefault.set(
-                        Iterations.asList(conn.getStatements(null, null, null, false, (Resource) null)).size());
+                        conn.getStatements(null, null, null, false, (Resource) null).stream().toList().size());
             }
         });
         transactional(() -> {
@@ -206,14 +213,14 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                final List<Resource> contexts = Iterations.asList(conn.getContextIDs());
+                final List<Resource> contexts = conn.getContextIDs().stream().toList();
                 assertFalse(contexts.isEmpty());
                 final Optional<Resource> ctx = contexts.stream()
                                                        .filter(r -> r.stringValue().contains(VOCABULARY_IRI.toString()))
                                                        .findFirst();
                 assertTrue(ctx.isPresent());
-                final List<Statement> inAll = Iterations.asList(conn.getStatements(null, null, null, false));
-                final List<Statement> inCtx = Iterations.asList(conn.getStatements(null, null, null, false, ctx.get()));
+                final List<Statement> inAll = conn.getStatements(null, null, null, false).stream().toList();
+                final List<Statement> inCtx = conn.getStatements(null, null, null, false, ctx.get()).stream().toList();
                 assertEquals(inAll.size() - existingStatementCountInDefault.get(), inCtx.size());
             }
         });
@@ -230,7 +237,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection conn = repo.getConnection()) {
-                final List<Resource> contexts = Iterations.asList(conn.getContextIDs());
+                final List<Resource> contexts = conn.getContextIDs().stream().toList();
                 assertFalse(contexts.isEmpty());
                 contexts.forEach(ctx -> assertThat(ctx.stringValue(), containsString(VOCABULARY_IRI.toString())));
 
@@ -240,20 +247,20 @@ class SKOSImporterTest extends BaseDaoTestRunner {
 
     @Test
     void importThrowsIllegalArgumentExceptionWhenTargetContextCannotBeDeterminedFromSpecifiedData() {
-        final String input = "@prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/> .\n" +
-                "@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n" +
-                "@prefix owl:   <http://www.w3.org/2002/07/owl#> .\n" +
-                "@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .\n" +
-                "@prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .\n" +
-                "@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> ." +
-                "termit-pojem:zablokovaný-uživatel-termitu\n" +
-                "        a       <http://www.w3.org/2004/02/skos/core#Concept> ;\n" +
-                "        <http://www.w3.org/2004/02/skos/core#broader>\n" +
-                "                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;\n" +
-                "        <http://www.w3.org/2004/02/skos/core#inScheme>\n" +
-                "                termit:glosář ;\n" +
-                "        <http://www.w3.org/2004/02/skos/core#prefLabel>\n" +
-                "                \"Blocked TermIt user\"@en , \"Zablokovaný uživatel TermItu\"@cs .";
+        final String input = """
+                @prefix termit: <http://onto.fel.cvut.cz/ontologies/application/termit/> .
+                @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+                @prefix owl:   <http://www.w3.org/2002/07/owl#> .
+                @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+                @prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
+                @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .termit-pojem:zablokovaný-uživatel-termitu
+                        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+                        <http://www.w3.org/2004/02/skos/core#broader>
+                                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+                        <http://www.w3.org/2004/02/skos/core#inScheme>
+                                termit:glosář ;
+                        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                                "Blocked TermIt user"@en , "Zablokovaný uživatel TermItu"@cs .""";
         transactional(() -> {
             final SKOSImporter sut = context.getBean(SKOSImporter.class);
             final VocabularyImportException ex = assertThrows(VocabularyImportException.class,
@@ -287,7 +294,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                       Environment.loadFile("data/test-glossary.ttl"));
             assertNotNull(result);
             assertEquals(VOCABULARY_IRI, result.getUri());
-            assertEquals("Vocabulary of system TermIt - glossary", result.getLabel());
+            assertEquals("Vocabulary of system TermIt - glossary", result.getPrimaryLabel());
         });
     }
 
@@ -301,8 +308,8 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         });
         transactional(() -> {
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
-                final List<Resource> terms = Iterations.stream(conn.getStatements(null, RDF.TYPE, SKOS.CONCEPT))
-                                                       .map(Statement::getSubject).collect(Collectors.toList());
+                final List<Resource> terms = conn.getStatements(null, RDF.TYPE, SKOS.CONCEPT).stream()
+                                                       .map(Statement::getSubject).toList();
                 assertFalse(terms.isEmpty());
                 terms.forEach(t -> assertTrue(conn.getStatements(t, SKOS.IN_SCHEME,
                                                                  vf.createIRI(GLOSSARY_IRI)).hasNext()));
@@ -320,7 +327,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         });
         transactional(() -> {
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
-                final List<Value> terms = Iterations.stream(conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null))
+                final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
                                                     .map(Statement::getObject).collect(Collectors.toList());
                 assertEquals(1, terms.size());
                 assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_uzivatel_termitu)));
@@ -338,7 +345,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         });
         transactional(() -> {
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
-                final List<Value> terms = Iterations.stream(conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null))
+                final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
                                                     .map(Statement::getObject).collect(Collectors.toList());
                 assertEquals(1, terms.size());
                 assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_uzivatel_termitu)));
@@ -420,7 +427,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         });
         transactional(() -> {
             try (final RepositoryConnection conn = em.unwrap(Repository.class).getConnection()) {
-                final List<Value> terms = Iterations.stream(conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null))
+                final List<Value> terms = conn.getStatements(null, SKOS.HAS_TOP_CONCEPT, null).stream()
                                                     .map(Statement::getObject).collect(Collectors.toList());
                 assertEquals(1, terms.size());
                 assertThat(terms, hasItem(vf.createIRI(Vocabulary.s_c_uzivatel_termitu)));
@@ -441,7 +448,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
 
         final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
         assertTrue(result.isPresent());
-        assertThat(result.get().getDescription(), not(emptyOrNullString()));
+        assertThat(result.get().getDescription().get(Environment.LANGUAGE), not(emptyOrNullString()));
     }
 
     @Test
@@ -461,5 +468,23 @@ class SKOSImporterTest extends BaseDaoTestRunner {
         final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
         assertNotNull(result);
         assertNotNull(result.getAcl());
+    }
+
+    @Test
+    void importImportsVocabularyLabelAndDescriptionInAllDeclaredLanguages() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(VOCABULARY_IRI, Constants.MediaType.TURTLE, persister,
+                                 Environment.loadFile("data/test-glossary.ttl"),
+                                 Environment.loadFile("data/test-vocabulary.ttl"));
+        });
+        final Set<String> languages = Set.of("en", "cs");
+
+        final Optional<cz.cvut.kbss.termit.model.Vocabulary> result = vocabularyDao.find(VOCABULARY_IRI);
+        assertTrue(result.isPresent());
+        languages.forEach(lang -> {
+            assertThat(result.get().getLabel().get(lang), not(emptyOrNullString()));
+            assertThat(result.get().getDescription().get(lang), not(emptyOrNullString()));
+        });
     }
 }

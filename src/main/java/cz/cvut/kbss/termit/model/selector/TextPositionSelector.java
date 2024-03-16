@@ -75,10 +75,9 @@ public class TextPositionSelector extends Selector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TextPositionSelector)) {
+        if (!(o instanceof TextPositionSelector selector)) {
             return false;
         }
-        TextPositionSelector selector = (TextPositionSelector) o;
         return Objects.equals(start, selector.start) &&
                 Objects.equals(end, selector.end);
     }

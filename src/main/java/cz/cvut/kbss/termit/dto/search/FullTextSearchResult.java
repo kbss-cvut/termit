@@ -51,13 +51,13 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
     @OWLAnnotationProperty(iri = RDFS.LABEL)
     private String label;
 
-    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/fts/snippet-text")
+    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/snippet-text")
     private String snippetText;
 
-    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/fts/snippet-field")
+    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/snippet-field")
     private String snippetField;
 
-    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/fts/score")
+    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/score")
     private Double score;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)

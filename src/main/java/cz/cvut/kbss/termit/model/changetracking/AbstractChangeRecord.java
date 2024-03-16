@@ -83,10 +83,9 @@ public class AbstractChangeRecord extends AbstractEntity {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractChangeRecord)) {
+        if (!(o instanceof AbstractChangeRecord that)) {
             return false;
         }
-        AbstractChangeRecord that = (AbstractChangeRecord) o;
         return Objects.equals(timestamp, that.timestamp) &&
                 Objects.equals(changedEntity, that.changedEntity);
     }
