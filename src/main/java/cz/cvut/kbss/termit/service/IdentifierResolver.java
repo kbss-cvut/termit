@@ -169,7 +169,7 @@ public class IdentifierResolver {
 
     /**
      * Generates a synthetic identifier using the specified base URL.
-     *
+     * <p>
      * This particular implementation uses the current system time in millis to generate the locally unique part of the identifier.
      *
      * @param base URL base
