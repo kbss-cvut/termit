@@ -60,19 +60,19 @@ public class RestExceptionHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestExceptionHandler.class);
 
-    private static void logException(TermItException ex) {
+    private static void logException(TermItException ex, HttpServletRequest request) {
         if (shouldSuppressLogging(ex)) {
             return;
         }
-        logException("Exception caught.", ex);
+        logException("Exception caught when processing request to '" + request.getRequestURI() + "'.", ex);
     }
 
     private static boolean shouldSuppressLogging(TermItException ex) {
         return ex.getClass().getAnnotation(SuppressibleLogging.class) != null;
     }
 
-    private static void logException(Throwable ex) {
-        logException("Exception caught.", ex);
+    private static void logException(Throwable ex, HttpServletRequest request) {
+        logException("Exception caught when processing request to '" + request.getRequestURI() + "'.", ex);
     }
 
     private static void logException(String message, Throwable ex) {
@@ -85,7 +85,7 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(PersistenceException.class)
     public ResponseEntity<ErrorInfo> persistenceException(HttpServletRequest request, PersistenceException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e.getCause()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -97,7 +97,7 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(ResourceExistsException.class)
     public ResponseEntity<ErrorInfo> resourceExistsException(HttpServletRequest request, ResourceExistsException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
@@ -115,40 +115,40 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ErrorInfo> authorizationException(HttpServletRequest request, AuthorizationException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorInfo> validationException(HttpServletRequest request, ValidationException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(WebServiceIntegrationException.class)
     public ResponseEntity<ErrorInfo> webServiceIntegrationException(HttpServletRequest request,
                                                                     WebServiceIntegrationException e) {
-        logException(e.getCause());
+        logException(e.getCause(), request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(AnnotationGenerationException.class)
     public ResponseEntity<ErrorInfo> annotationGenerationException(HttpServletRequest request,
                                                                    AnnotationGenerationException e) {
-        logException(e.getCause());
+        logException(e.getCause(), request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(TermItException.class)
     public ResponseEntity<ErrorInfo> termItException(HttpServletRequest request,
                                                      TermItException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(JsonLdException.class)
     public ResponseEntity<ErrorInfo> jsonLdException(HttpServletRequest request, JsonLdException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessage("Error when processing JSON-LD.", request.getRequestURI()),
                 HttpStatus.INTERNAL_SERVER_ERROR);
@@ -157,14 +157,14 @@ public class RestExceptionHandler {
     @ExceptionHandler(UnsupportedOperationException.class)
     public ResponseEntity<ErrorInfo> unsupportedAssetOperationException(HttpServletRequest request,
                                                                         UnsupportedOperationException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(VocabularyImportException.class)
     public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
                                                                VocabularyImportException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
                 HttpStatus.CONFLICT);
@@ -173,26 +173,26 @@ public class RestExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> unsupportedImportMediaTypeException(HttpServletRequest request,
                                                                          UnsupportedImportMediaTypeException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> assetRemovalException(HttpServletRequest request, AssetRemovalException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> invalidParameter(HttpServletRequest request, InvalidParameterException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> maxUploadSizeExceededException(HttpServletRequest request,
                                                                     MaxUploadSizeExceededException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(
                 e.getMessage(),
                 "error.file.maxUploadSizeExceeded", request.getRequestURI()), HttpStatus.BAD_REQUEST);
@@ -201,29 +201,29 @@ public class RestExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> snapshotNotEditableException(HttpServletRequest request,
                                                                   SnapshotNotEditableException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()),
-                HttpStatus.CONFLICT);
+                                    HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> unsupportedSearchFacetException(HttpServletRequest request,
                                                                      UnsupportedSearchFacetException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> invalidLanguageConstantException(HttpServletRequest request,
                                                                       InvalidLanguageConstantException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
                                                                InvalidTermStateException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
                 HttpStatus.CONFLICT);
