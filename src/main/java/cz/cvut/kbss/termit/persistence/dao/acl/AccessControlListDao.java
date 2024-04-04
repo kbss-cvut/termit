@@ -113,7 +113,7 @@ public class AccessControlListDao {
      */
     public void update(AccessControlList acl) {
         Objects.requireNonNull(acl);
-        final AccessControlList original = em.find(AccessControlList.class, acl.getUri());
+        final AccessControlList original = em.find(AccessControlList.class, acl.getUri(), descriptor());
         assert original != null;
         removeOrphanRecords(original, acl);
         em.merge(acl, descriptor());

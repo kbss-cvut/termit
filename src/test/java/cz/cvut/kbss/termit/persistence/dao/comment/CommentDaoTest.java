@@ -41,12 +41,20 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommentDaoTest extends BaseDaoTestRunner {
 
@@ -153,8 +161,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
     void findAllByAssetRetrievesAllCommentsForSpecifiedAsset() {
         final Term term = Generator.generateTermWithId();
 
-        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).collect(
-                Collectors.toList());
+        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).toList();
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> comments.forEach(c -> {
             em.persist(c, descriptor);
@@ -202,15 +209,14 @@ class CommentDaoTest extends BaseDaoTestRunner {
     void findAllByAssetAndTimeIntervalRetrievesCommentsCreatedInSpecifiedTimePeriod() {
         final Term term = Generator.generateTermWithId();
 
-        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).collect(
-                Collectors.toList());
+        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).toList();
         final EntityDescriptor descriptor = createDescriptor();
-        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {
             for (int i = 0; i < comments.size(); i++) {
                 final Comment c = comments.get(i);
+                em.persist(c, descriptor);
+                // Set created after persist so that we can override value set by prePersist
                 c.setCreated(Utils.timestamp().minus(i, ChronoUnit.DAYS));
-                em.merge(c, descriptor);
             }
         });
         final Instant from = Utils.timestamp().minus(comments.size() / 2, ChronoUnit.DAYS);
@@ -255,14 +261,13 @@ class CommentDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllByAssetAndTimeIntervalAllowsMissingAsset() {
         final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
-                                                .collect(Collectors.toList());
+                                                .toList();
         final EntityDescriptor descriptor = createDescriptor();
-        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {
             for (int i = 0; i < comments.size(); i++) {
                 final Comment c = comments.get(i);
+                em.persist(c, descriptor);
                 c.setCreated(Utils.timestamp().minus(i, ChronoUnit.DAYS));
-                em.merge(c, descriptor);
             }
         });
         final Instant from = Utils.timestamp().minus(comments.size() / 2, ChronoUnit.DAYS);
@@ -275,7 +280,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllByAssetAndTimeIntervalReturnsCommentsEditedInSpecifiedTimeInterval() {
         final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
-                                                .collect(Collectors.toList());
+                                                .toList();
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {
