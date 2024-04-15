@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +73,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     }
 
     @Override
-    protected void prePersist(Resource instance) {
+    protected void prePersist(@NotNull Resource instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver.generateIdentifier(cfgNamespace.getResource(), instance.getLabel()));
@@ -97,17 +98,16 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     }
 
     @Override
-    protected void preRemove(Resource instance) {
+    protected void preRemove(@NotNull Resource instance) {
         LOG.trace("Removing term occurrences in resource {} which is about to be removed.", instance);
         termOccurrenceDao.removeAll(instance);
         removeFromParentDocumentIfFile(instance);
     }
 
     private void removeFromParentDocumentIfFile(Resource instance) {
-        if (!(instance instanceof File)) {
+        if (!(instance instanceof File file)) {
             return;
         }
-        final File file = (File) instance;
         final Document parent = file.getDocument();
         if (parent != null) {
             LOG.trace("Removing file {} from its parent document {}.", instance, parent);

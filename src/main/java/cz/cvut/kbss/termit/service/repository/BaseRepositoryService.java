@@ -152,7 +152,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
         // Adapted from https://gist.github.com/yunspace/930d4d40a787a1f6a7d1
         final List<ResolvedType> typeParameters =
                 new TypeResolver().resolve(this.getClass()).typeParametersFor(BaseRepositoryService.class);
-        assert typeParameters.size() >= 1;
+        assert !typeParameters.isEmpty();
         return (Class<T>) typeParameters.get(0).getErasedType();
     }
 
@@ -230,10 +230,9 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
     }
 
     /**
-     * Override this method to plug custom behavior into the transactional cycle of {@link #update(HasIdentifier)} )}.
+     * Override this method to plug custom behavior into the transactional cycle of {@link #update(HasIdentifier)}.
      *
-     * @param instance The updated instance which will be returned by {@link #update(HasIdentifier)} )}, not {@code
-     *                 null}
+     * @param instance The updated instance which will be returned by {@link #update(HasIdentifier)}, not {@code null}
      */
     protected void postUpdate(@NonNull T instance) {
         // Do nothing
