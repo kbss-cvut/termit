@@ -44,13 +44,14 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ChangeTrackingTest extends BaseServiceTestRunner {
 
@@ -238,7 +239,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertFalse(result.isEmpty());
-        assertNull(((UpdateChangeRecord) result.get(0)).getOriginalValue());
+        assertThat(((UpdateChangeRecord) result.get(0)).getOriginalValue(), anyOf(nullValue(), empty()));
         assertEquals(Collections.singleton(parent.getUri()), ((UpdateChangeRecord) result.get(0)).getNewValue());
     }
 

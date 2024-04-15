@@ -27,6 +27,7 @@ import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -298,5 +299,12 @@ class IdentifierResolverTest {
         final URI result = IdentifierResolver.generateSyntheticIdentifier(base);
         assertThat(result.toString(), containsString(base));
         assertThat(result.toString().length(), greaterThan(base.length()));
+    }
+
+    @Test
+    void generateIdentifierHandlesStringsWithReservedUriCharacters() {
+        final String namespace = Vocabulary.s_c_slovnik;
+        final String invalidString = "Bug #$# test";
+        assertDoesNotThrow(() -> sut.generateIdentifier(namespace, invalidString));
     }
 }

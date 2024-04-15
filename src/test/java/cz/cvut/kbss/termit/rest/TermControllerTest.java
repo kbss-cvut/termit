@@ -232,7 +232,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/subterms"))
                 .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(children.size(), result.size());
         assertTrue(children.containsAll(result));
@@ -367,13 +367,14 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     private TypeAwareByteArrayResource prepareExcel() throws Exception {
-        final XSSFWorkbook wb = new XSSFWorkbook();
-        final XSSFSheet s = wb.createSheet("test");
-        s.createRow(0).createCell(0).setCellValue("test");
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        wb.write(bos);
-        return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
-                                              ExportFormat.EXCEL.getFileExtension());
+        try (final XSSFWorkbook wb = new XSSFWorkbook()) {
+            final XSSFSheet s = wb.createSheet("test");
+            s.createRow(0).createCell(0).setCellValue("test");
+            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            wb.write(bos);
+            return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
+                                                  ExportFormat.EXCEL.getFileExtension());
+        }
     }
 
     @Test

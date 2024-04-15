@@ -60,10 +60,10 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
             final Object updateValue = EntityPropertiesUtils.getAttributeValue(att, changed);
             if (att.isAssociation()) {
                 final Optional<UpdateChangeRecord> change = resolveAssociationChange(originalValue, updateValue, att,
-                        original.getUri());
+                                                                                     original.getUri());
                 change.ifPresent(records::add);
 
-            } else if (!Objects.equals(originalValue, updateValue)) {
+            } else if (!areEqual(att, originalValue, updateValue)) {
                 final UpdateChangeRecord record = createChangeRecord(original.getUri(), att.getIRI().toURI());
                 recordValues(record, att, originalValue, updateValue);
                 records.add(record);
@@ -76,6 +76,11 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
 
     private boolean shouldIgnoreChanges(Attribute<?, ?> att) {
         return att.getJavaField().isAnnotationPresent(IgnoreChanges.class);
+    }
+
+    private boolean areEqual(Attribute<?, ?> att, Object originalValue, Object newValue) {
+        return att.isCollection() ? areCollectionsEqual((Collection<?>) originalValue, (Collection<?>) newValue) :
+               Objects.equals(originalValue, newValue);
     }
 
     private void recordValues(UpdateChangeRecord record, Attribute<?, ?> att, Object originalValue, Object newValue) {
@@ -120,7 +125,7 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
             updateToCompare = updateValue != null ? getIdentifier(updateValue, metamodel) : null;
         }
 
-        if (Objects.equals(originalToCompare, updateToCompare)) {
+        if (areEqual(att, originalToCompare, updateToCompare)) {
             return Optional.empty();
         } else {
             final UpdateChangeRecord record = createChangeRecord(assetId, att.getIRI().toURI());

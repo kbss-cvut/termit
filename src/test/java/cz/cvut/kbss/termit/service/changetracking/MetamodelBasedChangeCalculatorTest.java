@@ -446,4 +446,13 @@ class MetamodelBasedChangeCalculatorTest extends BaseServiceTestRunner {
         final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
         assertThat(result, emptyCollectionOf(UpdateChangeRecord.class));
     }
+
+    @Test
+    void calculateChangesConsidersEmptyCollectionAndNullEqual() {
+        final Term original = Generator.generateTermWithId();
+        final Term changed = cloneOf(original);
+        changed.setExamples(Collections.emptySet());
+        final Collection<UpdateChangeRecord> result = sut.calculateChanges(changed, original);
+        assertThat(result, emptyCollectionOf(UpdateChangeRecord.class));
+    }
 }

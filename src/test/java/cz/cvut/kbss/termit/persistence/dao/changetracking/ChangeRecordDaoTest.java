@@ -42,8 +42,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -184,7 +187,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
         final UpdateChangeRecord result = em.find(UpdateChangeRecord.class, record.getUri());
         assertNotNull(result);
-        assertNull(result.getOriginalValue());
+        assertThat(result.getOriginalValue(), anyOf(nullValue(), empty()));
         assertEquals(record.getNewValue(), result.getNewValue());
     }
 

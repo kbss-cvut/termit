@@ -125,7 +125,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    protected void postUpdate(Term instance) {
+    protected void postUpdate(@NotNull Term instance) {
         final Vocabulary vocabulary = vocabularyService.getRequiredReference(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.getGlossary().removeRootTerm(instance);
@@ -427,7 +427,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    protected void postRemove(Term instance) {
+    protected void postRemove(@NotNull Term instance) {
         super.postRemove(instance);
         if (!instance.hasParentInSameVocabulary()) {
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
