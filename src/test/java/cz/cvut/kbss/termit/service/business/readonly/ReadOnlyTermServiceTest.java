@@ -261,4 +261,23 @@ class ReadOnlyTermServiceTest {
                                                                              .get(DC.Terms.REFERENCES)));
         assertThat(result.getProperties(), not(hasEntry(DC.Elements.DATE, term.getProperties().get(DC.Elements.DATE))));
     }
+
+    @Test
+    void findSubTermsPassesTermWithVocabularyToUnderlyingServiceForTermSubTermResolution() {
+        when(configuration.getPublicView()).thenReturn(new Configuration.PublicView());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        final List<Term> subTerms = Generator.generateTermsWithIds(3);
+        term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
+        when(termService.findSubTerms(any())).thenReturn(subTerms);
+
+        sut.findSubTerms(new ReadOnlyTerm(term));
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).findSubTerms(captor.capture());
+        final Term arg = captor.getValue();
+        assertEquals(term.getUri(), arg.getUri());
+        assertEquals(term.getVocabulary(), arg.getVocabulary());
+    }
 }

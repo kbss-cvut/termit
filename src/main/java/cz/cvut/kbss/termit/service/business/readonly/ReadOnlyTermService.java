@@ -87,11 +87,18 @@ public class ReadOnlyTermService {
 
     public List<ReadOnlyTerm> findSubTerms(ReadOnlyTerm parent) {
         Objects.requireNonNull(parent);
-        final Term arg = new Term(parent.getUri());
+        final Term arg = toTerm(parent);
         if (parent.getSubTerms() != null) {
             arg.setSubTerms(parent.getSubTerms());
         }
         return termService.findSubTerms(arg).stream().map(this::create).collect(Collectors.toList());
+    }
+
+    private static Term toTerm(ReadOnlyTerm roTerm) {
+        final Term t = new Term(roTerm.getUri());
+        // Ensure vocabulary is set on the Term instance as it may be referenced later
+        t.setVocabulary(roTerm.getVocabulary());
+        return t;
     }
 
     /**
@@ -132,13 +139,13 @@ public class ReadOnlyTermService {
 
     public List<Snapshot> findSnapshots(ReadOnlyTerm asset) {
         Objects.requireNonNull(asset);
-        final Term arg = new Term(asset.getUri());
+        final Term arg = toTerm(asset);
         return termService.findSnapshots(arg);
     }
 
     public ReadOnlyTerm findVersionValidAt(ReadOnlyTerm asset, Instant at) {
         Objects.requireNonNull(asset);
-        final Term arg = new Term(asset.getUri());
+        final Term arg = toTerm(asset);
         return create(termService.findVersionValidAt(arg, at));
     }
 }
