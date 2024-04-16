@@ -70,7 +70,7 @@ public class UserGroupRepositoryService extends BaseRepositoryService<UserGroup,
     public void addMembers(UserGroup target, Collection<User> toAdd) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(toAdd);
-        if (toAdd.size() == 0) {
+        if (toAdd.isEmpty()) {
             return;
         }
         LOG.debug("Adding users {} to group {}.", toAdd, target);
@@ -84,7 +84,7 @@ public class UserGroupRepositoryService extends BaseRepositoryService<UserGroup,
     public void removeMembers(UserGroup target, Collection<User> toRemove) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(toRemove);
-        if (toRemove.size() == 0) {
+        if (toRemove.isEmpty()) {
             return;
         }
         LOG.debug("Removing users {} from group {}.", toRemove, target);
