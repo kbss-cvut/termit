@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.exception;
 /**
  * Indicates a failure during document annotation generation.
  */
-public class AnnotationGenerationException extends TermItException {
+public class AnnotationGenerationException extends FileContentProcessingException {
 
     public AnnotationGenerationException(String message) {
         super(message);

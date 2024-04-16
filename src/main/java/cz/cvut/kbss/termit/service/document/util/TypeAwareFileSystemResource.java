@@ -46,13 +46,12 @@ public class TypeAwareFileSystemResource extends FileSystemResource implements T
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TypeAwareFileSystemResource)) {
+        if (!(o instanceof TypeAwareFileSystemResource that)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        TypeAwareFileSystemResource that = (TypeAwareFileSystemResource) o;
         return Objects.equals(mediaType, that.mediaType);
     }
 
