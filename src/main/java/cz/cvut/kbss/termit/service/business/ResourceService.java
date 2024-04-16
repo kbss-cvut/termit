@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -146,8 +147,13 @@ public class ResourceService
         Objects.requireNonNull(resource);
         verifyFileOperationPossible(resource, "Content retrieval");
         final File file = (File) resource;
-        return retrievalSpecification.at().map(instant -> documentManager.getAsResource(file, instant))
-                                     .orElseGet(() -> documentManager.getAsResource(file));
+        TypeAwareResource result = retrievalSpecification.at()
+                                                         .map(instant -> documentManager.getAsResource(file, instant))
+                                                         .orElseGet(() -> documentManager.getAsResource(file));
+        if (retrievalSpecification.withoutUnconfirmedOccurrences()) {
+            result = new UnconfirmedTermOccurrenceRemover().removeUnconfirmedOccurrences(result);
+        }
+        return result;
     }
 
     private void verifyFileOperationPossible(Resource resource, String operation) {
