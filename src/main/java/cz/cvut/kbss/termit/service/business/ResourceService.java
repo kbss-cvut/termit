@@ -32,10 +32,12 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
+import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +50,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Interface of business logic concerning resources.
@@ -120,41 +128,32 @@ public class ResourceService
 
     /**
      * Gets content of the specified resource.
+     * <p>
+     * The {@link ResourceRetrievalSpecification} argument provides further parameterization of the content to
+     * retrieve.
+     * <p>
+     * If the timestamp specified by {@code retrievalSpecification} is older than the first version of the specified
+     * resource, this version is returned. Similarly, if the timestamp is later than the most recent backup of the
+     * resource, the current version is returned.
      *
-     * @param resource Resource whose content should be retrieved
+     * @param resource               Resource whose content should be retrieved
+     * @param retrievalSpecification Specification of the result
      * @return Representation of the resource content
      * @throws UnsupportedAssetOperationException When content of the specified resource cannot be retrieved
      * @throws NotFoundException                  When the specified resource has no content stored
      */
-    public TypeAwareResource getContent(Resource resource) {
+    public TypeAwareResource getContent(Resource resource, ResourceRetrievalSpecification retrievalSpecification) {
         Objects.requireNonNull(resource);
         verifyFileOperationPossible(resource, "Content retrieval");
-        return documentManager.getAsResource((File) resource);
+        final File file = (File) resource;
+        return retrievalSpecification.at().map(instant -> documentManager.getAsResource(file, instant))
+                                     .orElseGet(() -> documentManager.getAsResource(file));
     }
 
     private void verifyFileOperationPossible(Resource resource, String operation) {
         if (!(resource instanceof File)) {
             throw new UnsupportedAssetOperationException(operation + " is not supported for resource " + resource);
         }
-    }
-
-    /**
-     * Gets content of the specified resource valid at the specified timestamp.
-     * <p>
-     * This method provides access to backups of the specified resource. If the specified timestamp is older than the
-     * first version of the specified resource, this version is returned. Similarly, if the timestamp is later than the
-     * most recent backup of the resource, the current version is returned.
-     *
-     * @param resource Resource whose content should be retrieved
-     * @param at       Timestamp of the version of the retrieved resource
-     * @return Representation of the resource content
-     * @throws UnsupportedAssetOperationException When content of the specified resource cannot be retrieved
-     * @throws NotFoundException                  When the specified resource has no content stored
-     */
-    public TypeAwareResource getContent(Resource resource, Instant at) {
-        Objects.requireNonNull(resource);
-        verifyFileOperationPossible(resource, "Content retrieval");
-        return documentManager.getAsResource((File) resource, at);
     }
 
     /**
@@ -190,10 +189,9 @@ public class ResourceService
     public List<File> getFiles(Resource document) {
         Objects.requireNonNull(document);
         final Resource instance = findRequired(document.getUri());
-        if (!(instance instanceof Document)) {
+        if (!(instance instanceof Document doc)) {
             throw new UnsupportedAssetOperationException("Cannot get files from resource which is not a document.");
         }
-        final Document doc = (Document) instance;
         if (doc.getFiles() != null) {
             final List<File> list = new ArrayList<>(doc.getFiles());
             list.sort(Comparator.comparing(File::getLabel));
@@ -215,10 +213,9 @@ public class ResourceService
     public void addFileToDocument(Resource document, File file) {
         Objects.requireNonNull(document);
         Objects.requireNonNull(file);
-        if (!(document instanceof Document)) {
+        if (!(document instanceof Document doc)) {
             throw new UnsupportedAssetOperationException("Cannot add file to the specified resource " + document);
         }
-        final Document doc = (Document) document;
         doc.addFile(file);
         if (doc.getVocabulary() != null) {
             final Vocabulary vocabulary = vocabularyService.getRequiredReference(doc.getVocabulary());
@@ -359,7 +356,7 @@ public class ResourceService
     }
 
     @Override
-    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }

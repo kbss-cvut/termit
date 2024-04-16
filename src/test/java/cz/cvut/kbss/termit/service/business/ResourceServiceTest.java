@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
+import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
@@ -118,14 +119,15 @@ class ResourceServiceTest {
     @Test
     void getContentLoadsContentOfFileFromDocumentManager() {
         final File file = Generator.generateFileWithId("test.html");
-        sut.getContent(file);
+        sut.getContent(file, new ResourceRetrievalSpecification(Optional.empty(), false));
         verify(documentManager).getAsResource(file);
     }
 
     @Test
     void getContentThrowsUnsupportedAssetOperationWhenResourceIsNotFile() {
         final Resource resource = Generator.generateResourceWithId();
-        assertThrows(UnsupportedAssetOperationException.class, () -> sut.getContent(resource));
+        assertThrows(UnsupportedAssetOperationException.class,
+                     () -> sut.getContent(resource, new ResourceRetrievalSpecification(Optional.empty(), false)));
         verify(documentManager, never()).getAsResource(any());
     }
 
@@ -180,7 +182,7 @@ class ResourceServiceTest {
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenResourceIsNotFile() {
         final Resource resource = Generator.generateResourceWithId();
         assertThrows(UnsupportedAssetOperationException.class,
-                () -> sut.runTextAnalysis(resource, Collections.emptySet()));
+                     () -> sut.runTextAnalysis(resource, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
     }
 
@@ -188,7 +190,7 @@ class ResourceServiceTest {
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenFileHasNoVocabularyAndNoVocabulariesAreSpecifiedEither() {
         final File file = Generator.generateFileWithId("test.html");
         assertThrows(UnsupportedAssetOperationException.class,
-                () -> sut.runTextAnalysis(file, Collections.emptySet()));
+                     () -> sut.runTextAnalysis(file, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
     }
 
@@ -474,7 +476,7 @@ class ResourceServiceTest {
     void getContentAtTimestampLoadsContentOfFileAtTimestampFromDocumentManager() {
         final File file = Generator.generateFileWithId("test.hml");
         final Instant at = Utils.timestamp();
-        sut.getContent(file, at);
+        sut.getContent(file, new ResourceRetrievalSpecification(Optional.of(at), false));
         verify(documentManager).getAsResource(file, at);
     }
 }

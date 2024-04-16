@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
+import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -44,7 +45,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -129,16 +140,16 @@ public class ResourceController extends BaseController {
             @RequestParam(name = "attachment", required = false) boolean asAttachment,
             @Parameter(
                     description = "Datetime (ISO-format) at which the content is expected to be valid. Allows getting older revisions of the resource content.")
-            @RequestParam(name = "at", required = false) Optional<String> at) {
+            @RequestParam(name = "at", required = false) Optional<String> at,
+            @Parameter(description = "Whether to return the content without unconfirmed term occurrences.")
+            @RequestParam(name = "withoutUnconfirmedOccurrences",
+                          required = false) boolean withoutUnconfirmedOccurrences) {
         final Resource resource = getResource(localName, namespace);
         try {
-            final TypeAwareResource content;
-            if (at.isPresent()) {
-                final Instant timestamp = RestUtils.parseTimestamp(at.get());
-                content = resourceService.getContent(resource, timestamp);
-            } else {
-                content = resourceService.getContent(resource);
-            }
+            final Optional<Instant> timestamp = at.map(RestUtils::parseTimestamp);
+            final TypeAwareResource content = resourceService.getContent(resource,
+                                                                         new ResourceRetrievalSpecification(timestamp,
+                                                                                                            withoutUnconfirmedOccurrences));
             final ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                                                                      .contentLength(content.contentLength())
                                                                      .contentType(MediaType.parseMediaType(
@@ -200,7 +211,10 @@ public class ResourceController extends BaseController {
         if (!hasContent) {
             return ResponseEntity.notFound().build();
         } else {
-            final String contentType = resourceService.getContent(r).getMediaType().orElse(null);
+            final String contentType = resourceService.getContent(r,
+                                                                  new ResourceRetrievalSpecification(Optional.empty(),
+                                                                                                     false))
+                                                      .getMediaType().orElse(null);
             return ResponseEntity.noContent().header(HttpHeaders.CONTENT_TYPE, contentType).build();
         }
     }
