@@ -30,7 +30,6 @@ termit:
         storage: /tmp/termit
     textAnalysis:
         url: http://localhost/annotace
-        termAssignmentMinScore: 1
         termOccurrenceMinScore: 0.49
     comments:
         context: http://onto.fel.cvut.cz/ontologies/komentare

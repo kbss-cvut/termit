@@ -405,7 +405,7 @@ public class Configuration {
          * Separator of snapshot timestamp and original asset identifier.
          * <p>
          * For example, if we have a Vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
-         * and the snapshot separator is configured to {@code version}, a snapshot will IRI will look something like
+         * and the snapshot separator is configured to {@code version}, a snapshot IRI will look something like
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/version/20220530T202317Z}.
          */
         private NamespaceDetail snapshot = new NamespaceDetail();
@@ -539,18 +539,6 @@ public class Configuration {
         String url;
 
         /**
-         * Minimal match score of a term occurrence for which a term assignment should be automatically generated.
-         * <p>
-         * More specifically, when annotated file content is being processed, term occurrences with sufficient score
-         * will cause creation of corresponding term assignments to the file.
-         *
-         * @deprecated This configuration is currently not used.
-         */
-        @Deprecated
-        @NotNull
-        String termAssignmentMinScore;
-
-        /**
          * Score threshold for a term occurrence for it to be saved into the repository.
          */
         @NotNull
@@ -562,14 +550,6 @@ public class Configuration {
 
         public void setUrl(String url) {
             this.url = url;
-        }
-
-        public String getTermAssignmentMinScore() {
-            return termAssignmentMinScore;
-        }
-
-        public void setTermAssignmentMinScore(String termAssignmentMinScore) {
-            this.termAssignmentMinScore = termAssignmentMinScore;
         }
 
         public String getTermOccurrenceMinScore() {
@@ -599,7 +579,7 @@ public class Configuration {
 
     public static class PublicView {
         /**
-         * Unmapped properties allowed to appear in the SKOS export.
+         * Unmapped properties allowed to appear in the public term access API.
          */
         @NotNull
         private Set<String> whiteListProperties;
@@ -733,12 +713,12 @@ public class Configuration {
     public static class ACL {
 
         /**
-         * Default access level for users in editor role.
+         * Default access level for users in the editor role.
          */
         private AccessLevel defaultEditorAccessLevel = AccessLevel.READ;
 
         /**
-         * Default access level for users in editor role.
+         * Default access level for users in the reader role.
          */
         private AccessLevel defaultReaderAccessLevel = AccessLevel.READ;
 
@@ -766,7 +746,7 @@ public class Configuration {
         }
 
         /**
-         * Determines whether an internal security mechanism or an external OIDC service will be used for
+         * Determines whether the internal security mechanism or an external OIDC service will be used for
          * authentication.
          * <p>
          * In case na OIDC service is selected, it should be configured using standard Spring Boot OAuth2 properties.
@@ -808,7 +788,7 @@ public class Configuration {
         private LanguageSource types = new LanguageSource();
 
         /**
-         * Path to a file containing definition of the language of states terms can be in with. The file must be in
+         * Path to a file containing definition of the language of states terms can be in. The file must be in
          * Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
          * broader/narrower).
          */
