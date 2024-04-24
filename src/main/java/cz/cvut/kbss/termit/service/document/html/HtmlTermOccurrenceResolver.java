@@ -20,8 +20,10 @@ package cz.cvut.kbss.termit.service.document.html;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.assignment.OccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.TermOccurrenceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -168,11 +170,18 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             LOG.trace("Processing RDFa annotated element {}.", element);
             final Optional<TermOccurrence> occurrence = resolveAnnotation(element, source);
             occurrence.ifPresent(to -> {
-                if (to.getScore() != null && to.getScore() > scoreThreshold) {
-                    LOG.trace("Found term occurrence {}.", to);
+                if (existsApproved(to)) {
+                    LOG.trace("Found term occurrence {} with matching existing approved occurrence.", to);
+                    to.markApproved();
                     result.add(to);
                 } else {
-                    LOG.trace("The score of this occurrence {} is lower than the specified threshold", to);
+                    if (to.getScore() != null && to.getScore() > scoreThreshold) {
+                        LOG.trace("Found term occurrence {}.", to);
+                        result.add(to);
+                    } else {
+                        LOG.trace("The confidence score of occurrence {} is lower than the configured threshold {}.",
+                                  to, scoreThreshold);
+                    }
                 }
             });
         }
@@ -222,6 +231,25 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             about = about.substring(BNODE_PREFIX.length());
         }
         return URI.create(base + about);
+    }
+
+    private boolean existsApproved(TermOccurrence newOccurrence) {
+        final OccurrenceTarget target = newOccurrence.getTarget();
+        assert target != null;
+        final Set<Selector> selectors = target.getSelectors();
+        for (TermOccurrence to : existingOccurrences) {
+            if (!to.getTerm().equals(newOccurrence.getTerm())) {
+                continue;
+            }
+            final OccurrenceTarget existingTarget = to.getTarget();
+            assert existingTarget != null;
+            assert existingTarget.getSource().equals(target.getSource());
+            // Same term, contains at least one identical selector
+            if (existingTarget.getSelectors().stream().anyMatch(selectors::contains) && !to.isSuggested()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

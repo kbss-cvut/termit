@@ -64,7 +64,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         final TermOccurrence toApprove = termOccurrenceDao.find(occurrence.getUri()).orElseThrow(
                 () -> NotFoundException.create(TermOccurrence.class, occurrence.getUri()));
         LOG.trace("Approving term occurrence {}", toApprove);
-        toApprove.removeType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
+        toApprove.markApproved();
     }
 
     @Transactional

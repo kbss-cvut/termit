@@ -67,6 +67,7 @@ public class AnnotationGenerator {
         final TermOccurrenceResolver occurrenceResolver = findResolverFor(source);
         LOG.debug("Resolving annotations of file {}.", source);
         occurrenceResolver.parseContent(content, source);
+        occurrenceResolver.setExistingOccurrences(occurrenceSaver.getExistingOccurrences(source));
         final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
         saveAnnotatedContent(source, occurrenceResolver.getContent());
         occurrenceSaver.saveOccurrences(occurrences, source);

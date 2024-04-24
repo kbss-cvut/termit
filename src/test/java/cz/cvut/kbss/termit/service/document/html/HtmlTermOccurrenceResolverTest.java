@@ -18,9 +18,13 @@
 package cz.cvut.kbss.termit.service.document.html;
 
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.selector.Selector;
+import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
+import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -37,12 +41,14 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
-import static org.hamcrest.Matchers.endsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -164,5 +170,22 @@ class HtmlTermOccurrenceResolverTest {
         sut.parseContent(is, file);
         final List<TermOccurrence> result = sut.findTermOccurrences();
         result.forEach(to -> assertThat(to.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+    }
+
+    @Test
+    void findTermOccurrencesSetsFoundOccurrencesAsApprovedWhenCorrespondingExistingOccurrenceWasApproved() {
+        when(termService.exists(TERM_URI)).thenReturn(true);
+        final File file = initFile();
+        final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
+        final Selector quoteSelector = new TextQuoteSelector("Územní plán", "RDFa simple", "hlavního města Prahy.");
+        final Selector posSelector = new TextPositionSelector(21, 32);
+        existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
+        final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
+        sut.parseContent(is, file);
+        sut.setExistingOccurrences(List.of(existing));
+
+        final List<TermOccurrence> result = sut.findTermOccurrences();
+        assertEquals(1, result.size());
+        assertThat(result.get(0).getTypes(), not(hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
     }
 }

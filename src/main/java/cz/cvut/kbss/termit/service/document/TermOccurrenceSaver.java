@@ -19,4 +19,12 @@ public interface TermOccurrenceSaver {
      * @param source      Asset in which the terms occur
      */
     void saveOccurrences(List<TermOccurrence> occurrences, Asset<?> source);
+
+    /**
+     * Gets a list of existing term occurrences in the specified asset.
+     *
+     * @param source Asset in which the terms occur
+     * @return List of existing term occurrences
+     */
+    List<TermOccurrence> getExistingOccurrences(Asset<?> source);
 }
