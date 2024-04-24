@@ -53,6 +53,12 @@ public class TextQuoteSelector extends Selector {
         this.exactMatch = exactMatch;
     }
 
+    public TextQuoteSelector(@NotBlank String exactMatch, String prefix, String suffix) {
+        this.exactMatch = exactMatch;
+        this.prefix = prefix;
+        this.suffix = suffix;
+    }
+
     public String getExactMatch() {
         return exactMatch;
     }
