@@ -34,11 +34,9 @@ public class SynchronousTermOccurrenceSaver implements TermOccurrenceSaver {
     public void saveOccurrences(List<TermOccurrence> occurrences, Asset<?> source) {
         LOG.trace("Saving term occurrences for asset {}.", source);
         final List<TermOccurrence> existing = termOccurrenceDao.findAllTargeting(source);
-        occurrences.stream().filter(o -> isNew(o, existing))
-                   .filter(o -> !o.getTerm().equals(source.getUri())).forEach(o -> {
-                       o.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
-                       termOccurrenceDao.persist(o);
-                   });
+        occurrences.stream().filter(o -> !o.getTerm().equals(source.getUri()))
+                   .filter(o -> isNew(o, existing))
+                   .forEach(termOccurrenceDao::persist);
     }
 
     /**

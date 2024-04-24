@@ -62,6 +62,8 @@ import java.util.Set;
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
 
+    private static final String BNODE_PREFIX = "_:";
+
     private static final Logger LOG = LoggerFactory.getLogger(HtmlTermOccurrenceResolver.class);
 
     private final HtmlSelectorGenerators selectorGenerators;
@@ -187,6 +189,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         verifyTermExists(rdfaElem, termUri, termId);
         final TermOccurrence occurrence = createOccurrence(termUri, source);
         occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem));
+        occurrence.setUri(resolveOccurrenceId(rdfaElem, source));
         final String strScore = rdfaElem.attr("score");
         if (!strScore.isEmpty()) {
             try {
@@ -210,6 +213,15 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                             termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
         }
         existingTermIds.add(termId);
+    }
+
+    private URI resolveOccurrenceId(Element rdfaElem, Asset<?> source) {
+        final String base = TermOccurrence.resolveContext(source.getUri()) + "/";
+        String about = rdfaElem.attr("about");
+        if (about.startsWith(BNODE_PREFIX)) {
+            about = about.substring(BNODE_PREFIX.length());
+        }
+        return URI.create(base + about);
     }
 
     @Override

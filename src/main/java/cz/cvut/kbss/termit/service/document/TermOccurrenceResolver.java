@@ -19,9 +19,14 @@ package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -95,6 +100,7 @@ public abstract class TermOccurrenceResolver {
         } else {
             throw new IllegalArgumentException("Unsupported term occurrence source " + source);
         }
+        occurrence.addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
         return occurrence;
     }
 }
