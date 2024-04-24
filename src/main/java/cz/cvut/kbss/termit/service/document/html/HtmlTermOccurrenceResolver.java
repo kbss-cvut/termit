@@ -65,6 +65,7 @@ import java.util.Set;
 public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
 
     private static final String BNODE_PREFIX = "_:";
+    private static final String SCORE_ATTRIBUTE = "score";
 
     private static final Logger LOG = LoggerFactory.getLogger(HtmlTermOccurrenceResolver.class);
 
@@ -173,6 +174,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                 if (existsApproved(to)) {
                     LOG.trace("Found term occurrence {} with matching existing approved occurrence.", to);
                     to.markApproved();
+                    // Annotation without score is considered approved by the frontend
+                    element.removeAttr(SCORE_ATTRIBUTE);
                     result.add(to);
                 } else {
                     if (to.getScore() != null && to.getScore() > scoreThreshold) {
@@ -199,7 +202,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         final TermOccurrence occurrence = createOccurrence(termUri, source);
         occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem));
         occurrence.setUri(resolveOccurrenceId(rdfaElem, source));
-        final String strScore = rdfaElem.attr("score");
+        final String strScore = rdfaElem.attr(SCORE_ATTRIBUTE);
         if (!strScore.isEmpty()) {
             try {
                 final Double score = Double.parseDouble(strScore);
