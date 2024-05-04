@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.document;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.model.Term;
@@ -386,15 +387,14 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(t);
             em.persist(otherTerm);
-            em.persist(to);
+            em.persist(to, new EntityDescriptor(to.resolveContext()));
         });
         final InputStream content = loadFile("data/rdfa-simple.html");
         generateFile();
         sut.generateAnnotations(content, file);
         final List<TermOccurrence> allOccurrences = termOccurrenceDao.findAllTargeting(file);
-        assertEquals(2, allOccurrences.size());
-        assertTrue(allOccurrences.stream().anyMatch(o -> o.getTerm().equals(otherTerm.getUri())));
-        assertTrue(allOccurrences.stream().anyMatch(o -> o.getTerm().equals(term.getUri())));
+        assertEquals(1, allOccurrences.size());
+        assertEquals(term.getUri(), allOccurrences.get(0).getTerm());
     }
 
     @Test
@@ -406,8 +406,9 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final List<TermOccurrence> occurrencesTwo = termOccurrenceDao.findAllTargeting(file);
         assertEquals(occurrencesOne.size(), occurrencesTwo.size());
         final int instanceCount = em.createNativeQuery("SELECT (count(*) as ?count) WHERE {" +
-                                                               "?x a ?termOccurrence ." +
+                                                               "GRAPH ?g { ?x a ?termOccurrence . }" +
                                                                "}", Integer.class)
+                                    .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
                                     .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                                     .getSingleResult();
         assertEquals(occurrencesTwo.size(), instanceCount);
