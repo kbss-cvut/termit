@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.model.assignment.*;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
+import cz.cvut.kbss.termit.persistence.dao.util.ScheduledContextRemover;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -58,6 +59,9 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private ScheduledContextRemover contextRemover;
 
     @Autowired
     private TermOccurrenceDao sut;
@@ -159,7 +163,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final Map<Term, List<TermOccurrence>> allOccurrences = generateOccurrences(false, fOne, fTwo);
         final List<TermOccurrence> matching = allOccurrences.values().stream().flatMap(
                                                                     l -> l.stream().filter(to -> to.getTarget().getSource().equals(fOne.getUri())))
-                                                            .collect(Collectors.toList());
+                                                            .toList();
 
         em.getEntityManagerFactory().getCache().evictAll();
         final List<TermOccurrence> result = sut.findAllTargeting(fOne);
@@ -251,7 +255,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                     to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
                     em.merge(to);
                 })));
-        transactional(() -> sut.removeAll(file));
+        transactional(() -> {
+            sut.removeAll(file);
+            contextRemover.runContextRemoval();
+        });
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
                                                                                                        URI.create(
@@ -270,7 +277,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                     to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
                     em.merge(to);
                 })));
-        transactional(() -> sut.removeAll(file));
+        transactional(() -> {
+            sut.removeAll(file);
+            contextRemover.runContextRemoval();
+        });
 
         assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class).setParameter("target",
                                                                                                URI.create(

@@ -30,7 +30,9 @@ public class SynchronousTermOccurrenceSaver implements TermOccurrenceSaver {
     @Override
     public void saveOccurrences(List<TermOccurrence> occurrences, Asset<?> source) {
         LOG.debug("Saving term occurrences for asset {}.", source);
+        LOG.trace("Removing all existing occurrences in asset {}.", source);
         termOccurrenceDao.removeAll(source);
+        LOG.trace("Persisting new occurrences in {}.", source);
         occurrences.stream().filter(o -> !o.getTerm().equals(source.getUri())).forEach(termOccurrenceDao::persist);
     }
 
