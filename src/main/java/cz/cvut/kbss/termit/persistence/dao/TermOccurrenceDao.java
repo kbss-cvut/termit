@@ -52,13 +52,13 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      */
     private static final String FIND_ALL_TARGETING_QUERY =
             "SELECT ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition WHERE {" +
-                    "GRAPH ?g {" +
-                    "?occ a ?occurrence ;" +
-                    "   a ?type ;" +
+                    "?occ a ?occurrence ." +
+                    "GRAPH ?g { " +
+                    "?occ a ?type ;" +
                     "   ?hasTarget ?target ." +
                     "OPTIONAL {" +
                     "   ?occ ?assignmentOfTerm ?term ." +
-                    "}" +
+                    "} }" +
                     "?target a ?occurrenceTarget ;" +
                     "   ?hasSource ?source ." +
                     "OPTIONAL {" +
@@ -71,8 +71,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                     "   } UNION {" +
                     "       ?selector ?hasStart ?startPosition ;" +
                     "           ?hasEnd ?endPosition ." +
-                    "   }" +
-                    "} }" +
+                    "   } " +
+                    "} " +
                     "FILTER (?type = ?fileOccurrence || ?type = ?definitionalOccurrence)" +
                     "BIND(EXISTS { ?occ a ?suggestedType . } as ?suggested)" +
                     "} GROUP BY ?occ ?type ?term ?target ?suggested ?selector ?exactMatch ?prefix ?suffix ?startPosition ?endPosition";

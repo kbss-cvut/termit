@@ -171,14 +171,17 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             LOG.trace("Processing RDFa annotated element {}.", element);
             final Optional<TermOccurrence> occurrence = resolveAnnotation(element, source);
             occurrence.ifPresent(to -> {
-                if (existsApproved(to)) {
+                if (!to.isSuggested()) {
+                    // Occurrence already approved in content (from previous manual approval)
+                    result.add(to);
+                } else if (existsApproved(to)) {
                     LOG.trace("Found term occurrence {} with matching existing approved occurrence.", to);
                     to.markApproved();
                     // Annotation without score is considered approved by the frontend
                     element.removeAttr(SCORE_ATTRIBUTE);
                     result.add(to);
                 } else {
-                    if (to.getScore() != null && to.getScore() > scoreThreshold) {
+                    if (to.getScore() > scoreThreshold) {
                         LOG.trace("Found term occurrence {}.", to);
                         result.add(to);
                     } else {
@@ -211,6 +214,9 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                 occurrence.setScore(0.0);
                 LOG.error("Unable to parse score.", e);
             }
+        } else {
+            // Occurrence already approved in text analysis output (probably from a previous processing of the content)
+            occurrence.markApproved();
         }
         return Optional.of(occurrence);
     }
