@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 
 import static cz.cvut.kbss.termit.util.Constants.SCHEDULING_PATTERN;
 
@@ -63,13 +64,34 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     @Override
     public void persist(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
-        if (!termService.exists(occurrence.getTerm())) {
-            throw new ValidationException("Occurrence references an unknown term " + Utils.uriToString(occurrence.getTerm()));
-        }
-        if (!termService.exists(occurrence.getTarget().getSource()) && !resourceService.exists(occurrence.getTarget().getSource())) {
-            throw new ValidationException("Occurrence references an unknown asset " + Utils.uriToString(occurrence.getTarget().getSource()));
+        checkTermExists(occurrence);
+        if (!termService.exists(occurrence.getTarget().getSource()) && !resourceService.exists(
+                occurrence.getTarget().getSource())) {
+            throw new ValidationException(
+                    "Occurrence references an unknown asset " + Utils.uriToString(occurrence.getTarget().getSource()));
         }
         termOccurrenceDao.persist(occurrence);
+    }
+
+    private void checkTermExists(TermOccurrence occurrence) {
+        if (!termService.exists(occurrence.getTerm())) {
+            throw new ValidationException(
+                    "Occurrence references an unknown term " + Utils.uriToString(occurrence.getTerm()));
+        }
+    }
+
+    @Transactional
+    @Override
+    public void persistOrUpdate(TermOccurrence occurrence) {
+        Objects.requireNonNull(occurrence);
+        if (termOccurrenceDao.exists(occurrence.getUri())) {
+            final Optional<TermOccurrence> existing = termOccurrenceDao.find(occurrence.getUri());
+            assert existing.isPresent();
+            checkTermExists(occurrence);
+            existing.get().setTerm(occurrence.getTerm());
+        } else {
+            persist(occurrence);
+        }
     }
 
     @Transactional

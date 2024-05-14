@@ -37,7 +37,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -69,19 +68,19 @@ public class TermOccurrenceController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates an approved occurrence.")
+               description = "Creates or updates a term occurrence.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Term occurrence created"),
+            @ApiResponse(responseCode = "202", description = "Term occurrence saved"),
             @ApiResponse(responseCode = "409",
                          description = "The occurrence is not valid, e.g., the term or target asset do not exist")
     })
-    @PostMapping(consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
-    @ResponseStatus(HttpStatus.CREATED)
+    @PutMapping(consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public void createOccurrence(@Parameter(description = "Term occurrence to persist")
-                                 @RequestBody TermOccurrence occurrence) {
-        occurrenceService.persist(occurrence);
-        LOG.debug("Created term occurrence {}.", occurrence);
+    public void saveOccurrence(@Parameter(description = "Term occurrence to save")
+                               @RequestBody TermOccurrence occurrence) {
+        occurrenceService.persistOrUpdate(occurrence);
+        LOG.debug("Saved term occurrence {}.", occurrence);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
