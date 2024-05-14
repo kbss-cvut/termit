@@ -34,10 +34,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -94,5 +96,40 @@ class TermOccurrenceRepositoryServiceTest {
         final ValidationException ex = assertThrows(ValidationException.class, () -> sut.persist(occurrence));
         assertThat(ex.getMessage(), containsString("references an unknown asset"));
         assertThat(ex.getMessage(), containsString(occurrence.getTarget().getSource().toString()));
+    }
+
+    @Test
+    void persistOrUpdatePersistsOccurrenceWhenItDoesNotExist() {
+        final Term term = Generator.generateTermWithId();
+        when(termService.exists(term.getUri())).thenReturn(true);
+        final File resource = Generator.generateFileWithId("test.html");
+        when(resourceService.exists(resource.getUri())).thenReturn(true);
+        final TermDefinitionSource definitionSource = new TermDefinitionSource(term.getUri(),
+                                                                               new FileOccurrenceTarget(resource));
+        definitionSource.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+
+        sut.persistOrUpdate(definitionSource);
+        verify(dao).persist(definitionSource);
+    }
+
+    @Test
+    void persistOrUpdateSetsTermOnExistingOccurrenceWhenItExists() {
+        final Term originalTerm = Generator.generateTermWithId();
+        final Term newTerm = Generator.generateTermWithId();
+        when(termService.exists(newTerm.getUri())).thenReturn(true);
+        final File resource = Generator.generateFileWithId("test.html");
+        final TermDefinitionSource original = new TermDefinitionSource(originalTerm.getUri(),
+                                                                               new FileOccurrenceTarget(resource));
+        original.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+        original.setUri(Generator.generateUri());
+        final TermDefinitionSource update = new TermDefinitionSource(newTerm.getUri(),
+                                                                     new FileOccurrenceTarget(resource));
+        original.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+        update.setUri(original.getUri());
+        when(dao.exists(original.getUri())).thenReturn(true);
+        when(dao.find(original.getUri())).thenReturn(Optional.of(original));
+
+        sut.persistOrUpdate(update);
+        assertEquals(original.getTerm(), update.getTerm());
     }
 }

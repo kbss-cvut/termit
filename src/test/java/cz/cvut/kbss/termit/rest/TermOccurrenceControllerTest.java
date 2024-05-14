@@ -115,12 +115,12 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void createOccurrencePersistsSpecifiedTermOccurrence() throws Exception {
+    void saveOccurrenceSavesSpecifiedTermOccurrence() throws Exception {
         final TermOccurrence to = generateTermOccurrence();
-        mockMvc.perform(post(TermOccurrenceController.PATH).content(toJson(to)).contentType(MediaType.APPLICATION_JSON))
-               .andExpect(status().isCreated());
+        mockMvc.perform(put(TermOccurrenceController.PATH).content(toJson(to)).contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isNoContent());
         final ArgumentCaptor<TermOccurrence> captor = ArgumentCaptor.forClass(TermOccurrence.class);
-        verify(occurrenceService).persist(captor.capture());
+        verify(occurrenceService).persistOrUpdate(captor.capture());
         assertEquals(to.getUri(), captor.getValue().getUri());
         assertEquals(to.getTerm(), captor.getValue().getTerm());
         assertEquals(to.getTarget().getSource(), captor.getValue().getTarget().getSource());

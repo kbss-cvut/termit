@@ -45,6 +45,15 @@ public interface TermOccurrenceService {
     void persist(TermOccurrence occurrence);
 
     /**
+     * Saves the specified term occurrence, either persisting it or updating if it already exists.
+     * <p>
+     * If the occurrence already exists, it is assumed that the term has changed and only this attribute is updated.
+     *
+     * @param occurrence Occurrence to save
+     */
+    void persistOrUpdate(TermOccurrence occurrence);
+
+    /**
      * Approves the specified term occurrence.
      * <p>
      * This removes the suggested classification of the occurrence if it were present.
