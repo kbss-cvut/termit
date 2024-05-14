@@ -18,9 +18,11 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
+import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +42,16 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
 
     private final TermOccurrenceDao termOccurrenceDao;
 
+    private final TermRepositoryService termService;
+
+    private final ResourceRepositoryService resourceService;
+
     @Autowired
-    public TermOccurrenceRepositoryService(TermOccurrenceDao termOccurrenceDao) {
+    public TermOccurrenceRepositoryService(TermOccurrenceDao termOccurrenceDao, TermRepositoryService termService,
+                                           ResourceRepositoryService resourceService) {
         this.termOccurrenceDao = termOccurrenceDao;
+        this.termService = termService;
+        this.resourceService = resourceService;
     }
 
     @Override
@@ -54,6 +63,12 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     @Override
     public void persist(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
+        if (!termService.exists(occurrence.getTerm())) {
+            throw new ValidationException("Occurrence references an unknown term " + Utils.uriToString(occurrence.getTerm()));
+        }
+        if (!termService.exists(occurrence.getTarget().getSource()) && !resourceService.exists(occurrence.getTarget().getSource())) {
+            throw new ValidationException("Occurrence references an unknown asset " + Utils.uriToString(occurrence.getTarget().getSource()));
+        }
         termOccurrenceDao.persist(occurrence);
     }
 
