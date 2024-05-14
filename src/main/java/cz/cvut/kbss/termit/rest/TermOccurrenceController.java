@@ -17,6 +17,8 @@
  */
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
@@ -31,8 +33,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 
@@ -55,6 +66,22 @@ public class TermOccurrenceController extends BaseController {
                                     TermOccurrenceService occurrenceService) {
         super(idResolver, config);
         this.occurrenceService = occurrenceService;
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Creates an approved occurrence.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Term occurrence created"),
+            @ApiResponse(responseCode = "409",
+                         description = "The occurrence is not valid, e.g., the term or target asset do not exist")
+    })
+    @PostMapping(consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
+    public void createOccurrence(@Parameter(description = "Term occurrence to persist")
+                                 @RequestBody TermOccurrence occurrence) {
+        occurrenceService.persist(occurrence);
+        LOG.debug("Created term occurrence {}.", occurrence);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

@@ -30,14 +30,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 
 import java.net.URI;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,7 +74,9 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
         final TermOccurrence to = generateTermOccurrence();
         when(occurrenceService.getRequiredReference(OCCURRENCE_URI)).thenReturn(to);
         when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
-        mockMvc.perform(put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+        mockMvc.perform(
+                       put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE,
+                                                                                        NAMESPACE))
                .andExpect(status().isNoContent());
         verify(occurrenceService).getRequiredReference(OCCURRENCE_URI);
         verify(occurrenceService).approve(to);
@@ -88,7 +94,9 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
     void approveOccurrenceReturnsNotFoundWhenOccurrenceIsNotFoundByService() throws Exception {
         when(occurrenceService.getRequiredReference(OCCURRENCE_URI)).thenThrow(NotFoundException.class);
         when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
-        mockMvc.perform(put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+        mockMvc.perform(
+                       put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE,
+                                                                                        NAMESPACE))
                .andExpect(status().isNotFound());
         verify(occurrenceService, never()).approve(any());
     }
@@ -98,9 +106,23 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
         final TermOccurrence to = generateTermOccurrence();
         when(occurrenceService.getRequiredReference(OCCURRENCE_URI)).thenReturn(to);
         when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
-        mockMvc.perform(delete(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE, NAMESPACE))
+        mockMvc.perform(
+                       delete(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE,
+                                                                                           NAMESPACE))
                .andExpect(status().isNoContent());
         verify(occurrenceService).getRequiredReference(OCCURRENCE_URI);
         verify(occurrenceService).remove(to);
+    }
+
+    @Test
+    void createOccurrencePersistsSpecifiedTermOccurrence() throws Exception {
+        final TermOccurrence to = generateTermOccurrence();
+        mockMvc.perform(post(TermOccurrenceController.PATH).content(toJson(to)).contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isCreated());
+        final ArgumentCaptor<TermOccurrence> captor = ArgumentCaptor.forClass(TermOccurrence.class);
+        verify(occurrenceService).persist(captor.capture());
+        assertEquals(to.getUri(), captor.getValue().getUri());
+        assertEquals(to.getTerm(), captor.getValue().getTerm());
+        assertEquals(to.getTarget().getSource(), captor.getValue().getTarget().getSource());
     }
 }

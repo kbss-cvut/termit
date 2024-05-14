@@ -29,6 +29,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.validation.constraints.NotNull;
 
 import java.net.URI;
 import java.util.Objects;
@@ -43,10 +44,12 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
      */
     public static final String CONTEXT_SUFFIX = "occurrences";
 
+    @NotNull
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_je_prirazenim_termu)
     private URI term;
 
+    @NotNull
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_cil, cascade = {CascadeType.MERGE}, fetch = FetchType.EAGER)
     OccurrenceTarget target;
