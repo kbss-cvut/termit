@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -130,6 +131,8 @@ class TermOccurrenceRepositoryServiceTest {
         when(dao.find(original.getUri())).thenReturn(Optional.of(original));
 
         sut.persistOrUpdate(update);
-        assertEquals(original.getTerm(), update.getTerm());
+        final ArgumentCaptor<TermOccurrence> captor = ArgumentCaptor.forClass(TermOccurrence.class);
+        verify(dao).update(captor.capture());
+        assertEquals(newTerm.getUri(), captor.getValue().getTerm());
     }
 }

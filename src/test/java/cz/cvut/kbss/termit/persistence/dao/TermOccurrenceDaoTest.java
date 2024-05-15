@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.JOPAPersistenceProperties;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -506,5 +507,31 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                 assertEquals(defOccurrences.size(), a.getCount().intValue());
             }
         }
+    }
+
+    @Test
+    void updateSavesTermOccurrenceInContext() {
+        final File file = Generator.generateFileWithId(FILE_LABEL);
+        transactional(() -> em.persist(file));
+        final TermOccurrence occurrence = new TermFileOccurrence(Generator.generateUri(),
+                                                                 new FileOccurrenceTarget(file));
+        occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+
+        transactional(() -> sut.persist(occurrence));
+        assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence ; ?hasTerm ?term .} }", Boolean.class)
+                     .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
+                     .setParameter("x", occurrence.getUri())
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
+                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
+                     .getSingleResult());
+        final URI newTermUri = Generator.generateUri();
+        occurrence.setTerm(newTermUri);
+        transactional(() -> sut.update(occurrence));
+        assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence ; ?hasTerm ?term .} }", Boolean.class)
+                     .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
+                     .setParameter("x", occurrence.getUri())
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
+                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
+                     .getSingleResult());
     }
 }

@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
+import com.github.jsonldjava.utils.Obj;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
@@ -200,6 +201,18 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
             if (entity.getTarget().getUri() == null) {
                 em.persist(entity.getTarget(), descriptor);
             }
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    public TermOccurrence update(TermOccurrence entity) {
+        Objects.requireNonNull(entity);
+        try {
+            // Evict possibly cached references with default context (cached by this.find)
+            em.getEntityManagerFactory().getCache().evict(TermOccurrence.class, entity.getUri(), null);
+            return em.merge(entity, new EntityDescriptor(entity.resolveContext()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
