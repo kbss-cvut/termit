@@ -85,10 +85,13 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     public void persistOrUpdate(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
         if (termOccurrenceDao.exists(occurrence.getUri())) {
-            final Optional<TermOccurrence> existing = termOccurrenceDao.find(occurrence.getUri());
-            assert existing.isPresent();
+            final Optional<TermOccurrence> existingWrapped = termOccurrenceDao.find(occurrence.getUri());
+            assert existingWrapped.isPresent();
+            final TermOccurrence existing = existingWrapped.get();
+            termOccurrenceDao.detach(existing);
             checkTermExists(occurrence);
-            existing.get().setTerm(occurrence.getTerm());
+            existing.setTerm(occurrence.getTerm());
+            termOccurrenceDao.update(existing);
         } else {
             persist(occurrence);
         }

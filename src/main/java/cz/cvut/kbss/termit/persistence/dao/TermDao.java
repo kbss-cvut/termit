@@ -95,11 +95,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
     }
 
-    public void detach(Term term) {
-        Objects.requireNonNull(term);
-        em.detach(term);
-    }
-
     /**
      * Loads terms whose relatedness to the specified term is inferred due to the symmetry of SKOS related.
      *

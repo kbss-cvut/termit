@@ -171,6 +171,25 @@ class BaseDaoTest extends BaseDaoTestRunner {
         assertFalse(result.isPresent());
     }
 
+    @Test
+    void detachDetachesInstanceFromPersistenceContext() {
+        final Term term = Generator.generateTermWithId();
+        transactional(() -> sut.persist(term));
+        transactional(() -> {
+            final Optional<Term> instance = sut.find(term.getUri());
+            assertTrue(instance.isPresent());
+            assertTrue(em.contains(instance.get()));
+            sut.detach(instance.get());
+            assertFalse(em.contains(instance.get()));
+        });
+    }
+
+    @Test
+    void detachDoesNothingWhenEntityIsNotManaged() {
+        final Term term = Generator.generateTermWithId();
+        assertDoesNotThrow(() -> sut.detach(term));
+    }
+
     private static class BaseDaoImpl extends BaseDao<Term> {
 
         BaseDaoImpl(EntityManager em) {
