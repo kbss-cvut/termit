@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
-import com.github.jsonldjava.utils.Obj;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
