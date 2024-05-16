@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.persistence.dao.util;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +13,7 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Drops registered repository contexts at scheduled moments.
@@ -53,9 +53,9 @@ public class ScheduledContextRemover {
      * @see #scheduleForRemoval(URI)
      */
     @Transactional
-    @Scheduled(cron = Constants.SCHEDULING_PATTERN)
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     public void runContextRemoval() {
-        LOG.debug("Running scheduled repository context removal.");
+        LOG.trace("Running scheduled repository context removal.");
         contextsToRemove.forEach(g -> {
             LOG.trace("Dropping repository context {}.", Utils.uriToString(g));
             em.createNativeQuery("DROP GRAPH ?g").setParameter("g", g).executeUpdate();
