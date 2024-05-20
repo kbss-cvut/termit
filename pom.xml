@@ -37,6 +37,13 @@
     </repositories>
     <pluginRepositories>
         <pluginRepository>
+            <id>kbss</id>
+            <url>https://kbss.felk.cvut.cz/m2repo</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+        <pluginRepository>
             <id>central-snapshots</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <releases>
