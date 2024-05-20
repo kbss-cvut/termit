@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -39,9 +38,9 @@ import org.springframework.http.MediaType;
 import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -71,15 +70,12 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
 
     @Test
     void approveOccurrenceApprovesTermOccurrenceViaService() throws Exception {
-        final TermOccurrence to = generateTermOccurrence();
-        when(occurrenceService.getRequiredReference(OCCURRENCE_URI)).thenReturn(to);
         when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
         mockMvc.perform(
                        put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE,
                                                                                         NAMESPACE))
-               .andExpect(status().isNoContent());
-        verify(occurrenceService).getRequiredReference(OCCURRENCE_URI);
-        verify(occurrenceService).approve(to);
+               .andExpect(status().is2xxSuccessful());
+        verify(occurrenceService).approve(OCCURRENCE_URI);
     }
 
     private TermOccurrence generateTermOccurrence() {
@@ -91,27 +87,13 @@ class TermOccurrenceControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void approveOccurrenceReturnsNotFoundWhenOccurrenceIsNotFoundByService() throws Exception {
-        when(occurrenceService.getRequiredReference(OCCURRENCE_URI)).thenThrow(NotFoundException.class);
-        when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
-        mockMvc.perform(
-                       put(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE,
-                                                                                        NAMESPACE))
-               .andExpect(status().isNotFound());
-        verify(occurrenceService, never()).approve(any());
-    }
-
-    @Test
     void removeOccurrenceRemovesTermOccurrenceViaService() throws Exception {
-        final TermOccurrence to = generateTermOccurrence();
-        when(occurrenceService.getRequiredReference(OCCURRENCE_URI)).thenReturn(to);
         when(idResolverMock.resolveIdentifier(NAMESPACE, LOCAL_NAME)).thenReturn(OCCURRENCE_URI);
         mockMvc.perform(
                        delete(TermOccurrenceController.PATH + "/" + LOCAL_NAME).queryParam(Constants.QueryParams.NAMESPACE,
                                                                                            NAMESPACE))
                .andExpect(status().isNoContent());
-        verify(occurrenceService).getRequiredReference(OCCURRENCE_URI);
-        verify(occurrenceService).remove(to);
+        verify(occurrenceService).remove(OCCURRENCE_URI);
     }
 
     @Test
