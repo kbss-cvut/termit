@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.sessions.UnitOfWorkImpl;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.jsonld.jackson.serialization.SerializationConstants;
@@ -32,7 +31,6 @@ import cz.cvut.kbss.termit.rest.servlet.DiagnosticsContextFilter;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
 import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.json.ManageableIgnoreMixin;
 import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
 import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
 import io.swagger.v3.oas.models.Components;
@@ -94,8 +92,6 @@ public class WebAppConfig implements WebMvcConfigurer {
         multilingualStringModule.addSerializer(MultilingualString.class, new MultilingualStringSerializer());
         multilingualStringModule.addDeserializer(MultilingualString.class, new MultilingualStringDeserializer());
         objectMapper.registerModule(multilingualStringModule);
-        // Ignore UoW references injected into entities
-        objectMapper.addMixIn(UnitOfWorkImpl.class, ManageableIgnoreMixin.class);
         // JSR 310 (Java 8 DateTime API)
         objectMapper.registerModule(new JavaTimeModule());
         // Serialize datetime as ISO strings

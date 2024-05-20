@@ -380,7 +380,7 @@ class TermServiceTest {
 
         sut.setTermDefinitionSource(term, definitionSource);
         assertEquals(term.getUri(), definitionSource.getTerm());
-        verify(termOccurrenceRepositoryService).remove(existingSource);
+        verify(termOccurrenceRepositoryService).remove(existingSource.getUri());
         verify(termOccurrenceRepositoryService).persist(definitionSource);
     }
 
@@ -494,14 +494,12 @@ class TermServiceTest {
     void removeTermDefinitionSourceRemovesOccurrenceRepresentingSourceOfDefinitionOfSpecifiedTerm() {
         final Term term = generateTermWithId();
         final TermDefinitionSource defSource = new TermDefinitionSource(term.getUri(),
-                new FileOccurrenceTarget(
-                        Generator.generateFileWithId(
-                                "test.html")));
+                new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
         defSource.setUri(Generator.generateUri());
         term.setDefinitionSource(defSource);
 
         sut.removeTermDefinitionSource(term);
-        verify(termOccurrenceRepositoryService).remove(defSource);
+        verify(termOccurrenceRepositoryService).remove(defSource.getUri());
     }
 
     @Test

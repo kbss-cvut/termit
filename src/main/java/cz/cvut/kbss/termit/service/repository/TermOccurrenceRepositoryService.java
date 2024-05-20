@@ -26,6 +26,9 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,22 +100,25 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         }
     }
 
+    @Async
+    // Retry in case the occurrence has not been persisted, yet (see AsynchronousTermOccurrenceSaver)
+    @Retryable(retryFor = NotFoundException.class, maxAttempts = 3, backoff = @Backoff(delay = 30000L))
     @Transactional
     @Override
-    public void approve(TermOccurrence occurrence) {
-        Objects.requireNonNull(occurrence);
-        final TermOccurrence toApprove = termOccurrenceDao.find(occurrence.getUri()).orElseThrow(
-                () -> NotFoundException.create(TermOccurrence.class, occurrence.getUri()));
+    public void approve(URI occurrenceId) {
+        Objects.requireNonNull(occurrenceId);
+        final TermOccurrence toApprove = termOccurrenceDao.find(occurrenceId).orElseThrow(
+                () -> NotFoundException.create(TermOccurrence.class, occurrenceId));
         LOG.trace("Approving term occurrence {}", toApprove);
         toApprove.markApproved();
     }
 
     @Transactional
     @Override
-    public void remove(TermOccurrence occurrence) {
-        Objects.requireNonNull(occurrence);
-        LOG.trace("Removing term occurrence {}.", occurrence);
-        termOccurrenceDao.remove(occurrence);
+    public void remove(URI occurrenceId) {
+        Objects.requireNonNull(occurrenceId);
+        LOG.trace("Removing term occurrence {}.", occurrenceId);
+        termOccurrenceDao.getReference(occurrenceId).ifPresent(termOccurrenceDao::remove);
     }
 
     /**

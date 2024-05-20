@@ -90,7 +90,7 @@ public class TermOccurrenceController extends BaseController {
             @ApiResponse(responseCode = "404", description = "Term occurrence not found.")
     })
     @PutMapping(value = "/{localName}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void approveOccurrence(
             @Parameter(description = TermOccurrenceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
@@ -101,7 +101,7 @@ public class TermOccurrenceController extends BaseController {
             @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, localName);
 
-        occurrenceService.approve(occurrenceService.getRequiredReference(identifier));
+        occurrenceService.approve(identifier);
         LOG.debug("Occurrence with identifier <{}> approved.", identifier);
     }
 
@@ -121,7 +121,7 @@ public class TermOccurrenceController extends BaseController {
                                             example = TermOccurrenceControllerDoc.ID_NAMESPACE_EXAMPLE)
                                  @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
         final URI identifier = idResolver.resolveIdentifier(namespace, localName);
-        occurrenceService.remove(occurrenceService.getRequiredReference(identifier));
+        occurrenceService.remove(identifier);
         LOG.debug("Occurrence with identifier <{}> removed.", identifier);
     }
 
@@ -132,6 +132,6 @@ public class TermOccurrenceController extends BaseController {
         private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace) unique part of the term occurrence identifier.";
         private static final String ID_LOCAL_NAME_EXAMPLE = "instance-12345";
         private static final String ID_NAMESPACE_DESCRIPTION = "Term occurrence identifier namespace.";
-        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/v\u00fdskyt-termu/";
+        private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/application/termit/pojem/výskyt-termu/";
     }
 }
