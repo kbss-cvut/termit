@@ -60,8 +60,7 @@ class TextQuoteSelectorGenerator implements SelectorGenerator {
             }
             previous = current;
         }
-        return sb.length() > 0 ? Optional.of(sb.substring(Math.max(0, sb.length() - CONTEXT_LENGTH))) :
-               Optional.empty();
+        return !sb.isEmpty() ? Optional.of(sb.substring(Math.max(0, sb.length() - CONTEXT_LENGTH))) : Optional.empty();
     }
 
     private Optional<String> extractSuffix(Element end) {
@@ -78,6 +77,6 @@ class TextQuoteSelectorGenerator implements SelectorGenerator {
             }
             previous = current;
         }
-        return sb.length() > 0 ? Optional.of(sb.substring(0, Math.min(sb.length(), CONTEXT_LENGTH))) : Optional.empty();
+        return !sb.isEmpty() ? Optional.of(sb.substring(0, Math.min(sb.length(), CONTEXT_LENGTH))) : Optional.empty();
     }
 }

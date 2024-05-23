@@ -22,6 +22,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.Optional;
 import java.util.Set;
@@ -37,7 +38,7 @@ import java.util.Set;
  */
 @ConfigurationProperties("termit")
 @Primary
-@Valid
+@Validated
 public class Configuration {
     /**
      * TermIt frontend URL.
@@ -52,23 +53,41 @@ public class Configuration {
      * server.
      */
     private String jmxBeanName = "TermItAdminBean";
+    @Valid
     private Persistence persistence = new Persistence();
+    @Valid
     private Repository repository = new Repository();
+    @Valid
     private ChangeTracking changetracking = new ChangeTracking();
+    @Valid
     private Comments comments = new Comments();
+    @Valid
     private Namespace namespace = new Namespace();
+    @Valid
     private Admin admin = new Admin();
+    @Valid
     private File file = new File();
+    @Valid
     private Jwt jwt = new Jwt();
+    @Valid
     private TextAnalysis textAnalysis = new TextAnalysis();
+    @Valid
     private Glossary glossary = new Glossary();
+    @Valid
     private PublicView publicView = new PublicView();
+    @Valid
     private Workspace workspace = new Workspace();
+    @Valid
     private Cors cors = new Cors();
+    @Valid
     private Schedule schedule = new Schedule();
+    @Valid
     private ACL acl = new ACL();
+    @Valid
     private Mail mail = new Mail();
+    @Valid
     private Security security = new Security();
+    @Valid
     private Language language = new Language();
 
     public String getUrl() {
@@ -231,7 +250,7 @@ public class Configuration {
         this.language = language;
     }
 
-
+    @Validated
     public static class Persistence {
         /**
          * OntoDriver class for the repository.
@@ -261,6 +280,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Repository {
         /**
          * URL of the main application repository.
@@ -315,7 +335,10 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class ChangeTracking {
+
+        @Valid
         Context context = new Context();
 
         public Context getContext() {
@@ -344,6 +367,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Comments {
         /**
          * IRI of the repository context used to store comments (discussion to assets).
@@ -360,6 +384,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Namespace {
         /**
          * Namespace for vocabulary identifiers.
@@ -387,6 +412,7 @@ public class Configuration {
          * http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where 'SEPARATOR'
          * is the value of this configuration parameter.
          */
+        @Valid
         private NamespaceDetail term = new NamespaceDetail();
         /**
          * Separator of File namespace from the parent Document identifier.
@@ -399,6 +425,7 @@ public class Configuration {
          * http://www.example.org/ontologies/resources/metropolitan-plan/document/SEPARATOR/main-file}, where
          * 'SEPARATOR' is the value of this configuration parameter.
          */
+        @Valid
         private NamespaceDetail file = new NamespaceDetail();
 
         /**
@@ -408,6 +435,7 @@ public class Configuration {
          * and the snapshot separator is configured to {@code version}, a snapshot IRI will look something like
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/version/20220530T202317Z}.
          */
+        @Valid
         private NamespaceDetail snapshot = new NamespaceDetail();
 
         public String getVocabulary() {
@@ -458,7 +486,9 @@ public class Configuration {
             this.snapshot = snapshot;
         }
 
+        @Validated
         public static class NamespaceDetail {
+
             @NotNull
             String separator;
 
@@ -472,6 +502,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Admin {
         /**
          * Specifies the folder in which admin credentials are saved when its account is generated.
@@ -501,6 +532,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class File {
         /**
          * Specifies root directory in which document files are stored.
@@ -517,6 +549,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Jwt {
         /**
          * Secret key used when hashing a JWT.
@@ -532,6 +565,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class TextAnalysis {
         /**
          * URL of the text analysis service.
@@ -561,6 +595,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Glossary {
         /**
          * IRI path to append to vocabulary IRI to get glossary identifier.
@@ -577,12 +612,13 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class PublicView {
         /**
          * Unmapped properties allowed to appear in the public term access API.
          */
         @NotNull
-        private Set<String> whiteListProperties;
+        private Set<String> whiteListProperties = Set.of();
 
         public Set<String> getWhiteListProperties() {
             return whiteListProperties;
@@ -593,6 +629,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Workspace {
 
         /**
@@ -615,6 +652,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Cors {
         /**
          * A comma-separated list of allowed origins for CORS.
@@ -648,8 +686,10 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Schedule {
 
+        @Valid
         private Cron cron = new Cron();
 
         public Cron getCron() {
@@ -662,6 +702,7 @@ public class Configuration {
 
         public static class Cron {
 
+            @Valid
             private Notification notification = new Notification();
 
             public Notification getNotification() {
@@ -691,6 +732,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Mail {
 
         /**
@@ -710,6 +752,7 @@ public class Configuration {
     /**
      * Configuration for initialization of new {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s.
      */
+    @Validated
     public static class ACL {
 
         /**
@@ -739,6 +782,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Security {
 
         public enum ProviderType {
@@ -777,6 +821,7 @@ public class Configuration {
         }
     }
 
+    @Validated
     public static class Language {
 
         /**
@@ -785,6 +830,7 @@ public class Configuration {
          * The file must be in Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel,
          * scopeNote and broader/narrower).
          */
+        @Valid
         private LanguageSource types = new LanguageSource();
 
         /**
@@ -792,6 +838,7 @@ public class Configuration {
          * Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
          * broader/narrower).
          */
+        @Valid
         private LanguageSource states = new LanguageSource();
 
         public LanguageSource getTypes() {
