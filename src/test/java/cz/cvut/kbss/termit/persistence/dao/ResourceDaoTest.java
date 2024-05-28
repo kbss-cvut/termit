@@ -236,9 +236,9 @@ class ResourceDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> {
             final Resource toDetach = sut.find(resource.getUri()).get();
-            assertTrue(sut.em.contains(toDetach));
+            assertTrue(em.contains(toDetach));
             sut.detach(toDetach);
-            assertFalse(sut.em.contains(toDetach));
+            assertFalse(em.contains(toDetach));
         });
     }
 
@@ -247,9 +247,9 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         final Resource resource = Generator.generateResourceWithId();
 
         transactional(() -> {
-            assertFalse(sut.em.contains(resource));
+            assertFalse(em.contains(resource));
             sut.detach(resource);
-            assertFalse(sut.em.contains(resource));
+            assertFalse(em.contains(resource));
         });
     }
 
