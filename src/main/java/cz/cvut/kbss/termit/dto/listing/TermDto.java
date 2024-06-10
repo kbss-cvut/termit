@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * Contains fewer data than a regular {@link cz.cvut.kbss.termit.model.Term}.
  */
 @OWLClass(iri = SKOS.CONCEPT)
-@JsonLdAttributeOrder({"uri", "label", "subTerms"})
+@JsonLdAttributeOrder({"uri", "label", "parentTerms", "subTerms"})
 @JsonIgnoreProperties({"definition", "persistenceContext"})
 public class TermDto extends AbstractTerm {
 
