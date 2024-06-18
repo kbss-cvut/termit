@@ -38,11 +38,11 @@ import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
-import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -242,13 +242,16 @@ public class VocabularyService
      * @return Template file as a resource
      */
     public TypeAwareResource getExcelTemplateFile() {
-        try {
-            assert getClass().getClassLoader().getResource("template/termit-import.xlsx") != null;
-            final File template = new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI());
-            return new TypeAwareFileSystemResource(template, ExportFormat.EXCEL.getMediaType());
-        } catch (URISyntaxException e) {
-            throw new TermItException("Fatal error, unable to load Excel template file.", e);
-        }
+        final Configuration config = context.getBean(Configuration.class);
+        final File templateFile = config.getTemplate().getExcelImport().map(File::new).orElseGet(() -> {
+            try {
+                assert getClass().getClassLoader().getResource("template/termit-import.xlsx") != null;
+                return new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI());
+            } catch (URISyntaxException e) {
+                throw new TermItException("Fatal error, unable to load Excel template file.", e);
+            }
+        });
+        return new TypeAwareFileSystemResource(templateFile, ExportFormat.EXCEL.getMediaType());
     }
 
     @Override

@@ -39,6 +39,7 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -375,6 +376,7 @@ class VocabularyServiceTest {
 
     @Test
     void getExcelTemplateFileReturnsResourceRepresentingExcelTemplateFile() throws Exception {
+        when(appContext.getBean(Configuration.class)).thenReturn(new Configuration());
         final TypeAwareResource result = sut.getExcelTemplateFile();
         assertTrue(result.getFileExtension().isPresent());
         assertEquals(ExportFormat.EXCEL.getFileExtension(), result.getFileExtension().get());
