@@ -37,7 +37,9 @@ import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
+import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,12 +55,26 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class VocabularyServiceTest {
@@ -355,5 +371,16 @@ class VocabularyServiceTest {
         verify(eventPublisher).publishEvent(captor.capture());
         assertInstanceOf(VocabularyCreatedEvent.class, captor.getValue());
         assertEquals(persisted, captor.getValue().getSource());
+    }
+
+    @Test
+    void getExcelTemplateFileReturnsResourceRepresentingExcelTemplateFile() throws Exception {
+        final TypeAwareResource result = sut.getExcelTemplateFile();
+        assertTrue(result.getFileExtension().isPresent());
+        assertEquals(ExportFormat.EXCEL.getFileExtension(), result.getFileExtension().get());
+        assertTrue(result.getMediaType().isPresent());
+        assertEquals(ExportFormat.EXCEL.getMediaType(), result.getMediaType().get());
+        final File expectedFile = new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI());
+        assertEquals(expectedFile, result.getFile());
     }
 }
