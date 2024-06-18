@@ -33,7 +33,8 @@ import java.util.Set;
  * The runtime configuration consists of predefined default values and configuration loaded from config files on
  * classpath. Values from config files supersede the default values.
  * <p>
- * The configuration can be also set via <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
+ * The configuration can be also set via <a
+ * href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
  * environment variables</a>. These override any statically configured values.
  */
 @ConfigurationProperties("termit")
@@ -89,6 +90,8 @@ public class Configuration {
     private Security security = new Security();
     @Valid
     private Language language = new Language();
+    @Valid
+    private Template template = new Template();
 
     public String getUrl() {
         return url;
@@ -250,6 +253,14 @@ public class Configuration {
         this.language = language;
     }
 
+    public Template getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(Template template) {
+        this.template = template;
+    }
+
     @Validated
     public static class Persistence {
         /**
@@ -407,10 +418,11 @@ public class Configuration {
          * Since Term identifier is given by the identifier of the Vocabulary it belongs to and its own normalized
          * label, this separator is used to (optionally) configure the Term identifier namespace.
          * <p>
-         * For example, if we have a Vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
-         * and a Term with normalized label {@code inhabited-area}, the resulting IRI will be {@code
-         * http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where 'SEPARATOR'
-         * is the value of this configuration parameter.
+         * For example, if we have a Vocabulary with IRI
+         * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan} and a Term with normalized label
+         * {@code inhabited-area}, the resulting IRI will be
+         * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where
+         * 'SEPARATOR' is the value of this configuration parameter.
          */
         @Valid
         private NamespaceDetail term = new NamespaceDetail();
@@ -420,9 +432,10 @@ public class Configuration {
          * Since File identifier is given by the identifier of the Document it belongs to and its own normalized label,
          * this separator is used to (optionally) configure the File identifier namespace.
          * <p>
-         * For example, if we have a Document with IRI {@code http://www.example.org/ontologies/resources/metropolitan-plan/document}
-         * and a File with normalized label {@code main-file}, the resulting IRI will be {@code
-         * http://www.example.org/ontologies/resources/metropolitan-plan/document/SEPARATOR/main-file}, where
+         * For example, if we have a Document with IRI
+         * {@code http://www.example.org/ontologies/resources/metropolitan-plan/document} and a File with normalized
+         * label {@code main-file}, the resulting IRI will be
+         * {@code http://www.example.org/ontologies/resources/metropolitan-plan/document/SEPARATOR/main-file}, where
          * 'SEPARATOR' is the value of this configuration parameter.
          */
         @Valid
@@ -431,8 +444,9 @@ public class Configuration {
         /**
          * Separator of snapshot timestamp and original asset identifier.
          * <p>
-         * For example, if we have a Vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
-         * and the snapshot separator is configured to {@code version}, a snapshot IRI will look something like
+         * For example, if we have a Vocabulary with IRI
+         * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan} and the snapshot separator is
+         * configured to {@code version}, a snapshot IRI will look something like
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/version/20220530T202317Z}.
          */
         @Valid
@@ -834,8 +848,8 @@ public class Configuration {
         private LanguageSource types = new LanguageSource();
 
         /**
-         * Path to a file containing definition of the language of states terms can be in. The file must be in
-         * Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
+         * Path to a file containing definition of the language of states terms can be in. The file must be in Turtle
+         * format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
          * broader/narrower).
          */
         @Valid
@@ -868,6 +882,28 @@ public class Configuration {
             public void setSource(String source) {
                 this.source = source;
             }
+        }
+    }
+
+    @Validated
+    public static class Template {
+
+        /**
+         * Template file for Excel import.
+         * <p>
+         * The purpose of configuring this file is mainly to have the value lists for term types and states in the
+         * template aligned with the corresponding languages used by TermIt.
+         * <p>
+         * Empty value means the built-in template file should be used.
+         */
+        private Optional<String> excelImport = Optional.empty();
+
+        public Optional<String> getExcelImport() {
+            return excelImport;
+        }
+
+        public void setExcelImport(Optional<String> excelImport) {
+            this.excelImport = excelImport;
         }
     }
 }
