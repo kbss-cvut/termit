@@ -38,6 +38,7 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
@@ -56,6 +57,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 import org.topbraid.shacl.vocabulary.SH;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.net.URI;
 import java.time.Instant;
@@ -615,7 +617,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         record.setHolder(Generator.generateUserWithId());
 
         mockMvc.perform(put(PATH + "/" + FRAGMENT + "/acl/records/" + Generator.randomInt())
-                       .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
+                                .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isBadRequest());
         verify(serviceMock, never()).updateAccessControlLevel(any(Vocabulary.class), any(AccessControlRecord.class));
     }
@@ -629,5 +631,17 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final AccessLevel result = readValue(mvcResult, AccessLevel.class);
         assertEquals(AccessLevel.SECURITY, result);
         verify(serviceMock).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void getExcelTemplateFileReturnsExcelTemplateFileRetrievedFromServiceAsAttachment() throws Exception {
+        when(serviceMock.getExcelTemplateFile()).thenReturn(new TypeAwareFileSystemResource(
+                new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI()),
+                Constants.MediaType.EXCEL));
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/import/template")).andReturn();
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
+                   containsString("filename=\"termit-import.xlsx\""));
     }
 }

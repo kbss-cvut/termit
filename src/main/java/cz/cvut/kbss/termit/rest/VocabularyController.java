@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,6 +44,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -60,9 +62,9 @@ import java.util.Optional;
 
 /**
  * Vocabulary management REST API.
- *
- * Note that most endpoints are now secured only by requiring the user to be authenticated, authorization is done
- * on service level based on ACL.
+ * <p>
+ * Note that most endpoints are now secured only by requiring the user to be authenticated, authorization is done on
+ * service level based on ACL.
  */
 @Tag(name = "Vocabularies", description = "Vocabulary management API")
 @RestController
@@ -181,6 +183,20 @@ public class VocabularyController extends BaseController {
         final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
         LOG.debug("New vocabulary {} imported.", vocabulary);
         return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+    }
+
+    @Operation(description = "Gets a template Excel file that can be used to import terms into TermIt")
+    @ApiResponse(responseCode = "200", description = "Template Excel file is returned as attachment")
+    @GetMapping("/import/template")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<TypeAwareResource> getExcelTemplateFile() {
+        final TypeAwareResource template = vocabularyService.getExcelTemplateFile();
+        return ResponseEntity.ok()
+                             .contentType(MediaType.parseMediaType(
+                                     template.getMediaType().orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE)))
+                             .header(HttpHeaders.CONTENT_DISPOSITION,
+                                     "attachment; filename=\"" + template.getFilename() + "\"")
+                             .body(template);
     }
 
     URI locationWithout(URI location, String toRemove) {
