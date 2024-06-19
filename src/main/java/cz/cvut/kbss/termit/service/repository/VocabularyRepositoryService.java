@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.MessageFormatter;
+import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -230,7 +231,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         Objects.requireNonNull(file);
         try {
             String contentType = resolveContentType(file);
-            return getSKOSImporter().importVocabulary(rename, contentType, this::persist, file.getInputStream());
+            return getSKOSImporter().importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(rename, null, this::initDocument),
+                    new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
@@ -251,7 +254,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         Objects.requireNonNull(file);
         try {
             String contentType = resolveContentType(file);
-            return getSKOSImporter().importVocabulary(vocabularyIri, contentType, this::persist, file.getInputStream());
+            return getSKOSImporter().importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
+                    new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
