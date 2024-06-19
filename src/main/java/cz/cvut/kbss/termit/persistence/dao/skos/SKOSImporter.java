@@ -28,6 +28,7 @@ import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.validation.constraints.NotNull;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -360,5 +361,15 @@ public class SKOSImporter implements VocabularyImporter {
 
     private void setVocabularyDescriptionFromGlossary(final Vocabulary vocabulary) {
         handleGlossaryStringProperty(DCTERMS.DESCRIPTION, vocabulary::setDescription);
+    }
+
+    /**
+     * Checks whether this importer supports the specified media type.
+     *
+     * @param mediaType Media type to check
+     * @return {@code true} when media type is supported, {@code false} otherwise
+     */
+    public static boolean supportsMediaType(@NotNull String mediaType) {
+        return Rio.getParserFormatForMIMEType(mediaType).isPresent();
     }
 }
