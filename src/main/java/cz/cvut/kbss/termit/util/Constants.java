@@ -193,6 +193,9 @@ public class Constants {
      * Additional media types not covered by {@link org.springframework.http.MediaType}.
      */
     public static final class MediaType {
+        /**
+         * Media type for .xlsx
+         */
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";

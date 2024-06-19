@@ -44,6 +44,8 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
@@ -515,5 +517,16 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             assertThat(result.get().getLabel().get(lang), not(emptyOrNullString()));
             assertThat(result.get().getDescription().get(lang), not(emptyOrNullString()));
         });
+    }
+
+    @ParameterizedTest
+    @CsvSource({Constants.MediaType.TURTLE, Constants.MediaType.RDF_XML, "application/n-triples"})
+    void supportsMediaTypeReturnsTrueForSupportedRDFBasedMediaTypes(String mediaType) {
+        assertTrue(SKOSImporter.supportsMediaType(mediaType));
+    }
+
+    @Test
+    void supportsMediaTypeReturnsFalseForUnsupportedMediaType() {
+        assertFalse(SKOSImporter.supportsMediaType(Constants.MediaType.EXCEL));
     }
 }

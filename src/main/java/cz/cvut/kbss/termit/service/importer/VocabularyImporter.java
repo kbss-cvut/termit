@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.service.importer;
 
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import jakarta.validation.constraints.NotNull;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -25,7 +26,7 @@ public interface VocabularyImporter {
      * @throws IllegalArgumentException  Indicates invalid input data, e.g., no input streams, missing language tags
      *                                   etc.
      */
-    Vocabulary importVocabulary(ImportConfiguration config, ImportInput data);
+    Vocabulary importVocabulary(@NotNull ImportConfiguration config, @NotNull ImportInput data);
 
     /**
      * Vocabulary import configuration.
@@ -37,7 +38,7 @@ public interface VocabularyImporter {
      * @param prePersist      Procedure to call before persisting the resulting vocabulary
      */
     record ImportConfiguration(boolean allowReIdentify, URI vocabularyIri,
-                               Consumer<Vocabulary> prePersist) {
+                               @NotNull Consumer<Vocabulary> prePersist) {
     }
 
     /**
@@ -46,6 +47,6 @@ public interface VocabularyImporter {
      * @param mediaType Media type of the imported data
      * @param data      Streams containing the data
      */
-    record ImportInput(String mediaType, InputStream... data) {
+    record ImportInput(@NotNull String mediaType, InputStream... data) {
     }
 }
