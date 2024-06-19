@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.IRI;
@@ -71,7 +72,7 @@ import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class SKOSImporter {
+public class SKOSImporter implements VocabularyImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSImporter.class);
 
@@ -102,49 +103,17 @@ public class SKOSImporter {
         this.em = em;
     }
 
-    /**
-     * Imports a new vocabulary from the specified streams representing the vocabulary in SKOS format.
-     *
-     * @param rename       Whether to change vocabulary, glossary and term IRIs in case of a conflict with existing
-     *                     data
-     * @param mediaType    Input data media type
-     * @param persist      Consumer of the imported vocabulary, used to save the imported data
-     * @param inputStreams Streams containing the imported SKOS data
-     * @return The imported vocabulary
-     * @throws VocabularyExistsException If a vocabulary/glossary with the same identifier already exists and
-     *                                   {@code rename} is set to {@code false}
-     * @throws IllegalArgumentException  Indicates invalid input data, e.g., no input streams, missing language tags
-     *                                   etc.
-     */
-    public Vocabulary importVocabulary(boolean rename, String mediaType, final Consumer<Vocabulary> persist,
-                                       final InputStream... inputStreams) {
-        return importVocabulary(rename, null, mediaType, persist, inputStreams);
-    }
-
-    /**
-     * Imports a SKOS vocabulary from the specified streams, possibly replacing an existing one.
-     * <p>
-     * If the specified {@code vocabularyIri} identifies an existing vocabulary, its content is replaced with the
-     * imported data.
-     *
-     * @param vocabularyIri Target vocabulary identifier
-     * @param mediaType     Input data media type
-     * @param persist       Consumer of the imported vocabulary, used to save the imported data
-     * @param inputStreams  Streams containing the imported SKOS data
-     * @return The imported vocabulary
-     * @throws IllegalArgumentException Indicates invalid input data, e.g., no input streams, missing language tags
-     *                                  etc.
-     */
-    public Vocabulary importVocabulary(URI vocabularyIri, String mediaType, final Consumer<Vocabulary> persist,
-                                       final InputStream... inputStreams) {
-        Objects.requireNonNull(vocabularyIri);
-        return importVocabulary(false, vocabularyIri, mediaType, persist, inputStreams);
+    @Override
+    public Vocabulary importVocabulary(ImportConfiguration config, ImportInput data) {
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(data);
+        return importVocabulary(config.allowReIdentify(), config.vocabularyIri(), data.mediaType(), config.prePersist(), data.data());
     }
 
     private Vocabulary importVocabulary(final boolean rename,
                                         final URI vocabularyIri,
                                         final String mediaType,
-                                        final Consumer<Vocabulary> persist,
+                                        final Consumer<Vocabulary> prePersist,
                                         final InputStream... inputStreams) {
         if (inputStreams.length == 0) {
             throw new IllegalArgumentException("No input provided for importing vocabulary.");
@@ -184,7 +153,8 @@ public class SKOSImporter {
         em.flush();
         em.clear();
 
-        persist.accept(vocabulary);
+        prePersist.accept(vocabulary);
+        vocabularyDao.persist(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;
