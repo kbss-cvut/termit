@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
@@ -570,13 +571,19 @@ public class Configuration {
         /**
          * URL of the text analysis service.
          */
-        String url;
+        private String url;
 
         /**
          * Score threshold for a term occurrence for it to be saved into the repository.
          */
         @NotNull
-        String termOccurrenceMinScore = Constants.SCORE_THRESHOLD.toString();
+        private String termOccurrenceMinScore = Constants.SCORE_THRESHOLD.toString();
+
+        /**
+         * Maximum of the prefix and suffix of a text quote selector.
+         */
+        @Min(8)
+        private int textQuoteSelectorContextLength = 32;
 
         public String getUrl() {
             return url;
@@ -593,6 +600,14 @@ public class Configuration {
         public void setTermOccurrenceMinScore(String termOccurrenceMinScore) {
             this.termOccurrenceMinScore = termOccurrenceMinScore;
         }
+
+        public int getTextQuoteSelectorContextLength() {
+            return textQuoteSelectorContextLength;
+        }
+
+        public void setTextQuoteSelectorContextLength(int textQuoteSelectorContextLength) {
+            this.textQuoteSelectorContextLength = textQuoteSelectorContextLength;
+        }
     }
 
     @Validated
@@ -601,7 +616,7 @@ public class Configuration {
          * IRI path to append to vocabulary IRI to get glossary identifier.
          */
         @NotNull
-        String fragment;
+        private String fragment;
 
         public String getFragment() {
             return fragment;

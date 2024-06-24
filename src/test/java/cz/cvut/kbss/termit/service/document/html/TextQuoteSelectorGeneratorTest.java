@@ -25,10 +25,13 @@ import org.jsoup.select.Elements;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static cz.cvut.kbss.termit.service.document.html.TextQuoteSelectorGenerator.CONTEXT_LENGTH;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TextQuoteSelectorGeneratorTest {
+
+    private static final int CONTEXT_LENGTH = 32;
 
     private TextQuoteSelectorGenerator sut;
 
@@ -37,7 +40,7 @@ class TextQuoteSelectorGeneratorTest {
     @BeforeEach
     void setUp() {
         this.document = new Document("");
-        this.sut = new TextQuoteSelectorGenerator();
+        this.sut = new TextQuoteSelectorGenerator(CONTEXT_LENGTH);
     }
 
     @Test

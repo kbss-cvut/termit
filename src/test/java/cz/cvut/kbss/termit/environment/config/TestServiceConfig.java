@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.service.document.html.DummySelectorGenerator;
 import cz.cvut.kbss.termit.service.document.html.HtmlSelectorGenerators;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.aspectj.lang.Aspects;
 import org.jsoup.nodes.Element;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -76,8 +77,8 @@ public class TestServiceConfig {
 
     @Bean
     @Primary
-    public HtmlSelectorGenerators htmlSelectorGenerators() {
-        return new HtmlSelectorGenerators() {
+    public HtmlSelectorGenerators htmlSelectorGenerators(Configuration configuration) {
+        return new HtmlSelectorGenerators(configuration) {
             @Override
             public Set<Selector> generateSelectors(Element... elements) {
                 return Collections.singleton(new DummySelectorGenerator().generateSelector(elements));

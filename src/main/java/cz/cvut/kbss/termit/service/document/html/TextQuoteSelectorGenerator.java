@@ -33,10 +33,11 @@ import java.util.Optional;
  */
 class TextQuoteSelectorGenerator implements SelectorGenerator {
 
-    /**
-     * Length of the generated prefix and suffix
-     */
-    static final int CONTEXT_LENGTH = 32;
+    private final int contextLength;
+
+    TextQuoteSelectorGenerator(int contextLength) {
+        this.contextLength = contextLength;
+    }
 
     @Override
     public TextQuoteSelector generateSelector(Element... elements) {
@@ -55,12 +56,12 @@ class TextQuoteSelectorGenerator implements SelectorGenerator {
             current = current.parent();
             final List<Node> previousSiblings = current.childNodes().subList(0, previous.siblingIndex());
             sb = extractNodeText(previousSiblings).append(sb);
-            if (sb.length() >= CONTEXT_LENGTH) {
+            if (sb.length() >= contextLength) {
                 break;
             }
             previous = current;
         }
-        return !sb.isEmpty() ? Optional.of(sb.substring(Math.max(0, sb.length() - CONTEXT_LENGTH))) : Optional.empty();
+        return !sb.isEmpty() ? Optional.of(sb.substring(Math.max(0, sb.length() - contextLength))) : Optional.empty();
     }
 
     private Optional<String> extractSuffix(Element end) {
@@ -72,11 +73,11 @@ class TextQuoteSelectorGenerator implements SelectorGenerator {
             final List<Node> previousSiblings = current.childNodes()
                                                        .subList(previous.siblingIndex() + 1, current.childNodeSize());
             sb.append(extractNodeText(previousSiblings));
-            if (sb.length() >= CONTEXT_LENGTH) {
+            if (sb.length() >= contextLength) {
                 break;
             }
             previous = current;
         }
-        return !sb.isEmpty() ? Optional.of(sb.substring(0, Math.min(sb.length(), CONTEXT_LENGTH))) : Optional.empty();
+        return !sb.isEmpty() ? Optional.of(sb.substring(0, Math.min(sb.length(), contextLength))) : Optional.empty();
     }
 }

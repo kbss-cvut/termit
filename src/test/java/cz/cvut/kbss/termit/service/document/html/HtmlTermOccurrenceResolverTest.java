@@ -73,7 +73,7 @@ class HtmlTermOccurrenceResolverTest {
 
     @SuppressWarnings("unused")
     @Spy
-    private HtmlSelectorGenerators selectorGenerators = new HtmlSelectorGenerators();
+    private HtmlSelectorGenerators selectorGenerators = new HtmlSelectorGenerators(config);
 
     @Mock
     private DocumentManager documentManager;
