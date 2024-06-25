@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,12 +54,15 @@ public class ExcelImporter implements VocabularyImporter {
         }
         final Vocabulary targetVocabulary = vocabularyDao.find(config.vocabularyIri()).orElseThrow(() -> NotFoundException.create(Vocabulary.class, config.vocabularyIri()));
         try {
+            List<Term> terms = Collections.emptyList();
             for (InputStream input : data.data()) {
                 final Workbook workbook = new XSSFWorkbook(input);
                 assert workbook.getNumberOfSheets() > 0;
-                final Sheet sheet = workbook.getSheetAt(0);
-                // TODO Reuse terms between internationalized sheets
-                final List<Term> terms = new LocalizedSheetImporter().resolveTermsFromSheet(sheet);
+                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                    final Sheet sheet = workbook.getSheetAt(i);
+                    // TODO Reuse terms between internationalized sheets
+                    terms = new LocalizedSheetImporter(terms).resolveTermsFromSheet(sheet);
+                }
                 // TODO Parents vs children
                 terms.forEach(t -> termService.addRootTermToVocabulary(t, targetVocabulary));
             }
