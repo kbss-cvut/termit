@@ -36,6 +36,11 @@ public class VocabularyImportException extends TermItException {
         this.messageId = messageId;
     }
 
+    public VocabularyImportException(String message, Throwable cause) {
+        super(message, cause);
+        this.messageId = null;
+    }
+
     public String getMessageId() {
         return messageId;
     }
