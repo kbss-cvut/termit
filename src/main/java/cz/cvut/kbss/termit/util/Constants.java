@@ -133,6 +133,7 @@ public class Constants {
 
     /**
      * Labels of columns representing exported term attributes in various supported languages.
+     * TODO Replace with constants loaded from attribute mapping properties files
      */
     public static final Map<String, List<String>> EXPORT_COLUMN_LABELS = Map.of(
             "cs",

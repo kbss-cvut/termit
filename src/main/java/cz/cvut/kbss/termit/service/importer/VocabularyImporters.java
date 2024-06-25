@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.service.importer;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
+import cz.cvut.kbss.termit.service.importer.excel.ExcelImporter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;

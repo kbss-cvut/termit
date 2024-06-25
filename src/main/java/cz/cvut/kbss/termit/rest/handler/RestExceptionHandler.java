@@ -221,7 +221,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
+    public ResponseEntity<ErrorInfo> invalidTermStateException(HttpServletRequest request,
                                                                InvalidTermStateException e) {
         logException(e, request);
         return new ResponseEntity<>(
