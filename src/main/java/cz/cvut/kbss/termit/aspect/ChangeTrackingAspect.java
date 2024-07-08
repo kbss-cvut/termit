@@ -46,7 +46,7 @@ public class ChangeTrackingAspect {
     @Autowired
     private ChangeTrackingHelperDao helperDao;
 
-    @Pointcut(value = "execution(public void persist(..)) && target(cz.cvut.kbss.termit.persistence.dao.GenericDao) " +
+    @Pointcut(value = "execution(public void persist(..)) && (target(cz.cvut.kbss.termit.persistence.dao.BaseAssetDao)) " +
             "&& @args(cz.cvut.kbss.termit.model.changetracking.Audited)")
     public void persistOperation() {
     }
@@ -56,7 +56,7 @@ public class ChangeTrackingAspect {
     public void persistTermOperation() {
     }
 
-    @Pointcut(value = "execution(public * update(..)) && target(cz.cvut.kbss.termit.persistence.dao.GenericDao) " +
+    @Pointcut(value = "execution(public * update(..)) && target(cz.cvut.kbss.termit.persistence.dao.BaseAssetDao) " +
             "&& @args(cz.cvut.kbss.termit.model.changetracking.Audited)")
     public void updateOperation() {
     }

@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.3</version>
+        <version>3.2.5</version>
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>3.0.4</version>
+    <version>3.1.0</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -20,39 +20,19 @@
         <repository>
             <id>kbss</id>
             <url>https://kbss.felk.cvut.cz/m2repo</url>
-        </repository>
-        <repository>
-            <id>central-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>central-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 
     <properties>
         <java.version>17</java.version>
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>2.2.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>2.0.0-SNAPSHOT</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.14.2</cz.cvut.kbss.jsonld.version>
-        <org.aspectj.version>1.9.20</org.aspectj.version>
+        <cz.cvut.kbss.jopa.version>2.0.0</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.14.3</cz.cvut.kbss.jsonld.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
@@ -132,14 +112,14 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>4.3.8</version>
+            <version>4.3.11</version>
         </dependency>
 
         <!-- Spring declarative transactions with JOPA -->
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.3.0-SNAPSHOT</version>
+            <version>0.3.0</version>
         </dependency>
 
         <!-- Spring -->
@@ -178,9 +158,17 @@
             <artifactId>spring-aspects</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
             <version>5.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
         </dependency>
 
         <!-- JWT support for Java -->
@@ -427,7 +415,18 @@
                             <artifactId>mapstruct-processor</artifactId>
                             <version>${org.mapstruct.version}</version>
                         </path>
+                        <path>
+                            <groupId>cz.lukaskabc.cvut.processor</groupId>
+                            <artifactId>spring-boot-configuration-docgen-processor</artifactId>
+                            <version>1.0</version>
+                        </path>
                     </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Aconfigurationdoc.output_file=termit-doc.md</arg>
+                        <arg>-Aconfigurationdoc.format=MD</arg>
+                        <arg>-Aconfigurationdoc.configuration_package=cz.cvut.kbss.termit</arg>
+                        <arg>-Aconfigurationdoc.prepend_required=true</arg>
+                    </compilerArgs>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
@@ -448,13 +447,6 @@
                     </aspectLibraries>
                     <parameters>true</parameters>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.aspectj</groupId>
-                        <artifactId>aspectjtools</artifactId>
-                        <version>${org.aspectj.version}</version>
-                    </dependency>
-                </dependencies>
                 <executions>
                     <execution>
                         <id>main</id>

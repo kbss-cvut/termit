@@ -61,6 +61,15 @@ public interface GenericDao<T extends HasIdentifier> {
     Optional<T> getReference(URI id);
 
     /**
+     * Detaches the specified entity from the current persistence context.
+     * <p>
+     * Does nothing if the specified entity is not managed.
+     *
+     * @param entity Entity to detach
+     */
+    void detach(T entity);
+
+    /**
      * Persists the specified entity.
      *
      * @param entity Entity to persist

@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
@@ -31,20 +32,27 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
+import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
+import org.jsoup.Jsoup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.MediaType;
 import org.springframework.transaction.TransactionSystemException;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 
@@ -118,14 +126,15 @@ class ResourceServiceTest {
     @Test
     void getContentLoadsContentOfFileFromDocumentManager() {
         final File file = Generator.generateFileWithId("test.html");
-        sut.getContent(file);
+        sut.getContent(file, new ResourceRetrievalSpecification(Optional.empty(), false));
         verify(documentManager).getAsResource(file);
     }
 
     @Test
     void getContentThrowsUnsupportedAssetOperationWhenResourceIsNotFile() {
         final Resource resource = Generator.generateResourceWithId();
-        assertThrows(UnsupportedAssetOperationException.class, () -> sut.getContent(resource));
+        assertThrows(UnsupportedAssetOperationException.class,
+                     () -> sut.getContent(resource, new ResourceRetrievalSpecification(Optional.empty(), false)));
         verify(documentManager, never()).getAsResource(any());
     }
 
@@ -180,7 +189,7 @@ class ResourceServiceTest {
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenResourceIsNotFile() {
         final Resource resource = Generator.generateResourceWithId();
         assertThrows(UnsupportedAssetOperationException.class,
-                () -> sut.runTextAnalysis(resource, Collections.emptySet()));
+                     () -> sut.runTextAnalysis(resource, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
     }
 
@@ -188,7 +197,7 @@ class ResourceServiceTest {
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenFileHasNoVocabularyAndNoVocabulariesAreSpecifiedEither() {
         final File file = Generator.generateFileWithId("test.html");
         assertThrows(UnsupportedAssetOperationException.class,
-                () -> sut.runTextAnalysis(file, Collections.emptySet()));
+                     () -> sut.runTextAnalysis(file, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
     }
 
@@ -474,7 +483,23 @@ class ResourceServiceTest {
     void getContentAtTimestampLoadsContentOfFileAtTimestampFromDocumentManager() {
         final File file = Generator.generateFileWithId("test.hml");
         final Instant at = Utils.timestamp();
-        sut.getContent(file, at);
+        sut.getContent(file, new ResourceRetrievalSpecification(Optional.of(at), false));
         verify(documentManager).getAsResource(file, at);
+    }
+
+    @Test
+    void getContentWithoutUnconfirmedOccurrencesRemovesUnconfirmedOccurrencesFromFileContentBeforeReturningIt()
+            throws Exception {
+        final File file = Generator.generateFileWithId("test.hml");
+        TypeAwareResource content;
+        try (final InputStream is = Environment.loadFile("data/rdfa-simple.html")) {
+            content = new TypeAwareByteArrayResource(is.readAllBytes(), MediaType.TEXT_HTML_VALUE, ".html");
+        }
+        when(documentManager.getAsResource(file)).thenReturn(content);
+
+        final TypeAwareResource result = sut.getContent(file,
+                                                        new ResourceRetrievalSpecification(Optional.empty(), true));
+        final org.jsoup.nodes.Document doc = Jsoup.parse(result.getInputStream(), StandardCharsets.UTF_8.name(), "");
+        assertTrue(doc.select("span[score]").isEmpty());
     }
 }

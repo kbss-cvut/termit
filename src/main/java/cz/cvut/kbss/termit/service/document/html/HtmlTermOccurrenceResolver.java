@@ -20,8 +20,10 @@ package cz.cvut.kbss.termit.service.document.html;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.assignment.OccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.TermOccurrenceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -61,6 +63,9 @@ import java.util.Set;
 @Service("html")
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
+
+    private static final String BNODE_PREFIX = "_:";
+    private static final String SCORE_ATTRIBUTE = "score";
 
     private static final Logger LOG = LoggerFactory.getLogger(HtmlTermOccurrenceResolver.class);
 
@@ -166,11 +171,23 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             LOG.trace("Processing RDFa annotated element {}.", element);
             final Optional<TermOccurrence> occurrence = resolveAnnotation(element, source);
             occurrence.ifPresent(to -> {
-                if (to.getScore() != null && to.getScore() > scoreThreshold) {
-                    LOG.trace("Found term occurrence {}.", to);
+                if (!to.isSuggested()) {
+                    // Occurrence already approved in content (from previous manual approval)
+                    result.add(to);
+                } else if (existsApproved(to)) {
+                    LOG.trace("Found term occurrence {} with matching existing approved occurrence.", to);
+                    to.markApproved();
+                    // Annotation without score is considered approved by the frontend
+                    element.removeAttr(SCORE_ATTRIBUTE);
                     result.add(to);
                 } else {
-                    LOG.trace("The score of this occurrence {} is lower than the specified threshold", to);
+                    if (to.getScore() > scoreThreshold) {
+                        LOG.trace("Found term occurrence {}.", to);
+                        result.add(to);
+                    } else {
+                        LOG.trace("The confidence score of occurrence {} is lower than the configured threshold {}.",
+                                  to, scoreThreshold);
+                    }
                 }
             });
         }
@@ -187,7 +204,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         verifyTermExists(rdfaElem, termUri, termId);
         final TermOccurrence occurrence = createOccurrence(termUri, source);
         occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem));
-        final String strScore = rdfaElem.attr("score");
+        occurrence.setUri(resolveOccurrenceId(rdfaElem, source));
+        final String strScore = rdfaElem.attr(SCORE_ATTRIBUTE);
         if (!strScore.isEmpty()) {
             try {
                 final Double score = Double.parseDouble(strScore);
@@ -196,6 +214,9 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                 occurrence.setScore(0.0);
                 LOG.error("Unable to parse score.", e);
             }
+        } else {
+            // Occurrence already approved in text analysis output (probably from a previous processing of the content)
+            occurrence.markApproved();
         }
         return Optional.of(occurrence);
     }
@@ -210,6 +231,34 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                             termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
         }
         existingTermIds.add(termId);
+    }
+
+    private URI resolveOccurrenceId(Element rdfaElem, Asset<?> source) {
+        final String base = TermOccurrence.resolveContext(source.getUri()) + "/";
+        String about = rdfaElem.attr("about");
+        if (about.startsWith(BNODE_PREFIX)) {
+            about = about.substring(BNODE_PREFIX.length());
+        }
+        return URI.create(base + about);
+    }
+
+    private boolean existsApproved(TermOccurrence newOccurrence) {
+        final OccurrenceTarget target = newOccurrence.getTarget();
+        assert target != null;
+        final Set<Selector> selectors = target.getSelectors();
+        for (TermOccurrence to : existingOccurrences) {
+            if (!to.getTerm().equals(newOccurrence.getTerm())) {
+                continue;
+            }
+            final OccurrenceTarget existingTarget = to.getTarget();
+            assert existingTarget != null;
+            assert existingTarget.getSource().equals(target.getSource());
+            // Same term, contains at least one identical selector
+            if (existingTarget.getSelectors().stream().anyMatch(selectors::contains) && !to.isSuggested()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

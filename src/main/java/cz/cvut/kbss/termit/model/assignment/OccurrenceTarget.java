@@ -23,6 +23,8 @@ import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import java.net.URI;
 import java.util.Objects;
@@ -32,10 +34,12 @@ import java.util.Set;
 @OWLClass(iri = Vocabulary.s_c_cil_vyskytu)
 public abstract class OccurrenceTarget extends AbstractEntity {
 
+    @NotNull
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_zdroj)
     private URI source;
 
+    @NotEmpty
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_selektor, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<Selector> selectors;

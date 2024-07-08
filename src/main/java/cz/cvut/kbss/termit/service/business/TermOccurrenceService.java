@@ -45,18 +45,27 @@ public interface TermOccurrenceService {
     void persist(TermOccurrence occurrence);
 
     /**
-     * Approves the specified term occurrence.
+     * Saves the specified term occurrence, either persisting it or updating if it already exists.
+     * <p>
+     * If the occurrence already exists, it is assumed that the term has changed and only this attribute is updated.
+     *
+     * @param occurrence Occurrence to save
+     */
+    void persistOrUpdate(TermOccurrence occurrence);
+
+    /**
+     * Approves term occurrence with the specified identifier.
      * <p>
      * This removes the suggested classification of the occurrence if it were present.
      *
-     * @param occurrence Occurrence to approve
+     * @param occurrenceId Identifier of the occurrence to approve
      */
-    void approve(TermOccurrence occurrence);
+    void approve(URI occurrenceId);
 
     /**
-     * Removes the specified term occurrence.
+     * Removes term occurrence with the specified identifier.
      *
-     * @param occurrence Occurrence to remove
+     * @param occurrenceId Identifier of the occurrence to remove
      */
-    void remove(TermOccurrence occurrence);
+    void remove(URI occurrenceId);
 }

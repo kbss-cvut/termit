@@ -78,6 +78,12 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
         }
     }
 
+    @Override
+    public void detach(T entity) {
+        Objects.requireNonNull(entity);
+        em.detach(entity);
+    }
+
     @ModifiesData
     @Override
     public void persist(T entity) {

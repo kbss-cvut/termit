@@ -34,4 +34,9 @@ public class AsynchronousTermOccurrenceSaver implements TermOccurrenceSaver {
         synchronousSaver.saveOccurrences(occurrences, source);
         LOG.trace("Finished saving term occurrences for asset {}.", source);
     }
+
+    @Override
+    public List<TermOccurrence> getExistingOccurrences(Asset<?> source) {
+        return synchronousSaver.getExistingOccurrences(source);
+    }
 }
