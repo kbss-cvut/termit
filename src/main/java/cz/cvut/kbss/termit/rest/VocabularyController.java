@@ -69,9 +69,9 @@ import java.util.Optional;
 
 /**
  * Vocabulary management REST API.
- *
- * Note that most endpoints are now secured only by requiring the user to be authenticated, authorization is done
- * on service level based on ACL.
+ * <p>
+ * Note that most endpoints are now secured only by requiring the user to be authenticated, authorization is done on
+ * service level based on ACL.
  */
 @Tag(name = "Vocabularies", description = "Vocabulary management API")
 @RestController
