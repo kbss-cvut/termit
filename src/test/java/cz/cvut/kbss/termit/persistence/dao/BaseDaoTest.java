@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.Term;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Collections;
 import java.util.List;
@@ -49,11 +50,15 @@ class BaseDaoTest extends BaseDaoTestRunner {
     @Autowired
     private EntityManager em;
 
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
     private BaseDao<Term> sut;
 
     @BeforeEach
     void setUp() {
         this.sut = new BaseDaoImpl(em);
+        sut.setApplicationEventPublisher(eventPublisher);
     }
 
     @Test
