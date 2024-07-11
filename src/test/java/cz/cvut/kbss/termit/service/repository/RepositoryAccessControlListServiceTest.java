@@ -138,11 +138,11 @@ class RepositoryAccessControlListServiceTest {
     }
 
     @Test
-    void getRequiredReferenceThrowsNotFoundExceptionWhenMatchingAccessControlListIsNotFound() {
+    void getReferenceThrowsNotFoundExceptionWhenMatchingAccessControlListIsNotFound() {
         final URI uri = Generator.generateUri();
         when(dao.getReference(uri)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> sut.getRequiredReference(uri));
+        assertThrows(NotFoundException.class, () -> sut.getReference(uri));
         verify(dao).getReference(uri);
     }
 

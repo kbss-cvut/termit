@@ -47,7 +47,7 @@ import java.util.Optional;
 
 /**
  * Controller for basic user-related operations that do not involve editing/adding/removing user accounts.
- *
+ * <p>
  * Enabled when OIDC security is used.
  */
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "oidc")
@@ -76,7 +76,8 @@ public class OidcUserController extends BaseController {
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets the currently logged-in user.")
     @ApiResponse(responseCode = "200", description = "Metadata of the current user's account.")
-    @GetMapping(value = UserController.CURRENT_USER_PATH, produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @GetMapping(value = UserController.CURRENT_USER_PATH,
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public UserAccount getCurrent() {
         return userService.getCurrent();
     }
@@ -89,14 +90,15 @@ public class OidcUserController extends BaseController {
     })
     @GetMapping(value = "/{localName}/managed-assets", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    public List<RdfsResource> getManagedAssets(@Parameter(description = UserController.UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                          example = UserController.UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                               @PathVariable String localName,
-                                               @Parameter(description = UserController.UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                                          example = UserController.UserControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                               @RequestParam(name = Constants.QueryParams.NAMESPACE,
-                                                             required = false) Optional<String> namespace) {
+    public List<RdfsResource> getManagedAssets(
+            @Parameter(description = UserController.UserControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = UserController.UserControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = UserController.UserControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = UserController.UserControllerDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = Constants.QueryParams.NAMESPACE,
+                          required = false) Optional<String> namespace) {
         final URI id = idResolver.resolveIdentifier(namespace.orElse(config.getNamespace().getUser()), localName);
-        return userService.getManagedAssets(userService.getRequiredReference(id));
+        return userService.getManagedAssets(userService.getReference(id));
     }
 }

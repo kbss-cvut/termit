@@ -32,6 +32,7 @@ import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,8 +111,8 @@ public class UserService {
      * @return Reference to the matching user account
      * @throws NotFoundException When no matching account is found
      */
-    public UserAccount getRequiredReference(URI id) {
-        return repositoryService.getRequiredReference(id);
+    public UserAccount getReference(URI id) {
+        return repositoryService.getReference(id);
     }
 
     /**
@@ -168,6 +169,19 @@ public class UserService {
     public void updateCurrent(UserUpdateDto update) {
         LOG.trace("Updating current user account.");
         Objects.requireNonNull(update);
+        UserAccount currentUser = getCurrentUser(update);
+        if (!Objects.equals(currentUser.getTypes(), update.getTypes())) {
+            throw new ValidationException(
+                    "User " + securityUtils.getCurrentUser() + " attempted to update their role.");
+        }
+        if (update.getPassword() != null) {
+            securityUtils.verifyCurrentUserPassword(update.getOriginalPassword());
+        }
+        repositoryService.update(update.asUserAccount());
+    }
+
+    @NotNull
+    private UserAccount getCurrentUser(UserUpdateDto update) {
         UserAccount currentUser = securityUtils.getCurrentUser();
 
         if (!currentUser.getUri().equals(update.getUri())) {
@@ -178,14 +192,7 @@ public class UserService {
             throw new ValidationException(
                     "User " + securityUtils.getCurrentUser() + " attempted to update their username.");
         }
-        if (!Objects.equals(currentUser.getTypes(), update.getTypes())) {
-            throw new ValidationException(
-                    "User " + securityUtils.getCurrentUser() + " attempted to update their role.");
-        }
-        if (update.getPassword() != null) {
-            securityUtils.verifyCurrentUserPassword(update.getOriginalPassword());
-        }
-        repositoryService.update(update.asUserAccount());
+        return currentUser;
     }
 
     /**

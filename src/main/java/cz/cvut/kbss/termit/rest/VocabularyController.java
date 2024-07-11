@@ -47,7 +47,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -139,7 +148,7 @@ public class VocabularyController extends BaseController {
                                                  example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(
+        final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
@@ -158,7 +167,7 @@ public class VocabularyController extends BaseController {
                                                  example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(
+        final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
@@ -232,7 +241,7 @@ public class VocabularyController extends BaseController {
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(
+        final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChanges(vocabulary);
     }
@@ -253,7 +262,7 @@ public class VocabularyController extends BaseController {
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(
+        final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChangesOfContent(vocabulary);
     }
@@ -342,7 +351,7 @@ public class VocabularyController extends BaseController {
                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary toRemove = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary toRemove = vocabularyService.getReference(identifier);
         vocabularyService.remove(toRemove);
         LOG.debug("Vocabulary {} removed.", toRemove);
     }
@@ -364,7 +373,7 @@ public class VocabularyController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         return vocabularyService.validateContents(vocabulary);
     }
 
@@ -385,7 +394,7 @@ public class VocabularyController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
         LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
         return ResponseEntity.created(
@@ -413,7 +422,7 @@ public class VocabularyController extends BaseController {
                                                   example = ApiDocConstants.DATETIME_EXAMPLE)
                                           @RequestParam(name = "at", required = false) Optional<String> at) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         if (at.isPresent()) {
             final Instant instant = RestUtils.parseTimestamp(at.get());
             return ResponseEntity.ok(vocabularyService.findVersionValidAt(vocabulary, instant));
@@ -437,7 +446,7 @@ public class VocabularyController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         return vocabularyService.getAccessControlList(vocabulary);
     }
 
@@ -459,7 +468,7 @@ public class VocabularyController extends BaseController {
                                        @Parameter(description = "Access control record to add.")
                                        @RequestBody AccessControlRecord<?> record) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         vocabularyService.addAccessControlRecords(vocabulary, record);
         LOG.debug("Added access control record to ACL of vocabulary {}.", vocabulary);
     }
@@ -482,7 +491,7 @@ public class VocabularyController extends BaseController {
                                           @Parameter(description = "Access control record to remove.")
                                           @RequestBody AccessControlRecord<?> record) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         vocabularyService.removeAccessControlRecord(vocabulary, record);
         LOG.debug("Removed access control record from ACL of vocabulary {}.", vocabulary);
     }
@@ -512,7 +521,7 @@ public class VocabularyController extends BaseController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Change record identifier does not match URL.");
         }
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         vocabularyService.updateAccessControlLevel(vocabulary, record);
         LOG.debug("Updated access control record {} from ACL of vocabulary {}.", record, vocabulary);
     }
@@ -532,7 +541,7 @@ public class VocabularyController extends BaseController {
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(identifier);
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         return vocabularyService.getAccessLevel(vocabulary);
     }
 

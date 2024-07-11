@@ -171,7 +171,7 @@ class UserControllerTest extends BaseControllerTestRunner {
     void getManagedAssetsRetrievesManagedAssetsForUserWithSpecifiedUri() throws Exception {
         final String namespace = Vocabulary.s_c_uzivatel_termitu + "/";
         when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
-        when(userService.getRequiredReference(user.getUri())).thenReturn(user);
+        when(userService.getReference(user.getUri())).thenReturn(user);
         final List<RdfsResource> resources = Collections.singletonList(
                 new RdfsResource(Generator.generateUri(), MultilingualString.create("Test term", Environment.LANGUAGE),
                                  null,

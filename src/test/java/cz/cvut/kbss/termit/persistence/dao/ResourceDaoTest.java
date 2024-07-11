@@ -353,7 +353,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         });
 
         transactional(() -> {
-            final Resource toRemove = sut.getReference(file.getUri()).get();
+            final Resource toRemove = sut.getReference(file.getUri());
             sut.remove(toRemove);
         });
 

@@ -58,11 +58,6 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         this.resourceService = resourceService;
     }
 
-    @Override
-    public TermOccurrence getRequiredReference(URI id) {
-        return termOccurrenceDao.getReference(id).orElseThrow(() -> NotFoundException.create(TermOccurrence.class, id));
-    }
-
     @Transactional
     @Override
     public void persist(TermOccurrence occurrence) {
@@ -118,7 +113,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     public void remove(URI occurrenceId) {
         Objects.requireNonNull(occurrenceId);
         LOG.trace("Removing term occurrence {}.", occurrenceId);
-        termOccurrenceDao.getReference(occurrenceId).ifPresent(termOccurrenceDao::remove);
+        termOccurrenceDao.find(occurrenceId).ifPresent(termOccurrenceDao::remove);
     }
 
     /**

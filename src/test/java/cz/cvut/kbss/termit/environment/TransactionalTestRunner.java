@@ -30,6 +30,10 @@ public abstract class TransactionalTestRunner {
         Transaction.execute(txManager, procedure);
     }
 
+    protected void readOnlyTransactional(Runnable procedure) {
+        Transaction.executeReadOnly(txManager, procedure);
+    }
+
     protected void enableRdfsInference(EntityManager em) {
         transactional(() -> Environment.addModelStructureForRdfsInference(em));
     }

@@ -263,8 +263,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @throws NotFoundException When vocabulary with the specified identifier does not exist
      */
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
-    public Vocabulary getRequiredVocabularyReference(URI id) {
-        return vocabularyService.getRequiredReference(id);
+    public Vocabulary getVocabularyReference(URI id) {
+        return vocabularyService.getReference(id);
     }
 
     /**
@@ -303,28 +303,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Gets a reference to a Term with the specified identifier.
      * <p>
-     * Note that this method is not protected by ACL-based authorization and should thus not be used in without some
+     * Note that this method is not protected by ACL-based authorization and should thus not be used without some
      * other type of authorization.
      *
      * @param id Term identifier
      * @return Matching Term reference wrapped in an {@code Optional}
      */
-    public Optional<Term> getReference(URI id) {
+    public Term getReference(URI id) {
         return repositoryService.getReference(id);
-    }
-
-    /**
-     * Gets a reference to a Term with the specified identifier.
-     * <p>
-     * Note that this method is not protected by ACL-based authorization and should thus not be used in without some
-     * other type of authorization.
-     *
-     * @param id Term identifier
-     * @return Matching term reference
-     * @throws NotFoundException When no matching term is found
-     */
-    public Term getRequiredReference(URI id) {
-        return repositoryService.getRequiredReference(id);
     }
 
     /**
@@ -400,7 +386,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
         analyzeTermDefinition(child, parent.getVocabulary());
-        vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(parent.getVocabulary()));
+        vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(parent.getVocabulary()));
     }
 
     /**
@@ -421,7 +407,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
             analyzeTermDefinition(term, original.getVocabulary());
         }
         if (!Objects.equals(original.getLabel(), term.getLabel())) {
-            vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(original.getVocabulary()));
+            vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(original.getVocabulary()));
         }
         return result;
     }

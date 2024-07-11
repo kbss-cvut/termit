@@ -116,10 +116,10 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     @Override
-    public Optional<Vocabulary> getReference(URI id) {
+    public Vocabulary getReference(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.getReference(type, id, descriptorFactory.vocabularyDescriptor(id)));
+            return em.getReference(type, id, descriptorFactory.vocabularyDescriptor(id));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

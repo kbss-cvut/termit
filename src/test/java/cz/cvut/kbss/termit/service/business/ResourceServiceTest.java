@@ -105,7 +105,7 @@ class ResourceServiceTest {
     @Test
     void removeRemovesResourceViaRepositoryService() {
         final Resource resource = Generator.generateResourceWithId();
-        when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.getReference(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
     }
@@ -117,7 +117,7 @@ class ResourceServiceTest {
         toRemove.setUri(Generator.generateUri());
         final Resource resource = Generator.generateResource();
         resource.setUri(toRemove.getUri());
-        when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.getReference(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
         verify(documentManager).remove(resource);
@@ -216,7 +216,7 @@ class ResourceServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         file.getDocument().setVocabulary(vocabulary.getUri());
         final Set<URI> imported = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
-        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(imported);
 
         sut.runTextAnalysis(file, Collections.emptySet());
@@ -233,9 +233,9 @@ class ResourceServiceTest {
         final Set<URI> vOneImports = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
         final Vocabulary vTwo = Generator.generateVocabularyWithId();
         final Set<URI> vTwoImports = Collections.singleton(Generator.generateUri());
-        when(vocabularyService.getRequiredReference(vOne.getUri())).thenReturn(vOne);
+        when(vocabularyService.getReference(vOne.getUri())).thenReturn(vOne);
         when(vocabularyService.getTransitivelyImportedVocabularies(vOne)).thenReturn(vOneImports);
-        when(vocabularyService.getRequiredReference(vTwo.getUri())).thenReturn(vTwo);
+        when(vocabularyService.getReference(vTwo.getUri())).thenReturn(vTwo);
         when(vocabularyService.getTransitivelyImportedVocabularies(vTwo)).thenReturn(vTwoImports);
 
         sut.runTextAnalysis(file, new HashSet<>(Arrays.asList(vOne.getUri(), vTwo.getUri())));
@@ -253,13 +253,6 @@ class ResourceServiceTest {
         final URI uri = Generator.generateUri();
         sut.getReference(uri);
         verify(resourceRepositoryService).getReference(uri);
-    }
-
-    @Test
-    void getRequiredReferenceDelegatesCallToRepositoryService() {
-        final URI uri = Generator.generateUri();
-        sut.getRequiredReference(uri);
-        verify(resourceRepositoryService).getRequiredReference(uri);
     }
 
     @Test
@@ -324,11 +317,11 @@ class ResourceServiceTest {
         final Document doc = Generator.generateDocumentWithId();
         doc.setVocabulary(vocabulary.getUri());
         final File fOne = Generator.generateFileWithId("test.html");
-        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(doc, fOne);
         verify(resourceRepositoryService).persist(fOne, vocabulary);
-        verify(vocabularyService).getRequiredReference(vocabulary.getUri());
+        verify(vocabularyService).getReference(vocabulary.getUri());
     }
 
     @Test
@@ -337,11 +330,11 @@ class ResourceServiceTest {
         final Document doc = Generator.generateDocumentWithId();
         doc.setVocabulary(vocabulary.getUri());
         final File fOne = Generator.generateFileWithId("test.html");
-        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(doc, fOne);
         verify(resourceRepositoryService).persist(doc);
-        verify(vocabularyService).getRequiredReference(vocabulary.getUri());
+        verify(vocabularyService).getReference(vocabulary.getUri());
     }
 
     @Test
@@ -400,7 +393,7 @@ class ResourceServiceTest {
     @Test
     void removeRemovesAssociatedDiskContent() {
         final Resource resource = Generator.generateResourceWithId();
-        when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.getReference(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(documentManager).remove(resource);
     }

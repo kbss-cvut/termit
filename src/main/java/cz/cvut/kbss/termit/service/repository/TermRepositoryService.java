@@ -126,7 +126,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     @Override
     protected void postUpdate(@NotNull Term instance) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(instance.getVocabulary());
+        final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.getGlossary().removeRootTerm(instance);
         } else {
@@ -170,7 +170,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
         // Load vocabulary so that it is managed and changes to it (resp. the glossary) are persisted on commit
-        final Vocabulary toUpdate = vocabularyService.getRequiredReference(vocabularyIri);
+        final Vocabulary toUpdate = vocabularyService.getReference(vocabularyIri);
         instance.setGlossary(toUpdate.getGlossary().getUri());
         toUpdate.getGlossary().addRootTerm(instance);
     }
@@ -185,7 +185,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
         prepareTermForPersist(instance, vocabularyIri);
 
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(vocabularyIri);
+        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyIri);
         instance.setGlossary(vocabulary.getGlossary().getUri());
         instance.addParentTerm(parentTerm);
         instance.splitExternalAndInternalParents();

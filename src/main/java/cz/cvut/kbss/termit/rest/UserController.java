@@ -220,7 +220,7 @@ public class UserController extends BaseController {
                                                @RequestParam(name = Constants.QueryParams.NAMESPACE,
                                                              required = false) Optional<String> namespace) {
         final URI id = idResolver.resolveIdentifier(namespace.orElse(config.getNamespace().getUser()), localName);
-        return userService.getManagedAssets(userService.getRequiredReference(id));
+        return userService.getManagedAssets(userService.getReference(id));
     }
 
     /**

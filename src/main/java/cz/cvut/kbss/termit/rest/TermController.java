@@ -220,7 +220,7 @@ public class TermController extends BaseController {
             @Parameter(description = "Language of the label.")
             @RequestParam(name = "language", required = false) String language) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
-        final Vocabulary vocabulary = termService.getRequiredVocabularyReference(vocabularyUri);
+        final Vocabulary vocabulary = termService.getVocabularyReference(vocabularyUri);
         if (prefLabel != null) {
             final boolean exists = termService.existsInVocabulary(prefLabel, vocabulary, language);
             return new ResponseEntity<>(exists ? HttpStatus.OK : HttpStatus.NOT_FOUND);

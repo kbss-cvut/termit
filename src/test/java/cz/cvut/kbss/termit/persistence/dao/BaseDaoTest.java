@@ -34,8 +34,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BaseDaoTest extends BaseDaoTestRunner {
 
@@ -59,7 +66,7 @@ class BaseDaoTest extends BaseDaoTestRunner {
                 }).collect(Collectors.toList());
         transactional(() -> sut.persist(terms));
         final List<Term> result = sut.findAll();
-        assertThat(result, hasItems(terms.toArray(new Term[] {})));
+        assertThat(result, hasItems(terms.toArray(new Term[]{})));
     }
 
     @Test
@@ -151,7 +158,7 @@ class BaseDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.persist(terms));
 
         final PersistenceException e = assertThrows(PersistenceException.class,
-                () -> transactional(() -> sut.persist(terms)));
+                                                    () -> transactional(() -> sut.persist(terms)));
         assertThat(e.getCause(), is(instanceOf(OWLPersistenceException.class)));
     }
 
@@ -159,16 +166,12 @@ class BaseDaoTest extends BaseDaoTestRunner {
     void getReferenceRetrievesReferenceToMatchingInstance() {
         final Term term = Generator.generateTermWithId();
         transactional(() -> sut.persist(term));
-        final Optional<Term> result = sut.getReference(term.getUri());
-        assertTrue(result.isPresent());
-        assertEquals(term.getUri(), result.get().getUri());
-    }
-
-    @Test
-    void getReferenceReturnsEmptyOptionalWhenNoMatchingInstanceExists() {
-        final Optional<Term> result = sut.getReference(Generator.generateUri());
-        assertNotNull(result);
-        assertFalse(result.isPresent());
+        readOnlyTransactional(() -> {
+            final Term result = sut.getReference(term.getUri());
+            assertNotNull(result);
+            // This will trigger state loading
+            assertEquals(term, result);
+        });
     }
 
     @Test

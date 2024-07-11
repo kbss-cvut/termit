@@ -69,10 +69,10 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     }
 
     @Override
-    public Optional<T> getReference(URI id) {
+    public T getReference(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.getReference(type, id, getDescriptor()));
+            return em.getReference(type, id, getDescriptor());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -123,8 +123,8 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
         Objects.requireNonNull(entity);
         Objects.requireNonNull(entity.getUri());
         try {
-            final Optional<T> reference = getReference(entity.getUri());
-            reference.ifPresent(em::remove);
+            final Optional<T> toRemove = find(entity.getUri());
+            toRemove.ifPresent(em::remove);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

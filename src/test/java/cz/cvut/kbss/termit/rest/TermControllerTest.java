@@ -147,7 +147,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final String language = "en";
         final URI vocabularyUri = URI.create(namespace + VOCABULARY_NAME);
         when(idResolverMock.resolveIdentifier(namespace, VOCABULARY_NAME)).thenReturn(vocabularyUri);
-        when(termServiceMock.getRequiredVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
+        when(termServiceMock.getVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
         when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(true);
         mockMvc.perform(
                        head(PATH + VOCABULARY_NAME + "/terms")
@@ -165,7 +165,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final String language = "en";
         final URI vocabularyUri = URI.create(namespace + VOCABULARY_NAME);
         when(idResolverMock.resolveIdentifier(namespace, VOCABULARY_NAME)).thenReturn(vocabularyUri);
-        when(termServiceMock.getRequiredVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
+        when(termServiceMock.getVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
         when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(false);
         mockMvc.perform(
                        head(PATH + VOCABULARY_NAME + "/terms")
@@ -1042,7 +1042,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void checkTermsRetrievesNumberOfTermsInVocabularyWithSpecifiedIdentifier() throws Exception {
         when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
                 .thenReturn(URI.create(VOCABULARY_URI));
-        when(termServiceMock.getRequiredVocabularyReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(termServiceMock.getVocabularyReference(vocabulary.getUri())).thenReturn(vocabulary);
         final Integer termCount = Generator.randomInt(0, 200);
         when(termServiceMock.getTermCount(vocabulary)).thenReturn(termCount);
 

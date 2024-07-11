@@ -235,7 +235,7 @@ public class ResourceController extends BaseController {
                                @RequestParam(name = QueryParams.NAMESPACE,
                                              required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getResource()), localName);
-        return resourceService.getFiles(resourceService.getRequiredReference(identifier));
+        return resourceService.getFiles(resourceService.getReference(identifier));
     }
 
     private String resourceNamespace(Optional<String> namespace) {
@@ -359,7 +359,7 @@ public class ResourceController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final Resource resource = resourceService
-                .getRequiredReference(resolveIdentifier(resourceNamespace(namespace), localName));
+                .getReference(resolveIdentifier(resourceNamespace(namespace), localName));
         return resourceService.getChanges(resource);
     }
 

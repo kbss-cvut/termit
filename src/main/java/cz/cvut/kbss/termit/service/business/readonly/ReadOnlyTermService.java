@@ -113,8 +113,8 @@ public class ReadOnlyTermService {
         return termService.getComments(term, from, to);
     }
 
-    public Term getRequiredReference(URI uri) {
-        return termService.getRequiredReference(uri);
+    public Term getReference(URI uri) {
+        return termService.getReference(uri);
     }
 
     /**

@@ -137,14 +137,8 @@ public class VocabularyService
 
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
-    public Optional<Vocabulary> getReference(URI id) {
+    public Vocabulary getReference(URI id) {
         return repositoryService.getReference(id);
-    }
-
-    @Override
-    @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
-    public Vocabulary getRequiredReference(URI id) {
-        return repositoryService.getRequiredReference(id);
     }
 
     @Override
@@ -255,7 +249,7 @@ public class VocabularyService
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
-                importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
+                importedVocabulary -> allTerms.addAll(termService.findAll(getReference(importedVocabulary))));
         final Map<TermDto, URI> termsToContexts = new HashMap<>(allTerms.size());
         allTerms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
         termService.asyncAnalyzeTermDefinitions(termsToContexts);
