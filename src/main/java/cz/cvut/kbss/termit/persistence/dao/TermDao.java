@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -172,6 +173,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
             evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
             eventPublisher.publishEvent(new VocabularyContentModified(this, vocabulary.getUri()));
+            eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

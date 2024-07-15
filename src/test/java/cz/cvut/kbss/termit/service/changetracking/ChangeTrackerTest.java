@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -72,13 +73,13 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void recordAddEventStoresCreationChangeRecordInRepository() {
+    void onAssetPersistEventStoresCreationChangeRecordInRepository() {
         enableRdfsInference(em);
         final Term newTerm = Generator.generateTermWithId();
         newTerm.setGlossary(vocabulary.getGlossary().getUri());
         transactional(() -> {
             em.persist(newTerm, descriptorFactory.termDescriptor(vocabulary));
-            sut.recordAddEvent(newTerm);
+            sut.onAssetPersistEvent(new AssetPersistEvent(this, newTerm));
         });
 
         final List<AbstractChangeRecord> result = findRecords(newTerm);

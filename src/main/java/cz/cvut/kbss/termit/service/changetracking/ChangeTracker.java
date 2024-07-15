@@ -17,17 +17,21 @@
  */
 package cz.cvut.kbss.termit.service.changetracking;
 
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
+import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,20 +63,6 @@ public class ChangeTracker {
     }
 
     /**
-     * Records an asset addition to the repository.
-     *
-     * @param added The added asset
-     */
-    @Transactional
-    public void recordAddEvent(Asset<?> added) {
-        Objects.requireNonNull(added);
-        final AbstractChangeRecord changeRecord = new PersistChangeRecord(added);
-        changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
-        changeRecord.setTimestamp(Utils.timestamp());
-        changeRecordDao.persist(changeRecord, added);
-    }
-
-    /**
      * Records an asset update.
      * <p>
      * Each changed attribute is stored as a separate change record
@@ -88,13 +78,33 @@ public class ChangeTracker {
         final User user = securityUtils.getCurrentUser().toUser();
         final Collection<UpdateChangeRecord> changes = changeCalculator.calculateChanges(update, original);
         if (!changes.isEmpty()) {
-            LOG.trace("Found changes to attributes: " + changes.stream().map(ch -> ch.getChangedAttribute().toString())
-                                                               .collect(Collectors.joining(", ")));
+            LOG.trace("Found changes to attributes: {}", changes.stream().map(ch -> ch.getChangedAttribute().toString())
+                                                                .collect(Collectors.joining(", ")));
         }
         changes.forEach(ch -> {
             ch.setAuthor(user);
             ch.setTimestamp(now);
             changeRecordDao.persist(ch, update);
         });
+    }
+
+    /**
+     * Records an asset addition to the repository.
+     *
+     * @param event Event representing the asset persist
+     */
+    @Transactional
+    @EventListener
+    public void onAssetPersistEvent(@NonNull AssetPersistEvent event) {
+        final Asset<?> added = event.getAsset();
+        if (added instanceof File) {
+            LOG.trace("Skipping recording of creation of file {}.", added);
+            return;
+        }
+        LOG.trace("Recording creation of asset {}.", added);
+        final AbstractChangeRecord changeRecord = new PersistChangeRecord(added);
+        changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
+        changeRecord.setTimestamp(Utils.timestamp());
+        changeRecordDao.persist(changeRecord, added);
     }
 }

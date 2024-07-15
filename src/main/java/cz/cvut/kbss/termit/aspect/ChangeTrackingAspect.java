@@ -19,10 +19,8 @@ package cz.cvut.kbss.termit.aspect;
 
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingHelperDao;
 import cz.cvut.kbss.termit.service.changetracking.ChangeTracker;
-import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -46,16 +44,6 @@ public class ChangeTrackingAspect {
     @Autowired
     private ChangeTrackingHelperDao helperDao;
 
-    @Pointcut(value = "execution(public void persist(..)) && (target(cz.cvut.kbss.termit.persistence.dao.BaseAssetDao)) " +
-            "&& @args(cz.cvut.kbss.termit.model.changetracking.Audited)")
-    public void persistOperation() {
-    }
-
-    @Pointcut(value = "execution(public void persist(..)) && target(cz.cvut.kbss.termit.persistence.dao.TermDao) " +
-            "&& @args(cz.cvut.kbss.termit.model.changetracking.Audited, *)")
-    public void persistTermOperation() {
-    }
-
     @Pointcut(value = "execution(public * update(..)) && target(cz.cvut.kbss.termit.persistence.dao.BaseAssetDao) " +
             "&& @args(cz.cvut.kbss.termit.model.changetracking.Audited)")
     public void updateOperation() {
@@ -64,18 +52,6 @@ public class ChangeTrackingAspect {
     @Pointcut(value = "execution(public void setState(..)) && target(cz.cvut.kbss.termit.persistence.dao.TermDao)" +
             "&& @args(cz.cvut.kbss.termit.model.changetracking.Audited, *)")
     public void termStateUpdateOperation() {
-    }
-
-    @After(value = "persistOperation() && args(asset)")
-    public void recordAssetPersist(Asset<?> asset) {
-        LOG.trace("Recording creation of asset {}.", asset);
-        changeTracker.recordAddEvent(asset);
-    }
-
-    @After(value = "persistTermOperation() && args(asset, voc)", argNames = "asset,voc")
-    public void recordTermPersist(Term asset, Vocabulary voc) {
-        LOG.trace("Recording creation of term {}.", asset);
-        changeTracker.recordAddEvent(asset);
     }
 
     @Before(value = "updateOperation() && args(asset)")
