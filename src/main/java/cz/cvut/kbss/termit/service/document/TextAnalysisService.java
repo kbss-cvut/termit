@@ -124,7 +124,7 @@ public class TextAnalysisService {
         }
         final HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE);
-        LOG.debug("Invoking text analysis service on input: {}", input);
+        LOG.debug("Invoking text analysis service at '{}' on input: {}", config.getTextAnalysis().getUrl(), input);
         final ResponseEntity<Resource> resp = restClient
                 .exchange(config.getTextAnalysis().getUrl(), HttpMethod.POST,
                           new HttpEntity<>(input, headers), Resource.class);
