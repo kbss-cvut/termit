@@ -82,6 +82,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -786,17 +787,15 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             final ValueFactory vf = conn.getValueFactory();
             final IRI subject = vf.createIRI(term.getUri().toString());
             final IRI hasSource = vf.createIRI(DC.Terms.SOURCE);
-            final List<Statement> sourceStatements = conn.getStatements(subject, hasSource, null).stream().collect(
-                    Collectors.toList());
+            final List<Statement> sourceStatements = conn.getStatements(subject, hasSource, null).stream().toList();
             assertEquals(term.getSources().size(), sourceStatements.size());
             sourceStatements.forEach(ss -> {
                 assertTrue(term.getSources().contains(ss.getObject().stringValue()));
-                if (ss.getObject() instanceof Literal) {
-                    final Literal litSource = (Literal) ss.getObject();
+                if (ss.getObject() instanceof Literal litSource) {
                     assertFalse(litSource.getLanguage().isPresent());
                     assertEquals(XSD.STRING, litSource.getDatatype());
                 } else {
-                    assertTrue(ss.getObject() instanceof IRI);
+                    assertInstanceOf(IRI.class, ss.getObject());
                 }
             });
         }
