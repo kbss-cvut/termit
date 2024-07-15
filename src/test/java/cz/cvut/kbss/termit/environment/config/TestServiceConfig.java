@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.environment.config;
 
 import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
-import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -99,11 +98,6 @@ public class TestServiceConfig {
     @Bean
     ChangeTrackingAspect changeTrackingAspect() {
         return Aspects.aspectOf(ChangeTrackingAspect.class);
-    }
-
-    @Bean
-    VocabularyContentModificationAspect vocabularyContentModificationAspect() {
-        return Aspects.aspectOf(VocabularyContentModificationAspect.class);
     }
 
     @Bean
