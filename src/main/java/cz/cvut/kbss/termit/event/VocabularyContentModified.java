@@ -19,6 +19,8 @@ package cz.cvut.kbss.termit.event;
 
 import org.springframework.context.ApplicationEvent;
 
+import java.net.URI;
+
 /**
  * Represents an event of modification of the content of a vocabulary.
  * <p>
@@ -26,7 +28,14 @@ import org.springframework.context.ApplicationEvent;
  */
 public class VocabularyContentModified extends ApplicationEvent {
 
-    public VocabularyContentModified(Object source) {
+    private final URI vocabularyIri;
+
+    public VocabularyContentModified(Object source, URI vocabularyIri) {
         super(source);
+        this.vocabularyIri = vocabularyIri;
+    }
+
+    public URI getVocabularyIri() {
+        return vocabularyIri;
     }
 }

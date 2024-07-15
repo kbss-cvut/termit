@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,8 +76,9 @@ class ResultCachingValidatorTest {
         when(validator.validate(anyCollection())).thenReturn(results);
         final Set<URI> vocabularies = Collections.singleton(Generator.generateUri());
         final List<ValidationResult> resultOne = sut.validate(vocabularies);
-        sut.evictCache(new VocabularyContentModified(this));
+        sut.evictCache(new VocabularyContentModified(this, null));
         final List<ValidationResult> resultTwo = sut.validate(vocabularies);
         verify(validator, times(2)).validate(vocabularies);
+        assertNotSame(resultOne, resultTwo);
     }
 }

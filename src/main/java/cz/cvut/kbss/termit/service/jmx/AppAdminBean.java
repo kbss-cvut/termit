@@ -65,7 +65,7 @@ public class AppAdminBean implements SelfNaming {
         eventPublisher.publishEvent(new EvictCacheEvent(this));
         LOG.info("Refreshing last modified timestamps...");
         eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
-        eventPublisher.publishEvent(new VocabularyContentModified(this));
+        eventPublisher.publishEvent(new VocabularyContentModified(this, null));
     }
 
     @ManagedOperation(description = "Sends test email to the specified address.")

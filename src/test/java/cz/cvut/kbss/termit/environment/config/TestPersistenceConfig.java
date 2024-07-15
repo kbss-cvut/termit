@@ -24,11 +24,15 @@ import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import cz.cvut.kbss.termit.workspace.EditableVocabulariesHolder;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import static org.mockito.Mockito.mock;
 
 @TestConfiguration
 @EnableAspectJAutoProxy(proxyTargetClass = true)
@@ -40,5 +44,11 @@ public class TestPersistenceConfig {
     @Bean
     public EditableVocabularies editableVocabularies(Configuration config, ObjectProvider<EditableVocabulariesHolder> editableVocabulariesHolder) {
         return new EditableVocabularies(config, editableVocabulariesHolder);
+    }
+
+    @Bean
+    @Primary
+    public ApplicationEventPublisher eventPublisher() {
+        return mock(ApplicationEventPublisher.class);
     }
 }
