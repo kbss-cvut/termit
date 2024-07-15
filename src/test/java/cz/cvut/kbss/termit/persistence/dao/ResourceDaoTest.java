@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -33,7 +34,10 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Comparator;
@@ -54,12 +58,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ResourceDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private DescriptorFactory descriptorFactory;
@@ -74,6 +83,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         this.user = Generator.generateUserWithId();
         transactional(() -> em.persist(user));
         Environment.setCurrentUser(user);
+        sut.setApplicationEventPublisher(eventPublisher);
     }
 
     private Resource generateResource() {
@@ -328,6 +338,22 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         assertEquals(newLabel, result.get().getLabel());
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
+    }
+
+    @Test
+    void updatePublishesAssetUpdateEvent() {
+        final Resource resource = generateResource();
+        final String newLabel = "New label";
+        resource.setLabel(newLabel);
+
+        transactional(() -> sut.update(resource));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
+                                                      .filter(AssetUpdateEvent.class::isInstance)
+                                                      .map(AssetUpdateEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(resource, evt.get().getAsset());
     }
 
     @Test

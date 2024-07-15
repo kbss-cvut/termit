@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 @TestConfiguration
 @EnableAspectJAutoProxy(proxyTargetClass = true)
@@ -46,9 +46,9 @@ public class TestPersistenceConfig {
         return new EditableVocabularies(config, editableVocabulariesHolder);
     }
 
-    @Bean
+    @Bean("spiedPublisher")
     @Primary
-    public ApplicationEventPublisher eventPublisher() {
-        return mock(ApplicationEventPublisher.class);
+    public ApplicationEventPublisher eventPublisher(ApplicationEventPublisher eventPublisher) {
+        return spy(eventPublisher);
     }
 }

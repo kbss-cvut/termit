@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -53,6 +54,23 @@ class BaseAssetDaoTest extends BaseDaoTestRunner{
         final Optional<AssetPersistEvent> evt = captor.getAllValues().stream()
                                                       .filter(AssetPersistEvent.class::isInstance)
                                                       .map(AssetPersistEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(t, evt.get().getAsset());
+    }
+
+    @Test
+    void updatePublishesAssetUpdateEvent() {
+        final Term t = Generator.generateTermWithId();
+        transactional(() -> em.persist(t));
+        t.setPrimaryLabel("Updated primary label");
+
+        transactional(() -> sut.update(t));
+
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
+                                                     .filter(AssetUpdateEvent.class::isInstance)
+                                                     .map(AssetUpdateEvent.class::cast).findFirst();
         assertTrue(evt.isPresent());
         assertEquals(t, evt.get().getAsset());
     }

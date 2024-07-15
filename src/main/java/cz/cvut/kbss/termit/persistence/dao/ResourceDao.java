@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -114,6 +115,7 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
             throw new PersistenceException(e);
         }
         refreshLastModified();
+        eventPublisher.publishEvent(new AssetUpdateEvent(this, updated));
         return updated;
     }
 

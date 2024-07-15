@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -189,6 +190,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             evictPossiblyCachedReferences(entity);
             final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
             entity.setDefinitionSource(original.getDefinitionSource());
+            eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
             final Term result = em.merge(entity, descriptorFactory.termDescriptor(entity));
             eventPublisher.publishEvent(new VocabularyContentModified(this, original.getVocabulary()));
@@ -229,6 +231,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @param state State to set
      */
     public void setState(Term term, URI state) {
+        term.setState(state);
+        eventPublisher.publishEvent(new AssetUpdateEvent(this, term));
         evictPossiblyCachedReferences(term);
         em.createNativeQuery("DELETE {" +
                   "?t ?hasState ?oldState ." +
