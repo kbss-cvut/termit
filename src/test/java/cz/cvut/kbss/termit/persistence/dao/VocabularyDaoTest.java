@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -62,6 +63,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -374,6 +376,23 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(newLabel, result.get().getLabel().get(Environment.LANGUAGE));
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
+    }
+
+    @Test
+    void updatePublishesAssetUpdateEvent() {
+        final Vocabulary voc = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
+        final String newLabel = "New vocabulary label";
+        voc.setLabel(MultilingualString.create(newLabel, Environment.LANGUAGE));
+
+        transactional(() -> sut.update(voc));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
+                                                     .filter(AssetUpdateEvent.class::isInstance)
+                                                     .map(AssetUpdateEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(voc, evt.get().getAsset());
     }
 
     @Test

@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -25,6 +26,7 @@ import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingHelperDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
@@ -37,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -52,13 +53,16 @@ public class ChangeTracker {
 
     private final ChangeRecordDao changeRecordDao;
 
+    private final ChangeTrackingHelperDao helperDao;
+
     private final SecurityUtils securityUtils;
 
     @Autowired
     public ChangeTracker(ChangeCalculator changeCalculator, ChangeRecordDao changeRecordDao,
-                         SecurityUtils securityUtils) {
+                         ChangeTrackingHelperDao helperDao, SecurityUtils securityUtils) {
         this.changeCalculator = changeCalculator;
         this.changeRecordDao = changeRecordDao;
+        this.helperDao = helperDao;
         this.securityUtils = securityUtils;
     }
 
@@ -71,16 +75,19 @@ public class ChangeTracker {
      * @param original The original version of the asset
      */
     @Transactional
-    public void recordUpdateEvent(Asset<?> update, Asset<?> original) {
-        Objects.requireNonNull(update);
-        Objects.requireNonNull(original);
+    @EventListener(AssetUpdateEvent.class)
+    public void onAssetUpdateEvent(AssetUpdateEvent event) {
+        final Asset<?> update = event.getAsset();
+        final Asset<?> original = helperDao.findStored(update);
         final Instant now = Utils.timestamp();
         final User user = securityUtils.getCurrentUser().toUser();
         final Collection<UpdateChangeRecord> changes = changeCalculator.calculateChanges(update, original);
-        if (!changes.isEmpty()) {
-            LOG.trace("Found changes to attributes: {}", changes.stream().map(ch -> ch.getChangedAttribute().toString())
-                                                                .collect(Collectors.joining(", ")));
+        if (changes.isEmpty()) {
+            return;
         }
+        LOG.trace("Recording update of asset {}.", update);
+        LOG.trace("Found changes to attributes: {}", changes.stream().map(ch -> ch.getChangedAttribute().toString())
+                                                            .collect(Collectors.joining(", ")));
         changes.forEach(ch -> {
             ch.setAuthor(user);
             ch.setTimestamp(now);

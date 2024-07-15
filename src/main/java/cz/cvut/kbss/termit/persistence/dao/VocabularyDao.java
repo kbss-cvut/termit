@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
@@ -166,21 +167,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     @ModifiesData
     @Override
-    public Vocabulary update(Vocabulary entity) {
-        Objects.requireNonNull(entity);
-        try {
-            // Evict possibly cached instance loaded from default context
-            em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
-            final Vocabulary result = em.merge(entity, descriptorFactory.vocabularyDescriptor(entity));
-            refreshLastModified();
-            return result;
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @ModifiesData
-    @Override
     public void persist(Vocabulary entity) {
         Objects.requireNonNull(entity);
         try {
@@ -190,6 +176,22 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             }
             refreshLastModified();
             eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @ModifiesData
+    @Override
+    public Vocabulary update(Vocabulary entity) {
+        Objects.requireNonNull(entity);
+        try {
+            eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
+            // Evict possibly cached instance loaded from default context
+            em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
+            final Vocabulary result = em.merge(entity, descriptorFactory.vocabularyDescriptor(entity));
+            refreshLastModified();
+            return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

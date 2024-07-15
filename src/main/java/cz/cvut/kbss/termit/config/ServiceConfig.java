@@ -18,13 +18,11 @@
 package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.aspectj.lang.Aspects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -106,11 +104,5 @@ public class ServiceConfig {
             return createFileSystemResource(config.getLanguage().getStates().getSource(), "states");
         }
         return new ClassPathResource("languages/states.ttl");
-    }
-
-    @Bean
-    ChangeTrackingAspect changeTrackingAspect() {
-        // Need to create the aspect as a bean, so that it can be injected into
-        return Aspects.aspectOf(ChangeTrackingAspect.class);
     }
 }

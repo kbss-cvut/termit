@@ -25,7 +25,7 @@ import java.util.Collection;
 /**
  * Calculates changes made to an asset when compared to its original from the repository.
  */
-interface ChangeCalculator {
+public interface ChangeCalculator {
 
     /**
      * Calculates the set of changes made to the specified asset.
