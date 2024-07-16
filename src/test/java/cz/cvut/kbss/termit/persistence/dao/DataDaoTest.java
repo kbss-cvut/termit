@@ -139,7 +139,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, vf.createIRI(Vocabulary.s_c_term));
+                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
                                vf.createLiteral(term.getPrimaryLabel()));
                 connection.commit();
@@ -170,7 +170,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, vf.createIRI(Vocabulary.s_c_term));
+                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE,SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
                                vf.createLiteral(term.getPrimaryLabel()));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
@@ -234,7 +234,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(vf.createIRI(Vocabulary.s_c_term), RDFS.LABEL, vf.createLiteral("Term"),
+                connection.add(SKOS.CONCEPT, RDFS.LABEL, vf.createLiteral("Term"),
                                vf.createIRI(context.toString()));
                 connection.commit();
             }
@@ -242,7 +242,7 @@ class DataDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             final TypeAwareResource result = sut.exportDataAsTurtle(context);
             Model model = parseExportToModel(result);
-            assertTrue(model.contains(vf.createIRI(Vocabulary.s_c_term), RDFS.LABEL, vf.createLiteral("Term")));
+            assertTrue(model.contains(SKOS.CONCEPT, RDFS.LABEL, vf.createLiteral("Term")));
             assertFalse(model.contains(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), null, null));
         });
     }
