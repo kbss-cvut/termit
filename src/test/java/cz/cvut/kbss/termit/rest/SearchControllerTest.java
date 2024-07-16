@@ -29,7 +29,6 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,7 +75,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void fullTextSearchExecutesSearchOnService() throws Exception {
         final List<FullTextSearchResult> expected = Collections
                 .singletonList(
-                        new FullTextSearchResult(Generator.generateUri(), "test", null, null, Vocabulary.s_c_term,
+                        new FullTextSearchResult(Generator.generateUri(), "test", null, null, SKOS.CONCEPT,
                                                  "test", "test", 1.0));
         when(searchServiceMock.fullTextSearch(any())).thenReturn(expected);
         final String searchString = "test";
@@ -97,7 +96,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
         final URI vocabularyIri = URI.create("https://test.org/vocabulary");
         final List<FullTextSearchResult> expected = Collections
                 .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", vocabularyIri, null,
-                                                        Vocabulary.s_c_term, "test", "test", 1.0));
+                                                        SKOS.CONCEPT, "test", "test", 1.0));
         when(searchServiceMock.fullTextSearchOfTerms(any(), any())).thenReturn(expected);
         final String searchString = "test";
 

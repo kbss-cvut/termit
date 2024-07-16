@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.environment;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
@@ -47,7 +48,26 @@ public class Transaction {
         new TransactionTemplate(txManager).execute(new TransactionCallbackWithoutResult() {
 
             @Override
-            protected void doInTransactionWithoutResult(TransactionStatus transactionStatus) {
+            protected void doInTransactionWithoutResult(@NotNull TransactionStatus transactionStatus) {
+                procedure.run();
+            }
+        });
+    }
+
+    /**
+     * Helper method for executing the specified portion of code in a read-only transaction.
+     * <p>
+     * This method allows executing transactional behavior in a read-only mode.
+     *
+     * @param txManager Transaction manager to use to run the transactional code
+     * @param procedure Code to execute
+     */
+    public static void executeReadOnly(PlatformTransactionManager txManager, Runnable procedure) {
+        final TransactionTemplate transaction = new TransactionTemplate(txManager);
+        transaction.setReadOnly(true);
+        new TransactionTemplate(txManager).execute(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(@NotNull TransactionStatus transactionStatus) {
                 procedure.run();
             }
         });

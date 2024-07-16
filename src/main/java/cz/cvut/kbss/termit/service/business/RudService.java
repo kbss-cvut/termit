@@ -50,16 +50,7 @@ public interface RudService<T> {
      * @param id Item identifier
      * @return Matching item reference wrapped in an {@code Optional}
      */
-    Optional<T> getReference(URI id);
-
-    /**
-     * Gets a reference to an item with the specified identifier (with empty attribute values).
-     *
-     * @param id Item identifier
-     * @return Matching item reference
-     * @throws cz.cvut.kbss.termit.exception.NotFoundException When no matching item is found
-     */
-    T getRequiredReference(URI id);
+    T getReference(URI id);
 
     /**
      * Updates the specified item.

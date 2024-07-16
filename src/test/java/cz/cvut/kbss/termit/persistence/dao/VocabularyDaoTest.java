@@ -26,6 +26,8 @@ import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -41,7 +43,10 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
@@ -58,6 +63,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class VocabularyDaoTest extends BaseDaoTestRunner {
@@ -69,6 +76,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     private DescriptorFactory descriptorFactory;
 
     @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
+    @Autowired
     private VocabularyDao sut;
 
     private User author;
@@ -78,6 +88,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         this.author = Generator.generateUserWithId();
         transactional(() -> em.persist(author));
         Environment.setCurrentUser(author);
+        sut.setApplicationEventPublisher(eventPublisher);
     }
 
     @Test
@@ -329,6 +340,20 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void persistPublishesAssetPersistEvent() {
+        final Vocabulary voc = Generator.generateVocabularyWithId();
+        transactional(() -> sut.persist(voc));
+
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        final Optional<AssetPersistEvent> evt = captor.getAllValues().stream()
+                                                      .filter(AssetPersistEvent.class::isInstance)
+                                                      .map(AssetPersistEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(voc, evt.get().getAsset());
+    }
+
+    @Test
     void removeRefreshesLastModifiedValue() {
         final long before = sut.getLastModified();
         final Vocabulary voc = Generator.generateVocabularyWithId();
@@ -351,6 +376,23 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(newLabel, result.get().getLabel().get(Environment.LANGUAGE));
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
+    }
+
+    @Test
+    void updatePublishesAssetUpdateEvent() {
+        final Vocabulary voc = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
+        final String newLabel = "New vocabulary label";
+        voc.setLabel(MultilingualString.create(newLabel, Environment.LANGUAGE));
+
+        transactional(() -> sut.update(voc));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
+                                                     .filter(AssetUpdateEvent.class::isInstance)
+                                                     .map(AssetUpdateEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(voc, evt.get().getAsset());
     }
 
     @Test

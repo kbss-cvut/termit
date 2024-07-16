@@ -52,7 +52,7 @@ public interface AccessControlListService {
      * @return Reference to a matching ACL
      * @throws cz.cvut.kbss.termit.exception.NotFoundException If no matching ACL exists
      */
-    AccessControlList getRequiredReference(URI id);
+    AccessControlList getReference(URI id);
 
     /**
      * Finds an {@link AccessControlList} guarding access to the specified subject.

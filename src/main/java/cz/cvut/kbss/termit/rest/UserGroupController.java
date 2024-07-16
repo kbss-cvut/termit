@@ -109,7 +109,7 @@ public class UserGroupController extends BaseController {
                                   example = UserGroupControllerDoc.ID_LOCAL_NAME_EXAMPLE)
                        @PathVariable String fragment) {
         final URI uri = resolveIdentifier(UserGroup.NAMESPACE, fragment);
-        final UserGroup toRemove = groupService.getRequiredReference(uri);
+        final UserGroup toRemove = groupService.getReference(uri);
         groupService.remove(toRemove);
         LOG.debug("Group {} removed.", toRemove);
     }

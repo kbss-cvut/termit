@@ -25,6 +25,9 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
+import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Term_;
@@ -46,7 +49,10 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -78,9 +84,12 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TermDaoTest extends BaseTermDaoTestRunner {
@@ -88,9 +97,13 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     @Autowired
     private Configuration configuration;
 
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
     @BeforeEach
     void setUp() {
         super.setUp();
+        sut.setApplicationEventPublisher(eventPublisher);
     }
 
     private static List<TermDto> toDtos(List<Term> terms) {
@@ -350,6 +363,34 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     }
 
     @Test
+    void persistPublishesVocabularyContentModifiedEvent() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> sut.persist(term, vocabulary));
+
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<VocabularyContentModified> evt = captor.getAllValues().stream()
+                                                              .filter(VocabularyContentModified.class::isInstance)
+                                                              .map(VocabularyContentModified.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
+    }
+
+    @Test
+    void persistPublishesAssetPersistEvent() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> sut.persist(term, vocabulary));
+
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetPersistEvent> evt = captor.getAllValues().stream()
+                                                      .filter(AssetPersistEvent.class::isInstance)
+                                                      .map(AssetPersistEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(term, evt.get().getAsset());
+    }
+
+    @Test
     void updateUpdatesTermInVocabularyContext() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
@@ -371,6 +412,50 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?hasLabel ?label }", Boolean.class)
                       .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
                       .setParameter("label", oldLabel, Environment.LANGUAGE).getSingleResult());
+    }
+
+    @Test
+    void updatePublishesVocabularyContentModifiedEvent() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            term.setGlossary(vocabulary.getGlossary().getUri());
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+
+        final String updatedLabel = "Updated label";
+        term.setPrimaryLabel(updatedLabel);
+        transactional(() -> sut.update(term));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<VocabularyContentModified> evt = captor.getAllValues().stream().filter(VocabularyContentModified.class::isInstance)
+                                                     .map(VocabularyContentModified.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
+    }
+
+    @Test
+    void updatePublishesAssetUpdateEvent() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            term.setGlossary(vocabulary.getGlossary().getUri());
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+
+        final String updatedLabel = "Updated label";
+        term.setPrimaryLabel(updatedLabel);
+        transactional(() -> sut.update(term));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream().filter(AssetUpdateEvent.class::isInstance)
+                                                     .map(AssetUpdateEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(term, evt.get().getAsset());
     }
 
     @Test
@@ -745,17 +830,15 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             final ValueFactory vf = conn.getValueFactory();
             final IRI subject = vf.createIRI(term.getUri().toString());
             final IRI hasSource = vf.createIRI(DC.Terms.SOURCE);
-            final List<Statement> sourceStatements = conn.getStatements(subject, hasSource, null).stream().collect(
-                    Collectors.toList());
+            final List<Statement> sourceStatements = conn.getStatements(subject, hasSource, null).stream().toList();
             assertEquals(term.getSources().size(), sourceStatements.size());
             sourceStatements.forEach(ss -> {
                 assertTrue(term.getSources().contains(ss.getObject().stringValue()));
-                if (ss.getObject() instanceof Literal) {
-                    final Literal litSource = (Literal) ss.getObject();
+                if (ss.getObject() instanceof Literal litSource) {
                     assertFalse(litSource.getLanguage().isPresent());
                     assertEquals(XSD.STRING, litSource.getDatatype());
                 } else {
-                    assertTrue(ss.getObject() instanceof IRI);
+                    assertInstanceOf(IRI.class, ss.getObject());
                 }
             });
         }
@@ -1153,7 +1236,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
         });
         final List<TermDto> rootsBefore = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC,
-                Collections.emptyList());
+                                                           Collections.emptyList());
         assertEquals(1, rootsBefore.size());
         assertTrue(rootsBefore.get(0).getSubTerms().stream().anyMatch(ti -> ti.getUri().equals(term.getUri())));
 
@@ -1162,6 +1245,26 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<TermDto> roots = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, roots.size());
         assertThat(roots.get(0).getSubTerms(), anyOf(nullValue(), emptyCollectionOf(TermInfo.class)));
+    }
+
+    @Test
+    void removePublishesVocabularyContentModifiedEvent() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setGlossary(vocabulary.getGlossary().getUri());
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+        });
+
+        transactional(() -> sut.remove(term));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<VocabularyContentModified> evt = captor.getAllValues().stream()
+                                                              .filter(VocabularyContentModified.class::isInstance)
+                                                              .map(VocabularyContentModified.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
     }
 
     @Test
@@ -1183,5 +1286,26 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                       .setParameter("x", term)
                       .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu))
                       .setParameter("oldState", Generator.TERM_STATES[0]).getSingleResult());
+    }
+
+    @Test
+    void setStatePublishesAssetUpdateEvent() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setState(Generator.TERM_STATES[0]);
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(term);
+            term.setGlossary(vocabulary.getGlossary().getUri());
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+
+        transactional(() -> sut.setState(term, Generator.TERM_STATES[1]));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream().filter(AssetUpdateEvent.class::isInstance)
+                                                     .map(AssetUpdateEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(term, evt.get().getAsset());
     }
 }

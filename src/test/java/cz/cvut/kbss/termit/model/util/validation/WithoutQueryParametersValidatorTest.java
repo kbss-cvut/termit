@@ -17,14 +17,14 @@
  */
 package cz.cvut.kbss.termit.model.util.validation;
 
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.validation.ConstraintValidatorContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import jakarta.validation.ConstraintValidatorContext;
 import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -40,7 +40,7 @@ class WithoutQueryParametersValidatorTest {
 
     @Test
     void isValidReturnsTrueForNormalUris() {
-        final URI uri = URI.create(Vocabulary.s_c_term + Generator.randomInt(0, 1000000));
+        final URI uri = URI.create(SKOS.CONCEPT + Generator.randomInt(0, 1000000));
         assertTrue(sut.isValid(uri, ctx));
     }
 

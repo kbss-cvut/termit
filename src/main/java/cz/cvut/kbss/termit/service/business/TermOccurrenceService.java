@@ -27,17 +27,6 @@ import java.net.URI;
 public interface TermOccurrenceService {
 
     /**
-     * Gets a reference to a {@link TermOccurrence} with the specified identifier.
-     * <p>
-     * The returned instance may be empty apart from its identifier.
-     *
-     * @param id Term occurrence identifier
-     * @return Matching term occurrence
-     * @throws cz.cvut.kbss.termit.exception.NotFoundException If there is no such term occurrence
-     */
-    TermOccurrence getRequiredReference(URI id);
-
-    /**
      * Persists the specified term occurrence.
      *
      * @param occurrence Occurrence to persist

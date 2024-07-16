@@ -24,7 +24,10 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
+import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -170,6 +173,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             entity.setVocabulary(null); // This is inferred
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
             evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
+            eventPublisher.publishEvent(new VocabularyContentModified(this, vocabulary.getUri()));
+            eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -185,8 +190,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             evictPossiblyCachedReferences(entity);
             final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
             entity.setDefinitionSource(original.getDefinitionSource());
+            eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
-            return em.merge(entity, descriptorFactory.termDescriptor(entity));
+            final Term result = em.merge(entity, descriptorFactory.termDescriptor(entity));
+            eventPublisher.publishEvent(new VocabularyContentModified(this, original.getVocabulary()));
+            return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -223,6 +231,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @param state State to set
      */
     public void setState(Term term, URI state) {
+        term.setState(state);
+        eventPublisher.publishEvent(new AssetUpdateEvent(this, term));
         evictPossiblyCachedReferences(term);
         em.createNativeQuery("DELETE {" +
                   "?t ?hasState ?oldState ." +
@@ -603,7 +613,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public List<TermDto> findAll(String searchString) {
         Objects.requireNonNull(searchString);
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                                       "" +
                                                                        "?term a ?type ; " +
                                                                        "      ?hasLabel ?label ; " +
                                                                        "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
@@ -727,10 +736,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                  .getResultList();
     }
 
+    @ModifiesData
     @Override
     public void remove(Term entity) {
         super.remove(entity);
         evictCachedSubTerms(entity.getParentTerms(), Collections.emptySet());
+        eventPublisher.publishEvent(new VocabularyContentModified(this, entity.getVocabulary()));
     }
 
     @Override
@@ -751,7 +762,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     @EventListener
     public void onEvictCache(EvictCacheEvent evt) {
-
         subTermsCache.evictAll();
     }
 }

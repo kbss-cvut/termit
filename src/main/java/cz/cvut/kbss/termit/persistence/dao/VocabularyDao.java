@@ -26,6 +26,8 @@ import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
@@ -116,10 +118,10 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     @Override
-    public Optional<Vocabulary> getReference(URI id) {
+    public Vocabulary getReference(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.getReference(type, id, descriptorFactory.vocabularyDescriptor(id)));
+            return em.getReference(type, id, descriptorFactory.vocabularyDescriptor(id));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -165,19 +167,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     @ModifiesData
     @Override
-    public Vocabulary update(Vocabulary entity) {
-        Objects.requireNonNull(entity);
-        try {
-            // Evict possibly cached instance loaded from default context
-            em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
-            return em.merge(entity, descriptorFactory.vocabularyDescriptor(entity));
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
-    @ModifiesData
-    @Override
     public void persist(Vocabulary entity) {
         Objects.requireNonNull(entity);
         try {
@@ -185,6 +174,24 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             if (entity.getDocument() != null && em.find(Document.class, entity.getDocument().getUri()) == null) {
                 em.persist(entity.getDocument(), descriptorFactory.documentDescriptor(entity));
             }
+            refreshLastModified();
+            eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @ModifiesData
+    @Override
+    public Vocabulary update(Vocabulary entity) {
+        Objects.requireNonNull(entity);
+        try {
+            eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
+            // Evict possibly cached instance loaded from default context
+            em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
+            final Vocabulary result = em.merge(entity, descriptorFactory.vocabularyDescriptor(entity));
+            refreshLastModified();
+            return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -195,7 +202,10 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     public void remove(Vocabulary entity) {
         Objects.requireNonNull(entity);
         try {
-            find(entity.getUri()).ifPresent(em::remove);
+            find(entity.getUri()).ifPresent(elem -> {
+                em.remove(elem);
+                refreshLastModified();
+            });
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -238,7 +248,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      */
     public Glossary updateGlossary(Vocabulary entity) {
         Objects.requireNonNull(entity);
-        return em.merge(entity.getGlossary(), descriptorFactory.glossaryDescriptor(entity));
+        final Glossary result = em.merge(entity.getGlossary(), descriptorFactory.glossaryDescriptor(entity));
+        refreshLastModified();
+        return result;
     }
 
     /**
@@ -408,15 +420,16 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         result.add(rootVocabulary.getUri());
         // Using old-school iteration to prevent concurrent modification issues when adding items to list under iteration
         for (int i = 0; i < result.size(); i++) {
-            final Set<URI> toAdd = new HashSet<>(em.createNativeQuery("SELECT DISTINCT ?v WHERE {\n" +
-                                                                              "    ?t a ?term ;\n" +
-                                                                              "       ?inVocabulary ?vocabulary ;\n" +
-                                                                              "       ?y ?z .\n" +
-                                                                              "    ?z a ?term ;\n" +
-                                                                              "       ?inVocabulary ?v .\n" +
-                                                                              "    FILTER (?v != ?vocabulary)\n" +
-                                                                              "    FILTER (?y IN (?cascadingRelationships))\n" +
-                                                                              "}", URI.class)
+            final Set<URI> toAdd = new HashSet<>(em.createNativeQuery("""
+                                                                              SELECT DISTINCT ?v WHERE {
+                                                                                  ?t a ?term ;
+                                                                                     ?inVocabulary ?vocabulary ;
+                                                                                     ?y ?z .
+                                                                                  ?z a ?term ;
+                                                                                     ?inVocabulary ?v .
+                                                                                  FILTER (?v != ?vocabulary)
+                                                                                  FILTER (?y IN (?cascadingRelationships))
+                                                                              }""", URI.class)
                                                    .setParameter("term", URI.create(SKOS.CONCEPT))
                                                    .setParameter("inVocabulary",
                                                                  URI.create(
@@ -456,7 +469,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                      .setParameter("hasNamespace", URI.create(
                                              cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri))
                                      .getResultList();
-            if (result.size() == 0) {
+            if (result.isEmpty()) {
                 return PrefixDeclaration.EMPTY_PREFIX;
             }
             assert result.get(0) instanceof Object[];

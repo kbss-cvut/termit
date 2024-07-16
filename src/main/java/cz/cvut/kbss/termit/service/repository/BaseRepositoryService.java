@@ -103,10 +103,14 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * for the loaded instance.
      *
      * @param id Identifier of the object to load
-     * @return {@link Optional} with the loaded reference or an empty one
+     * @return Entity reference
+     * @throws NotFoundException If no matching instance is found
      */
-    public Optional<T> getReference(URI id) {
-        return getPrimaryDao().getReference(id);
+    public T getReference(URI id) {
+        if (exists(id)) {
+            return getPrimaryDao().getReference(id);
+        }
+        throw NotFoundException.create(resolveGenericType().getSimpleName(), id);
     }
 
     /**
@@ -122,25 +126,6 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      */
     public T findRequired(URI id) {
         return find(id).orElseThrow(() -> NotFoundException.create(resolveGenericType().getSimpleName(), id));
-    }
-
-    /**
-     * Gets a reference to an object wih the specified identifier.
-     * <p>
-     * In comparison to {@link #getReference(URI)}, this method guarantees to return a matching instance. If no such
-     * object is found, a {@link NotFoundException} is thrown.
-     * <p>
-     * Note that all attributes of the reference are loaded lazily and the corresponding persistence context must be
-     * still open to load them.
-     * <p>
-     * Also note that, in contrast to {@link #find(URI)}, this method does not invoke {@link #postLoad(HasIdentifier)}
-     * for the loaded instance.
-     *
-     * @param id Identifier of the object to load
-     * @return {@link Optional} with the loaded reference or an empty one
-     */
-    public T getRequiredReference(URI id) {
-        return getReference(id).orElseThrow(() -> NotFoundException.create(resolveGenericType().getSimpleName(), id));
     }
 
     /**

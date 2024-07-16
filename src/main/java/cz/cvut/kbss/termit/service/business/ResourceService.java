@@ -108,7 +108,7 @@ public class ResourceService
             throw new AssetRemovalException("Cannot remove non-empty document " + toRemove.getLabel() + "!");
         }
         // We need the reference managed, so that its name is available to document manager
-        final Resource actualToRemove = getRequiredReference(toRemove.getUri());
+        final Resource actualToRemove = getReference(toRemove.getUri());
         documentManager.remove(actualToRemove);
         repositoryService.remove(actualToRemove);
     }
@@ -224,12 +224,12 @@ public class ResourceService
         }
         doc.addFile(file);
         if (doc.getVocabulary() != null) {
-            final Vocabulary vocabulary = vocabularyService.getRequiredReference(doc.getVocabulary());
+            final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
             repositoryService.persist(file, vocabulary);
         } else {
             repositoryService.persist(file);
         }
-        if (getReference(document.getUri()).isEmpty()) {
+        if (!repositoryService.exists(document.getUri())) {
             repositoryService.persist(document);
         } else {
             update(doc);
@@ -251,7 +251,7 @@ public class ResourceService
             throw new InvalidParameterException("File was not attached to a document.");
         } else {
             doc.removeFile(file);
-            if (repositoryService.getReference(doc.getUri()).isPresent()) {
+            if (repositoryService.find(doc.getUri()).isPresent()) {
                 update(doc);
             }
         }
@@ -292,7 +292,7 @@ public class ResourceService
     private Set<URI> includeImportedVocabularies(Set<URI> providedVocabularies) {
         final Set<URI> result = new HashSet<>(providedVocabularies);
         providedVocabularies.forEach(uri -> {
-            final Vocabulary ref = vocabularyService.getRequiredReference(uri);
+            final Vocabulary ref = vocabularyService.getReference(uri);
             result.addAll(vocabularyService.getTransitivelyImportedVocabularies(ref));
         });
         return result;
@@ -314,12 +314,8 @@ public class ResourceService
         return repositoryService.findRequired(id);
     }
 
-    public Optional<Resource> getReference(URI id) {
+    public Resource getReference(URI id) {
         return repositoryService.getReference(id);
-    }
-
-    public Resource getRequiredReference(URI id) {
-        return repositoryService.getRequiredReference(id);
     }
 
     @Transactional

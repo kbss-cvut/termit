@@ -271,20 +271,10 @@ class TermServiceTest {
     @Test
     void getReferenceRetrievesTermReferenceFromRepositoryService() {
         final Term t = Generator.generateTermWithId();
-        when(termRepositoryService.getReference(t.getUri())).thenReturn(Optional.of(t));
-        final Optional<Term> result = sut.getReference(t.getUri());
-        assertTrue(result.isPresent());
-        assertEquals(t, result.get());
-        verify(termRepositoryService).getReference(t.getUri());
-    }
-
-    @Test
-    void getRequiredReferenceRetrievesTermReferenceFromRepositoryService() {
-        final Term t = Generator.generateTermWithId();
-        when(termRepositoryService.getRequiredReference(t.getUri())).thenReturn(t);
-        final Term result = sut.getRequiredReference(t.getUri());
+        when(termRepositoryService.getReference(t.getUri())).thenReturn(t);
+        final Term result = sut.getReference(t.getUri());
         assertEquals(t, result);
-        verify(termRepositoryService).getRequiredReference(t.getUri());
+        verify(termRepositoryService).getReference(t.getUri());
     }
 
     @Test
@@ -465,7 +455,7 @@ class TermServiceTest {
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
-        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
 
         sut.persistChild(childToPersist, parent);
@@ -483,7 +473,7 @@ class TermServiceTest {
         update.setDescription(new MultilingualString(original.getDescription().getValue()));
         update.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
-        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         update.getLabel().set(Environment.LANGUAGE, "updatedLabel");
 
         sut.update(update);

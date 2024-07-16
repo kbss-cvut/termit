@@ -277,7 +277,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termService.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termService.getReference(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
         when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
 
@@ -296,7 +296,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termService.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termService.getReference(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
         when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
         final Instant from = Utils.timestamp().minus(Generator.randomInt(50, 100), ChronoUnit.DAYS);
@@ -317,7 +317,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termService.getRequiredReference(termUri)).thenReturn(term);
+        when(termService.getReference(termUri)).thenReturn(term);
         final List<TermOccurrence> occurrences = generateOccurrences(term, true);
         when(termService.getDefinitionallyRelatedOf(term)).thenReturn(occurrences);
 
@@ -327,7 +327,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<List<TermOccurrence>>() {
         });
         assertThat(result, containsSameEntities(occurrences));
-        verify(termService).getRequiredReference(termUri);
+        verify(termService).getReference(termUri);
         verify(termService).getDefinitionallyRelatedOf(term);
     }
 
@@ -348,7 +348,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termService.getRequiredReference(termUri)).thenReturn(term);
+        when(termService.getReference(termUri)).thenReturn(term);
         final List<TermOccurrence> occurrences = generateOccurrences(term, false);
         when(termService.getDefinitionallyRelatedTargeting(term)).thenReturn(occurrences);
 
@@ -358,7 +358,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<List<TermOccurrence>>() {
         });
         assertThat(result, containsSameEntities(occurrences));
-        verify(termService).getRequiredReference(termUri);
+        verify(termService).getReference(termUri);
         verify(termService).getDefinitionallyRelatedTargeting(term);
     }
 

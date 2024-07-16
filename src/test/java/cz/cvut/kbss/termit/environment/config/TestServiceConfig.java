@@ -17,8 +17,6 @@
  */
 package cz.cvut.kbss.termit.environment.config;
 
-import cz.cvut.kbss.termit.aspect.ChangeTrackingAspect;
-import cz.cvut.kbss.termit.aspect.VocabularyContentModificationAspect;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapperImpl;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -26,10 +24,8 @@ import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.service.document.html.DummySelectorGenerator;
 import cz.cvut.kbss.termit.service.document.html.HtmlSelectorGenerators;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.aspectj.lang.Aspects;
 import org.jsoup.nodes.Element;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
@@ -94,22 +90,6 @@ public class TestServiceConfig {
     @Bean("termStatesLanguage")
     public ClassPathResource termStatesLanguageFile() {
         return new ClassPathResource("languages/states.ttl");
-    }
-
-    @Bean
-    ChangeTrackingAspect changeTrackingAspect() {
-        return Aspects.aspectOf(ChangeTrackingAspect.class);
-    }
-
-    @Bean
-    VocabularyContentModificationAspect vocabularyContentModificationAspect() {
-        return Aspects.aspectOf(VocabularyContentModificationAspect.class);
-    }
-
-    @Bean
-    @Primary
-    public ApplicationEventPublisher eventPublisher() {
-        return mock(ApplicationEventPublisher.class);
     }
 
     @Bean

@@ -232,7 +232,7 @@ public class ReadOnlyTermController extends BaseController {
             @Parameter(description = "Datetime (ISO-formatted) of the latest comment to retrieve. Defaults to now.")
             @RequestParam(name = "to", required = false) Optional<String> to) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.getComments(termService.getRequiredReference(termUri),
+        return termService.getComments(termService.getReference(termUri),
                                        from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
                                        to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }
@@ -257,7 +257,7 @@ public class ReadOnlyTermController extends BaseController {
                        example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.getDefinitionallyRelatedOf(termService.getRequiredReference(termUri));
+        return termService.getDefinitionallyRelatedOf(termService.getReference(termUri));
     }
 
     @Operation(
@@ -280,7 +280,7 @@ public class ReadOnlyTermController extends BaseController {
                        example = TermController.ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = Constants.QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.getDefinitionallyRelatedTargeting(termService.getRequiredReference(termUri));
+        return termService.getDefinitionallyRelatedTargeting(termService.getReference(termUri));
     }
 
     @Operation(description = "Gets a list of comments on the term with the specified identifier.")
@@ -304,7 +304,7 @@ public class ReadOnlyTermController extends BaseController {
                        example = ApiDocConstants.DATETIME_EXAMPLE)
             @RequestParam(name = "to", required = false) Optional<String> to) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return termService.getComments(termService.getRequiredReference(termUri),
+        return termService.getComments(termService.getReference(termUri),
                                        from.map(RestUtils::parseTimestamp).orElse(Constants.EPOCH_TIMESTAMP),
                                        to.map(RestUtils::parseTimestamp).orElse(Utils.timestamp()));
     }

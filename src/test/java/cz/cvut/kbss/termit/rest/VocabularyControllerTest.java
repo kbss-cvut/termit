@@ -352,7 +352,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 .thenReturn(VOCABULARY_URI);
         final Set<URI> imports = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri())
                                           .collect(Collectors.toSet());
-        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        when(serviceMock.getReference(VOCABULARY_URI)).thenReturn(vocabulary);
         when(serviceMock.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(imports);
 
         final MvcResult mvcResult =
@@ -361,7 +361,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Set<URI> result = readValue(mvcResult, new TypeReference<Set<URI>>() {
         });
         assertEquals(imports, result);
-        verify(serviceMock).getRequiredReference(VOCABULARY_URI);
+        verify(serviceMock).getReference(VOCABULARY_URI);
         verify(serviceMock).getTransitivelyImportedVocabularies(vocabulary);
     }
 
@@ -379,7 +379,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         });
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(serviceMock).getRequiredReference(VOCABULARY_URI);
+        verify(serviceMock).getReference(VOCABULARY_URI);
         verify(serviceMock).getTransitivelyImportedVocabularies(vocabulary);
     }
 
@@ -470,7 +470,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(VOCABULARY_URI);
         when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
                 .thenReturn(VOCABULARY_URI);
-        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        when(serviceMock.getReference(VOCABULARY_URI)).thenReturn(vocabulary);
         return vocabulary;
     }
 

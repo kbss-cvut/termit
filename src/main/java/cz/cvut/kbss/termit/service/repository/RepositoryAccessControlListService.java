@@ -82,7 +82,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     }
 
     @Override
-    public AccessControlList getRequiredReference(URI id) {
+    public AccessControlList getReference(URI id) {
         return dao.getReference(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 

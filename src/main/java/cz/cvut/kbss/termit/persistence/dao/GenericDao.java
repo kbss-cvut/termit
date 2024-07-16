@@ -55,10 +55,9 @@ public interface GenericDao<T extends HasIdentifier> {
      * operations.
      *
      * @param id Identifier
-     * @return {@code Optional} containing a reference to a matching instance or an empty {@code Optional }if no such
-     * instance exists
+     * @return Reference to an entity with the specified identifier
      */
-    Optional<T> getReference(URI id);
+    T getReference(URI id);
 
     /**
      * Detaches the specified entity from the current persistence context.

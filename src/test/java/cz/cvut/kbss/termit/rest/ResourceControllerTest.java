@@ -226,7 +226,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         document.setUri(RESOURCE_URI);
         final File fOne = generateFile();
         document.addFile(fOne);
-        when(resourceServiceMock.getRequiredReference(document.getUri())).thenReturn(document);
+        when(resourceServiceMock.getReference(document.getUri())).thenReturn(document);
         when(resourceServiceMock.getFiles(document)).thenReturn(new ArrayList<>(document.getFiles()));
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(document.getUri());
 
@@ -245,7 +245,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         resource.setUri(RESOURCE_URI);
         resource.setLabel(RESOURCE_NAME);
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(RESOURCE_URI);
-        when(resourceServiceMock.getRequiredReference(RESOURCE_URI)).thenReturn(resource);
+        when(resourceServiceMock.getReference(RESOURCE_URI)).thenReturn(resource);
         when(resourceServiceMock.getFiles(resource)).thenThrow(UnsupportedAssetOperationException.class);
         mockMvc.perform(get(PATH + "/" + RESOURCE_NAME + "/files").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
                .andExpect(status().isConflict());
@@ -395,7 +395,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final Resource resource = Generator.generateResourceWithId();
         resource.setUri(RESOURCE_URI);
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(resource.getUri());
-        when(resourceServiceMock.getRequiredReference(RESOURCE_URI)).thenReturn(resource);
+        when(resourceServiceMock.getReference(RESOURCE_URI)).thenReturn(resource);
         final List<AbstractChangeRecord> records = Collections.singletonList(Generator.generatePersistChange(resource));
         when(resourceServiceMock.getChanges(resource)).thenReturn(records);
 

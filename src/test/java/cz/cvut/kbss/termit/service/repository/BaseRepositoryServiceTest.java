@@ -256,4 +256,19 @@ class BaseRepositoryServiceTest extends BaseServiceTestRunner {
         inOrder.verify(userAccountDaoMock).find(instance.getUri());
         inOrder.verify(sut).postLoad(instance);
     }
+
+    @Test
+    void getReferenceRetrievesReferenceFromDaoWhenInstanceExists() {
+        final UserAccount instance = Generator.generateUserAccountWithPassword();
+        transactional(() -> em.persist(instance));
+        final UserAccount result = sut.getReference(instance.getUri());
+        assertNotNull(result);
+        assertEquals(instance.getUri(), result.getUri());
+    }
+
+    @Test
+    void getReferenceThrowsNotFoundExceptionWhenInstanceDoesNotExist() {
+        final URI id = Generator.generateUri();
+        assertThrows(NotFoundException.class, () -> sut.getReference(id));
+    }
 }

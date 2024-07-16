@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
+        <version>3.3.1</version>
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>3.1.0</version>
+    <version>3.1.1</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -31,7 +31,7 @@
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <org.springdoc.version>2.2.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>2.0.0</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jopa.version>2.0.2</cz.cvut.kbss.jopa.version>
         <cz.cvut.kbss.jsonld.version>0.14.3</cz.cvut.kbss.jsonld.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
@@ -112,7 +112,7 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>4.3.11</version>
+            <version>5.0.0</version>
         </dependency>
 
         <!-- Spring declarative transactions with JOPA -->
@@ -437,8 +437,6 @@
                 <version>1.13.1</version>
                 <configuration>
                     <complianceLevel>${java.version}</complianceLevel>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
                     <aspectLibraries>
                         <aspectLibrary>
                             <groupId>org.springframework</groupId>

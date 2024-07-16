@@ -93,6 +93,8 @@ public class TextAnalysisService {
         );
         input.setVocabularyRepository(repositoryUrl);
         input.setLanguage(config.getPersistence().getLanguage());
+        input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
+        input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
         return input;
     }
 
@@ -124,7 +126,7 @@ public class TextAnalysisService {
         }
         final HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE);
-        LOG.debug("Invoking text analysis service on input: {}", input);
+        LOG.debug("Invoking text analysis service at '{}' on input: {}", config.getTextAnalysis().getUrl(), input);
         final ResponseEntity<Resource> resp = restClient
                 .exchange(config.getTextAnalysis().getUrl(), HttpMethod.POST,
                           new HttpEntity<>(input, headers), Resource.class);
@@ -169,6 +171,8 @@ public class TextAnalysisService {
             final TextAnalysisInput input = new TextAnalysisInput(term.getDefinition().get(language), language,
                                                                   URI.create(config.getRepository().getUrl()));
             input.addVocabularyContext(vocabularyContext);
+            input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
+            input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
 
             invokeTextAnalysisOnTerm(term, input);
         }

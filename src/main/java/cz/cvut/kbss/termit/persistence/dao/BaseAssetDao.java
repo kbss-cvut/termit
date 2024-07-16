@@ -19,6 +19,8 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -49,6 +51,18 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
         super(type, em);
         this.config = config;
         this.descriptorFactory = descriptorFactory;
+    }
+
+    @Override
+    public void persist(T entity) {
+        super.persist(entity);
+        eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
+    }
+
+    @Override
+    public T update(T entity) {
+        eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
+        return super.update(entity);
     }
 
     /**

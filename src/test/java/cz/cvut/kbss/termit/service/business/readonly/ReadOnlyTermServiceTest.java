@@ -70,7 +70,7 @@ class ReadOnlyTermServiceTest {
     private ReadOnlyTermService sut;
 
     @Test
-    void getRequiredVocabularyReferenceRetrievesReferenceToVocabularyFromService() {
+    void getVocabularyReferenceRetrievesReferenceToVocabularyFromService() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         when(termService.findVocabularyRequired(any())).thenReturn(vocabulary);
 

@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
@@ -184,7 +185,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                  .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
                  .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
                  .setParameter("lang", config.getLanguage())
-                 .setParameter("termType", URI.create(Vocabulary.s_c_term))
+                 .setParameter("termType", URI.create(SKOS.CONCEPT))
                  .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
                  .setParameter("fileOcc", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
                  .setParameter("t", term.getUri()).getResultList();

@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -80,6 +81,7 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+        refreshLastModified();
     }
 
     private Descriptor createDescriptor(Resource resource, URI vocabularyUri) {
@@ -98,26 +100,29 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
     @ModifiesData
     @Override
     public Resource update(Resource entity) {
+        final Resource updated;
         try {
             final URI vocabularyId = resolveVocabularyId(entity);
             if (vocabularyId != null) {
                 setDocumentOnFileIfNecessary(entity, vocabularyId);
                 // This evict is a bit overkill, but there are multiple relationships that would have to be evicted
                 em.getEntityManagerFactory().getCache().evict(vocabularyId);
-                return em.merge(entity, createDescriptor(entity, vocabularyId));
+                updated = em.merge(entity, createDescriptor(entity, vocabularyId));
             } else {
-                return em.merge(entity);
+                updated = em.merge(entity);
             }
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+        refreshLastModified();
+        eventPublisher.publishEvent(new AssetUpdateEvent(this, updated));
+        return updated;
     }
 
     private URI resolveVocabularyId(Resource resource) {
         if (resource instanceof Document) {
             return ((Document) resource).getVocabulary();
-        } else if (resource instanceof File) {
-            final File f = (File) resource;
+        } else if (resource instanceof File f) {
             if (f.getDocument() != null) {
                 return f.getDocument().getVocabulary();
             }
@@ -138,11 +143,11 @@ public class ResourceDao extends BaseAssetDao<Resource> implements SupportsLastM
     public List<Resource> findAll() {
         try {
             return em.createNativeQuery("SELECT ?x WHERE {" +
-                    "?x a ?type ;" +
-                    "?hasLabel ?label ." +
-                    "FILTER NOT EXISTS { ?y ?hasFile ?x . } " +
-                    "FILTER NOT EXISTS { ?x a ?vocabulary . } " +
-                    "} ORDER BY LCASE(?label)", Resource.class)
+                                                "?x a ?type ;" +
+                                                "?hasLabel ?label ." +
+                                                "FILTER NOT EXISTS { ?y ?hasFile ?x . } " +
+                                                "FILTER NOT EXISTS { ?x a ?vocabulary . } " +
+                                                "} ORDER BY LCASE(?label)", Resource.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", labelProperty())
                      .setParameter("hasFile", URI.create(Vocabulary.s_p_ma_soubor))

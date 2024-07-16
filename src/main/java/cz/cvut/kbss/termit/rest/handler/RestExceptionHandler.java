@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.rest.handler;
 
+import cz.cvut.kbss.jopa.exceptions.EntityNotFoundException;
 import cz.cvut.kbss.jopa.exceptions.OWLPersistenceException;
 import cz.cvut.kbss.jsonld.exception.JsonLdException;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
@@ -112,6 +113,11 @@ public class RestExceptionHandler {
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorInfo> entityNotFoundException(HttpServletRequest request, EntityNotFoundException e) {
+        logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.NOT_FOUND);
+    }
 
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ErrorInfo> authorizationException(HttpServletRequest request, AuthorizationException e) {

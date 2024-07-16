@@ -46,7 +46,7 @@ import java.net.URI;
         TestServiceConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class BaseServiceTestRunner extends TransactionalTestRunner {
+public abstract class BaseServiceTestRunner extends TransactionalTestRunner {
 
     private static final String EXISTENCE_CHECK_QUERY = "ASK { ?x a ?type . }";
 

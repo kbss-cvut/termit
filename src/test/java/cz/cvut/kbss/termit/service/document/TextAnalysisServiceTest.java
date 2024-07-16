@@ -167,6 +167,8 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         );
         input.setVocabularyRepository(repositoryUrl);
         input.setLanguage(config.getPersistence().getLanguage());
+        input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
+        input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
         return input;
     }
 
@@ -179,6 +181,23 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                 .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE))
                 .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+        sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
+        mockServer.verify();
+    }
+
+    @Test
+    void analyzeFilePassesRepositoryUsernameAndPasswordToServiceWhenProvided() throws Exception {
+        final String username = "user";
+        config.getRepository().setUsername(username);
+        final String password = "password";
+        config.getRepository().setPassword(password);
+        final TextAnalysisInput input = textAnalysisInput();
+        input.setVocabularyRepositoryUserName(username);
+        input.setVocabularyRepositoryPassword(password);
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
     }
@@ -352,5 +371,27 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         mockServer.verify();
         verify(annotationGeneratorMock, never()).generateAnnotations(any(), any(Term.class));
         verify(textAnalysisRecordDao, never()).persist(any());
+    }
+
+    @Test
+    void analyzeTermDefinitionInvokesTextAnalysisServiceWithVocabularyRepositoryUsernameAndPassword()
+            throws Exception {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        final TextAnalysisInput input = textAnalysisInput();
+        input.setContent(term.getDefinition().get(Environment.LANGUAGE));
+        final String username = "user";
+        config.getRepository().setUsername(username);
+        final String password = "password";
+        config.getRepository().setPassword(password);
+        input.setVocabularyRepositoryUserName(username);
+        input.setVocabularyRepositoryPassword(password);
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+
+        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        mockServer.verify();
     }
 }

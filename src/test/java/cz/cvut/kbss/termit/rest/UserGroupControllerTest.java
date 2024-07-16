@@ -80,7 +80,7 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
     void removeRemovesSpecifiedGroupViaService() throws Exception {
         final UserGroup toRemove = Generator.generateUserGroup();
         final String fragment = IdentifierResolver.extractIdentifierFragment(toRemove.getUri());
-        when(groupService.getRequiredReference(toRemove.getUri())).thenReturn(toRemove);
+        when(groupService.getReference(toRemove.getUri())).thenReturn(toRemove);
         mockMvc.perform(delete(UserGroupController.PATH + "/" + fragment)).andExpect(status().isNoContent());
         verify(groupService).remove(toRemove);
     }
