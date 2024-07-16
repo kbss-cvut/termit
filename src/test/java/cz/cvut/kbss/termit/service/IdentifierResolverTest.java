@@ -307,4 +307,12 @@ class IdentifierResolverTest {
         final String invalidString = "Bug #$# test";
         assertDoesNotThrow(() -> sut.generateIdentifier(namespace, invalidString));
     }
+
+    @Test
+    void generateIdentifierRemovesSectionSign() {
+        final String namespace = Vocabulary.s_c_slovnik;
+        final String label = "je povinným subjektem podle §2 zákona 106/1999 Sb.";
+        final URI result = sut.generateIdentifier(namespace, label);
+        assertEquals(URI.create(namespace + "/je-povinným-subjektem-podle-2-zákona-106-1999-sb."), result);
+    }
 }
