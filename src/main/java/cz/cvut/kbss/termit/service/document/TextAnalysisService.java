@@ -93,6 +93,8 @@ public class TextAnalysisService {
         );
         input.setVocabularyRepository(repositoryUrl);
         input.setLanguage(config.getPersistence().getLanguage());
+        input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
+        input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
         return input;
     }
 
@@ -169,6 +171,8 @@ public class TextAnalysisService {
             final TextAnalysisInput input = new TextAnalysisInput(term.getDefinition().get(language), language,
                                                                   URI.create(config.getRepository().getUrl()));
             input.addVocabularyContext(vocabularyContext);
+            input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
+            input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
 
             invokeTextAnalysisOnTerm(term, input);
         }
