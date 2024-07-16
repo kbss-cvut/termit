@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlRecordDto;
@@ -49,6 +50,8 @@ public abstract class DtoMapper {
     public abstract VocabularyDto vocabularyToVocabularyDto(Vocabulary vocabulary);
 
     public abstract AccessControlListDto accessControlListToDto(AccessControlList acl);
+
+    public abstract PasswordChangeRequestDto passwordChangeRequestToDto(PasswordChangeRequest request);
 
     public AccessControlRecordDto accessControlRecordToDto(AccessControlRecord<?> record) {
         final AccessControlRecordDto dto = new AccessControlRecordDto();

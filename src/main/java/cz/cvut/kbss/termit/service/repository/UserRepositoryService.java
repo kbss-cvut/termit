@@ -30,6 +30,8 @@ import org.springframework.stereotype.Service;
 
 import jakarta.validation.Validator;
 
+import java.util.Optional;
+
 @Service
 public class UserRepositoryService extends BaseRepositoryService<UserAccount, UserAccount> {
 
@@ -65,6 +67,10 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
      */
     public boolean exists(String username) {
         return userAccountDao.exists(username);
+    }
+
+    public Optional<UserAccount> findByUsername(String username) {
+        return userAccountDao.findByUsername(username);
     }
 
     @Override
