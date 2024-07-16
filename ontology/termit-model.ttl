@@ -333,3 +333,8 @@ termit-pojem:úvodní-stav-pojmu
 termit-pojem:koncový-stav-pojmu
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
         rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
+
+termit-pojem:požadavek-na-změnu-hesla
+    a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
+
+
