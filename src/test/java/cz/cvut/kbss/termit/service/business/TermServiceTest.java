@@ -455,7 +455,7 @@ class TermServiceTest {
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
-        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
 
         sut.persistChild(childToPersist, parent);
