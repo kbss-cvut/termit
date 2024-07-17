@@ -41,12 +41,12 @@ public class PasswordChangeRequestRepositoryService extends BaseRepositoryServic
         return token;
     }
 
-    public PasswordChangeRequest findRequired(String username) {
-        return find(username).orElseThrow(() -> NotFoundException.create(PasswordChangeRequest.class.getSimpleName(), username));
+    public PasswordChangeRequest findByUsernameRequired(String username) {
+        return findByUsername(username).orElseThrow(() -> NotFoundException.create(PasswordChangeRequest.class.getSimpleName(), username));
     }
 
-    public Optional<PasswordChangeRequest> find(String username) {
-        return passwordChangeRequestDao.find(username);
+    public Optional<PasswordChangeRequest> findByUsername(String username) {
+        return passwordChangeRequestDao.findByUsername(username);
     }
 
     @Override

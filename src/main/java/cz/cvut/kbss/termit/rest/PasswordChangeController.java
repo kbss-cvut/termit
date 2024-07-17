@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.rest;
 
+import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
 import cz.cvut.kbss.termit.service.business.PasswordChangeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,11 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class PasswordChangeController {
     private static final Logger LOG = LoggerFactory.getLogger(PasswordChangeController.class);
 
-    private final PasswordChangeService tokenService;
+    private final PasswordChangeService passwordChangeService;
 
     @Autowired
-    public PasswordChangeController(PasswordChangeService tokenService) {
-        this.tokenService = tokenService;
+    public PasswordChangeController(PasswordChangeService passwordChangeService) {
+        this.passwordChangeService = passwordChangeService;
         LOG.debug("Instantiating password change controller.");
     }
 
@@ -46,7 +48,7 @@ public class PasswordChangeController {
     public ResponseEntity<Void> requestPasswordReset(
             @Parameter(description = "Username of the user") @PathVariable String username) {
         LOG.info("Password reset requested for user {}.", username);
-        tokenService.requestPasswordReset(username);
+        passwordChangeService.requestPasswordReset(username);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -56,11 +58,12 @@ public class PasswordChangeController {
             @ApiResponse(responseCode = "403", description = "Invalid or expired token")
     })
     @PreAuthorize("permitAll()")
-    @PostMapping(path = "/change")
+    @PostMapping(path = "/change", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> changePassword(
-            @Parameter(description = "Token for password reset") @RequestBody PasswordChangeDto passwordChangeDto) {
+            @Parameter(
+                    description = "Token with URI for password reset") @RequestBody PasswordChangeDto passwordChangeDto) {
         LOG.info("Password change requested with token {}", passwordChangeDto.getToken());
-        tokenService.changePassword(passwordChangeDto);
+        passwordChangeService.changePassword(passwordChangeDto);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }
