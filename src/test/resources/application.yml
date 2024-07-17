@@ -10,7 +10,7 @@ keycloak:
     enabled: false
 termit:
     repository:
-        url: mem:termit
+        url: termit
     persistence:
         driver: cz.cvut.kbss.ontodriver.rdf4j.Rdf4jDataSource
         language: en
