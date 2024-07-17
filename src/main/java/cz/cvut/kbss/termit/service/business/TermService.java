@@ -386,7 +386,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
         analyzeTermDefinition(child, parent.getVocabulary());
-        vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(parent.getVocabulary()));
+        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
     }
 
     /**
