@@ -22,7 +22,8 @@ import java.util.function.Supplier;
 @Service
 public class PasswordChangeService {
     private static final Logger LOG = LoggerFactory.getLogger(PasswordChangeService.class);
-    private static final String INVALID_TOKEN_ERROR_MESSAGE_ID = "resetPassword.invalidToken";
+
+    public static final String INVALID_TOKEN_ERROR_MESSAGE_ID = "resetPassword.invalidToken";
 
     private final Configuration.Security securityConfig;
     private final PasswordChangeRequestRepositoryService passwordChangeRequestRepositoryService;
@@ -42,15 +43,16 @@ public class PasswordChangeService {
     @Transactional
     public void requestPasswordReset(String username) {
         // delete any existing token for the user
-        passwordChangeRequestRepositoryService.find(username).ifPresent(passwordChangeRequestRepositoryService::remove);
+        passwordChangeRequestRepositoryService.findByUsername(username)
+                                              .ifPresent(passwordChangeRequestRepositoryService::remove);
         UserAccount account = userRepositoryService.findByUsername(username)
                                                    .orElseThrow(() -> NotFoundException.create(UserAccount.class, username));
         PasswordChangeRequest request = passwordChangeRequestRepositoryService.create(account);
         passwordChangeNotifier.sendEmail(request);
     }
 
-    public boolean isValid(PasswordChangeRequest token) {
-        return token.getCreatedAt().plus(securityConfig.getPasswordChangeTokenValidity()).isAfter(Instant.now());
+    public boolean isValid(PasswordChangeRequest request) {
+        return request.getCreatedAt().plus(securityConfig.getPasswordChangeTokenValidity()).isAfter(Instant.now());
     }
 
     @Transactional

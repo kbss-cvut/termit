@@ -1,10 +1,11 @@
 package cz.cvut.kbss.termit.dto;
 
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
-public class PasswordChangeDto {
+public class PasswordChangeDto implements Serializable {
     private URI uri;
     private String token;
     private String newPassword;
