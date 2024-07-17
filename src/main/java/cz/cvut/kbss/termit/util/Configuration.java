@@ -821,10 +821,10 @@ public class Configuration {
         private String roleClaim = "realm_access.roles";
 
         /**
-         * A duration for how long tokens for resetting passwords are valid before expiration.
+         * A duration for how long requests for resetting passwords are valid before expiration.
          */
         @NotNull
-        private Duration passwordChangeTokenValidity = Duration.ofHours(24);
+        private Duration passwordChangeRequestValidity = Duration.ofHours(24);
 
         public ProviderType getProvider() {
             return provider;
@@ -842,15 +842,15 @@ public class Configuration {
             this.roleClaim = roleClaim;
         }
 
-        public Duration getPasswordChangeTokenValidity() {
-            return passwordChangeTokenValidity;
+        public Duration getPasswordChangeRequestValidity() {
+            return passwordChangeRequestValidity;
         }
 
-        public void setPasswordChangeTokenValidity(Duration passwordChangeTokenValidity) {
-            if (passwordChangeTokenValidity.isNegative() || passwordChangeTokenValidity.isZero()) {
+        public void setPasswordChangeRequestValidity(Duration passwordChangeRequestValidity) {
+            if (passwordChangeRequestValidity.isNegative() || passwordChangeRequestValidity.isZero()) {
                 throw new IllegalArgumentException("Reset password token validity must be a positive duration.");
             }
-            this.passwordChangeTokenValidity = passwordChangeTokenValidity;
+            this.passwordChangeRequestValidity = passwordChangeRequestValidity;
         }
     }
 

@@ -2,7 +2,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
-import cz.cvut.kbss.termit.exception.InvalidPasswordChangeTokenException;
+import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -42,7 +42,7 @@ public class PasswordChangeService {
 
     @Transactional
     public void requestPasswordReset(String username) {
-        // delete any existing token for the user
+        // delete existing request for the user
         passwordChangeRequestRepositoryService.findByUsername(username)
                                               .ifPresent(passwordChangeRequestRepositoryService::remove);
         UserAccount account = userRepositoryService.findByUsername(username)
@@ -52,12 +52,12 @@ public class PasswordChangeService {
     }
 
     public boolean isValid(PasswordChangeRequest request) {
-        return request.getCreatedAt().plus(securityConfig.getPasswordChangeTokenValidity()).isAfter(Instant.now());
+        return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity()).isAfter(Instant.now());
     }
 
     @Transactional
     public void changePassword(PasswordChangeDto passwordChangeDto) {
-        Supplier<AuthorizationException> exception = () -> new InvalidPasswordChangeTokenException("Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID);
+        Supplier<AuthorizationException> exception = () -> new InvalidPasswordChangeRequestException("Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID);
         PasswordChangeRequest request = passwordChangeRequestRepositoryService.find(passwordChangeDto.getUri())
                                                                               .orElseThrow(exception);
 

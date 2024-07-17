@@ -17,10 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PasswordChangeRequestDaoTest extends BaseDaoTestRunner {
 
-    private static final String TOKEN_A = "a7a9a64f-ce3f-40e6-90ef-a2345c811715";
-
-    private static final String TOKEN_B = "7dbcea7b-8567-44df-a64e-084d2bdfacc3";
-
     @Autowired
     private EntityManager em;
 
@@ -54,8 +50,8 @@ class PasswordChangeRequestDaoTest extends BaseDaoTestRunner {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         transactional(() -> em.persist(user));
 
-        final String TOKEN = TOKEN_A;
-        final String ANOTHER_TOKEN = TOKEN_B;
+        final String TOKEN = "a7a9a64f-ce3f-40e6-90ef-a2345c811715";
+        final String ANOTHER_TOKEN = "7dbcea7b-8567-44df-a64e-084d2bdfacc3";
 
         final PasswordChangeRequest passwordChangeRequest = new PasswordChangeRequest();
         passwordChangeRequest.setToken(TOKEN);

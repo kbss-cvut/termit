@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.InvalidPasswordChangeTokenException;
+import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.business.PasswordChangeService;
@@ -81,7 +81,7 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
         dto.setNewPassword(UUID.randomUUID().toString());
         dto.setToken(UUID.randomUUID().toString());
 
-        doThrow(new InvalidPasswordChangeTokenException("Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID))
+        doThrow(new InvalidPasswordChangeRequestException("Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID))
                 .when(passwordChangeService).changePassword(refEq(dto));
 
         mockMvc.perform(post("/password/change").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
