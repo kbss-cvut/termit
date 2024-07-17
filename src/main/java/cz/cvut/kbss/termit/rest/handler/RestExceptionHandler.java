@@ -25,7 +25,7 @@ import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
 import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
-import cz.cvut.kbss.termit.exception.InvalidPasswordChangeTokenException;
+import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -237,7 +237,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidPasswordChangeTokenException(HttpServletRequest request, InvalidPasswordChangeTokenException e) {
+    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request, InvalidPasswordChangeRequestException e) {
         logException(e, request);
         return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()), HttpStatus.FORBIDDEN);
     }

@@ -2,7 +2,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.InvalidPasswordChangeTokenException;
+import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -100,7 +100,7 @@ public class PasswordChangeServiceTest {
     void expiredRequestIsNotValid() {
         final PasswordChangeRequest request = new PasswordChangeRequest();
         request.setCreatedAt(Instant.now().minus(configuration.getSecurity()
-                                                              .getPasswordChangeTokenValidity())
+                                                              .getPasswordChangeRequestValidity())
                                     .minusNanos(1));
 
         boolean isValid = sut.isValid(request);
@@ -111,7 +111,7 @@ public class PasswordChangeServiceTest {
     void requestIsValid() {
         final PasswordChangeRequest request = new PasswordChangeRequest();
         Instant created = Instant.now().minus(configuration.getSecurity()
-                                                           .getPasswordChangeTokenValidity()
+                                                           .getPasswordChangeRequestValidity()
                                                            .dividedBy(2));
         request.setCreatedAt(created);
 
@@ -155,7 +155,7 @@ public class PasswordChangeServiceTest {
         when(passwordChangeRequestRepositoryService.find(dto.getUri()))
                 .thenReturn(Optional.empty());
 
-        assertThrows(InvalidPasswordChangeTokenException.class, () ->
+        assertThrows(InvalidPasswordChangeRequestException.class, () ->
                 sut.changePassword(dto)
         );
         verify(passwordChangeRequestRepositoryService).find(dto.getUri());
@@ -165,7 +165,7 @@ public class PasswordChangeServiceTest {
     void changePasswordInvalidRequestExceptionThrown() {
         final PasswordChangeRequest request = new PasswordChangeRequest();
         request.setCreatedAt(Instant.now().minus(configuration.getSecurity()
-                                                              .getPasswordChangeTokenValidity())
+                                                              .getPasswordChangeRequestValidity())
                                     .minusNanos(1));
         request.setUri(Generator.generateUri());
         request.setToken(UUID.randomUUID().toString());
@@ -177,7 +177,7 @@ public class PasswordChangeServiceTest {
         when(passwordChangeRequestRepositoryService.find(dto.getUri()))
                 .thenReturn(Optional.of(request));
 
-        assertThrows(InvalidPasswordChangeTokenException.class, () ->
+        assertThrows(InvalidPasswordChangeRequestException.class, () ->
                 sut.changePassword(dto)
         );
         verify(passwordChangeRequestRepositoryService).find(dto.getUri());
@@ -197,7 +197,7 @@ public class PasswordChangeServiceTest {
         when(passwordChangeRequestRepositoryService.find(dto.getUri()))
                 .thenReturn(Optional.of(request));
 
-        assertThrows(InvalidPasswordChangeTokenException.class, () ->
+        assertThrows(InvalidPasswordChangeRequestException.class, () ->
                 sut.changePassword(dto)
         );
         verify(passwordChangeRequestRepositoryService).find(dto.getUri());

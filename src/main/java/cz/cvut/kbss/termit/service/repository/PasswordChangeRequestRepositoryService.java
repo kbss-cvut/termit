@@ -32,13 +32,13 @@ public class PasswordChangeRequestRepositoryService extends BaseRepositoryServic
     }
 
     public PasswordChangeRequest create(UserAccount userAccount) {
-        PasswordChangeRequest token = new PasswordChangeRequest();
-        token.setUserAccount(userAccount);
-        token.setToken(UUID.randomUUID().toString());
-        token.setCreatedAt(Instant.now());
+        PasswordChangeRequest request = new PasswordChangeRequest();
+        request.setUserAccount(userAccount);
+        request.setToken(UUID.randomUUID().toString());
+        request.setCreatedAt(Instant.now());
 
-        passwordChangeRequestDao.persist(token);
-        return token;
+        passwordChangeRequestDao.persist(request);
+        return request;
     }
 
     public PasswordChangeRequest findByUsernameRequired(String username) {

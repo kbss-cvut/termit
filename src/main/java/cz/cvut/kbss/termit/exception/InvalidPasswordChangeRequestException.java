@@ -1,9 +1,9 @@
 package cz.cvut.kbss.termit.exception;
 
-public class InvalidPasswordChangeTokenException extends AuthorizationException {
+public class InvalidPasswordChangeRequestException extends AuthorizationException {
 
     private final String messageId;
-    public InvalidPasswordChangeTokenException(String message, String messageId) {
+    public InvalidPasswordChangeRequestException(String message, String messageId) {
         super(message);
         this.messageId = messageId;
     }
