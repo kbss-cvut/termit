@@ -42,9 +42,10 @@ public class PasswordChangeService {
 
     @Transactional
     public void requestPasswordReset(String username) {
-        // delete existing request for the user
-        passwordChangeRequestRepositoryService.findByUsername(username)
-                                              .ifPresent(passwordChangeRequestRepositoryService::remove);
+        // delete any existing request for the user
+        passwordChangeRequestRepositoryService.findAllByUsername(username)
+                                              .forEach(passwordChangeRequestRepositoryService::remove);
+
         UserAccount account = userRepositoryService.findByUsername(username)
                                                    .orElseThrow(() -> NotFoundException.create(UserAccount.class, username));
         PasswordChangeRequest request = passwordChangeRequestRepositoryService.create(account);

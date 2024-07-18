@@ -11,6 +11,7 @@ import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,6 +48,10 @@ public class PasswordChangeRequestRepositoryService extends BaseRepositoryServic
 
     public Optional<PasswordChangeRequest> findByUsername(String username) {
         return passwordChangeRequestDao.findByUsername(username);
+    }
+
+    public List<PasswordChangeRequest> findAllByUsername(String username) {
+        return passwordChangeRequestDao.findAllByUsername(username);
     }
 
     @Override
