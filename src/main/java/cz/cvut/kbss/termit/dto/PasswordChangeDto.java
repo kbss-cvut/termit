@@ -18,11 +18,6 @@ public class PasswordChangeDto implements Serializable {
         this.uri = uri;
     }
 
-    public void setUri(String uri) {
-        String stringURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
-        setUri(URI.create(stringURI));
-    }
-
     public String getToken() {
         return token;
     }
