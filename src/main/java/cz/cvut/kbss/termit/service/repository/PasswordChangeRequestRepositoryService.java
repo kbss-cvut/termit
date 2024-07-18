@@ -39,11 +39,13 @@ public class PasswordChangeRequestRepositoryService extends BaseRepositoryServic
         request.setCreatedAt(Instant.now());
 
         passwordChangeRequestDao.persist(request);
+        postPersist(request);
         return request;
     }
 
     public List<PasswordChangeRequest> findAllByUsername(String username) {
-        return passwordChangeRequestDao.findAllByUsername(username);
+        List<PasswordChangeRequest> loaded = passwordChangeRequestDao.findAllByUsername(username);
+        return loaded.stream().map(this::postLoad).toList();
     }
 
     @Override
