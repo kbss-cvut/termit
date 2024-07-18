@@ -26,21 +26,6 @@ public class PasswordChangeRequestDao extends BaseDao<PasswordChangeRequest> {
         this.persistenceConfig = configuration.getPersistence();
     }
 
-    public Optional<PasswordChangeRequest> findByToken(String token) {
-        Objects.requireNonNull(token);
-        try {
-            return Optional.of(
-                    em.createQuery("SELECT t FROM " + type.getSimpleName() + " t WHERE t.token = :token ORDER BY t.createdAt DESC", type)
-                      .setParameter("token", token)
-                      .setMaxResults(1).getSingleResult()
-            );
-        } catch (NoResultException e) {
-            return Optional.empty();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
     public Optional<PasswordChangeRequest> findByUsername(String username) {
         Objects.requireNonNull(username);
         try {

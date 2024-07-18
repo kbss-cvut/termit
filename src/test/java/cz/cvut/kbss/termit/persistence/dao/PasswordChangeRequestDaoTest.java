@@ -29,65 +29,6 @@ class PasswordChangeRequestDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void findByTokenReturnsResultMatchingTheToken() {
-        final UserAccount user = Generator.generateUserAccountWithPassword();
-        transactional(() -> em.persist(user));
-
-        final String TOKEN = randomToken();
-        final PasswordChangeRequest passwordChangeRequest = new PasswordChangeRequest();
-        passwordChangeRequest.setToken(TOKEN);
-        passwordChangeRequest.setUserAccount(user);
-        passwordChangeRequest.setCreatedAt(Instant.now());
-        transactional(() -> em.persist(passwordChangeRequest));
-
-        final Optional<PasswordChangeRequest> result = sut.findByToken(TOKEN);
-        assertTrue(result.isPresent());
-        assertEquals(TOKEN, result.get().getToken());
-        assertEquals(user.getUri(), result.get().getUserAccount().getUri());
-    }
-
-    @Test
-    void findByTokenReturnsEmptyOptionalWhenNoMatchingRequestIsFound() {
-        final UserAccount user = Generator.generateUserAccountWithPassword();
-        transactional(() -> em.persist(user));
-
-        final String TOKEN = randomToken();
-        final String ANOTHER_TOKEN = randomToken();
-
-        final PasswordChangeRequest passwordChangeRequest = new PasswordChangeRequest();
-        passwordChangeRequest.setToken(TOKEN);
-        passwordChangeRequest.setUserAccount(user);
-        passwordChangeRequest.setCreatedAt(Instant.now());
-        transactional(() -> em.persist(passwordChangeRequest));
-
-        final Optional<PasswordChangeRequest> result = sut.findByToken(ANOTHER_TOKEN);
-        assertFalse(result.isPresent());
-    }
-
-    @Test
-    void findByTokenReturnsSingleResultWhenMultipleArePresent() {
-        final UserAccount user = Generator.generateUserAccountWithPassword();
-        transactional(() -> em.persist(user));
-
-        final String TOKEN = randomToken();
-        final PasswordChangeRequest passwordChangeRequest = new PasswordChangeRequest();
-        final PasswordChangeRequest secondPasswordChangeRequest = new PasswordChangeRequest();
-        passwordChangeRequest.setToken(TOKEN);
-        secondPasswordChangeRequest.setToken(TOKEN);
-        passwordChangeRequest.setUserAccount(user);
-        secondPasswordChangeRequest.setUserAccount(user);
-        passwordChangeRequest.setCreatedAt(Instant.now());
-        secondPasswordChangeRequest.setCreatedAt(Instant.now());
-        transactional(() -> em.persist(passwordChangeRequest));
-        transactional(() -> em.persist(secondPasswordChangeRequest));
-
-        final Optional<PasswordChangeRequest> result = sut.findByToken(TOKEN);
-        assertTrue(result.isPresent());
-        assertEquals(TOKEN, result.get().getToken());
-        assertEquals(user.getUri(), result.get().getUserAccount().getUri());
-    }
-
-    @Test
     void findByUsernameReturnsResultMatchingTheToken() {
         final UserAccount user = Generator.generateUserAccountWithPassword();
         transactional(() -> em.persist(user));
