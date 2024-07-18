@@ -42,14 +42,6 @@ public class PasswordChangeRequestRepositoryService extends BaseRepositoryServic
         return request;
     }
 
-    public PasswordChangeRequest findByUsernameRequired(String username) {
-        return findByUsername(username).orElseThrow(() -> NotFoundException.create(PasswordChangeRequest.class.getSimpleName(), username));
-    }
-
-    public Optional<PasswordChangeRequest> findByUsername(String username) {
-        return passwordChangeRequestDao.findByUsername(username);
-    }
-
     public List<PasswordChangeRequest> findAllByUsername(String username) {
         return passwordChangeRequestDao.findAllByUsername(username);
     }

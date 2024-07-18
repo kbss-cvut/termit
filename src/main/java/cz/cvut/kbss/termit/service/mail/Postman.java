@@ -67,8 +67,7 @@ public class Postman {
 
     @PostConstruct
     public void postConstruct() {
-        // exclude mailSender check for test environment
-        if(mailSender == null && Arrays.stream(env.getActiveProfiles()).noneMatch("test"::equals)) {
+        if(mailSender == null) {
             throw new ValidationException("Mail server not configured.");
         }
     }

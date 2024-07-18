@@ -30,7 +30,6 @@ public class PasswordChangeService {
     private final UserRepositoryService userRepositoryService;
     private final PasswordChangeNotifier passwordChangeNotifier;
 
-    @Autowired
     public PasswordChangeService(PasswordChangeRequestRepositoryService passwordChangeRequestRepositoryService,
                                  Configuration configuration, UserRepositoryService userRepositoryService,
                                  PasswordChangeNotifier passwordChangeNotifier) {
@@ -52,7 +51,7 @@ public class PasswordChangeService {
         passwordChangeNotifier.sendEmail(request);
     }
 
-    public boolean isValid(PasswordChangeRequest request) {
+    private boolean isValid(PasswordChangeRequest request) {
         return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity()).isAfter(Instant.now());
     }
 
