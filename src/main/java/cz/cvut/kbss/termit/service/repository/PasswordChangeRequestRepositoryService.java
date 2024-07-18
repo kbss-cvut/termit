@@ -2,7 +2,6 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
-import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
@@ -12,16 +11,17 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class PasswordChangeRequestRepositoryService extends BaseRepositoryService<PasswordChangeRequest, PasswordChangeRequestDto> {
+public class PasswordChangeRequestRepositoryService
+        extends BaseRepositoryService<PasswordChangeRequest, PasswordChangeRequestDto> {
 
     private final PasswordChangeRequestDao passwordChangeRequestDao;
     private final DtoMapper dtoMapper;
 
-    protected PasswordChangeRequestRepositoryService(PasswordChangeRequestDao passwordChangeRequestDao, DtoMapper dtoMapper, Validator validator) {
+    public PasswordChangeRequestRepositoryService(PasswordChangeRequestDao passwordChangeRequestDao,
+                                                  DtoMapper dtoMapper, Validator validator) {
         super(validator);
         this.passwordChangeRequestDao = passwordChangeRequestDao;
         this.dtoMapper = dtoMapper;

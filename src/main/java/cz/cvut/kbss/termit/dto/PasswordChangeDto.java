@@ -8,8 +8,6 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 
 @OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/password-change")
 public class PasswordChangeDto implements Serializable {
