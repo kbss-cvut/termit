@@ -18,6 +18,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -52,8 +53,8 @@ public class PasswordChangeServiceTest {
         final UserAccount userAccount = Generator.generateUserAccount();
         final PasswordChangeRequest request = new PasswordChangeRequest();
 
-        when(passwordChangeRequestRepositoryService.findByUsername(userAccount.getUsername()))
-                .thenReturn(Optional.empty());
+        when(passwordChangeRequestRepositoryService.findAllByUsername(userAccount.getUsername()))
+                .thenReturn(List.of());
         when(userRepositoryService.findByUsername(userAccount.getUsername()))
                 .thenReturn(Optional.of(userAccount));
         when(passwordChangeRequestRepositoryService.create(userAccount)).thenReturn(request);
@@ -66,13 +67,13 @@ public class PasswordChangeServiceTest {
     }
 
     @Test
-    void requestPasswordResetPreviousRequestRemoved() {
+    void requestPasswordResetSinglePreviousRequestRemoved() {
         final UserAccount userAccount = Generator.generateUserAccount();
         final PasswordChangeRequest oldRequest = new PasswordChangeRequest();
         final PasswordChangeRequest request = new PasswordChangeRequest();
 
-        when(passwordChangeRequestRepositoryService.findByUsername(userAccount.getUsername()))
-                .thenReturn(Optional.of(oldRequest));
+        when(passwordChangeRequestRepositoryService.findAllByUsername(userAccount.getUsername()))
+                .thenReturn(List.of(oldRequest));
         when(userRepositoryService.findByUsername(userAccount.getUsername()))
                 .thenReturn(Optional.of(userAccount));
         when(passwordChangeRequestRepositoryService.create(userAccount)).thenReturn(request);
@@ -80,6 +81,27 @@ public class PasswordChangeServiceTest {
         sut.requestPasswordReset(userAccount.getUsername());
 
         verify(passwordChangeRequestRepositoryService).remove(oldRequest);
+    }
+
+    @Test
+    void requestPasswordResetAllPreviousRequestsRemoved() {
+        final UserAccount userAccount = Generator.generateUserAccount();
+        final PasswordChangeRequest oldRequest_A = new PasswordChangeRequest();
+        final PasswordChangeRequest oldRequest_B = new PasswordChangeRequest();
+        final PasswordChangeRequest oldRequest_C = new PasswordChangeRequest();
+        final PasswordChangeRequest request = new PasswordChangeRequest();
+
+        when(passwordChangeRequestRepositoryService.findAllByUsername(userAccount.getUsername()))
+                .thenReturn(List.of(oldRequest_A, oldRequest_B, oldRequest_C));
+        when(userRepositoryService.findByUsername(userAccount.getUsername()))
+                .thenReturn(Optional.of(userAccount));
+        when(passwordChangeRequestRepositoryService.create(userAccount)).thenReturn(request);
+
+        sut.requestPasswordReset(userAccount.getUsername());
+
+        verify(passwordChangeRequestRepositoryService).remove(oldRequest_A);
+        verify(passwordChangeRequestRepositoryService).remove(oldRequest_B);
+        verify(passwordChangeRequestRepositoryService).remove(oldRequest_C);
     }
 
     @Test
