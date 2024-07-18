@@ -117,30 +117,6 @@ public class PasswordChangeServiceTest {
         verify(userRepositoryService).findByUsername(username);
     }
 
-
-    @Test
-    void expiredRequestIsNotValid() {
-        final PasswordChangeRequest request = new PasswordChangeRequest();
-        request.setCreatedAt(Instant.now().minus(configuration.getSecurity()
-                                                              .getPasswordChangeRequestValidity())
-                                    .minusNanos(1));
-
-        boolean isValid = sut.isValid(request);
-        assertFalse(isValid);
-    }
-
-    @Test
-    void requestIsValid() {
-        final PasswordChangeRequest request = new PasswordChangeRequest();
-        Instant created = Instant.now().minus(configuration.getSecurity()
-                                                           .getPasswordChangeRequestValidity()
-                                                           .dividedBy(2));
-        request.setCreatedAt(created);
-
-        boolean isValid = sut.isValid(request);
-        assertTrue(isValid);
-    }
-
     @Test
     void changePasswordValidRequestPasswordChanged() {
         final UserAccount account = Generator.generateUserAccountWithPassword();
@@ -184,7 +160,7 @@ public class PasswordChangeServiceTest {
     }
 
     @Test
-    void changePasswordInvalidRequestExceptionThrown() {
+    void changePasswordExpiredRequestExceptionThrown() {
         final PasswordChangeRequest request = new PasswordChangeRequest();
         request.setCreatedAt(Instant.now().minus(configuration.getSecurity()
                                                               .getPasswordChangeRequestValidity())

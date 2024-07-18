@@ -239,6 +239,6 @@ public class RestExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request, InvalidPasswordChangeRequestException e) {
         logException(e, request);
-        return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()), HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()), HttpStatus.CONFLICT);
     }
 }

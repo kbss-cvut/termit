@@ -26,21 +26,6 @@ public class PasswordChangeRequestDao extends BaseDao<PasswordChangeRequest> {
         this.persistenceConfig = configuration.getPersistence();
     }
 
-    public Optional<PasswordChangeRequest> findByUsername(String username) {
-        Objects.requireNonNull(username);
-        try {
-            return Optional.of(
-                    em.createQuery("SELECT t FROM " + type.getSimpleName() + " t WHERE t.userAccount.username = :username ORDER BY t.createdAt DESC", type)
-                      .setParameter("username", username, persistenceConfig.getLanguage())
-                      .setMaxResults(1).getSingleResult()
-            );
-        } catch (NoResultException e) {
-            return Optional.empty();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
-    }
-
     public List<PasswordChangeRequest> findAllByUsername(String username) {
         Objects.requireNonNull(username);
         try {

@@ -16,8 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,30 +40,30 @@ public class PasswordChangeController {
 
     @Operation(description = "Requests a password reset for the specified username.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password reset request accepted, email sent"),
+            @ApiResponse(responseCode = "204", description = "Password reset request accepted, email sent"),
             @ApiResponse(responseCode = "404", description = "User with the specified username not found.")
     })
     @PreAuthorize("permitAll()")
-    @PostMapping(path = "/reset/{username}")
+    @PostMapping(consumes = {MediaType.TEXT_PLAIN_VALUE})
     public ResponseEntity<Void> requestPasswordReset(
-            @Parameter(description = "Username of the user") @PathVariable String username) {
+            @Parameter(description = "Username of the user") @RequestBody String username) {
         LOG.info("Password reset requested for user {}.", username);
         passwordChangeService.requestPasswordReset(username);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @Operation(description = "Changes the password for the specified user.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password changed"),
-            @ApiResponse(responseCode = "403", description = "Invalid or expired token")
+            @ApiResponse(responseCode = "204", description = "Password changed"),
+            @ApiResponse(responseCode = "409", description = "Invalid or expired token")
     })
     @PreAuthorize("permitAll()")
-    @PostMapping(path = "/change", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PutMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> changePassword(
             @Parameter(
                     description = "Token with URI for password reset") @RequestBody PasswordChangeDto passwordChangeDto) {
         LOG.info("Password change requested with token {}", passwordChangeDto.getToken());
         passwordChangeService.changePassword(passwordChangeDto);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

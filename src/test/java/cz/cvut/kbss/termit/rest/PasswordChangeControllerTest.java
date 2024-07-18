@@ -18,10 +18,12 @@ import org.springframework.http.MediaType;
 import java.util.UUID;
 
 import static cz.cvut.kbss.termit.service.business.PasswordChangeService.INVALID_TOKEN_ERROR_MESSAGE_ID;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,8 +45,10 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
     void passwordResetRequestsPasswordReset() throws Exception {
         final UserAccount userAccount = Generator.generateUserAccount();
 
-        mockMvc.perform(post("/password/reset/" + userAccount.getUsername()))
-               .andExpect(status().isOk());
+        mockMvc.perform(post("/password")
+                       .content(userAccount.getUsername())
+                       .contentType(MediaType.TEXT_PLAIN))
+               .andExpect(status().isNoContent());
         verify(passwordChangeService).requestPasswordReset(userAccount.getUsername());
     }
 
@@ -56,10 +60,12 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
         doThrow(NotFoundException.create(UserAccount.class, username))
                 .when(passwordChangeService).requestPasswordReset(username);
 
-        mockMvc.perform(post("/password/reset/" + username))
+        mockMvc.perform(post("/password")
+                       .content(username)
+                       .contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNotFound());
 
-        verify(passwordChangeService).requestPasswordReset(username);
+        verify(passwordChangeService).requestPasswordReset(eq(username));
     }
 
     @Test
@@ -69,13 +75,13 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
         dto.setNewPassword(UUID.randomUUID().toString());
         dto.setToken(UUID.randomUUID().toString());
 
-        mockMvc.perform(post("/password/change").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
-               .andExpect(status().isOk());
+        mockMvc.perform(put("/password").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNoContent());
         verify(passwordChangeService).changePassword(refEq(dto));
     }
 
     @Test
-    void passwordChangeRequestedWithInvalidTokenForbiddenReturned() throws Exception {
+    void passwordChangeRequestedWithInvalidTokenConflictReturned() throws Exception {
         final PasswordChangeDto dto = new PasswordChangeDto();
         dto.setUri(Generator.generateUri());
         dto.setNewPassword(UUID.randomUUID().toString());
@@ -84,9 +90,9 @@ class PasswordChangeControllerTest extends BaseControllerTestRunner {
         doThrow(new InvalidPasswordChangeRequestException("Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID))
                 .when(passwordChangeService).changePassword(refEq(dto));
 
-        mockMvc.perform(post("/password/change").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
+        mockMvc.perform(put("/password").content(toJson(dto)).contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(jsonPath("messageId").value(INVALID_TOKEN_ERROR_MESSAGE_ID))
-               .andExpect(status().isForbidden());
+               .andExpect(status().isConflict());
 
         verify(passwordChangeService).changePassword(refEq(dto));
     }
