@@ -43,8 +43,8 @@ public class PasswordChangeRequestRepositoryService
         return request;
     }
 
-    public List<PasswordChangeRequest> findAllByUsername(String username) {
-        List<PasswordChangeRequest> loaded = passwordChangeRequestDao.findAllByUsername(username);
+    public List<PasswordChangeRequest> findAllByUserAccount(UserAccount userAccount) {
+        List<PasswordChangeRequest> loaded = passwordChangeRequestDao.findAllByUserAccount(userAccount);
         return loaded.stream().map(this::postLoad).toList();
     }
 

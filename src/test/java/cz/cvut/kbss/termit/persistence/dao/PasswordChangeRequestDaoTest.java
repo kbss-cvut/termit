@@ -46,7 +46,7 @@ class PasswordChangeRequestDaoTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(passwordChangeRequest));
         transactional(() -> em.persist(secondPasswordChangeRequest));
 
-        final List<PasswordChangeRequest> result = sut.findAllByUsername(user.getUsername());
+        final List<PasswordChangeRequest> result = sut.findAllByUserAccount(user);
         assertTrue(result.stream().anyMatch(r -> passwordChangeRequest.getUri().equals(r.getUri())));
         assertTrue(result.stream().anyMatch(r -> secondPasswordChangeRequest.getUri().equals(r.getUri())));
         assertEquals(2, result.size());
