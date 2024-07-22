@@ -265,6 +265,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#instance)")
     @CacheEvict(allEntries = true)
+    @Transactional
     @Override
     public void remove(Vocabulary instance) {
         if (instance.getDocument() != null) {

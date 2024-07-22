@@ -351,9 +351,10 @@ public class VocabularyController extends BaseController {
                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary toRemove = vocabularyService.getReference(identifier);
-        vocabularyService.remove(toRemove);
-        LOG.debug("Vocabulary {} removed.", toRemove);
+        vocabularyService.find(identifier).ifPresent(toRemove -> {
+            vocabularyService.remove(toRemove);
+            LOG.debug("Vocabulary {} removed.", toRemove);
+        });
     }
 
     @Operation(description = "Validates the terms in a vocabulary with the specified identifier.")
