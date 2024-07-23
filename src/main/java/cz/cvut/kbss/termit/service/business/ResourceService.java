@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
-import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -104,13 +103,16 @@ public class ResourceService
     @PreAuthorize("@resourceAuthorizationService.canRemove(#toRemove)")
     public void remove(Resource toRemove) {
         Objects.requireNonNull(toRemove);
-        if (toRemove instanceof Document && !((Document) toRemove).getFiles().isEmpty()) {
-            throw new AssetRemovalException("Cannot remove non-empty document " + toRemove.getLabel() + "!");
+        final Resource managed = findRequired(toRemove.getUri());
+        if (managed instanceof Document doc) {
+            doc.getFiles().forEach(f -> {
+                documentManager.remove(f);
+                repositoryService.remove(f);
+            });
         }
         // We need the reference managed, so that its name is available to document manager
-        final Resource actualToRemove = getReference(toRemove.getUri());
-        documentManager.remove(actualToRemove);
-        repositoryService.remove(actualToRemove);
+        documentManager.remove(managed);
+        repositoryService.remove(managed);
     }
 
     /**
