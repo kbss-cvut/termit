@@ -268,10 +268,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Transactional
     @Override
     public void remove(Vocabulary instance) {
-        if (instance.getDocument() != null) {
-            throw new AssetRemovalException("Removal of document vocabularies is not supported yet.");
-        }
-
         final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
         if (!vocabularies.isEmpty()) {
             throw new AssetRemovalException(
