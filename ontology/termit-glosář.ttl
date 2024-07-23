@@ -631,3 +631,12 @@ termit-pojem:koncový-stav-pojmu
                 termit:glosář ;
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Terminal term state"@en , "Koncový stav pojmu"@cs .
+
+termit-pojem:požadavek-na-změnu-hesla
+    a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+    <http://www.w3.org/2004/02/skos/core#broader>
+            <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+    <http://www.w3.org/2004/02/skos/core#inScheme>
+            termit:glosář ;
+    <http://www.w3.org/2004/02/skos/core#prefLabel>
+            "Password reset request"@en , "Požadavek na změnu hesla"@cs .

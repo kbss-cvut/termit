@@ -18,10 +18,12 @@
 package cz.cvut.kbss.termit.service.mail;
 
 import cz.cvut.kbss.termit.exception.PostmanException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -30,14 +32,19 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+
+import javax.annotation.PostConstruct;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Objects;
 
 @Service
 public class Postman {
 
     private static final Logger LOG = LoggerFactory.getLogger(Postman.class);
+
+    private final Environment env;
 
     @Value("${spring.mail.username:#{null}}")
     private String senderUsername;
@@ -52,8 +59,17 @@ public class Postman {
 
     private final JavaMailSender mailSender;
 
-    public Postman(@Autowired(required = false) JavaMailSender mailSender) {
+    @Autowired
+    public Postman(Environment env, @Autowired(required = false) JavaMailSender mailSender) {
+        this.env = env;
         this.mailSender = mailSender;
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        if(mailSender == null) {
+            throw new ValidationException("Mail server not configured.");
+        }
     }
 
     /**

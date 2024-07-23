@@ -262,11 +262,13 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Test
     void facetedTermSearchReturnsTermsMatchingSubstringSearchParamWithSpecifiedValue() {
+        final Term sample = Generator.randomElement(terms);
+        final String sampleValue = sample.getExamples().iterator().next().get().substring(0, 4);
         final SearchParam param = new SearchParam(URI.create(SKOS.EXAMPLE),
-                                                  Set.of("matching"),
+                                                  Set.of(sampleValue),
                                                   MatchType.SUBSTRING);
         final List<Term> matchingTerms = terms.stream().filter(t -> t.getExamples().iterator().next().get()
-                                                                     .startsWith("Matching"))
+                                                                     .startsWith(sampleValue))
                                               .collect(Collectors.toList());
         final List<FacetedSearchResult> result = sut.facetedTermSearch(Set.of(param), Constants.DEFAULT_PAGE_SPEC);
         assertFalse(result.isEmpty());

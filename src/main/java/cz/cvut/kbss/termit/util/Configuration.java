@@ -25,6 +25,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
@@ -819,6 +820,12 @@ public class Configuration {
          */
         private String roleClaim = "realm_access.roles";
 
+        /**
+         * A duration for how long requests for resetting passwords are valid before expiration.
+         */
+        @NotNull
+        private Duration passwordChangeRequestValidity = Duration.ofHours(24);
+
         public ProviderType getProvider() {
             return provider;
         }
@@ -833,6 +840,17 @@ public class Configuration {
 
         public void setRoleClaim(String roleClaim) {
             this.roleClaim = roleClaim;
+        }
+
+        public Duration getPasswordChangeRequestValidity() {
+            return passwordChangeRequestValidity;
+        }
+
+        public void setPasswordChangeRequestValidity(Duration passwordChangeRequestValidity) {
+            if (passwordChangeRequestValidity.isNegative() || passwordChangeRequestValidity.isZero()) {
+                throw new IllegalArgumentException("Reset password token validity must be a positive duration.");
+            }
+            this.passwordChangeRequestValidity = passwordChangeRequestValidity;
         }
     }
 

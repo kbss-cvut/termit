@@ -168,6 +168,16 @@ public class Generator {
     }
 
     /**
+     * Returns a (pseudo)random element from the specified list.
+     * @param lst List to select random element from
+     * @return Element from the list
+     * @param <T> Element type
+     */
+    public static <T> T randomElement(List<T> lst) {
+        return lst.get(randomIndex(lst));
+    }
+
+    /**
      * Generators a (pseudo) random boolean.
      *
      * @return Random boolean

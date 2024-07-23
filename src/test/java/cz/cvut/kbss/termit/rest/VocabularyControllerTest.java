@@ -265,9 +265,11 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void removeVocabularyReturns2xxForEmptyVocabulary() throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
-        mockMvc.perform(delete(PATH + "/" + fragment)).andExpect(status().is2xxSuccessful()).andReturn();
+        vocabulary.setUri(VOCABULARY_URI);
+        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
+                .thenReturn(VOCABULARY_URI);
+        when(serviceMock.find(VOCABULARY_URI)).thenReturn(Optional.of(vocabulary));
+        mockMvc.perform(delete(PATH + "/" + FRAGMENT)).andExpect(status().is2xxSuccessful()).andReturn();
     }
 
     @Test
@@ -276,7 +278,10 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                .when(serviceMock).remove(any());
 
         final Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
+        vocabulary.setUri(VOCABULARY_URI);
+        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
+                .thenReturn(VOCABULARY_URI);
+        when(serviceMock.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
         mockMvc.perform(delete(PATH + "/" + fragment)).andExpect(status().is4xxClientError()).andReturn();
     }
@@ -615,7 +620,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         record.setHolder(Generator.generateUserWithId());
 
         mockMvc.perform(put(PATH + "/" + FRAGMENT + "/acl/records/" + Generator.randomInt())
-                       .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
+                                .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isBadRequest());
         verify(serviceMock, never()).updateAccessControlLevel(any(Vocabulary.class), any(AccessControlRecord.class));
     }

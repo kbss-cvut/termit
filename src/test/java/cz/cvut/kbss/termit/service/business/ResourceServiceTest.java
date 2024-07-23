@@ -21,7 +21,6 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
-import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -43,7 +42,11 @@ import org.jsoup.Jsoup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
@@ -54,10 +57,23 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anySet;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ResourceServiceTest {
@@ -105,19 +121,19 @@ class ResourceServiceTest {
     @Test
     void removeRemovesResourceViaRepositoryService() {
         final Resource resource = Generator.generateResourceWithId();
-        when(resourceRepositoryService.getReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.findRequired(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
     }
 
-    // Bug #1356
+    // Bug R#1356
     @Test
     void removeEnsuresAttributesForDocumentManagerArePresent() {
         final Resource toRemove = new Resource();
         toRemove.setUri(Generator.generateUri());
         final Resource resource = Generator.generateResource();
         resource.setUri(toRemove.getUri());
-        when(resourceRepositoryService.getReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.findRequired(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
         verify(documentManager).remove(resource);
@@ -393,7 +409,7 @@ class ResourceServiceTest {
     @Test
     void removeRemovesAssociatedDiskContent() {
         final Resource resource = Generator.generateResourceWithId();
-        when(resourceRepositoryService.getReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.findRequired(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(documentManager).remove(resource);
     }
@@ -463,13 +479,17 @@ class ResourceServiceTest {
     }
 
     @Test
-    void removeThrowsAssetRemovalExceptionWhenNonEmptyDocumentIsRemoved() {
+    void removeNonEmptyDocumentRemovesAllAssociatedFiles() {
         final File file = Generator.generateFileWithId("test.html");
         final Document document = Generator.generateDocumentWithId();
         document.addFile(file);
+        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
 
-        assertThrows(AssetRemovalException.class, () -> sut.remove(document));
-        verify(resourceRepositoryService, never()).remove(any());
+        sut.remove(document);
+        verify(documentManager).remove(file);
+        verify(documentManager).remove(document);
+        verify(resourceRepositoryService).remove(file);
+        verify(resourceRepositoryService).remove(document);
     }
 
     @Test
