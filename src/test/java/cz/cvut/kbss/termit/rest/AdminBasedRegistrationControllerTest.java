@@ -53,7 +53,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AdminBasedRegistrationController.class)
@@ -69,7 +69,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
 
-    private static final String PATH = REST_MAPPING_PATH + "/users";
+    private static final String PATH = REST_MAPPING_PATH + "/admin/users";
 
     @Autowired
     private MockMvc mockMvc;
@@ -94,7 +94,7 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         userService.persist(admin);
         final UserAccount user = Generator.generateUserAccountWithPassword();
-        mockMvc.perform(put(PATH).content(toJson(user))
+        mockMvc.perform(post(PATH).content(toJson(user))
                                   .contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isCreated());
         verify(userService).adminCreateUser(user);
@@ -106,7 +106,7 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
         Environment.setCurrentUser(admin);
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         final UserAccount user = Generator.generateUserAccount();
-        mockMvc.perform(put(PATH).content(toJson(user))
+        mockMvc.perform(post(PATH).content(toJson(user))
                                   .contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isForbidden());
         verify(userService, never()).persist(any());
@@ -120,7 +120,7 @@ class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
         when(securityUtils.getCurrentUser()).thenReturn(admin);
         userService.persist(admin);
         final UserAccount user = Generator.generateUserAccount();
-        mockMvc.perform(put(PATH).content(toJson(user))
+        mockMvc.perform(post(PATH).content(toJson(user))
                                  .contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isCreated());
 

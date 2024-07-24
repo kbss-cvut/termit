@@ -48,7 +48,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -368,7 +367,7 @@ public class UserService {
     }
 
     private boolean isValid(PasswordChangeRequest request) {
-        return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity()).isAfter(Instant.now());
+        return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity()).isAfter(Utils.timestamp());
     }
 
     /**

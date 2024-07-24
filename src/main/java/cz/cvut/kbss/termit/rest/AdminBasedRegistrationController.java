@@ -34,7 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,7 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
 @Tag(name = "Admin User Registration", description = "Allows admins to register new users.")
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/admin/users")
 public class AdminBasedRegistrationController {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminBasedRegistrationController.class);
@@ -67,7 +67,7 @@ public class AdminBasedRegistrationController {
             @ApiResponse(responseCode = "409", description = "User data are invalid")
     })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    @PutMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> createUser(@RequestBody UserAccount user) {
         userService.adminCreateUser(user);
         LOG.info("User {} successfully registered by {}.", user, userService.getCurrent().getUsername());
