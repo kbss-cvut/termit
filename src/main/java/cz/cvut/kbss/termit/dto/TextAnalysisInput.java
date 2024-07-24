@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +45,16 @@ public class TextAnalysisInput {
     private URI vocabularyRepository;
 
     /**
+     * Username to access the repository
+     */
+    private String vocabularyRepositoryUserName;
+
+    /**
+     * Password to access the repository
+     */
+    private String vocabularyRepositoryPassword;
+
+    /**
      * URIs of contexts containing vocabularies whose terms are used in the text analysis. Optional.
      * <p>
      * If not specified, the whole {@link #vocabularyRepository} is searched for terms.
@@ -82,6 +92,22 @@ public class TextAnalysisInput {
 
     public void setVocabularyRepository(URI vocabularyRepository) {
         this.vocabularyRepository = vocabularyRepository;
+    }
+
+    public String getVocabularyRepositoryUserName() {
+        return vocabularyRepositoryUserName;
+    }
+
+    public void setVocabularyRepositoryUserName(String vocabularyRepositoryUserName) {
+        this.vocabularyRepositoryUserName = vocabularyRepositoryUserName;
+    }
+
+    public String getVocabularyRepositoryPassword() {
+        return vocabularyRepositoryPassword;
+    }
+
+    public void setVocabularyRepositoryPassword(String vocabularyRepositoryPassword) {
+        this.vocabularyRepositoryPassword = vocabularyRepositoryPassword;
     }
 
     public Set<URI> getVocabularyContexts() {

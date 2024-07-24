@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
@@ -21,8 +24,10 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
+import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
+import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -39,7 +44,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -52,6 +68,7 @@ import java.util.Set;
 @Tag(name = "Resources", description = "Resource management API")
 @RestController
 @RequestMapping("/resources")
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class ResourceController extends BaseController {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResourceController.class);
@@ -123,16 +140,16 @@ public class ResourceController extends BaseController {
             @RequestParam(name = "attachment", required = false) boolean asAttachment,
             @Parameter(
                     description = "Datetime (ISO-format) at which the content is expected to be valid. Allows getting older revisions of the resource content.")
-            @RequestParam(name = "at", required = false) Optional<String> at) {
+            @RequestParam(name = "at", required = false) Optional<String> at,
+            @Parameter(description = "Whether to return the content without unconfirmed term occurrences.")
+            @RequestParam(name = "withoutUnconfirmedOccurrences",
+                          required = false) boolean withoutUnconfirmedOccurrences) {
         final Resource resource = getResource(localName, namespace);
         try {
-            final TypeAwareResource content;
-            if (at.isPresent()) {
-                final Instant timestamp = RestUtils.parseTimestamp(at.get());
-                content = resourceService.getContent(resource, timestamp);
-            } else {
-                content = resourceService.getContent(resource);
-            }
+            final Optional<Instant> timestamp = at.map(RestUtils::parseTimestamp);
+            final TypeAwareResource content = resourceService.getContent(resource,
+                                                                         new ResourceRetrievalSpecification(timestamp,
+                                                                                                            withoutUnconfirmedOccurrences));
             final ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                                                                      .contentLength(content.contentLength())
                                                                      .contentType(MediaType.parseMediaType(
@@ -194,7 +211,10 @@ public class ResourceController extends BaseController {
         if (!hasContent) {
             return ResponseEntity.notFound().build();
         } else {
-            final String contentType = resourceService.getContent(r).getMediaType().orElse(null);
+            final String contentType = resourceService.getContent(r,
+                                                                  new ResourceRetrievalSpecification(Optional.empty(),
+                                                                                                     false))
+                                                      .getMediaType().orElse(null);
             return ResponseEntity.noContent().header(HttpHeaders.CONTENT_TYPE, contentType).build();
         }
     }
@@ -215,7 +235,7 @@ public class ResourceController extends BaseController {
                                @RequestParam(name = QueryParams.NAMESPACE,
                                              required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getResource()), localName);
-        return resourceService.getFiles(resourceService.getRequiredReference(identifier));
+        return resourceService.getFiles(resourceService.getReference(identifier));
     }
 
     private String resourceNamespace(Optional<String> namespace) {
@@ -339,7 +359,7 @@ public class ResourceController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final Resource resource = resourceService
-                .getRequiredReference(resolveIdentifier(resourceNamespace(namespace), localName));
+                .getReference(resolveIdentifier(resourceNamespace(namespace), localName));
         return resourceService.getChanges(resource);
     }
 

@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 
 public class BaseAssetRepositoryServiceImpl extends BaseAssetRepositoryService<Term, Term> {
 

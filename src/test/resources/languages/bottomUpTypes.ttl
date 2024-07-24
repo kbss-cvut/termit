@@ -1,0 +1,53 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ufo: <http://onto.fel.cvut.cz/ontologies/ufo/> .
+
+ufo:individual a skos:Concept ;
+    skos:prefLabel "Individuál"@cs,
+        "Individual"@en .
+
+ufo:type a skos:Concept ;
+    skos:prefLabel "Typ"@cs,
+        "Type"@en .
+
+ufo:event a skos:Concept ;
+    skos:prefLabel "Událost"@cs,
+        "Event"@en ;
+    skos:scopeNote "An event, perdurant in the ontological sense. Events do not change its properties over time."@en ;
+    skos:broader ufo:individual .
+
+ufo:event-type a skos:Concept ;
+    skos:prefLabel "Typ události"@cs,
+        "Event Type"@en ;
+    skos:broader ufo:type .
+
+ufo:intrinsic-trope a skos:Concept ;
+    skos:prefLabel "Vlastnost"@cs,
+        "Aspect"@en ;
+    skos:broader ufo:individual .
+
+ufo:intrinsic-trope-type a skos:Concept ;
+    skos:prefLabel "Typ vlastnosti"@cs,
+        "Aspect Type"@en ;
+    skos:broader ufo:type .
+
+ufo:object a skos:Concept ;
+    skos:prefLabel "Objekt"@cs,
+        "Object"@en ;
+    skos:scopeNote "Object is any identifiable endurant entity existence of which is not directly dependent on an existence of another entity."@en ;
+    skos:broader ufo:individual .
+
+ufo:object-type a skos:Concept ;
+    skos:prefLabel "Typ objektu"@cs,
+        "Object Type"@en ;
+    skos:broader ufo:type .
+
+ufo:relator a skos:Concept ;
+    skos:prefLabel "Vztah"@cs,
+        "Relator"@en ;
+    skos:broader ufo:individual .
+
+ufo:relator-type a skos:Concept ;
+    skos:prefLabel "Typ vztahu"@cs,
+        "Relation"@en ;
+    skos:broader ufo:type .

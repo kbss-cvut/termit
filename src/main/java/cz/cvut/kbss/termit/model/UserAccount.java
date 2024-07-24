@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.net.URI;
 import java.time.Instant;
@@ -56,7 +56,7 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
     @OWLDataProperty(iri = Vocabulary.s_p_ma_heslo)
     private String password;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_last_activity_date)
+    @OWLDataProperty(iri = Vocabulary.s_p_sioc_last_activity_date)
     private Instant lastSeen;
 
     @Types
@@ -255,10 +255,9 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UserAccount)) {
+        if (!(o instanceof UserAccount that)) {
             return false;
         }
-        UserAccount that = (UserAccount) o;
         return Objects.equals(getUri(), that.getUri()) && Objects.equals(username, that.username);
     }
 

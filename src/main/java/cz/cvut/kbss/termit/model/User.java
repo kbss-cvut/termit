@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
@@ -108,10 +108,9 @@ public class User extends AccessControlAgent implements HasTypes, Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof User)) {
+        if (!(o instanceof User that)) {
             return false;
         }
-        User that = (User) o;
         return Objects.equals(getUri(), that.getUri()) && Objects.equals(username, that.username);
     }
 

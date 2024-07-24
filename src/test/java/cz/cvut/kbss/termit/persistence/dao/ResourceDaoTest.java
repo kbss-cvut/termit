@@ -1,25 +1,27 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
@@ -32,7 +34,10 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Comparator;
@@ -42,14 +47,28 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ResourceDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private DescriptorFactory descriptorFactory;
@@ -64,6 +83,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         this.user = Generator.generateUserWithId();
         transactional(() -> em.persist(user));
         Environment.setCurrentUser(user);
+        sut.setApplicationEventPublisher(eventPublisher);
     }
 
     private Resource generateResource() {
@@ -190,11 +210,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
 
     @Test
     void updateEvictsCachedVocabularyToPreventIssuesWithStaleReferencesBetweenContexts() {
-        final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        vocabulary.setLabel("vocabulary");
-        vocabulary.setGlossary(new Glossary());
-        vocabulary.setModel(new Model());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Document document = Generator.generateDocumentWithId();
         vocabulary.setDocument(document);
         document.setVocabulary(vocabulary.getUri());
@@ -230,9 +246,9 @@ class ResourceDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> {
             final Resource toDetach = sut.find(resource.getUri()).get();
-            assertTrue(sut.em.contains(toDetach));
+            assertTrue(em.contains(toDetach));
             sut.detach(toDetach);
-            assertFalse(sut.em.contains(toDetach));
+            assertFalse(em.contains(toDetach));
         });
     }
 
@@ -241,9 +257,9 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         final Resource resource = Generator.generateResourceWithId();
 
         transactional(() -> {
-            assertFalse(sut.em.contains(resource));
+            assertFalse(em.contains(resource));
             sut.detach(resource);
-            assertFalse(sut.em.contains(resource));
+            assertFalse(em.contains(resource));
         });
     }
 
@@ -254,12 +270,8 @@ class ResourceDaoTest extends BaseDaoTestRunner {
     void updateVocabularyDocumentWorksCorrectlyWithContexts() {
         enableRdfsInference(em);
         final Document doc = Generator.generateDocumentWithId();
-        final Vocabulary voc = new Vocabulary();
-        voc.setUri(Generator.generateUri());
-        voc.setLabel("Test vocabulary");
+        final Vocabulary voc = Generator.generateVocabularyWithId();
         voc.setDocument(doc);
-        voc.setGlossary(new Glossary());
-        voc.setModel(new Model());
 
         transactional(() -> {
             em.persist(voc, descriptorFactory.vocabularyDescriptor(voc));
@@ -329,13 +341,25 @@ class ResourceDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void updatePublishesAssetUpdateEvent() {
+        final Resource resource = generateResource();
+        final String newLabel = "New label";
+        resource.setLabel(newLabel);
+
+        transactional(() -> sut.update(resource));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
+                                                      .filter(AssetUpdateEvent.class::isInstance)
+                                                      .map(AssetUpdateEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(resource, evt.get().getAsset());
+    }
+
+    @Test
     void removeFileUpdatesParentDocumentInVocabularyContext() {
         final Document document = Generator.generateDocumentWithId();
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = new cz.cvut.kbss.termit.model.Vocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        vocabulary.setLabel("Vocabulary");
-        vocabulary.setGlossary(new Glossary());
-        vocabulary.setModel(new Model());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         vocabulary.setDocument(document);
         document.setVocabulary(vocabulary.getUri());
         final File file = new File();
@@ -355,7 +379,7 @@ class ResourceDaoTest extends BaseDaoTestRunner {
         });
 
         transactional(() -> {
-            final Resource toRemove = sut.getReference(file.getUri()).get();
+            final Resource toRemove = sut.getReference(file.getUri());
             sut.remove(toRemove);
         });
 

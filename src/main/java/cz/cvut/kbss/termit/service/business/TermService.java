@@ -1,9 +1,27 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.Snapshot;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -18,10 +36,12 @@ import cz.cvut.kbss.termit.service.comment.CommentService;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
+import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +53,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +86,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     private final CommentService commentService;
 
+    private final LanguageService languageService;
+
     private final Configuration config;
 
     @Autowired
@@ -67,7 +95,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
                        VocabularyContextMapper vocabularyContextMapper,
                        TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
                        TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
-                       CommentService commentService, Configuration config) {
+                       CommentService commentService, LanguageService languageService, Configuration config) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -76,6 +104,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         this.termOccurrenceService = termOccurrenceService;
         this.changeRecordService = changeRecordService;
         this.commentService = commentService;
+        this.languageService = languageService;
         this.config = config;
     }
 
@@ -234,8 +263,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @throws NotFoundException When vocabulary with the specified identifier does not exist
      */
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
-    public Vocabulary getRequiredVocabularyReference(URI id) {
-        return vocabularyService.getRequiredReference(id);
+    public Vocabulary getVocabularyReference(URI id) {
+        return vocabularyService.getReference(id);
     }
 
     /**
@@ -274,28 +303,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Gets a reference to a Term with the specified identifier.
      * <p>
-     * Note that this method is not protected by ACL-based authorization and should thus not be used in without some
+     * Note that this method is not protected by ACL-based authorization and should thus not be used without some
      * other type of authorization.
      *
      * @param id Term identifier
      * @return Matching Term reference wrapped in an {@code Optional}
      */
-    public Optional<Term> getReference(URI id) {
+    public Term getReference(URI id) {
         return repositoryService.getReference(id);
-    }
-
-    /**
-     * Gets a reference to a Term with the specified identifier.
-     * <p>
-     * Note that this method is not protected by ACL-based authorization and should thus not be used in without some
-     * other type of authorization.
-     *
-     * @param id Term identifier
-     * @return Matching term reference
-     * @throws NotFoundException When no matching term is found
-     */
-    public Term getRequiredReference(URI id) {
-        return repositoryService.getRequiredReference(id);
     }
 
     /**
@@ -308,12 +323,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                             () -> new NotFoundException(
-                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
-                                                  Comparator.nullsLast(Comparator.naturalOrder())))
-                     .collect(Collectors.toList());
+                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                              () -> new NotFoundException(
+                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
+                              Comparator.nullsLast(Comparator.naturalOrder())))
+                      .collect(Collectors.toList());
     }
 
     /**
@@ -352,6 +367,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void persistRoot(Term term, Vocabulary owner) {
         Objects.requireNonNull(term);
         Objects.requireNonNull(owner);
+        languageService.getInitialTermState().ifPresent(is -> term.setState(is.getUri()));
         repositoryService.addRootTermToVocabulary(term, owner);
         analyzeTermDefinition(term, owner.getUri());
         vocabularyService.runTextAnalysisOnAllTerms(owner);
@@ -367,9 +383,10 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void persistChild(Term child, Term parent) {
         Objects.requireNonNull(child);
         Objects.requireNonNull(parent);
+        languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
         analyzeTermDefinition(child, parent.getVocabulary());
-        vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(parent.getVocabulary()));
+        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
     }
 
     /**
@@ -382,13 +399,15 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public Term update(Term term) {
         Objects.requireNonNull(term);
         final Term original = repositoryService.findRequired(term.getUri());
+        languageService.verifyStateExists(term.getState());
+        checkForInvalidTerminalStateAssignment(original, term.getState());
         // Ensure the change is merged into the repo before analyzing other terms
         final Term result = repositoryService.update(term);
         if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
             analyzeTermDefinition(term, original.getVocabulary());
         }
         if (!Objects.equals(original.getLabel(), term.getLabel())) {
-            vocabularyService.runTextAnalysisOnAllTerms(getRequiredVocabularyReference(original.getVocabulary()));
+            vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(original.getVocabulary()));
         }
         return result;
     }
@@ -416,7 +435,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
         Objects.requireNonNull(term);
-        if (term.getDefinition().isEmpty()) {
+        if (term.getDefinition() == null || term.getDefinition().isEmpty()) {
             return;
         }
         LOG.debug("Analyzing definition of term {}.", term);
@@ -458,7 +477,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(definitionSource);
         definitionSource.setTerm(term.getUri());
         if (term.getDefinitionSource() != null) {
-            termOccurrenceService.remove(term.getDefinitionSource());
+            termOccurrenceService.remove(term.getDefinitionSource().getUri());
         }
         termOccurrenceService.persist(definitionSource);
     }
@@ -478,30 +497,36 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void removeTermDefinitionSource(Term term) {
         Objects.requireNonNull(term);
         if (term.getDefinitionSource() != null) {
-            termOccurrenceService.remove(term.getDefinitionSource());
+            termOccurrenceService.remove(term.getDefinitionSource().getUri());
         }
     }
 
     /**
-     * Updates the specified term's status to the specified value.
+     * Updates the specified term's state to the specified new value.
      *
-     * @param term   Term to update
-     * @param status New status
+     * @param term  Term to update
+     * @param state New state
      */
     @Transactional
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
-    public void setStatus(Term term, TermStatus status) {
-        repositoryService.setStatus(term, status);
+    public void setState(Term term, URI state) {
+        languageService.verifyStateExists(state);
+        checkForInvalidTerminalStateAssignment(term, state);
+        repositoryService.setState(term, state);
     }
 
-    /**
-     * Gets terms not occurring in any resources or other terms definitions.
-     *
-     * @return List of term identifiers
-     */
-    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
-        Objects.requireNonNull(vocabulary);
-        return repositoryService.getUnusedTermsInVocabulary(vocabulary);
+    private void checkForInvalidTerminalStateAssignment(Term term, URI state) {
+        final List<RdfsResource> states = languageService.getTermStates();
+        final Predicate<URI> isStateTerminal = (URI s) -> states.stream().filter(r -> r.getUri().equals(s)).findFirst()
+                                                                .map(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu))
+                                                                .orElse(false);
+        if (!isStateTerminal.test(state)) {
+            return;
+        }
+        if (Utils.emptyIfNull(term.getSubTerms()).stream()
+                 .anyMatch(Predicate.not(ti -> isStateTerminal.test(ti.getState())))) {
+            throw new InvalidTermStateException("Cannot set state of term " + term + " to terminal when at least one of its sub-terms is not in terminal state.", "error.term.state.terminal.liveChildren");
+        }
     }
 
     @Override

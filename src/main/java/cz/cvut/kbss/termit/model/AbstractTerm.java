@@ -1,7 +1,31 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.Inferred;
+import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Transient;
+import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
@@ -42,8 +66,8 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
-    private Boolean draft;
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    private URI state;
 
     @Types
     private Set<String> types;
@@ -60,7 +84,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         if (other.getDefinition() != null) {
             this.definition = new MultilingualString(other.getDefinition().getValue());
         }
-        this.draft = other.draft;
+        this.state = other.state;
         this.glossary = other.glossary;
         this.vocabulary = other.vocabulary;
         if (other.getSubTerms() != null) {
@@ -114,12 +138,12 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.vocabulary = vocabulary;
     }
 
-    public Boolean isDraft() {
-        return draft == null || draft;
+    public URI getState() {
+        return state;
     }
 
-    public void setDraft(Boolean draft) {
-        this.draft = draft;
+    public void setState(URI state) {
+        this.state = state;
     }
 
     @Override
@@ -132,6 +156,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.types = types;
     }
 
+    @JsonIgnore
     @Override
     public boolean isSnapshot() {
         return hasType(Vocabulary.s_c_verze_pojmu);
@@ -147,10 +172,9 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractTerm)) {
+        if (!(o instanceof AbstractTerm that)) {
             return false;
         }
-        AbstractTerm that = (AbstractTerm) o;
         return Objects.equals(getUri(), that.getUri());
     }
 

@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.environment.Environment;
@@ -9,6 +26,7 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.*;
 import cz.cvut.kbss.termit.persistence.dao.acl.AccessControlListDao;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
@@ -18,6 +36,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.net.URI;
 import java.util.List;
@@ -45,6 +64,10 @@ class RepositoryAccessControlListServiceTest {
 
     @Spy
     private Configuration configuration = new Configuration();
+
+    @Spy
+    private SecurityUtils securityUtils = new SecurityUtils(null, new BCryptPasswordEncoder(), null,
+                                                            new Configuration());
 
     @InjectMocks
     private RepositoryAccessControlListService sut;
@@ -74,8 +97,10 @@ class RepositoryAccessControlListServiceTest {
     @Test
     void removeRecordLoadsTargetAccessControlListRemovesSpecifiedRecordsAndUpdatesIt() {
         final AccessControlList acl = generateAcl();
-        acl.addRecord(new RoleAccessControlRecord(AccessLevel.READ, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER)));
-        acl.addRecord(new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER)));
+        acl.addRecord(new RoleAccessControlRecord(AccessLevel.READ, new UserRole(
+                cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER)));
+        acl.addRecord(new RoleAccessControlRecord(AccessLevel.WRITE,
+                                                  new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER)));
         final UserAccessControlRecord existingRecord = new UserAccessControlRecord();
         existingRecord.setUri(Generator.generateUri());
         existingRecord.setHolder(Generator.generateUserWithId());
@@ -113,11 +138,11 @@ class RepositoryAccessControlListServiceTest {
     }
 
     @Test
-    void getRequiredReferenceThrowsNotFoundExceptionWhenMatchingAccessControlListIsNotFound() {
+    void getReferenceThrowsNotFoundExceptionWhenMatchingAccessControlListIsNotFound() {
         final URI uri = Generator.generateUri();
         when(dao.getReference(uri)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> sut.getRequiredReference(uri));
+        assertThrows(NotFoundException.class, () -> sut.getReference(uri));
         verify(dao).getReference(uri);
     }
 
@@ -178,7 +203,8 @@ class RepositoryAccessControlListServiceTest {
     @Test
     void removeRecordThrowsUnsupportedOperationExceptionWhenAttemptingToRemoveRoleRecord() {
         final AccessControlList acl = generateAcl();
-        final RoleAccessControlRecord toRemove = new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER));
+        final RoleAccessControlRecord toRemove = new RoleAccessControlRecord(AccessLevel.WRITE, new UserRole(
+                cz.cvut.kbss.termit.security.model.UserRole.FULL_USER));
         acl.addRecord(toRemove);
 
         assertThrows(UnsupportedOperationException.class, () -> sut.removeRecord(acl, toRemove));

@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.model.LangString;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.util.Utils;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -79,6 +80,16 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
         this.label = label;
         this.comment = comment;
         this.types = new HashSet<>(Collections.singleton(type));
+    }
+
+    public RdfsResource(RdfsResource other) {
+        this.uri = other.uri;
+        assert other.label != null;
+        this.label = new MultilingualString(other.label.getValue());
+        if (other.comment != null) {
+            this.comment = new MultilingualString(other.comment.getValue());
+        }
+        this.types = new HashSet<>(Utils.emptyIfNull(other.types));
     }
 
     @Override

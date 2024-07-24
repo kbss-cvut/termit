@@ -1,21 +1,26 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -46,6 +51,18 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
         super(type, em);
         this.config = config;
         this.descriptorFactory = descriptorFactory;
+    }
+
+    @Override
+    public void persist(T entity) {
+        super.persist(entity);
+        eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
+    }
+
+    @Override
+    public T update(T entity) {
+        eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
+        return super.update(entity);
     }
 
     /**
@@ -145,7 +162,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("hasLabel", labelProperty())
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                    .setParameter("hasAuthor", URI.create(Vocabulary.s_p_has_creator))
+                    .setParameter("hasAuthor", URI.create(Vocabulary.s_p_sioc_has_creator))
                     .setParameter("language", config.getLanguage())
                     .setParameter("author", author)
                     .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())

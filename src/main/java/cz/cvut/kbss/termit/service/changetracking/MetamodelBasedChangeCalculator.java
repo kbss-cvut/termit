@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
@@ -43,10 +60,10 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
             final Object updateValue = EntityPropertiesUtils.getAttributeValue(att, changed);
             if (att.isAssociation()) {
                 final Optional<UpdateChangeRecord> change = resolveAssociationChange(originalValue, updateValue, att,
-                        original.getUri());
+                                                                                     original.getUri());
                 change.ifPresent(records::add);
 
-            } else if (!Objects.equals(originalValue, updateValue)) {
+            } else if (!areEqual(att, originalValue, updateValue)) {
                 final UpdateChangeRecord record = createChangeRecord(original.getUri(), att.getIRI().toURI());
                 recordValues(record, att, originalValue, updateValue);
                 records.add(record);
@@ -59,6 +76,11 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
 
     private boolean shouldIgnoreChanges(Attribute<?, ?> att) {
         return att.getJavaField().isAnnotationPresent(IgnoreChanges.class);
+    }
+
+    private boolean areEqual(Attribute<?, ?> att, Object originalValue, Object newValue) {
+        return att.isCollection() ? areCollectionsEqual((Collection<?>) originalValue, (Collection<?>) newValue) :
+               Objects.equals(originalValue, newValue);
     }
 
     private void recordValues(UpdateChangeRecord record, Attribute<?, ?> att, Object originalValue, Object newValue) {
@@ -103,7 +125,7 @@ public class MetamodelBasedChangeCalculator implements ChangeCalculator {
             updateToCompare = updateValue != null ? getIdentifier(updateValue, metamodel) : null;
         }
 
-        if (Objects.equals(originalToCompare, updateToCompare)) {
+        if (areEqual(att, originalToCompare, updateToCompare)) {
             return Optional.empty();
         } else {
             final UpdateChangeRecord record = createChangeRecord(assetId, att.getIRI().toURI());

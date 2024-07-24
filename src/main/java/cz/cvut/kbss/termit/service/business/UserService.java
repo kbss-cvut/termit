@@ -1,34 +1,44 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.PasswordChangeDto;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.event.LoginAttemptsThresholdExceeded;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
+import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.rest.dto.UserUpdateDto;
+import cz.cvut.kbss.termit.service.notification.PasswordChangeNotifier;
+import cz.cvut.kbss.termit.service.repository.PasswordChangeRequestRepositoryService;
 import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +51,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +62,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserService.class);
+    public static final String INVALID_TOKEN_ERROR_MESSAGE_ID = "resetPassword.invalidToken";
 
     private final UserRepositoryService repositoryService;
 
@@ -61,14 +74,26 @@ public class UserService {
 
     private final DtoMapper dtoMapper;
 
+    private final Configuration.Security securityConfig;
+
+    private final PasswordChangeRequestRepositoryService passwordChangeRequestRepositoryService;
+
+    private final PasswordChangeNotifier passwordChangeNotifier;
+
     @Autowired
     public UserService(UserRepositoryService repositoryService, UserRoleRepositoryService userRoleRepositoryService,
-                       AccessControlListService aclService, SecurityUtils securityUtils, DtoMapper dtoMapper) {
+                       AccessControlListService aclService, SecurityUtils securityUtils, DtoMapper dtoMapper,
+                       Configuration configuration,
+                       PasswordChangeRequestRepositoryService passwordChangeRequestRepositoryService,
+                       PasswordChangeNotifier passwordChangeNotifier) {
         this.repositoryService = repositoryService;
         this.userRoleRepositoryService = userRoleRepositoryService;
         this.aclService = aclService;
         this.securityUtils = securityUtils;
         this.dtoMapper = dtoMapper;
+        this.securityConfig = configuration.getSecurity();
+        this.passwordChangeRequestRepositoryService = passwordChangeRequestRepositoryService;
+        this.passwordChangeNotifier = passwordChangeNotifier;
     }
 
     /**
@@ -107,8 +132,8 @@ public class UserService {
      * @return Reference to the matching user account
      * @throws NotFoundException When no matching account is found
      */
-    public UserAccount getRequiredReference(URI id) {
-        return repositoryService.getRequiredReference(id);
+    public UserAccount getReference(URI id) {
+        return repositoryService.getReference(id);
     }
 
     /**
@@ -131,6 +156,27 @@ public class UserService {
         account.setLastSeen(Utils.timestamp());
         LOG.trace("Updating last seen timestamp of user {}.", account);
         repositoryService.update(account);
+    }
+
+    /**
+     * Persists a new user.
+     * When a password is null or blank,
+     * a random password is generated and an email for password creation is sent to the user.
+     * @param account
+     */
+    @Transactional
+    public void adminCreateUser(UserAccount account) {
+        if (account.getPassword() == null || account.getPassword().isBlank()) {
+            // generate random password
+            account.setPassword(UUID.randomUUID() + UUID.randomUUID().toString());
+            account.lock();
+            persist(account);
+
+            PasswordChangeRequest passwordChangeRequest = createPasswordChangeRequest(account);
+            passwordChangeNotifier.sendCreatePasswordEmail(passwordChangeRequest);
+        } else {
+            persist(account);
+        }
     }
 
     /**
@@ -166,6 +212,19 @@ public class UserService {
     public void updateCurrent(UserUpdateDto update) {
         LOG.trace("Updating current user account.");
         Objects.requireNonNull(update);
+        UserAccount currentUser = getCurrentUser(update);
+        if (!Objects.equals(currentUser.getTypes(), update.getTypes())) {
+            throw new ValidationException(
+                    "User " + securityUtils.getCurrentUser() + " attempted to update their role.");
+        }
+        if (update.getPassword() != null) {
+            securityUtils.verifyCurrentUserPassword(update.getOriginalPassword());
+        }
+        repositoryService.update(update.asUserAccount());
+    }
+
+    @NotNull
+    private UserAccount getCurrentUser(UserUpdateDto update) {
         UserAccount currentUser = securityUtils.getCurrentUser();
 
         if (!currentUser.getUri().equals(update.getUri())) {
@@ -176,14 +235,7 @@ public class UserService {
             throw new ValidationException(
                     "User " + securityUtils.getCurrentUser() + " attempted to update their username.");
         }
-        if (!Objects.equals(currentUser.getTypes(), update.getTypes())) {
-            throw new ValidationException(
-                    "User " + securityUtils.getCurrentUser() + " attempted to update their role.");
-        }
-        if (update.getPassword() != null) {
-            securityUtils.verifyCurrentUserPassword(update.getOriginalPassword());
-        }
-        repositoryService.update(update.asUserAccount());
+        return currentUser;
     }
 
     /**
@@ -206,7 +258,7 @@ public class UserService {
     }
 
     private void ensureNotOwnAccount(UserAccount account, String operation) {
-        if (securityUtils.getCurrentUser().equals(account)) {
+        if (securityUtils.isAuthenticated() && securityUtils.getCurrentUser().equals(account)) {
             throw new UnsupportedOperationException("Cannot " + operation + " your own account!");
         }
     }
@@ -297,5 +349,48 @@ public class UserService {
         Objects.requireNonNull(user);
         return aclService.findAssetsByAgentWithSecurityAccess(user.toUser()).stream()
                          .map(dtoMapper::assetToRdfsResource).collect(Collectors.toList());
+    }
+
+    private PasswordChangeRequest createPasswordChangeRequest(UserAccount userAccount) {
+        // delete any existing request for the user
+        passwordChangeRequestRepositoryService.findAllByUserAccount(userAccount)
+                                              .forEach(passwordChangeRequestRepositoryService::remove);
+
+        return passwordChangeRequestRepositoryService.create(userAccount);
+    }
+
+    @Transactional
+    public void requestPasswordReset(String username) {
+        final UserAccount account = repositoryService.findByUsername(username)
+                                               .orElseThrow(() -> NotFoundException.create(UserAccount.class, username));
+        PasswordChangeRequest request = createPasswordChangeRequest(account);
+        passwordChangeNotifier.sendPasswordResetEmail(request);
+    }
+
+    private boolean isValid(PasswordChangeRequest request) {
+        return request.getCreatedAt().plus(securityConfig.getPasswordChangeRequestValidity()).isAfter(Utils.timestamp());
+    }
+
+    /**
+     * Changes the user's password if there is a valid password change request.
+     * Unlocks the user account if it is locked.
+     */
+    @Transactional
+    public void changePassword(PasswordChangeDto passwordChangeDto) {
+        Supplier<AuthorizationException> exception = () -> new InvalidPasswordChangeRequestException("Invalid or expired password change link", INVALID_TOKEN_ERROR_MESSAGE_ID);
+        PasswordChangeRequest request = passwordChangeRequestRepositoryService.find(passwordChangeDto.getUri())
+                                                                              .orElseThrow(exception);
+
+        if (!request.getToken().equals(passwordChangeDto.getToken()) || !isValid(request)) {
+            throw exception.get();
+        }
+
+        UserAccount account = repositoryService.find(request.getUserAccount().getUri())
+                                                   .orElseThrow(exception);
+
+        passwordChangeRequestRepositoryService.remove(request);
+
+        unlock(account, passwordChangeDto.getNewPassword());
+        LOG.info("Password changed for user {}.", account.getUsername());
     }
 }

@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.rest.readonly;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -260,7 +277,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termService.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termService.getReference(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
         when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
 
@@ -279,7 +296,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termService.getRequiredReference(term.getUri())).thenReturn(term);
+        when(termService.getReference(term.getUri())).thenReturn(term);
         final List<Comment> comments = generateComments(term);
         when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(comments);
         final Instant from = Utils.timestamp().minus(Generator.randomInt(50, 100), ChronoUnit.DAYS);
@@ -300,7 +317,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termService.getRequiredReference(termUri)).thenReturn(term);
+        when(termService.getReference(termUri)).thenReturn(term);
         final List<TermOccurrence> occurrences = generateOccurrences(term, true);
         when(termService.getDefinitionallyRelatedOf(term)).thenReturn(occurrences);
 
@@ -310,7 +327,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<List<TermOccurrence>>() {
         });
         assertThat(result, containsSameEntities(occurrences));
-        verify(termService).getRequiredReference(termUri);
+        verify(termService).getReference(termUri);
         verify(termService).getDefinitionallyRelatedOf(term);
     }
 
@@ -331,7 +348,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        when(termService.getRequiredReference(termUri)).thenReturn(term);
+        when(termService.getReference(termUri)).thenReturn(term);
         final List<TermOccurrence> occurrences = generateOccurrences(term, false);
         when(termService.getDefinitionallyRelatedTargeting(term)).thenReturn(occurrences);
 
@@ -341,7 +358,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<List<TermOccurrence>>() {
         });
         assertThat(result, containsSameEntities(occurrences));
-        verify(termService).getRequiredReference(termUri);
+        verify(termService).getReference(termUri);
         verify(termService).getDefinitionallyRelatedTargeting(term);
     }
 

@@ -1,6 +1,24 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.dto.mapper;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.dto.PasswordChangeRequestDto;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.acl.AccessControlRecordDto;
@@ -13,6 +31,7 @@ import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -32,6 +51,8 @@ public abstract class DtoMapper {
 
     public abstract AccessControlListDto accessControlListToDto(AccessControlList acl);
 
+    public abstract PasswordChangeRequestDto passwordChangeRequestToDto(PasswordChangeRequest request);
+
     public AccessControlRecordDto accessControlRecordToDto(AccessControlRecord<?> record) {
         final AccessControlRecordDto dto = new AccessControlRecordDto();
         dto.setUri(record.getUri());
@@ -49,12 +70,11 @@ public abstract class DtoMapper {
         switch (type) {
             case cz.cvut.kbss.termit.util.Vocabulary.s_c_uzivatel_termitu:
                 final User user = (User) holder;
-                assert user.getTypes() != null;
-                user.getTypes().forEach(dto::addType);
+                Utils.emptyIfNull(user.getTypes()).forEach(dto::addType);
                 dto.setLabel(MultilingualString.create(user.getFullName(),
                                                        config.getPersistence().getLanguage()));
                 break;
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup:
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_sioc_Usergroup:
                 dto.setLabel(MultilingualString.create(((UserGroup) holder).getLabel(),
                                                        config.getPersistence().getLanguage()));
                 break;

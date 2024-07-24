@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.repository;
 
@@ -20,11 +23,14 @@ import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
+
+import java.util.Optional;
 
 @Service
 public class UserRepositoryService extends BaseRepositoryService<UserAccount, UserAccount> {
@@ -63,20 +69,24 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
         return userAccountDao.exists(username);
     }
 
+    public Optional<UserAccount> findByUsername(String username) {
+        return userAccountDao.findByUsername(username);
+    }
+
     @Override
     protected UserAccount mapToDto(UserAccount entity) {
         return entity;
     }
 
     @Override
-    protected UserAccount postLoad(UserAccount instance) {
+    protected UserAccount postLoad(@NotNull UserAccount instance) {
         instance.erasePassword();
         return instance;
     }
 
     @Override
-    protected void prePersist(UserAccount instance) {
-        validate(instance);
+    protected void prePersist(@NotNull UserAccount instance) {
+        super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver
                     .generateIdentifier(cfgNamespace.getUser(), instance.getFirstName(), instance.getLastName()));
@@ -87,7 +97,7 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
     }
 
     @Override
-    protected void preUpdate(UserAccount instance) {
+    protected void preUpdate(@NotNull UserAccount instance) {
         final UserAccount original = userAccountDao.find(instance.getUri()).orElseThrow(
                 () -> new NotFoundException("User " + instance + " does not exist."));
         if (instance.getPassword() != null) {

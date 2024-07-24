@@ -1,10 +1,26 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
@@ -28,9 +44,14 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ChangeTrackingTest extends BaseServiceTestRunner {
 
@@ -92,7 +113,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     void updatingVocabularyLiteralAttributeCreatesUpdateChangeRecord() {
         enableRdfsInference(em);
         transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
-        vocabulary.setLabel("Updated vocabulary label");
+        vocabulary.setPrimaryLabel("Updated vocabulary label");
         transactional(() -> vocabularyService.update(vocabulary));
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(vocabulary);
@@ -110,7 +131,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(imported, descriptorFactory.vocabularyDescriptor(imported));
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
-        vocabulary.setLabel("Updated vocabulary label");
+        vocabulary.setPrimaryLabel("Updated vocabulary label");
         vocabulary.setImportedVocabularies(Collections.singleton(imported.getUri()));
         transactional(() -> vocabularyService.update(vocabulary));
 
@@ -218,7 +239,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertFalse(result.isEmpty());
-        assertNull(((UpdateChangeRecord) result.get(0)).getOriginalValue());
+        assertThat(((UpdateChangeRecord) result.get(0)).getOriginalValue(), anyOf(nullValue(), empty()));
         assertEquals(Collections.singleton(parent.getUri()), ((UpdateChangeRecord) result.get(0)).getNewValue());
     }
 
@@ -233,8 +254,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void updatingTermDraftStatusCreatesUpdateChangeRecord() {
-        enableRdfsInference(em);
+    void updatingTermStateCreatesUpdateChangeRecord() {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId();
         transactional(() -> {
@@ -244,11 +264,11 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
         });
 
-        termService.setStatus(term, TermStatus.CONFIRMED);
+        termService.setState(term, Generator.randomItem(Generator.TERM_STATES));
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
-        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft),
-                     ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
+        assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu),
+                ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
     }
 }

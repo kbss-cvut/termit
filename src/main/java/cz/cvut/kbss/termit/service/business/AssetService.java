@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
@@ -41,12 +44,16 @@ public class AssetService {
 
     private final VocabularyAuthorizationService vocabularyAuthorizationService;
 
+    private final SecurityUtils securityUtils;
+
     @Autowired
     public AssetService(TermRepositoryService termRepositoryService, AssetDao assetDao,
-                        VocabularyAuthorizationService vocabularyAuthorizationService) {
+                        VocabularyAuthorizationService vocabularyAuthorizationService,
+                        SecurityUtils securityUtils) {
         this.termRepositoryService = termRepositoryService;
         this.assetDao = assetDao;
         this.vocabularyAuthorizationService = vocabularyAuthorizationService;
+        this.securityUtils = securityUtils;
     }
 
     /**
@@ -117,7 +124,7 @@ public class AssetService {
      * @return Page of recently added/edited assets
      */
     public Page<RecentlyModifiedAsset> findMyLastEdited(Pageable pageSpec) {
-        final User me = SecurityUtils.currentUser().toUser();
+        final User me = securityUtils.getCurrentUser().toUser();
         return assetDao.findLastEditedBy(me, pageSpec);
     }
 
@@ -128,7 +135,7 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findLastCommentedInReactionToMine(Pageable pageSpec) {
-        final User me = SecurityUtils.currentUser().toUser();
+        final User me = securityUtils.getCurrentUser().toUser();
         return termRepositoryService.findLastCommentedInReaction(me, pageSpec);
     }
 
@@ -139,7 +146,7 @@ public class AssetService {
      * @return List of recently commented assets
      */
     public Page<RecentlyCommentedAsset> findMyLastCommented(Pageable pageSpec) {
-        final User me = SecurityUtils.currentUser().toUser();
+        final User me = securityUtils.getCurrentUser().toUser();
         return termRepositoryService.findMyLastCommented(me, pageSpec);
     }
 }

@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -44,15 +61,18 @@ public class RepositoryAccessControlListService implements AccessControlListServ
 
     private final DtoMapper dtoMapper;
 
+    private final SecurityUtils securityUtils;
+
     private final Configuration.ACL aclConfig;
 
     public RepositoryAccessControlListService(AccessControlListDao dao, ChangeRecordService changeRecordService,
                                               UserRoleRepositoryService userRoleService,
-                                              DtoMapper dtoMapper, Configuration config) {
+                                              DtoMapper dtoMapper, SecurityUtils securityUtils, Configuration config) {
         this.dao = dao;
         this.changeRecordService = changeRecordService;
         this.userRoleService = userRoleService;
         this.dtoMapper = dtoMapper;
+        this.securityUtils = securityUtils;
         this.aclConfig = config.getAcl();
     }
 
@@ -62,11 +82,11 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     }
 
     @Override
-    public AccessControlList getRequiredReference(URI id) {
+    public AccessControlList getReference(URI id) {
         return dao.getReference(id).orElseThrow(() -> NotFoundException.create(AccessControlList.class, id));
     }
 
-    @Cacheable(key = "#p0.uri")
+    @Cacheable(key = "#p0.uri", unless = "#result == null")
     @Override
     public Optional<AccessControlList> findFor(HasIdentifier subject) {
         return dao.findFor(subject);
@@ -93,7 +113,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     private void setInitialAccessControlRecords(HasIdentifier subject, AccessControlList acl) {
         // Add current user - author in case the subject is just being created
         if (SecurityUtils.authenticated()) {
-            acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, SecurityUtils.currentUser().toUser()));
+            acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, securityUtils.getCurrentUser().toUser()));
         }
         // Add possible authors in case the subject already existed
         changeRecordService.getAuthors(subject)

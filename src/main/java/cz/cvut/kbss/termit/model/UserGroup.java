@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.model;
 
 import cz.cvut.kbss.jopa.model.annotations.*;
@@ -5,25 +22,25 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@OWLClass(iri = Vocabulary.s_c_Usergroup)
+@OWLClass(iri = Vocabulary.s_c_sioc_Usergroup)
 public class UserGroup extends AccessControlAgent {
 
     /**
      * Namespace of UserGroup identifiers.
      */
-    public static final String NAMESPACE = "http://rdfs.org/sioc/ns#";
+    public static final String NAMESPACE = Vocabulary.ONTOLOGY_IRI_SIOC;
 
     @NotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
     private String label;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_has_member_A, fetch = FetchType.EAGER)
+    @OWLObjectProperty(iri = Vocabulary.s_p_sioc_has_member, fetch = FetchType.EAGER)
     private Set<User> members;
 
     public String getLabel() {

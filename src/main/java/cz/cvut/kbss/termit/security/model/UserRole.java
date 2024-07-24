@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,7 +108,7 @@ public enum UserRole {
     }
 
     /**
-     * Checks whether a role with the specifeid name exists.
+     * Checks whether a role with the specified name exists.
      *
      * @param name Role name
      * @return Role existence status

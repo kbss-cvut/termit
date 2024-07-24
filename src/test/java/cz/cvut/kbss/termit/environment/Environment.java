@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.environment;
 
@@ -26,6 +29,7 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -44,6 +48,7 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
@@ -52,11 +57,9 @@ import java.util.stream.Collectors;
 
 public class Environment {
 
-    public static final String BASE_URI = Vocabulary.ONTOLOGY_IRI_termit;
+    public static final String BASE_URI = Vocabulary.ONTOLOGY_IRI_TERMIT;
 
     public static final String LANGUAGE = Constants.DEFAULT_LANGUAGE;
-
-    private static UserAccount currentUser;
 
     private static ObjectMapper objectMapper;
 
@@ -78,7 +81,6 @@ public class Environment {
      * @param user User to set as currently authenticated
      */
     public static void setCurrentUser(UserAccount user) {
-        currentUser = user;
         final TermItUserDetails userDetails = new TermItUserDetails(user, new HashSet<>());
         SecurityContext context = new SecurityContextImpl();
         context.setAuthentication(new AuthenticationToken(userDetails.getAuthorities(), userDetails));
@@ -99,14 +101,19 @@ public class Environment {
     }
 
     public static UserAccount getCurrentUser() {
-        return currentUser;
+        final SecurityContext context = SecurityContextHolder.getContext();
+        if (context == null || context.getAuthentication() == null) {
+            return null;
+        }
+
+        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+        return userDetails.getUser();
     }
 
     /**
      * Resets security context, removing any previously set data.
      */
     public static void resetCurrentUser() {
-        currentUser = null;
         SecurityContextHolder.clearContext();
     }
 
@@ -180,10 +187,10 @@ public class Environment {
         try (final RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
             conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/popis-dat-model.ttl"), BASE_URI,
-                    RDFFormat.TURTLE);
+                     RDFFormat.TURTLE);
             conn.add(new File("ontology/termit-model.ttl"), BASE_URI, RDFFormat.TURTLE);
-            conn.add(new File("rulesets/rules-termit-spin.ttl"), BASE_URI, RDFFormat.TURTLE);
-            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "", RDFFormat.RDFXML);
+            conn.add(Environment.class.getClassLoader().getResourceAsStream("ontologies/skos.rdf"), "",
+                     RDFFormat.RDFXML);
             conn.commit();
         } catch (IOException e) {
             throw new RuntimeException("Unable to load TermIt model for import.", e);
@@ -192,5 +199,24 @@ public class Environment {
 
     public static List<TermDto> termsToDtos(List<Term> terms) {
         return terms.stream().map(TermDto::new).collect(Collectors.toList());
+    }
+
+    /**
+     * Injects the specified {@link Configuration} object into the specified
+     * {@link cz.cvut.kbss.termit.model.Vocabulary} instance.
+     * <p>
+     * This simulates Spring {@code @Configurable} behavior.
+     *
+     * @param vocabulary Target instance
+     * @param config     Instance to inject
+     */
+    public static void injectConfiguration(cz.cvut.kbss.termit.model.Vocabulary vocabulary, Configuration config) {
+        try {
+            final Field configField = cz.cvut.kbss.termit.model.Vocabulary.class.getDeclaredField("config");
+            configField.setAccessible(true);
+            configField.set(vocabulary, config);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Unable to inject configuration into Vocabulary instance.", e);
+        }
     }
 }

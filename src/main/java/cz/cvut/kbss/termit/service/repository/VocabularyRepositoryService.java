@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
@@ -11,16 +28,19 @@ import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.MessageFormatter;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
+import jakarta.validation.Validator;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -35,11 +55,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Validator;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @CacheConfig(cacheNames = "vocabularies")
@@ -85,7 +108,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     // Cache only if all vocabularies are editable
-    @Cacheable(condition = "@configuration.workspace.allVocabulariesEditable")
+    @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable")
     @Override
     public List<VocabularyDto> findAll() {
         return super.findAll();
@@ -116,10 +139,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     protected void prePersist(@NotNull Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
-            instance.setUri(idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getLabel()));
+            instance.setUri(
+                    idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
         }
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
+        initDocument(instance);
         if (instance.getDocument() != null) {
             instance.getDocument().setVocabulary(null);
         }
@@ -135,6 +160,19 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
             vocabulary.setModel(new Model());
             vocabulary.getModel().setUri(idResolver.generateIdentifier(iriBase, Constants.DEFAULT_MODEL_IRI_COMPONENT));
         }
+    }
+
+    private void initDocument(Vocabulary vocabulary) {
+        if (vocabulary.getDocument() != null) {
+            return;
+        }
+        final Document doc = new Document();
+        doc.setUri(idResolver.generateIdentifier(vocabulary.getUri().toString(),
+                                                 Constants.DEFAULT_DOCUMENT_IRI_COMPONENT));
+        doc.setLabel(
+                new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
+                                                                                          vocabulary.getPrimaryLabel()));
+        vocabulary.setDocument(doc);
     }
 
     @Override
@@ -227,17 +265,14 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#instance)")
     @CacheEvict(allEntries = true)
+    @Transactional
     @Override
     public void remove(Vocabulary instance) {
-        if (instance.getDocument() != null) {
-            throw new AssetRemovalException("Removal of document vocabularies is not supported yet.");
-        }
-
         final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
         if (!vocabularies.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
-                            + vocabularies.stream().map(Vocabulary::getLabel).collect(Collectors.joining(", ")));
+                            + vocabularies.stream().map(Vocabulary::getPrimaryLabel).collect(Collectors.joining(", ")));
         }
         if (!vocabularyDao.isEmpty(instance)) {
             throw new AssetRemovalException("Vocabulary cannot be removed. It contains terms.");

@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service;
 
@@ -24,6 +27,7 @@ import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -280,7 +284,7 @@ class IdentifierResolverTest {
 
     @Test
     void generateSyntheticIdentifierGeneratesIdentifierForBaseContainingHash() {
-        final String base = Vocabulary.s_c_Usergroup;
+        final String base = Vocabulary.s_c_sioc_Usergroup;
         assertThat(base, containsString("#"));
         final URI result = IdentifierResolver.generateSyntheticIdentifier(base);
         assertThat(result.toString(), containsString(base));
@@ -295,5 +299,20 @@ class IdentifierResolverTest {
         final URI result = IdentifierResolver.generateSyntheticIdentifier(base);
         assertThat(result.toString(), containsString(base));
         assertThat(result.toString().length(), greaterThan(base.length()));
+    }
+
+    @Test
+    void generateIdentifierHandlesStringsWithReservedUriCharacters() {
+        final String namespace = Vocabulary.s_c_slovnik;
+        final String invalidString = "Bug #$# test";
+        assertDoesNotThrow(() -> sut.generateIdentifier(namespace, invalidString));
+    }
+
+    @Test
+    void generateIdentifierRemovesSectionSign() {
+        final String namespace = Vocabulary.s_c_slovnik;
+        final String label = "je povinným subjektem podle §2 zákona 106/1999 Sb.";
+        final URI result = sut.generateIdentifier(namespace, label);
+        assertEquals(URI.create(namespace + "/je-povinným-subjektem-podle-2-zákona-106-1999-sb."), result);
     }
 }

@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.document;
 
@@ -90,6 +93,8 @@ public class TextAnalysisService {
         );
         input.setVocabularyRepository(repositoryUrl);
         input.setLanguage(config.getPersistence().getLanguage());
+        input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
+        input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
         return input;
     }
 
@@ -121,7 +126,7 @@ public class TextAnalysisService {
         }
         final HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE);
-        LOG.debug("Invoking text analysis service on input: {}", input);
+        LOG.debug("Invoking text analysis service at '{}' on input: {}", config.getTextAnalysis().getUrl(), input);
         final ResponseEntity<Resource> resp = restClient
                 .exchange(config.getTextAnalysis().getUrl(), HttpMethod.POST,
                           new HttpEntity<>(input, headers), Resource.class);
@@ -166,6 +171,8 @@ public class TextAnalysisService {
             final TextAnalysisInput input = new TextAnalysisInput(term.getDefinition().get(language), language,
                                                                   URI.create(config.getRepository().getUrl()));
             input.addVocabularyContext(vocabularyContext);
+            input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
+            input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
 
             invokeTextAnalysisOnTerm(term, input);
         }

@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,10 +55,18 @@ public interface GenericDao<T extends HasIdentifier> {
      * operations.
      *
      * @param id Identifier
-     * @return {@code Optional} containing a reference to a matching instance or an empty {@code Optional }if no such
-     * instance exists
+     * @return Reference to an entity with the specified identifier
      */
-    Optional<T> getReference(URI id);
+    T getReference(URI id);
+
+    /**
+     * Detaches the specified entity from the current persistence context.
+     * <p>
+     * Does nothing if the specified entity is not managed.
+     *
+     * @param entity Entity to detach
+     */
+    void detach(T entity);
 
     /**
      * Persists the specified entity.

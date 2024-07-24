@@ -1,20 +1,26 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
-import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -25,25 +31,49 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
+import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
+import org.jsoup.Jsoup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.MediaType;
 import org.springframework.transaction.TransactionSystemException;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anySet;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ResourceServiceTest {
@@ -91,19 +121,19 @@ class ResourceServiceTest {
     @Test
     void removeRemovesResourceViaRepositoryService() {
         final Resource resource = Generator.generateResourceWithId();
-        when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.findRequired(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
     }
 
-    // Bug #1356
+    // Bug R#1356
     @Test
     void removeEnsuresAttributesForDocumentManagerArePresent() {
         final Resource toRemove = new Resource();
         toRemove.setUri(Generator.generateUri());
         final Resource resource = Generator.generateResource();
         resource.setUri(toRemove.getUri());
-        when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.findRequired(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(resourceRepositoryService).remove(resource);
         verify(documentManager).remove(resource);
@@ -112,14 +142,15 @@ class ResourceServiceTest {
     @Test
     void getContentLoadsContentOfFileFromDocumentManager() {
         final File file = Generator.generateFileWithId("test.html");
-        sut.getContent(file);
+        sut.getContent(file, new ResourceRetrievalSpecification(Optional.empty(), false));
         verify(documentManager).getAsResource(file);
     }
 
     @Test
     void getContentThrowsUnsupportedAssetOperationWhenResourceIsNotFile() {
         final Resource resource = Generator.generateResourceWithId();
-        assertThrows(UnsupportedAssetOperationException.class, () -> sut.getContent(resource));
+        assertThrows(UnsupportedAssetOperationException.class,
+                     () -> sut.getContent(resource, new ResourceRetrievalSpecification(Optional.empty(), false)));
         verify(documentManager, never()).getAsResource(any());
     }
 
@@ -174,7 +205,7 @@ class ResourceServiceTest {
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenResourceIsNotFile() {
         final Resource resource = Generator.generateResourceWithId();
         assertThrows(UnsupportedAssetOperationException.class,
-                () -> sut.runTextAnalysis(resource, Collections.emptySet()));
+                     () -> sut.runTextAnalysis(resource, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
     }
 
@@ -182,7 +213,7 @@ class ResourceServiceTest {
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenFileHasNoVocabularyAndNoVocabulariesAreSpecifiedEither() {
         final File file = Generator.generateFileWithId("test.html");
         assertThrows(UnsupportedAssetOperationException.class,
-                () -> sut.runTextAnalysis(file, Collections.emptySet()));
+                     () -> sut.runTextAnalysis(file, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
     }
 
@@ -201,7 +232,7 @@ class ResourceServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         file.getDocument().setVocabulary(vocabulary.getUri());
         final Set<URI> imported = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
-        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(imported);
 
         sut.runTextAnalysis(file, Collections.emptySet());
@@ -218,9 +249,9 @@ class ResourceServiceTest {
         final Set<URI> vOneImports = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
         final Vocabulary vTwo = Generator.generateVocabularyWithId();
         final Set<URI> vTwoImports = Collections.singleton(Generator.generateUri());
-        when(vocabularyService.getRequiredReference(vOne.getUri())).thenReturn(vOne);
+        when(vocabularyService.getReference(vOne.getUri())).thenReturn(vOne);
         when(vocabularyService.getTransitivelyImportedVocabularies(vOne)).thenReturn(vOneImports);
-        when(vocabularyService.getRequiredReference(vTwo.getUri())).thenReturn(vTwo);
+        when(vocabularyService.getReference(vTwo.getUri())).thenReturn(vTwo);
         when(vocabularyService.getTransitivelyImportedVocabularies(vTwo)).thenReturn(vTwoImports);
 
         sut.runTextAnalysis(file, new HashSet<>(Arrays.asList(vOne.getUri(), vTwo.getUri())));
@@ -238,13 +269,6 @@ class ResourceServiceTest {
         final URI uri = Generator.generateUri();
         sut.getReference(uri);
         verify(resourceRepositoryService).getReference(uri);
-    }
-
-    @Test
-    void getRequiredReferenceDelegatesCallToRepositoryService() {
-        final URI uri = Generator.generateUri();
-        sut.getRequiredReference(uri);
-        verify(resourceRepositoryService).getRequiredReference(uri);
     }
 
     @Test
@@ -309,11 +333,11 @@ class ResourceServiceTest {
         final Document doc = Generator.generateDocumentWithId();
         doc.setVocabulary(vocabulary.getUri());
         final File fOne = Generator.generateFileWithId("test.html");
-        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(doc, fOne);
         verify(resourceRepositoryService).persist(fOne, vocabulary);
-        verify(vocabularyService).getRequiredReference(vocabulary.getUri());
+        verify(vocabularyService).getReference(vocabulary.getUri());
     }
 
     @Test
@@ -322,11 +346,11 @@ class ResourceServiceTest {
         final Document doc = Generator.generateDocumentWithId();
         doc.setVocabulary(vocabulary.getUri());
         final File fOne = Generator.generateFileWithId("test.html");
-        when(vocabularyService.getRequiredReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(doc, fOne);
         verify(resourceRepositoryService).persist(doc);
-        verify(vocabularyService).getRequiredReference(vocabulary.getUri());
+        verify(vocabularyService).getReference(vocabulary.getUri());
     }
 
     @Test
@@ -385,7 +409,7 @@ class ResourceServiceTest {
     @Test
     void removeRemovesAssociatedDiskContent() {
         final Resource resource = Generator.generateResourceWithId();
-        when(resourceRepositoryService.getRequiredReference(resource.getUri())).thenReturn(resource);
+        when(resourceRepositoryService.findRequired(resource.getUri())).thenReturn(resource);
         sut.remove(resource);
         verify(documentManager).remove(resource);
     }
@@ -455,20 +479,40 @@ class ResourceServiceTest {
     }
 
     @Test
-    void removeThrowsAssetRemovalExceptionWhenNonEmptyDocumentIsRemoved() {
+    void removeNonEmptyDocumentRemovesAllAssociatedFiles() {
         final File file = Generator.generateFileWithId("test.html");
         final Document document = Generator.generateDocumentWithId();
         document.addFile(file);
+        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
 
-        assertThrows(AssetRemovalException.class, () -> sut.remove(document));
-        verify(resourceRepositoryService, never()).remove(any());
+        sut.remove(document);
+        verify(documentManager).remove(file);
+        verify(documentManager).remove(document);
+        verify(resourceRepositoryService).remove(file);
+        verify(resourceRepositoryService).remove(document);
     }
 
     @Test
     void getContentAtTimestampLoadsContentOfFileAtTimestampFromDocumentManager() {
         final File file = Generator.generateFileWithId("test.hml");
         final Instant at = Utils.timestamp();
-        sut.getContent(file, at);
+        sut.getContent(file, new ResourceRetrievalSpecification(Optional.of(at), false));
         verify(documentManager).getAsResource(file, at);
+    }
+
+    @Test
+    void getContentWithoutUnconfirmedOccurrencesRemovesUnconfirmedOccurrencesFromFileContentBeforeReturningIt()
+            throws Exception {
+        final File file = Generator.generateFileWithId("test.hml");
+        TypeAwareResource content;
+        try (final InputStream is = Environment.loadFile("data/rdfa-simple.html")) {
+            content = new TypeAwareByteArrayResource(is.readAllBytes(), MediaType.TEXT_HTML_VALUE, ".html");
+        }
+        when(documentManager.getAsResource(file)).thenReturn(content);
+
+        final TypeAwareResource result = sut.getContent(file,
+                                                        new ResourceRetrievalSpecification(Optional.empty(), true));
+        final org.jsoup.nodes.Document doc = Jsoup.parse(result.getInputStream(), StandardCharsets.UTF_8.name(), "");
+        assertTrue(doc.select("span[score]").isEmpty());
     }
 }

@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
@@ -18,6 +21,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.JOPAPersistenceProperties;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -28,6 +32,7 @@ import cz.cvut.kbss.termit.model.assignment.*;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
+import cz.cvut.kbss.termit.persistence.dao.util.ScheduledContextRemover;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -55,6 +60,9 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private ScheduledContextRemover contextRemover;
 
     @Autowired
     private TermOccurrenceDao sut;
@@ -156,7 +164,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         final Map<Term, List<TermOccurrence>> allOccurrences = generateOccurrences(false, fOne, fTwo);
         final List<TermOccurrence> matching = allOccurrences.values().stream().flatMap(
                                                                     l -> l.stream().filter(to -> to.getTarget().getSource().equals(fOne.getUri())))
-                                                            .collect(Collectors.toList());
+                                                            .toList();
 
         em.getEntityManagerFactory().getCache().evictAll();
         final List<TermOccurrence> result = sut.findAllTargeting(fOne);
@@ -248,7 +256,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                     to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
                     em.merge(to);
                 })));
-        transactional(() -> sut.removeAll(file));
+        transactional(() -> {
+            sut.removeAll(file);
+            contextRemover.runContextRemoval();
+        });
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
                                                                                                        URI.create(
@@ -267,7 +278,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                     to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
                     em.merge(to);
                 })));
-        transactional(() -> sut.removeAll(file));
+        transactional(() -> {
+            sut.removeAll(file);
+            contextRemover.runContextRemoval();
+        });
 
         assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class).setParameter("target",
                                                                                                URI.create(
@@ -493,5 +507,31 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                 assertEquals(defOccurrences.size(), a.getCount().intValue());
             }
         }
+    }
+
+    @Test
+    void updateSavesTermOccurrenceInContext() {
+        final File file = Generator.generateFileWithId(FILE_LABEL);
+        transactional(() -> em.persist(file));
+        final TermOccurrence occurrence = new TermFileOccurrence(Generator.generateUri(),
+                                                                 new FileOccurrenceTarget(file));
+        occurrence.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
+
+        transactional(() -> sut.persist(occurrence));
+        assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence ; ?hasTerm ?term .} }", Boolean.class)
+                     .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
+                     .setParameter("x", occurrence.getUri())
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
+                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
+                     .getSingleResult());
+        final URI newTermUri = Generator.generateUri();
+        occurrence.setTerm(newTermUri);
+        transactional(() -> sut.update(occurrence));
+        assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?g { ?x a ?occurrence ; ?hasTerm ?term .} }", Boolean.class)
+                     .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
+                     .setParameter("x", occurrence.getUri())
+                     .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
+                     .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
+                     .getSingleResult());
     }
 }

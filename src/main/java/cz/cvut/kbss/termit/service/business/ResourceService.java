@@ -1,23 +1,25 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
-import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -29,10 +31,13 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
+import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
+import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +50,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Interface of business logic concerning resources.
@@ -92,13 +103,16 @@ public class ResourceService
     @PreAuthorize("@resourceAuthorizationService.canRemove(#toRemove)")
     public void remove(Resource toRemove) {
         Objects.requireNonNull(toRemove);
-        if (toRemove instanceof Document && !((Document) toRemove).getFiles().isEmpty()) {
-            throw new AssetRemovalException("Cannot remove non-empty document " + toRemove.getLabel() + "!");
+        final Resource managed = findRequired(toRemove.getUri());
+        if (managed instanceof Document doc) {
+            doc.getFiles().forEach(f -> {
+                documentManager.remove(f);
+                repositoryService.remove(f);
+            });
         }
         // We need the reference managed, so that its name is available to document manager
-        final Resource actualToRemove = getRequiredReference(toRemove.getUri());
-        documentManager.remove(actualToRemove);
-        repositoryService.remove(actualToRemove);
+        documentManager.remove(managed);
+        repositoryService.remove(managed);
     }
 
     /**
@@ -117,41 +131,37 @@ public class ResourceService
 
     /**
      * Gets content of the specified resource.
+     * <p>
+     * The {@link ResourceRetrievalSpecification} argument provides further parameterization of the content to
+     * retrieve.
+     * <p>
+     * If the timestamp specified by {@code retrievalSpecification} is older than the first version of the specified
+     * resource, this version is returned. Similarly, if the timestamp is later than the most recent backup of the
+     * resource, the current version is returned.
      *
-     * @param resource Resource whose content should be retrieved
+     * @param resource               Resource whose content should be retrieved
+     * @param retrievalSpecification Specification of the result
      * @return Representation of the resource content
      * @throws UnsupportedAssetOperationException When content of the specified resource cannot be retrieved
      * @throws NotFoundException                  When the specified resource has no content stored
      */
-    public TypeAwareResource getContent(Resource resource) {
+    public TypeAwareResource getContent(Resource resource, ResourceRetrievalSpecification retrievalSpecification) {
         Objects.requireNonNull(resource);
         verifyFileOperationPossible(resource, "Content retrieval");
-        return documentManager.getAsResource((File) resource);
+        final File file = (File) resource;
+        TypeAwareResource result = retrievalSpecification.at()
+                                                         .map(instant -> documentManager.getAsResource(file, instant))
+                                                         .orElseGet(() -> documentManager.getAsResource(file));
+        if (retrievalSpecification.withoutUnconfirmedOccurrences()) {
+            result = new UnconfirmedTermOccurrenceRemover().removeUnconfirmedOccurrences(result);
+        }
+        return result;
     }
 
     private void verifyFileOperationPossible(Resource resource, String operation) {
         if (!(resource instanceof File)) {
             throw new UnsupportedAssetOperationException(operation + " is not supported for resource " + resource);
         }
-    }
-
-    /**
-     * Gets content of the specified resource valid at the specified timestamp.
-     * <p>
-     * This method provides access to backups of the specified resource. If the specified timestamp is older than the
-     * first version of the specified resource, this version is returned. Similarly, if the timestamp is later than the
-     * most recent backup of the resource, the current version is returned.
-     *
-     * @param resource Resource whose content should be retrieved
-     * @param at       Timestamp of the version of the retrieved resource
-     * @return Representation of the resource content
-     * @throws UnsupportedAssetOperationException When content of the specified resource cannot be retrieved
-     * @throws NotFoundException                  When the specified resource has no content stored
-     */
-    public TypeAwareResource getContent(Resource resource, Instant at) {
-        Objects.requireNonNull(resource);
-        verifyFileOperationPossible(resource, "Content retrieval");
-        return documentManager.getAsResource((File) resource, at);
     }
 
     /**
@@ -187,10 +197,9 @@ public class ResourceService
     public List<File> getFiles(Resource document) {
         Objects.requireNonNull(document);
         final Resource instance = findRequired(document.getUri());
-        if (!(instance instanceof Document)) {
+        if (!(instance instanceof Document doc)) {
             throw new UnsupportedAssetOperationException("Cannot get files from resource which is not a document.");
         }
-        final Document doc = (Document) instance;
         if (doc.getFiles() != null) {
             final List<File> list = new ArrayList<>(doc.getFiles());
             list.sort(Comparator.comparing(File::getLabel));
@@ -212,18 +221,17 @@ public class ResourceService
     public void addFileToDocument(Resource document, File file) {
         Objects.requireNonNull(document);
         Objects.requireNonNull(file);
-        if (!(document instanceof Document)) {
+        if (!(document instanceof Document doc)) {
             throw new UnsupportedAssetOperationException("Cannot add file to the specified resource " + document);
         }
-        final Document doc = (Document) document;
         doc.addFile(file);
         if (doc.getVocabulary() != null) {
-            final Vocabulary vocabulary = vocabularyService.getRequiredReference(doc.getVocabulary());
+            final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
             repositoryService.persist(file, vocabulary);
         } else {
             repositoryService.persist(file);
         }
-        if (getReference(document.getUri()).isEmpty()) {
+        if (!repositoryService.exists(document.getUri())) {
             repositoryService.persist(document);
         } else {
             update(doc);
@@ -245,7 +253,7 @@ public class ResourceService
             throw new InvalidParameterException("File was not attached to a document.");
         } else {
             doc.removeFile(file);
-            if (repositoryService.getReference(doc.getUri()).isPresent()) {
+            if (repositoryService.find(doc.getUri()).isPresent()) {
                 update(doc);
             }
         }
@@ -286,7 +294,7 @@ public class ResourceService
     private Set<URI> includeImportedVocabularies(Set<URI> providedVocabularies) {
         final Set<URI> result = new HashSet<>(providedVocabularies);
         providedVocabularies.forEach(uri -> {
-            final Vocabulary ref = vocabularyService.getRequiredReference(uri);
+            final Vocabulary ref = vocabularyService.getReference(uri);
             result.addAll(vocabularyService.getTransitivelyImportedVocabularies(ref));
         });
         return result;
@@ -308,12 +316,8 @@ public class ResourceService
         return repositoryService.findRequired(id);
     }
 
-    public Optional<Resource> getReference(URI id) {
+    public Resource getReference(URI id) {
         return repositoryService.getReference(id);
-    }
-
-    public Resource getRequiredReference(URI id) {
-        return repositoryService.getRequiredReference(id);
     }
 
     @Transactional
@@ -356,7 +360,7 @@ public class ResourceService
     }
 
     @Override
-    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }

@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.security.authorization.acl;
 
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -7,6 +24,8 @@ import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.security.model.UserRole;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -18,6 +37,8 @@ import java.util.Optional;
  */
 @Service
 public class AccessControlListBasedAuthorizationService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AccessControlListBasedAuthorizationService.class);
 
     private final AccessControlListService aclService;
 
@@ -52,6 +73,9 @@ public class AccessControlListBasedAuthorizationService {
     public boolean canReadAnonymously(HasIdentifier resource) {
         Objects.requireNonNull(resource);
         final Optional<AccessControlList> optionalAcl = aclService.findFor(resource);
+        if (optionalAcl.isEmpty()) {
+            LOG.warn("Asset {} is missing an ACL.", resource);
+        }
         final Optional<AccessControlRecord<?>> record = optionalAcl.flatMap(acl -> acl.getRecords().stream()
                                                                                       .filter(r -> r.getHolder()
                                                                                                     .getUri()

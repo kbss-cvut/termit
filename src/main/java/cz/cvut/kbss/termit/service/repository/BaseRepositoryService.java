@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.repository;
 
@@ -24,7 +27,7 @@ import cz.cvut.kbss.termit.validation.ValidationResult;
 import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
@@ -100,10 +103,14 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * for the loaded instance.
      *
      * @param id Identifier of the object to load
-     * @return {@link Optional} with the loaded reference or an empty one
+     * @return Entity reference
+     * @throws NotFoundException If no matching instance is found
      */
-    public Optional<T> getReference(URI id) {
-        return getPrimaryDao().getReference(id);
+    public T getReference(URI id) {
+        if (exists(id)) {
+            return getPrimaryDao().getReference(id);
+        }
+        throw NotFoundException.create(resolveGenericType().getSimpleName(), id);
     }
 
     /**
@@ -122,25 +129,6 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
     }
 
     /**
-     * Gets a reference to an object wih the specified identifier.
-     * <p>
-     * In comparison to {@link #getReference(URI)}, this method guarantees to return a matching instance. If no such
-     * object is found, a {@link NotFoundException} is thrown.
-     * <p>
-     * Note that all attributes of the reference are loaded lazily and the corresponding persistence context must be
-     * still open to load them.
-     * <p>
-     * Also note that, in contrast to {@link #find(URI)}, this method does not invoke {@link #postLoad(HasIdentifier)}
-     * for the loaded instance.
-     *
-     * @param id Identifier of the object to load
-     * @return {@link Optional} with the loaded reference or an empty one
-     */
-    public T getRequiredReference(URI id) {
-        return getReference(id).orElseThrow(() -> NotFoundException.create(resolveGenericType().getSimpleName(), id));
-    }
-
-    /**
      * Resolves the actual generic type of the implementation of {@link BaseRepositoryService}.
      *
      * @return Actual generic type class
@@ -149,7 +137,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
         // Adapted from https://gist.github.com/yunspace/930d4d40a787a1f6a7d1
         final List<ResolvedType> typeParameters =
                 new TypeResolver().resolve(this.getClass()).typeParametersFor(BaseRepositoryService.class);
-        assert typeParameters.size() >= 1;
+        assert !typeParameters.isEmpty();
         return (Class<T>) typeParameters.get(0).getErasedType();
     }
 
@@ -227,10 +215,9 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
     }
 
     /**
-     * Override this method to plug custom behavior into the transactional cycle of {@link #update(HasIdentifier)} )}.
+     * Override this method to plug custom behavior into the transactional cycle of {@link #update(HasIdentifier)}.
      *
-     * @param instance The updated instance which will be returned by {@link #update(HasIdentifier)} )}, not {@code
-     *                 null}
+     * @param instance The updated instance which will be returned by {@link #update(HasIdentifier)}, not {@code null}
      */
     protected void postUpdate(@NonNull T instance) {
         // Do nothing

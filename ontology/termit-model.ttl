@@ -51,18 +51,9 @@ termit-pojem:uživatel-termitu
 
 termit-pojem:má-zdroj-definice-termu
         a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
-        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term> ;
+        rdfs:domain         <http://www.w3.org/2004/02/skos/core#Concept> ;
         rdfs:range          termit-pojem:zdroj-definice-termu ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
-
-termit-pojem:je-draft
-        a                   owl:DatatypeProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
-        rdfs:domain         <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term> ;
-        rdfs:range          xsd:boolean ;
-        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
-
-<http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term>
-        a       owl:Class .
 
 termit-pojem:selektor
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
@@ -109,7 +100,7 @@ termit-pojem:cíl  a      <https://slovník.gov.cz/základní/pojem/typ-objektu>
 termit-pojem:je-přiřazením-termu
         a                   owl:ObjectProperty , <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
         rdfs:domain         termit-pojem:přiřazení-termu ;
-        rdfs:range          <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/term> ;
+        rdfs:range          <http://www.w3.org/2004/02/skos/core#Concept> ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
 
 termit-pojem:selektor-definice
@@ -334,3 +325,16 @@ termit-pojem:úroveň-přístupových-oprávnění
 
 <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/úroveň-přístupových-oprávnění/správa>
         a               owl:NamedIndividual .
+
+termit-pojem:úvodní-stav-pojmu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
+
+termit-pojem:koncový-stav-pojmu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class ;
+        rdfs:subClassOf  <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu> .
+
+termit-pojem:požadavek-na-změnu-hesla
+    a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
+
+

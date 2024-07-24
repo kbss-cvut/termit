@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
@@ -6,6 +23,8 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -24,9 +43,13 @@ import java.util.Collections;
 import java.util.List;
 
 import static cz.cvut.kbss.termit.service.changetracking.MetamodelBasedChangeCalculatorTest.cloneOf;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChangeTrackerTest extends BaseServiceTestRunner {
 
@@ -55,13 +78,13 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void recordAddEventStoresCreationChangeRecordInRepository() {
+    void onAssetPersistEventStoresCreationChangeRecordInRepository() {
         enableRdfsInference(em);
         final Term newTerm = Generator.generateTermWithId();
         newTerm.setGlossary(vocabulary.getGlossary().getUri());
         transactional(() -> {
             em.persist(newTerm, descriptorFactory.termDescriptor(vocabulary));
-            sut.recordAddEvent(newTerm);
+            sut.onAssetPersistEvent(new AssetPersistEvent(this, newTerm));
         });
 
         final List<AbstractChangeRecord> result = findRecords(newTerm);
@@ -74,7 +97,8 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     }
 
     private List<AbstractChangeRecord> findRecords(HasIdentifier entity) {
-        return em.createNativeQuery("SELECT ?x WHERE { ?x a ?changeRecord ; ?concerns ?entity . }", AbstractChangeRecord.class)
+        return em.createNativeQuery("SELECT ?x WHERE { ?x a ?changeRecord ; ?concerns ?entity . }",
+                                    AbstractChangeRecord.class)
                  .setParameter("changeRecord", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
                  .setParameter("concerns", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
                  .setParameter("entity", entity.getUri())
@@ -82,20 +106,20 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void recordUpdateEventDoesNothingWhenAssetDidNotChange() {
+    void onAssetUpdateEventEventDoesNothingWhenAssetDidNotChange() {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
         original.setVocabulary(vocabulary.getUri());
         transactional(() -> em.persist(original, descriptorFactory.termDescriptor(original)));
 
         final Term update = cloneOf(original);
-        transactional(() -> sut.recordUpdateEvent(update, original));
+        transactional(() -> sut.onAssetUpdateEvent(new AssetUpdateEvent(this, update)));
 
         assertTrue(findRecords(original).isEmpty());
     }
 
     @Test
-    void recordUpdateRecordsSingleChangeToLiteralAttribute() {
+    void onAssetUpdateEventRecordsSingleChangeToLiteralAttribute() {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
         original.setGlossary(vocabulary.getGlossary().getUri());
@@ -103,7 +127,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
 
         final Term update = cloneOf(original);
         update.setDefinition(MultilingualString.create("Updated definition of this term.", Environment.LANGUAGE));
-        transactional(() -> sut.recordUpdateEvent(update, original));
+        transactional(() -> sut.onAssetUpdateEvent(new AssetUpdateEvent(this, update)));
 
         final List<AbstractChangeRecord> result = findRecords(original);
         assertEquals(1, result.size());
@@ -114,7 +138,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void recordUpdateRecordsMultipleChangesToAttributes() {
+    void onAssetUpdateEventRecordsMultipleChangesToAttributes() {
         enableRdfsInference(em);
         final Term original = Generator.generateTermWithId();
         original.setGlossary(vocabulary.getGlossary().getUri());
@@ -123,7 +147,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
         final Term update = cloneOf(original);
         update.setDefinition(MultilingualString.create("Updated definition of this term.", Environment.LANGUAGE));
         update.setSources(Collections.singleton(Generator.generateUri().toString()));
-        transactional(() -> sut.recordUpdateEvent(update, original));
+        transactional(() -> sut.onAssetUpdateEvent(new AssetUpdateEvent(this, update)));
 
         final List<AbstractChangeRecord> result = findRecords(original);
         assertEquals(2, result.size());
@@ -131,7 +155,7 @@ class ChangeTrackerTest extends BaseServiceTestRunner {
             assertEquals(original.getUri(), record.getChangedEntity());
             assertThat(record, instanceOf(UpdateChangeRecord.class));
             assertThat(((UpdateChangeRecord) record).getChangedAttribute().toString(), anyOf(equalTo(SKOS.DEFINITION),
-                    equalTo(DC.Terms.SOURCE)));
+                                                                                             equalTo(DC.Terms.SOURCE)));
         });
     }
 }

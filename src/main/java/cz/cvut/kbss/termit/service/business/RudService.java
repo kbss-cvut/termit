@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,16 +50,7 @@ public interface RudService<T> {
      * @param id Item identifier
      * @return Matching item reference wrapped in an {@code Optional}
      */
-    Optional<T> getReference(URI id);
-
-    /**
-     * Gets a reference to an item with the specified identifier (with empty attribute values).
-     *
-     * @param id Item identifier
-     * @return Matching item reference
-     * @throws cz.cvut.kbss.termit.exception.NotFoundException When no matching item is found
-     */
-    T getRequiredReference(URI id);
+    T getReference(URI id);
 
     /**
      * Updates the specified item.

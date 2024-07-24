@@ -1,13 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest;
 
@@ -155,17 +161,17 @@ class UserControllerTest extends BaseControllerTestRunner {
         when(userService.findRequired(user.getUri())).thenReturn(user);
         mockMvc.perform(put(BASE_URL + "/" + extractIdentifierFragment(user.getUri()) + "/role")
                                 .queryParam(Constants.QueryParams.NAMESPACE, namespace)
-                                .content(Vocabulary.s_c_omezeny_uzivatel).contentType(MediaType.TEXT_PLAIN))
+                                .content(Vocabulary.s_c_omezeny_uzivatel_termitu).contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
         verify(idResolverMock).resolveIdentifier(namespace, extractIdentifierFragment(user.getUri()));
-        verify(userService).changeRole(user, Vocabulary.s_c_omezeny_uzivatel);
+        verify(userService).changeRole(user, Vocabulary.s_c_omezeny_uzivatel_termitu);
     }
 
     @Test
     void getManagedAssetsRetrievesManagedAssetsForUserWithSpecifiedUri() throws Exception {
         final String namespace = Vocabulary.s_c_uzivatel_termitu + "/";
         when(idResolverMock.resolveIdentifier(any(), any())).thenReturn(user.getUri());
-        when(userService.getRequiredReference(user.getUri())).thenReturn(user);
+        when(userService.getReference(user.getUri())).thenReturn(user);
         final List<RdfsResource> resources = Collections.singletonList(
                 new RdfsResource(Generator.generateUri(), MultilingualString.create("Test term", Environment.LANGUAGE),
                                  null,

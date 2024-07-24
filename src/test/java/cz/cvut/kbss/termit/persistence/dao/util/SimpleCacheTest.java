@@ -1,8 +1,24 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.persistence.dao.util;
 
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,7 +31,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SimpleCacheTest {
@@ -99,17 +118,5 @@ class SimpleCacheTest {
         assertEquals(data, sut.getOrCompute(keyTwo, supplier));
         verify(supplier, times(2)).apply(key);
         verify(supplier, times(2)).apply(keyTwo);
-    }
-
-    @Test
-    void evictCacheEventEvictsWholeCache() {
-        final Set<TermInfo> data = generateData();
-        final URI key = Generator.generateUri();
-        when(supplier.apply(any(URI.class))).thenReturn(data);
-
-        assertEquals(data, sut.getOrCompute(key, supplier));
-        sut.onEvictCache(new EvictCacheEvent(this));
-        assertEquals(data, sut.getOrCompute(key, supplier));
-        verify(supplier, times(2)).apply(key);
     }
 }

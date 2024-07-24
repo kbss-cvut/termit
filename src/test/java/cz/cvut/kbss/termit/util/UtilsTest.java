@@ -1,20 +1,24 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.environment.Generator;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -23,6 +27,7 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,6 +45,8 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 class UtilsTest {
@@ -228,5 +235,31 @@ class UtilsTest {
         Utils.pruneBlankTranslations(str);
         assertEquals(1, str.getValue().size());
         assertEquals("test", str.get("en"));
+    }
+
+    @Test
+    void resolveTranslationsExtractsPropertyValuesWithLanguageTagsFromSpecifiedModel() {
+        final Model model = new LinkedHashModel();
+        final ValueFactory vf = SimpleValueFactory.getInstance();
+        final IRI subject = vf.createIRI(Generator.generateUriString());
+        final IRI property = RDFS.LABEL;
+        final MultilingualString expected = MultilingualString.create("English", "en").set("cs", "Česky");
+        expected.getValue().forEach((lang, v) -> model.add(subject, property, vf.createLiteral(v, lang)));
+
+        assertEquals(expected, Utils.resolveTranslations(subject, property, model));
+    }
+
+    @Test
+    void resolveTranslationsSkipsLanguageLessAndNonLiteralValues() {
+        final Model model = new LinkedHashModel();
+        final ValueFactory vf = SimpleValueFactory.getInstance();
+        final IRI subject = vf.createIRI(Generator.generateUriString());
+        final IRI property = RDFS.LABEL;
+        model.add(subject, property, vf.createLiteral("Language-less string"));
+        model.add(subject, property, vf.createIRI(Generator.generateUriString()));
+
+        final MultilingualString result = Utils.resolveTranslations(subject, property, model);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 }

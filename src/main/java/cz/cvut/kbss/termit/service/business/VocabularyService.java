@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.business;
 
@@ -134,14 +137,8 @@ public class VocabularyService
 
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
-    public Optional<Vocabulary> getReference(URI id) {
+    public Vocabulary getReference(URI id) {
         return repositoryService.getReference(id);
-    }
-
-    @Override
-    @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
-    public Vocabulary getRequiredReference(URI id) {
-        return repositoryService.getRequiredReference(id);
     }
 
     @Override
@@ -198,9 +195,14 @@ public class VocabularyService
      *                                                                           matching the one in the imported data
      *                                                                           already exists
      */
+    @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
     public Vocabulary importVocabulary(boolean rename, MultipartFile file) {
-        return repositoryService.importVocabulary(rename, file);
+        final Vocabulary imported = repositoryService.importVocabulary(rename, file);
+        final AccessControlList acl = aclService.createFor(imported);
+        imported.setAcl(acl.getUri());
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(imported));
+        return imported;
     }
 
     /**
@@ -247,10 +249,9 @@ public class VocabularyService
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary).forEach(
-                importedVocabulary -> allTerms.addAll(termService.findAll(getRequiredReference(importedVocabulary))));
+                importedVocabulary -> allTerms.addAll(termService.findAll(getReference(importedVocabulary))));
         final Map<TermDto, URI> termsToContexts = new HashMap<>(allTerms.size());
-        allTerms.stream().filter(t -> t.getDefinition() != null)
-                .forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
+        allTerms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
         termService.asyncAnalyzeTermDefinitions(termsToContexts);
     }
 
@@ -263,8 +264,7 @@ public class VocabularyService
         final Map<TermDto, URI> termsToContexts = new HashMap<>();
         repositoryService.findAll().forEach(v -> {
             List<TermDto> terms = termService.findAll(new Vocabulary(v.getUri()));
-            terms.stream().filter(t -> t.getDefinition() != null)
-                 .forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
+            terms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
             termService.asyncAnalyzeTermDefinitions(termsToContexts);
         });
     }

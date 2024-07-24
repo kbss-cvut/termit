@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.persistence.dao.comment;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
@@ -24,12 +41,20 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommentDaoTest extends BaseDaoTestRunner {
 
@@ -92,7 +117,10 @@ class CommentDaoTest extends BaseDaoTestRunner {
     @Test
     void updateSetsLastModifiedValue() {
         final Comment comment = generateComment(Generator.generateUri());
-        transactional(() -> em.persist(comment, createDescriptor()));
+        transactional(() -> {
+            em.persist(comment, createDescriptor());
+            comment.setCreated(Utils.timestamp().minus(1, ChronoUnit.DAYS));
+        });
 
         comment.setContent("Updated content.");
         transactional(() -> sut.update(comment));
@@ -133,10 +161,12 @@ class CommentDaoTest extends BaseDaoTestRunner {
     void findAllByAssetRetrievesAllCommentsForSpecifiedAsset() {
         final Term term = Generator.generateTermWithId();
 
-        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).collect(
-                Collectors.toList());
+        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).toList();
         final EntityDescriptor descriptor = createDescriptor();
-        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
+        transactional(() -> comments.forEach(c -> {
+            em.persist(c, descriptor);
+            c.setCreated(Utils.timestamp().minusSeconds(10));
+        }));
         final Comment anotherComment = generateComment(Generator.generateUri());
         transactional(() -> em.persist(anotherComment, descriptor));
 
@@ -179,15 +209,14 @@ class CommentDaoTest extends BaseDaoTestRunner {
     void findAllByAssetAndTimeIntervalRetrievesCommentsCreatedInSpecifiedTimePeriod() {
         final Term term = Generator.generateTermWithId();
 
-        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).collect(
-                Collectors.toList());
+        final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(term.getUri())).toList();
         final EntityDescriptor descriptor = createDescriptor();
-        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {
             for (int i = 0; i < comments.size(); i++) {
                 final Comment c = comments.get(i);
+                em.persist(c, descriptor);
+                // Set created after persist so that we can override value set by prePersist
                 c.setCreated(Utils.timestamp().minus(i, ChronoUnit.DAYS));
-                em.merge(c, descriptor);
             }
         });
         final Instant from = Utils.timestamp().minus(comments.size() / 2, ChronoUnit.DAYS);
@@ -232,15 +261,13 @@ class CommentDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllByAssetAndTimeIntervalAllowsMissingAsset() {
         final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
-                                                .collect(
-                                                        Collectors.toList());
+                                                .toList();
         final EntityDescriptor descriptor = createDescriptor();
-        transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {
             for (int i = 0; i < comments.size(); i++) {
                 final Comment c = comments.get(i);
+                em.persist(c, descriptor);
                 c.setCreated(Utils.timestamp().minus(i, ChronoUnit.DAYS));
-                em.merge(c, descriptor);
             }
         });
         final Instant from = Utils.timestamp().minus(comments.size() / 2, ChronoUnit.DAYS);
@@ -253,8 +280,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllByAssetAndTimeIntervalReturnsCommentsEditedInSpecifiedTimeInterval() {
         final List<Comment> comments = IntStream.range(0, 10).mapToObj(i -> generateComment(Generator.generateUri()))
-                                                .collect(
-                                                        Collectors.toList());
+                                                .toList();
         final EntityDescriptor descriptor = createDescriptor();
         transactional(() -> comments.forEach(c -> em.persist(c, descriptor)));
         transactional(() -> {

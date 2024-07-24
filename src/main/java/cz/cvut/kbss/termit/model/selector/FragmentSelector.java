@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
 
 @OWLClass(iri = Vocabulary.s_c_selektor_fragmentem)
@@ -54,10 +54,9 @@ public class FragmentSelector extends Selector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FragmentSelector)) {
+        if (!(o instanceof FragmentSelector that)) {
             return false;
         }
-        FragmentSelector that = (FragmentSelector) o;
         return Objects.equals(value, that.value);
     }
 

@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
@@ -21,6 +24,10 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
+import cz.cvut.kbss.termit.event.EvictCacheEvent;
+import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -34,12 +41,21 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -82,11 +98,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         r.setInverseExactMatchTerms(loadInverseExactMatchTerms(r));
     }
 
-    public void detach(Term term) {
-        Objects.requireNonNull(term);
-        em.detach(term);
-    }
-
     /**
      * Loads terms whose relatedness to the specified term is inferred due to the symmetry of SKOS related.
      *
@@ -121,7 +132,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Loads terms whose relatedness to the specified term is inferred due to the symmetric of SKOS relatedMatch.
+     * Loads terms whose relatedness to the specified term is inferred due to the symmetry of SKOS relatedMatch.
      *
      * @param term Term to load related terms for
      */
@@ -131,7 +142,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Loads terms whose exact match to the specified term is inferred due to the symmetric of SKOS exactMatch.
+     * Loads terms whose exact match to the specified term is inferred due to the symmetry of SKOS exactMatch.
      *
      * @param term Term to load related terms for
      */
@@ -162,6 +173,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             entity.setVocabulary(null); // This is inferred
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
             evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
+            eventPublisher.publishEvent(new VocabularyContentModified(this, vocabulary.getUri()));
+            eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -177,8 +190,11 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             evictPossiblyCachedReferences(entity);
             final Term original = em.find(Term.class, entity.getUri(), descriptorFactory.termDescriptor(entity));
             entity.setDefinitionSource(original.getDefinitionSource());
+            eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
-            return em.merge(entity, descriptorFactory.termDescriptor(entity));
+            final Term result = em.merge(entity, descriptorFactory.termDescriptor(entity));
+            eventPublisher.publishEvent(new VocabularyContentModified(this, original.getVocabulary()));
+            return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -186,13 +202,19 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Evicts possibly cached instance loaded from the default context, as well as references to the instance from sub
-     * terms.
+     * terms and parents.
      *
      * @param term Entity to evict
      */
     private void evictPossiblyCachedReferences(Term term) {
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
+        em.getEntityManagerFactory().getCache().evict(TermInfo.class, term.getUri(), null);
+        Utils.emptyIfNull(term.getParentTerms()).forEach(pt -> {
+            em.getEntityManagerFactory().getCache().evict(Term.class, pt.getUri(), null);
+            em.getEntityManagerFactory().getCache().evict(TermDto.class, pt.getUri(), null);
+            subTermsCache.evict(pt.getUri());
+        });
         term.setSubTerms(getSubTerms(term));
         // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
         Utils.emptyIfNull(term.getSubTerms())
@@ -203,41 +225,28 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Marks the specified term as draft.
+     * Sets state of the specified term to the specified value.
      *
-     * @param term Term to mark as draft
+     * @param term  Term whose state to update
+     * @param state State to set
      */
-    public void setAsDraft(Term term) {
-        Objects.requireNonNull(term);
-        setTermDraftStatusTo(term, true);
-    }
-
-
-    private void setTermDraftStatusTo(Term term, boolean draft) {
+    public void setState(Term term, URI state) {
+        term.setState(state);
+        eventPublisher.publishEvent(new AssetUpdateEvent(this, term));
         evictPossiblyCachedReferences(term);
         em.createNativeQuery("DELETE {" +
-                                     "?t ?hasStatus ?oldDraft ." +
-                                     "} INSERT {" +
-                                     "GRAPH ?g {" +
-                                     "?t ?hasStatus ?newDraft ." +
-                                     "}} WHERE {" +
-                                     "OPTIONAL {?t ?hasStatus ?oldDraft .}" +
-                                     "GRAPH ?g {" +
-                                     "?t ?inScheme ?glossary ." +
-                                     "}}").setParameter("t", term)
-          .setParameter("hasStatus", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_draft))
+                  "?t ?hasState ?oldState ." +
+                  "} INSERT {" +
+                  "GRAPH ?g {" +
+                  "?t ?hasState ?newState ." +
+                  "}} WHERE {" +
+                  "OPTIONAL {?t ?hasState ?oldState .}" +
+                  "GRAPH ?g {" +
+                  "?t ?inScheme ?glossary ." +
+                  "}}").setParameter("t", term)
+          .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu))
           .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
-          .setParameter("newDraft", draft).executeUpdate();
-    }
-
-    /**
-     * Marks the specified term as confirmed.
-     *
-     * @param term Term to mark as confirmed
-     */
-    public void setAsConfirmed(Term term) {
-        Objects.requireNonNull(term);
-        setTermDraftStatusTo(term, false);
+          .setParameter("newState", state).executeUpdate();
     }
 
     private void evictCachedSubTerms(Set<? extends AbstractTerm> originalParents,
@@ -604,7 +613,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public List<TermDto> findAll(String searchString) {
         Objects.requireNonNull(searchString);
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                                       "" +
                                                                        "?term a ?type ; " +
                                                                        "      ?hasLabel ?label ; " +
                                                                        "FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) ." +
@@ -728,10 +736,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                  .getResultList();
     }
 
+    @ModifiesData
     @Override
     public void remove(Term entity) {
         super.remove(entity);
         evictCachedSubTerms(entity.getParentTerms(), Collections.emptySet());
+        eventPublisher.publishEvent(new VocabularyContentModified(this, entity.getVocabulary()));
     }
 
     @Override
@@ -748,5 +758,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                     postLoad(t);
                     return t;
                 });
+    }
+
+    @EventListener
+    public void onEvictCache(EvictCacheEvent evt) {
+        subTermsCache.evictAll();
     }
 }

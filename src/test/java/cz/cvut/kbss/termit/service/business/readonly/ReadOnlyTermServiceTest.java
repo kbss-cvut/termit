@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.business.readonly;
 
 import cz.cvut.kbss.jopa.vocabulary.DC;
@@ -53,7 +70,7 @@ class ReadOnlyTermServiceTest {
     private ReadOnlyTermService sut;
 
     @Test
-    void getRequiredVocabularyReferenceRetrievesReferenceToVocabularyFromService() {
+    void getVocabularyReferenceRetrievesReferenceToVocabularyFromService() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         when(termService.findVocabularyRequired(any())).thenReturn(vocabulary);
 
@@ -243,5 +260,24 @@ class ReadOnlyTermServiceTest {
         assertThat(result.getProperties(), hasEntry(DC.Terms.REFERENCES, term.getProperties()
                                                                              .get(DC.Terms.REFERENCES)));
         assertThat(result.getProperties(), not(hasEntry(DC.Elements.DATE, term.getProperties().get(DC.Elements.DATE))));
+    }
+
+    @Test
+    void findSubTermsPassesTermWithVocabularyToUnderlyingServiceForTermSubTermResolution() {
+        when(configuration.getPublicView()).thenReturn(new Configuration.PublicView());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        final List<Term> subTerms = Generator.generateTermsWithIds(3);
+        term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
+        when(termService.findSubTerms(any())).thenReturn(subTerms);
+
+        sut.findSubTerms(new ReadOnlyTerm(term));
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).findSubTerms(captor.capture());
+        final Term arg = captor.getValue();
+        assertEquals(term.getUri(), arg.getUri());
+        assertEquals(term.getVocabulary(), arg.getVocabulary());
     }
 }

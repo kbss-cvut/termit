@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.model.User;
@@ -14,7 +31,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
@@ -53,7 +70,7 @@ public class UserGroupRepositoryService extends BaseRepositoryService<UserGroup,
     public void addMembers(UserGroup target, Collection<User> toAdd) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(toAdd);
-        if (toAdd.size() == 0) {
+        if (toAdd.isEmpty()) {
             return;
         }
         LOG.debug("Adding users {} to group {}.", toAdd, target);
@@ -67,7 +84,7 @@ public class UserGroupRepositoryService extends BaseRepositoryService<UserGroup,
     public void removeMembers(UserGroup target, Collection<User> toRemove) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(toRemove);
-        if (toRemove.size() == 0) {
+        if (toRemove.isEmpty()) {
             return;
         }
         LOG.debug("Removing users {} from group {}.", toRemove, target);

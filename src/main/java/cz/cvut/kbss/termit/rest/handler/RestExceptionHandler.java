@@ -1,23 +1,42 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.rest.handler;
 
+import cz.cvut.kbss.jopa.exceptions.EntityNotFoundException;
 import cz.cvut.kbss.jopa.exceptions.OWLPersistenceException;
 import cz.cvut.kbss.jsonld.exception.JsonLdException;
+import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
+import cz.cvut.kbss.termit.exception.AuthorizationException;
+import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
+import cz.cvut.kbss.termit.exception.InvalidParameterException;
+import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
+import cz.cvut.kbss.termit.exception.InvalidTermStateException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.exception.ResourceExistsException;
+import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
+import cz.cvut.kbss.termit.exception.SuppressibleLogging;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
-import cz.cvut.kbss.termit.exception.*;
+import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
+import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import org.slf4j.Logger;
@@ -29,7 +48,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Exception handlers for REST controllers.
@@ -43,19 +62,19 @@ public class RestExceptionHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestExceptionHandler.class);
 
-    private static void logException(TermItException ex) {
+    private static void logException(TermItException ex, HttpServletRequest request) {
         if (shouldSuppressLogging(ex)) {
             return;
         }
-        logException("Exception caught.", ex);
+        logException("Exception caught when processing request to '" + request.getRequestURI() + "'.", ex);
     }
 
     private static boolean shouldSuppressLogging(TermItException ex) {
         return ex.getClass().getAnnotation(SuppressibleLogging.class) != null;
     }
 
-    private static void logException(Throwable ex) {
-        logException("Exception caught.", ex);
+    private static void logException(Throwable ex, HttpServletRequest request) {
+        logException("Exception caught when processing request to '" + request.getRequestURI() + "'.", ex);
     }
 
     private static void logException(String message, Throwable ex) {
@@ -68,7 +87,7 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(PersistenceException.class)
     public ResponseEntity<ErrorInfo> persistenceException(HttpServletRequest request, PersistenceException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e.getCause()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -80,7 +99,7 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(ResourceExistsException.class)
     public ResponseEntity<ErrorInfo> resourceExistsException(HttpServletRequest request, ResourceExistsException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
@@ -95,43 +114,48 @@ public class RestExceptionHandler {
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorInfo> entityNotFoundException(HttpServletRequest request, EntityNotFoundException e) {
+        logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.NOT_FOUND);
+    }
 
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ErrorInfo> authorizationException(HttpServletRequest request, AuthorizationException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorInfo> validationException(HttpServletRequest request, ValidationException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(WebServiceIntegrationException.class)
     public ResponseEntity<ErrorInfo> webServiceIntegrationException(HttpServletRequest request,
                                                                     WebServiceIntegrationException e) {
-        logException(e.getCause());
+        logException(e.getCause(), request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(AnnotationGenerationException.class)
     public ResponseEntity<ErrorInfo> annotationGenerationException(HttpServletRequest request,
                                                                    AnnotationGenerationException e) {
-        logException(e.getCause());
+        logException(e.getCause(), request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(TermItException.class)
     public ResponseEntity<ErrorInfo> termItException(HttpServletRequest request,
                                                      TermItException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(JsonLdException.class)
     public ResponseEntity<ErrorInfo> jsonLdException(HttpServletRequest request, JsonLdException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessage("Error when processing JSON-LD.", request.getRequestURI()),
                 HttpStatus.INTERNAL_SERVER_ERROR);
@@ -140,21 +164,14 @@ public class RestExceptionHandler {
     @ExceptionHandler(UnsupportedOperationException.class)
     public ResponseEntity<ErrorInfo> unsupportedAssetOperationException(HttpServletRequest request,
                                                                         UnsupportedOperationException e) {
-        logException(e);
-        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(DisabledOperationException.class)
-    public ResponseEntity<ErrorInfo> disabledOperationException(HttpServletRequest request,
-                                                                DisabledOperationException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(VocabularyImportException.class)
     public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
                                                                VocabularyImportException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
                 HttpStatus.CONFLICT);
@@ -163,26 +180,26 @@ public class RestExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> unsupportedImportMediaTypeException(HttpServletRequest request,
                                                                          UnsupportedImportMediaTypeException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> assetRemovalException(HttpServletRequest request, AssetRemovalException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> invalidParameter(HttpServletRequest request, InvalidParameterException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> maxUploadSizeExceededException(HttpServletRequest request,
                                                                     MaxUploadSizeExceededException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(
                 e.getMessage(),
                 "error.file.maxUploadSizeExceeded", request.getRequestURI()), HttpStatus.BAD_REQUEST);
@@ -191,7 +208,7 @@ public class RestExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> snapshotNotEditableException(HttpServletRequest request,
                                                                   SnapshotNotEditableException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI()),
                                     HttpStatus.CONFLICT);
     }
@@ -199,7 +216,29 @@ public class RestExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ErrorInfo> unsupportedSearchFacetException(HttpServletRequest request,
                                                                      UnsupportedSearchFacetException e) {
-        logException(e);
+        logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> invalidLanguageConstantException(HttpServletRequest request,
+                                                                      InvalidLanguageConstantException e) {
+        logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
+                                                               InvalidTermStateException e) {
+        logException(e, request);
+        return new ResponseEntity<>(
+                ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
+                HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request, InvalidPasswordChangeRequestException e) {
+        logException(e, request);
+        return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()), HttpStatus.CONFLICT);
     }
 }

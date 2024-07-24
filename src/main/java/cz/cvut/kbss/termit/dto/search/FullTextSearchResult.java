@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.dto.search;
 
@@ -31,7 +34,7 @@ import java.util.Set;
                                                               @VariableResult(name = "entity", type = URI.class),
                                                               @VariableResult(name = "label", type = String.class),
                                                               @VariableResult(name = "vocabularyUri", type = URI.class),
-                                                              @VariableResult(name = "draft", type = Boolean.class),
+                                                              @VariableResult(name = "state", type = URI.class),
                                                               @VariableResult(name = "type", type = String.class),
                                                               @VariableResult(name = "snippetField",
                                                                               type = String.class),
@@ -48,20 +51,20 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
     @OWLAnnotationProperty(iri = RDFS.LABEL)
     private String label;
 
-    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/fts/snippet-text")
+    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/snippet-text")
     private String snippetText;
 
-    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/fts/snippet-field")
+    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/snippet-field")
     private String snippetField;
 
-    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_termit + "/fts/score")
+    @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/score")
     private Double score;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
-    @OWLDataProperty(iri = Vocabulary.s_p_je_draft)
-    private Boolean draft;
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    private URI state;
 
     @Types
     private Set<String> types;
@@ -69,12 +72,12 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
     public FullTextSearchResult() {
     }
 
-    public FullTextSearchResult(URI uri, String label, URI vocabulary, Boolean draft, String type, String snippetField,
+    public FullTextSearchResult(URI uri, String label, URI vocabulary, URI state, String type, String snippetField,
                                 String snippetText, Double score) {
         this.uri = uri;
         this.label = label;
         this.vocabulary = vocabulary;
-        this.draft = draft == null || draft;
+        this.state = state;
         this.types = Collections.singleton(type);
         this.snippetField = snippetField;
         this.snippetText = snippetText;
@@ -107,12 +110,12 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
         this.vocabulary = vocabulary;
     }
 
-    public Boolean isDraft() {
-        return draft;
+    public URI getState() {
+        return state;
     }
 
-    public void setDraft(Boolean draft) {
-        this.draft = draft;
+    public void setState(URI state) {
+        this.state = state;
     }
 
     @Override

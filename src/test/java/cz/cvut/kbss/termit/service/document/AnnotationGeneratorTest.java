@@ -1,26 +1,28 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
-import cz.cvut.kbss.termit.model.Glossary;
-import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
@@ -44,7 +46,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.web.WebAppConfiguration;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -56,7 +63,10 @@ import static cz.cvut.kbss.termit.environment.Environment.loadFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // Needed for the request-scoped occurrence resolver bean to work
 @WebAppConfiguration
@@ -102,13 +112,10 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         this.termTwo = new Term();
         termTwo.setUri(TERM_TWO_ID);
         termTwo.setLabel(MultilingualString
-                .create("Územní plán hlavního města Prahy", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
+                                 .create("Územní plán hlavního města Prahy",
+                                         cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         final User author = Generator.generateUserWithId();
-        this.vocabulary = new cz.cvut.kbss.termit.model.Vocabulary();
-        vocabulary.setLabel("Test Vocabulary");
-        vocabulary.setGlossary(new Glossary());
-        vocabulary.setModel(new Model());
-        vocabulary.setUri(Generator.generateUri());
+        this.vocabulary = Generator.generateVocabularyWithId();
         this.document = new cz.cvut.kbss.termit.model.resource.Document();
         document.setLabel("metropolitan-plan");
         document.setUri(Generator.generateUri());
@@ -178,23 +185,24 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         assert element.size() == 1;
         element.attr(Constants.RDFa.TYPE, cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik);
 
-        return new ByteArrayInputStream(doc.toString().getBytes(StandardCharsets.UTF_8.name()));
+        return new ByteArrayInputStream(doc.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     @Test
     void generateAnnotationsThrowsAnnotationGenerationExceptionForUnsupportedFileType() throws Exception {
-        final InputStream content = loadFile("application.yml");
-        file.setLabel(generateIncompatibleFile());
-        final AnnotationGenerationException ex = assertThrows(AnnotationGenerationException.class,
-                () -> sut.generateAnnotations(content, file));
-        assertThat(ex.getMessage(), containsString("Unsupported type of file"));
+        try (final InputStream content = loadFile("application.yml")) {
+            file.setLabel(generateIncompatibleFile());
+            final AnnotationGenerationException ex = assertThrows(AnnotationGenerationException.class,
+                                                                  () -> sut.generateAnnotations(content, file));
+            assertThat(ex.getMessage(), containsString("Unsupported type of file"));
+        }
     }
 
     private String generateIncompatibleFile() throws Exception {
         final String tempDir = System.getProperty("java.io.tmpdir");
         config.getFile().setStorage(tempDir);
         final java.io.File docDir = new java.io.File(tempDir + java.io.File.separator +
-                document.getDirectoryName());
+                                                             document.getDirectoryName());
         Files.createDirectory(docDir.toPath());
         docDir.deleteOnExit();
         final java.io.File content = Files.createTempFile(docDir.toPath(), "test", ".txt").toFile();
@@ -216,7 +224,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     void generateAnnotationsThrowsAnnotationGenerationExceptionForUnknownTermIdentifier() throws Exception {
         final InputStream content = setUnknownTermIdentifier(loadFile("data/rdfa-simple.html"));
         final AnnotationGenerationException ex = assertThrows(AnnotationGenerationException.class,
-                () -> sut.generateAnnotations(content, file));
+                                                              () -> sut.generateAnnotations(content, file));
         assertThat(ex.getMessage(), containsString("Term with id "));
         assertThat(ex.getMessage(), containsString("not found"));
     }
@@ -234,11 +242,11 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     void generateAnnotationsHandlesLargerDocumentAnalysis() throws Exception {
         final Term mp = new Term();
         mp.setLabel(MultilingualString
-                .create("Metropolitní plán", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
+                            .create("Metropolitní plán", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         mp.setUri(URI.create("http://test.org/pojem/metropolitni-plan"));
         final Term ma = new Term();
         ma.setLabel(MultilingualString
-                .create("Správní území Prahy", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
+                            .create("Správní území Prahy", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         ma.setUri(URI.create("http://test.org/pojem/spravni-uzemi-prahy"));
         final Term area = new Term();
         area.setLabel(MultilingualString.create("Území", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
@@ -369,7 +377,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final Term otherTerm = new Term();
         otherTerm.setUri(Generator.generateUri());
         otherTerm.setLabel(MultilingualString
-                .create("Other term", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
+                                   .create("Other term", cz.cvut.kbss.termit.environment.Environment.LANGUAGE));
         final TextQuoteSelector selector = new TextQuoteSelector("Územní plán");
         selector.setPrefix("RDFa simple");
         selector.setSuffix(" hlavního města Prahy.");
@@ -379,15 +387,14 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         transactional(() -> {
             em.persist(t);
             em.persist(otherTerm);
-            em.persist(to);
+            em.persist(to, new EntityDescriptor(to.resolveContext()));
         });
         final InputStream content = loadFile("data/rdfa-simple.html");
         generateFile();
         sut.generateAnnotations(content, file);
         final List<TermOccurrence> allOccurrences = termOccurrenceDao.findAllTargeting(file);
-        assertEquals(2, allOccurrences.size());
-        assertTrue(allOccurrences.stream().anyMatch(o -> o.getTerm().equals(otherTerm.getUri())));
-        assertTrue(allOccurrences.stream().anyMatch(o -> o.getTerm().equals(term.getUri())));
+        assertEquals(1, allOccurrences.size());
+        assertEquals(term.getUri(), allOccurrences.get(0).getTerm());
     }
 
     @Test
@@ -399,8 +406,10 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         final List<TermOccurrence> occurrencesTwo = termOccurrenceDao.findAllTargeting(file);
         assertEquals(occurrencesOne.size(), occurrencesTwo.size());
         final int instanceCount = em.createNativeQuery("SELECT (count(*) as ?count) WHERE {" +
-                "?x a ?termOccurrence ." +
-                "}", Integer.class).setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
+                                                               "GRAPH ?g { ?x a ?termOccurrence . }" +
+                                                               "}", Integer.class)
+                                    .setParameter("g", TermOccurrence.resolveContext(file.getUri()))
+                                    .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                                     .getSingleResult();
         assertEquals(occurrencesTwo.size(), instanceCount);
     }
@@ -410,8 +419,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         generateFile();
         sut.generateAnnotations(loadFile("data/rdfa-simple.html"), file);
         final List<TermOccurrence> occurrencesOne = termOccurrenceDao.findAllTargeting(file);
-        final List<TermOccurrence> confirmed = occurrencesOne.stream().filter(to -> Generator.randomBoolean()).collect(
-                Collectors.toList());
+        final List<TermOccurrence> confirmed = occurrencesOne.stream().filter(to -> Generator.randomBoolean()).toList();
         transactional(() -> confirmed.forEach(to -> {
             to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
             em.merge(to);

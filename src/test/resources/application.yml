@@ -10,7 +10,7 @@ keycloak:
     enabled: false
 termit:
     repository:
-        url: mem:termit
+        url: termit
     persistence:
         driver: cz.cvut.kbss.ontodriver.rdf4j.Rdf4jDataSource
         language: en
@@ -30,7 +30,6 @@ termit:
         storage: /tmp/termit
     textAnalysis:
         url: http://localhost/annotace
-        termAssignmentMinScore: 1
         termOccurrenceMinScore: 0.49
     comments:
         context: http://onto.fel.cvut.cz/ontologies/komentare

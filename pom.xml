@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.12</version>
+        <version>3.3.1</version>
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>2.18.0</version>
+    <version>3.1.2</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -20,34 +20,24 @@
         <repository>
             <id>kbss</id>
             <url>https://kbss.felk.cvut.cz/m2repo</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <org.springdoc.version>1.7.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>0.22.1</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.12.3</cz.cvut.kbss.jsonld.version>
-        <org.aspectj.version>1.9.7</org.aspectj.version>
+        <org.springdoc.version>2.2.0</org.springdoc.version>
+        <cz.cvut.kbss.jopa.version>2.0.2</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.14.3</cz.cvut.kbss.jsonld.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
         <packaging>jar</packaging>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.keycloak.bom</groupId>
-                <artifactId>keycloak-adapter-bom</artifactId>
-                <version>19.0.1</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -82,7 +72,7 @@
         <dependency>
             <groupId>org.mitre.dsmiley.httpproxy</groupId>
             <artifactId>smiley-http-proxy-servlet</artifactId>
-            <version>1.12.1</version>
+            <version>2.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core -->
@@ -122,15 +112,14 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>3.7.7</version>
+            <version>5.0.0</version>
         </dependency>
-
 
         <!-- Spring declarative transactions with JOPA -->
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.1.5</version>
+            <version>0.3.0</version>
         </dependency>
 
         <!-- Spring -->
@@ -157,6 +146,10 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-commons</artifactId>
         </dependency>
@@ -164,21 +157,18 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-aspects</artifactId>
         </dependency>
-
-        <!-- Keycloak -->
         <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-spring-boot-starter</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-annotations</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
         </dependency>
 
         <!-- JWT support for Java -->
@@ -226,8 +216,8 @@
 
         <!-- Servlet-API -->
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -237,14 +227,14 @@
             <artifactId>hibernate-validator</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>javax.el-api</artifactId>
-            <version>3.0.0</version>
+            <groupId>jakarta.el</groupId>
+            <artifactId>jakarta.el-api</artifactId>
+            <version>5.0.1</version>
         </dependency>
         <dependency>
-            <groupId>org.glassfish.web</groupId>
-            <artifactId>javax.el</artifactId>
-            <version>2.2.6</version>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
+            <version>5.0.0-M1</version>
         </dependency>
 
         <!-- jsoup for HTML/XML processing -->
@@ -296,17 +286,14 @@
         <dependency>
             <groupId>net.bull.javamelody</groupId>
             <artifactId>javamelody-spring-boot-starter</artifactId>
-            <version>1.92.0</version>
+            <version>2.0.0</version>
         </dependency>
 
         <!-- Caching -->
         <dependency>
-            <groupId>javax.cache</groupId>
-            <artifactId>cache-api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>
+            <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
@@ -317,12 +304,7 @@
         <!-- REST API documentation -->
         <dependency>
             <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-ui</artifactId>
-            <version>${org.springdoc.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-security</artifactId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${org.springdoc.version}</version>
         </dependency>
 
@@ -345,6 +327,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -405,13 +388,6 @@
 
         <!-- Profiles for storages. Important for correct full text search functionality -->
         <profile>
-            <id>rdf4j</id>
-            <properties>
-                <profile.name>rdf4j</profile.name>
-                <spring.profiles.active>lucene</spring.profiles.active>
-            </properties>
-        </profile>
-        <profile>
             <id>graphdb</id>
             <properties>
                 <profile.name>graphdb</profile.name>
@@ -427,6 +403,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <parameters>true</parameters>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.hibernate.validator</groupId>
@@ -438,7 +415,18 @@
                             <artifactId>mapstruct-processor</artifactId>
                             <version>${org.mapstruct.version}</version>
                         </path>
+                        <path>
+                            <groupId>cz.lukaskabc.cvut.processor</groupId>
+                            <artifactId>spring-boot-configuration-docgen-processor</artifactId>
+                            <version>1.0</version>
+                        </path>
                     </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Aconfigurationdoc.output_file=termit-doc.md</arg>
+                        <arg>-Aconfigurationdoc.format=MD</arg>
+                        <arg>-Aconfigurationdoc.configuration_package=cz.cvut.kbss.termit</arg>
+                        <arg>-Aconfigurationdoc.prepend_required=true</arg>
+                    </compilerArgs>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
@@ -449,46 +437,29 @@
                 <version>1.13.1</version>
                 <configuration>
                     <complianceLevel>${java.version}</complianceLevel>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
                     <aspectLibraries>
-                        <aspectLibrary>
-                            <groupId>cz.cvut.kbss.jopa</groupId>
-                            <artifactId>jopa-impl</artifactId>
-                        </aspectLibrary>
                         <aspectLibrary>
                             <groupId>org.springframework</groupId>
                             <artifactId>spring-aspects</artifactId>
                         </aspectLibrary>
                     </aspectLibraries>
+                    <parameters>true</parameters>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.aspectj</groupId>
-                        <artifactId>aspectjtools</artifactId>
-                        <version>${org.aspectj.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.aspectj</groupId>
-                        <artifactId>aspectjrt</artifactId>
-                        <version>${org.aspectj.version}</version>
-                    </dependency>
-                </dependencies>
                 <executions>
                     <execution>
                         <id>main</id>
                         <phase>process-classes</phase>
                         <goals>
+                            <!-- Weave all main classes -->
                             <goal>compile</goal>
-                            <!-- use this goal to weave all your main classes -->
                         </goals>
                     </execution>
                     <execution>
                         <id>test</id>
                         <phase>process-test-classes</phase>
                         <goals>
+                            <!-- Weave all test classes -->
                             <goal>test-compile</goal>
-                            <!-- use this goal to weave all your test classes -->
                         </goals>
                     </execution>
                 </executions>
@@ -509,15 +480,6 @@
                 <groupId>cz.cvut.kbss.jopa</groupId>
                 <artifactId>jopa-maven-plugin</artifactId>
                 <version>${cz.cvut.kbss.jopa.version}</version>
-                <configuration>
-                    <package>cz.cvut.kbss.termit.util</package>
-                    <output-directory>${project.basedir}/src/main/generated-sources</output-directory>
-                    <ontology-iri>http://onto.fel.cvut.cz/ontologies/application/termit</ontology-iri>
-                    <mapping-file>${project.basedir}/src/main/resources/mapping</mapping-file>
-                    <whole-ontology-as-ics>true</whole-ontology-as-ics>
-                    <vocabulary-only>true</vocabulary-only>
-                    <ignore-failed-imports>true</ignore-failed-imports>
-                </configuration>
                 <executions>
                     <execution>
                         <id>generate-vocabulary</id>
@@ -525,6 +487,26 @@
                         <goals>
                             <goal>owl2java-transform</goal>
                         </goals>
+                        <configuration>
+                            <package>cz.cvut.kbss.termit.util</package>
+                            <output-directory>${project.basedir}/src/main/generated-sources</output-directory>
+                            <ontology-iri>http://onto.fel.cvut.cz/ontologies/application/termit</ontology-iri>
+                            <mapping-file>${project.basedir}/jopa-config/mapping</mapping-file>
+                            <whole-ontology-as-ics>true</whole-ontology-as-ics>
+                            <vocabulary-only>true</vocabulary-only>
+                            <ignore-failed-imports>true</ignore-failed-imports>
+                            <prefix-mapping-file>${project.basedir}/jopa-config/prefixes</prefix-mapping-file>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-static-metamodel</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>modelgen</goal>
+                        </goals>
+                        <configuration>
+                            <source-package>cz.cvut.kbss.termit.model</source-package>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -536,7 +518,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.8</version>
+                <version>0.8.12</version>
                 <executions>
                     <execution>
                         <goals>
@@ -564,7 +546,8 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>src/main/generated-sources</source>
+                                <source>${project.basedir}/src/main/generated-sources</source>
+                                <source>${project.build.directory}/generated-sources/static-metamodel/</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -601,6 +584,32 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- use mvn license:check to check for missing license headers, mvn license:format to add license headers -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                    <header>header.txt</header>
+                    <excludes>
+                        <exclude>.github/**</exclude>
+                        <exclude>src/test/resources/**</exclude>
+                        <exclude>src/main/resources/**</exclude>
+                        <exclude>license.txt</exclude>
+                        <exclude>README.md</exclude>
+                        <exclude>**/*.txt</exclude>
+                        <exclude>**/*.md</exclude>
+                        <exclude>**/*.yml</exclude>
+                        <exclude>**/*.ttl</exclude>
+                        <exclude>**/*.sh</exclude>
+                        <exclude>pom.xml</exclude>
+                        <exclude>.editorconfig</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>de.qaware.maven</groupId>

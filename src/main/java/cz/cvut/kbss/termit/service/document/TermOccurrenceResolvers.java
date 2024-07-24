@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
  * class.
  */
 @Component
-interface TermOccurrenceResolvers {
+public interface TermOccurrenceResolvers {
 
     @Lookup
     HtmlTermOccurrenceResolver htmlTermOccurrenceResolver();

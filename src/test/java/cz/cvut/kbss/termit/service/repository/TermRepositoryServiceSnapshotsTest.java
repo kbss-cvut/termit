@@ -1,7 +1,23 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
@@ -13,8 +29,6 @@ import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -64,10 +78,10 @@ public class TermRepositoryServiceSnapshotsTest extends BaseServiceTestRunner {
     }
 
     @Test
-    void setStatusOnSnapshotThrowsSnapshotNotEditableException() {
+    void setStateOnSnapshotThrowsSnapshotNotEditableException() {
         final Term snapshot = generateAndPersistSnapshot();
 
-        assertThrows(SnapshotNotEditableException.class, () -> sut.setStatus(snapshot, TermStatus.CONFIRMED));
+        assertThrows(SnapshotNotEditableException.class, () -> sut.setState(snapshot, Generator.TERM_STATES[0]));
     }
 
     @Test

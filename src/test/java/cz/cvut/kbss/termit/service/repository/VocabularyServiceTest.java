@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
@@ -14,6 +31,7 @@ import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
@@ -25,12 +43,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
@@ -300,5 +323,37 @@ class VocabularyServiceTest {
         sut.createSnapshot(vocabulary);
         verify(aclService).clone(originalAcl);
         assertEquals(cloneAcl.getUri(), snapshotVoc.getAcl());
+    }
+
+    @Test
+    void importNewVocabularyCreatesAccessControlListForImportedVocabulary() {
+        final MultipartFile fileToImport = new MockMultipartFile("test.ttl", "content to import".getBytes(
+                StandardCharsets.UTF_8));
+        final Vocabulary persisted = Generator.generateVocabularyWithId();
+        when(repositoryService.importVocabulary(anyBoolean(), any(MultipartFile.class))).thenReturn(persisted);
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        when(aclService.createFor(any(HasIdentifier.class))).thenReturn(acl);
+
+        sut.importVocabulary(false, fileToImport);
+        final InOrder inOrder = inOrder(repositoryService, aclService);
+        inOrder.verify(repositoryService).importVocabulary(false, fileToImport);
+        inOrder.verify(aclService).createFor(persisted);
+        assertEquals(acl.getUri(), persisted.getAcl());
+    }
+
+    @Test
+    void importNewVocabularyPublishesVocabularyCreatedEvent() {
+        final MultipartFile fileToImport = new MockMultipartFile("test.ttl", "content to import".getBytes(
+                StandardCharsets.UTF_8));
+        final Vocabulary persisted = Generator.generateVocabularyWithId();
+        when(repositoryService.importVocabulary(anyBoolean(), any(MultipartFile.class))).thenReturn(persisted);
+        final AccessControlList acl = Generator.generateAccessControlList(false);
+        when(aclService.createFor(any(HasIdentifier.class))).thenReturn(acl);
+
+        sut.importVocabulary(false, fileToImport);
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertInstanceOf(VocabularyCreatedEvent.class, captor.getValue());
+        assertEquals(persisted, captor.getValue().getSource());
     }
 }

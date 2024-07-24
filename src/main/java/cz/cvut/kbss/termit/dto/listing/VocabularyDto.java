@@ -1,5 +1,23 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.dto.listing;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
@@ -19,10 +37,10 @@ import java.util.Set;
 public class VocabularyDto extends AbstractEntity {
 
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
-    private String label;
+    private MultilingualString label;
 
     @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
-    private String description;
+    private MultilingualString description;
 
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)
     private Set<URI> importedVocabularies;
@@ -33,19 +51,19 @@ public class VocabularyDto extends AbstractEntity {
     @Types
     private Set<String> types;
 
-    public String getLabel() {
+    public MultilingualString getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
     }
 
-    public String getDescription() {
+    public MultilingualString getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(MultilingualString description) {
         this.description = description;
     }
 
@@ -78,10 +96,9 @@ public class VocabularyDto extends AbstractEntity {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof VocabularyDto)) {
+        if (!(o instanceof VocabularyDto that)) {
             return false;
         }
-        VocabularyDto that = (VocabularyDto) o;
         return Objects.equals(getUri(), that.getUri());
     }
 

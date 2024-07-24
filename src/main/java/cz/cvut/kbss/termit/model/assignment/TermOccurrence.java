@@ -1,11 +1,35 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.model.assignment;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.CascadeType;
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.validation.constraints.NotNull;
 
 import java.net.URI;
 import java.util.Objects;
@@ -20,10 +44,12 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
      */
     public static final String CONTEXT_SUFFIX = "occurrences";
 
+    @NotNull
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_je_prirazenim_termu)
     private URI term;
 
+    @NotNull
     @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_cil, cascade = {CascadeType.MERGE}, fetch = FetchType.EAGER)
     OccurrenceTarget target;
@@ -93,6 +119,35 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
         this.score = score;
     }
 
+    /**
+     * Marks this term occurrence as suggested by automation.
+     * <p>
+     * Corresponds to classifying with {@link Vocabulary#s_c_navrzeny_vyskyt_termu}.
+     */
+    public void markSuggested() {
+        addType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+    }
+
+    /**
+     * Marks this term occurrence as approved.
+     * <p>
+     * Corresponds to removing the {@link Vocabulary#s_c_navrzeny_vyskyt_termu} type.
+     */
+    public void markApproved() {
+        removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+    }
+
+    /**
+     * Checks whether this term occurrence is marked as suggested by automation.
+     * <p>
+     * Suggested in this context means classified with {@link Vocabulary#s_c_navrzeny_vyskyt_termu}.
+     *
+     * @return {@code true} when this instance is marked as suggested by automation
+     */
+    public boolean isSuggested() {
+        return hasType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+    }
+
     @Override
     public String toString() {
         return "TermOccurrence{<" +
@@ -114,7 +169,8 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
     }
 
     /**
-     * Resolves identifier of the repository context in which term occurrences targeting the specified source should be stored.
+     * Resolves identifier of the repository context in which term occurrences targeting the specified source should be
+     * stored.
      * <p>
      * The context is based on the specified source and {@link #CONTEXT_SUFFIX}.
      *

@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,13 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
+import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 
 import java.net.URI;
 import java.util.Collection;
@@ -34,12 +38,14 @@ import java.util.Optional;
 /**
  * Base implementation of the generic DAO API.
  */
-public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> {
+public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T>, ApplicationEventPublisherAware {
 
     protected final Class<T> type;
     protected final URI typeUri;
 
     protected final EntityManager em;
+
+    protected ApplicationEventPublisher eventPublisher;
 
     protected BaseDao(Class<T> type, EntityManager em) {
         this.type = type;
@@ -69,13 +75,19 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     }
 
     @Override
-    public Optional<T> getReference(URI id) {
+    public T getReference(URI id) {
         Objects.requireNonNull(id);
         try {
-            return Optional.ofNullable(em.getReference(type, id, getDescriptor()));
+            return em.getReference(type, id, getDescriptor());
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    @Override
+    public void detach(T entity) {
+        Objects.requireNonNull(entity);
+        em.detach(entity);
     }
 
     @ModifiesData
@@ -87,6 +99,7 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+        eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
     }
 
     @ModifiesData
@@ -98,6 +111,7 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+        eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
     }
 
     @ModifiesData
@@ -105,7 +119,9 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
     public T update(T entity) {
         Objects.requireNonNull(entity);
         try {
-            return em.merge(entity, getDescriptor());
+            final T result = em.merge(entity, getDescriptor());
+            eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
+            return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -117,8 +133,11 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
         Objects.requireNonNull(entity);
         Objects.requireNonNull(entity.getUri());
         try {
-            final Optional<T> reference = getReference(entity.getUri());
-            reference.ifPresent(em::remove);
+            final Optional<T> toRemove = find(entity.getUri());
+            toRemove.ifPresent(elem -> {
+                em.remove(elem);
+                eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
+            });
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -137,5 +156,10 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T> 
 
     protected Descriptor getDescriptor() {
         return new EntityDescriptor();
+    }
+
+    @Override
+    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 }

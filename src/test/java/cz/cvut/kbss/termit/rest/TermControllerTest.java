@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -6,7 +23,6 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.Snapshot;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -52,11 +68,19 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
+import static cz.cvut.kbss.termit.environment.Generator.TERM_STATES;
 import static cz.cvut.kbss.termit.environment.Generator.generateComment;
 import static cz.cvut.kbss.termit.environment.Generator.generateComments;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
@@ -66,9 +90,21 @@ import static cz.cvut.kbss.termit.util.Constants.QueryParams.PAGE_SIZE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.lessThan;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -100,7 +136,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void setUp() {
         super.setUp(sut);
         this.vocabulary = Generator.generateVocabulary();
-        vocabulary.setLabel(VOCABULARY_NAME);
+        vocabulary.setLabel(MultilingualString.create(VOCABULARY_NAME, Environment.LANGUAGE));
         vocabulary.setUri(URI.create(VOCABULARY_URI));
     }
 
@@ -111,7 +147,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final String language = "en";
         final URI vocabularyUri = URI.create(namespace + VOCABULARY_NAME);
         when(idResolverMock.resolveIdentifier(namespace, VOCABULARY_NAME)).thenReturn(vocabularyUri);
-        when(termServiceMock.getRequiredVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
+        when(termServiceMock.getVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
         when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(true);
         mockMvc.perform(
                        head(PATH + VOCABULARY_NAME + "/terms")
@@ -129,7 +165,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final String language = "en";
         final URI vocabularyUri = URI.create(namespace + VOCABULARY_NAME);
         when(idResolverMock.resolveIdentifier(namespace, VOCABULARY_NAME)).thenReturn(vocabularyUri);
-        when(termServiceMock.getRequiredVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
+        when(termServiceMock.getVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
         when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(false);
         mockMvc.perform(
                        head(PATH + VOCABULARY_NAME + "/terms")
@@ -196,7 +232,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/subterms"))
                 .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(children.size(), result.size());
         assertTrue(children.containsAll(result));
@@ -221,7 +257,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void getTermReturnsTermWithUnmappedProperties() throws Exception {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
-        final String customProperty = Vocabulary.s_p_has_dataset;
+        final String customProperty = Vocabulary.s_p_ddo_has_dataset;
         final String value = "Test";
         term.setProperties(Collections.singletonMap(customProperty, Collections.singleton(value)));
         term.setUri(termUri);
@@ -305,57 +341,12 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + parent.getLabel().get(Environment.LANGUAGE) +
                                      "/subterms"))
                 .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(children.size(), result.size());
         assertTrue(children.containsAll(result));
         verify(termServiceMock).findRequired(parent.getUri());
         verify(termServiceMock).findSubTerms(parent);
-    }
-
-    @Test
-    void getAllExportsTermsToCsvWhenAcceptMediaTypeIsSetToCsv() throws Exception {
-        when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(URI.create(VOCABULARY_URI));
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final String content = String.join(",", Constants.EXPORT_COLUMN_LABELS.get(Constants.DEFAULT_LANGUAGE));
-        final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
-                                                                                 ExportFormat.CSV.getMediaType(),
-                                                                                 ExportFormat.CSV.getFileExtension());
-        when(termServiceMock.exportGlossary(eq(vocabulary), any(ExportConfig.class))).thenReturn(Optional.of(export));
-
-        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())
-                                                              .queryParam("exportType", ExportType.SKOS.toString()))
-               .andExpect(status().isOk());
-        verify(termServiceMock).exportGlossary(vocabulary,
-                                               new ExportConfig(ExportType.SKOS, ExportFormat.CSV.getMediaType()));
-    }
-
-    @Test
-    void getAllReturnsCsvAsAttachmentWhenAcceptMediaTypeIsCsv() throws Exception {
-        when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        final cz.cvut.kbss.termit.model.Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(URI.create(VOCABULARY_URI));
-        when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        final String content = String.join(",", Constants.EXPORT_COLUMN_LABELS.get(Constants.DEFAULT_LANGUAGE));
-        final TypeAwareByteArrayResource export = new TypeAwareByteArrayResource(content.getBytes(),
-                                                                                 ExportFormat.CSV.getMediaType(),
-                                                                                 ExportFormat.CSV.getFileExtension());
-        when(termServiceMock.exportGlossary(vocabulary, new ExportConfig(ExportType.SKOS,
-                                                                         ExportFormat.CSV.getMediaType()))).thenReturn(
-                Optional.of(export));
-
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms").accept(ExportFormat.CSV.getMediaType())
-                                                               .queryParam("exportType", ExportType.SKOS.toString()))
-                .andReturn();
-        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
-        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
-                   containsString("filename=\"" + VOCABULARY_NAME + ExportFormat.CSV.getFileExtension() + "\""));
-        assertEquals(content, mvcResult.getResponse().getContentAsString());
     }
 
     @Test
@@ -376,13 +367,14 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     private TypeAwareByteArrayResource prepareExcel() throws Exception {
-        final XSSFWorkbook wb = new XSSFWorkbook();
-        final XSSFSheet s = wb.createSheet("test");
-        s.createRow(0).createCell(0).setCellValue("test");
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        wb.write(bos);
-        return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
-                                              ExportFormat.EXCEL.getFileExtension());
+        try (final XSSFWorkbook wb = new XSSFWorkbook()) {
+            final XSSFSheet s = wb.createSheet("test");
+            s.createRow(0).createCell(0).setCellValue("test");
+            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            wb.write(bos);
+            return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.EXCEL.getMediaType(),
+                                                  ExportFormat.EXCEL.getFileExtension());
+        }
     }
 
     @Test
@@ -548,16 +540,17 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     private TypeAwareByteArrayResource prepareTurtle() {
-        final String content = "@base <http://example.org/> .\n" +
-                "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n" +
-                "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n" +
-                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
-                "@prefix rel: <http://www.perceive.net/schemas/relationship/> .\n" +
-                "\n" +
-                "<#spiderman>\n" +
-                "    rel:enemyOf <#green-goblin> ;\n" +
-                "    a foaf:Person ;\n" +
-                "    foaf:name \"Spiderman\", .";
+        final String content = """
+                @base <http://example.org/> .
+                @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+                @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+                @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+                @prefix rel: <http://www.perceive.net/schemas/relationship/> .
+
+                <#spiderman>
+                    rel:enemyOf <#green-goblin> ;
+                    a foaf:Person ;
+                    foaf:name "Spiderman", .""";
         return new TypeAwareByteArrayResource(content.getBytes(), ExportFormat.TURTLE.getMediaType(),
                                               ExportFormat.TURTLE.getFileExtension());
     }
@@ -986,7 +979,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
-        final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comment/";
         comment.setUri(URI.create(namespace + name));
 
         final MvcResult mvcResult = mockMvc
@@ -1026,7 +1019,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final Comment comment = generateComment(null, null);
         final String name = "comment-12345";
-        final String namespace = Vocabulary.ONTOLOGY_IRI_glosar + "/comment/";
+        final String namespace = Vocabulary.ONTOLOGY_IRI_GLOSAR + "/comment/";
         comment.setUri(URI.create(namespace + name));
 
         final MvcResult mvcResult = mockMvc
@@ -1049,7 +1042,7 @@ class TermControllerTest extends BaseControllerTestRunner {
     void checkTermsRetrievesNumberOfTermsInVocabularyWithSpecifiedIdentifier() throws Exception {
         when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
                 .thenReturn(URI.create(VOCABULARY_URI));
-        when(termServiceMock.getRequiredVocabularyReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(termServiceMock.getVocabularyReference(vocabulary.getUri())).thenReturn(vocabulary);
         final Integer termCount = Generator.randomInt(0, 200);
         when(termServiceMock.getTermCount(vocabulary)).thenReturn(termCount);
 
@@ -1113,16 +1106,16 @@ class TermControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
-    void updateStatusSetsTermStatusToSpecifiedValue() throws Exception {
+    void updateStateSetsTermStateToSpecifiedValue() throws Exception {
         final Term term = generateTermForStandalone();
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
 
-        mockMvc.perform(put("/terms/" + TERM_NAME + "/status").queryParam(QueryParams.NAMESPACE, NAMESPACE)
-                                                              .content(TermStatus.DRAFT.toString())
-                                                              .contentType(MediaType.TEXT_PLAIN))
+        mockMvc.perform(put("/terms/" + TERM_NAME + "/state").queryParam(QueryParams.NAMESPACE, NAMESPACE)
+                                                             .content(Generator.TERM_STATES[1].toString())
+                                                             .contentType(MediaType.TEXT_PLAIN))
                .andExpect(status().isNoContent());
         verify(termServiceMock).findRequired(TERM_URI);
-        verify(termServiceMock).setStatus(term, TermStatus.DRAFT);
+        verify(termServiceMock).setState(term, TERM_STATES[1]);
     }
 
     @Test

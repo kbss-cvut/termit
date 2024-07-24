@@ -1,6 +1,24 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -26,7 +44,11 @@ import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -41,16 +63,31 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -228,9 +265,11 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     @Test
     void removeVocabularyReturns2xxForEmptyVocabulary() throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
-        mockMvc.perform(delete(PATH + "/" + fragment)).andExpect(status().is2xxSuccessful()).andReturn();
+        vocabulary.setUri(VOCABULARY_URI);
+        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
+                .thenReturn(VOCABULARY_URI);
+        when(serviceMock.find(VOCABULARY_URI)).thenReturn(Optional.of(vocabulary));
+        mockMvc.perform(delete(PATH + "/" + FRAGMENT)).andExpect(status().is2xxSuccessful()).andReturn();
     }
 
     @Test
@@ -239,7 +278,10 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                .when(serviceMock).remove(any());
 
         final Vocabulary vocabulary = Generator.generateVocabulary();
-        vocabulary.setUri(Generator.generateUri());
+        vocabulary.setUri(VOCABULARY_URI);
+        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
+                .thenReturn(VOCABULARY_URI);
+        when(serviceMock.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
         mockMvc.perform(delete(PATH + "/" + fragment)).andExpect(status().is4xxClientError()).andReturn();
     }
@@ -315,7 +357,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 .thenReturn(VOCABULARY_URI);
         final Set<URI> imports = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri())
                                           .collect(Collectors.toSet());
-        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        when(serviceMock.getReference(VOCABULARY_URI)).thenReturn(vocabulary);
         when(serviceMock.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(imports);
 
         final MvcResult mvcResult =
@@ -324,7 +366,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Set<URI> result = readValue(mvcResult, new TypeReference<Set<URI>>() {
         });
         assertEquals(imports, result);
-        verify(serviceMock).getRequiredReference(VOCABULARY_URI);
+        verify(serviceMock).getReference(VOCABULARY_URI);
         verify(serviceMock).getTransitivelyImportedVocabularies(vocabulary);
     }
 
@@ -342,7 +384,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         });
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(serviceMock).getRequiredReference(VOCABULARY_URI);
+        verify(serviceMock).getReference(VOCABULARY_URI);
         verify(serviceMock).getTransitivelyImportedVocabularies(vocabulary);
     }
 
@@ -433,7 +475,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(VOCABULARY_URI);
         when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
                 .thenReturn(VOCABULARY_URI);
-        when(serviceMock.getRequiredReference(VOCABULARY_URI)).thenReturn(vocabulary);
+        when(serviceMock.getReference(VOCABULARY_URI)).thenReturn(vocabulary);
         return vocabulary;
     }
 
@@ -486,7 +528,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary snapshot = new Vocabulary();
         final Instant instant = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         snapshot.setUri(URI.create(vocabulary.getUri().toString() + "/version/" + instant));
-        snapshot.setLabel(FRAGMENT + " - Snapshot");
+        snapshot.setLabel(MultilingualString.create(FRAGMENT + " - Snapshot", Environment.LANGUAGE));
         when(serviceMock.findVersionValidAt(eq(vocabulary), any(Instant.class))).thenReturn(snapshot);
 
         final MvcResult mvcResult = mockMvc.perform(
@@ -578,7 +620,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         record.setHolder(Generator.generateUserWithId());
 
         mockMvc.perform(put(PATH + "/" + FRAGMENT + "/acl/records/" + Generator.randomInt())
-                       .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
+                                .content(toJson(record)).contentType(MediaType.APPLICATION_JSON))
                .andExpect(status().isBadRequest());
         verify(serviceMock, never()).updateAccessControlLevel(any(Vocabulary.class), any(AccessControlRecord.class));
     }

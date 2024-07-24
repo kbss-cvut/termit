@@ -1,20 +1,24 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -24,6 +28,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -91,9 +96,10 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void persistThrowsValidationExceptionWhenVocabularyNameIsBlank() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.setLabel("");
+        vocabulary.setPrimaryLabel("");
         final ValidationException exception = assertThrows(ValidationException.class, () -> sut.persist(vocabulary));
-        assertThat(exception.getMessage(), containsString("label must not be blank"));
+        assertThat(exception.getMessage(),
+                   containsString("label in the primary configured language must not be blank"));
     }
 
     @Test
@@ -104,7 +110,8 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
-        assertThat(result.getUri().toString(), containsString(IdentifierResolver.normalize(vocabulary.getLabel())));
+        assertThat(result.getUri().toString(),
+                   containsString(IdentifierResolver.normalize(vocabulary.getPrimaryLabel())));
     }
 
     @Test
@@ -123,7 +130,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistCreatesGlossaryAndModelInstances() {
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(Generator.generateUri());
-        vocabulary.setLabel("TestVocabulary");
+        vocabulary.setPrimaryLabel("TestVocabulary");
         sut.persist(vocabulary);
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result.getGlossary());
@@ -145,7 +152,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
-        vocabulary.setLabel("");
+        vocabulary.setPrimaryLabel("");
         assertThrows(ValidationException.class, () -> sut.update(vocabulary));
     }
 
@@ -159,15 +166,15 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
         final String newName = "Updated name";
-        vocabulary.setLabel(newName);
+        vocabulary.setLabel(MultilingualString.create(newName, Environment.LANGUAGE));
         sut.update(vocabulary);
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
-        assertEquals(newName, result.getLabel());
+        assertEquals(newName, result.getLabel().get(Environment.LANGUAGE));
     }
 
     @Test
-    void removeRemovesNondocumentEmptyNonImportedVocabulary() {
+    void removeRemovesEmptyVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
         sut.remove(vocabulary);
@@ -261,7 +268,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         );
 
         final Vocabulary v = sut.importVocabulary(true, mf);
-        assertEquals(v.getLabel(), "Test");
+        assertEquals(v.getPrimaryLabel(), "Test");
     }
 
     @Test
@@ -281,7 +288,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         );
 
         final Vocabulary v = sut.importVocabulary(true, mf);
-        assertEquals(v.getLabel(), "Test");
+        assertEquals(v.getPrimaryLabel(), "Test");
     }
 
     @Test
@@ -299,7 +306,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                     skos.getBytes(StandardCharsets.UTF_8)
             );
             final Vocabulary v = sut.importVocabulary(false, mf);
-            assertEquals(v.getLabel(), "Test");
+            assertEquals(v.getPrimaryLabel(), "Test");
         });
     }
 
@@ -319,7 +326,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistGeneratesGlossaryIriBasedOnVocabularyIriAndConfiguredFragment() {
         final String label = "Test vocabulary " + System.currentTimeMillis();
         final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setLabel(label);
+        vocabulary.setPrimaryLabel(label);
         sut.persist(vocabulary);
         assertNotNull(vocabulary.getUri());
         assertNotNull(vocabulary.getGlossary());
@@ -333,7 +340,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistGeneratesModelIriBasedOnVocabularyIri() {
         final String label = "Test vocabulary " + System.currentTimeMillis();
         final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setLabel(label);
+        vocabulary.setPrimaryLabel(label);
         sut.persist(vocabulary);
         assertNotNull(vocabulary.getUri());
         assertNotNull(vocabulary.getModel());
@@ -358,7 +365,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
-        vocabulary.setLabel("Updated label");
+        vocabulary.setPrimaryLabel("Updated label");
         assertThrows(SnapshotNotEditableException.class, () -> sut.update(vocabulary));
     }
 
@@ -371,7 +378,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary update = new Vocabulary(vocabulary.getUri());
         update.setModel(vocabulary.getModel());
         update.setGlossary(vocabulary.getGlossary());
-        update.setLabel("Updated label");
+        update.setPrimaryLabel("Updated label");
         // Intentionally leave ACL null, this is how it would arrive from the client
 
         transactional(() -> sut.update(update));
@@ -379,5 +386,42 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertEquals(update.getLabel(), result.getLabel());
         assertEquals(vocabulary.getAcl(), result.getAcl());
+    }
+
+    @Test
+    void importCreatesDocumentAssociatedWithVocabulary() {
+        final String skos =
+                "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
+                        "@prefix dc : <http://purl.org/dc/terms/> . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
+
+
+        final MultipartFile mf = new MockMultipartFile(
+                "file",
+                "thesaurus",
+                "text/turtle",
+                skos.getBytes(StandardCharsets.UTF_8)
+        );
+
+        final Vocabulary v = sut.importVocabulary(true, mf);
+        assertNotNull(v.getDocument());
+        assertNotNull(em.find(Document.class, v.getDocument().getUri()));
+        assertEquals("Document for " + v.getLabel().get(Constants.DEFAULT_LANGUAGE), v.getDocument().getLabel());
+    }
+
+    @Test
+    void updateSavesLabelInNewLanguage() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
+        final MultilingualString expected = new MultilingualString(vocabulary.getLabel().getValue());
+
+        final String newCsName = "Nový název";
+        expected.set("cs", newCsName);
+        vocabulary.getLabel().set("cs", newCsName);
+        sut.update(vocabulary);
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertNotNull(result);
+        assertEquals(expected, result.getLabel());
     }
 }

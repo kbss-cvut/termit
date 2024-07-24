@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.business.readonly;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
@@ -70,11 +87,18 @@ public class ReadOnlyTermService {
 
     public List<ReadOnlyTerm> findSubTerms(ReadOnlyTerm parent) {
         Objects.requireNonNull(parent);
-        final Term arg = new Term(parent.getUri());
+        final Term arg = toTerm(parent);
         if (parent.getSubTerms() != null) {
             arg.setSubTerms(parent.getSubTerms());
         }
         return termService.findSubTerms(arg).stream().map(this::create).collect(Collectors.toList());
+    }
+
+    private static Term toTerm(ReadOnlyTerm roTerm) {
+        final Term t = new Term(roTerm.getUri());
+        // Ensure vocabulary is set on the Term instance as it may be referenced later
+        t.setVocabulary(roTerm.getVocabulary());
+        return t;
     }
 
     /**
@@ -89,8 +113,8 @@ public class ReadOnlyTermService {
         return termService.getComments(term, from, to);
     }
 
-    public Term getRequiredReference(URI uri) {
-        return termService.getRequiredReference(uri);
+    public Term getReference(URI uri) {
+        return termService.getReference(uri);
     }
 
     /**
@@ -115,13 +139,13 @@ public class ReadOnlyTermService {
 
     public List<Snapshot> findSnapshots(ReadOnlyTerm asset) {
         Objects.requireNonNull(asset);
-        final Term arg = new Term(asset.getUri());
+        final Term arg = toTerm(asset);
         return termService.findSnapshots(arg);
     }
 
     public ReadOnlyTerm findVersionValidAt(ReadOnlyTerm asset, Instant at) {
         Objects.requireNonNull(asset);
-        final Term arg = new Term(asset.getUri());
+        final Term arg = toTerm(asset);
         return create(termService.findVersionValidAt(arg, at));
     }
 }

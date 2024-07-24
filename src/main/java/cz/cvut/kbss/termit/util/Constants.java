@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.util;
 
@@ -62,8 +65,8 @@ public class Constants {
     /**
      * Path to directory containing queries used by the system.
      * <p>
-     * The path should be relative to the classpath, so that queries from it can be loaded using {@link
-     * ClassLoader#getResourceAsStream(String)}.
+     * The path should be relative to the classpath, so that queries from it can be loaded using
+     * {@link ClassLoader#getResourceAsStream(String)}.
      */
     public static final String QUERY_DIRECTORY = "query";
 
@@ -86,8 +89,15 @@ public class Constants {
     public static final String DEFAULT_MODEL_IRI_COMPONENT = "model";
 
     /**
+     * Default identifier component for {@link cz.cvut.kbss.termit.model.resource.Document}.
+     * <p>
+     * This component is appended to the containing vocabulary identifier to form the document identifier.
+     */
+    public static final String DEFAULT_DOCUMENT_IRI_COMPONENT = "document";
+
+    /**
      * Default language when none is specified in configuration.
-     *
+     * <p>
      * Used mainly for resolving internationalized templates.
      */
     public static final String DEFAULT_LANGUAGE = "en";
@@ -131,7 +141,7 @@ public class Constants {
                     "Pojmy se stejným významem", "Stav pojmu", "Notace", "Příklady", "Reference"),
             DEFAULT_LANGUAGE,
             List.of("Identifier", "Label", "Synonyms", "Search strings", "Definition", "Scope note", "Type", "Source",
-                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "Status",
+                    "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "State",
                     "Notation", "Example", "References")
     );
 
@@ -183,7 +193,6 @@ public class Constants {
      * Additional media types not covered by {@link org.springframework.http.MediaType}.
      */
     public static final class MediaType {
-        public static final String CSV = "text/csv";
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";

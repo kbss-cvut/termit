@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,17 @@ package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,6 +38,8 @@ import java.util.List;
 public abstract class TermOccurrenceResolver {
 
     protected final TermRepositoryService termService;
+
+    protected List<TermOccurrence> existingOccurrences = Collections.emptyList();
 
     protected TermOccurrenceResolver(TermRepositoryService termService) {
         this.termService = termService;
@@ -48,6 +55,15 @@ public abstract class TermOccurrenceResolver {
      * @param source Original source of the input. Used for term occurrence generation
      */
     public abstract void parseContent(InputStream input, Asset<?> source);
+
+    /**
+     * Sets occurrences that already existed on previous analyses.
+     *
+     * @param existingOccurrences Term occurrences from the previous analysis run
+     */
+    public void setExistingOccurrences(List<TermOccurrence> existingOccurrences) {
+        this.existingOccurrences = existingOccurrences;
+    }
 
     /**
      * Gets the content which was previously parsed and processed by this instance.
@@ -95,6 +111,7 @@ public abstract class TermOccurrenceResolver {
         } else {
             throw new IllegalArgumentException("Unsupported term occurrence source " + source);
         }
+        occurrence.markSuggested();
         return occurrence;
     }
 }

@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.jmx;
 
@@ -21,6 +24,7 @@ import cz.cvut.kbss.termit.rest.dto.HealthInfo;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.Postman;
 import cz.cvut.kbss.termit.util.Configuration;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +66,7 @@ public class AppAdminBean implements SelfNaming {
         eventPublisher.publishEvent(new EvictCacheEvent(this));
         LOG.info("Refreshing last modified timestamps...");
         eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
-        eventPublisher.publishEvent(new VocabularyContentModified(this));
+        eventPublisher.publishEvent(new VocabularyContentModified(this, null));
     }
 
     @ManagedOperation(description = "Sends test email to the specified address.")
@@ -73,7 +77,7 @@ public class AppAdminBean implements SelfNaming {
     }
 
     @Override
-    public ObjectName getObjectName() throws MalformedObjectNameException {
+    public @NotNull ObjectName getObjectName() throws MalformedObjectNameException {
         return new ObjectName("bean:name=" + beanName);
     }
 
@@ -81,7 +85,7 @@ public class AppAdminBean implements SelfNaming {
      * Gets health info of the application.
      * <p>
      * This method provides basic info on the status of the system.
-     *
+     * <p>
      * TODO Resolve status of services used by TermIt (repository, annotace, mail server - if configured)
      *
      * @return Health info object

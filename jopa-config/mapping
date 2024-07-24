@@ -1,0 +1,8 @@
+http://onto.fel.cvut.cz/ontologies/application/termit > ../ontology/termit-slovník.ttl
+http://onto.fel.cvut.cz/ontologies/application/termit/glosář > ../ontology/termit-glosář.ttl
+http://onto.fel.cvut.cz/ontologies/application/termit/model > ../ontology/termit-model.ttl
+http://rdfs.org/sioc/ns# > ../ontology/sioc-ns.rdf
+http://www.w3.org/ns/activitystreams# > https://raw.githubusercontent.com/w3c/activitystreams/master/vocabulary/activitystreams2.owl
+https://slovník.gov.cz/datový/pracovní-prostor/glosář > https://raw.githubusercontent.com/opendata-mvcr/ssp/master/content/vocabularies/d-sgov-pracovn%C3%AD-prostor-0.0.1/d-sgov-pracovn%C3%AD-prostor-0.0.1-glos%C3%A1%C5%99.ttl
+https://slovník.gov.cz/datový/pracovní-prostor/model > https://raw.githubusercontent.com/opendata-mvcr/ssp/master/content/vocabularies/d-sgov-pracovn%C3%AD-prostor-0.0.1/d-sgov-pracovn%C3%AD-prostor-0.0.1-model.ttl
+http://purl.org/vocab/vann/ > https://vocab.org/vann/vann-vocab-20100607.rdf

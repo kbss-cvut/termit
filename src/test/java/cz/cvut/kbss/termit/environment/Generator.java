@@ -1,18 +1,20 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package cz.cvut.kbss.termit.environment;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
@@ -20,9 +22,27 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.model.*;
-import cz.cvut.kbss.termit.model.acl.*;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Model;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.UserGroup;
+import cz.cvut.kbss.termit.model.UserRole;
+import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserGroupAccessControlRecord;
+import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
@@ -31,6 +51,7 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
@@ -39,11 +60,22 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Generator {
+
+    public static URI[] TERM_STATES = new URI[]{
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/new-term"),
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/published-term"),
+            URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/cancelled-term")
+    };
 
     private static final Random random = new Random();
 
@@ -125,6 +157,27 @@ public class Generator {
     }
 
     /**
+     * Returns a (pseudo)random element from the specified array.
+     *
+     * @param arr Array to select random element from
+     * @param <T> Element type
+     * @return Random array element
+     */
+    public static <T> T randomItem(T[] arr) {
+        return arr[randomIndex(arr)];
+    }
+
+    /**
+     * Returns a (pseudo)random element from the specified list.
+     * @param lst List to select random element from
+     * @return Element from the list
+     * @param <T> Element type
+     */
+    public static <T> T randomElement(List<T> lst) {
+        return lst.get(randomIndex(lst));
+    }
+
+    /**
      * Generators a (pseudo) random boolean.
      *
      * @return Random boolean
@@ -201,8 +254,9 @@ public class Generator {
                 new cz.cvut.kbss.termit.model.Vocabulary();
         vocabulary.setGlossary(new Glossary());
         vocabulary.setModel(new Model());
-        vocabulary.setLabel("Vocabulary" + randomInt());
-        vocabulary.setDescription("Description of vocabulary " + vocabulary.getLabel());
+        vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), Environment.LANGUAGE));
+        vocabulary.setDescription(MultilingualString.create(
+                "Description of vocabulary " + vocabulary.getLabel().get(Environment.LANGUAGE), Environment.LANGUAGE));
         return vocabulary;
     }
 
@@ -234,7 +288,7 @@ public class Generator {
         final Term term = new Term();
         term.setLabel(MultilingualString.create("Term" + randomInt(), Environment.LANGUAGE));
         term.setDefinition(MultilingualString
-                                   .create("Normative definition of term " + term.getLabel().get(),
+                                   .create("Normative definition of term " + term.getLabel().get(Environment.LANGUAGE),
                                            Environment.LANGUAGE));
         term.setDescription(MultilingualString.create("Comment" + randomInt(), Environment.LANGUAGE));
         if (Generator.randomBoolean()) {
@@ -438,7 +492,7 @@ public class Generator {
     public static UserGroup generateUserGroup() {
         final UserGroup group = new UserGroup();
         group.setUri(
-                URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_Usergroup + "_instance" + Generator.randomInt()));
+                IdentifierResolver.generateSyntheticIdentifier(cz.cvut.kbss.termit.util.Vocabulary.s_c_sioc_Usergroup));
         group.setLabel(UserGroup.class.getSimpleName() + Generator.randomInt());
         return group;
     }

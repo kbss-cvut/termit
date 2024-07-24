@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.exception;
 /**
  * Indicates a failure during document annotation generation.
  */
-public class AnnotationGenerationException extends TermItException {
+public class AnnotationGenerationException extends FileContentProcessingException {
 
     public AnnotationGenerationException(String message) {
         super(message);

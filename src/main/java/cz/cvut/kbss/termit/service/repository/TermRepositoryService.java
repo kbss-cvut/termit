@@ -1,27 +1,28 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.TermStatus;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
-import cz.cvut.kbss.termit.exception.DisabledOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -41,10 +42,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -120,8 +125,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    protected void postUpdate(Term instance) {
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(instance.getVocabulary());
+    protected void postUpdate(@NotNull Term instance) {
+        final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.getGlossary().removeRootTerm(instance);
         } else {
@@ -130,15 +135,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Transactional
-    public void setStatus(Term term, TermStatus status) {
+    public void setState(Term term, URI state) {
         Objects.requireNonNull(term);
-        Objects.requireNonNull(status);
+        Objects.requireNonNull(state);
         SnapshotProvider.verifySnapshotNotModified(term);
-        if (status == TermStatus.CONFIRMED) {
-            termDao.setAsConfirmed(term);
-        } else {
-            termDao.setAsDraft(term);
-        }
+        termDao.setState(term, state);
     }
 
     @Transactional
@@ -169,7 +170,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
         // Load vocabulary so that it is managed and changes to it (resp. the glossary) are persisted on commit
-        final Vocabulary toUpdate = vocabularyService.getRequiredReference(vocabularyIri);
+        final Vocabulary toUpdate = vocabularyService.getReference(vocabularyIri);
         instance.setGlossary(toUpdate.getGlossary().getUri());
         toUpdate.getGlossary().addRootTerm(instance);
     }
@@ -184,7 +185,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
         prepareTermForPersist(instance, vocabularyIri);
 
-        final Vocabulary vocabulary = vocabularyService.getRequiredReference(vocabularyIri);
+        final Vocabulary vocabulary = vocabularyService.getReference(vocabularyIri);
         instance.setGlossary(vocabulary.getGlossary().getUri());
         instance.addParentTerm(parentTerm);
         instance.splitExternalAndInternalParents();
@@ -369,16 +370,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Gets all unused (unassigned to, neither occurring in a resource) terms in the given vocabulary
-     *
-     * @param vocabulary - IRI of the vocabulary in which the terms are
-     * @return List of definitionally related terms of the specified term
-     */
-    public List<URI> getUnusedTermsInVocabulary(Vocabulary vocabulary) {
-        throw new DisabledOperationException("This method is disabled, not working correctly.");
-    }
-
-    /**
      * Removes a term if it: - does not have children, - is not related to any resource, - is not related to any term
      * occurrences.
      *
@@ -387,8 +378,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional
     @Override
     public void remove(Term instance) {
-
-
         super.remove(instance);
     }
 
@@ -438,7 +427,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    protected void postRemove(Term instance) {
+    protected void postRemove(@NotNull Term instance) {
         super.postRemove(instance);
         if (!instance.hasParentInSameVocabulary()) {
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());

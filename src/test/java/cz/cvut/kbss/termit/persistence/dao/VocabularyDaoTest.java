@@ -1,20 +1,24 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
@@ -22,6 +26,8 @@ import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.AssetPersistEvent;
+import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.model.*;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -37,7 +43,10 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
@@ -54,6 +63,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class VocabularyDaoTest extends BaseDaoTestRunner {
@@ -65,6 +76,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     private DescriptorFactory descriptorFactory;
 
     @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
+    @Autowired
     private VocabularyDao sut;
 
     private User author;
@@ -74,6 +88,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         this.author = Generator.generateUserWithId();
         transactional(() -> em.persist(author));
         Environment.setCurrentUser(author);
+        sut.setApplicationEventPublisher(eventPublisher);
     }
 
     @Test
@@ -83,7 +98,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFor(v))));
 
         final List<Vocabulary> result = sut.findAll();
-        vocabularies.sort(Comparator.comparing(Vocabulary::getLabel));
+        vocabularies.sort(Comparator.comparing(Vocabulary::getPrimaryLabel));
         for (int i = 0; i < vocabularies.size(); i++) {
             assertEquals(vocabularies.get(i).getUri(), result.get(i).getUri());
         }
@@ -110,12 +125,12 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> em.persist(vocabulary, descriptor));
 
         final String newName = "Updated vocabulary name";
-        vocabulary.setLabel(newName);
+        vocabulary.setLabel(MultilingualString.create(newName, Environment.LANGUAGE));
         transactional(() -> sut.update(vocabulary));
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(), descriptor);
         assertNotNull(result);
-        assertEquals(newName, result.getLabel());
+        assertEquals(newName, result.getLabel().get(Environment.LANGUAGE));
     }
 
     @Test
@@ -128,19 +143,16 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(1, vocabularies.size());
 
         final String newName = "Updated vocabulary name";
-        vocabulary.setLabel(newName);
+        vocabulary.setLabel(MultilingualString.create(newName, Environment.LANGUAGE));
         transactional(() -> sut.update(vocabulary));
         final List<Vocabulary> result = sut.findAll();
         assertEquals(1, result.size());
-        assertEquals(newName, result.get(0).getLabel());
+        assertEquals(newName, result.get(0).getLabel().get(Environment.LANGUAGE));
     }
 
     @Test
     void updateWorksCorrectlyInContextsForDocumentVocabulary() {
-        final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setUri(Generator.generateUri());
-        vocabulary.setLabel("test-vocabulary");
-        vocabulary.setGlossary(new Glossary());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         vocabulary.setModel(new Model());
         final Document doc = new Document();
         doc.setLabel("test-document");
@@ -159,11 +171,11 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         });
 
         final String newComment = "New comment";
-        vocabulary.setDescription(newComment);
+        vocabulary.setDescription(MultilingualString.create(newComment, Environment.LANGUAGE));
         transactional(() -> sut.update(vocabulary));
 
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri(), vocabularyDescriptor);
-        assertEquals(newComment, result.getDescription());
+        assertEquals(newComment, result.getDescription().get(Environment.LANGUAGE));
     }
 
     @Test
@@ -328,6 +340,20 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void persistPublishesAssetPersistEvent() {
+        final Vocabulary voc = Generator.generateVocabularyWithId();
+        transactional(() -> sut.persist(voc));
+
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        final Optional<AssetPersistEvent> evt = captor.getAllValues().stream()
+                                                      .filter(AssetPersistEvent.class::isInstance)
+                                                      .map(AssetPersistEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(voc, evt.get().getAsset());
+    }
+
+    @Test
     void removeRefreshesLastModifiedValue() {
         final long before = sut.getLastModified();
         final Vocabulary voc = Generator.generateVocabularyWithId();
@@ -343,13 +369,30 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Vocabulary voc = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
         final String newLabel = "New vocabulary label";
-        voc.setLabel(newLabel);
+        voc.setLabel(MultilingualString.create(newLabel, Environment.LANGUAGE));
         transactional(() -> sut.update(voc));
         final Optional<Vocabulary> result = sut.find(voc.getUri());
         assertTrue(result.isPresent());
-        assertEquals(newLabel, result.get().getLabel());
+        assertEquals(newLabel, result.get().getLabel().get(Environment.LANGUAGE));
         final long after = sut.getLastModified();
         assertThat(after, greaterThan(before));
+    }
+
+    @Test
+    void updatePublishesAssetUpdateEvent() {
+        final Vocabulary voc = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(voc, descriptorFactory.vocabularyDescriptor(voc)));
+        final String newLabel = "New vocabulary label";
+        voc.setLabel(MultilingualString.create(newLabel, Environment.LANGUAGE));
+
+        transactional(() -> sut.update(voc));
+        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        final Optional<AssetUpdateEvent> evt = captor.getAllValues().stream()
+                                                     .filter(AssetUpdateEvent.class::isInstance)
+                                                     .map(AssetUpdateEvent.class::cast).findFirst();
+        assertTrue(evt.isPresent());
+        assertEquals(voc, evt.get().getAsset());
     }
 
     @Test
@@ -455,8 +498,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     void getTermCountRetrievesNumberOfTermsInVocabulary() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
-                                          .collect(
-                                                  Collectors.toList());
+                                          .toList();
         transactional(() -> {
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
             terms.forEach(t -> {
@@ -628,8 +670,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     void forceRemoveRemovesVocabularyGlossaryModelAndAllTerms() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
-                                          .collect(
-                                                  Collectors.toList());
+                                          .toList();
         final Document doc = Generator.generateDocumentWithId();
         vocabulary.setDocument(doc);
         transactional(() -> {

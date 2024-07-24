@@ -1,18 +1,20 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
@@ -25,13 +27,14 @@ import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import java.util.Objects;
 
 @Service
@@ -70,7 +73,7 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     }
 
     @Override
-    protected void prePersist(Resource instance) {
+    protected void prePersist(@NotNull Resource instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver.generateIdentifier(cfgNamespace.getResource(), instance.getLabel()));
@@ -95,17 +98,16 @@ public class ResourceRepositoryService extends BaseAssetRepositoryService<Resour
     }
 
     @Override
-    protected void preRemove(Resource instance) {
+    protected void preRemove(@NotNull Resource instance) {
         LOG.trace("Removing term occurrences in resource {} which is about to be removed.", instance);
         termOccurrenceDao.removeAll(instance);
         removeFromParentDocumentIfFile(instance);
     }
 
     private void removeFromParentDocumentIfFile(Resource instance) {
-        if (!(instance instanceof File)) {
+        if (!(instance instanceof File file)) {
             return;
         }
-        final File file = (File) instance;
         final Document parent = file.getDocument();
         if (parent != null) {
             LOG.trace("Removing file {} from its parent document {}.", instance, parent);

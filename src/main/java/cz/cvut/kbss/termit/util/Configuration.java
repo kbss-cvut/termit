@@ -1,24 +1,31 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
+import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.NotNull;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,9 +38,9 @@ import java.util.Set;
  * The configuration can be also set via <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
  * environment variables</a>. These override any statically configured values.
  */
-@org.springframework.context.annotation.Configuration
 @ConfigurationProperties("termit")
 @Primary
+@Validated
 public class Configuration {
     /**
      * TermIt frontend URL.
@@ -48,22 +55,42 @@ public class Configuration {
      * server.
      */
     private String jmxBeanName = "TermItAdminBean";
+    @Valid
     private Persistence persistence = new Persistence();
+    @Valid
     private Repository repository = new Repository();
+    @Valid
     private ChangeTracking changetracking = new ChangeTracking();
+    @Valid
     private Comments comments = new Comments();
+    @Valid
     private Namespace namespace = new Namespace();
+    @Valid
     private Admin admin = new Admin();
+    @Valid
     private File file = new File();
+    @Valid
     private Jwt jwt = new Jwt();
+    @Valid
     private TextAnalysis textAnalysis = new TextAnalysis();
+    @Valid
     private Glossary glossary = new Glossary();
+    @Valid
     private PublicView publicView = new PublicView();
+    @Valid
     private Workspace workspace = new Workspace();
+    @Valid
     private Cors cors = new Cors();
+    @Valid
     private Schedule schedule = new Schedule();
+    @Valid
     private ACL acl = new ACL();
+    @Valid
     private Mail mail = new Mail();
+    @Valid
+    private Security security = new Security();
+    @Valid
+    private Language language = new Language();
 
     public String getUrl() {
         return url;
@@ -209,8 +236,23 @@ public class Configuration {
         this.mail = mail;
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "persistence")
+    public Security getSecurity() {
+        return security;
+    }
+
+    public void setSecurity(Security security) {
+        this.security = security;
+    }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
+
+    @Validated
     public static class Persistence {
         /**
          * OntoDriver class for the repository.
@@ -240,8 +282,7 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "repository")
+    @Validated
     public static class Repository {
         /**
          * URL of the main application repository.
@@ -296,9 +337,10 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "changetracking")
+    @Validated
     public static class ChangeTracking {
+
+        @Valid
         Context context = new Context();
 
         public Context getContext() {
@@ -327,8 +369,7 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "comments")
+    @Validated
     public static class Comments {
         /**
          * IRI of the repository context used to store comments (discussion to assets).
@@ -345,8 +386,7 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "namespace")
+    @Validated
     public static class Namespace {
         /**
          * Namespace for vocabulary identifiers.
@@ -374,6 +414,7 @@ public class Configuration {
          * http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where 'SEPARATOR'
          * is the value of this configuration parameter.
          */
+        @Valid
         private NamespaceDetail term = new NamespaceDetail();
         /**
          * Separator of File namespace from the parent Document identifier.
@@ -386,15 +427,17 @@ public class Configuration {
          * http://www.example.org/ontologies/resources/metropolitan-plan/document/SEPARATOR/main-file}, where
          * 'SEPARATOR' is the value of this configuration parameter.
          */
+        @Valid
         private NamespaceDetail file = new NamespaceDetail();
 
         /**
          * Separator of snapshot timestamp and original asset identifier.
          * <p>
          * For example, if we have a Vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
-         * and the snapshot separator is configured to {@code version}, a snapshot will IRI will look something like
+         * and the snapshot separator is configured to {@code version}, a snapshot IRI will look something like
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/version/20220530T202317Z}.
          */
+        @Valid
         private NamespaceDetail snapshot = new NamespaceDetail();
 
         public String getVocabulary() {
@@ -445,7 +488,9 @@ public class Configuration {
             this.snapshot = snapshot;
         }
 
+        @Validated
         public static class NamespaceDetail {
+
             @NotNull
             String separator;
 
@@ -459,8 +504,7 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "admin")
+    @Validated
     public static class Admin {
         /**
          * Specifies the folder in which admin credentials are saved when its account is generated.
@@ -490,8 +534,7 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "file")
+    @Validated
     public static class File {
         /**
          * Specifies root directory in which document files are stored.
@@ -508,13 +551,11 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "jwt")
+    @Validated
     public static class Jwt {
         /**
          * Secret key used when hashing a JWT.
          */
-        @NotNull
         String secretKey;
 
         public String getSecretKey() {
@@ -526,31 +567,24 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "textanalysis")
+    @Validated
     public static class TextAnalysis {
         /**
          * URL of the text analysis service.
          */
-        String url;
-
-        /**
-         * Minimal match score of a term occurrence for which a term assignment should be automatically generated.
-         * <p>
-         * More specifically, when annotated file content is being processed, term occurrences with sufficient score
-         * will cause creation of corresponding term assignments to the file.
-         *
-         * @deprecated This configuration is currently not used.
-         */
-        @Deprecated
-        @NotNull
-        String termAssignmentMinScore;
+        private String url;
 
         /**
          * Score threshold for a term occurrence for it to be saved into the repository.
          */
         @NotNull
-        String termOccurrenceMinScore = Constants.SCORE_THRESHOLD.toString();
+        private String termOccurrenceMinScore = Constants.SCORE_THRESHOLD.toString();
+
+        /**
+         * Maximum of the prefix and suffix of a text quote selector.
+         */
+        @Min(8)
+        private int textQuoteSelectorContextLength = 32;
 
         public String getUrl() {
             return url;
@@ -560,14 +594,6 @@ public class Configuration {
             this.url = url;
         }
 
-        public String getTermAssignmentMinScore() {
-            return termAssignmentMinScore;
-        }
-
-        public void setTermAssignmentMinScore(String termAssignmentMinScore) {
-            this.termAssignmentMinScore = termAssignmentMinScore;
-        }
-
         public String getTermOccurrenceMinScore() {
             return termOccurrenceMinScore;
         }
@@ -575,16 +601,23 @@ public class Configuration {
         public void setTermOccurrenceMinScore(String termOccurrenceMinScore) {
             this.termOccurrenceMinScore = termOccurrenceMinScore;
         }
+
+        public int getTextQuoteSelectorContextLength() {
+            return textQuoteSelectorContextLength;
+        }
+
+        public void setTextQuoteSelectorContextLength(int textQuoteSelectorContextLength) {
+            this.textQuoteSelectorContextLength = textQuoteSelectorContextLength;
+        }
     }
 
-    @org.springframework.context.annotation.Configuration
-    @ConfigurationProperties(prefix = "glossary")
+    @Validated
     public static class Glossary {
         /**
          * IRI path to append to vocabulary IRI to get glossary identifier.
          */
         @NotNull
-        String fragment;
+        private String fragment;
 
         public String getFragment() {
             return fragment;
@@ -595,13 +628,13 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
+    @Validated
     public static class PublicView {
         /**
-         * Unmapped properties allowed to appear in the SKOS export.
+         * Unmapped properties allowed to appear in the public term access API.
          */
         @NotNull
-        private Set<String> whiteListProperties;
+        private Set<String> whiteListProperties = Set.of();
 
         public Set<String> getWhiteListProperties() {
             return whiteListProperties;
@@ -612,7 +645,7 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
+    @Validated
     public static class Workspace {
 
         /**
@@ -635,7 +668,7 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
+    @Validated
     public static class Cors {
         /**
          * A comma-separated list of allowed origins for CORS.
@@ -669,9 +702,10 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
+    @Validated
     public static class Schedule {
 
+        @Valid
         private Cron cron = new Cron();
 
         public Cron getCron() {
@@ -684,6 +718,7 @@ public class Configuration {
 
         public static class Cron {
 
+            @Valid
             private Notification notification = new Notification();
 
             public Notification getNotification() {
@@ -713,7 +748,7 @@ public class Configuration {
         }
     }
 
-    @org.springframework.context.annotation.Configuration
+    @Validated
     public static class Mail {
 
         /**
@@ -733,16 +768,16 @@ public class Configuration {
     /**
      * Configuration for initialization of new {@link cz.cvut.kbss.termit.model.acl.AccessControlList}s.
      */
-    @org.springframework.context.annotation.Configuration
+    @Validated
     public static class ACL {
 
         /**
-         * Default access level for users in editor role.
+         * Default access level for users in the editor role.
          */
         private AccessLevel defaultEditorAccessLevel = AccessLevel.READ;
 
         /**
-         * Default access level for users in editor role.
+         * Default access level for users in the reader role.
          */
         private AccessLevel defaultReaderAccessLevel = AccessLevel.READ;
 
@@ -760,6 +795,112 @@ public class Configuration {
 
         public void setDefaultReaderAccessLevel(AccessLevel defaultReaderAccessLevel) {
             this.defaultReaderAccessLevel = defaultReaderAccessLevel;
+        }
+    }
+
+    @Validated
+    public static class Security {
+
+        public enum ProviderType {
+            INTERNAL, OIDC
+        }
+
+        /**
+         * Determines whether the internal security mechanism or an external OIDC service will be used for
+         * authentication.
+         * <p>
+         * In case na OIDC service is selected, it should be configured using standard Spring Boot OAuth2 properties.
+         */
+        private ProviderType provider = ProviderType.INTERNAL;
+
+        /**
+         * Claim in the authentication token provided by the OIDC service containing roles mapped to TermIt user roles.
+         * <p>
+         * Supports nested objects via dot notation.
+         */
+        private String roleClaim = "realm_access.roles";
+
+        /**
+         * A duration for how long requests for resetting passwords are valid before expiration.
+         */
+        @NotNull
+        private Duration passwordChangeRequestValidity = Duration.ofHours(24);
+
+        public ProviderType getProvider() {
+            return provider;
+        }
+
+        public void setProvider(ProviderType provider) {
+            this.provider = provider;
+        }
+
+        public String getRoleClaim() {
+            return roleClaim;
+        }
+
+        public void setRoleClaim(String roleClaim) {
+            this.roleClaim = roleClaim;
+        }
+
+        public Duration getPasswordChangeRequestValidity() {
+            return passwordChangeRequestValidity;
+        }
+
+        public void setPasswordChangeRequestValidity(Duration passwordChangeRequestValidity) {
+            if (passwordChangeRequestValidity.isNegative() || passwordChangeRequestValidity.isZero()) {
+                throw new IllegalArgumentException("Reset password token validity must be a positive duration.");
+            }
+            this.passwordChangeRequestValidity = passwordChangeRequestValidity;
+        }
+    }
+
+    @Validated
+    public static class Language {
+
+        /**
+         * Path to a file containing definition of the language of types terms can be classified with.
+         * <p>
+         * The file must be in Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel,
+         * scopeNote and broader/narrower).
+         */
+        @Valid
+        private LanguageSource types = new LanguageSource();
+
+        /**
+         * Path to a file containing definition of the language of states terms can be in. The file must be in
+         * Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
+         * broader/narrower).
+         */
+        @Valid
+        private LanguageSource states = new LanguageSource();
+
+        public LanguageSource getTypes() {
+            return types;
+        }
+
+        public void setTypes(LanguageSource types) {
+            this.types = types;
+        }
+
+        public LanguageSource getStates() {
+            return states;
+        }
+
+        public void setStates(LanguageSource states) {
+            this.states = states;
+        }
+
+        public static class LanguageSource {
+
+            private String source;
+
+            public String getSource() {
+                return source;
+            }
+
+            public void setSource(String source) {
+                this.source = source;
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
-/**
+/*
  * TermIt
- * Copyright (C) 2019 Czech Technical University in Prague
+ * Copyright (C) 2023 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
 package cz.cvut.kbss.termit.service.document.html;
 
 import cz.cvut.kbss.termit.model.selector.Selector;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,8 +37,13 @@ import java.util.stream.Collectors;
 @Service
 public class HtmlSelectorGenerators {
 
-    private final List<SelectorGenerator> generators = Arrays
-            .asList(new TextQuoteSelectorGenerator(), new TextPositionSelectorGenerator());
+    private final List<SelectorGenerator> generators;
+
+    public HtmlSelectorGenerators(Configuration config) {
+        this.generators = List.of(
+                new TextQuoteSelectorGenerator(config.getTextAnalysis().getTextQuoteSelectorContextLength()),
+                new TextPositionSelectorGenerator());
+    }
 
     /**
      * Generates selectors for the specified HTML/XML elements.

@@ -1,16 +1,19 @@
-/**
- * TermIt Copyright (C) 2019 Czech Technical University in Prague
- * <p>
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- * <p>
- * You should have received a copy of the GNU General Public License along with this program.  If not, see
- * <https://www.gnu.org/licenses/>.
+/*
+ * TermIt
+ * Copyright (C) 2023 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package cz.cvut.kbss.termit.dto;
 
@@ -33,7 +36,7 @@ import java.util.Set;
 /**
  * Represents basic data about a {@link Term}.
  * <p>
- * This is not a full blown entity and should not be used to modify data.
+ * This is not a full-blown entity and should not be used to modify data.
  */
 @OWLClass(iri = SKOS.CONCEPT)
 public class TermInfo implements Serializable, HasIdentifier, HasTypes {
@@ -48,6 +51,9 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
     @Inferred
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
+
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
+    private URI state;
 
     @Types
     private Set<String> types;
@@ -65,6 +71,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         assert term.getLabel() != null;
         this.label = new MultilingualString(term.getLabel().getValue());
         this.vocabulary = term.getVocabulary();
+        this.state = term.getState();
     }
 
     public TermInfo(TermInfo other) {
@@ -73,6 +80,7 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         assert other.getLabel() != null;
         this.label = new MultilingualString(other.getLabel().getValue());
         this.vocabulary = other.getVocabulary();
+        this.state = other.getState();
         this.types = new HashSet<>(Utils.emptyIfNull(other.getTypes()));
     }
 
@@ -102,6 +110,14 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         this.vocabulary = vocabulary;
     }
 
+    public URI getState() {
+        return state;
+    }
+
+    public void setState(URI state) {
+        this.state = state;
+    }
+
     @Override
     public Set<String> getTypes() {
         return types;
@@ -117,10 +133,9 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TermInfo)) {
+        if (!(o instanceof TermInfo termInfo)) {
             return false;
         }
-        TermInfo termInfo = (TermInfo) o;
         return Objects.equals(uri, termInfo.uri);
     }
 
@@ -131,6 +146,6 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
 
     @Override
     public String toString() {
-        return "TermInfo{" + label + "<" + uri + ">" + '}';
+        return "TermInfo{" + label + " " + Utils.uriToString(uri) + '}';
     }
 }
