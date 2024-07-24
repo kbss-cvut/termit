@@ -35,7 +35,6 @@ public class PasswordChangeController {
     @Autowired
     public PasswordChangeController(UserService userService) {
         this.userService = userService;
-        LOG.debug("Instantiating password change controller.");
     }
 
     @Operation(description = "Requests a password reset for the specified username.")

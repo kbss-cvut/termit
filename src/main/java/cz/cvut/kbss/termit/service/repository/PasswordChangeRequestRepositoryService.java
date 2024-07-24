@@ -6,10 +6,10 @@ import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.persistence.dao.PasswordChangeRequestDao;
+import cz.cvut.kbss.termit.util.Utils;
 import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,7 +36,7 @@ public class PasswordChangeRequestRepositoryService
         PasswordChangeRequest request = new PasswordChangeRequest();
         request.setUserAccount(userAccount);
         request.setToken(UUID.randomUUID().toString());
-        request.setCreatedAt(Instant.now());
+        request.setCreatedAt(Utils.timestamp());
 
         passwordChangeRequestDao.persist(request);
         postPersist(request);

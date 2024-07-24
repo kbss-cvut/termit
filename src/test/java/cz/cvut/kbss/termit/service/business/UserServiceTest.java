@@ -39,6 +39,7 @@ import cz.cvut.kbss.termit.service.repository.UserRepositoryService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +52,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -493,7 +493,7 @@ class UserServiceTest {
         final UserAccount account = Generator.generateUserAccountWithPassword();
         final String originalPassword = account.getPassword();
         final PasswordChangeRequest request = new PasswordChangeRequest();
-        request.setCreatedAt(Instant.now());
+        request.setCreatedAt(Utils.timestamp());
         request.setToken(UUID.randomUUID().toString());
         request.setUserAccount(account);
         request.setUri(Generator.generateUri());
@@ -533,7 +533,7 @@ class UserServiceTest {
     @Test
     void changePasswordExpiredRequestExceptionThrown() {
         final PasswordChangeRequest request = new PasswordChangeRequest();
-        request.setCreatedAt(Instant.now().minus(configuration.getSecurity()
+        request.setCreatedAt(Utils.timestamp().minus(configuration.getSecurity()
                                                               .getPasswordChangeRequestValidity())
                                     .minusNanos(1));
         request.setUri(Generator.generateUri());
@@ -555,7 +555,7 @@ class UserServiceTest {
     @Test
     void changePasswordValidURINotMatchingTokenExceptionThrown() {
         final PasswordChangeRequest request = new PasswordChangeRequest();
-        request.setCreatedAt(Instant.now());
+        request.setCreatedAt(Utils.timestamp());
         request.setUri(Generator.generateUri());
         request.setToken(UUID.randomUUID().toString());
 
@@ -578,7 +578,7 @@ class UserServiceTest {
         user.lock();
 
         final PasswordChangeRequest request = new PasswordChangeRequest();
-        request.setCreatedAt(Instant.now().minusNanos(1));
+        request.setCreatedAt(Utils.timestamp().minusMillis(1));
         request.setUri(Generator.generateUri());
         request.setToken(UUID.randomUUID().toString());
         request.setUserAccount(user);
