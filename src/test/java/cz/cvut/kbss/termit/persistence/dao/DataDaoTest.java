@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -52,7 +53,11 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DataDaoTest extends BaseDaoTestRunner {
 
@@ -170,7 +175,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
             try (final RepositoryConnection connection = repo.getConnection()) {
-                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE,SKOS.CONCEPT);
+                connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
                                vf.createLiteral(term.getPrimaryLabel()));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
@@ -200,7 +205,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void exportDataToTurtleReturnsResourceRepresentingTurtleData() {
         generateProperties();
-        transactional(() -> {
+        readOnlyTransactional(() -> {
             final TypeAwareResource result = sut.exportDataAsTurtle();
             assertNotNull(result);
             assertTrue(result.getMediaType().isPresent());
@@ -214,7 +219,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     void exportDataToTurtleExportsDefaultContextWhenNoArgumentsAreProvided() {
         generateProperties();
         final ValueFactory vf = SimpleValueFactory.getInstance();
-        transactional(() -> {
+        readOnlyTransactional(() -> {
             final TypeAwareResource result = sut.exportDataAsTurtle();
             final Model model = parseExportToModel(result);
             assertAll(() -> assertTrue(model.contains(vf.createIRI(Vocabulary.s_p_ma_krestni_jmeno), RDFS.LABEL,
@@ -239,7 +244,7 @@ class DataDaoTest extends BaseDaoTestRunner {
                 connection.commit();
             }
         });
-        transactional(() -> {
+        readOnlyTransactional(() -> {
             final TypeAwareResource result = sut.exportDataAsTurtle(context);
             Model model = parseExportToModel(result);
             assertTrue(model.contains(SKOS.CONCEPT, RDFS.LABEL, vf.createLiteral("Term")));
@@ -280,5 +285,27 @@ class DataDaoTest extends BaseDaoTestRunner {
                                vf.createLiteral("Má křestní jméno", "cs"));
             }
         });
+    }
+
+    @Test
+    void insertDataInsertsSpecifiedQuadsIntoRepository() {
+        final URI context = Generator.generateUri();
+        final URI termOne = Generator.generateUri();
+        final URI termTwo = Generator.generateUri();
+        final List<Quad> quads = List.of(
+                new Quad(termOne, URI.create(RDF.TYPE.stringValue()), URI.create(SKOS.CONCEPT.stringValue()), context),
+                new Quad(termTwo, URI.create(RDF.TYPE.stringValue()), URI.create(SKOS.CONCEPT.stringValue()), context),
+                new Quad(termOne, URI.create(SKOS.RELATED.stringValue()), termTwo, context)
+        );
+
+        transactional(() -> sut.insertRawData(quads));
+        readOnlyTransactional(() -> assertTrue(
+                em.createNativeQuery("ASK WHERE { GRAPH ?ctx { ?x a ?type . ?y a ?type . ?x ?related ?y . } }",
+                                     Boolean.class)
+                  .setParameter("x", termOne)
+                  .setParameter("y", termTwo)
+                  .setParameter("ctx", context)
+                  .setParameter("related", URI.create(SKOS.RELATED.stringValue()))
+                  .setParameter("type", URI.create(SKOS.CONCEPT.stringValue())).getSingleResult()));
     }
 }

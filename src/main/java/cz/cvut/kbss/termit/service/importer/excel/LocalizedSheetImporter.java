@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,6 +29,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Maps an Excel sheet with terms in one language to TermIt {@link Term}s, possibly reusing already processed terms.
+ * <p>
+ * Note that this class keeps a state.
+ */
 class LocalizedSheetImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalizedSheetImporter.class);
@@ -38,13 +44,26 @@ class LocalizedSheetImporter {
     private String langTag;
 
     private Map<String, Term> labelToTerm;
+    private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
     LocalizedSheetImporter(List<Term> existingTerms) {
         this.existingTerms = existingTerms;
     }
 
+    /**
+     * Resolves terms from the specified sheet and returns them.
+     * <p>
+     * If existing terms are provided to this instance, they will be reused.
+     * <p>
+     * Note that relationships between terms (except hierarchical ones) are resolved separately and are available via
+     * {@link #getRawDataToInsert()}, whose result should be inserted directly into the repository.
+     *
+     * @param sheet Sheet to process
+     * @return Terms resolved from the sheet
+     */
     List<Term> resolveTermsFromSheet(Sheet sheet) {
         LOG.debug("Importing terms from sheet '{}'.", sheet.getSheetName());
+        this.rawDataToInsert = new ArrayList<>();
         final Optional<LanguageCode> lang = resolveLanguage(sheet);
         if (lang.isEmpty()) {
             return existingTerms;
@@ -62,34 +81,58 @@ class LocalizedSheetImporter {
             LOG.error("Unable to find attribute mapping for sheet {}. Skipping the sheet.", sheet.getSheetName(), e);
             return Collections.emptyList();
         }
-        for (int i = 1; i < sheet.getLastRowNum(); i++) {
-            final Row termRow = sheet.getRow(i);
-            Term term = existingTerms.size() >= i ? existingTerms.get(i - 1) : new Term();
-            final Optional<String> label = getAttributeValue(termRow, SKOS.PREF_LABEL);
-            if (label.isEmpty()) {
-                LOG.trace("Reached empty label column cell at row {}. Finished processing sheet.", i);
-                break;
-            }
-            mapRowToTerm(term, label.get(), termRow);
-            labelToTerm.put(label.get(), term);
+        findTerms(sheet);
+        int i = 1;
+        for (Map.Entry<String, Term> entry : labelToTerm.entrySet()) {
+            mapRowToTermAttributes(entry.getValue(), sheet.getRow(i++));
         }
         return new ArrayList<>(labelToTerm.values());
     }
 
-    private void mapRowToTerm(Term term, String label, Row termRow) {
-        initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label);
+    /**
+     * First map terms to labels.
+     * <p>
+     * This ensures when we are dealing with references between terms, we know we already have all the terms mapped by
+     * labels.
+     *
+     * @param sheet Sheet with terms
+     */
+    private void findTerms(Sheet sheet) {
+        int i;
+        for (i = 1; i < sheet.getLastRowNum(); i++) {
+            final Row termRow = sheet.getRow(i);
+            Term term = existingTerms.size() >= i ? existingTerms.get(i - 1) : new Term();
+            final Optional<String> label = getAttributeValue(termRow, SKOS.PREF_LABEL);
+            if (label.isEmpty()) {
+                LOG.trace("Reached empty label column cell at row {}. Working with {} terms.", i, (i - 1));
+                break;
+            }
+            initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label.get());
+            labelToTerm.put(label.get(), term);
+        }
+        assert labelToTerm.size() == i - 1;
+    }
+
+    private void mapRowToTermAttributes(Term term, Row termRow) {
         getAttributeValue(termRow, SKOS.DEFINITION).ifPresent(
                 d -> initSingularMultilingualString(term::getDefinition, term::setDefinition).set(langTag, d));
         getAttributeValue(termRow, SKOS.SCOPE_NOTE).ifPresent(
                 sn -> initSingularMultilingualString(term::getDescription, term::setDescription).set(langTag, sn));
-        getAttributeValue(termRow, SKOS.ALT_LABEL).ifPresent(al -> populatePluralMultilingualString(term::getAltLabels, term::setAltLabels, splitIntoMultipleValues(al)));
-        getAttributeValue(termRow, SKOS.HIDDEN_LABEL).ifPresent(hl -> populatePluralMultilingualString(term::getHiddenLabels, term::setHiddenLabels, splitIntoMultipleValues(hl)));
-        getAttributeValue(termRow, SKOS.EXAMPLE).ifPresent(ex -> populatePluralMultilingualString(term::getExamples, term::setExamples, splitIntoMultipleValues(ex)));
+        getAttributeValue(termRow, SKOS.ALT_LABEL).ifPresent(
+                al -> populatePluralMultilingualString(term::getAltLabels, term::setAltLabels,
+                                                       splitIntoMultipleValues(al)));
+        getAttributeValue(termRow, SKOS.HIDDEN_LABEL).ifPresent(
+                hl -> populatePluralMultilingualString(term::getHiddenLabels, term::setHiddenLabels,
+                                                       splitIntoMultipleValues(hl)));
+        getAttributeValue(termRow, SKOS.EXAMPLE).ifPresent(
+                ex -> populatePluralMultilingualString(term::getExamples, term::setExamples,
+                                                       splitIntoMultipleValues(ex)));
         getAttributeValue(termRow, DC.Terms.SOURCE).ifPresent(src -> term.setSources(splitIntoMultipleValues(src)));
         getAttributeValue(termRow, SKOS.BROADER).ifPresent(br -> setParentTerms(term, splitIntoMultipleValues(br)));
         getAttributeValue(termRow, SKOS.NOTATION).ifPresent(nt -> term.setNotations(splitIntoMultipleValues(nt)));
         getAttributeValue(termRow, DC.Terms.REFERENCES).ifPresent(
                 nt -> term.setProperties(Map.of(DC.Terms.REFERENCES, splitIntoMultipleValues(nt))));
+        getAttributeValue(termRow, SKOS.RELATED).ifPresent(rt -> mapSkosRelationship(term, splitIntoMultipleValues(rt), SKOS.RELATED));
     }
 
     private MultilingualString initSingularMultilingualString(Supplier<MultilingualString> getter,
@@ -127,6 +170,23 @@ class LocalizedSheetImporter {
                 term.addParentTerm(parent);
             }
         });
+    }
+
+    private void mapSkosRelationship(Term subject, Set<String> objects, String property) {
+        final URI propertyUri = URI.create(property);
+        objects.forEach(object -> {
+            final Term objectTerm = labelToTerm.get(object);
+            if (objectTerm == null) {
+                LOG.warn("No term with label '{}' found for term '{}' and relationship <{}>.", object, subject.getLabel().get(langTag), property);
+            } else {
+                // Term IDs are not generated, yet
+                rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm));
+            }
+        });
+    }
+
+    List<ExcelImporter.TermRelationship> getRawDataToInsert() {
+        return rawDataToInsert;
     }
 
     private static Optional<LanguageCode> resolveLanguage(Sheet sheet) {
