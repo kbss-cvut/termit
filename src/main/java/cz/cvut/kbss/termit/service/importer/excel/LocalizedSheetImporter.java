@@ -72,6 +72,8 @@ class LocalizedSheetImporter {
         LOG.trace("Sheet '{}' mapped to language tag '{}'.", sheet.getSheetName(), langTag);
         final Properties attributeMapping = new Properties();
         this.labelToTerm = new LinkedHashMap<>();
+        // TODO How to handle languages for which we do not have column names (attribute mapping)?
+        // Use English as backup
         try {
             attributeMapping.load(
                     getClass().getClassLoader().getResourceAsStream("attributes/" + langTag + ".properties"));
@@ -134,7 +136,8 @@ class LocalizedSheetImporter {
         getAttributeValue(termRow, SKOS.NOTATION).ifPresent(nt -> term.setNotations(splitIntoMultipleValues(nt)));
         getAttributeValue(termRow, DC.Terms.REFERENCES).ifPresent(
                 nt -> term.setProperties(Map.of(DC.Terms.REFERENCES, splitIntoMultipleValues(nt))));
-        getAttributeValue(termRow, SKOS.RELATED).ifPresent(rt -> mapSkosRelationship(term, splitIntoMultipleValues(rt), SKOS.RELATED));
+        getAttributeValue(termRow, SKOS.RELATED).ifPresent(
+                rt -> mapSkosRelationship(term, splitIntoMultipleValues(rt), SKOS.RELATED));
     }
 
     private MultilingualString initSingularMultilingualString(Supplier<MultilingualString> getter,
@@ -179,7 +182,8 @@ class LocalizedSheetImporter {
         objects.forEach(object -> {
             final Term objectTerm = labelToTerm.get(object);
             if (objectTerm == null) {
-                LOG.warn("No term with label '{}' found for term '{}' and relationship <{}>.", object, subject.getLabel().get(langTag), property);
+                LOG.warn("No term with label '{}' found for term '{}' and relationship <{}>.", object,
+                         subject.getLabel().get(langTag), property);
             } else {
                 // Term IDs are not generated, yet
                 rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm));
@@ -217,6 +221,11 @@ class LocalizedSheetImporter {
     }
 
     private Optional<String> getAttributeValue(Row row, String attributeIri) {
+        final Cell cell = row.getCell(attributeToColumn.get(attributeIri));
+        if (cell == null) {
+            // The cell may be null instead of blank if there are no other columns behind at
+            return Optional.empty();
+        }
         final String cellValue = row.getCell(attributeToColumn.get(attributeIri)).getStringCellValue();
         return cellValue.isBlank() ? Optional.empty() : Optional.of(cellValue.trim());
     }
