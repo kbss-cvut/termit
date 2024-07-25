@@ -9,6 +9,7 @@ import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -62,8 +63,9 @@ public class ExcelImporter implements VocabularyImporter {
                     final Sheet sheet = workbook.getSheetAt(i);
                     terms = new LocalizedSheetImporter(terms).resolveTermsFromSheet(sheet);
                 }
-                // TODO Parents vs children
-                terms.forEach(t -> termService.addRootTermToVocabulary(t, targetVocabulary));
+                // Ensure all parents are saved before we start adding children
+                terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty()).forEach(root -> termService.addRootTermToVocabulary(root, targetVocabulary));
+                terms.stream().filter(t -> !Utils.emptyIfNull(t.getParentTerms()).isEmpty()).forEach(t -> termService.addChildTerm(t, t.getParentTerms().iterator().next()));
             }
         } catch (IOException e) {
             throw new VocabularyImportException("Unable to read input as Excel.", e);

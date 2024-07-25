@@ -37,6 +37,8 @@ class LocalizedSheetImporter {
     private Map<String, Integer> attributeToColumn;
     private String langTag;
 
+    private Map<String, Term> labelToTerm;
+
     LocalizedSheetImporter(List<Term> existingTerms) {
         this.existingTerms = existingTerms;
     }
@@ -50,7 +52,7 @@ class LocalizedSheetImporter {
         this.langTag = lang.get().name();
         LOG.trace("Sheet '{}' mapped to language tag '{}'.", sheet.getSheetName(), langTag);
         final Properties attributeMapping = new Properties();
-        final Map<String, Term> labelToTerm = new LinkedHashMap<>();
+        this.labelToTerm = new LinkedHashMap<>();
         try {
             attributeMapping.load(
                     getClass().getClassLoader().getResourceAsStream("attributes/" + langTag + ".properties"));
@@ -84,6 +86,7 @@ class LocalizedSheetImporter {
         getAttributeValue(termRow, SKOS.HIDDEN_LABEL).ifPresent(hl -> populatePluralMultilingualString(term::getHiddenLabels, term::setHiddenLabels, splitIntoMultipleValues(hl)));
         getAttributeValue(termRow, SKOS.EXAMPLE).ifPresent(ex -> populatePluralMultilingualString(term::getExamples, term::setExamples, splitIntoMultipleValues(ex)));
         getAttributeValue(termRow, DC.Terms.SOURCE).ifPresent(src -> term.setSources(splitIntoMultipleValues(src)));
+        getAttributeValue(termRow, SKOS.BROADER).ifPresent(br -> setParentTerms(term, splitIntoMultipleValues(br)));
         getAttributeValue(termRow, SKOS.NOTATION).ifPresent(nt -> term.setNotations(splitIntoMultipleValues(nt)));
         getAttributeValue(termRow, DC.Terms.REFERENCES).ifPresent(
                 nt -> term.setProperties(Map.of(DC.Terms.REFERENCES, splitIntoMultipleValues(nt))));
@@ -115,6 +118,17 @@ class LocalizedSheetImporter {
         }
     }
 
+    private void setParentTerms(Term term, Set<String> parentLabels) {
+        parentLabels.forEach(label -> {
+            final Term parent = labelToTerm.get(label);
+            if (parent == null) {
+                LOG.warn("No parent term with label '{}' for term '{}'.", label, term.getLabel().get(langTag));
+            } else {
+                term.addParentTerm(parent);
+            }
+        });
+    }
+
     private static Optional<LanguageCode> resolveLanguage(Sheet sheet) {
         final List<LanguageCode> codes = LanguageCode.findByName(sheet.getSheetName());
         if (codes.isEmpty()) {
@@ -124,7 +138,7 @@ class LocalizedSheetImporter {
         return Optional.of(codes.get(0));
     }
 
-    private Map<String, Integer> resolveAttributeColumns(Row attributes, Properties attributeMapping) {
+    private static Map<String, Integer> resolveAttributeColumns(Row attributes, Properties attributeMapping) {
         final Map<String, Integer> attributesToColumn = new HashMap<>();
         final Iterator<Cell> it = attributes.cellIterator();
         while (it.hasNext()) {
@@ -145,7 +159,7 @@ class LocalizedSheetImporter {
         return cellValue.isBlank() ? Optional.empty() : Optional.of(cellValue.trim());
     }
 
-    private Set<String> splitIntoMultipleValues(String value) {
+    private static Set<String> splitIntoMultipleValues(String value) {
         return Stream.of(value.split(",")).map(String::trim).collect(Collectors.toSet());
     }
 }

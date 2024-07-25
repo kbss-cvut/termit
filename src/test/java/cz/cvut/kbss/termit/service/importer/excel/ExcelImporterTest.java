@@ -194,4 +194,26 @@ class ExcelImporterTest {
         assertEquals(Set.of("B"), building.getNotations());
         assertEquals(Set.of("a56"), building.getProperties().get(DC.Terms.REFERENCES));
     }
+
+    @Test
+    void importCreatesTermHierarchy() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+
+        final Vocabulary result = sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                                                       new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                                                          Environment.loadFile(
+                                                                                                  "data/import-hierarchy-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> rootCaptor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(rootCaptor.capture(), eq(vocabulary));
+        assertEquals(1, rootCaptor.getAllValues().size());
+        final Term area = rootCaptor.getValue();
+        assertEquals("Area", area.getLabel().get("en"));
+        final ArgumentCaptor<Term> childCaptor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addChildTerm(childCaptor.capture(), eq(area));
+        assertEquals(1, childCaptor.getAllValues().size());
+        final Term buildableArea = childCaptor.getValue();
+        assertEquals("Buildable area", buildableArea.getLabel().get("en"));
+    }
 }
