@@ -72,7 +72,10 @@ public class ExcelImporter implements VocabularyImporter {
                 }
                 // Ensure all parents are saved before we start adding children
                 terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty())
-                     .forEach(root -> termService.addRootTermToVocabulary(root, targetVocabulary));
+                     .forEach(root -> {
+                         termService.addRootTermToVocabulary(root, targetVocabulary);
+                         root.setVocabulary(targetVocabulary.getUri());
+                     });
                 terms.stream().filter(t -> !Utils.emptyIfNull(t.getParentTerms()).isEmpty())
                      .forEach(t -> termService.addChildTerm(t, t.getParentTerms().iterator().next()));
                 // Insert term relationships as raw data because of possible object conflicts in the persistence context -

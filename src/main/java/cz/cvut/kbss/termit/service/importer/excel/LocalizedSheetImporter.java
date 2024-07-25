@@ -110,7 +110,9 @@ class LocalizedSheetImporter {
             initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label.get());
             labelToTerm.put(label.get(), term);
         }
-        assert labelToTerm.size() == i - 1;
+        for (; i <= existingTerms.size(); i++) {
+            labelToTerm.put(existingTerms.get(i - 1).getLabel().get(), existingTerms.get(i - 1));
+        }
     }
 
     private void mapRowToTermAttributes(Term term, Row termRow) {

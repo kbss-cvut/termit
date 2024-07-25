@@ -251,7 +251,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
-            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage());
+            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage(), e);
         }
     }
 

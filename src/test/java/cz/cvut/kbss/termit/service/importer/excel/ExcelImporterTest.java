@@ -289,4 +289,30 @@ class ExcelImporterTest {
         assertEquals(List.of(new Quad(termCaptor.getAllValues().get(1).getUri(), URI.create(SKOS.RELATED),
                                       termCaptor.getAllValues().get(0).getUri(), vocabulary.getUri())), quadsCaptor.getValue());
     }
+
+    @Test
+    void importImportsTermsWhenAnotherLanguageSheetIsEmpty() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initIdentifierGenerator(false);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-en-empty-cs.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertEquals(2, captor.getAllValues().size());
+        final Optional<Term> building = captor.getAllValues().stream()
+                                              .filter(t -> "Building".equals(t.getLabel().get("en"))).findAny();
+        assertTrue(building.isPresent());
+        assertEquals("Definition of term Building", building.get().getDefinition().get("en"));
+        assertEquals("Building scope note", building.get().getDescription().get("en"));
+        final Optional<Term> construction = captor.getAllValues().stream()
+                                                  .filter(t -> "Construction".equals(t.getLabel().get("en"))).findAny();
+        assertTrue(construction.isPresent());
+        assertEquals("The process of building a building", construction.get().getDefinition().get("en"));
+    }
 }
