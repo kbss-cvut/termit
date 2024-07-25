@@ -57,7 +57,7 @@ public class MessageAssetFactory {
 
         @Override
         public void visitTerm(AbstractTerm term) {
-            this.label = term.getPrimaryLabel() + " (" + dataService.getLabel(term.getVocabulary()).orElse("") + ")";
+            this.label = term.getPrimaryLabel() + " (" + dataService.getLabel(term.getVocabulary(), null).orElse("") + ")";
         }
 
         @Override
