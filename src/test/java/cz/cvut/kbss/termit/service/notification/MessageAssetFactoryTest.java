@@ -68,7 +68,7 @@ class MessageAssetFactoryTest {
         final String vocabularyLabel = "Vocabulary " + Generator.randomInt(0, 1000);
         final Term term = Generator.generateTermWithId();
         when(linkBuilder.linkTo(term)).thenReturn(term.getUri().toString());
-        when(dataService.getLabel(term.getVocabulary())).thenReturn(Optional.of(vocabularyLabel));
+        when(dataService.getLabel(term.getVocabulary(), null)).thenReturn(Optional.of(vocabularyLabel));
         // Simulate autowired configuration
         final Field configField = Term.class.getDeclaredField("config");
         configField.setAccessible(true);
