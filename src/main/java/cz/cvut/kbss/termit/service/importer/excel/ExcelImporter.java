@@ -60,7 +60,6 @@ public class ExcelImporter implements VocabularyImporter {
                 assert workbook.getNumberOfSheets() > 0;
                 for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
                     final Sheet sheet = workbook.getSheetAt(i);
-                    // TODO Reuse terms between internationalized sheets
                     terms = new LocalizedSheetImporter(terms).resolveTermsFromSheet(sheet);
                 }
                 // TODO Parents vs children

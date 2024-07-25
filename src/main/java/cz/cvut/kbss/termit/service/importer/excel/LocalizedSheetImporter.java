@@ -48,7 +48,7 @@ class LocalizedSheetImporter {
             return existingTerms;
         }
         this.langTag = lang.get().name();
-        LOG.trace("Sheet '{}' mapped to language tage '{}'.", sheet.getSheetName(), langTag);
+        LOG.trace("Sheet '{}' mapped to language tag '{}'.", sheet.getSheetName(), langTag);
         final Properties attributeMapping = new Properties();
         final Map<String, Term> labelToTerm = new LinkedHashMap<>();
         try {
