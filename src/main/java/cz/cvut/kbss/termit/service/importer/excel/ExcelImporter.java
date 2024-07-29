@@ -87,7 +87,10 @@ public class ExcelImporter implements VocabularyImporter {
                          root.setVocabulary(targetVocabulary.getUri());
                      });
                 terms.stream().filter(t -> !Utils.emptyIfNull(t.getParentTerms()).isEmpty())
-                     .forEach(t -> termService.addChildTerm(t, t.getParentTerms().iterator().next()));
+                     .forEach(t -> {
+                         t.setVocabulary(targetVocabulary.getUri());
+                         termService.addChildTerm(t, t.getParentTerms().iterator().next());
+                     });
                 // Insert term relationships as raw data because of possible object conflicts in the persistence context -
                 // the same term being as multiple types (Term, TermInfo) in the same persistence context
                 dataDao.insertRawData(rawDataToInsert.stream().map(tr -> new Quad(tr.subject().getUri(), tr.property(),
