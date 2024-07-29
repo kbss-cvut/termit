@@ -34,6 +34,7 @@ public class TabularTermExportUtils {
         throw new AssertionError();
     }
 
+    // TODO Remove
     /**
      * Transforms the specified {@link MultilingualString} to a single string where individual translations are
      * separated by a predefined delimiter.

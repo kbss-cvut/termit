@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
+import cz.cvut.kbss.termit.service.export.ExcelVocabularyExporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
@@ -15,6 +16,8 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.lang.NonNull;
@@ -32,6 +35,8 @@ import java.util.Set;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ExcelImporter implements VocabularyImporter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ExcelImporter.class);
 
     /**
      * Media type for legacy .xls files.
@@ -64,9 +69,14 @@ public class ExcelImporter implements VocabularyImporter {
             for (InputStream input : data.data()) {
                 final Workbook workbook = new XSSFWorkbook(input);
                 assert workbook.getNumberOfSheets() > 0;
+                PrefixMap prefixMap = resolvePrefixMap(workbook);
                 for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
                     final Sheet sheet = workbook.getSheetAt(i);
-                    final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(terms);
+                    if (ExcelVocabularyExporter.PREFIX_SHEET_NAME.equals(sheet.getSheetName())) {
+                        // Skip already processed prefix sheet
+                        continue;
+                    }
+                    final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(prefixMap, terms);
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
@@ -88,6 +98,16 @@ public class ExcelImporter implements VocabularyImporter {
             throw new VocabularyImportException("Unable to read input as Excel.", e);
         }
         return targetVocabulary;
+    }
+
+    private PrefixMap resolvePrefixMap(Workbook excel) {
+        final Sheet prefixSheet = excel.getSheet(ExcelVocabularyExporter.PREFIX_SHEET_NAME);
+        if (prefixSheet == null) {
+            return new PrefixMap();
+        } else {
+            LOG.debug("Loading prefix map from sheet '{}'.", ExcelVocabularyExporter.PREFIX_SHEET_NAME);
+            return new PrefixMap(prefixSheet);
+        }
     }
 
     /**

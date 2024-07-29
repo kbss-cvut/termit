@@ -4,6 +4,7 @@ import com.neovisionaries.i18n.LanguageCode;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.model.Term;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -41,15 +42,18 @@ class LocalizedSheetImporter {
 
     private static final String FALLBACK_LANGUAGE = "en";
 
+    private final PrefixMap prefixMap;
     private final List<Term> existingTerms;
 
     private Map<String, Integer> attributeToColumn;
     private String langTag;
 
     private Map<String, Term> labelToTerm;
+    private Map<URI, Term> idToTerm;
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
-    LocalizedSheetImporter(List<Term> existingTerms) {
+    LocalizedSheetImporter(PrefixMap prefixMap, List<Term> existingTerms) {
+        this.prefixMap = prefixMap;
         this.existingTerms = existingTerms;
     }
 
@@ -75,6 +79,7 @@ class LocalizedSheetImporter {
         LOG.trace("Sheet '{}' mapped to language tag '{}'.", sheet.getSheetName(), langTag);
         final Properties attributeMapping = new Properties();
         this.labelToTerm = new LinkedHashMap<>();
+        this.idToTerm = new HashMap<>();
         try {
             attributeMapping.load(resolveColumnMappingFile());
             final Row attributes = sheet.getRow(0);
@@ -96,7 +101,8 @@ class LocalizedSheetImporter {
             LOG.trace("Loading attribute mapping for language tag '{}'.", langTag);
             return getClass().getClassLoader().getResourceAsStream("attributes/" + langTag + ".properties");
         } else {
-            LOG.trace("No attribute mapping found for language tag '{}', falling back to '{}'.", langTag, FALLBACK_LANGUAGE);
+            LOG.trace("No attribute mapping found for language tag '{}', falling back to '{}'.", langTag,
+                      FALLBACK_LANGUAGE);
             return getClass().getClassLoader().getResourceAsStream("attributes/" + FALLBACK_LANGUAGE + ".properties");
         }
     }
@@ -121,6 +127,10 @@ class LocalizedSheetImporter {
             }
             initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label.get());
             labelToTerm.put(label.get(), term);
+            getAttributeValue(termRow, JsonLd.ID).ifPresent(id -> {
+                term.setUri(URI.create(prefixMap.resolvePrefixed(id)));
+                idToTerm.put(term.getUri(), term);
+            });
         }
         for (; i <= existingTerms.size(); i++) {
             labelToTerm.put(existingTerms.get(i - 1).getLabel().get(), existingTerms.get(i - 1));
@@ -190,15 +200,25 @@ class LocalizedSheetImporter {
     private void mapSkosRelationship(Term subject, Set<String> objects, String property) {
         final URI propertyUri = URI.create(property);
         objects.forEach(object -> {
-            final Term objectTerm = labelToTerm.get(object);
-            if (objectTerm == null) {
-                LOG.warn("No term with label '{}' found for term '{}' and relationship <{}>.", object,
-                         subject.getLabel().get(langTag), property);
-            } else {
-                // Term IDs are not generated, yet
-                rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm));
+            try {
+                final Term objectTerm = getTerm(object);
+                if (objectTerm == null) {
+                    LOG.warn("No term with label '{}' found for term '{}' and relationship <{}>.", object,
+                             subject.getLabel().get(langTag), property);
+                } else {
+                    // Term IDs may not be generated, yet
+                    rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm));
+                }
+            } catch (IllegalArgumentException e) {
+                LOG.warn("Could not create URI for value '{}' and it does not reference another term by label either",
+                         object);
             }
         });
+    }
+
+    private Term getTerm(String identification) {
+        return labelToTerm.containsKey(identification) ? labelToTerm.get(identification) :
+               idToTerm.get(URI.create(prefixMap.resolvePrefixed(identification)));
     }
 
     List<ExcelImporter.TermRelationship> getRawDataToInsert() {
@@ -231,6 +251,10 @@ class LocalizedSheetImporter {
     }
 
     private Optional<String> getAttributeValue(Row row, String attributeIri) {
+        if (!attributeToColumn.containsKey(attributeIri)) {
+            // Attribute column is not present at all
+            return Optional.empty();
+        }
         final Cell cell = row.getCell(attributeToColumn.get(attributeIri));
         if (cell == null) {
             // The cell may be null instead of blank if there are no other columns behind at

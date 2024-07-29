@@ -128,6 +128,9 @@ class ExcelImporterTest {
     private void initIdentifierGenerator(String lang, boolean forChild) {
         doAnswer(inv -> {
             final Term t = inv.getArgument(0);
+            if (t.getUri() != null) {
+                return null;
+            }
             t.setUri(URI.create(vocabulary.getUri().toString() + "/" + IdentifierResolver.normalize(
                     t.getLabel().get(lang))));
             return null;
@@ -135,6 +138,9 @@ class ExcelImporterTest {
         if (forChild) {
             doAnswer(inv -> {
                 final Term t = inv.getArgument(0);
+                if (t.getUri() != null) {
+                    return null;
+                }
                 t.setUri(URI.create(vocabulary.getUri().toString() + "/" + IdentifierResolver.normalize(
                         t.getLabel().get(lang))));
                 return null;
@@ -339,5 +345,65 @@ class ExcelImporterTest {
                                                   .filter(t -> "Bau".equals(t.getLabel().get("de"))).findAny();
         assertTrue(construction.isPresent());
         assertEquals("Ein Prozess", construction.get().getDefinition().get("de"));
+    }
+
+    @Test
+    void importSupportsTermIdentifiers() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE,false);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-identifiers-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertEquals(2, captor.getAllValues().size());
+        final Optional<Term> building = captor.getAllValues().stream()
+                                              .filter(t -> "Building".equals(t.getLabel().get("en"))).findAny();
+        assertTrue(building.isPresent());
+        assertEquals(URI.create("http://example.com/terms/building"), building.get().getUri());
+        final Optional<Term> construction = captor.getAllValues().stream()
+                                              .filter(t -> "Construction".equals(t.getLabel().get("en"))).findAny();
+        assertTrue(construction.isPresent());
+        assertEquals(URI.create("http://example.com/terms/construction"), construction.get().getUri());
+        final ArgumentCaptor<Collection<Quad>> quadsCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(dataDao).insertRawData(quadsCaptor.capture());
+        assertEquals(1, quadsCaptor.getValue().size());
+        assertEquals(List.of(new Quad(construction.get().getUri(), URI.create(SKOS.RELATED),
+                                      building.get().getUri(), vocabulary.getUri())), quadsCaptor.getValue());
+    }
+
+    @Test
+    void importSupportsPrefixedTermIdentifiers() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE,false);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-prefixed-identifiers-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertEquals(2, captor.getAllValues().size());
+        final Optional<Term> building = captor.getAllValues().stream()
+                                              .filter(t -> "Building".equals(t.getLabel().get("en"))).findAny();
+        assertTrue(building.isPresent());
+        assertEquals(URI.create("http://example.com/terms/building"), building.get().getUri());
+        final Optional<Term> construction = captor.getAllValues().stream()
+                                                  .filter(t -> "Construction".equals(t.getLabel().get("en"))).findAny();
+        assertTrue(construction.isPresent());
+        assertEquals(URI.create("http://example.com/terms/construction"), construction.get().getUri());
+        final ArgumentCaptor<Collection<Quad>> quadsCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(dataDao).insertRawData(quadsCaptor.capture());
+        assertEquals(1, quadsCaptor.getValue().size());
+        assertEquals(List.of(new Quad(construction.get().getUri(), URI.create(SKOS.RELATED),
+                                      building.get().getUri(), vocabulary.getUri())), quadsCaptor.getValue());
     }
 }
