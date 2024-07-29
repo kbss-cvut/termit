@@ -103,7 +103,7 @@ class ExcelImporterTest {
     void importCreatesRootTermsWithBasicAttributesFromEnglishSheet() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -125,18 +125,18 @@ class ExcelImporterTest {
         assertEquals("The process of building a building", construction.get().getDefinition().get("en"));
     }
 
-    private void initIdentifierGenerator(boolean forChild) {
+    private void initIdentifierGenerator(String lang, boolean forChild) {
         doAnswer(inv -> {
             final Term t = inv.getArgument(0);
             t.setUri(URI.create(vocabulary.getUri().toString() + "/" + IdentifierResolver.normalize(
-                    t.getLabel().get(Constants.DEFAULT_LANGUAGE))));
+                    t.getLabel().get(lang))));
             return null;
         }).when(termService).addRootTermToVocabulary(any(Term.class), eq(vocabulary));
         if (forChild) {
             doAnswer(inv -> {
                 final Term t = inv.getArgument(0);
                 t.setUri(URI.create(vocabulary.getUri().toString() + "/" + IdentifierResolver.normalize(
-                        t.getLabel().get(Constants.DEFAULT_LANGUAGE))));
+                        t.getLabel().get(lang))));
                 return null;
             }).when(termService).addChildTerm(any(Term.class), any(Term.class));
         }
@@ -146,7 +146,7 @@ class ExcelImporterTest {
     void importCreatesRootTermsWithPluralBasicAttributesFromEnglishSheet() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -181,7 +181,7 @@ class ExcelImporterTest {
     void importCreatesRootTermsWithBasicAttributesFromMultipleTranslationSheets() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -212,7 +212,7 @@ class ExcelImporterTest {
     void importCreatesRootTermsWithPluralBasicAttributesFromMultipleTranslationSheets() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -249,7 +249,7 @@ class ExcelImporterTest {
     void importCreatesTermHierarchy() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(true);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, true);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -273,7 +273,7 @@ class ExcelImporterTest {
     void importSavesRelationshipsBetweenTerms() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -294,7 +294,7 @@ class ExcelImporterTest {
     void importImportsTermsWhenAnotherLanguageSheetIsEmpty() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE,false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -314,5 +314,30 @@ class ExcelImporterTest {
                                                   .filter(t -> "Construction".equals(t.getLabel().get("en"))).findAny();
         assertTrue(construction.isPresent());
         assertEquals("The process of building a building", construction.get().getDefinition().get("en"));
+    }
+
+    @Test
+    void importFallsBackToEnglishColumnLabelsForUnknownLanguages() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initIdentifierGenerator("de", false);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-simple-de.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertEquals(2, captor.getAllValues().size());
+        final Optional<Term> building = captor.getAllValues().stream()
+                                              .filter(t -> "Gebäude".equals(t.getLabel().get("de"))).findAny();
+        assertTrue(building.isPresent());
+        assertEquals("Definition für ein Gebäude", building.get().getDefinition().get("de"));
+        final Optional<Term> construction = captor.getAllValues().stream()
+                                                  .filter(t -> "Bau".equals(t.getLabel().get("de"))).findAny();
+        assertTrue(construction.isPresent());
+        assertEquals("Ein Prozess", construction.get().getDefinition().get("de"));
     }
 }

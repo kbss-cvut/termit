@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +38,8 @@ import java.util.stream.Stream;
 class LocalizedSheetImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalizedSheetImporter.class);
+
+    private static final String FALLBACK_LANGUAGE = "en";
 
     private final List<Term> existingTerms;
 
@@ -72,11 +75,8 @@ class LocalizedSheetImporter {
         LOG.trace("Sheet '{}' mapped to language tag '{}'.", sheet.getSheetName(), langTag);
         final Properties attributeMapping = new Properties();
         this.labelToTerm = new LinkedHashMap<>();
-        // TODO How to handle languages for which we do not have column names (attribute mapping)?
-        // Use English as backup
         try {
-            attributeMapping.load(
-                    getClass().getClassLoader().getResourceAsStream("attributes/" + langTag + ".properties"));
+            attributeMapping.load(resolveColumnMappingFile());
             final Row attributes = sheet.getRow(0);
             this.attributeToColumn = resolveAttributeColumns(attributes, attributeMapping);
         } catch (IOException e) {
@@ -89,6 +89,16 @@ class LocalizedSheetImporter {
             mapRowToTermAttributes(entry.getValue(), sheet.getRow(i++));
         }
         return new ArrayList<>(labelToTerm.values());
+    }
+
+    private InputStream resolveColumnMappingFile() {
+        if (getClass().getClassLoader().getResource("attributes/" + langTag + ".properties") != null) {
+            LOG.trace("Loading attribute mapping for language tag '{}'.", langTag);
+            return getClass().getClassLoader().getResourceAsStream("attributes/" + langTag + ".properties");
+        } else {
+            LOG.trace("No attribute mapping found for language tag '{}', falling back to '{}'.", langTag, FALLBACK_LANGUAGE);
+            return getClass().getClassLoader().getResourceAsStream("attributes/" + FALLBACK_LANGUAGE + ".properties");
+        }
     }
 
     /**
