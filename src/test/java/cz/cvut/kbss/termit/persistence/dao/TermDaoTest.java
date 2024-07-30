@@ -743,6 +743,19 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                            .collect(Collectors.toList()));
     }
 
+    @Test
+    void findAllRootsReturnsTermsThatAreMissingDefaultLanguageLabel() {
+        configuration.getPersistence().setLanguage("cs");
+        // these terms will be missing Czech labels
+        persistTerms("en", "Germany", "China", "Spain", "Syria");
+        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        assertEquals(4, result.size());
+        assertEquals(Arrays
+                        .asList("China", "Germany", "Spain", "Syria"),
+                result.stream().map(r -> r.getLabel().get("en"))
+                      .toList());
+    }
+
     private void persistTerms(String lang, String... labels) {
         transactional(() -> Arrays.stream(labels).forEach(label -> {
             final Term parent = Generator.generateTermWithId();
