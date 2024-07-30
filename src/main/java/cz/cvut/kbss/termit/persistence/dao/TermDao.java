@@ -390,6 +390,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Loads a page of root terms (terms without a parent) contained in the specified vocabulary.
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param vocabulary   Vocabulary whose root terms should be returned
      * @param pageSpec     Page specification
@@ -401,13 +403,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                      "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
                                                                  "GRAPH ?context { " +
                                                                  "?term a ?type ;" +
                                                                  "?hasLabel ?label ." +
                                                                  "?vocabulary ?hasGlossary/?hasTerm ?term ." +
-                                                                 "FILTER (lang(?label) = ?labelLang) ." +
+                                                                 "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
-                                                                 "}} ORDER BY " + orderSentence("?label"),
+                                                      "}} ORDER BY DESC(?hasLocaleLabel) " + orderSentence("?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
@@ -453,6 +456,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     /**
      * Loads a page of root terms (terms without a parent).
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param pageSpec     Page specification
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
@@ -462,13 +467,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
         Objects.requireNonNull(pageSpec);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                      "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
                                                                  "?term a ?type ; " +
                                                                  "?hasLabel ?label . " +
                                                                  "?vocabulary ?hasGlossary/?hasTerm ?term . " +
-                                                                 "FILTER (lang(?label) = ?labelLang) . " +
+                                                                 "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included)) . " +
                                                                  "FILTER NOT EXISTS {?term a ?snapshot .} " +
-                                                                 "} ORDER BY " + orderSentence("?label"),
+                                                      "} ORDER BY DESC(?hasLocaleLabel) " + orderSentence("?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
@@ -533,6 +539,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * <p>
      * This method basically does a transitive closure of the vocabulary import relationship and retrieves a page of
      * root terms from this closure.
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param vocabulary The last vocabulary in the vocabulary import chain
      * @param pageSpec   Page specification
@@ -544,13 +552,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                      "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
                                                                  "?term a ?type ;" +
                                                                  "?hasLabel ?label ." +
                                                                  "?vocabulary ?imports* ?parent ." +
                                                                  "?parent ?hasGlossary/?hasTerm ?term ." +
-                                                                 "FILTER (lang(?label) = ?labelLang) ." +
+                                                                 "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
-                                                                 "} ORDER BY " + orderSentence("?label"),
+                                                      "} ORDER BY DESC(?hasLocaleLabel) " + orderSentence("?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, true);
         try {
