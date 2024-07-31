@@ -410,7 +410,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
-                                                      "}} ORDER BY DESC(?hasLocaleLabel) " + orderSentence("?label") + "}",
+                                                      "}} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence("?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
@@ -474,7 +474,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included)) . " +
                                                                  "FILTER NOT EXISTS {?term a ?snapshot .} " +
-                                                      "} ORDER BY DESC(?hasLocaleLabel) " + orderSentence("?label") + "}",
+                                                      "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence("?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
@@ -559,7 +559,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?parent ?hasGlossary/?hasTerm ?term ." +
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
-                                                      "} ORDER BY DESC(?hasLocaleLabel) " + orderSentence("?label") + "}",
+                                                      "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence("?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, true);
         try {
