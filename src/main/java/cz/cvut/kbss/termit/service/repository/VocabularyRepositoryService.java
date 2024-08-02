@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
+import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
@@ -263,22 +264,63 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getLastModified();
     }
 
+    /**
+     * Removes a vocabulary unless:
+     * <ul>
+     *     <li>it is imported by another vocabulary, other relation with another vocabulary exists or</li>
+     *     <li>it contains terms that are a part of relations with another vocabulary</li>
+     * </ul>
+     */
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#instance)")
     @CacheEvict(allEntries = true)
     @Transactional
     @Override
     public void remove(Vocabulary instance) {
-        final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(instance);
+        super.remove(instance);
+    }
+
+    /**
+     * Ensures that the vocabulary to be removed complies with the rules allowing removal.
+     * <ul>
+     *     <li>it is imported by another vocabulary or</li>
+     *     <li>it contains terms that are a part of relations with another vocabulary</li>
+     * </ul>
+     *
+     * @param instance The instance to be removed, not {@code null}
+     */
+    @Override
+    protected void preRemove(Vocabulary instance) {
+        ensureNotImported(instance);
+        ensureNoTermRelationsExists(instance);
+        super.preRemove(instance);
+    }
+
+    /**
+     * Ensures there is no other vocabulary importing the {@code vocabulary}
+     *
+     * @param vocabulary The Vocabulary to search if its imported
+     * @throws AssetRemovalException when there is a vocabulary importing the {@code vocabulary}
+     */
+    private void ensureNotImported(Vocabulary vocabulary) throws AssetRemovalException {
+        final List<Vocabulary> vocabularies = vocabularyDao.getImportingVocabularies(vocabulary);
         if (!vocabularies.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
                             + vocabularies.stream().map(Vocabulary::getPrimaryLabel).collect(Collectors.joining(", ")));
         }
-        if (!vocabularyDao.isEmpty(instance)) {
-            throw new AssetRemovalException("Vocabulary cannot be removed. It contains terms.");
-        }
+    }
 
-        super.remove(instance);
+    /**
+     * Ensures there are no terms in other vocabularies with a relation to any term in this {@code vocabulary}
+     *
+     * @param vocabulary The vocabulary
+     * @throws AssetRemovalException when there is a vocabulary with a term and relation to a term in the {@code vocabulary}
+     */
+    private void ensureNoTermRelationsExists(Vocabulary vocabulary) throws AssetRemovalException {
+        final List<RdfsStatement> relations = vocabularyDao.getTermRelations(vocabulary);
+        if (!relations.isEmpty()) {
+            throw new AssetRemovalException("Vocabulary cannot be removed. There are relations with other vocabularies.");
+        }
     }
 
     public List<ValidationResult> validateContents(Vocabulary instance) {
@@ -287,6 +329,14 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     public Integer getTermCount(Vocabulary vocabulary) {
         return vocabularyDao.getTermCount(vocabulary);
+    }
+
+    public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
+        return vocabularyDao.getTermRelations(vocabulary);
+    }
+
+    public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
+        return vocabularyDao.getVocabularyRelations(vocabulary, excludedRelations);
     }
 
 

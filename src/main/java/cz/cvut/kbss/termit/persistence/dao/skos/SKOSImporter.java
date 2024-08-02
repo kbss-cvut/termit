@@ -206,7 +206,7 @@ public class SKOSImporter {
         possibleVocabulary.ifPresent(toRemove -> {
             newVocabulary.setDocument(toRemove.getDocument());
             newVocabulary.setAcl(toRemove.getAcl());
-            vocabularyDao.forceRemove(toRemove);
+            vocabularyDao.removeVocabulary(toRemove, false);
         });
     }
 
