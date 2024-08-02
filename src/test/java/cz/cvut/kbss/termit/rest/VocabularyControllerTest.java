@@ -263,12 +263,31 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
+    void removeVocabularyCallsRemove() throws Exception {
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(VOCABULARY_URI);
+
+        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
+                .thenReturn(VOCABULARY_URI);
+        when(serviceMock.findRequired(VOCABULARY_URI)).thenReturn(vocabulary);
+
+        mockMvc.perform(delete(PATH + "/" + FRAGMENT)).andExpect(status().is2xxSuccessful()).andReturn();
+
+        final ArgumentCaptor<Vocabulary> captor = ArgumentCaptor.forClass(Vocabulary.class);
+        verify(serviceMock).remove(captor.capture());
+
+        assertEquals(vocabulary, captor.getValue());
+        // ensures that the object was really a Vocabulary, and not a dto
+        assertEquals(Vocabulary.class, captor.getValue().getClass());
+    }
+
+    @Test
     void removeVocabularyReturns2xxForEmptyVocabulary() throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(VOCABULARY_URI);
         when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
                 .thenReturn(VOCABULARY_URI);
-        when(serviceMock.find(VOCABULARY_URI)).thenReturn(Optional.of(vocabulary));
+        when(serviceMock.findRequired(VOCABULARY_URI)).thenReturn(vocabulary);
         mockMvc.perform(delete(PATH + "/" + FRAGMENT)).andExpect(status().is2xxSuccessful()).andReturn();
     }
 
@@ -281,7 +300,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(VOCABULARY_URI);
         when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
                 .thenReturn(VOCABULARY_URI);
-        when(serviceMock.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        when(serviceMock.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
         mockMvc.perform(delete(PATH + "/" + fragment)).andExpect(status().is4xxClientError()).andReturn();
     }

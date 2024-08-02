@@ -781,9 +781,10 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                 "Duitsland", "Sjina",
                 "Kina", "Tyskland",
                 "China", "Germany",
-                "Chiny", "Niemcy");
+                "Chiny", "Niemcy"
+        );
 
-        assertEquals(10, result.size());
+        assertEquals(expectedOrder.size(), result.size());
         assertEquals(expectedOrder, labels);
     }
 
