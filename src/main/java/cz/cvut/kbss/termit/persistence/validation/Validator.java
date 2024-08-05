@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.validation;
 import com.github.sgov.server.ValidationResultSeverityComparator;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -154,7 +155,7 @@ public class Validator implements VocabularyContentValidator {
                                                                                          .map(RDFNode::asLiteral)
                                                                                          .collect(Collectors.toMap(
                                                                                                  lit -> lit.getLanguage().isBlank() ?
-                                                                                                        Constants.DEFAULT_LANGUAGE : lit.getLanguage(),
+                                                                                                        JsonLd.NONE : lit.getLanguage(),
                                                                                                  Literal::getLexicalForm)));
 
                         return new ValidationResult()
