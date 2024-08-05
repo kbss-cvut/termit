@@ -54,8 +54,8 @@ class LocalizedSheetImporter {
     private Map<String, Integer> attributeToColumn;
     private String langTag;
 
-    private Map<String, Term> labelToTerm;
-    private Map<URI, Term> idToTerm;
+    private final Map<String, Term> labelToTerm = new LinkedHashMap<>();
+    private final Map<URI, Term> idToTerm = new HashMap<>();
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
     LocalizedSheetImporter(PrefixMap prefixMap, List<Term> existingTerms, IdentifierResolver idResolver,
@@ -64,6 +64,7 @@ class LocalizedSheetImporter {
         this.existingTerms = existingTerms;
         this.idResolver = idResolver;
         this.expectedTermNamespace = expectedTermNamespace;
+        existingTerms.stream().filter(t -> t.getUri() != null).forEach(t -> idToTerm.put(t.getUri(), t));
     }
 
     /**
@@ -87,8 +88,6 @@ class LocalizedSheetImporter {
         this.langTag = lang.get().name();
         LOG.trace("Sheet '{}' mapped to language tag '{}'.", sheet.getSheetName(), langTag);
         final Properties attributeMapping = new Properties();
-        this.labelToTerm = new LinkedHashMap<>();
-        this.idToTerm = new HashMap<>();
         try {
             attributeMapping.load(resolveColumnMappingFile());
             final Row attributes = sheet.getRow(0);
@@ -126,24 +125,27 @@ class LocalizedSheetImporter {
      */
     private void findTerms(Sheet sheet) {
         int i;
-        for (i = 1; i < sheet.getLastRowNum(); i++) {
+        for (i = 1; i <= sheet.getLastRowNum(); i++) {
             final Row termRow = sheet.getRow(i);
             Term term = existingTerms.size() >= i ? existingTerms.get(i - 1) : new Term();
-            final Optional<String> label = getAttributeValue(termRow, SKOS.PREF_LABEL);
-            if (label.isEmpty()) {
-                LOG.trace("Reached empty label column cell at row {}. Working with {} terms.", i, (i - 1));
-                break;
-            }
-            initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label.get());
-            labelToTerm.put(label.get(), term);
             getAttributeValue(termRow, JsonLd.ID).ifPresent(id -> {
                 term.setUri(resolveTermUri(id));
                 idToTerm.put(term.getUri(), term);
             });
+            final Optional<String> label = getAttributeValue(termRow, SKOS.PREF_LABEL);
+            if (label.isPresent()) {
+                initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label.get());
+                labelToTerm.put(label.get(), term);
+            } else {
+                if (i > existingTerms.size()) {
+                    LOG.trace("Reached empty label column cell at row {}.", i);
+                    break;
+                } else {
+                    labelToTerm.put(existingTerms.get(i - 1).getLabel().get(), existingTerms.get(i - 1));
+                }
+            }
         }
-        for (; i <= existingTerms.size(); i++) {
-            labelToTerm.put(existingTerms.get(i - 1).getLabel().get(), existingTerms.get(i - 1));
-        }
+        LOG.trace("Found {} term rows.", i - 1);
     }
 
     /**
