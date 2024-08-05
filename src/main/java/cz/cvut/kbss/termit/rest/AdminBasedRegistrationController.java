@@ -21,11 +21,15 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,12 +45,12 @@ import org.springframework.web.bind.annotation.RestController;
  * Available only if internal security is used.
  */
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
+@Tag(name = "Admin User Registration", description = "Allows admins to register new users.")
 @RestController
-@RequestMapping("/users")
-@Profile("admin-registration-only")
+@RequestMapping("/admin/users")
 public class AdminBasedRegistrationController {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FreeRegistrationController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminBasedRegistrationController.class);
 
     private final UserService userService;
 
@@ -56,11 +60,17 @@ public class AdminBasedRegistrationController {
         LOG.debug("Instantiating admin-based registration controller.");
     }
 
+    @Operation(security = {@SecurityRequirement(name="bearer-key")},
+               description = "Creates a new user account. If the password is blank, the account is locked, and an email will be sent to the new user with a link to create a password.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "User created"),
+            @ApiResponse(responseCode = "409", description = "User data are invalid")
+    })
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> createUser(@RequestBody UserAccount user) {
-        userService.persist(user);
-        LOG.info("User {} successfully registered.", user);
+        userService.adminCreateUser(user);
+        LOG.info("User {} successfully registered by {}.", user, userService.getCurrent().getUsername());
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 }

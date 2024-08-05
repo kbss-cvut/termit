@@ -2,7 +2,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.PasswordChangeDto;
-import cz.cvut.kbss.termit.service.business.PasswordChangeService;
+import cz.cvut.kbss.termit.service.business.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,11 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class PasswordChangeController {
     private static final Logger LOG = LoggerFactory.getLogger(PasswordChangeController.class);
 
-    private final PasswordChangeService passwordChangeService;
+    private final UserService userService;
 
     @Autowired
-    public PasswordChangeController(PasswordChangeService passwordChangeService) {
-        this.passwordChangeService = passwordChangeService;
+    public PasswordChangeController(UserService userService) {
+        this.userService = userService;
     }
 
     @Operation(description = "Requests a password reset for the specified username.")
@@ -47,7 +47,7 @@ public class PasswordChangeController {
     public ResponseEntity<Void> requestPasswordReset(
             @Parameter(description = "Username of the user") @RequestBody String username) {
         LOG.info("Password reset requested for user {}.", username);
-        passwordChangeService.requestPasswordReset(username);
+        userService.requestPasswordReset(username);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -62,7 +62,7 @@ public class PasswordChangeController {
             @Parameter(
                     description = "Token with URI for password reset") @RequestBody PasswordChangeDto passwordChangeDto) {
         LOG.info("Password change requested with token {}", passwordChangeDto.getToken());
-        passwordChangeService.changePassword(passwordChangeDto);
+        userService.changePassword(passwordChangeDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

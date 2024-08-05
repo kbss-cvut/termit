@@ -19,59 +19,114 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.environment.config.TestPersistenceConfig;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
+import cz.cvut.kbss.termit.environment.config.TestServiceConfig;
+import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.service.business.UserService;
+import cz.cvut.kbss.termit.service.mail.Postman;
+import cz.cvut.kbss.termit.service.notification.PasswordChangeNotifier;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AdminBasedRegistrationController.class)
-@Import({TestRestSecurityConfig.class})
-@ActiveProfiles(profiles = {"admin-registration-only"})
+@EnableAspectJAutoProxy(proxyTargetClass = true)
+@EnableTransactionManagement
+@ExtendWith(SpringExtension.class)
+@EnableSpringConfigured
+@EnableConfigurationProperties({Configuration.class})
+@ContextConfiguration(classes = {
+        TestRestSecurityConfig.class,
+        TestPersistenceConfig.class,
+        TestServiceConfig.class}, initializers = {ConfigDataApplicationContextInitializer.class})
+@ActiveProfiles("test")
 class AdminBasedRegistrationControllerTest extends BaseControllerTestRunner {
 
-    private static final String PATH = REST_MAPPING_PATH + "/users";
+    private static final String PATH = REST_MAPPING_PATH + "/admin/users";
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @SpyBean
+    private SecurityUtils securityUtils;
+
+    @SpyBean
+    private Postman postman;
+
+    @SpyBean
+    private PasswordChangeNotifier passwordChangeNotifier;
+
+    @SpyBean
     private UserService userService;
 
     @Test
     void createUserPersistsUserWhenCalledByAdmin() throws Exception {
-        final UserAccount admin = Generator.generateUserAccount();
+        final UserAccount admin = Generator.generateUserAccountWithPassword();
         admin.addType(Vocabulary.s_c_administrator_termitu);
         Environment.setCurrentUser(admin);
-        final UserAccount user = Generator.generateUserAccount();
+        when(securityUtils.getCurrentUser()).thenReturn(admin);
+        userService.persist(admin);
+        final UserAccount user = Generator.generateUserAccountWithPassword();
         mockMvc.perform(post(PATH).content(toJson(user))
                                   .contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isCreated());
-        verify(userService).persist(user);
+        verify(userService).adminCreateUser(user);
     }
 
     @Test
     void createUserThrowsForbiddenForNonAdminUser() throws Exception {
         final UserAccount admin = Generator.generateUserAccount();
         Environment.setCurrentUser(admin);
+        when(securityUtils.getCurrentUser()).thenReturn(admin);
         final UserAccount user = Generator.generateUserAccount();
         mockMvc.perform(post(PATH).content(toJson(user))
                                   .contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isForbidden());
         verify(userService, never()).persist(any());
+    }
+
+    @Test
+    void createUserSendsEmailWhenPasswordIsEmpty() throws Exception {
+        final UserAccount admin = Generator.generateUserAccountWithPassword();
+        admin.addType(Vocabulary.s_c_administrator_termitu);
+        Environment.setCurrentUser(admin);
+        when(securityUtils.getCurrentUser()).thenReturn(admin);
+        userService.persist(admin);
+        final UserAccount user = Generator.generateUserAccount();
+        mockMvc.perform(post(PATH).content(toJson(user))
+                                 .contentType(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isCreated());
+
+        ArgumentCaptor<PasswordChangeRequest> argumentCaptor = ArgumentCaptor.forClass(PasswordChangeRequest.class);
+        verify(passwordChangeNotifier).sendCreatePasswordEmail(argumentCaptor.capture());
+        assertEquals(user, argumentCaptor.getValue().getUserAccount());
+        verify(postman).sendMessage(any());
     }
 }

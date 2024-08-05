@@ -4,16 +4,14 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.PasswordChangeRequest;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PasswordChangeRequestDaoTest extends BaseDaoTestRunner {
@@ -41,12 +39,12 @@ class PasswordChangeRequestDaoTest extends BaseDaoTestRunner {
         secondPasswordChangeRequest.setToken(ANOTHER_TOKEN);
         passwordChangeRequest.setUserAccount(user);
         secondPasswordChangeRequest.setUserAccount(user);
-        passwordChangeRequest.setCreatedAt(Instant.now());
-        secondPasswordChangeRequest.setCreatedAt(Instant.now());
+        passwordChangeRequest.setCreatedAt(Utils.timestamp());
+        secondPasswordChangeRequest.setCreatedAt(Utils.timestamp());
         transactional(() -> em.persist(passwordChangeRequest));
         transactional(() -> em.persist(secondPasswordChangeRequest));
 
-        final List<PasswordChangeRequest> result = sut.findAllByUsername(user.getUsername());
+        final List<PasswordChangeRequest> result = sut.findAllByUserAccount(user);
         assertTrue(result.stream().anyMatch(r -> passwordChangeRequest.getUri().equals(r.getUri())));
         assertTrue(result.stream().anyMatch(r -> secondPasswordChangeRequest.getUri().equals(r.getUri())));
         assertEquals(2, result.size());

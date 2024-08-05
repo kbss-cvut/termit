@@ -34,17 +34,21 @@ import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @TestConfiguration
 @ComponentScan(basePackages = "cz.cvut.kbss.termit.service")
@@ -94,7 +98,10 @@ public class TestServiceConfig {
 
     @Bean
     public JavaMailSender javaMailSender() {
-        return mock(JavaMailSender.class);
+        JavaMailSender sender = mock(JavaMailSenderImpl.class);
+        when(sender.createMimeMessage()).thenCallRealMethod();
+        when(sender.createMimeMessage(any(InputStream.class))).thenCallRealMethod();
+        return sender;
     }
 
     @Bean
