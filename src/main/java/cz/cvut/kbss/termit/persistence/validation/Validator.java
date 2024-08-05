@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -152,7 +153,8 @@ public class Validator implements VocabularyContentValidator {
                         final MultilingualString messages = new MultilingualString(result.getMessages().stream()
                                                                                          .map(RDFNode::asLiteral)
                                                                                          .collect(Collectors.toMap(
-                                                                                                 Literal::getLanguage,
+                                                                                                 lit -> lit.getLanguage().isBlank() ?
+                                                                                                        Constants.DEFAULT_LANGUAGE : lit.getLanguage(),
                                                                                                  Literal::getLexicalForm)));
 
                         return new ValidationResult()
