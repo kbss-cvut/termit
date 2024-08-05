@@ -282,8 +282,9 @@ public class VocabularyService
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#asset)")
     public void remove(Vocabulary asset) {
-        aclService.findFor(asset).ifPresent(aclService::remove);
-        repositoryService.remove(asset);
+        Vocabulary toRemove = repositoryService.findRequired(asset.getUri());
+        aclService.findFor(toRemove).ifPresent(aclService::remove);
+        repositoryService.remove(toRemove);
     }
 
     /**
