@@ -297,6 +297,7 @@ class VocabularyServiceTest {
     @Test
     void removeRemovesAccessControlList() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final AccessControlList acl = Generator.generateAccessControlList(true);
         when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
 

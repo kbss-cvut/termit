@@ -790,7 +790,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     private void persistTerms(String lang, String... labels) {
         transactional(() -> Arrays.stream(labels).forEach(label -> {
             final Term parent = Generator.generateTermWithId();
-            parent.getLabel().set(lang, label);
+            parent.setLabel(MultilingualString.create(label, lang));
             parent.setGlossary(vocabulary.getGlossary().getUri());
             vocabulary.getGlossary().addRootTerm(parent);
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));

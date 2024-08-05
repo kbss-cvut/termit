@@ -114,7 +114,7 @@ public class Validator implements VocabularyContentValidator {
                 // Currently, only using content rules, not OntoUml, as TermIt does not support adding OntoUml rules
                 validator.getModelRules().stream()
                          .filter(r -> MODEL_RULES_TO_ADD.stream().anyMatch(s -> r.toString().contains(s)))
-                         .collect(Collectors.toList())
+                         .toList()
         );
         final Model validationModel = com.github.sgov.server.Validator.getRulesModel(rules);
         loadOverrideRules(validationModel, language);
