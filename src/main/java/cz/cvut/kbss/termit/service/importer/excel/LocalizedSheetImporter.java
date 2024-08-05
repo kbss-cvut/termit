@@ -6,7 +6,9 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
+import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -45,6 +47,9 @@ class LocalizedSheetImporter {
 
     private final PrefixMap prefixMap;
     private final List<Term> existingTerms;
+    private final IdentifierResolver idResolver;
+    // Namespace expected based on the vocabulary into which the terms will be imported
+    private final String expectedTermNamespace;
 
     private Map<String, Integer> attributeToColumn;
     private String langTag;
@@ -53,9 +58,12 @@ class LocalizedSheetImporter {
     private Map<URI, Term> idToTerm;
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
-    LocalizedSheetImporter(PrefixMap prefixMap, List<Term> existingTerms) {
+    LocalizedSheetImporter(PrefixMap prefixMap, List<Term> existingTerms, IdentifierResolver idResolver,
+                           String expectedTermNamespace) {
         this.prefixMap = prefixMap;
         this.existingTerms = existingTerms;
+        this.idResolver = idResolver;
+        this.expectedTermNamespace = expectedTermNamespace;
     }
 
     /**
@@ -129,12 +137,37 @@ class LocalizedSheetImporter {
             initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label.get());
             labelToTerm.put(label.get(), term);
             getAttributeValue(termRow, JsonLd.ID).ifPresent(id -> {
-                term.setUri(URI.create(prefixMap.resolvePrefixed(id)));
+                term.setUri(resolveTermUri(id));
                 idToTerm.put(term.getUri(), term);
             });
         }
         for (; i <= existingTerms.size(); i++) {
             labelToTerm.put(existingTerms.get(i - 1).getLabel().get(), existingTerms.get(i - 1));
+        }
+    }
+
+    /**
+     * If an identifier column is found in the sheet, attempt to use it for term ids.
+     * <p>
+     * This methods first resolves possible prefixes and then ensures the identifier matches the expected namespace
+     * provided by the vocabulary into which we are importing. If it does not match, a new identifier is generated based
+     * on the expected namespace and the local name extracted from the identifier present in the sheet.
+     *
+     * @param id Identifier extracted from the sheet
+     * @return Valid term identifier matching target vocabulary
+     */
+    private URI resolveTermUri(String id) {
+        // Handle prefix if it is used
+        id = prefixMap.resolvePrefixed(id);
+        final URI uriId = URI.create(id);
+        if (expectedTermNamespace.equals(IdentifierResolver.extractIdentifierNamespace(uriId))) {
+            return URI.create(id);
+        } else {
+            LOG.trace(
+                    "Existing term identifier {} does not correspond to the expected vocabulary term namespace {}. Adjusting the term id.",
+                    Utils.uriToString(uriId), expectedTermNamespace);
+            final String localName = IdentifierResolver.extractIdentifierFragment(uriId);
+            return idResolver.generateIdentifier(expectedTermNamespace, localName);
         }
     }
 

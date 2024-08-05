@@ -14,6 +14,7 @@ import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,11 +24,13 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -58,6 +61,13 @@ class ExcelImporterTest {
     @Mock
     private DataDao dataDao;
 
+    @Spy
+    private Configuration config = new Configuration();
+
+    @SuppressWarnings("unused")
+    @Spy
+    private IdentifierResolver idResolver = new IdentifierResolver();
+
     @InjectMocks
     private ExcelImporter sut;
 
@@ -66,6 +76,7 @@ class ExcelImporterTest {
     @BeforeEach
     void setUp() {
         this.vocabulary = Generator.generateVocabularyWithId();
+        config.getNamespace().getTerm().setSeparator("/terms");
     }
 
     @ParameterizedTest
@@ -293,14 +304,15 @@ class ExcelImporterTest {
         verify(dataDao).insertRawData(quadsCaptor.capture());
         assertEquals(1, quadsCaptor.getValue().size());
         assertEquals(List.of(new Quad(termCaptor.getAllValues().get(1).getUri(), URI.create(SKOS.RELATED),
-                                      termCaptor.getAllValues().get(0).getUri(), vocabulary.getUri())), quadsCaptor.getValue());
+                                      termCaptor.getAllValues().get(0).getUri(), vocabulary.getUri())),
+                     quadsCaptor.getValue());
     }
 
     @Test
     void importImportsTermsWhenAnotherLanguageSheetIsEmpty() {
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE,false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -349,9 +361,10 @@ class ExcelImporterTest {
 
     @Test
     void importSupportsTermIdentifiers() {
+        vocabulary.setUri(URI.create("http://example.com"));
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE,false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -367,7 +380,7 @@ class ExcelImporterTest {
         assertTrue(building.isPresent());
         assertEquals(URI.create("http://example.com/terms/building"), building.get().getUri());
         final Optional<Term> construction = captor.getAllValues().stream()
-                                              .filter(t -> "Construction".equals(t.getLabel().get("en"))).findAny();
+                                                  .filter(t -> "Construction".equals(t.getLabel().get("en"))).findAny();
         assertTrue(construction.isPresent());
         assertEquals(URI.create("http://example.com/terms/construction"), construction.get().getUri());
         final ArgumentCaptor<Collection<Quad>> quadsCaptor = ArgumentCaptor.forClass(Collection.class);
@@ -379,9 +392,10 @@ class ExcelImporterTest {
 
     @Test
     void importSupportsPrefixedTermIdentifiers() {
+        vocabulary.setUri(URI.create("http://example.com"));
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE,false);
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -405,5 +419,27 @@ class ExcelImporterTest {
         assertEquals(1, quadsCaptor.getValue().size());
         assertEquals(List.of(new Quad(construction.get().getUri(), URI.create(SKOS.RELATED),
                                       building.get().getUri(), vocabulary.getUri())), quadsCaptor.getValue());
+    }
+
+    @Test
+    void importAdjustsTermIdentifiersToUseExistingVocabularyIdentifierAndSeparatorAsNamespace() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-identifiers-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertTrue(captor.getAllValues().stream().anyMatch(t -> Objects.equals(URI.create(
+                                                                                       vocabulary.getUri().toString() + config.getNamespace().getTerm().getSeparator() + "/building"),
+                                                                               t.getUri())));
+        assertTrue(captor.getAllValues().stream().anyMatch(t -> Objects.equals(URI.create(
+                                                                                       vocabulary.getUri().toString() + config.getNamespace().getTerm().getSeparator() + "/construction"),
+                                                                               t.getUri())));
     }
 }

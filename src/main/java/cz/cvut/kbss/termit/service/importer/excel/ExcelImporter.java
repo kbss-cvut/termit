@@ -8,9 +8,11 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.ExcelVocabularyExporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -48,10 +50,16 @@ public class ExcelImporter implements VocabularyImporter {
     private final TermRepositoryService termService;
     private final DataDao dataDao;
 
-    public ExcelImporter(VocabularyDao vocabularyDao, TermRepositoryService termService, DataDao dataDao) {
+    private final IdentifierResolver idResolver;
+    private final Configuration config;
+
+    public ExcelImporter(VocabularyDao vocabularyDao, TermRepositoryService termService, DataDao dataDao,
+                         IdentifierResolver idResolver, Configuration config) {
         this.vocabularyDao = vocabularyDao;
         this.termService = termService;
         this.dataDao = dataDao;
+        this.idResolver = idResolver;
+        this.config = config;
     }
 
     @Override
@@ -63,6 +71,7 @@ public class ExcelImporter implements VocabularyImporter {
         }
         final Vocabulary targetVocabulary = vocabularyDao.find(config.vocabularyIri()).orElseThrow(
                 () -> NotFoundException.create(Vocabulary.class, config.vocabularyIri()));
+        final String termNamespace = resolveVocabularyTermNamespace(targetVocabulary);
         try {
             List<Term> terms = Collections.emptyList();
             Set<TermRelationship> rawDataToInsert = new HashSet<>();
@@ -76,19 +85,22 @@ public class ExcelImporter implements VocabularyImporter {
                         // Skip already processed prefix sheet
                         continue;
                     }
-                    final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(prefixMap, terms);
+                    final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(prefixMap, terms,
+                                                                                            idResolver, termNamespace);
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
                 // Ensure all parents are saved before we start adding children
                 terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty())
                      .forEach(root -> {
+                         LOG.trace("Persisting root term {}.", root);
                          termService.addRootTermToVocabulary(root, targetVocabulary);
                          root.setVocabulary(targetVocabulary.getUri());
                      });
                 terms.stream().filter(t -> !Utils.emptyIfNull(t.getParentTerms()).isEmpty())
                      .forEach(t -> {
                          t.setVocabulary(targetVocabulary.getUri());
+                         LOG.trace("Persisting child term {}.", t);
                          termService.addChildTerm(t, t.getParentTerms().iterator().next());
                      });
                 // Insert term relationships as raw data because of possible object conflicts in the persistence context -
@@ -111,6 +123,19 @@ public class ExcelImporter implements VocabularyImporter {
             LOG.debug("Loading prefix map from sheet '{}'.", ExcelVocabularyExporter.PREFIX_SHEET_NAME);
             return new PrefixMap(prefixSheet);
         }
+    }
+
+    /**
+     * Resolves namespace for identifiers of terms in the specified vocabulary.
+     * <p>
+     * It uses the vocabulary identifier and the configured term namespace separator.
+     *
+     * @param vocabulary Vocabulary whose term identifier namespace to resolve
+     * @return Resolved namespace
+     */
+    private String resolveVocabularyTermNamespace(Vocabulary vocabulary) {
+        return idResolver.buildNamespace(vocabulary.getUri().toString(),
+                                         config.getNamespace().getTerm().getSeparator());
     }
 
     /**
