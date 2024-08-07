@@ -25,14 +25,18 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
+import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
+import cz.cvut.kbss.termit.event.VocabularyRemovalEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.Document;
+import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -51,7 +55,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SIZE;
+import static cz.cvut.kbss.termit.util.Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
 
 @Repository
 public class VocabularyDao extends BaseAssetDao<Vocabulary>
@@ -197,41 +211,60 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         }
     }
 
+    /**
+     * Forcefully removes the specified vocabulary.
+     * <p>
+     * This deletes the whole graph of the vocabulary, all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
+     * should be exercised when using this method. All relevant data, including documents and files, will be dropped.
+     * <p>
+     * Publishes {@link VocabularyRemovalEvent} before the actual removal to allow other services to clean up related resources (e.g., delete the document).
+     * @param entity The vocabulary to delete
+     */
     @ModifiesData
     @Override
     public void remove(Vocabulary entity) {
-        Objects.requireNonNull(entity);
-        try {
-            find(entity.getUri()).ifPresent(elem -> {
-                em.remove(elem);
-                refreshLastModified();
-            });
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
+        eventPublisher.publishEvent(new VocabularyRemovalEvent(this, entity.getUri()));
+        this.removeVocabulary(entity, true);
     }
 
     /**
+     * <p>
+     * Does not publishes the {@link VocabularyRemovalEvent}.<br>
+     * You should use {@link #remove(Vocabulary)} instead.
+     * <p>
      * Forcefully removes the specified vocabulary.
      * <p>
      * This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
      * should be exercised when using this method, as it does not check for any references or usage and just drops all
      * the relevant data.
-     *
      * @param entity The vocabulary to delete
+     * @param dropGraph if false,
+     *                  executes {@code  src/main/resources/query/remove/removeGlossaryTerms.ru} removing terms,
+     *                  their relations, model, glossary and vocabulary itself, keeps the document.
+     *                  When true, the whole vocabulary graph is dropped.
      */
-    @ModifiesData
-    public void forceRemove(Vocabulary entity) {
+    public void removeVocabulary(Vocabulary entity, boolean dropGraph) {
         Objects.requireNonNull(entity);
         LOG.debug("Forcefully removing vocabulary {} and all its contents.", entity);
         try {
-            final URI context = contextMapper.getVocabularyContext(entity);
-            em.createNativeQuery(Utils.loadQuery(REMOVE_GLOSSARY_TERMS_QUERY_FILE))
-              .setParameter("g", context)
-              .setParameter("vocabulary", entity)
-              .executeUpdate();
-            remove(entity);
-            em.getEntityManagerFactory().getCache().evict(context);
+            final URI vocabularyContext = contextMapper.getVocabularyContext(entity.getUri());
+
+            if(dropGraph) {
+                // drops whole named graph
+                em.createNativeQuery("DROP GRAPH ?context")
+                  .setParameter("context", vocabularyContext)
+                  .executeUpdate();
+            } else {
+                // removes all terms and their relations from named graph
+                em.createNativeQuery(Utils.loadQuery(REMOVE_GLOSSARY_TERMS_QUERY_FILE))
+                  .setParameter("g", vocabularyContext)
+                  .setParameter("vocabulary", entity.getUri())
+                  .executeUpdate();
+            }
+
+            find(entity.getUri()).ifPresent(em::remove);
+            refreshLastModified();
+            em.getEntityManagerFactory().getCache().evict(vocabularyContext);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -376,7 +409,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                  "?inVocabulary ?vocabulary ." +
                                                  " }", Boolean.class)
                       .setParameter("type", URI.create(SKOS.CONCEPT))
-                      .setParameter("vocabulary", vocabulary)
+                      .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("inVocabulary",
                                     URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
                       .getSingleResult();
@@ -475,6 +508,78 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             assert result.get(0) instanceof Object[];
             return new PrefixDeclaration(((Object[]) result.get(0))[0].toString(),
                                          ((Object[]) result.get(0))[1].toString());
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * @return all relations between specified vocabulary and all other vocabularies
+     */
+    public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
+        Objects.requireNonNull(vocabulary);
+        final URI vocabularyUri = vocabulary.getUri();
+
+        try {
+            return em.createNativeQuery("""
+                             SELECT DISTINCT ?object ?relation ?subject {
+                                 ?object a ?vocabularyType ;
+                                    ?relation ?subject . 
+                                 FILTER(?object != ?subject) .
+                                 FILTER(?relation NOT IN (?excluded)) .
+                             } ORDER BY ?object ?relation
+                             """, "RDFStatement")
+                     .setParameter("subject", vocabularyUri)
+                    .setParameter("excluded", excludedRelations)
+                     .setParameter("vocabularyType", URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Vocabulary.class)))
+                     .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * @return all relations between terms in specified vocabulary and all terms from any other vocabulary
+     */
+    public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        final URI vocabularyUri = vocabulary.getUri();
+        final URI termType = URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Term.class));
+        final URI inVocabulary = URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku);
+
+        try {
+            return em.createNativeQuery("""
+                             SELECT DISTINCT ?object ?relation ?subject WHERE {
+                                     ?term a ?termType;
+                                         ?inVocabulary ?vocabulary .
+
+                                     {
+                                        ?term ?relation ?secondTerm .
+                                        ?secondTerm a ?termType;
+                                            ?inVocabulary ?secondVocabulary .
+                                            
+                                        BIND(?term as ?object)
+                                        BIND(?secondTerm as ?subject)
+                                     } UNION {
+                                        ?secondTerm ?relation ?term .
+                                        ?secondTerm a ?termType;
+                                            ?inVocabulary ?secondVocabulary .
+
+                                        BIND(?secondTerm as ?object)
+                                        BIND(?term as ?subject)
+                                     }
+
+                                     FILTER(?relation IN (?deniedRelations))
+                                     FILTER(?object != ?subject)
+                                     FILTER(?secondVocabulary != ?vocabulary)
+                             } ORDER by ?object ?relation ?subject
+                             """, "RDFStatement"
+                     ).setMaxResults(DEFAULT_PAGE_SIZE)
+                     .setParameter("termType", termType)
+                     .setParameter("inVocabulary", inVocabulary)
+                     .setParameter("vocabulary", vocabularyUri)
+                     .setParameter("deniedRelations", SKOS_CONCEPT_MATCH_RELATIONSHIPS)
+                     .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

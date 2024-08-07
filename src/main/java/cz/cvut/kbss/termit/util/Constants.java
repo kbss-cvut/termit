@@ -132,6 +132,13 @@ public class Constants {
     ).map(URI::create).collect(Collectors.toSet());
 
     /**
+     * Relations between vocabularies that do not prevent vocabulary to be removed
+     */
+    public static final Set<URI> VOCABULARY_REMOVAL_IGNORED_RELATIONS = Stream.of(
+            Vocabulary.s_p_je_verzi, Vocabulary.s_p_is_snapshot_of, Vocabulary.s_p_je_verzi_slovniku
+    ).map(URI::create).collect(Collectors.toSet());
+
+    /**
      * Labels of columns representing exported term attributes in various supported languages.
      */
     public static final Map<String, List<String>> EXPORT_COLUMN_LABELS = Map.of(

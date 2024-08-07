@@ -23,27 +23,40 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
+import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.model.*;
+import cz.cvut.kbss.termit.event.VocabularyRemovalEvent;
+import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Model;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -54,7 +67,17 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -62,7 +85,11 @@ import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.contains
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
@@ -75,6 +102,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Autowired
     private DescriptorFactory descriptorFactory;
 
+    @Spy
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
@@ -667,7 +695,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void forceRemoveRemovesVocabularyGlossaryModelAndAllTerms() {
+    void removeVocabularyRemovesVocabularyGlossaryModelAndAllTermsWithoutDocument() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
                                           .toList();
@@ -682,25 +710,69 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             });
         });
 
-        transactional(() -> sut.forceRemove(vocabulary));
+        transactional(() -> sut.removeVocabulary(vocabulary, false));
         final String query = "ASK { ?x a ?type }";
+        // vocabulary removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
                       .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
                       .getSingleResult());
+        // glossary removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
                       .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_glosar))
                       .getSingleResult());
+        // model removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
                       .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_model))
                       .getSingleResult());
+
+        // all terms removed
         assertFalse(em.createNativeQuery(query, Boolean.class).setParameter("type", URI.create(SKOS.CONCEPT))
                       .getSingleResult());
+
+        // document not removed
         assertTrue(em.createNativeQuery(query, Boolean.class)
                      .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_dokument))
                      .getSingleResult());
+
+        // vocabulary removed from cache
         assertFalse(em.getEntityManagerFactory().getCache().contains(Vocabulary.class, vocabulary.getUri(),
                                                                      descriptorFactory.vocabularyDescriptor(
                                                                              vocabulary)));
+    }
+
+    @Test
+    void removePublishesEventAndDropsGraph() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
+                                          .toList();
+        final Document doc = Generator.generateDocumentWithId();
+        vocabulary.setDocument(doc);
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            em.persist(doc, descriptorFactory.documentDescriptor(vocabulary));
+            terms.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(t));
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
+            });
+        });
+
+        assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?vocabulary { ?s ?p ?o }}", Boolean.class)
+                      .setParameter("vocabulary", vocabulary.getUri())
+                      .getSingleResult());
+
+        transactional(() -> sut.remove(vocabulary));
+
+        ArgumentCaptor<VocabularyRemovalEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyRemovalEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+        VocabularyRemovalEvent event = eventCaptor.getValue();
+        assertNotNull(event);
+
+        assertEquals(event.getVocabulary(), vocabulary.getUri());
+
+        assertFalse(em.createNativeQuery("ASK WHERE{ GRAPH ?vocabulary { ?s ?p ?o }}", Boolean.class)
+                      .setParameter("vocabulary", vocabulary.getUri())
+                      .getSingleResult());
     }
 
     @Test
@@ -716,5 +788,144 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(document, result.getDocument());
         assertEquals(document,
                      em.find(Document.class, document.getUri(), descriptorFactory.documentDescriptor(instance)));
+    }
+
+    @Test
+    void internalAddRealtionCreatesRelation() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+        final URI relation = URI.create(SKOS.RELATED);
+
+        transactional(() -> {
+            sut.persist(vocabulary);
+            sut.persist(secondVocabulary);
+
+            Generator.addRelation(vocabulary.getUri(), relation, secondVocabulary.getUri(), em);
+        });
+
+        Boolean result = em.createNativeQuery("""
+                                   ASK WHERE {
+                                       ?vocabulary a ?vocabularyType .
+                                       ?secondVocabulary a ?vocabularyType .
+                                       ?vocabulary ?relation ?secondVocabulary .
+                                   }
+                                   """, Boolean.class)
+                           .setParameter("vocabulary", vocabulary.getUri())
+                           .setParameter("secondVocabulary", secondVocabulary.getUri())
+                           .setParameter("vocabularyType", URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Vocabulary.class)))
+                           .setParameter("relation", relation).getSingleResult();
+
+        assertTrue(result);
+    }
+
+    public static Set<URI> skosConceptMatchRelationshipsSource() {
+        return Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
+    }
+
+    /**
+     * term - relation - secondTerm
+     */
+    @ParameterizedTest
+    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
+    void getAnyExternalRelationsReturnsTermsWithOutgoingRelations(URI termRelation) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(secondVocabulary.getUri());
+
+        transactional(() -> {
+            sut.persist(vocabulary);
+            sut.persist(secondVocabulary);
+
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+
+            em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
+            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
+
+            Generator.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
+        });
+
+        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+
+        assertEquals(1, relations.size());
+        final RdfsStatement relation = relations.get(0);
+        assertEquals(term.getUri(), relation.getObject());
+        assertEquals(termRelation, relation.getRelation());
+        assertEquals(secondTerm.getUri(), relation.getSubject());
+    }
+
+    /**
+     * secondTerm - relation - term
+     */
+    @ParameterizedTest
+    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
+    void getAnyExternalRelationsReturnsTermsWithIncommingRelations(URI termRelation) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(secondVocabulary.getUri());
+
+        transactional(() -> {
+            sut.persist(vocabulary);
+            sut.persist(secondVocabulary);
+
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+
+            em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
+            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
+
+            Generator.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
+        });
+
+        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+
+        assertEquals(1, relations.size());
+        final RdfsStatement relation = relations.get(0);
+        assertEquals(secondTerm.getUri(), relation.getObject());
+        assertEquals(termRelation, relation.getRelation());
+        assertEquals(term.getUri(), relation.getSubject());
+    }
+
+    /**
+     * secondTerm - relation - term<br>
+     * term - relation - secondTerm
+     */
+    @ParameterizedTest
+    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
+    void getAnyExternalRelationsReturnsTermsWithBothRelations(URI termRelation) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(secondVocabulary.getUri());
+
+        transactional(() -> {
+            sut.persist(vocabulary);
+            sut.persist(secondVocabulary);
+
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+
+            em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
+            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
+
+            Generator.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
+            Generator.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
+        });
+
+        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+
+        assertEquals(2, relations.size());
+        relations.forEach(relation -> {
+            assertEquals(termRelation, relation.getRelation());
+            if(relation.getObject().equals(term.getUri())) {
+                assertEquals(secondTerm.getUri(), relation.getSubject());
+            } else if(relation.getObject().equals(secondTerm.getUri())) {
+                assertEquals(term.getUri(), relation.getSubject());
+            } else {
+                Assertions.fail("The Relation object is neither a term nor a secondTerm");
+            }
+        });
     }
 }

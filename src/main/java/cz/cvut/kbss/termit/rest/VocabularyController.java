@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
@@ -351,10 +352,49 @@ public class VocabularyController extends BaseController {
                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        vocabularyService.find(identifier).ifPresent(toRemove -> {
-            vocabularyService.remove(toRemove);
-            LOG.debug("Vocabulary {} removed.", toRemove);
-        });
+        final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
+        vocabularyService.remove(vocabulary);
+        LOG.debug("Vocabulary {} removed.", vocabulary);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Returns relations with other vocabularies")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "A collection of vocabulary relations"),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+    })
+    @GetMapping(value = "/{localName}/relations")
+    public List<RdfsStatement> relations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                                 @PathVariable String localName,
+                                         @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                            example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                                 @RequestParam(name = QueryParams.NAMESPACE,
+                                               required = false) Optional<String> namespace) {
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
+        final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
+
+        return vocabularyService.getVocabularyRelations(vocabulary);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Returns relations with terms from other vocabularies")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "A collection of term relations"),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+    })
+    @GetMapping(value = "/{localName}/terms/relations")
+    public List<RdfsStatement> termsRelations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                         example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                                        @PathVariable String localName,
+                                              @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                   example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                                        @RequestParam(name = QueryParams.NAMESPACE,
+                                                      required = false) Optional<String> namespace) {
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
+        final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
+
+        return vocabularyService.getTermRelations(vocabulary);
     }
 
     @Operation(description = "Validates the terms in a vocabulary with the specified identifier.")
