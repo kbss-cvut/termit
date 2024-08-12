@@ -289,7 +289,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * @param instance The instance to be removed, not {@code null}
      */
     @Override
-    protected void preRemove(Vocabulary instance) {
+    protected void preRemove(@NotNull Vocabulary instance) {
         ensureNotImported(instance);
         ensureNoTermRelationsExists(instance);
         super.preRemove(instance);

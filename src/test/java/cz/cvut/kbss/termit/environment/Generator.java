@@ -527,20 +527,4 @@ public class Generator {
         result.add(rr);
         return result;
     }
-
-    /**
-     * Adds relation into entity manager connection
-     * @implNote call in transactional
-     */
-    public static void addRelation(URI subject, URI predicate, URI object, EntityManager em) {
-        final Repository repo = em.unwrap(Repository.class);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            final ValueFactory vf = conn.getValueFactory();
-            conn.begin();
-            conn.add(vf.createIRI(subject.toString()),
-                    vf.createIRI(predicate.toString()),
-                    vf.createIRI(object.toString()));
-            conn.commit();
-        }
-    }
 }
