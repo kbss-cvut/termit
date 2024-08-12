@@ -743,10 +743,54 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                            .collect(Collectors.toList()));
     }
 
+    @Test
+    void findAllRootsReturnsTermsThatAreMissingDefaultLanguageLabel() {
+        configuration.getPersistence().setLanguage("cs");
+        // these terms will be missing Czech labels
+        persistTerms("en", "Germany", "China", "Spain", "Syria");
+        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+        assertEquals(4, result.size());
+        assertEquals(Arrays
+                        .asList("China", "Germany", "Spain", "Syria"),
+                result.stream().map(r -> r.getLabel().get("en"))
+                      .toList());
+    }
+
+    /**
+     * terms should be ordered - by language and then lexicographically, with the default language always first
+     */
+    @Test
+    void findAllRootsReturnsTermsInMultipleLanguagesWithoutPrimaryLabelInCorrectOrder() {
+        configuration.getPersistence().setLanguage("cs");
+        persistTerms("cs", "Německo", "Čína");
+        persistTerms("af", "Duitsland", "Sjina");
+        persistTerms("en", "Germany", "China");
+        persistTerms("pl", "Niemcy", "Chiny");
+        persistTerms("da", "Tyskland", "Kina");
+        // lang order is: af, cs, da, en, pl
+        final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
+
+        // map results to another language than English if possible
+        final List<String> labels = result.stream().map(r -> {
+            final Optional<String> lang = r.getLabel().getLanguages().stream().filter(l -> !l.equals("en")).findAny();
+            return r.getLabel().get(lang.orElse("en"));
+        }).toList();
+
+        final List<String> expectedOrder = Arrays.asList(
+                "Čína", "Německo", // Czech as first, its default language
+                "Duitsland", "Sjina",
+                "Kina", "Tyskland",
+                "China", "Germany",
+                "Chiny", "Niemcy");
+
+        assertEquals(10, result.size());
+        assertEquals(expectedOrder, labels);
+    }
+
     private void persistTerms(String lang, String... labels) {
         transactional(() -> Arrays.stream(labels).forEach(label -> {
             final Term parent = Generator.generateTermWithId();
-            parent.getLabel().set(lang, label);
+            parent.setLabel(MultilingualString.create(label, lang));
             parent.setGlossary(vocabulary.getGlossary().getUri());
             vocabulary.getGlossary().addRootTerm(parent);
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));

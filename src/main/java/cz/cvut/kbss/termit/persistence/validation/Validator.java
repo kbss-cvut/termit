@@ -20,10 +20,12 @@ package cz.cvut.kbss.termit.persistence.validation;
 import com.github.sgov.server.ValidationResultSeverityComparator;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -113,7 +115,7 @@ public class Validator implements VocabularyContentValidator {
                 // Currently, only using content rules, not OntoUml, as TermIt does not support adding OntoUml rules
                 validator.getModelRules().stream()
                          .filter(r -> MODEL_RULES_TO_ADD.stream().anyMatch(s -> r.toString().contains(s)))
-                         .collect(Collectors.toList())
+                         .toList()
         );
         final Model validationModel = com.github.sgov.server.Validator.getRulesModel(rules);
         loadOverrideRules(validationModel, language);
@@ -152,7 +154,8 @@ public class Validator implements VocabularyContentValidator {
                         final MultilingualString messages = new MultilingualString(result.getMessages().stream()
                                                                                          .map(RDFNode::asLiteral)
                                                                                          .collect(Collectors.toMap(
-                                                                                                 Literal::getLanguage,
+                                                                                                 lit -> lit.getLanguage().isBlank() ?
+                                                                                                        JsonLd.NONE : lit.getLanguage(),
                                                                                                  Literal::getLexicalForm)));
 
                         return new ValidationResult()

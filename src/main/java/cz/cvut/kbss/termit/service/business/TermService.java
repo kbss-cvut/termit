@@ -176,6 +176,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Retrieves root terms (terms without parent).
      * <p>
      * The page specification parameter allows configuration of the number of results and their offset.
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param pageSpec     Paging specification
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
@@ -192,6 +194,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * <p>
      * Basically, this does a transitive closure over the vocabulary import relationship, starting at the specified
      * vocabulary, and returns all parent-less terms.
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param vocabulary   Base vocabulary for the vocabulary import closure
      * @param pageSpec     Page specifying result number and position

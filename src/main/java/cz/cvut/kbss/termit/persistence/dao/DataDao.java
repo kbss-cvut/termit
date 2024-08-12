@@ -32,6 +32,7 @@ import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import jakarta.annotation.Nullable;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -150,13 +151,30 @@ public class DataDao {
     /**
      * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
      * <p>
-     * Note that the label has to have matching language tag or no language tag at all (matching tag is preferred).
+     * Note that the label has to have language tag matching the configured persistence unit language
+     * or no language tag at all (matching tag is preferred).
      *
      * @param id Resource ({@link RDFS#RESOURCE}) identifier
      * @return Matching resource identifier (if found)
      */
     public Optional<String> getLabel(URI id) {
+        return getLabel(id, null);
+    }
+
+    /**
+     * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
+     * <p>
+     * Note that the label has to have matching language tag or no language tag at all (matching tag is preferred).
+     *
+     * @param id Resource ({@link RDFS#RESOURCE}) identifier
+     * @param language Label language, if null, configured persistence unit language is used instead
+     * @return Matching resource identifier (if found)
+     */
+    public Optional<String> getLabel(URI id, @Nullable String language) {
         Objects.requireNonNull(id);
+        if(language == null) {
+            language = config.getLanguage();
+        }
         if (!id.isAbsolute()) {
             return Optional.of(id.toString());
         }
@@ -170,7 +188,7 @@ public class DataDao {
                                                     String.class)
                                  .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
                                  .setParameter("has-title", URI.create(DC.Terms.TITLE))
-                                 .setParameter("tag", config.getLanguage(), null).getSingleResult());
+                                 .setParameter("tag", language, null).getSingleResult());
         } catch (NoResultException | NoUniqueResultException e) {
             return Optional.empty();
         }

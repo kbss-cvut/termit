@@ -240,6 +240,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     /**
      * Finds all root terms (terms without parent term) in the specified vocabulary.
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param vocabulary   Vocabulary whose terms should be returned
      * @param pageSpec     Page specifying result number and position
@@ -255,6 +257,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     /**
      * Finds all root terms (terms without parent term).
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param pageSpec     Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
@@ -273,6 +277,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * <p>
      * Basically, this does a transitive closure over the vocabulary import relationship, starting at the specified
      * vocabulary, and returns all parent-less terms.
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param vocabulary   Base vocabulary for the vocabulary import closure
      * @param pageSpec     Page specifying result number and position
