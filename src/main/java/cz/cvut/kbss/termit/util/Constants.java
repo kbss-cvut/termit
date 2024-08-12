@@ -140,6 +140,7 @@ public class Constants {
 
     /**
      * Labels of columns representing exported term attributes in various supported languages.
+     * TODO Replace with constants loaded from attribute mapping properties files
      */
     public static final Map<String, List<String>> EXPORT_COLUMN_LABELS = Map.of(
             "cs",
@@ -200,6 +201,9 @@ public class Constants {
      * Additional media types not covered by {@link org.springframework.http.MediaType}.
      */
     public static final class MediaType {
+        /**
+         * Media type for .xlsx
+         */
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";

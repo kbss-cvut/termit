@@ -564,6 +564,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
+                            <propertiesEncoding>ISO-8859-1</propertiesEncoding>
                             <nonFilteredFileExtensions>
                                 <nonFilteredFileExtension>xlsx</nonFilteredFileExtension>
                             </nonFilteredFileExtensions>

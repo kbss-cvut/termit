@@ -33,9 +33,10 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
-import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.MessageFormatter;
+import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
+import cz.cvut.kbss.termit.service.importer.VocabularyImporters;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -50,7 +51,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationContext;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,29 +78,21 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
 
     private final Configuration config;
 
-    private final ApplicationContext context;
+    private final VocabularyImporters importers;
 
     private final DtoMapper dtoMapper;
 
     @Autowired
-    public VocabularyRepositoryService(ApplicationContext context, VocabularyDao vocabularyDao,
-                                       IdentifierResolver idResolver,
+    public VocabularyRepositoryService(VocabularyDao vocabularyDao, IdentifierResolver idResolver,
                                        Validator validator, EditableVocabularies editableVocabularies,
-                                       Configuration config, DtoMapper dtoMapper) {
+                                       Configuration config, VocabularyImporters importers, DtoMapper dtoMapper) {
         super(validator);
-        this.context = context;
         this.vocabularyDao = vocabularyDao;
         this.idResolver = idResolver;
         this.editableVocabularies = editableVocabularies;
         this.config = config;
+        this.importers = importers;
         this.dtoMapper = dtoMapper;
-    }
-
-    /**
-     * This method ensures new instances of the prototype-scoped bean are returned on every call.
-     */
-    private SKOSImporter getSKOSImporter() {
-        return context.getBean(SKOSImporter.class);
     }
 
     @Override
@@ -231,7 +223,9 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         Objects.requireNonNull(file);
         try {
             String contentType = resolveContentType(file);
-            return getSKOSImporter().importVocabulary(rename, contentType, this::persist, file.getInputStream());
+            return importers.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(rename, null, this::initDocument),
+                    new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
@@ -252,11 +246,13 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         Objects.requireNonNull(file);
         try {
             String contentType = resolveContentType(file);
-            return getSKOSImporter().importVocabulary(vocabularyIri, contentType, this::persist, file.getInputStream());
+            return importers.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
+                    new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
-            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage());
+            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage(), e);
         }
     }
 

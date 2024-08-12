@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -36,10 +37,14 @@ import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
+import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +59,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -143,7 +150,8 @@ public class VocabularyService
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Vocabulary findRequired(URI id) {
         // Enhance vocabulary data with info on current user's access level
-        final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(repositoryService.findRequired(id));
+        final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(
+                repositoryService.findRequired(id));
         dto.setAccessLevel(getAccessLevel(dto));
         return dto;
     }
@@ -242,6 +250,24 @@ public class VocabularyService
     @PreAuthorize("@vocabularyAuthorizationService.canReimport(#vocabularyIri)")
     public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
         return repositoryService.importVocabulary(vocabularyIri, file);
+    }
+
+    /**
+     * Gets an Excel template file that can be used to import terms into TermIt.
+     *
+     * @return Template file as a resource
+     */
+    public TypeAwareResource getExcelTemplateFile() {
+        final Configuration config = context.getBean(Configuration.class);
+        final File templateFile = config.getTemplate().getExcelImport().map(File::new).orElseGet(() -> {
+            try {
+                assert getClass().getClassLoader().getResource("template/termit-import.xlsx") != null;
+                return new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI());
+            } catch (URISyntaxException e) {
+                throw new TermItException("Fatal error, unable to load Excel template file.", e);
+            }
+        });
+        return new TypeAwareFileSystemResource(templateFile, ExportFormat.EXCEL.getMediaType());
     }
 
     @Override
