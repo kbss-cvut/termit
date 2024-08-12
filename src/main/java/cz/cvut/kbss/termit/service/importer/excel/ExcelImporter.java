@@ -12,6 +12,7 @@ import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.ExcelVocabularyExporter;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
+import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -50,8 +51,9 @@ import java.util.Set;
  * The importer removes any existing terms that appear in the sheet and would thus be overwritten.
  * <p>
  * SKOS relationships can be used in the sheet. If they are within a single vocabulary, terms may be referenced by their
- * labels. Relationships to external terms must use full URIs. State and type columns are skipped during import. Also,
- * prefixed URIs are supported, as long as the workbook contains a sheet with prefix definitions.
+ * labels. Relationships to external terms must use full URIs. State and type are resolved via label or identifier, both
+ * methods are supported. Also, prefixed URIs are supported, as long as the workbook contains a sheet with prefix
+ * definitions.
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -69,16 +71,20 @@ public class ExcelImporter implements VocabularyImporter {
     private final TermRepositoryService termService;
     private final DataDao dataDao;
 
+    private final LanguageService languageService;
+
     private final IdentifierResolver idResolver;
     private final Configuration config;
 
     private final EntityManager em;
 
     public ExcelImporter(VocabularyDao vocabularyDao, TermRepositoryService termService, DataDao dataDao,
-                         IdentifierResolver idResolver, Configuration config, EntityManager em) {
+                         LanguageService languageService, IdentifierResolver idResolver, Configuration config,
+                         EntityManager em) {
         this.vocabularyDao = vocabularyDao;
         this.termService = termService;
         this.dataDao = dataDao;
+        this.languageService = languageService;
         this.idResolver = idResolver;
         this.config = config;
         this.em = em;
@@ -107,9 +113,9 @@ public class ExcelImporter implements VocabularyImporter {
                         // Skip already processed prefix sheet
                         continue;
                     }
-                    final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(termService, prefixMap,
-                                                                                            terms,
-                                                                                            idResolver, termNamespace);
+                    final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(
+                            new LocalizedSheetImporter.Services(termService, languageService, idResolver),
+                            prefixMap, terms, termNamespace);
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }

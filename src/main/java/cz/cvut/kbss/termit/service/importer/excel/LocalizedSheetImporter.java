@@ -5,11 +5,14 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
+import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -48,6 +51,7 @@ class LocalizedSheetImporter {
     private static final String FALLBACK_LANGUAGE = "en";
 
     private final TermRepositoryService termRepositoryService;
+    private final LanguageService languageService;
     private final PrefixMap prefixMap;
     private final List<Term> existingTerms;
     private final IdentifierResolver idResolver;
@@ -61,13 +65,13 @@ class LocalizedSheetImporter {
     private final Map<URI, Term> idToTerm = new HashMap<>();
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
-    LocalizedSheetImporter(TermRepositoryService termRepositoryService, PrefixMap prefixMap, List<Term> existingTerms,
-                           IdentifierResolver idResolver,
+    LocalizedSheetImporter(Services services, PrefixMap prefixMap, List<Term> existingTerms,
                            String expectedTermNamespace) {
-        this.termRepositoryService = termRepositoryService;
+        this.termRepositoryService = services.termRepositoryService();
+        this.languageService = services.languageService();
         this.prefixMap = prefixMap;
         this.existingTerms = existingTerms;
-        this.idResolver = idResolver;
+        this.idResolver = services.idResolver();
         this.expectedTermNamespace = expectedTermNamespace;
         existingTerms.stream().filter(t -> t.getUri() != null).forEach(t -> idToTerm.put(t.getUri(), t));
     }
@@ -203,6 +207,10 @@ class LocalizedSheetImporter {
                 rtm -> mapSkosMatchProperties(term, SKOS.RELATED_MATCH, splitIntoMultipleValues(rtm)));
         getAttributeValue(termRow, SKOS.EXACT_MATCH).ifPresent(
                 exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
+        getAttributeValue(termRow, JsonLd.TYPE).flatMap(this::resolveTermType).ifPresent(t -> term.setTypes(Set.of(t)));
+        getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).flatMap(this::resolveTermState)
+                                                                .ifPresent(term::setState);
+
     }
 
     private MultilingualString initSingularMultilingualString(Supplier<MultilingualString> getter,
@@ -274,6 +282,20 @@ class LocalizedSheetImporter {
                        new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
     }
 
+    private Optional<String> resolveTermType(String value) {
+        return languageService.getTermTypes().stream()
+                              .filter(t -> value.equals(t.getLabel().get(langTag)) || value.equals(
+                                      t.getUri().toString())).findFirst()
+                              .map(t -> t.getUri().toString());
+    }
+
+    private Optional<URI> resolveTermState(String value) {
+        return languageService.getTermStates().stream()
+                              .filter(t -> value.equals(t.getLabel().get(langTag)) || value.equals(
+                                      t.getUri().toString())).findFirst()
+                              .map(RdfsResource::getUri);
+    }
+
     List<ExcelImporter.TermRelationship> getRawDataToInsert() {
         return rawDataToInsert;
     }
@@ -320,5 +342,9 @@ class LocalizedSheetImporter {
     private static Set<String> splitIntoMultipleValues(String value) {
         return Stream.of(value.split(TabularTermExportUtils.STRING_DELIMITER)).map(String::trim)
                      .collect(Collectors.toSet());
+    }
+
+    record Services(TermRepositoryService termRepositoryService, LanguageService languageService,
+                    IdentifierResolver idResolver) {
     }
 }

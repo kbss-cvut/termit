@@ -4,6 +4,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.importing.VocabularyDoesNotExistException;
@@ -14,6 +15,7 @@ import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
+import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
@@ -64,6 +66,9 @@ class ExcelImporterTest {
 
     @Spy
     private Configuration config = new Configuration();
+
+    @Mock
+    private LanguageService languageService;
 
     @SuppressWarnings("unused")
     @Mock
@@ -504,5 +509,34 @@ class ExcelImporterTest {
                                        URI.create("http://example.com/another-vocabulary/terms/exactMatch"),
                                        vocabulary.getUri()))),
                      quadsCaptor.getValue());
+    }
+
+    @Test
+    void importResolvesTermStateAndTypesUsingLabels() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
+        final Term type = Generator.generateTermWithId();
+        type.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/object-type"));
+        type.setLabel(MultilingualString.create("Object Type", Constants.DEFAULT_LANGUAGE));
+        type.getLabel().set("cs", "Typ objektu");
+        when(languageService.getTermTypes()).thenReturn(List.of(type));
+        final RdfsResource state = new RdfsResource(
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem"),
+                MultilingualString.create("Proposed term", Constants.DEFAULT_LANGUAGE), null,
+                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+        when(languageService.getTermStates()).thenReturn(List.of(state));
+
+
+        sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-type-state-en.xlsx")));
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        final Term result = captor.getValue();
+        assertEquals(Set.of(type.getUri().toString()), result.getTypes());
+        assertEquals(state.getUri(), result.getState());
     }
 }
