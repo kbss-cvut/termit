@@ -38,7 +38,8 @@ import java.util.stream.Stream;
 /**
  * Maps an Excel sheet with terms in one language to TermIt {@link Term}s, possibly reusing already processed terms.
  * <p>
- * Note that this class keeps a state.
+ * Note that this class keeps a state and should thus not be reused to process multiple sheets in a single spreadsheet.
+ * Instead, a new instance should be created for each sheet.
  */
 class LocalizedSheetImporter {
 
@@ -269,7 +270,8 @@ class LocalizedSheetImporter {
     private void mapSkosMatchProperties(Term subject, String property, Set<String> objects) {
         final URI propertyUri = URI.create(property);
         objects.stream().map(id -> URI.create(prefixMap.resolvePrefixed(id))).filter(termRepositoryService::exists)
-               .forEach(uri -> rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
+               .forEach(uri -> rawDataToInsert.add(
+                       new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
     }
 
     List<ExcelImporter.TermRelationship> getRawDataToInsert() {

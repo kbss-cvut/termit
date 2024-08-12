@@ -35,6 +35,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Imports a vocabulary from an Excel file.
+ * <p>
+ * It is expected that the file has a form matching either the downloadable template file or the file exported by TermIt
+ * itself.
+ * <p>
+ * The importer processes all sheets in the workbook, skipping any sheets that do not match the expected format. The
+ * format is given by column labels available currently in Czech and English (all other languages should use English
+ * column labels). It is expected that each sheet contains the same terms in the same order. Sheet name should
+ * correspond to language in English. Term identifiers may be specified in the sheet, but if they do not correspond to
+ * the target vocabulary, they will be adjusted.
+ * <p>
+ * The importer removes any existing terms that appear in the sheet and would thus be overwritten.
+ * <p>
+ * SKOS relationships can be used in the sheet. If they are within a single vocabulary, terms may be referenced by their
+ * labels. Relationships to external terms must use full URIs. State and type columns are skipped during import. Also,
+ * prefixed URIs are supported, as long as the workbook contains a sheet with prefix definitions.
+ */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ExcelImporter implements VocabularyImporter {
