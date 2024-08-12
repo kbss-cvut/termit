@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -303,8 +304,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Gets a reference to a Term with the specified identifier.
      * <p>
-     * Note that this method is not protected by ACL-based authorization and should thus not be used without some
-     * other type of authorization.
+     * Note that this method is not protected by ACL-based authorization and should thus not be used without some other
+     * type of authorization.
      *
      * @param id Term identifier
      * @return Matching Term reference wrapped in an {@code Optional}
@@ -323,12 +324,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                              () -> new NotFoundException(
-                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
-                              Comparator.nullsLast(Comparator.naturalOrder())))
-                      .collect(Collectors.toList());
+               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                             () -> new NotFoundException(
+                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
+                                                  Comparator.nullsLast(Comparator.naturalOrder())))
+                     .collect(Collectors.toList());
     }
 
     /**
@@ -418,7 +419,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term Term to remove
      */
     @PreAuthorize("@termAuthorizationService.canRemove(#term)")
-    public void remove(Term term) {
+    public void remove(@NonNull Term term) {
         Objects.requireNonNull(term);
         repositoryService.remove(term);
     }
@@ -518,14 +519,17 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     private void checkForInvalidTerminalStateAssignment(Term term, URI state) {
         final List<RdfsResource> states = languageService.getTermStates();
         final Predicate<URI> isStateTerminal = (URI s) -> states.stream().filter(r -> r.getUri().equals(s)).findFirst()
-                                                                .map(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu))
+                                                                .map(r -> r.hasType(
+                                                                        cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu))
                                                                 .orElse(false);
         if (!isStateTerminal.test(state)) {
             return;
         }
         if (Utils.emptyIfNull(term.getSubTerms()).stream()
                  .anyMatch(Predicate.not(ti -> isStateTerminal.test(ti.getState())))) {
-            throw new InvalidTermStateException("Cannot set state of term " + term + " to terminal when at least one of its sub-terms is not in terminal state.", "error.term.state.terminal.liveChildren");
+            throw new InvalidTermStateException(
+                    "Cannot set state of term " + term + " to terminal when at least one of its sub-terms is not in terminal state.",
+                    "error.term.state.terminal.liveChildren");
         }
     }
 

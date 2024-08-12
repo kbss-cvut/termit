@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.importer.excel;
 
+import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyDoesNotExistException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -53,13 +54,16 @@ public class ExcelImporter implements VocabularyImporter {
     private final IdentifierResolver idResolver;
     private final Configuration config;
 
+    private final EntityManager em;
+
     public ExcelImporter(VocabularyDao vocabularyDao, TermRepositoryService termService, DataDao dataDao,
-                         IdentifierResolver idResolver, Configuration config) {
+                         IdentifierResolver idResolver, Configuration config, EntityManager em) {
         this.vocabularyDao = vocabularyDao;
         this.termService = termService;
         this.dataDao = dataDao;
         this.idResolver = idResolver;
         this.config = config;
+        this.em = em;
     }
 
     @Override
@@ -90,6 +94,12 @@ public class ExcelImporter implements VocabularyImporter {
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
+                terms.stream().filter(t -> termService.exists(t.getUri())).forEach(t -> {
+                    LOG.trace("Term {} already exists. Removing old version.", t);
+                    termService.forceRemove(termService.findRequired(t.getUri()));
+                    // Flush changes to prevent EntityExistsExceptions when term is already managed in PC as different type (Term vs TermInfo)
+                    em.flush();
+                });
                 // Ensure all parents are saved before we start adding children
                 terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty())
                      .forEach(root -> {

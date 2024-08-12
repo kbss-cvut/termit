@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.importer.excel;
 
+import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -63,6 +64,10 @@ class ExcelImporterTest {
 
     @Spy
     private Configuration config = new Configuration();
+
+    @SuppressWarnings("unused")
+    @Mock
+    private EntityManager em;
 
     @SuppressWarnings("unused")
     @Spy
@@ -441,5 +446,32 @@ class ExcelImporterTest {
         assertTrue(captor.getAllValues().stream().anyMatch(t -> Objects.equals(URI.create(
                                                                                        vocabulary.getUri().toString() + config.getNamespace().getTerm().getSeparator() + "/construction"),
                                                                                t.getUri())));
+    }
+
+    @Test
+    void importRemovesExistingInstanceWhenImportedTermAlreadyExists() {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
+        final Term existingBuilding = Generator.generateTermWithId();
+        existingBuilding.setUri(URI.create("http://example.com/terms/building"));
+        final Term existingConstruction = Generator.generateTermWithId();
+        existingConstruction.setUri(URI.create("http://example.com/terms/construction"));
+        when(termService.exists(existingBuilding.getUri())).thenReturn(true);
+        when(termService.exists(existingConstruction.getUri())).thenReturn(true);
+        when(termService.findRequired(existingBuilding.getUri())).thenReturn(existingBuilding);
+        when(termService.findRequired(existingConstruction.getUri())).thenReturn(existingConstruction);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-identifiers-en.xlsx")));
+        assertEquals(vocabulary, result);
+        verify(termService).forceRemove(existingBuilding);
+        verify(termService).forceRemove(existingConstruction);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
     }
 }
