@@ -89,7 +89,8 @@ public class ExcelImporter implements VocabularyImporter {
                         // Skip already processed prefix sheet
                         continue;
                     }
-                    final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(prefixMap, terms,
+                    final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(termService, prefixMap,
+                                                                                            terms,
                                                                                             idResolver, termNamespace);
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());

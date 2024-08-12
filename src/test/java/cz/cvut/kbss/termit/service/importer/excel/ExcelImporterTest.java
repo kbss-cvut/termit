@@ -474,4 +474,35 @@ class ExcelImporterTest {
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
     }
+
+    @Test
+    void importSupportsReferencesToOtherVocabulariesViaTermIdentifiersWhenReferencedTermsExist() {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
+        when(termService.exists(any())).thenReturn(false);
+        when(termService.exists(URI.create("http://example.com/another-vocabulary/terms/relatedMatch"))).thenReturn(
+                true);
+        when(termService.exists(URI.create("http://example.com/another-vocabulary/terms/exactMatch"))).thenReturn(true);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-with-external-references-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> termCaptor = ArgumentCaptor.forClass(Term.class);
+        verify(termService, times(2)).addRootTermToVocabulary(termCaptor.capture(), eq(vocabulary));
+        final ArgumentCaptor<Collection<Quad>> quadsCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(dataDao).insertRawData(quadsCaptor.capture());
+        assertEquals(2, quadsCaptor.getValue().size());
+        assertEquals(List.of(new Quad(termCaptor.getAllValues().get(0).getUri(), URI.create(SKOS.RELATED_MATCH),
+                                      URI.create("http://example.com/another-vocabulary/terms/relatedMatch"),
+                                      vocabulary.getUri()),
+                             (new Quad(termCaptor.getAllValues().get(1).getUri(), URI.create(SKOS.EXACT_MATCH),
+                                       URI.create("http://example.com/another-vocabulary/terms/exactMatch"),
+                                       vocabulary.getUri()))),
+                     quadsCaptor.getValue());
+    }
 }

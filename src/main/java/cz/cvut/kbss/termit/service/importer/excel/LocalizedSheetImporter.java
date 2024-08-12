@@ -8,6 +8,7 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
+import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -45,6 +46,7 @@ class LocalizedSheetImporter {
 
     private static final String FALLBACK_LANGUAGE = "en";
 
+    private final TermRepositoryService termRepositoryService;
     private final PrefixMap prefixMap;
     private final List<Term> existingTerms;
     private final IdentifierResolver idResolver;
@@ -58,8 +60,10 @@ class LocalizedSheetImporter {
     private final Map<URI, Term> idToTerm = new HashMap<>();
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
-    LocalizedSheetImporter(PrefixMap prefixMap, List<Term> existingTerms, IdentifierResolver idResolver,
+    LocalizedSheetImporter(TermRepositoryService termRepositoryService, PrefixMap prefixMap, List<Term> existingTerms,
+                           IdentifierResolver idResolver,
                            String expectedTermNamespace) {
+        this.termRepositoryService = termRepositoryService;
         this.prefixMap = prefixMap;
         this.existingTerms = existingTerms;
         this.idResolver = idResolver;
@@ -193,7 +197,11 @@ class LocalizedSheetImporter {
         getAttributeValue(termRow, DC.Terms.REFERENCES).ifPresent(
                 nt -> term.setProperties(Collections.singletonMap(DC.Terms.REFERENCES, splitIntoMultipleValues(nt))));
         getAttributeValue(termRow, SKOS.RELATED).ifPresent(
-                rt -> mapSkosRelationship(term, splitIntoMultipleValues(rt), SKOS.RELATED));
+                rt -> mapSkosRelated(term, splitIntoMultipleValues(rt)));
+        getAttributeValue(termRow, SKOS.RELATED_MATCH).ifPresent(
+                rtm -> mapSkosMatchProperties(term, SKOS.RELATED_MATCH, splitIntoMultipleValues(rtm)));
+        getAttributeValue(termRow, SKOS.EXACT_MATCH).ifPresent(
+                exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
     }
 
     private MultilingualString initSingularMultilingualString(Supplier<MultilingualString> getter,
@@ -234,14 +242,14 @@ class LocalizedSheetImporter {
         });
     }
 
-    private void mapSkosRelationship(Term subject, Set<String> objects, String property) {
-        final URI propertyUri = URI.create(property);
+    private void mapSkosRelated(Term subject, Set<String> objects) {
+        final URI propertyUri = URI.create(SKOS.RELATED);
         objects.forEach(object -> {
             try {
                 final Term objectTerm = getTerm(object);
                 if (objectTerm == null) {
                     LOG.warn("No term with label '{}' found for term '{}' and relationship <{}>.", object,
-                             subject.getLabel().get(langTag), property);
+                             subject.getLabel().get(langTag), SKOS.RELATED);
                 } else {
                     // Term IDs may not be generated, yet
                     rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm));
@@ -256,6 +264,12 @@ class LocalizedSheetImporter {
     private Term getTerm(String identification) {
         return labelToTerm.containsKey(identification) ? labelToTerm.get(identification) :
                idToTerm.get(URI.create(prefixMap.resolvePrefixed(identification)));
+    }
+
+    private void mapSkosMatchProperties(Term subject, String property, Set<String> objects) {
+        final URI propertyUri = URI.create(property);
+        objects.stream().map(id -> URI.create(prefixMap.resolvePrefixed(id))).filter(termRepositoryService::exists)
+               .forEach(uri -> rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
     }
 
     List<ExcelImporter.TermRelationship> getRawDataToInsert() {
