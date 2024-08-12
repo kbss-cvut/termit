@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -70,6 +71,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
+import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
 /**
  * Business logic concerning vocabularies.
@@ -129,6 +132,9 @@ public class VocabularyService
         return repositoryService.getLastModified();
     }
 
+    /**
+     * @return {@link cz.cvut.kbss.termit.dto.VocabularyDto}
+     */
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Optional<Vocabulary> find(URI id) {
@@ -195,6 +201,16 @@ public class VocabularyService
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#entity)")
     public Set<URI> getRelatedVocabularies(Vocabulary entity) {
         return repositoryService.getRelatedVocabularies(entity);
+    }
+
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
+    public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
+        return repositoryService.getTermRelations(vocabulary);
+    }
+
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
+    public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary) {
+        return repositoryService.getVocabularyRelations(vocabulary, VOCABULARY_REMOVAL_IGNORED_RELATIONS);
     }
 
     /**
@@ -307,7 +323,7 @@ public class VocabularyService
      * <ul>
      *     <li>it is a document vocabulary or</li>
      *     <li>it is imported by another vocabulary or</li>
-     *     <li>it contains terms</li>
+     *     <li>it contains terms that are a part of relations with another vocabulary</li>
      * </ul>
      *
      * @param asset Vocabulary to remove
@@ -316,8 +332,8 @@ public class VocabularyService
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#asset)")
     public void remove(Vocabulary asset) {
         Vocabulary toRemove = repositoryService.findRequired(asset.getUri());
-        aclService.findFor(toRemove).ifPresent(aclService::remove);
         repositoryService.remove(toRemove);
+        aclService.findFor(toRemove).ifPresent(aclService::remove);
     }
 
     /**
