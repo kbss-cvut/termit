@@ -54,7 +54,7 @@ public class ScheduledContextRemover {
      */
     @Transactional
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
-    public void runContextRemoval() {
+    public synchronized void runContextRemoval() {
         LOG.trace("Running scheduled repository context removal.");
         contextsToRemove.forEach(g -> {
             LOG.trace("Dropping repository context {}.", Utils.uriToString(g));
