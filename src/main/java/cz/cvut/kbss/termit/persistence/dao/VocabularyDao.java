@@ -30,7 +30,7 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.event.VocabularyRemovalEvent;
+import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
@@ -217,19 +217,34 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * This deletes the whole graph of the vocabulary, all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
      * should be exercised when using this method. All relevant data, including documents and files, will be dropped.
      * <p>
-     * Publishes {@link VocabularyRemovalEvent} before the actual removal to allow other services to clean up related resources (e.g., delete the document).
+     * Publishes {@link VocabularyWillBeRemovedEvent} before the actual removal to allow other services to clean up related resources (e.g., delete the document).
      * @param entity The vocabulary to delete
      */
     @ModifiesData
     @Override
     public void remove(Vocabulary entity) {
-        eventPublisher.publishEvent(new VocabularyRemovalEvent(this, entity.getUri()));
+        eventPublisher.publishEvent(new VocabularyWillBeRemovedEvent(this, entity.getUri()));
         this.removeVocabulary(entity, true);
     }
 
     /**
+     * Does not publish the {@link VocabularyWillBeRemovedEvent}.
      * <p>
-     * Does not publishes the {@link VocabularyRemovalEvent}.<br>
+     * Forcefully removes the specified vocabulary.
+     * <p>
+     * This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself.
+     * Extreme caution should be exercised when using this method,
+     * as it does not check for any references or usage and just drops all the relevant data.
+     * <p>
+     * The document is not removed.
+     */
+    public void removeVocabularyKeepDocument(Vocabulary entity) {
+        this.removeVocabulary(entity, false);
+    }
+
+    /**
+     * <p>
+     * Does not publish the {@link VocabularyWillBeRemovedEvent}.<br>
      * You should use {@link #remove(Vocabulary)} instead.
      * <p>
      * Forcefully removes the specified vocabulary.
@@ -243,7 +258,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      *                  their relations, model, glossary and vocabulary itself, keeps the document.
      *                  When true, the whole vocabulary graph is dropped.
      */
-    public void removeVocabulary(Vocabulary entity, boolean dropGraph) {
+    private void removeVocabulary(Vocabulary entity, boolean dropGraph) {
         Objects.requireNonNull(entity);
         LOG.debug("Forcefully removing vocabulary {} and all its contents.", entity);
         try {

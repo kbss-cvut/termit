@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
-import cz.cvut.kbss.termit.event.VocabularyRemovalEvent;
+import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -97,7 +97,7 @@ public class ResourceService
      * Ensures that document gets removed during Vocabulary removal
      */
     @EventListener
-    public void onVocabularyRemoval(VocabularyRemovalEvent event) {
+    public void onVocabularyRemoval(VocabularyWillBeRemovedEvent event) {
         vocabularyService.find(event.getVocabulary()).ifPresent(vocabulary -> {
             if(vocabulary.getDocument() != null) {
                 remove(vocabulary.getDocument());

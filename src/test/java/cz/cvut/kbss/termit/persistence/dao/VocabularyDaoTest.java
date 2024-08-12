@@ -30,7 +30,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.event.VocabularyRemovalEvent;
+import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Term;
@@ -54,7 +54,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -710,7 +709,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             });
         });
 
-        transactional(() -> sut.removeVocabulary(vocabulary, false));
+        transactional(() -> sut.removeVocabularyKeepDocument(vocabulary));
         final String query = "ASK { ?x a ?type }";
         // vocabulary removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
@@ -762,10 +761,10 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.remove(vocabulary));
 
-        ArgumentCaptor<VocabularyRemovalEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyRemovalEvent.class);
+        ArgumentCaptor<VocabularyWillBeRemovedEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyWillBeRemovedEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
 
-        VocabularyRemovalEvent event = eventCaptor.getValue();
+        VocabularyWillBeRemovedEvent event = eventCaptor.getValue();
         assertNotNull(event);
 
         assertEquals(event.getVocabulary(), vocabulary.getUri());
@@ -800,7 +799,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             sut.persist(vocabulary);
             sut.persist(secondVocabulary);
 
-            Generator.addRelation(vocabulary.getUri(), relation, secondVocabulary.getUri(), em);
+            Environment.addRelation(vocabulary.getUri(), relation, secondVocabulary.getUri(), em);
         });
 
         Boolean result = em.createNativeQuery("""
@@ -843,7 +842,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
             Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
 
-            Generator.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
+            Environment.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
         });
 
         final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
@@ -876,7 +875,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
             Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
 
-            Generator.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
+            Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
         });
 
         final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
@@ -910,8 +909,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
             Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
 
-            Generator.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
-            Generator.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
+            Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
+            Environment.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
         });
 
         final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);

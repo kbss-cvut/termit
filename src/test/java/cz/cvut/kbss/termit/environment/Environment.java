@@ -29,10 +29,10 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
@@ -217,6 +218,23 @@ public class Environment {
             configField.set(vocabulary, config);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException("Unable to inject configuration into Vocabulary instance.", e);
+        }
+    }
+
+    /**
+     * Adds relation into entity manager connection
+     *
+     * @implNote call in transactional
+     */
+    public static void addRelation(URI subject, URI predicate, URI object, EntityManager em) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            final ValueFactory vf = conn.getValueFactory();
+            conn.begin();
+            conn.add(vf.createIRI(subject.toString()),
+                    vf.createIRI(predicate.toString()),
+                    vf.createIRI(object.toString()));
+            conn.commit();
         }
     }
 }
