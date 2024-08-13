@@ -600,6 +600,8 @@ public class Configuration {
         @Min(8)
         private int textQuoteSelectorContextLength = 32;
 
+        private boolean disableVocabularyAnalysisOnTermEdit = false;
+
         public String getUrl() {
             return url;
         }
@@ -622,6 +624,14 @@ public class Configuration {
 
         public void setTextQuoteSelectorContextLength(int textQuoteSelectorContextLength) {
             this.textQuoteSelectorContextLength = textQuoteSelectorContextLength;
+        }
+
+        public boolean isDisableVocabularyAnalysisOnTermEdit() {
+            return disableVocabularyAnalysisOnTermEdit;
+        }
+
+        public void setDisableVocabularyAnalysisOnTermEdit(boolean disableVocabularyAnalysisOnTermEdit) {
+            this.disableVocabularyAnalysisOnTermEdit = disableVocabularyAnalysisOnTermEdit;
         }
     }
 
