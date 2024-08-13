@@ -119,7 +119,7 @@ public class ExcelImporter implements VocabularyImporter {
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
-                terms.stream().filter(t -> termService.exists(t.getUri())).forEach(t -> {
+                terms.stream().filter(t -> t.getUri() != null && termService.exists(t.getUri())).forEach(t -> {
                     LOG.trace("Term {} already exists. Removing old version.", t);
                     termService.forceRemove(termService.findRequired(t.getUri()));
                     // Flush changes to prevent EntityExistsExceptions when term is already managed in PC as different type (Term vs TermInfo)
