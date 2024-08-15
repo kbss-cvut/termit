@@ -374,10 +374,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(owner);
         languageService.getInitialTermState().ifPresent(is -> term.setState(is.getUri()));
         repositoryService.addRootTermToVocabulary(term, owner);
-        if (!config.getTextAnalysis().isDisableVocabularyAnalysisOnTermEdit()) {
-            analyzeTermDefinition(term, owner.getUri());
-            vocabularyService.runTextAnalysisOnAllTerms(owner);
-        }
+        analyzeTermDefinition(term, owner.getUri());
+        vocabularyService.runTextAnalysisOnAllTerms(owner);
     }
 
     /**
@@ -392,10 +390,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(parent);
         languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
-        if (!config.getTextAnalysis().isDisableVocabularyAnalysisOnTermEdit()) {
-            analyzeTermDefinition(child, parent.getVocabulary());
-            vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
-        }
+        analyzeTermDefinition(child, parent.getVocabulary());
+        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
     }
 
     /**
@@ -412,10 +408,10 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         checkForInvalidTerminalStateAssignment(original, term.getState());
         // Ensure the change is merged into the repo before analyzing other terms
         final Term result = repositoryService.update(term);
-        if (!Objects.equals(original.getDefinition(), term.getDefinition()) && !config.getTextAnalysis().isDisableVocabularyAnalysisOnTermEdit()) {
+        if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
             analyzeTermDefinition(term, original.getVocabulary());
         }
-        if (!Objects.equals(original.getLabel(), term.getLabel()) && !config.getTextAnalysis().isDisableVocabularyAnalysisOnTermEdit()) {
+        if (!Objects.equals(original.getLabel(), term.getLabel())) {
             vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(original.getVocabulary()));
         }
         return result;
