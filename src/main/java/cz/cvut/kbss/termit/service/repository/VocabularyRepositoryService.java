@@ -205,7 +205,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
-        return vocabularyDao.getTransitivelyImportedVocabularies(entity);
+        return vocabularyDao.getTransitivelyImportedVocabularies(entity.getUri());
     }
 
     public Set<URI> getRelatedVocabularies(Vocabulary entity) {
@@ -319,8 +319,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    public List<ValidationResult> validateContents(Vocabulary instance) {
-        return vocabularyDao.validateContents(instance);
+    public List<ValidationResult> validateContents(URI vocabulary) {
+        return vocabularyDao.validateContents(vocabulary);
     }
 
     public Integer getTermCount(Vocabulary vocabulary) {

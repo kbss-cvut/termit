@@ -147,14 +147,14 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * @param entity Base vocabulary, whose imports should be retrieved
      * @return Collection of (transitively) imported vocabularies
      */
-    public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
-        Objects.requireNonNull(entity);
+    public Collection<URI> getTransitivelyImportedVocabularies(URI vocabulary) {
+        Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
                                                 "?x ?imports+ ?imported ." +
                                                 "}", URI.class)
                      .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                     .setParameter("x", entity.getUri()).getResultList();
+                     .setParameter("x", vocabulary).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -357,10 +357,10 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     @Transactional
-    public List<ValidationResult> validateContents(Vocabulary voc) {
+    public List<ValidationResult> validateContents(URI vocabulary) {
         final VocabularyContentValidator validator = context.getBean(VocabularyContentValidator.class);
-        final Collection<URI> importClosure = getTransitivelyImportedVocabularies(voc);
-        importClosure.add(voc.getUri());
+        final Collection<URI> importClosure = getTransitivelyImportedVocabularies(vocabulary);
+        importClosure.add(vocabulary);
         return validator.validate(importClosure);
     }
 

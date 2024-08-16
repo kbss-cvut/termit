@@ -207,6 +207,10 @@ public class Constants {
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";
+
+        private MediaType() {
+            throw new AssertionError();
+        }
     }
 
     /**
@@ -240,6 +244,23 @@ public class Constants {
         public static final String PAGE_SIZE = "size";
 
         private QueryParams() {
+            throw new AssertionError();
+        }
+    }
+
+    public static final class DebouncingGroups {
+
+        /**
+         * Text analysis of all terms in specific vocabulary
+         */
+        public static final String TEXT_ANALYSIS_VOCABULARY_TERMS_ALL_DEFINITIONS = "TEXT_ANALYSIS_VOCABULARY_TERMS_ALL_DEFINITIONS";
+
+        /**
+         * Text analysis of all vocabularies
+         */
+        public static final String TEXT_ANALYSIS_VOCABULARY = "TEXT_ANALYSIS_VOCABULARY";
+
+        private DebouncingGroups() {
             throw new AssertionError();
         }
     }
