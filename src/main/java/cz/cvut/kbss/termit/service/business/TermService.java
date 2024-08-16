@@ -374,7 +374,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(owner);
         languageService.getInitialTermState().ifPresent(is -> term.setState(is.getUri()));
         repositoryService.addRootTermToVocabulary(term, owner);
-        analyzeTermDefinition(term, owner.getUri());
         vocabularyService.runTextAnalysisOnAllTerms(owner);
     }
 
@@ -390,8 +389,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(parent);
         languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
-        analyzeTermDefinition(child, parent.getVocabulary());
-        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
+        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(child.getVocabulary()));
     }
 
     /**
@@ -408,11 +406,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         checkForInvalidTerminalStateAssignment(original, term.getState());
         // Ensure the change is merged into the repo before analyzing other terms
         final Term result = repositoryService.update(term);
-        if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
-            analyzeTermDefinition(term, original.getVocabulary());
-        }
+
+        // if the label changed, run analysis on all terms in the vocabulary
         if (!Objects.equals(original.getLabel(), term.getLabel())) {
             vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(original.getVocabulary()));
+            // if all terms have not been analyzed, check if the definition has changed,
+            // and if so, perform an analysis for the term definition
+        } else if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
+            analyzeTermDefinition(term, original.getVocabulary());
         }
         return result;
     }
