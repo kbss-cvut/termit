@@ -15,9 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.service.document.util;
+package cz.cvut.kbss.termit.util;
 
-import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.springframework.core.io.FileSystemResource;
 
 import java.io.File;

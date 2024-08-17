@@ -26,8 +26,6 @@ import java.util.Optional;
  * <p>
  * Allows to get MIME type of the resource and the associated file extension. However, both methods return
  * {@link Optional} to accommodate resources which may not support this feature.
- *
- * TODO Move all implementations into the same package!
  */
 public interface TypeAwareResource extends Resource {
 
