@@ -52,13 +52,12 @@ public class TypeAwareByteArrayResource extends ByteArrayResource implements Typ
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TypeAwareByteArrayResource)) {
+        if (!(o instanceof TypeAwareByteArrayResource that)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        TypeAwareByteArrayResource that = (TypeAwareByteArrayResource) o;
         return Objects.equals(mediaType, that.mediaType) &&
                 Objects.equals(fileExtension, that.fileExtension);
     }
