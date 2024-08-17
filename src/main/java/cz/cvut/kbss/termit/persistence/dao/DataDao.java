@@ -28,7 +28,7 @@ import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
-import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
+import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Configuration.Persistence;
 import cz.cvut.kbss.termit.util.TypeAwareResource;

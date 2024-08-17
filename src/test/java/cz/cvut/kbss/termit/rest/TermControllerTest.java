@@ -41,7 +41,7 @@ import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
-import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
+import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;

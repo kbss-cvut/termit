@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.service.document.html;
 
 import cz.cvut.kbss.termit.environment.Environment;
-import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
+import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

@@ -26,7 +26,7 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
+import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
