@@ -539,4 +539,34 @@ class ExcelImporterTest {
         assertEquals(Set.of(type.getUri().toString()), result.getTypes());
         assertEquals(state.getUri(), result.getState());
     }
+
+    @Test
+    void importSetsConfiguredInitialTermStateWhenSheetDoesNotSpecifyIt() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        final RdfsResource state = new RdfsResource(
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/navrhovaný-pojem"),
+                MultilingualString.create("Proposed term", Constants.DEFAULT_LANGUAGE), null,
+                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+        when(languageService.getInitialTermState()).thenReturn(Optional.of(state));
+        initIdentifierGenerator(Constants.DEFAULT_LANGUAGE, false);
+
+        final Vocabulary result = sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-simple-en.xlsx")));
+        assertEquals(vocabulary, result);
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService, times(2)).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertEquals(2, captor.getAllValues().size());
+        final Optional<Term> building = captor.getAllValues().stream()
+                                              .filter(t -> "Building".equals(t.getLabel().get("en"))).findAny();
+        assertTrue(building.isPresent());
+        assertEquals(state.getUri(), building.get().getState());
+        final Optional<Term> construction = captor.getAllValues().stream()
+                                                  .filter(t -> "Construction".equals(t.getLabel().get("en"))).findAny();
+        assertTrue(construction.isPresent());
+        assertEquals(state.getUri(), construction.get().getState());
+    }
 }
