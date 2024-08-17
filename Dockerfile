@@ -16,7 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-FROM maven:3-eclipse-temurin-17 as build
+FROM maven:3-eclipse-temurin-17 AS build
 
 WORKDIR /termit
 
@@ -31,7 +31,7 @@ COPY src src
 
 RUN mvn package -B -P graphdb,standalone -DskipTests=true
 
-FROM eclipse-temurin:17-jdk-alpine as runtime
+FROM eclipse-temurin:17-jdk-alpine AS runtime
 COPY --from=build  /termit/target/termit.jar termit.jar
 
 EXPOSE 8080
