@@ -208,8 +208,7 @@ class LocalizedSheetImporter {
         getAttributeValue(termRow, SKOS.EXACT_MATCH).ifPresent(
                 exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
         getAttributeValue(termRow, JsonLd.TYPE).flatMap(this::resolveTermType).ifPresent(t -> term.setTypes(Set.of(t)));
-        getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).flatMap(this::resolveTermState)
-                                                                .ifPresent(term::setState);
+        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null)).ifPresent(term::setState);
 
     }
 
@@ -290,10 +289,17 @@ class LocalizedSheetImporter {
     }
 
     private Optional<URI> resolveTermState(String value) {
-        return languageService.getTermStates().stream()
+        if (value == null) {
+            return languageService.getInitialTermState().map(RdfsResource::getUri);
+        }
+        final Optional<URI> state = languageService.getTermStates().stream()
                               .filter(t -> value.equals(t.getLabel().get(langTag)) || value.equals(
                                       t.getUri().toString())).findFirst()
                               .map(RdfsResource::getUri);
+        if (state.isPresent()) {
+            return state;
+        }
+        return languageService.getInitialTermState().map(RdfsResource::getUri);
     }
 
     List<ExcelImporter.TermRelationship> getRawDataToInsert() {
