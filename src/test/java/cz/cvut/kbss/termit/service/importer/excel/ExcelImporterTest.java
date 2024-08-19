@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.importing.VocabularyDoesNotExistException;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
@@ -19,6 +20,9 @@ import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +34,8 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -569,4 +576,25 @@ class ExcelImporterTest {
         assertTrue(construction.isPresent());
         assertEquals(state.getUri(), construction.get().getState());
     }
+
+    @Test
+    void importThrowsVocabularyImportExceptionWhenSheetContainsDuplicateLabels() throws Exception {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
+        final Sheet sheet = input.getSheet("English");
+        sheet.getRow(1).getCell(0).setCellValue("Construction");
+        sheet.getRow(2).getCell(0).setCellValue("Construction");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        input.write(bos);
+
+        final VocabularyImportException ex = assertThrows(VocabularyImportException.class,
+                     () -> sut.importVocabulary(
+                             new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                             new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL, new ByteArrayInputStream(bos.toByteArray()))));
+        assertEquals("error.vocabulary.import.excel.duplicateLabel", ex.getMessageId());
+        verify(termService, never()).addRootTermToVocabulary(any(), eq(vocabulary));
+    }
+
+    // TODO
 }
