@@ -6,6 +6,7 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
@@ -144,6 +145,11 @@ class LocalizedSheetImporter {
             final Optional<String> label = getAttributeValue(termRow, SKOS.PREF_LABEL);
             if (label.isPresent()) {
                 initSingularMultilingualString(term::getLabel, term::setLabel).set(langTag, label.get());
+                if (labelToTerm.containsKey(label.get())) {
+                    throw new VocabularyImportException(
+                            "Sheet " + sheet.getSheetName() + " contains multiple terms with the same label: " + label.get(),
+                            "error.vocabulary.import.excel.duplicateLabel");
+                }
                 labelToTerm.put(label.get(), term);
             } else {
                 if (i > existingTerms.size()) {
@@ -208,7 +214,8 @@ class LocalizedSheetImporter {
         getAttributeValue(termRow, SKOS.EXACT_MATCH).ifPresent(
                 exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
         getAttributeValue(termRow, JsonLd.TYPE).flatMap(this::resolveTermType).ifPresent(t -> term.setTypes(Set.of(t)));
-        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null)).ifPresent(term::setState);
+        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null)).ifPresent(
+                term::setState);
 
     }
 
@@ -293,9 +300,9 @@ class LocalizedSheetImporter {
             return languageService.getInitialTermState().map(RdfsResource::getUri);
         }
         final Optional<URI> state = languageService.getTermStates().stream()
-                              .filter(t -> value.equals(t.getLabel().get(langTag)) || value.equals(
-                                      t.getUri().toString())).findFirst()
-                              .map(RdfsResource::getUri);
+                                                   .filter(t -> value.equals(t.getLabel().get(langTag)) || value.equals(
+                                                           t.getUri().toString())).findFirst()
+                                                   .map(RdfsResource::getUri);
         if (state.isPresent()) {
             return state;
         }
