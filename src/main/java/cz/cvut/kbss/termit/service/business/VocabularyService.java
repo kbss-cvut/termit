@@ -45,7 +45,8 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import cz.cvut.kbss.termit.util.debounce.Debounce;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +74,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
@@ -294,11 +294,11 @@ public class VocabularyService
      * @param vocabulary Vocabulary to be analyzed
      */
     @Transactional
-    @Debounce(value = "{vocabulary.getUri()}",
+    @Throttle(value = "{vocabulary.getUri()}",
               group = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY_TERMS_ALL_DEFINITIONS)
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
-        vocabulary = findRequired(vocabulary.getUri());
+        vocabulary = findRequired(vocabulary.getUri()); // required when throttling
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
@@ -312,7 +312,7 @@ public class VocabularyService
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
      */
-    @Debounce(group = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY,
+    @Throttle(group = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY,
               clearGroup = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY)
     @Transactional
     public void runTextAnalysisOnAllVocabularies() {
@@ -348,9 +348,9 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to validate
      */
-    @Debounce("{vocabulary}")
+    @Throttle("{vocabulary}")
     public Future<List<ValidationResult>> validateContents(URI vocabulary) {
-        return new FutureTask<>(() -> repositoryService.validateContents(vocabulary));
+        return ThrottledFuture.of(() -> repositoryService.validateContents(vocabulary));
     }
 
     /**

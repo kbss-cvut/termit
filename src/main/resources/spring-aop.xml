@@ -4,17 +4,18 @@
        xmlns:aop="http://www.springframework.org/schema/aop"
        xsi:schemaLocation="
 		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+		http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd"
+       profile="!test">
 
     <description>AOP related definitions</description>
 
     <aop:config>
         <!-- bean created with annotations -->
-        <!-- cz.cvut.kbss.termit.util.debounce.DebounceAspect -->
-        <aop:aspect id="debounceAspect" ref="debounceAspect">
+        <!-- cz.cvut.kbss.termit.util.throttle.ThrottleAspect -->
+        <aop:aspect id="throttleAspect" ref="throttleAspect">
             <aop:around
-                    pointcut="@annotation(debounceAnnotation)"
-                method="debounceMethodCall" />
+                    pointcut="@annotation(throttleAnnotation)"
+                    method="throttleMethodCall"/>
         </aop:aspect>
     </aop:config>
 

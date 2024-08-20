@@ -389,7 +389,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(parent);
         languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
-        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(child.getVocabulary()));
+        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
     }
 
     /**
@@ -408,12 +408,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         final Term result = repositoryService.update(term);
 
         // if the label changed, run analysis on all terms in the vocabulary
-        if (!Objects.equals(original.getLabel(), term.getLabel())) {
-            vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(original.getVocabulary()));
+        if (!Objects.equals(original.getLabel(), result.getLabel())) {
+            vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(result.getVocabulary()));
             // if all terms have not been analyzed, check if the definition has changed,
             // and if so, perform an analysis for the term definition
-        } else if (!Objects.equals(original.getDefinition(), term.getDefinition())) {
-            analyzeTermDefinition(term, original.getVocabulary());
+        } else if (!Objects.equals(original.getDefinition(), result.getDefinition())) {
+            analyzeTermDefinition(result, result.getVocabulary());
         }
         return result;
     }
