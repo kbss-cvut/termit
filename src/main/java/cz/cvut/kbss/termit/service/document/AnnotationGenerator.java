@@ -21,7 +21,7 @@ import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
-import cz.cvut.kbss.termit.util.debounce.Debounce;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,7 +96,7 @@ public class AnnotationGenerator {
      * @param annotatedTerm Term whose definition was annotated
      */
     @Transactional
-    @Debounce(value = "{annotatedTerm.getUri()}")
+    @Throttle(value = "{annotatedTerm.getUri()}")
     public void generateAnnotations(InputStream content, AbstractTerm annotatedTerm) {
         // We assume the content (text analysis output) is HTML-compatible
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();

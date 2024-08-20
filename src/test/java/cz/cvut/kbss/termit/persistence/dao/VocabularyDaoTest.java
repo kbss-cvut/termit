@@ -334,7 +334,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(transitiveVocabulary, descriptorFactory.vocabularyDescriptor(transitiveVocabulary));
         });
 
-        final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary);
+        final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary.getUri());
         assertEquals(3, result.size());
         assertTrue(result.contains(importedVocabularyOne.getUri()));
         assertTrue(result.contains(importedVocabularyTwo.getUri()));

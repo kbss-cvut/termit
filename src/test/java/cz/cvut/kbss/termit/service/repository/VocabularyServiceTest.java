@@ -35,8 +35,8 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
+import cz.cvut.kbss.termit.service.business.TermService;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -57,6 +57,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,6 +73,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -81,7 +83,7 @@ import static org.mockito.Mockito.when;
 class VocabularyServiceTest {
 
     @Mock
-    private AsyncTermService termService;
+    TermService termService;
 
     @Mock
     private VocabularyRepositoryService repositoryService;
@@ -121,9 +123,12 @@ class VocabularyServiceTest {
         when(termService.findAll(vocabulary)).thenReturn(terms);
         when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         when(repositoryService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(Collections.emptyList());
+        when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         sut.runTextAnalysisOnAllTerms(vocabulary);
-        verify(termService).asyncAnalyzeTermDefinitions(Map.of(termOne, vocabulary.getUri(),
-                                                               termTwo, vocabulary.getUri()));
+        Map<Term, URI> expected = Map.of(termOne, vocabulary.getUri(), termTwo, vocabulary.getUri());
+        for(final Map.Entry<Term, URI> entry : expected.entrySet()) {
+            verify(termService).analyzeTermDefinition(entry.getKey(), entry.getValue());
+        }
     }
 
     @Test
@@ -136,7 +141,8 @@ class VocabularyServiceTest {
         when(contextMapper.getVocabularyContext(v.getUri())).thenReturn(v.getUri());
         when(termService.findAll(v)).thenReturn(Collections.singletonList(new TermDto(term)));
         sut.runTextAnalysisOnAllVocabularies();
-        verify(termService).asyncAnalyzeTermDefinitions(Map.of(term, v.getUri()));
+
+        verify(termService).analyzeTermDefinition(term, v.getUri());
     }
 
     @Test

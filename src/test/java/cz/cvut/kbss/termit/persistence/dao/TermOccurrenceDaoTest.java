@@ -33,7 +33,6 @@ import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
-import cz.cvut.kbss.termit.persistence.dao.util.ScheduledContextRemover;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -73,8 +72,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     @Autowired
     private EntityManager em;
 
-    @Autowired
-    private ScheduledContextRemover contextRemover;
+//    @Autowired
+//    private ScheduledContextRemover contextRemover;
 
     @Autowired
     private TermOccurrenceDao sut;
@@ -270,7 +269,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                 })));
         transactional(() -> {
             sut.removeAll(file);
-            contextRemover.runContextRemoval();
+//            contextRemover.runContextRemoval();
         });
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
@@ -292,7 +291,7 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                 })));
         transactional(() -> {
             sut.removeAll(file);
-            contextRemover.runContextRemoval();
+//            contextRemover.runContextRemoval();
         });
 
         assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class).setParameter("target",

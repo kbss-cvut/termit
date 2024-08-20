@@ -49,7 +49,7 @@ public class AppConfig implements AsyncConfigurer {
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setPoolSize(1);
+        threadPoolTaskScheduler.setPoolSize(1); // TODO config value
         threadPoolTaskScheduler.setThreadNamePrefix("TermItScheduler-");
         threadPoolTaskScheduler.setWaitForTasksToCompleteOnShutdown(true);
         threadPoolTaskScheduler.setRemoveOnCancelPolicy(true);
