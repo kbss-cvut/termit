@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.ThrottleAspectException;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -14,6 +15,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.annotation.Order;
 import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.EvaluationException;
+import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
@@ -26,20 +29,21 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static cz.cvut.kbss.termit.util.Constants.THROTTLE_THRESHOLD;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_SINGLETON;
 
 /**
@@ -51,15 +55,19 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 @Profile("!test")
 public class ThrottleAspect {
 
-    public static final Duration THROTTLE_THRESHOLD = Duration.ofSeconds(10); // TODO: config value
-
     private static final Logger LOG = LoggerFactory.getLogger(ThrottleAspect.class);
 
-    private final Map<String, ThrottledFuture<Object>> throttledFutures;
+    /**
+     * group, identifier -> future
+     */
+    private final Map<Identifier, ThrottledFuture<Object>> throttledFutures;
 
-    private final Map<String, Instant> lastRun;
+    private final Map<Identifier, Instant> lastRun;
 
-    private final NavigableMap<String, Future<Object>> scheduledFutures;
+    /**
+     * group, identifier -> future
+     */
+    private final NavigableMap<Identifier, Future<Object>> scheduledFutures;
 
     /**
      * synchronize before access
@@ -81,9 +89,10 @@ public class ThrottleAspect {
         clock = Clock.systemUTC(); // used by Instant.now() by default
     }
 
-    public ThrottleAspect(Map<String, ThrottledFuture<Object>> throttledFutures, Map<String, Instant> lastRun,
-                          NavigableMap<String, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
-                          Clock clock) {
+    protected ThrottleAspect(Map<Identifier, ThrottledFuture<Object>> throttledFutures,
+                             Map<Identifier, Instant> lastRun,
+                             NavigableMap<Identifier, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
+                             Clock clock) {
         this.throttledFutures = throttledFutures;
         this.lastRun = lastRun;
         this.scheduledFutures = scheduledFutures;
@@ -114,17 +123,15 @@ public class ThrottleAspect {
                                       .withRootObject(joinPoint.getTarget()).build();
     }
 
-    /**
-     * Use this method with caution, ensure that both throttled futures contain the same type!
-     */
-    @SuppressWarnings({"unchecked"})
-    private static <T> ThrottledFuture<Object> transferTask(@NotNull ThrottledFuture<T> source,
-                                                            @NotNull ThrottledFuture<T> target) {
-        return (ThrottledFuture<Object>) source.transfer(target);
+    @SuppressWarnings("unchecked")
+    private static ThrottledFuture<Object> transferTask(@NotNull ThrottledFuture<?> source,
+                                                        @NotNull ThrottledFuture<?> target) {
+        // casting the type parameter to Object
+        return ((ThrottledFuture<Object>) source).transfer((ThrottledFuture<Object>) target);
     }
 
     private @NotNull AbstractMap.SimpleImmutableEntry<Runnable, ThrottledFuture<Object>> getFutureTask(
-            @NotNull ProceedingJoinPoint joinPoint, String key, @NotNull ThrottledFuture<Object> future)
+            @NotNull ProceedingJoinPoint joinPoint, Identifier identifier, @NotNull ThrottledFuture<Object> future)
             throws Throwable {
 
         final Supplier<SecurityContext> securityContext = SecurityContextHolder.getDeferredContext();
@@ -141,15 +148,20 @@ public class ThrottleAspect {
 
         // the future must contain the same type - ensured by accessing with the unique key
         if (isFuture) {
-            ThrottledFuture<Object> throttledMethodFuture = (ThrottledFuture<Object>) joinPoint.proceed();
-            // future acquired by key or a new future supplied, ensuring the same type
-            // ThrottledFuture#updateOther will create a new future when required
-            throttledFuture = transferTask(throttledMethodFuture, future);
+            Object result = joinPoint.proceed();
+            if (result instanceof ThrottledFuture<?> throttledMethodFuture) {
+                // future acquired by key or a new future supplied, ensuring the same type
+                // ThrottledFuture#updateOther will create a new future when required
+                throttledFuture = transferTask(throttledMethodFuture, future);
+            } else {
+                throw new ThrottleAspectException("Returned value is not a ThrottledFuture");
+            }
         } else {
             future.update(() -> {
                 try {
                     return joinPoint.proceed();
                 } catch (Throwable e) {
+                    // exception happened inside throttled method
                     throw new TermItException(e);
                 }
             });
@@ -163,20 +175,20 @@ public class ThrottleAspect {
             // mark the thread as throttled
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
-            LOG.trace("Running throttled task '{}'", key);
+            LOG.trace("Running throttled task '{}'", identifier);
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
             try {
                 // update last run timestamp
                 synchronized (lastRun) {
-                    lastRun.put(key, Instant.now(clock));
+                    lastRun.put(identifier, Instant.now(clock));
                 }
                 // fulfill the future
                 future.run();
             } finally {
                 // clear the security context
                 SecurityContextHolder.clearContext();
-                LOG.trace("Throttled task run finished '{}'", key);
+                LOG.trace("Throttled task run finished '{}'", identifier);
                 // remove throttled mark
                 throttledThreads.remove(threadId);
             }
@@ -192,13 +204,12 @@ public class ThrottleAspect {
      * @implNote Around advice configured in {@code spring-aop.xml}
      */
     public synchronized @Nullable Object throttleMethodCall(@NotNull ProceedingJoinPoint joinPoint,
-                                                            @NotNull Throttle throttleAnnotation)
-            throws Throwable {
+                                                            @NotNull Throttle throttleAnnotation) throws Throwable {
 
         // if the current thread is already executing a throttled code, we want to skip further throttling
         if (throttledThreads.contains(Thread.currentThread().getId())) {
             // proceed with method execution
-            Object result = joinPoint.proceed();
+            final Object result = joinPoint.proceed();
             if (result instanceof ThrottledFuture<?> throttledFuture) {
                 // directly run throttled future
                 throttledFuture.run();
@@ -210,83 +221,107 @@ public class ThrottleAspect {
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
         // construct the throttle instance key
-        final String key = makeKey(joinPoint, throttleAnnotation);
-        LOG.trace("Throttling task with key '{}'", key);
+        final Identifier identifier = makeIdentifier(joinPoint, throttleAnnotation);
+        LOG.trace("Throttling task with key '{}'", identifier);
 
-        Map.Entry<String, Future<Object>> ceiling = scheduledFutures.higherEntry(key);
-        if (!throttleAnnotation.group().isBlank() && ceiling != null) {
-            Future<Object> ceilingFuture = ceiling.getValue();
-            if (!ceilingFuture.isDone() && !ceilingFuture.isCancelled()) {
-                LOG.trace("Throttling canceled due to scheduled ceiling task '{}'", ceiling.getKey());
-                return ThrottledFuture.canceled();
+        if (!throttleAnnotation.group().isBlank()) {
+            // check if there is a task with higher group
+            // and if so, cancel this task in favor of the higher group
+            final Map.Entry<Identifier, Future<Object>> lowerEntry = scheduledFutures.lowerEntry(identifier);
+            if (lowerEntry != null) {
+                final Future<Object> lowerFuture = lowerEntry.getValue();
+                boolean hasGroupPrefix = identifier.hasGroupPrefix(lowerEntry.getKey().getGroup());
+                if (hasGroupPrefix && !lowerFuture.isDone() && !lowerFuture.isCancelled()) {
+                    LOG.trace("Throttling canceled due to scheduled lower task '{}'", lowerEntry.getKey());
+                    return ThrottledFuture.canceled();
+                }
             }
+
+            cancelWithLowerGroup(throttleAnnotation);
         }
 
         // if there is a scheduled task and this throttled instance was executed in the last THROTTLE_THRESHOLD
         // cancel the scheduled task
         // -> the execution is further delayed
-        Future<Object> oldFuture = scheduledFutures.get(key);
-        boolean throttleNotExpired = lastRun.getOrDefault(key, Instant.EPOCH)
+        Future<Object> oldFuture = scheduledFutures.get(identifier);
+        boolean throttleNotExpired = lastRun.getOrDefault(identifier, Instant.EPOCH)
                                             .isAfter(Instant.now(clock).minus(THROTTLE_THRESHOLD));
         if (oldFuture != null && throttleNotExpired) {
             oldFuture.cancel(false);
         }
 
         // acquire a throttled future from a map, or make a new one
-        ThrottledFuture<Object> oldThrottledFuture = throttledFutures.getOrDefault(key, new ThrottledFuture<>());
+        ThrottledFuture<Object> oldThrottledFuture = throttledFutures.getOrDefault(identifier, new ThrottledFuture<>());
 
-        AbstractMap.SimpleImmutableEntry<Runnable, ThrottledFuture<Object>> entry = getFutureTask(joinPoint, key, oldThrottledFuture);
+        AbstractMap.SimpleImmutableEntry<Runnable, ThrottledFuture<Object>> entry = getFutureTask(joinPoint, identifier, oldThrottledFuture);
         Runnable task = entry.getKey();
         ThrottledFuture<Object> future = entry.getValue();
         // update the throttled future in the map
-        throttledFutures.put(key, future);
+        throttledFutures.put(identifier, future);
 
-        Object result = voidOrFuture(signature, key, future);
-
-        clearGroup(throttleAnnotation);
+        Object result = resultVoidOrFuture(signature, future);
 
         if (oldFuture == null || oldFuture.isDone() || oldFuture.isCancelled()) {
-            Future<Object> scheduled = (Future<Object>) taskScheduler.schedule(task, Instant.now(clock)
-                                                                                            .plus(THROTTLE_THRESHOLD));
-            scheduledFutures.put(key, scheduled);
+            schedule(identifier, task);
         }
 
         return result;
     }
 
-    private void clearGroup(Throttle throttleAnnotation) {
-        if (!throttleAnnotation.clearGroup().isBlank()) {
-            Map<String, Future<Object>> toClear = scheduledFutures.tailMap(throttleAnnotation.clearGroup());
-            toClear.forEach((k, f) -> f.cancel(false));
-            toClear.clear();
+    @SuppressWarnings("unchecked")
+    private void schedule(Identifier identifier, Runnable task) {
+        Future<?> scheduled = taskScheduler.schedule(task, Instant.now(clock).plus(THROTTLE_THRESHOLD));
+        // casting the type parameter to Object
+        scheduledFutures.put(identifier, (Future<Object>) scheduled);
+    }
+
+    private void cancelWithLowerGroup(Throttle throttleAnnotation) {
+        // look for any futures with lower group
+        // cancel them and remove from maps
+        Future<Object> higherFuture;
+        Identifier higherKey = scheduledFutures.higherKey(new Identifier(throttleAnnotation.group(), ""));
+        while (higherKey != null) {
+            if (!higherKey.hasGroupPrefix(throttleAnnotation.group()) || higherKey.getGroup()
+                                                                                  .equals(throttleAnnotation.group())) {
+                break;
+            }
+
+            higherFuture = scheduledFutures.get(higherKey);
+            higherFuture.cancel(false);
+            final ThrottledFuture<Object> throttledFuture = throttledFutures.get(higherKey);
+            if (throttledFuture != null) {
+                throttledFuture.cancel(false);
+            }
+
+            scheduledFutures.remove(higherKey);
+            throttledFutures.remove(higherKey);
+
+            higherKey = scheduledFutures.higherKey(higherKey);
         }
     }
 
-    private String makeKey(JoinPoint joinPoint, Throttle throttleAnnotation) throws IllegalCallerException {
+    private Identifier makeIdentifier(JoinPoint joinPoint, Throttle throttleAnnotation) throws IllegalCallerException {
         final String identifier = constructIdentifier(joinPoint, throttleAnnotation.value());
         final String groupIdentifier = throttleAnnotation.group();
 
-        if (identifier == null) {
-            throw new IllegalCallerException("Identifier in Debounce annotation resolved to null");
-        }
-
-        return groupIdentifier + "-" + joinPoint.getSignature().toShortString() + "-" + identifier;
+        return new Identifier(groupIdentifier, joinPoint.getSignature().toShortString() + "-" + identifier);
     }
 
-    private @Nullable Object voidOrFuture(@NotNull MethodSignature signature, String key,
-                                          ThrottledFuture<Object> future)
+    private @Nullable Object resultVoidOrFuture(@NotNull MethodSignature signature, ThrottledFuture<Object> future)
             throws IllegalCallerException {
         Class<?> returnType = signature.getReturnType();
-        if (returnType.isAssignableFrom(Future.class)) {
+        if (returnType.isAssignableFrom(ThrottledFuture.class)) {
             return future;
         }
         if (Void.TYPE.equals(returnType) || Void.class.equals(returnType)) {
             return null;
         }
-        throw new IllegalCallerException("Invalid return type for " + signature + " annotated with @Debounce, only Future or void allowed!");
+        throw new ThrottleAspectException("Invalid return type for " + signature + " annotated with @Debounce, only Future or void allowed!");
     }
 
-    private @Nullable String constructIdentifier(JoinPoint joinPoint, String expression) {
+
+    @SuppressWarnings({"unchecked"})
+    private @NotNull String constructIdentifier(JoinPoint joinPoint, String expression) throws ThrottleAspectException {
         if (expression == null || expression.isBlank()) {
             return "";
         }
@@ -297,10 +332,23 @@ public class ThrottleAspect {
 
         final EvaluationContext context = makeContext(joinPoint, parameters);
 
-        final List<Object> identifier = parser.parseExpression(expression).getValue(context, List.class);
-        assert identifier != null;
+        final Expression identifierExp = parser.parseExpression(expression);
+        try {
+            Object result = identifierExp.getValue(context);
 
-        return identifier.stream().map(Object::toString).collect(Collectors.joining("-"));
+            if (result instanceof String stringResult) {
+                return stringResult;
+            }
+
+            // casting the expression result to the list of objects
+            // exception handled and rethrown by try-catch
+            Collection<Object> identifierList = (Collection<Object>) identifierExp.getValue(context);
+            Objects.requireNonNull(identifierList);
+            return identifierList.stream().map(Object::toString).collect(Collectors.joining("-"));
+        } catch (EvaluationException | ClassCastException | NullPointerException e) {
+            throw new ThrottleAspectException("The identifier expression: '" + expression + "' has not been resolved to a Collection<Object>", e);
+        }
+
     }
 
     /**
@@ -335,6 +383,38 @@ public class ThrottleAspect {
         public void write(@NotNull EvaluationContext context, Object target, @NotNull String name, Object newValue)
                 throws AccessException {
             throw new AccessException("Unsupported operation");
+        }
+    }
+
+    /**
+     * A composed identifier of a throttled instance.
+     * <pre><code>
+     *     String group
+     *     String identifier
+     * </code></pre>
+     * Implements comparable, first comparing group, then identifier.
+     */
+    protected static class Identifier extends ComparablePair<String, String> {
+
+        public Identifier(String group, String identifier) {
+            super(group, identifier);
+        }
+
+        public String getGroup() {
+            return this.getFirst();
+        }
+
+        public String getIdentifier() {
+            return this.getSecond();
+        }
+
+        public boolean hasGroupPrefix(String group) {
+            return this.getGroup().indexOf(group) == 0;
+        }
+
+        @Override
+        public String toString() {
+            return "ThrottleAspect.Identifier{group='" + getGroup() + "',identifier='" + getIdentifier() + "'}";
         }
     }
 }

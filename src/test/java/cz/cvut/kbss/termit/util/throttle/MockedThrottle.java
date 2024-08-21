@@ -10,12 +10,9 @@ public class MockedThrottle implements Throttle {
 
     private String group;
 
-    private String clearGroup;
-
-    public MockedThrottle(String value, String group, String clearGroup) {
+    public MockedThrottle(String value, String group) {
         this.value = value;
         this.group = group;
-        this.clearGroup = clearGroup;
     }
 
     @Override
@@ -29,11 +26,6 @@ public class MockedThrottle implements Throttle {
     }
 
     @Override
-    public @NotNull String clearGroup() {
-        return clearGroup;
-    }
-
-    @Override
     public Class<? extends Annotation> annotationType() {
         return Throttle.class;
     }
@@ -44,9 +36,5 @@ public class MockedThrottle implements Throttle {
 
     public void setGroup(String group) {
         this.group = group;
-    }
-
-    public void setClearGroup(String clearGroup) {
-        this.clearGroup = clearGroup;
     }
 }

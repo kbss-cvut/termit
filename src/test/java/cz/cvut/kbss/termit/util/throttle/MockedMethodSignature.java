@@ -12,14 +12,14 @@ public class MockedMethodSignature implements MethodSignature {
 
     private String[] parameterNames;
 
-    public MockedMethodSignature(Class<?> returnType, Class<?>[] parameterTypes, String[] parameterNames) {
+    public MockedMethodSignature(Class<?> returnType, Class[] parameterTypes, String[] parameterNames) {
         this.returnType = returnType;
         this.parameterTypes = parameterTypes;
         this.parameterNames = parameterNames;
     }
 
     @Override
-    public Class getReturnType() {
+    public Class<?> getReturnType() {
         return returnType;
     }
 
@@ -64,7 +64,7 @@ public class MockedMethodSignature implements MethodSignature {
     }
 
     @Override
-    public Class getDeclaringType() {
+    public Class<?> getDeclaringType() {
         return null;
     }
 
