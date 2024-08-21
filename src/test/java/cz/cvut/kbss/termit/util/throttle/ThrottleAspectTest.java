@@ -84,7 +84,7 @@ class ThrottleAspectTest {
         when(joinPointA.getArgs()).thenReturn(new Object[]{new Object(), new Object()});
         when(joinPointA.getTarget()).thenReturn(this);
 
-        throttleA = new MockedThrottle("'string literal'", "my.testing.group.A");
+        throttleA = new MockedThrottle("'string literal'", "'my.testing.group.A'");
     }
 
     void mockB() throws Throwable {
@@ -97,7 +97,7 @@ class ThrottleAspectTest {
         when(joinPointB.getTarget()).thenReturn(this);
 
 
-        throttleB = new MockedThrottle("{paramName.get('second'), paramName.get('first')}", "my.testing.group.B");
+        throttleB = new MockedThrottle("{#paramName.get('second'), #paramName.get('first')}", "'my.testing.group.B'");
     }
 
     void mockC() throws Throwable {
@@ -109,7 +109,7 @@ class ThrottleAspectTest {
         when(joinPointC.getArgs()).thenReturn(new Object[]{new Object(), new Object()});
         when(joinPointC.getTarget()).thenReturn(this);
 
-        throttleC = new MockedThrottle("'string literal'", "my.testing");
+        throttleC = new MockedThrottle("'string literal'", "'my.testing'");
     }
 
     @BeforeEach
@@ -252,9 +252,9 @@ class ThrottleAspectTest {
 
     @Test
     void cancelsAllScheduledFuturesWhenNewTaskWithLowerGroupIsScheduled() throws Throwable {
-        throttleA.setGroup("the.group.identifier.first");
-        throttleB.setGroup("the.group.identifier.second");
-        throttleC.setGroup("the.group.identifier");
+        throttleA.setGroup("'the.group.identifier.first'");
+        throttleB.setGroup("'the.group.identifier.second'");
+        throttleC.setGroup("'the.group.identifier'");
 
         sut.throttleMethodCall(joinPointA, throttleA);
         sut.throttleMethodCall(joinPointB, throttleB);
@@ -277,8 +277,8 @@ class ThrottleAspectTest {
 
     @Test
     void immediatelyCancelsNewFutureWhenLowerGroupIsAlreadyScheduled() throws Throwable {
-        throttleA.setGroup("the.group.identifier");
-        throttleB.setGroup("the.group.identifier.with.higher.value");
+        throttleA.setGroup("'the.group.identifier'");
+        throttleB.setGroup("'the.group.identifier.with.higher.value'");
 
         signatureB.setReturnType(Future.class);
         when(joinPointB.proceed()).then(invocation -> new ThrottledFuture<>());
@@ -357,7 +357,7 @@ class ThrottleAspectTest {
     @ValueSource(classes = {Future.class, ThrottledFuture.class})
     void aspectThrowsWhenMethodDoesNotReturnsThrottledFutureObject(Class<?> returnType) throws Throwable {
         signatureA.setReturnType(returnType);
-        when(joinPointA.proceed()).thenReturn(new Object());
+        when(joinPointA.proceed()).thenReturn(new FutureTask<>(()->""));
 
         assertThrows(ThrottleAspectException.class, () -> sut.throttleMethodCall(joinPointA, throttleA));
     }
@@ -369,6 +369,17 @@ class ThrottleAspectTest {
         when(joinPointA.proceed()).thenReturn(null);
 
         assertThrows(ThrottleAspectException.class, () -> sut.throttleMethodCall(joinPointA, throttleA));
+    }
+
+    @Test
+    void aspectResolvesThrottleGroupProviderClassInSpEL() throws Throwable {
+        throttleA.setGroup("T(ThrottleGroupProvider).getTextAnalysisVocabulariesAll()");
+
+        sut.throttleMethodCall(joinPointA, throttleA);
+
+        final String expectedGroup = ThrottleGroupProvider.getTextAnalysisVocabulariesAll();
+        final String resolvedGroup = scheduledFutures.firstEntry().getKey().getGroup();
+        assertEquals(expectedGroup, resolvedGroup);
     }
 
 }

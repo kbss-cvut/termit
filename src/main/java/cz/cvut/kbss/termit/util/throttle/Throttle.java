@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 /**
  * Indicates that calls to this method will be throttled & debounced.
  * Meaning that the action will be executed on the first call of the method,
- * then every next call which comes earlier then {@link ThrottleAspect#THROTTLE_THRESHOLD}
+ * then every next call which comes earlier then {@link cz.cvut.kbss.termit.util.Constants#THROTTLE_THRESHOLD}
  * will return a pending future which might be resolved by a newer future.
- * Futures will be resolved once per {@link ThrottleAspect#THROTTLE_THRESHOLD} (+ duration to execute the future task).
+ * Futures will be resolved once per {@link cz.cvut.kbss.termit.util.Constants#THROTTLE_THRESHOLD} (+ duration to execute the future task).
  * <p>
  * Every annotated method should be tested for throttling to ensure it has the desired effect.
  * <p>
@@ -23,17 +23,17 @@ import java.lang.annotation.Target;
  * or another type assignable from {@link ThrottledFuture},
  * but the returned concrete object has to be {@link ThrottledFuture}, <b>method call will throw otherwise!</b>
  * <p>
- * Note that returned future can be canceled (see {@link #clearGroup()})
+ * Note that returned future can be canceled
  * <p>
  * Example implementation:
  * <pre><code>
- *  {@code @}Throttle(value = "{paramObj, anotherParam}")
+ *  {@code @}Throttle(value = "{#paramObj, #anotherParam}")
  *  public Future&lt;String&gt; myFunction(Object paramObj, Object anotherParam) {
  *      return ThrottledFuture.of(() -> doStuff());
  *  }
  * </code></pre>
  *
- * @implNote The annotation is being processed by {@link ThrottleAspect#throttledThreads}
+ * @implNote Methods will be called from a separated thread.
  * @see <a href="https://css-tricks.com/debouncing-throttling-explained-examples/">Debouncing and Throttling</a>
  * @see <a href="https://github.com/kbss-cvut/termit/blob/master/doc/throttle-debounce.png">Throttling + debouncing image</a>
  */
@@ -42,7 +42,8 @@ import java.lang.annotation.Target;
 public @interface Throttle {
 
     /**
-     * The Spring-EL expression returning a List of Objects which will be used to construct the unique identifier
+     * The Spring-EL expression
+     * returning a List of Objects or a String which will be used to construct the unique identifier
      * for this throttled instance.
      * <p>
      * In the expression, you have available method parameters.
@@ -50,7 +51,8 @@ public @interface Throttle {
     @NotNull String value() default "";
 
     /**
-     * The Spring-EL expression returning group identifier (String) to which this throttle belongs.
+     * The Spring-EL expression
+     * returning group identifier a List of Objects or a String to which this throttle belongs.
      * <p>
      * When there is a pending task <code>P</code> with a group
      * that is also a prefix for a group of a new task <code>N</code>,
