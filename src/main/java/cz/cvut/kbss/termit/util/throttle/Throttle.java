@@ -20,17 +20,18 @@ import java.lang.annotation.Target;
  * <p>
  * Available only for methods returning {@code void}, {@link Void} and {@link ThrottledFuture},
  * method signature may be {@link java.util.concurrent.Future},
+ * or another type assignable from {@link ThrottledFuture},
  * but the returned concrete object has to be {@link ThrottledFuture}, <b>method call will throw otherwise!</b>
  * <p>
  * Note that returned future can be canceled (see {@link #clearGroup()})
  * <p>
  * Example implementation:
- * <pre>
- *  &#64;Throttle(value = "{paramObj, anotherParam}")
+ * <pre><code>
+ *  {@code @}Throttle(value = "{paramObj, anotherParam}")
  *  public Future&lt;String&gt; myFunction(Object paramObj, Object anotherParam) {
  *      return ThrottledFuture.of(() -> doStuff());
  *  }
- * </pre>
+ * </code></pre>
  *
  * @implNote The annotation is being processed by {@link ThrottleAspect#throttledThreads}
  * @see <a href="https://css-tricks.com/debouncing-throttling-explained-examples/">Debouncing and Throttling</a>
@@ -41,21 +42,32 @@ import java.lang.annotation.Target;
 public @interface Throttle {
 
     /**
-     * @return The Spring-EL expression returning a List of Objects which will be used to construct the unique identifier
-     * for this throttled instance. In the expression, you have available method parameters.
+     * The Spring-EL expression returning a List of Objects which will be used to construct the unique identifier
+     * for this throttled instance.
+     * <p>
+     * In the expression, you have available method parameters.
      */
     @NotNull String value() default "";
 
     /**
-     * @return The group identifier to which this throttle belongs to.
-     * Used for canceling tasks with {@link #clearGroup()}.
-     * When there is a pending task with a group that is also a prefix for this group, this task will be canceled immediately.
+     * The Spring-EL expression returning group identifier (String) to which this throttle belongs.
+     * <p>
+     * When there is a pending task <code>P</code> with a group
+     * that is also a prefix for a group of a new task <code>N</code>,
+     * the new task <code>N</code> will be canceled immediately.
+     * The group of the task <code>P</code> is lower than the group of the task <code>N</code>.
+     * <p>
+     * When a task with lower group is scheduled, all scheduled tasks with higher groups are canceled.
+     * <p>
+     * Example:
+     * <pre>
+     *     new task A with group <code>"my.group.task1"</code> is scheduled
+     *     new task B with group <code>"my.group.task1.subtask"</code> wants to be scheduled
+     *        -&gt; task <b>B is canceled</b> immediately (task A with lower group is already pending)
+     *     new task C with group <code>"my.group"</code> is scheduled
+     *        -&gt; task <b>A is canceled</b> as the task C has lower group than A
+     * </pre>
+     * Blank string disables any group processing.
      */
     @NotNull String group() default "";
-
-    /**
-     * @return A prefix of a group that will be cleared on throttling.
-     * All pending tasks with a prefix of this value will be canceled in favor of this task.
-     */
-    @NotNull String clearGroup() default "";
 }

@@ -312,8 +312,7 @@ public class VocabularyService
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
      */
-    @Throttle(group = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY,
-              clearGroup = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY)
+    @Throttle(group = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY)
     @Transactional
     public void runTextAnalysisOnAllVocabularies() {
         LOG.debug("Analyzing definitions of all terms in all vocabularies.");

@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -45,6 +46,16 @@ public class Constants {
      * URL path to the application's REST API.
      */
     public static final String REST_MAPPING_PATH = "/rest";
+
+    /**
+     * The amount of time in which calls of methods
+     * with {@link cz.cvut.kbss.termit.util.throttle.Throttle} annotation
+     * should be merged.
+     *
+     * @see cz.cvut.kbss.termit.util.throttle.Throttle
+     * @see cz.cvut.kbss.termit.util.throttle.ThrottleAspect
+     */
+    public static final Duration THROTTLE_THRESHOLD = Duration.ofSeconds(10);
 
     /**
      * Default page size.
