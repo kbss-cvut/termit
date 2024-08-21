@@ -294,8 +294,8 @@ public class VocabularyService
      * @param vocabulary Vocabulary to be analyzed
      */
     @Transactional
-    @Throttle(value = "{vocabulary.getUri()}",
-              group = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY_TERMS_ALL_DEFINITIONS)
+    @Throttle(value = "{#vocabulary.getUri()}",
+              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabulary.getUri())")
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
         vocabulary = findRequired(vocabulary.getUri()); // required when throttling
@@ -312,7 +312,7 @@ public class VocabularyService
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
      */
-    @Throttle(group = Constants.DebouncingGroups.TEXT_ANALYSIS_VOCABULARY)
+    @Throttle(group = "T(ThrottleGroupProvider).getTextAnalysisVocabulariesAll()")
     @Transactional
     public void runTextAnalysisOnAllVocabularies() {
         LOG.debug("Analyzing definitions of all terms in all vocabularies.");
@@ -347,7 +347,7 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to validate
      */
-    @Throttle("{vocabulary}")
+    @Throttle("{#vocabulary}")
     public Future<List<ValidationResult>> validateContents(URI vocabulary) {
         return ThrottledFuture.of(() -> repositoryService.validateContents(vocabulary));
     }

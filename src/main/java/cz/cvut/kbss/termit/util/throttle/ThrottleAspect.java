@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.util.throttle;
 
+import cz.cvut.kbss.termit.TermItApplication;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
 import org.aspectj.lang.JoinPoint;
@@ -21,8 +22,9 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.DataBindingMethodResolver;
-import org.springframework.expression.spel.support.SimpleEvaluationContext;
+import org.springframework.expression.spel.support.DataBindingPropertyAccessor;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.expression.spel.support.StandardTypeLocator;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +33,7 @@ import org.springframework.stereotype.Component;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,6 +81,8 @@ public class ThrottleAspect {
 
     private final TaskScheduler taskScheduler;
 
+    private final StandardEvaluationContext standardEvaluationContext;
+
     private final Clock clock;
 
     @Autowired
@@ -87,6 +92,7 @@ public class ThrottleAspect {
         lastRun = new HashMap<>();
         scheduledFutures = new TreeMap<>();
         clock = Clock.systemUTC(); // used by Instant.now() by default
+        standardEvaluationContext = makeDefaultContext();
     }
 
     protected ThrottleAspect(Map<Identifier, ThrottledFuture<Object>> throttledFutures,
@@ -98,6 +104,22 @@ public class ThrottleAspect {
         this.scheduledFutures = scheduledFutures;
         this.taskScheduler = taskScheduler;
         this.clock = clock;
+        standardEvaluationContext = makeDefaultContext();
+    }
+
+    private static StandardEvaluationContext makeDefaultContext() {
+        StandardEvaluationContext standardEvaluationContext = new StandardEvaluationContext();
+        standardEvaluationContext.addPropertyAccessor(DataBindingPropertyAccessor.forReadOnlyAccess());
+
+        final ClassLoader loader = ThrottleAspect.class.getClassLoader();
+        final StandardTypeLocator typeLocator = new StandardTypeLocator(loader);
+
+        final String basePackage = TermItApplication.class.getPackageName();
+        Arrays.stream(loader.getDefinedPackages()).map(Package::getName)
+              .filter(s -> s.indexOf(basePackage) == 0).forEach(typeLocator::registerImport);
+
+        standardEvaluationContext.setTypeLocator(typeLocator);
+        return standardEvaluationContext;
     }
 
     /**
@@ -116,11 +138,12 @@ public class ThrottleAspect {
         }
     }
 
-    private static EvaluationContext makeContext(JoinPoint joinPoint, Map<String, Object> parameters) {
-        return SimpleEvaluationContext.forPropertyAccessors(new MapPropertyAccessor<>(joinPoint.getTarget()
-                                                                                               .getClass(), parameters))
-                                      .withMethodResolvers(DataBindingMethodResolver.forInstanceMethodInvocation())
-                                      .withRootObject(joinPoint.getTarget()).build();
+    private EvaluationContext makeContext(JoinPoint joinPoint, Map<String, Object> parameters) {
+        StandardEvaluationContext context = new StandardEvaluationContext();
+        standardEvaluationContext.applyDelegatesTo(context);
+        context.setRootObject(joinPoint.getTarget());
+        context.setVariables(parameters);
+        return context;
     }
 
     @SuppressWarnings("unchecked")
@@ -224,9 +247,9 @@ public class ThrottleAspect {
         final Identifier identifier = makeIdentifier(joinPoint, throttleAnnotation);
         LOG.trace("Throttling task with key '{}'", identifier);
 
-        if (!throttleAnnotation.group().isBlank()) {
-            // check if there is a task with higher group
-            // and if so, cancel this task in favor of the higher group
+        if (!identifier.getGroup().isBlank()) {
+            // check if there is a task with lower group
+            // and if so, cancel this task in favor of the lower group
             final Map.Entry<Identifier, Future<Object>> lowerEntry = scheduledFutures.lowerEntry(identifier);
             if (lowerEntry != null) {
                 final Future<Object> lowerFuture = lowerEntry.getValue();
@@ -237,7 +260,7 @@ public class ThrottleAspect {
                 }
             }
 
-            cancelWithLowerGroup(throttleAnnotation);
+            cancelWithHigherGroup(identifier);
         }
 
         // if there is a scheduled task and this throttled instance was executed in the last THROTTLE_THRESHOLD
@@ -275,14 +298,17 @@ public class ThrottleAspect {
         scheduledFutures.put(identifier, (Future<Object>) scheduled);
     }
 
-    private void cancelWithLowerGroup(Throttle throttleAnnotation) {
-        // look for any futures with lower group
+    private void cancelWithHigherGroup(Identifier throttleAnnotation) {
+        if (throttleAnnotation.getGroup().isBlank()) {
+            return;
+        }
+        // look for any futures with higher group
         // cancel them and remove from maps
         Future<Object> higherFuture;
-        Identifier higherKey = scheduledFutures.higherKey(new Identifier(throttleAnnotation.group(), ""));
+        Identifier higherKey = scheduledFutures.higherKey(new Identifier(throttleAnnotation.getGroup(), ""));
         while (higherKey != null) {
-            if (!higherKey.hasGroupPrefix(throttleAnnotation.group()) || higherKey.getGroup()
-                                                                                  .equals(throttleAnnotation.group())) {
+            if (!higherKey.hasGroupPrefix(throttleAnnotation.getGroup()) || higherKey.getGroup()
+                                                                                     .equals(throttleAnnotation.getGroup())) {
                 break;
             }
 
@@ -302,7 +328,7 @@ public class ThrottleAspect {
 
     private Identifier makeIdentifier(JoinPoint joinPoint, Throttle throttleAnnotation) throws IllegalCallerException {
         final String identifier = constructIdentifier(joinPoint, throttleAnnotation.value());
-        final String groupIdentifier = throttleAnnotation.group();
+        final String groupIdentifier = constructIdentifier(joinPoint, throttleAnnotation.group());
 
         return new Identifier(groupIdentifier, joinPoint.getSignature().toShortString() + "-" + identifier);
     }
@@ -328,7 +354,6 @@ public class ThrottleAspect {
 
         final Map<String, Object> parameters = new HashMap<>();
         resolveParameters(parameters, (MethodSignature) joinPoint.getSignature(), joinPoint);
-        assert !parameters.isEmpty();
 
         final EvaluationContext context = makeContext(joinPoint, parameters);
 
@@ -346,9 +371,8 @@ public class ThrottleAspect {
             Objects.requireNonNull(identifierList);
             return identifierList.stream().map(Object::toString).collect(Collectors.joining("-"));
         } catch (EvaluationException | ClassCastException | NullPointerException e) {
-            throw new ThrottleAspectException("The identifier expression: '" + expression + "' has not been resolved to a Collection<Object>", e);
+            throw new ThrottleAspectException("The expression: '" + expression + "' has not been resolved to a Collection<Object> or String", e);
         }
-
     }
 
     /**
