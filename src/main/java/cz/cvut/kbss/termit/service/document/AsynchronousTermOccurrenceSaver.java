@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Primary
 @Service
-@Profile("!test")
+@Profile("!test & disabled")
 public class AsynchronousTermOccurrenceSaver implements TermOccurrenceSaver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AsynchronousTermOccurrenceSaver.class);

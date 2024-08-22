@@ -1,8 +1,11 @@
 package cz.cvut.kbss.termit.util.throttle;
 
+import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -10,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-public class ThrottledFuture<T> implements Future<T> {
+public class ThrottledFuture<T> implements Future<T>, LongRunningTask {
 
     private final Object lock = new Object();
 
@@ -21,7 +24,7 @@ public class ThrottledFuture<T> implements Future<T> {
     /**
      * Access only with acquired {@link #lock}
      */
-    private boolean completing = false;
+    private @Nullable Instant completingSince = null;
 
     private ThrottledFuture(@NotNull final Supplier<T> task) {
         this.task = task;
@@ -77,7 +80,6 @@ public class ThrottledFuture<T> implements Future<T> {
             throws InterruptedException, ExecutionException, TimeoutException {
         return future.get(timeout, unit);
     }
-
     /**
      * @param task the new task
      * @return If the current task is already running, was canceled or already completed, returns a new future for the given task.
@@ -85,7 +87,7 @@ public class ThrottledFuture<T> implements Future<T> {
      */
     protected ThrottledFuture<T> update(Supplier<T> task) {
         synchronized (lock) {
-            if (completing || future.isCancelled() || future.isDone()) {
+            if (isRunning() || future.isCancelled() || future.isDone()) {
                 return ThrottledFuture.of(task);
             }
             this.task = task;
@@ -104,7 +106,7 @@ public class ThrottledFuture<T> implements Future<T> {
      */
     protected ThrottledFuture<T> transfer(ThrottledFuture<T> target) {
         synchronized (lock) {
-            if (completing || future.isCancelled() || future.isDone()) {
+            if (isRunning() || future.isCancelled() || future.isDone()) {
                 return target;
             }
 
@@ -116,10 +118,10 @@ public class ThrottledFuture<T> implements Future<T> {
 
     protected void run() {
         synchronized (lock) {
-            if (completing || future.isCancelled() || future.isDone()) {
+            if (isRunning() || future.isCancelled() || future.isDone()) {
                 return;
             }
-            completing = true;
+            completingSince = Utils.timestamp();
         }
 
         if (task != null) {
@@ -127,5 +129,20 @@ public class ThrottledFuture<T> implements Future<T> {
         } else {
             future.complete(null);
         }
+    }
+
+    @Override
+    public boolean isRunning() {
+        return completingSince != null;
+    }
+
+    @Override
+    public boolean isCompleted() {
+        return isDone() && isCancelled();
+    }
+
+    @Override
+    public @Nullable Instant runningSince() {
+        return completingSince;
     }
 }
