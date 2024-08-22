@@ -3,6 +3,8 @@ package cz.cvut.kbss.termit.util.throttle;
 import cz.cvut.kbss.termit.TermItApplication;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskRegister;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -34,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
@@ -54,7 +57,7 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 @Scope(SCOPE_SINGLETON)
 @Component("throttleAspect")
 @Profile("!test")
-public class ThrottleAspect {
+public class ThrottleAspect implements LongRunningTaskRegister {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThrottleAspect.class);
 
@@ -210,7 +213,10 @@ public class ThrottleAspect {
             // mark the thread as throttled
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
-            LOG.trace("Running throttled task [{} left] '{}'", scheduledFutures.size(), identifier);
+            LOG.atTrace()
+               .addArgument(() -> scheduledFutures.values().stream().filter(f -> !f.isDone() && !f.isCancelled())
+                                                  .count()).addArgument(identifier)
+               .log("Running throttled task [{} left] '{}'");
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
             try {
@@ -393,6 +399,11 @@ public class ThrottleAspect {
         } catch (EvaluationException | ClassCastException | NullPointerException e) {
             throw new ThrottleAspectException("The expression: '" + expression + "' has not been resolved to a Collection<Object> or String", e);
         }
+    }
+
+    @Override
+    public @NotNull Collection<LongRunningTask> getTasks() {
+        return List.copyOf(throttledFutures.values());
     }
 
     /**

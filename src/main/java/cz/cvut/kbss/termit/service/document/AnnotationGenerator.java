@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,17 +49,13 @@ public class AnnotationGenerator {
 
     private final TermOccurrenceSaver occurrenceSaver;
 
-    private final SynchronousTermOccurrenceSaver synchronousTermOccurrenceSaver;
-
     @Autowired
     public AnnotationGenerator(DocumentManager documentManager,
                                TermOccurrenceResolvers resolvers,
-                               TermOccurrenceSaver occurrenceSaver,
-                               SynchronousTermOccurrenceSaver synchronousTermOccurrenceSaver) {
+                               TermOccurrenceSaver occurrenceSaver) {
         this.documentManager = documentManager;
         this.resolvers = resolvers;
         this.occurrenceSaver = occurrenceSaver;
-        this.synchronousTermOccurrenceSaver = synchronousTermOccurrenceSaver;
     }
 
     /**
@@ -107,7 +104,7 @@ public class AnnotationGenerator {
         LOG.debug("Resolving annotations of the definition of {}.", annotatedTerm);
         occurrenceResolver.parseContent(content, annotatedTerm);
         final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
-        synchronousTermOccurrenceSaver.saveOccurrences(occurrences, annotatedTerm);
+        occurrenceSaver.saveOccurrences(occurrences, annotatedTerm);
         LOG.trace("Finished generating annotations for the definition of {}.", annotatedTerm);
     }
 }
