@@ -9,7 +9,7 @@
 
     <description>AOP related definitions</description>
 
-    <aop:config>
+    <aop:config proxy-target-class="true">
         <!-- bean created with annotations -->
         <!-- cz.cvut.kbss.termit.util.throttle.ThrottleAspect -->
         <aop:aspect id="throttleAspect" ref="throttleAspect">

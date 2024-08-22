@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -64,15 +65,16 @@ public class JwtUtils {
 
     private final ObjectMapper objectMapper;
 
-    private final Key key;
-
     private final JwtParser jwtParser;
+
+    private final Key key;
 
     @Autowired
     public JwtUtils(@Qualifier("objectMapper") ObjectMapper objectMapper, Configuration config) {
         this.objectMapper = objectMapper;
         this.key = Utils.isBlank(config.getJwt().getSecretKey()) ? Keys.secretKeyFor(SIGNATURE_ALGORITHM) :
                          Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+
         this.jwtParser = Jwts.parserBuilder().setSigningKey(key)
                              .deserializeJsonWith(new JacksonDeserializer<>(objectMapper))
                              .build();

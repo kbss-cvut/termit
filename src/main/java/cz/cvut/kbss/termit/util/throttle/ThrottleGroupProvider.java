@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.util.throttle;
 
 import java.net.URI;
 
+@SuppressWarnings("unused")
 public class ThrottleGroupProvider {
 
     private ThrottleGroupProvider() {

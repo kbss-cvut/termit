@@ -49,6 +49,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
@@ -263,5 +264,10 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request, InvalidPasswordChangeRequestException e) {
         logException(e, request);
         return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public void asyncRequestNotUsableException(HttpServletRequest request, AsyncRequestNotUsableException e) {
+        LOG.error("Client closed connection when processing request to {}", request.getRequestURI());
     }
 }

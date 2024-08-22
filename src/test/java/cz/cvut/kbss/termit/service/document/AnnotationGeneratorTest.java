@@ -193,7 +193,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
         try (final InputStream content = loadFile("application.yml")) {
             file.setLabel(generateIncompatibleFile());
             final AnnotationGenerationException ex = assertThrows(AnnotationGenerationException.class,
-                                                                  () -> sut.generateAnnotations(content, file));
+                    () -> sut.generateAnnotations(content, file));
             assertThat(ex.getMessage(), containsString("Unsupported type of file"));
         }
     }
@@ -224,7 +224,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     void generateAnnotationsThrowsAnnotationGenerationExceptionForUnknownTermIdentifier() throws Exception {
         final InputStream content = setUnknownTermIdentifier(loadFile("data/rdfa-simple.html"));
         final AnnotationGenerationException ex = assertThrows(AnnotationGenerationException.class,
-                                                              () -> sut.generateAnnotations(content, file));
+                () -> sut.generateAnnotations(content, file));
         assertThat(ex.getMessage(), containsString("Term with id "));
         assertThat(ex.getMessage(), containsString("not found"));
     }
@@ -434,7 +434,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     void generateAnnotationsCreatesAnnotationsForOccurrencesInTermDefinition() {
         // This is the term in whose definition were discovered by text analysis is their target
         final Term source = Generator.generateTermWithId();
-        sut.generateAnnotations(loadFile("data/rdfa-simple.html"), source);
+        sut.generateAnnotationsSync(loadFile("data/rdfa-simple.html"), source);
         final List<TermOccurrence> result = findAllOccurrencesOf(term);
         assertEquals(1, result.size());
         result.forEach(occ -> assertEquals(source.getUri(), occ.getTarget().getSource()));
@@ -444,7 +444,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     void generateAnnotationsCreatesAnnotationsWithSuggestedStateForOccurrencesInTermDefinition() {
         // This is the term in whose definition were discovered by text analysis is their target
         final Term source = Generator.generateTermWithId();
-        sut.generateAnnotations(loadFile("data/rdfa-simple.html"), source);
+        sut.generateAnnotationsSync(loadFile("data/rdfa-simple.html"), source);
         final List<TermOccurrence> result = findAllOccurrencesOf(term);
         result.forEach(occ -> assertThat(occ.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
     }

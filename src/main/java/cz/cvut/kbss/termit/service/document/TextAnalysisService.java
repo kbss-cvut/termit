@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +81,7 @@ public class TextAnalysisService {
      * @param file               File whose content shall be analyzed
      * @param vocabularyContexts Identifiers of repository contexts containing vocabularies intended for text analysis
      */
+    @Throttle("#file.getUri()")
     @Transactional
     public void analyzeFile(File file, Set<URI> vocabularyContexts) {
         Objects.requireNonNull(file);
@@ -189,7 +191,7 @@ public class TextAnalysisService {
                 return;
             }
             try (final InputStream is = result.get().getInputStream()) {
-                annotationGenerator.generateAnnotations(is, term);
+                annotationGenerator.generateAnnotationsSync(is, term);
             }
         } catch (WebServiceIntegrationException e) {
             throw e;
