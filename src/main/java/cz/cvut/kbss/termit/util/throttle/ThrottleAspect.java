@@ -14,13 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.annotation.Order;
-import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.EvaluationException;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.PropertyAccessor;
-import org.springframework.expression.TypedValue;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.DataBindingPropertyAccessor;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
@@ -29,10 +26,10 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -42,6 +39,7 @@ import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -85,9 +83,12 @@ public class ThrottleAspect {
 
     private final Clock clock;
 
+    private final Executor transactionExecutor;
+
     @Autowired
-    public ThrottleAspect(TaskScheduler taskScheduler) {
+    public ThrottleAspect(TaskScheduler taskScheduler, TransactionExecutor transactionExecutor) {
         this.taskScheduler = taskScheduler;
+        this.transactionExecutor = transactionExecutor;
         throttledFutures = new HashMap<>();
         lastRun = new HashMap<>();
         scheduledFutures = new TreeMap<>();
@@ -98,12 +99,13 @@ public class ThrottleAspect {
     protected ThrottleAspect(Map<Identifier, ThrottledFuture<Object>> throttledFutures,
                              Map<Identifier, Instant> lastRun,
                              NavigableMap<Identifier, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
-                             Clock clock) {
+                             Clock clock, TransactionExecutor transactionExecutor) {
         this.throttledFutures = throttledFutures;
         this.lastRun = lastRun;
         this.scheduledFutures = scheduledFutures;
         this.taskScheduler = taskScheduler;
         this.clock = clock;
+        this.transactionExecutor = transactionExecutor;
         standardEvaluationContext = makeDefaultContext();
     }
 
@@ -115,8 +117,8 @@ public class ThrottleAspect {
         final StandardTypeLocator typeLocator = new StandardTypeLocator(loader);
 
         final String basePackage = TermItApplication.class.getPackageName();
-        Arrays.stream(loader.getDefinedPackages()).map(Package::getName)
-              .filter(s -> s.indexOf(basePackage) == 0).forEach(typeLocator::registerImport);
+        Arrays.stream(loader.getDefinedPackages()).map(Package::getName).filter(s -> s.indexOf(basePackage) == 0)
+              .forEach(typeLocator::registerImport);
 
         standardEvaluationContext.setTypeLocator(typeLocator);
         return standardEvaluationContext;
@@ -133,9 +135,20 @@ public class ThrottleAspect {
         final String[] paramNames = signature.getParameterNames();
         final Object[] params = joinPoint.getArgs();
 
+        if (paramNames == null || params == null || params.length != paramNames.length) {
+            return;
+        }
+
         for (int i = 0; i < params.length; i++) {
             map.putIfAbsent(paramNames[i], params[i]);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ThrottledFuture<Object> transferTask(@NotNull ThrottledFuture<?> source,
+                                                        @NotNull ThrottledFuture<?> target) {
+        // casting the type parameter to Object
+        return ((ThrottledFuture<Object>) source).transfer((ThrottledFuture<Object>) target);
     }
 
     private EvaluationContext makeContext(JoinPoint joinPoint, Map<String, Object> parameters) {
@@ -146,19 +159,14 @@ public class ThrottleAspect {
         return context;
     }
 
-    @SuppressWarnings("unchecked")
-    private static ThrottledFuture<Object> transferTask(@NotNull ThrottledFuture<?> source,
-                                                        @NotNull ThrottledFuture<?> target) {
-        // casting the type parameter to Object
-        return ((ThrottledFuture<Object>) source).transfer((ThrottledFuture<Object>) target);
-    }
-
-    private @NotNull AbstractMap.SimpleImmutableEntry<Runnable, ThrottledFuture<Object>> getFutureTask(
-            @NotNull ProceedingJoinPoint joinPoint, Identifier identifier, @NotNull ThrottledFuture<Object> future)
+    private Pair<Runnable, ThrottledFuture<Object>> getFutureTask(@NotNull ProceedingJoinPoint joinPoint,
+                                                                  @NotNull Identifier identifier,
+                                                                  @NotNull ThrottledFuture<Object> future)
             throws Throwable {
 
         final Supplier<SecurityContext> securityContext = SecurityContextHolder.getDeferredContext();
-        final Class<?> returnType = ((MethodSignature) joinPoint.getSignature()).getReturnType();
+        final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final Class<?> returnType = methodSignature.getReturnType();
         final boolean isFuture = returnType.isAssignableFrom(ThrottledFuture.class);
 
         ThrottledFuture<Object> throttledFuture = future;
@@ -175,12 +183,12 @@ public class ThrottleAspect {
             if (result instanceof ThrottledFuture<?> throttledMethodFuture) {
                 // future acquired by key or a new future supplied, ensuring the same type
                 // ThrottledFuture#updateOther will create a new future when required
-                throttledFuture = transferTask(throttledMethodFuture, future);
+                throttledFuture = transferTask(throttledMethodFuture, throttledFuture);
             } else {
                 throw new ThrottleAspectException("Returned value is not a ThrottledFuture");
             }
         } else {
-            future.update(() -> {
+            throttledFuture.update(() -> {
                 try {
                     return joinPoint.proceed();
                 } catch (Throwable e) {
@@ -190,15 +198,19 @@ public class ThrottleAspect {
             });
         }
 
+        final boolean withTransaction = methodSignature.getMethod() != null && methodSignature.getMethod()
+                                                                                              .isAnnotationPresent(Transactional.class);
+
+        final ThrottledFuture<?> finalFuture = throttledFuture;
         // create a task which will be scheduled with executor
         final Runnable toSchedule = () -> {
-            if (future.isCancelled() || future.isDone()) {
+            if (finalFuture.isCancelled() || finalFuture.isDone()) {
                 return;
             }
             // mark the thread as throttled
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
-            LOG.trace("Running throttled task '{}'", identifier);
+            LOG.trace("Running throttled task [{} left] '{}'", scheduledFutures.size(), identifier);
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
             try {
@@ -207,7 +219,11 @@ public class ThrottleAspect {
                     lastRun.put(identifier, Instant.now(clock));
                 }
                 // fulfill the future
-                future.run();
+                if (withTransaction) {
+                    transactionExecutor.execute(finalFuture::run);
+                } else {
+                    finalFuture.run();
+                }
             } finally {
                 // clear the security context
                 SecurityContextHolder.clearContext();
@@ -217,7 +233,7 @@ public class ThrottleAspect {
             }
         };
 
-        return new AbstractMap.SimpleImmutableEntry<>(toSchedule, throttledFuture);
+        return new Pair<>(toSchedule, throttledFuture);
     }
 
     /**
@@ -267,33 +283,37 @@ public class ThrottleAspect {
         // cancel the scheduled task
         // -> the execution is further delayed
         Future<Object> oldFuture = scheduledFutures.get(identifier);
-        boolean throttleNotExpired = lastRun.getOrDefault(identifier, Instant.EPOCH)
-                                            .isAfter(Instant.now(clock).minus(THROTTLE_THRESHOLD));
-        if (oldFuture != null && throttleNotExpired) {
+        boolean throttleExpired = lastRun.getOrDefault(identifier, Instant.EPOCH)
+                                         .isBefore(Instant.now(clock).minus(THROTTLE_THRESHOLD));
+        if (oldFuture != null && !throttleExpired) {
             oldFuture.cancel(false);
         }
 
         // acquire a throttled future from a map, or make a new one
         ThrottledFuture<Object> oldThrottledFuture = throttledFutures.getOrDefault(identifier, new ThrottledFuture<>());
 
-        AbstractMap.SimpleImmutableEntry<Runnable, ThrottledFuture<Object>> entry = getFutureTask(joinPoint, identifier, oldThrottledFuture);
-        Runnable task = entry.getKey();
-        ThrottledFuture<Object> future = entry.getValue();
+        Pair<Runnable, ThrottledFuture<Object>> pair = getFutureTask(joinPoint, identifier, oldThrottledFuture);
+        Runnable task = pair.getFirst();
+        ThrottledFuture<Object> future = pair.getSecond();
         // update the throttled future in the map
         throttledFutures.put(identifier, future);
 
         Object result = resultVoidOrFuture(signature, future);
 
         if (oldFuture == null || oldFuture.isDone() || oldFuture.isCancelled()) {
-            schedule(identifier, task);
+            schedule(identifier, task, throttleExpired);
         }
 
         return result;
     }
 
     @SuppressWarnings("unchecked")
-    private void schedule(Identifier identifier, Runnable task) {
-        Future<?> scheduled = taskScheduler.schedule(task, Instant.now(clock).plus(THROTTLE_THRESHOLD));
+    private void schedule(Identifier identifier, Runnable task, boolean immediately) {
+        Instant startTime = Instant.now(clock).plus(THROTTLE_THRESHOLD);
+        if (immediately) {
+            startTime = Instant.now(clock);
+        }
+        Future<?> scheduled = taskScheduler.schedule(task, startTime);
         // casting the type parameter to Object
         scheduledFutures.put(identifier, (Future<Object>) scheduled);
     }
@@ -320,7 +340,7 @@ public class ThrottleAspect {
             }
 
             scheduledFutures.remove(higherKey);
-            throttledFutures.remove(higherKey);
+//            throttledFutures.remove(higherKey);
 
             higherKey = scheduledFutures.higherKey(higherKey);
         }
@@ -376,41 +396,6 @@ public class ThrottleAspect {
     }
 
     /**
-     * Resolves properties to map values
-     *
-     * @param rootClass a class this accessor should accept as target's class
-     * @param map       the map with values
-     */
-    private record MapPropertyAccessor<T>(Class<?> rootClass, Map<String, T> map) implements PropertyAccessor {
-
-        @Override
-        public Class<?>[] getSpecificTargetClasses() {
-            return new Class<?>[]{rootClass, map.getClass()};
-        }
-
-        @Override
-        public boolean canRead(@NotNull EvaluationContext context, Object target, @NotNull String name) {
-            return map.containsKey(name);
-        }
-
-        @Override
-        public @NotNull TypedValue read(@NotNull EvaluationContext context, Object target, @NotNull String name) {
-            return new TypedValue(map.get(name));
-        }
-
-        @Override
-        public boolean canWrite(@NotNull EvaluationContext context, Object target, @NotNull String name) {
-            return false;
-        }
-
-        @Override
-        public void write(@NotNull EvaluationContext context, Object target, @NotNull String name, Object newValue)
-                throws AccessException {
-            throw new AccessException("Unsupported operation");
-        }
-    }
-
-    /**
      * A composed identifier of a throttled instance.
      * <pre><code>
      *     String group
@@ -418,7 +403,7 @@ public class ThrottleAspect {
      * </code></pre>
      * Implements comparable, first comparing group, then identifier.
      */
-    protected static class Identifier extends ComparablePair<String, String> {
+    protected static class Identifier extends Pair.Comparable<String, String> {
 
         public Identifier(String group, String identifier) {
             super(group, identifier);

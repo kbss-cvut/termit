@@ -48,13 +48,17 @@ public class AnnotationGenerator {
 
     private final TermOccurrenceSaver occurrenceSaver;
 
+    private final SynchronousTermOccurrenceSaver synchronousTermOccurrenceSaver;
+
     @Autowired
     public AnnotationGenerator(DocumentManager documentManager,
                                TermOccurrenceResolvers resolvers,
-                               TermOccurrenceSaver occurrenceSaver) {
+                               TermOccurrenceSaver occurrenceSaver,
+                               SynchronousTermOccurrenceSaver synchronousTermOccurrenceSaver) {
         this.documentManager = documentManager;
         this.resolvers = resolvers;
         this.occurrenceSaver = occurrenceSaver;
+        this.synchronousTermOccurrenceSaver = synchronousTermOccurrenceSaver;
     }
 
     /**
@@ -97,13 +101,13 @@ public class AnnotationGenerator {
      */
     @Transactional
     @Throttle(value = "{#annotatedTerm.getUri()}")
-    public void generateAnnotations(InputStream content, AbstractTerm annotatedTerm) {
+    public void generateAnnotationsSync(InputStream content, AbstractTerm annotatedTerm) {
         // We assume the content (text analysis output) is HTML-compatible
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();
         LOG.debug("Resolving annotations of the definition of {}.", annotatedTerm);
         occurrenceResolver.parseContent(content, annotatedTerm);
         final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
-        occurrenceSaver.saveOccurrences(occurrences, annotatedTerm);
+        synchronousTermOccurrenceSaver.saveOccurrences(occurrences, annotatedTerm);
         LOG.trace("Finished generating annotations for the definition of {}.", annotatedTerm);
     }
 }
