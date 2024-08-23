@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.rest.handler;
 import cz.cvut.kbss.jopa.exceptions.EntityNotFoundException;
 import cz.cvut.kbss.jopa.exceptions.OWLPersistenceException;
 import cz.cvut.kbss.jsonld.exception.JsonLdException;
-import cz.cvut.kbss.jsonld.exception.JsonLdSerializationException;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
@@ -50,7 +49,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
@@ -265,18 +263,5 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request, InvalidPasswordChangeRequestException e) {
         logException(e, request);
         return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler
-    public void asyncRequestNotUsableException(HttpServletRequest request, JsonLdSerializationException e) {
-        Throwable cause = e.getCause();
-        while (cause != null && !cause.getCause().equals(cause)) {
-            if (cause instanceof AsyncRequestNotUsableException) {
-                LOG.error("Client closed connection when processing request to {}", request.getRequestURI());
-                return;
-            }
-            cause = cause.getCause();
-        }
-        throw e;
     }
 }

@@ -56,6 +56,13 @@ public class Configuration {
      * server.
      */
     private String jmxBeanName = "TermItAdminBean";
+
+    /**
+     * The number of threads for thread pool executing asynchronous and long-running tasks.
+     * @configurationdoc.default The number of processors available to the Java virtual machine.
+     */
+    @Min(1)
+    private Integer asyncThreadCount = Runtime.getRuntime().availableProcessors();
     @Valid
     private Persistence persistence = new Persistence();
     @Valid
@@ -109,6 +116,14 @@ public class Configuration {
 
     public void setJmxBeanName(String jmxBeanName) {
         this.jmxBeanName = jmxBeanName;
+    }
+
+    public Integer getAsyncThreadCount() {
+        return asyncThreadCount;
+    }
+
+    public void setAsyncThreadCount(@Min(1) Integer asyncThreadCount) {
+        this.asyncThreadCount = asyncThreadCount;
     }
 
     public Persistence getPersistence() {

@@ -46,10 +46,14 @@ public class AppConfig implements AsyncConfigurer {
         return new AsyncExceptionHandler();
     }
 
-    @Bean
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+    /**
+     * This thread pool is responsible for executing asynchronous REST controller methods
+     * and any asynchronous task in the application.
+     */
+    @Bean(destroyMethod = "destroy")
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler(cz.cvut.kbss.termit.util.Configuration config) {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setPoolSize(1); // TODO config value
+        threadPoolTaskScheduler.setPoolSize(config.getAsyncThreadCount());
         threadPoolTaskScheduler.setThreadNamePrefix("TermItScheduler-");
         threadPoolTaskScheduler.setWaitForTasksToCompleteOnShutdown(true);
         threadPoolTaskScheduler.setRemoveOnCancelPolicy(true);
