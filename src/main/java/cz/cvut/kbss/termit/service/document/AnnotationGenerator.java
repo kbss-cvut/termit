@@ -97,6 +97,7 @@ public class AnnotationGenerator {
             return null;
         });
         Thread finder = new Thread(findTask);
+        finder.setName("AnnotationGenerator-TermOccurrenceFinder");
         finder.start();
 
         occurrenceSaver.saveFromQueue(source, finished, toSave);
