@@ -28,9 +28,11 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Base class for resolving term occurrences in an annotated document.
@@ -49,7 +51,7 @@ public abstract class TermOccurrenceResolver {
      * Parses the specified input into some abstract representation from which new terms and term occurrences can be
      * extracted.
      * <p>
-     * Note that this method has to be called before calling {@link #findTermOccurrences()}.
+     * Note that this method has to be called before calling {@link #findTermOccurrences(Consumer)}.
      *
      * @param input  The input to parse
      * @param source Original source of the input. Used for term occurrence generation
@@ -80,10 +82,10 @@ public abstract class TermOccurrenceResolver {
      * <p>
      * {@link #parseContent(InputStream, Asset)} has to be called prior to this method.
      *
-     * @return List of term occurrences identified in the input
+     * @param resultConsumer the consumer that will be called for each result
      * @see #parseContent(InputStream, Asset)
      */
-    public abstract List<TermOccurrence> findTermOccurrences();
+    public abstract void findTermOccurrences(Consumer<TermOccurrence> resultConsumer);
 
     /**
      * Checks whether this resolver supports the specified source file type.
@@ -102,11 +104,11 @@ public abstract class TermOccurrenceResolver {
      */
     protected TermOccurrence createOccurrence(URI termUri, Asset<?> source) {
         final TermOccurrence occurrence;
-        if (source instanceof File) {
-            final FileOccurrenceTarget target = new FileOccurrenceTarget((File) source);
+        if (source instanceof File file) {
+            final FileOccurrenceTarget target = new FileOccurrenceTarget(file);
             occurrence = new TermFileOccurrence(termUri, target);
-        } else if (source instanceof AbstractTerm) {
-            final DefinitionalOccurrenceTarget target = new DefinitionalOccurrenceTarget((AbstractTerm) source);
+        } else if (source instanceof AbstractTerm abstractTerm) {
+            final DefinitionalOccurrenceTarget target = new DefinitionalOccurrenceTarget(abstractTerm);
             occurrence = new TermDefinitionalOccurrence(termUri, target);
         } else {
             throw new IllegalArgumentException("Unsupported term occurrence source " + source);

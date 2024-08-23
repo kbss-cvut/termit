@@ -45,6 +45,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Resolves term occurrences from RDFa-annotated HTML document.
@@ -152,11 +154,10 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     @Override
-    public List<TermOccurrence> findTermOccurrences() {
+    public void findTermOccurrences(Consumer<TermOccurrence> resultConsumer) {
         assert document != null;
         final Set<String> visited = new HashSet<>();
         final Elements elements = document.getElementsByAttribute(Constants.RDFa.ABOUT);
-        final List<TermOccurrence> result = new ArrayList<>(elements.size());
         final Double scoreThreshold = Double.parseDouble(config.getTextAnalysis().getTermOccurrenceMinScore());
         for (Element element : elements) {
             if (isNotTermOccurrence(element)) {
@@ -173,17 +174,17 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             occurrence.ifPresent(to -> {
                 if (!to.isSuggested()) {
                     // Occurrence already approved in content (from previous manual approval)
-                    result.add(to);
+                    resultConsumer.accept(to);
                 } else if (existsApproved(to)) {
                     LOG.trace("Found term occurrence {} with matching existing approved occurrence.", to);
                     to.markApproved();
                     // Annotation without score is considered approved by the frontend
                     element.removeAttr(SCORE_ATTRIBUTE);
-                    result.add(to);
+                    resultConsumer.accept(to);
                 } else {
                     if (to.getScore() > scoreThreshold) {
                         LOG.trace("Found term occurrence {}.", to);
-                        result.add(to);
+                        resultConsumer.accept(to);
                     } else {
                         LOG.trace("The confidence score of occurrence {} is lower than the configured threshold {}.",
                                   to, scoreThreshold);
@@ -191,7 +192,6 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                 }
             });
         }
-        return result;
     }
 
     private Optional<TermOccurrence> resolveAnnotation(Element rdfaElem, Asset<?> source) {

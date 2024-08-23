@@ -18,11 +18,17 @@
 package cz.cvut.kbss.termit.service.document.html;
 
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
+import org.apache.logging.log4j.util.BiConsumer;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
+import org.jsoup.select.NodeTraversor;
+import org.jsoup.select.NodeVisitor;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Generates a {@link TextPositionSelector} for the specified elements.
@@ -47,15 +53,31 @@ class TextPositionSelectorGenerator implements SelectorGenerator {
         return selector;
     }
 
+    /**
+     * @see SelectorGenerator#extractNodeText(Iterable)
+     * @see Element#wholeText()
+     * @see TextNode#getWholeText()
+     */
     private int resolveStartPosition(Element element) {
         final Elements ancestors = element.parents();
         Element previous = element;
-        int counter = 0;
+        AtomicInteger counter = new AtomicInteger();
         for (Element parent : ancestors) {
             final List<Node> previousSiblings = parent.childNodes().subList(0, previous.siblingIndex());
-            counter += extractNodeText(previousSiblings).length();
+
+            for (final Node sibling : previousSiblings) {
+                    NodeVisitor consumer = (node, depth) -> {
+                        if (node instanceof TextNode textNode) {
+                            counter.addAndGet(textNode.getWholeText().length());
+                        } else if (node.normalName().equals("br")) {
+                            counter.getAndIncrement();
+                        }
+                    };
+                    NodeTraversor.traverse(consumer, sibling);
+            }
+
             previous = parent;
         }
-        return counter;
+        return counter.get();
     }
 }
