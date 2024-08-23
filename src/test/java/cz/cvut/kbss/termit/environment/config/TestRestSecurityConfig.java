@@ -30,9 +30,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.authentication.AuthenticationProvider;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * This configuration class is necessary when testing security of REST controllers (e.g., {@link
@@ -72,5 +74,10 @@ public class TestRestSecurityConfig {
     @Bean
     public TermItUserDetailsService userDetailsService() {
         return mock(TermItUserDetailsService.class);
+    }
+
+    @Bean
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+        return mock(ThreadPoolTaskScheduler.class);
     }
 }

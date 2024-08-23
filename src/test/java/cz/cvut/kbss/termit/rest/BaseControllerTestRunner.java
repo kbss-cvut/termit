@@ -24,8 +24,11 @@ import cz.cvut.kbss.termit.rest.handler.RestExceptionHandler;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.accept.ContentNegotiationManager;
+import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 
 import static cz.cvut.kbss.termit.environment.Environment.createDefaultMessageConverter;
 import static cz.cvut.kbss.termit.environment.Environment.createJsonLdMessageConverter;
@@ -33,6 +36,8 @@ import static cz.cvut.kbss.termit.environment.Environment.createResourceMessageC
 import static cz.cvut.kbss.termit.environment.Environment.createStringEncodingMessageConverter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 /**
  * Common configuration for REST controller tests.
@@ -56,6 +61,11 @@ public class BaseControllerTestRunner {
                                               createResourceMessageConverter())
                                       .setContentNegotiationManager(new ContentNegotiationManager())
                                       .build();
+    }
+
+    protected ResultActions performAsync(RequestBuilder requestBuilder) throws Exception {
+        MvcResult async = mockMvc.perform(requestBuilder).andExpect(request().asyncStarted()).andReturn();
+        return mockMvc.perform(asyncDispatch(async));
     }
 
     protected void setupObjectMappers() {
