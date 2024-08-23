@@ -52,6 +52,6 @@ public class HtmlSelectorGenerators {
      * @return Set of generated selectors
      */
     public Set<Selector> generateSelectors(Element... elements) {
-        return generators.stream().map(g -> g.generateSelector(elements)).collect(Collectors.toSet());
+        return generators.parallelStream().map(g -> g.generateSelector(elements)).collect(Collectors.toSet());
     }
 }

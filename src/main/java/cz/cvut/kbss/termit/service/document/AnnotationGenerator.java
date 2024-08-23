@@ -18,19 +18,24 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * Creates annotations (term occurrences) for vocabulary terms.
@@ -41,6 +46,8 @@ import java.util.List;
 @Service
 public class AnnotationGenerator {
 
+    private static final long THREAD_JOIN_TIMEOUT = 1000L * 60; // 1 minute
+
     private static final Logger LOG = LoggerFactory.getLogger(AnnotationGenerator.class);
 
     private final DocumentManager documentManager;
@@ -50,8 +57,7 @@ public class AnnotationGenerator {
     private final TermOccurrenceSaver occurrenceSaver;
 
     @Autowired
-    public AnnotationGenerator(DocumentManager documentManager,
-                               TermOccurrenceResolvers resolvers,
+    public AnnotationGenerator(DocumentManager documentManager, TermOccurrenceResolvers resolvers,
                                TermOccurrenceSaver occurrenceSaver) {
         this.documentManager = documentManager;
         this.resolvers = resolvers;
@@ -70,10 +76,48 @@ public class AnnotationGenerator {
         LOG.debug("Resolving annotations of file {}.", source);
         occurrenceResolver.parseContent(content, source);
         occurrenceResolver.setExistingOccurrences(occurrenceSaver.getExistingOccurrences(source));
-        final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
-        saveAnnotatedContent(source, occurrenceResolver.getContent());
-        occurrenceSaver.saveOccurrences(occurrences, source);
+        findAndSaveTermOccurrences(source, occurrenceResolver);
         LOG.trace("Finished generating annotations for file {}.", source);
+    }
+
+    /**
+     * Calls {@link TermOccurrenceResolver#findTermOccurrences(Consumer)} on {@code #occurrenceResolver}
+     * creating new thread that will save any found occurrence in parallel.
+     * Saves annotated content ({@link #saveAnnotatedContent(File, InputStream)} when the source is a {@link File}.
+     */
+    private void findAndSaveTermOccurrences(Asset<?> source, TermOccurrenceResolver occurrenceResolver) {
+        AtomicBoolean finished = new AtomicBoolean(false);
+        final ConcurrentLinkedQueue<TermOccurrence> toSave = new ConcurrentLinkedQueue<>();
+        FutureTask<Void> findTask = new FutureTask<>(() -> {
+            try {
+                occurrenceResolver.findTermOccurrences(toSave::add);
+            } finally {
+                finished.set(true);
+            }
+            return null;
+        });
+        Thread finder = new Thread(findTask);
+        finder.start();
+
+        occurrenceSaver.saveFromQueue(source, finished, toSave);
+
+        if (source instanceof File sourceFile) {
+            saveAnnotatedContent(sourceFile, occurrenceResolver.getContent());
+        }
+
+        try {
+            findTask.get();
+            finder.join(THREAD_JOIN_TIMEOUT);
+        } catch (InterruptedException e) {
+            LOG.error("Thread interrupted while saving annotations of file {}.", source);
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RuntimeException re) {
+                throw re;
+            }
+            throw new TermItException(e);
+        }
     }
 
     private TermOccurrenceResolver findResolverFor(File file) {
@@ -97,14 +141,13 @@ public class AnnotationGenerator {
      * @param annotatedTerm Term whose definition was annotated
      */
     @Transactional
-    @Throttle(value = "{#annotatedTerm.getUri()}")
-    public void generateAnnotationsSync(InputStream content, AbstractTerm annotatedTerm) {
+    @Throttle("{#annotatedTerm.getUri()}")
+    public void generateAnnotations(InputStream content, AbstractTerm annotatedTerm) {
         // We assume the content (text analysis output) is HTML-compatible
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();
         LOG.debug("Resolving annotations of the definition of {}.", annotatedTerm);
         occurrenceResolver.parseContent(content, annotatedTerm);
-        final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
-        occurrenceSaver.saveOccurrences(occurrences, annotatedTerm);
+        findAndSaveTermOccurrences(annotatedTerm, occurrenceResolver);
         LOG.trace("Finished generating annotations for the definition of {}.", annotatedTerm);
     }
 }

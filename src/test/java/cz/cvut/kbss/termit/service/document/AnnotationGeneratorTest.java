@@ -434,7 +434,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     void generateAnnotationsCreatesAnnotationsForOccurrencesInTermDefinition() {
         // This is the term in whose definition were discovered by text analysis is their target
         final Term source = Generator.generateTermWithId();
-        sut.generateAnnotationsSync(loadFile("data/rdfa-simple.html"), source);
+        sut.generateAnnotations(loadFile("data/rdfa-simple.html"), source);
         final List<TermOccurrence> result = findAllOccurrencesOf(term);
         assertEquals(1, result.size());
         result.forEach(occ -> assertEquals(source.getUri(), occ.getTarget().getSource()));
@@ -444,7 +444,7 @@ class AnnotationGeneratorTest extends BaseServiceTestRunner {
     void generateAnnotationsCreatesAnnotationsWithSuggestedStateForOccurrencesInTermDefinition() {
         // This is the term in whose definition were discovered by text analysis is their target
         final Term source = Generator.generateTermWithId();
-        sut.generateAnnotationsSync(loadFile("data/rdfa-simple.html"), source);
+        sut.generateAnnotations(loadFile("data/rdfa-simple.html"), source);
         final List<TermOccurrence> result = findAllOccurrencesOf(term);
         result.forEach(occ -> assertThat(occ.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
     }

@@ -357,7 +357,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
         sut.analyzeTermDefinition(term, vocabulary.getUri());
         final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
-        verify(annotationGeneratorMock).generateAnnotationsSync(captor.capture(), eq(term));
+        verify(annotationGeneratorMock).generateAnnotations(captor.capture(), eq(term));
         final String result = new BufferedReader(new InputStreamReader(captor.getValue())).lines().collect(
                 Collectors.joining("\n"));
         assertEquals(CONTENT, result);
@@ -371,7 +371,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         assertNotEquals(term.getDefinition().getLanguages(), Collections.singleton(Environment.LANGUAGE));
         sut.analyzeTermDefinition(term, vocabulary.getUri());
         mockServer.verify();
-        verify(annotationGeneratorMock, never()).generateAnnotationsSync(any(), any(Term.class));
+        verify(annotationGeneratorMock, never()).generateAnnotations(any(), any(Term.class));
     }
 
     @Test
@@ -382,7 +382,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
         sut.analyzeTermDefinition(term, vocabulary.getUri());
         mockServer.verify();
-        verify(annotationGeneratorMock, never()).generateAnnotationsSync(any(), any(Term.class));
+        verify(annotationGeneratorMock, never()).generateAnnotations(any(), any(Term.class));
         verify(textAnalysisRecordDao, never()).persist(any());
     }
 
