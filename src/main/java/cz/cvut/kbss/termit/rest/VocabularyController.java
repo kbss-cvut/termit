@@ -42,6 +42,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.aspectj.weaver.ast.Call;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -326,14 +327,17 @@ public class VocabularyController extends BaseController {
                description = "Runs text analysis on the definitions of all terms in the vocabulary with the specified identifier.")
     @PutMapping(value = "/{localName}/terms/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void runTextAnalysisOnAllTerms(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+    public Callable<Void> runTextAnalysisOnAllTerms(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                                                      example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                           @PathVariable String localName,
                                           @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                                                      example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace) {
-        vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
+        return () -> {
+            vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
+            return null;
+        };
     }
 
     /**
@@ -347,8 +351,11 @@ public class VocabularyController extends BaseController {
     @GetMapping(value = "/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    public void runTextAnalysisOnAllVocabularies() {
-        vocabularyService.runTextAnalysisOnAllVocabularies();
+    public Callable<Void> runTextAnalysisOnAllVocabularies() {
+        return () -> {
+            vocabularyService.runTextAnalysisOnAllVocabularies();
+            return null;
+        };
     }
 
     /**
@@ -428,7 +435,7 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PostMapping("/{localName}/versions")
-    public ResponseEntity<Void> createSnapshot(
+    public Callable<ResponseEntity<Void>> createSnapshot(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -438,11 +445,13 @@ public class VocabularyController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
-        final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
-        LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
-        return ResponseEntity.created(
-                locationWithout(generateLocation(snapshot.getUri()), "/" + localName + "/versions")).build();
+        return () -> {
+            final Vocabulary vocabulary = vocabularyService.getReference(identifier);
+            final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
+            LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
+            return ResponseEntity.created(
+                    locationWithout(generateLocation(snapshot.getUri()), "/" + localName + "/versions")).build();
+        };
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

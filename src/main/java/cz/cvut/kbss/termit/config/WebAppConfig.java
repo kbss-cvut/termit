@@ -47,8 +47,10 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerTypePredicate;
+import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
@@ -62,13 +64,15 @@ import java.util.Properties;
 @Configuration
 public class WebAppConfig implements WebMvcConfigurer {
 
-    private final cz.cvut.kbss.termit.util.Configuration.Repository config;
+    private final cz.cvut.kbss.termit.util.Configuration config;
+    private final ThreadPoolTaskScheduler scheduler;
 
     @Value("${application.version:development}")
     private String version;
 
-    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config) {
-        this.config = config.getRepository();
+    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config, ThreadPoolTaskScheduler threadPoolTaskScheduler) {
+        this.config = config;
+        this.scheduler = threadPoolTaskScheduler;
     }
 
     @Bean(name = "objectMapper")
@@ -133,10 +137,11 @@ public class WebAppConfig implements WebMvcConfigurer {
         controller.setServletClass(AdjustedUriTemplateProxyServlet.class);
         controller.setBeanName("sparqlEndpointProxyServlet");
         final Properties p = new Properties();
-        p.setProperty("targetUri", config.getUrl());
+        final cz.cvut.kbss.termit.util.Configuration.Repository repository = config.getRepository();
+        p.setProperty("targetUri", repository.getUrl());
         p.setProperty("log", "false");
-        p.setProperty(ConfigParam.REPO_USERNAME.toString(), config.getUsername() != null ? config.getUsername() : "");
-        p.setProperty(ConfigParam.REPO_PASSWORD.toString(), config.getPassword() != null ? config.getPassword() : "");
+        p.setProperty(ConfigParam.REPO_USERNAME.toString(), repository.getUsername() != null ? repository.getUsername() : "");
+        p.setProperty(ConfigParam.REPO_PASSWORD.toString(), repository.getPassword() != null ? repository.getPassword() : "");
         controller.setInitParameters(p);
         controller.afterPropertiesSet();
         return controller;
@@ -199,5 +204,11 @@ public class WebAppConfig implements WebMvcConfigurer {
                                                                                                 .bearerFormat("JWT")))
                             .info(new Info().title("TermIt REST API").description("TermIt REST API definition.")
                                             .version(version));
+    }
+
+    @Override
+    public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+        configurer.setDefaultTimeout((long) 1000 * 60 * 2);
+        configurer.setTaskExecutor(scheduler);
     }
 }

@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.util.throttle;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -39,6 +40,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@Documented
 public @interface Throttle {
 
     /**
@@ -72,4 +74,9 @@ public @interface Throttle {
      * Blank string disables any group processing.
      */
     @NotNull String group() default "";
+
+    /**
+     * Whether the returned future may be from older call.
+     */
+    boolean returnCached() default true;
 }

@@ -10,6 +10,8 @@ public class MockedThrottle implements Throttle {
 
     private String group;
 
+    private boolean returnCached = false;
+
     public MockedThrottle(String value, String group) {
         this.value = value;
         this.group = group;
@@ -26,6 +28,11 @@ public class MockedThrottle implements Throttle {
     }
 
     @Override
+    public boolean returnCached() {
+        return returnCached;
+    }
+
+    @Override
     public Class<? extends Annotation> annotationType() {
         return Throttle.class;
     }
@@ -36,5 +43,9 @@ public class MockedThrottle implements Throttle {
 
     public void setGroup(String group) {
         this.group = group;
+    }
+
+    public void setReturnCached(boolean returnCached) {
+        this.returnCached = returnCached;
     }
 }

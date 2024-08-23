@@ -72,6 +72,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 
@@ -210,7 +211,7 @@ public class TermController extends BaseController {
     })
     @PreAuthorize("permitAll()")
     @RequestMapping(method = RequestMethod.HEAD, value = "/vocabularies/{localName}/terms")
-    public ResponseEntity<Void> checkTerms(
+    public Callable<ResponseEntity<Void>> checkTerms(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
@@ -220,14 +221,16 @@ public class TermController extends BaseController {
             @Parameter(description = "Language of the label.")
             @RequestParam(name = "language", required = false) String language) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
-        final Vocabulary vocabulary = termService.getVocabularyReference(vocabularyUri);
-        if (prefLabel != null) {
-            final boolean exists = termService.existsInVocabulary(prefLabel, vocabulary, language);
-            return new ResponseEntity<>(exists ? HttpStatus.OK : HttpStatus.NOT_FOUND);
-        } else {
-            final Integer count = termService.getTermCount(vocabulary);
-            return ResponseEntity.ok().header(Constants.X_TOTAL_COUNT_HEADER, count.toString()).build();
-        }
+        return () -> {
+            final Vocabulary vocabulary = termService.getVocabularyReference(vocabularyUri);
+            if (prefLabel != null) {
+                final boolean exists = termService.existsInVocabulary(prefLabel, vocabulary, language);
+                return new ResponseEntity<>(exists ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+            } else {
+                final Integer count = termService.getTermCount(vocabulary);
+                return ResponseEntity.ok().header(Constants.X_TOTAL_COUNT_HEADER, count.toString()).build();
+            }
+        };
     }
 
     private Vocabulary getVocabulary(URI vocabularyUri) {
@@ -256,7 +259,7 @@ public class TermController extends BaseController {
     })
     @GetMapping(value = "/vocabularies/{localName}/terms/roots",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<TermDto> getAllRoots(
+    public Callable<List<TermDto>> getAllRoots(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
@@ -270,11 +273,13 @@ public class TermController extends BaseController {
             @Parameter(
                     description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
-        final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
-        return includeImported ?
-               termService
-                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+        return () -> {
+            final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
+            return includeImported ?
+                    termService
+                            .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
+                    termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+        };
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -354,7 +359,7 @@ public class TermController extends BaseController {
     @PutMapping(value = "/vocabularies/{localName}/terms/{termLocalName}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(
+    public Callable<Void> update(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
@@ -365,8 +370,11 @@ public class TermController extends BaseController {
             @RequestBody Term term) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         verifyRequestAndEntityIdentifier(term, termUri);
-        termService.update(term);
-        LOG.debug("Term {} updated.", term);
+        return () -> {
+            termService.update(term);
+            LOG.debug("Term {} updated.", term);
+            return null;
+        };
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -378,7 +386,7 @@ public class TermController extends BaseController {
     })
     @PutMapping(value = "/terms/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(
+    public Callable<Void> update(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -389,8 +397,11 @@ public class TermController extends BaseController {
             @RequestBody Term term) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         verifyRequestAndEntityIdentifier(term, termUri);
-        termService.update(term);
-        LOG.debug("Term {} updated.", term);
+        return () -> {
+            termService.update(term);
+            LOG.debug("Term {} updated.", term);
+            return null;
+        };
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -601,15 +612,18 @@ public class TermController extends BaseController {
     })
     @PutMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void runTextAnalysisOnTerm(
+    public Callable<Void> runTextAnalysisOnTerm(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        termService.analyzeTermDefinition(getById(localName, termLocalName, namespace),
-                                          getVocabularyUri(namespace, localName));
+        return () -> {
+            termService.analyzeTermDefinition(getById(localName, termLocalName, namespace),
+                    getVocabularyUri(namespace, localName));
+            return null;
+        };
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
