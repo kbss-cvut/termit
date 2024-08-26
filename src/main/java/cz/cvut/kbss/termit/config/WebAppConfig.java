@@ -47,7 +47,6 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerTypePredicate;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
@@ -65,20 +64,12 @@ import java.util.Properties;
 public class WebAppConfig implements WebMvcConfigurer {
 
     private final cz.cvut.kbss.termit.util.Configuration config;
-    private final ThreadPoolTaskScheduler scheduler;
 
     @Value("${application.version:development}")
     private String version;
 
-    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config, ThreadPoolTaskScheduler threadPoolTaskScheduler) {
+    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config) {
         this.config = config;
-        this.scheduler = threadPoolTaskScheduler;
-    }
-
-    @Bean(name = "objectMapper")
-    @Primary
-    public ObjectMapper objectMapper() {
-        return createJsonObjectMapper();
     }
 
     /**
@@ -103,11 +94,6 @@ public class WebAppConfig implements WebMvcConfigurer {
         return objectMapper;
     }
 
-    @Bean(name = "jsonLdMapper")
-    public ObjectMapper jsonLdObjectMapper() {
-        return createJsonLdObjectMapper();
-    }
-
     /**
      * Creates an {@link ObjectMapper} for processing JSON-LD using the JB4JSON-LD library.
      * <p>
@@ -124,6 +110,17 @@ public class WebAppConfig implements WebMvcConfigurer {
         jsonLdModule.configure(SerializationConstants.FORM, SerializationConstants.FORM_COMPACT_WITH_CONTEXT);
         mapper.registerModule(jsonLdModule);
         return mapper;
+    }
+
+    @Bean(name = "objectMapper")
+    @Primary
+    public ObjectMapper objectMapper() {
+        return createJsonObjectMapper();
+    }
+
+    @Bean(name = "jsonLdMapper")
+    public ObjectMapper jsonLdObjectMapper() {
+        return createJsonLdObjectMapper();
     }
 
     /**
@@ -152,7 +149,7 @@ public class WebAppConfig implements WebMvcConfigurer {
         SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
         mapping.setOrder(0);
         final Map<String, Object> urlMap = Collections.singletonMap(Constants.REST_MAPPING_PATH + "/query",
-                                                                    sparqlEndpointController());
+                sparqlEndpointController());
         mapping.setUrlMap(urlMap);
         return mapping;
     }
@@ -198,17 +195,16 @@ public class WebAppConfig implements WebMvcConfigurer {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI().components(new Components().addSecuritySchemes("bearer-key",
-                                                                            new SecurityScheme().type(
-                                                                                                        SecurityScheme.Type.HTTP)
-                                                                                                .scheme("bearer")
-                                                                                                .bearerFormat("JWT")))
+                                    new SecurityScheme().type(
+                                                                SecurityScheme.Type.HTTP)
+                                                        .scheme("bearer")
+                                                        .bearerFormat("JWT")))
                             .info(new Info().title("TermIt REST API").description("TermIt REST API definition.")
                                             .version(version));
     }
 
     @Override
     public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
-        configurer.setDefaultTimeout((long) 1000 * 60 * 2);
-        configurer.setTaskExecutor(scheduler);
+        configurer.setDefaultTimeout(Constants.REST_ASYNC_TIMEOUT);
     }
 }

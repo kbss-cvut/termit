@@ -4,6 +4,9 @@ import org.aspectj.lang.reflect.MethodSignature;
 
 import java.lang.reflect.Method;
 
+/**
+ * Allows construction of {@link MethodSignature} for testing purposes
+ */
 public class MockedMethodSignature implements MethodSignature {
 
     private Class<?> returnType;
@@ -21,6 +24,10 @@ public class MockedMethodSignature implements MethodSignature {
     @Override
     public Class<?> getReturnType() {
         return returnType;
+    }
+
+    public void setReturnType(Class<?> returnType) {
+        this.returnType = returnType;
     }
 
     @Override
@@ -71,17 +78,5 @@ public class MockedMethodSignature implements MethodSignature {
     @Override
     public String getDeclaringTypeName() {
         return "";
-    }
-
-    public void setReturnType(Class<?> returnType) {
-        this.returnType = returnType;
-    }
-
-    public void setParameterTypes(Class<?>[] parameterTypes) {
-        this.parameterTypes = parameterTypes;
-    }
-
-    public void setParameterNames(String[] parameterNames) {
-        this.parameterNames = parameterNames;
     }
 }

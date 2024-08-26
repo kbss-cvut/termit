@@ -85,7 +85,7 @@ public abstract class TermOccurrenceResolver {
      * @param resultConsumer the consumer that will be called for each result
      * @see #parseContent(InputStream, Asset)
      */
-    public abstract void findTermOccurrences(Consumer<TermOccurrence> resultConsumer);
+    public abstract void findTermOccurrences(OccurrenceConsumer resultConsumer);
 
     /**
      * Checks whether this resolver supports the specified source file type.
@@ -115,5 +115,10 @@ public abstract class TermOccurrenceResolver {
         }
         occurrence.markSuggested();
         return occurrence;
+    }
+
+    @FunctionalInterface
+    public static interface OccurrenceConsumer {
+        void accept(TermOccurrence termOccurrence) throws InterruptedException;
     }
 }

@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.util.throttle;
 
+import cz.cvut.kbss.termit.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Documented;
@@ -7,24 +8,36 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.concurrent.Future;
 
 /**
  * Indicates that calls to this method will be throttled & debounced.
- * Meaning that the action will be executed on the first call of the method,
- * then every next call which comes earlier then {@link cz.cvut.kbss.termit.util.Constants#THROTTLE_THRESHOLD}
- * will return a pending future which might be resolved by a newer future.
- * Futures will be resolved once per {@link cz.cvut.kbss.termit.util.Constants#THROTTLE_THRESHOLD} (+ duration to execute the future task).
+ * <p>
+ * Body of the annotated method will be executed on the first call of the method,
+ * then every next call which comes earlier than {@link Constants#THROTTLE_THRESHOLD}
+ * will return a pending future which might be resolved by a newer call.
+ * Future will be resolved once per {@link Constants#THROTTLE_THRESHOLD} (+ duration to execute the future).
+ * <p>
+ * <img src="https://github.com/lukaskabc/termit/blob/lukaskabc/Performance-285-throttle/doc/throttle-debounce.png?raw=true" />
  * <p>
  * Every annotated method should be tested for throttling to ensure it has the desired effect.
  * <p>
- * Method can't use any parameters that are part of persistent context, they need to be re-requested.
+ * Method can't use any parameters that are part of persistent context as the method will be executed on separated thread,
+ * objects need to be re-requested.<br>
+ * Call to this method cannot be part of an existing transaction.
  * <p>
  * Available only for methods returning {@code void}, {@link Void} and {@link ThrottledFuture},
- * method signature may be {@link java.util.concurrent.Future},
+ * method signature may be {@link Future},
  * or another type assignable from {@link ThrottledFuture},
  * but the returned concrete object has to be {@link ThrottledFuture}, <b>method call will throw otherwise!</b>
  * <p>
+ * Whole body of method with {@code void} or {@link Void} return types will be considered as task to be executed later.
+ * In case of {@link Future} return type, only task in returned {@link ThrottledFuture} is throttled,
+ * meaning that actual body of the method will be executed every call.
+ * <p>
  * Note that returned future can be canceled
+ * <p>
+ * Method may also return already canceled or fulfilled future; in that case, the result is returned immediately.
  * <p>
  * Example implementation:
  * <pre><code>
@@ -47,8 +60,6 @@ public @interface Throttle {
      * The Spring-EL expression
      * returning a List of Objects or a String which will be used to construct the unique identifier
      * for this throttled instance.
-     * <p>
-     * In the expression, you have available method parameters.
      */
     @NotNull String value() default "";
 
@@ -74,9 +85,4 @@ public @interface Throttle {
      * Blank string disables any group processing.
      */
     @NotNull String group() default "";
-
-    /**
-     * Whether the returned future may be from older call.
-     */
-    boolean returnCached() default true;
 }

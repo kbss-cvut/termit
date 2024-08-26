@@ -1,13 +1,16 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import com.vladsch.flexmark.util.collection.OrderedMap;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.TaskUtils;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Clock;
@@ -15,12 +18,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.AbstractMap;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -124,10 +128,13 @@ class ThrottleAspectTest {
         taskSchedulerTasks = new OrderedMap<>();
 
         taskScheduler = mock(TaskScheduler.class);
+
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).then(invocation -> {
-            taskSchedulerTasks.put(invocation.getArgument(0, Runnable.class), invocation.getArgument(1, Instant.class));
+            final Runnable decorated = TaskUtils.decorateTaskWithErrorHandler(invocation.getArgument(0, Runnable.class), null, false);
+            final ScheduledFutureTask<Object> task = new ScheduledFutureTask<>(Executors.callable(decorated));
+            taskSchedulerTasks.put(task, invocation.getArgument(1, Instant.class));
             System.out.println("Scheduled task at " + invocation.getArgument(1, Instant.class));
-            return new MockedFutureTask<>(Executors.callable(invocation.getArgument(0, Runnable.class)));
+            return task;
         });
 
         throttledFutures = new OrderedMap<>();
@@ -151,9 +158,37 @@ class ThrottleAspectTest {
     }
 
     void addSecond() {
-        clock = Clock.offset(clock, Duration.ofSeconds(1));
+        clock = Clock.fixed(clock.instant().plusSeconds(1), ZoneId.of("UTC"));
     }
 
+    void skipThreshold() {
+        clock = Clock.fixed(clock.instant().plus(THROTTLE_THRESHOLD), ZoneId.of("UTC"));
+    }
+
+    void executeScheduledTasks() {
+        taskSchedulerTasks.forEach((runnable, instant) -> runnable.run());
+        taskSchedulerTasks.clear();
+    }
+
+    @Test
+    void firstCallAfterThresholdIsScheduledImmediately() throws Throwable {
+        sut.throttleMethodCall(joinPointA, throttleA);
+        executeScheduledTasks();
+
+        skipThreshold();
+        addSecond();
+
+        final Instant expectedTime = getInstant();
+        sut.throttleMethodCall(joinPointA, throttleA);
+
+        assertEquals(1, taskSchedulerTasks.size());
+        assertEquals(expectedTime, taskSchedulerTasks.getValue(0));
+    }
+
+    /**
+     * Calling the annotated method three times
+     * will execute it only once with the newest data.
+     */
     @Test
     void threeImmediateCallsScheduleFirstCallWithLastTask() throws Throwable {
         final String[] params = new String[]{"param1", "param2", "param3", "param4", "param5", "param6"};
@@ -163,11 +198,10 @@ class ThrottleAspectTest {
         final Supplier<String> methodTask = () -> "method result";
         final Supplier<String> anotherMethodResult = () -> "another method result";
 
-        final ThrottledFuture<String> methodFuture = new ThrottledFuture<>();
-        methodFuture.update(methodTask);
+        final ThrottledFuture<String> methodFuture = ThrottledFuture.of(methodTask);
 
         // for each method call, make new future with "another method task"
-        doAnswer(invocation -> new ThrottledFuture<String>().update(anotherMethodResult)).when(joinPointA).proceed();
+        doAnswer(invocation -> ThrottledFuture.of(anotherMethodResult)).when(joinPointA).proceed();
 
         final Instant firstCall = getInstant();
         // simulate first call
@@ -209,6 +243,10 @@ class ThrottleAspectTest {
         assertEquals(methodTask.get(), future.get());
     }
 
+    /**
+     * When method is called in the throttle interval
+     * call are merged and method will be executed only once.
+     */
     @Test
     void callsInThrottleIntervalAreMerged() throws Throwable {
         final String[] params = new String[]{"param1", "param2", "param3", "param4", "param5", "param6"};
@@ -238,7 +276,7 @@ class ThrottleAspectTest {
     @Test
     void schedulesNewFutureWhenTheOldOneIsCompleted() throws Throwable {
         doReturn(Future.class).when(signatureA).getReturnType();
-        when(joinPointA.proceed()).then(invocation -> ThrottledFuture.of(()->"result"));
+        when(joinPointA.proceed()).then(invocation -> ThrottledFuture.of(() -> "result"));
         Future<Object> firstFuture = (Future<Object>) sut.throttleMethodCall(joinPointA, throttleA);
         addSecond();
 
@@ -247,8 +285,7 @@ class ThrottleAspectTest {
         assertFalse(firstFuture.isCancelled());
 
         assertEquals(1, taskSchedulerTasks.size());
-        taskSchedulerTasks.forEach((runnable, instant) -> runnable.run());
-        taskSchedulerTasks.clear();
+        executeScheduledTasks();
         assertTrue(firstFuture.isDone());
         assertFalse(firstFuture.isCancelled());
 
@@ -259,15 +296,56 @@ class ThrottleAspectTest {
         assertFalse(secondFuture.isDone());
         assertFalse(secondFuture.isCancelled());
 
+        assertEquals(1, scheduledFutures.size());
         assertEquals(1, taskSchedulerTasks.size());
-        taskSchedulerTasks.forEach((runnable, instant) -> runnable.run());
-        taskSchedulerTasks.clear();
+        executeScheduledTasks();
         assertTrue(secondFuture.isDone());
         assertFalse(secondFuture.isCancelled());
 
         assertNotEquals(firstFuture, secondFuture);
+    }
+
+    /**
+     * Ensures that calling the annotated method even outside the threshold
+     * merges calls when no future was resolved.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    void callsAreMergedWhenCalledOutsideTheThresholdButNoFutureExecutedYet() throws Throwable {
+        doReturn(Future.class).when(signatureA).getReturnType();
+        final String firstResult = "first result";
+        final String secondResult = "second result";
+        when(joinPointA.proceed()).then(invocation -> ThrottledFuture.of(() -> firstResult));
+
+        Future<Object> firstFuture = (Future<Object>) sut.throttleMethodCall(joinPointA, throttleA);
+        skipThreshold();
+        skipThreshold();
+
+        when(joinPointA.proceed()).then(invocation -> ThrottledFuture.of(() -> secondResult));
+        Future<Object> secondFuture = (Future<Object>) sut.throttleMethodCall(joinPointA, throttleA);
+
+        assertNotNull(firstFuture);
+        assertFalse(firstFuture.isDone());
+        assertFalse(firstFuture.isCancelled());
+
+        assertNotNull(secondFuture);
+        assertFalse(secondFuture.isDone());
+        assertFalse(secondFuture.isCancelled());
+
+        assertEquals(firstFuture, secondFuture);
 
         assertEquals(1, scheduledFutures.size());
+        assertEquals(1, taskSchedulerTasks.size());
+        executeScheduledTasks();
+
+        assertTrue(firstFuture.isDone());
+        assertFalse(firstFuture.isCancelled());
+        // future resolved with the newest call
+        assertEquals(secondResult, firstFuture.get());
+
+        assertTrue(secondFuture.isDone());
+        assertFalse(secondFuture.isCancelled());
+        assertEquals(secondResult, secondFuture.get());
     }
 
     @Test
@@ -408,18 +486,28 @@ class ThrottleAspectTest {
 
         sut.throttleMethodCall(joinPointA, throttleA);
 
-        assertThrows(RuntimeException.class, () -> taskSchedulerTasks.forEach((r, i) -> r.run()));
+        assertDoesNotThrow(() -> taskSchedulerTasks.forEach((r, i) -> r.run()));
     }
 
     @Test
-    void exceptionPropagatedFutureTask() throws Throwable {
+    void exceptionPropagatedFromFutureTask() throws Throwable {
+        final String exceptionMessage = "termit exception";
         when(joinPointA.proceed()).then(invocation -> new ThrottledFuture<>().update(() -> {
-            throw new RuntimeException();
+            throw new TermItException(exceptionMessage);
         }));
         signatureA.setReturnType(Future.class);
 
         sut.throttleMethodCall(joinPointA, throttleA);
 
-        assertThrows(RuntimeException.class, () -> taskSchedulerTasks.forEach((r, i) -> r.run()));
+        assertEquals(1, taskSchedulerTasks.size());
+        assertEquals(1, scheduledFutures.size());
+        Runnable scheduled = taskSchedulerTasks.getKey(0);
+        Future<?> future = scheduledFutures.firstEntry().getValue();
+
+        assertNotNull(scheduled);
+        assertNotNull(future);
+        assertDoesNotThrow(scheduled::run);
+        ExecutionException e = assertThrows(ExecutionException.class, future::get);
+        assertEquals(exceptionMessage, e.getCause().getMessage());
     }
 }

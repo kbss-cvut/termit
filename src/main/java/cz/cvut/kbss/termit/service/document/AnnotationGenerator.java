@@ -29,11 +29,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StopWatch;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -81,33 +85,39 @@ public class AnnotationGenerator {
     }
 
     /**
-     * Calls {@link TermOccurrenceResolver#findTermOccurrences(Consumer)} on {@code #occurrenceResolver}
+     * Calls {@link TermOccurrenceResolver#findTermOccurrences(TermOccurrenceResolver.OccurrenceConsumer)} on {@code #occurrenceResolver}
      * creating new thread that will save any found occurrence in parallel.
      * Saves annotated content ({@link #saveAnnotatedContent(File, InputStream)} when the source is a {@link File}.
      */
     private void findAndSaveTermOccurrences(Asset<?> source, TermOccurrenceResolver occurrenceResolver) {
         AtomicBoolean finished = new AtomicBoolean(false);
-        final ConcurrentLinkedQueue<TermOccurrence> toSave = new ConcurrentLinkedQueue<>();
+        // alternatively, SynchronousQueue could be used, but this allows to have some space as buffer
+        final ArrayBlockingQueue<TermOccurrence> toSave = new ArrayBlockingQueue<>(10);
+        // not limiting the queue size would result in OutOfMemoryError
+
         FutureTask<Void> findTask = new FutureTask<>(() -> {
             try {
-                occurrenceResolver.findTermOccurrences(toSave::add);
+                LOG.trace("Resolving term occurrences for {}.", source);
+                occurrenceResolver.findTermOccurrences(toSave::put);
+                LOG.trace("Finished resolving term occurrences for {}.", source);
+                LOG.trace("Saving term occurrences for {}.", source);
+                if (source instanceof File sourceFile) {
+                    saveAnnotatedContent(sourceFile, occurrenceResolver.getContent());
+                }
+                LOG.trace("Term occurrences saved for {}.", source);
             } finally {
                 finished.set(true);
             }
             return null;
         });
         Thread finder = new Thread(findTask);
-        finder.setName("AnnotationGenerator-TermOccurrenceFinder");
+        finder.setName("AnnotationGenerator-TermOccurrenceResolver");
         finder.start();
 
         occurrenceSaver.saveFromQueue(source, finished, toSave);
 
-        if (source instanceof File sourceFile) {
-            saveAnnotatedContent(sourceFile, occurrenceResolver.getContent());
-        }
-
         try {
-            findTask.get();
+            findTask.get(); // propagates exceptions
             finder.join(THREAD_JOIN_TIMEOUT);
         } catch (InterruptedException e) {
             LOG.error("Thread interrupted while saving annotations of file {}.", source);
@@ -142,13 +152,13 @@ public class AnnotationGenerator {
      * @param annotatedTerm Term whose definition was annotated
      */
     @Transactional
-    @Throttle("{#annotatedTerm.getUri()}")
-    public void generateAnnotations(InputStream content, AbstractTerm annotatedTerm) {
+    @Throttle(value = "{#annotatedTerm.getUri()}")
+    public void generateAnnotationsSync(InputStream content, AbstractTerm annotatedTerm) {
         // We assume the content (text analysis output) is HTML-compatible
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();
         LOG.debug("Resolving annotations of the definition of {}.", annotatedTerm);
         occurrenceResolver.parseContent(content, annotatedTerm);
-        findAndSaveTermOccurrences(annotatedTerm, occurrenceResolver);
+        occurrenceResolver.findTermOccurrences(o -> occurrenceSaver.saveOccurrence(o, annotatedTerm));
         LOG.trace("Finished generating annotations for the definition of {}.", annotatedTerm);
     }
 }

@@ -44,7 +44,7 @@ class ThrottleAspectBeanTest {
         reset(taskScheduler);
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).then(invocation -> {
             Runnable task = invocation.getArgument(0, Runnable.class);
-            return new MockedFutureTask<>(task, null);
+            return new ScheduledFutureTask<>(task, null);
         });
     }
 

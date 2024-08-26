@@ -47,8 +47,7 @@ public class AppConfig implements AsyncConfigurer {
     }
 
     /**
-     * This thread pool is responsible for executing asynchronous REST controller methods
-     * and any asynchronous task in the application.
+     * This thread pool is responsible for executing long-running tasks in the application.
      */
     @Bean(destroyMethod = "destroy")
     public ThreadPoolTaskScheduler threadPoolTaskScheduler(cz.cvut.kbss.termit.util.Configuration config) {

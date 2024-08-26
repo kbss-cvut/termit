@@ -35,7 +35,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -67,6 +66,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
 
     /**
      * group, identifier -> future
+     *
      * @implSpec Synchronize in the field definition order before modification
      */
     private final Map<Identifier, ThrottledFuture<Object>> throttledFutures;
@@ -78,6 +78,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
 
     /**
      * group, identifier -> future
+     *
      * @implSpec Synchronize in the field definition order before modification
      */
     private final NavigableMap<Identifier, Future<Object>> scheduledFutures;
@@ -139,6 +140,84 @@ public class ThrottleAspect implements LongRunningTaskRegister {
 
         standardEvaluationContext.setTypeLocator(typeLocator);
         return standardEvaluationContext;
+    }
+
+    /**
+     * @return future or null
+     * @throws TermItException        when the target method throws
+     * @throws IllegalCallerException when the annotated method returns another type than {@code void}, {@link Void} or {@link Future}
+     * @implNote Around advice configured in {@code spring-aop.xml}
+     */
+    public synchronized @Nullable Object throttleMethodCall(@NotNull ProceedingJoinPoint joinPoint,
+                                                            @NotNull Throttle throttleAnnotation) throws Throwable {
+
+        // if the current thread is already executing a throttled code, we want to skip further throttling
+        if (throttledThreads.contains(Thread.currentThread().getId())) {
+            // proceed with method execution
+            final Object result = joinPoint.proceed();
+            if (result instanceof ThrottledFuture<?> throttledFuture) {
+                // directly run throttled future
+                throttledFuture.run();
+                return throttledFuture;
+            }
+            return result;
+        }
+
+        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+
+        // construct the throttle instance key
+        final Identifier identifier = makeIdentifier(joinPoint, throttleAnnotation);
+        LOG.trace("Throttling task with key '{}'", identifier);
+
+        synchronized (scheduledFutures) {
+            if (!identifier.getGroup().isBlank()) {
+                // check if there is a task with lower group
+                // and if so, cancel this task in favor of the lower group
+                final Map.Entry<Identifier, Future<Object>> lowerEntry = scheduledFutures.lowerEntry(identifier);
+                if (lowerEntry != null) {
+                    final Future<Object> lowerFuture = lowerEntry.getValue();
+                    boolean hasGroupPrefix = identifier.hasGroupPrefix(lowerEntry.getKey().getGroup());
+                    if (hasGroupPrefix && !lowerFuture.isDone() && !lowerFuture.isCancelled()) {
+                        LOG.trace("Throttling canceled due to scheduled lower task '{}'", lowerEntry.getKey());
+                        return ThrottledFuture.canceled();
+                    }
+                }
+
+                cancelWithHigherGroup(identifier);
+            }
+        }
+
+        // if there is a scheduled task and this throttled instance was executed in the last THROTTLE_THRESHOLD
+        // cancel the scheduled task
+        // -> the execution is further delayed
+        Future<Object> oldFuture = scheduledFutures.get(identifier);
+        boolean throttleExpired = isThresholdExpired(identifier);
+        if (oldFuture != null && !throttleExpired) {
+            oldFuture.cancel(false);
+        }
+
+        // acquire a throttled future from a map, or make a new one
+        ThrottledFuture<Object> oldThrottledFuture = throttledFutures.getOrDefault(identifier, new ThrottledFuture<>());
+
+        Pair<Runnable, ThrottledFuture<Object>> pair = getFutureTask(joinPoint, identifier, oldThrottledFuture);
+        Runnable task = pair.getFirst();
+        ThrottledFuture<Object> future = pair.getSecond();
+        // update the throttled future in the map
+        synchronized (throttledFutures) {
+            throttledFutures.put(identifier, future);
+        }
+
+        Object result = resultVoidOrFuture(signature, future);
+
+        if (future.isCompleted() || future.isRunning()) {
+            return result;
+        }
+
+        if (oldFuture == null || oldFuture.isDone() || oldFuture.isCancelled()) {
+            schedule(identifier, task, throttleExpired);
+        }
+
+        return result;
     }
 
     /**
@@ -223,7 +302,8 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         return new Pair<>(toSchedule, throttledFuture);
     }
 
-    private Runnable createRunnableToSchedule(ThrottledFuture<?> throttledFuture, Identifier identifier, boolean withTransaction) {
+    private Runnable createRunnableToSchedule(ThrottledFuture<?> throttledFuture, Identifier identifier,
+                                              boolean withTransaction) {
         final Supplier<SecurityContext> securityContext = SecurityContextHolder.getDeferredContext();
         return () -> {
             if (throttledFuture.isCancelled() || throttledFuture.isDone()) {
@@ -233,14 +313,11 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
 
-            LOG.atTrace()
-               .addArgument(() -> {
-                   synchronized (scheduledFutures) {
-                       return scheduledFutures.values().stream().filter(f -> !f.isDone() && !f.isCancelled())
-                                              .count();
-                   }
-               }).addArgument(identifier)
-               .log("Running throttled task [{} left] '{}'");
+            LOG.atTrace().addArgument(() -> {
+                synchronized (scheduledFutures) {
+                    return scheduledFutures.values().stream().filter(f -> !f.isDone() && !f.isCancelled()).count() - 1;
+                }
+            }).addArgument(identifier).log("Running throttled task [{} left] '{}'");
 
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
@@ -280,7 +357,8 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         synchronized (throttledFutures) {
             synchronized (lastRun) {
                 synchronized (scheduledFutures) {
-                    Stream.of(throttledFutures.keySet().stream(), scheduledFutures.keySet().stream(), lastRun.keySet().stream())
+                    Stream.of(throttledFutures.keySet().stream(), scheduledFutures.keySet().stream(), lastRun.keySet()
+                                                                                                             .stream())
                           .flatMap(s -> s).distinct().toList() // ensures safe modification of maps
                           .forEach(identifier -> {
                               if (isThresholdExpired(identifier)) {
@@ -307,82 +385,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
      * true when the task had never run
      */
     private boolean isThresholdExpired(Identifier identifier) {
-        return lastRun.getOrDefault(identifier, Instant.EPOCH)
-                      .isBefore(Instant.now(clock).minus(THROTTLE_THRESHOLD));
-    }
-
-    /**
-     * @return future or null
-     * @throws TermItException        when the target method throws
-     * @throws IllegalCallerException when the annotated method returns another type than {@code void}, {@link Void} or {@link Future}
-     * @implNote Around advice configured in {@code spring-aop.xml}
-     */
-    public synchronized @Nullable Object throttleMethodCall(@NotNull ProceedingJoinPoint joinPoint,
-                                                            @NotNull Throttle throttleAnnotation) throws Throwable {
-
-        // if the current thread is already executing a throttled code, we want to skip further throttling
-        if (throttledThreads.contains(Thread.currentThread().getId())) {
-            // proceed with method execution
-            final Object result = joinPoint.proceed();
-            if (result instanceof ThrottledFuture<?> throttledFuture) {
-                // directly run throttled future
-                throttledFuture.run();
-                return throttledFuture;
-            }
-            return result;
-        }
-
-        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-
-        // construct the throttle instance key
-        final Identifier identifier = makeIdentifier(joinPoint, throttleAnnotation);
-        LOG.trace("Throttling task with key '{}'", identifier);
-
-        synchronized (scheduledFutures) {
-            if (!identifier.getGroup().isBlank()) {
-                // check if there is a task with lower group
-                // and if so, cancel this task in favor of the lower group
-                final Map.Entry<Identifier, Future<Object>> lowerEntry = scheduledFutures.lowerEntry(identifier);
-                if (lowerEntry != null) {
-                    final Future<Object> lowerFuture = lowerEntry.getValue();
-                    boolean hasGroupPrefix = identifier.hasGroupPrefix(lowerEntry.getKey().getGroup());
-                    if (hasGroupPrefix && !lowerFuture.isDone() && !lowerFuture.isCancelled()) {
-                        LOG.trace("Throttling canceled due to scheduled lower task '{}'", lowerEntry.getKey());
-                        return ThrottledFuture.canceled();
-                    }
-                }
-
-                cancelWithHigherGroup(identifier);
-            }
-        }
-
-        // if there is a scheduled task and this throttled instance was executed in the last THROTTLE_THRESHOLD
-        // cancel the scheduled task
-        // -> the execution is further delayed
-        Future<Object> oldFuture = scheduledFutures.get(identifier);
-        boolean throttleExpired = isThresholdExpired(identifier);
-        if (oldFuture != null && !throttleExpired) {
-            oldFuture.cancel(false);
-        }
-
-        // acquire a throttled future from a map, or make a new one
-        ThrottledFuture<Object> oldThrottledFuture = throttledFutures.getOrDefault(identifier, new ThrottledFuture<>());
-
-        Pair<Runnable, ThrottledFuture<Object>> pair = getFutureTask(joinPoint, identifier, oldThrottledFuture);
-        Runnable task = pair.getFirst();
-        ThrottledFuture<Object> future = pair.getSecond();
-        // update the throttled future in the map
-        synchronized (throttledFutures) {
-            throttledFutures.put(identifier, future);
-        }
-
-        Object result = resultVoidOrFuture(signature, future);
-
-        if (oldFuture == null || oldFuture.isDone() || oldFuture.isCancelled()) {
-            schedule(identifier, task, throttleExpired);
-        }
-
-        return result;
+        return lastRun.getOrDefault(identifier, Instant.EPOCH).isBefore(Instant.now(clock).minus(THROTTLE_THRESHOLD));
     }
 
     @SuppressWarnings("unchecked")

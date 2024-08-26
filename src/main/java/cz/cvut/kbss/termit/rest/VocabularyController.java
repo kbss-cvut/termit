@@ -49,6 +49,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,6 +72,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Vocabulary management REST API.
@@ -429,7 +431,7 @@ public class VocabularyController extends BaseController {
             @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PostMapping("/{localName}/versions")
-    public Callable<ResponseEntity<Void>> createSnapshot(
+    public ResponseEntity<Void> createSnapshot(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -439,13 +441,11 @@ public class VocabularyController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        return () -> {
-            final Vocabulary vocabulary = vocabularyService.getReference(identifier);
-            final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
-            LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
-            return ResponseEntity.created(
-                    locationWithout(generateLocation(snapshot.getUri()), "/" + localName + "/versions")).build();
-        };
+        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
+        final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
+        LOG.debug("Created snapshot of vocabulary {}.", vocabulary);
+        return ResponseEntity.created(
+                locationWithout(generateLocation(snapshot.getUri()), "/" + localName + "/versions")).build();
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

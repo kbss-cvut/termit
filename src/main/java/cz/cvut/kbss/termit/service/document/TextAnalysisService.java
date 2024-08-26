@@ -88,6 +88,7 @@ public class TextAnalysisService {
         final TextAnalysisInput input = createAnalysisInput(file);
         input.setVocabularyContexts(vocabularyContexts);
         invokeTextAnalysisOnFile(file, input);
+        LOG.debug("Text analysis finished for resource {}.", file.getUri());
     }
 
     private TextAnalysisInput createAnalysisInput(File file) {
