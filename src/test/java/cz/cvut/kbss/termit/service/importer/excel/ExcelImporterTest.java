@@ -596,5 +596,27 @@ class ExcelImporterTest {
         verify(termService, never()).addRootTermToVocabulary(any(), eq(vocabulary));
     }
 
-    // TODO
+    @Test
+    void importThrowsVocabularyImportExceptionWhenSheetContainsDuplicateIdentifiers() throws Exception {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
+        final Sheet sheet = input.getSheet("English");
+        sheet.shiftColumns(0, 12, 1);
+        sheet.getRow(0).createCell(0).setCellValue("Identifier");
+        sheet.getRow(1).createCell(0).setCellValue("http://example.com/terms/Construction");
+        sheet.getRow(1).getCell(1).setCellValue("Construction");
+        sheet.getRow(2).createCell(0).setCellValue("http://example.com/terms/Construction");
+        sheet.getRow(2).getCell(1).setCellValue("Another Construction");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        input.write(bos);
+
+        final VocabularyImportException ex = assertThrows(VocabularyImportException.class,
+                                                          () -> sut.importVocabulary(
+                                                                  new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                                                                  new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL, new ByteArrayInputStream(bos.toByteArray()))));
+        assertEquals("error.vocabulary.import.excel.duplicateIdentifier", ex.getMessageId());
+        verify(termService, never()).addRootTermToVocabulary(any(), eq(vocabulary));
+    }
 }
