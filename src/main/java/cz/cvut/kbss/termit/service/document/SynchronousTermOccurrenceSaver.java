@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.service.document;
 
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
@@ -8,14 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -43,28 +39,42 @@ public class SynchronousTermOccurrenceSaver implements TermOccurrenceSaver {
         occurrences.stream().filter(o -> !o.getTerm().equals(source.getUri())).forEach(termOccurrenceDao::persist);
     }
 
-    private void saveOccurrence(TermOccurrence occurrence, Asset<?> source) {
+    @Override
+    public void saveOccurrence(TermOccurrence occurrence, Asset<?> source) {
         if (occurrence.getTerm().equals(source.getUri())) {
             return;
         }
-        LOG.debug("Saving a term occurrence for asset {}.", source);
-        termOccurrenceDao.persist(occurrence);
+        if(!termOccurrenceDao.exists(occurrence.getUri())) {
+            termOccurrenceDao.persist(occurrence);
+        } else {
+            LOG.debug("Occurrence already exists, skipping: {}", occurrence);
+        }
     }
 
     @Transactional
     @Override
     public void saveFromQueue(final Asset<?> source, final AtomicBoolean finished,
-                               final ConcurrentLinkedQueue<TermOccurrence> toSave) {
+                              final BlockingQueue<TermOccurrence> toSave) {
+        LOG.debug("Saving term occurrences for asset {}.", source);
         removeAll(source);
         TermOccurrence occurrence;
-        while (!finished.get() || !toSave.isEmpty()) {
-            if (toSave.isEmpty()) {
-                Thread.yield();
+        long count = 0;
+        try {
+            while (!finished.get() || !toSave.isEmpty()) {
+                if (toSave.isEmpty()) {
+                    Thread.yield();
+                }
+                occurrence = toSave.poll(1, TimeUnit.SECONDS);
+                if (occurrence != null) {
+                    saveOccurrence(occurrence, source);
+                    count++;
+                }
             }
-            occurrence = toSave.poll();
-            if (occurrence != null) {
-                saveOccurrence(occurrence, source);
-            }
+            LOG.debug("Saved {} term occurrences for assert {}.", count, source);
+        } catch (InterruptedException e) {
+            LOG.error("Thread interrupted while waiting for occurrences to save.");
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
         }
     }
 

@@ -149,7 +149,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(namespace, VOCABULARY_NAME)).thenReturn(vocabularyUri);
         when(termServiceMock.getVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
         when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(true);
-        performAsync(
+        mockMvc.perform(
                        head(PATH + VOCABULARY_NAME + "/terms")
                                .param(QueryParams.NAMESPACE, namespace)
                                .param("prefLabel", name)
@@ -167,7 +167,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(namespace, VOCABULARY_NAME)).thenReturn(vocabularyUri);
         when(termServiceMock.getVocabularyReference(vocabularyUri)).thenReturn(vocabulary);
         when(termServiceMock.existsInVocabulary(any(), any(), any())).thenReturn(false);
-        performAsync(
+        mockMvc.perform(
                        head(PATH + VOCABULARY_NAME + "/terms")
                                .param(QueryParams.NAMESPACE, namespace)
                                .param("prefLabel", name)
@@ -408,7 +408,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
-        performAsync(get(PATH + VOCABULARY_NAME + "/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param(PAGE, "5").param(PAGE_SIZE, "100"))
                .andExpect(status().isOk());
 
         final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
@@ -422,7 +422,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
-        performAsync(get(PATH + VOCABULARY_NAME + "/terms/roots")).andExpect(status().isOk());
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots")).andExpect(status().isOk());
 
         final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
         verify(termServiceMock).findAllRoots(eq(vocabulary), captor.capture(), anyCollection());
@@ -701,7 +701,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
 
-        performAsync(
+        mockMvc.perform(
                        get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeImported", Boolean.TRUE.toString()))
                .andExpect(status().isOk());
         verify(termServiceMock).findAllRootsIncludingImported(vocabulary, DEFAULT_PAGE_SPEC, Collections.emptyList());
@@ -852,7 +852,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         when(termServiceMock.findAllRoots(eq(vocabulary), any(Pageable.class), anyCollection())).thenReturn(terms);
         final List<URI> toInclude = Arrays.asList(Generator.generateUri(), Generator.generateUri());
-        performAsync(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeTerms",
+        mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeTerms",
                                                                            toInclude.stream().map(URI::toString)
                                                                                     .toArray(String[]::new)))
                .andExpect(status().isOk());
@@ -1046,7 +1046,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Integer termCount = Generator.randomInt(0, 200);
         when(termServiceMock.getTermCount(vocabulary)).thenReturn(termCount);
 
-        final MvcResult mvcResult = performAsync(head(PATH + VOCABULARY_NAME + "/terms")).andExpect(status().isOk())
+        final MvcResult mvcResult = mockMvc.perform(head(PATH + VOCABULARY_NAME + "/terms")).andExpect(status().isOk())
                                            .andReturn();
         final String countHeader = mvcResult.getResponse().getHeader(Constants.X_TOTAL_COUNT_HEADER);
         assertNotNull(countHeader);

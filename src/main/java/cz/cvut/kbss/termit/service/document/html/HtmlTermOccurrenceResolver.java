@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.document.html;
 
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.OccurrenceTarget;
@@ -45,17 +46,13 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * Resolves term occurrences from RDFa-annotated HTML document.
@@ -67,15 +64,19 @@ import java.util.function.Consumer;
 public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
 
     private static final String BNODE_PREFIX = "_:";
+
     private static final String SCORE_ATTRIBUTE = "score";
 
     private static final Logger LOG = LoggerFactory.getLogger(HtmlTermOccurrenceResolver.class);
 
     private final HtmlSelectorGenerators selectorGenerators;
+
     private final DocumentManager documentManager;
+
     private final Configuration config;
 
     private Document document;
+
     private Asset<?> source;
 
     private Map<String, String> prefixes;
@@ -154,7 +155,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     @Override
-    public void findTermOccurrences(Consumer<TermOccurrence> resultConsumer) {
+    public void findTermOccurrences(OccurrenceConsumer resultConsumer) {
         assert document != null;
         final Set<String> visited = new HashSet<>();
         final Elements elements = document.getElementsByAttribute(Constants.RDFa.ABOUT);
@@ -172,23 +173,28 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             LOG.trace("Processing RDFa annotated element {}.", element);
             final Optional<TermOccurrence> occurrence = resolveAnnotation(element, source);
             occurrence.ifPresent(to -> {
-                if (!to.isSuggested()) {
-                    // Occurrence already approved in content (from previous manual approval)
-                    resultConsumer.accept(to);
-                } else if (existsApproved(to)) {
-                    LOG.trace("Found term occurrence {} with matching existing approved occurrence.", to);
-                    to.markApproved();
-                    // Annotation without score is considered approved by the frontend
-                    element.removeAttr(SCORE_ATTRIBUTE);
-                    resultConsumer.accept(to);
-                } else {
-                    if (to.getScore() > scoreThreshold) {
-                        LOG.trace("Found term occurrence {}.", to);
+                try {
+                    if (!to.isSuggested()) {
+                        // Occurrence already approved in content (from previous manual approval)
+                        resultConsumer.accept(to);
+                    } else if (existsApproved(to)) {
+                        LOG.trace("Found term occurrence {} with matching existing approved occurrence.", to);
+                        to.markApproved();
+                        // Annotation without score is considered approved by the frontend
+                        element.removeAttr(SCORE_ATTRIBUTE);
                         resultConsumer.accept(to);
                     } else {
-                        LOG.trace("The confidence score of occurrence {} is lower than the configured threshold {}.",
-                                  to, scoreThreshold);
+                        if (to.getScore() > scoreThreshold) {
+                            LOG.trace("Found term occurrence {}.", to);
+                            resultConsumer.accept(to);
+                        } else {
+                            LOG.trace("The confidence score of occurrence {} is lower than the configured threshold {}.", to, scoreThreshold);
+                        }
                     }
+                } catch (InterruptedException e) {
+                    LOG.error("Thread interrupted while resolving term occurrences.");
+                    Thread.currentThread().interrupt();
+                    throw new TermItException(e);
                 }
             });
         }
@@ -226,9 +232,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             return;
         }
         if (!termService.exists(termUri)) {
-            throw new AnnotationGenerationException(
-                    "Term with id " + Utils.uriToString(
-                            termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
+            throw new AnnotationGenerationException("Term with id " + Utils.uriToString(termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
         }
         existingTermIds.add(termId);
     }
@@ -273,8 +277,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             return true;
         }
         final Optional<String> probedContentType = documentManager.getContentType(sourceFile);
-        return probedContentType.isPresent()
-                && (probedContentType.get().equals(MediaType.TEXT_HTML_VALUE)
-                || probedContentType.get().equals(MediaType.APPLICATION_XHTML_XML_VALUE));
+        return probedContentType.isPresent() && (probedContentType.get()
+                                                                  .equals(MediaType.TEXT_HTML_VALUE) || probedContentType.get()
+                                                                                                                         .equals(MediaType.APPLICATION_XHTML_XML_VALUE));
     }
 }

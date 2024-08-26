@@ -4,6 +4,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -35,7 +36,9 @@ public interface TermOccurrenceSaver {
      * @param toSave   the queue with occurrences to save
      */
     void saveFromQueue(final Asset<?> source, final AtomicBoolean finished,
-                       final ConcurrentLinkedQueue<TermOccurrence> toSave);
+                       final BlockingQueue<TermOccurrence> toSave);
+
+    void saveOccurrence(TermOccurrence occurrence, Asset<?> source);
 
     /**
      * Gets a list of existing term occurrences in the specified asset.

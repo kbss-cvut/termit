@@ -136,6 +136,9 @@ public class ThrottledFuture<T> implements Future<T>, LongRunningTask {
         return completingSince != null;
     }
 
+    /**
+     * @return true if the future is done or canceled, false otherwise
+     */
     @Override
     public boolean isCompleted() {
         return isDone() && isCancelled();

@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StopWatch;
 
 import java.net.URI;
 import java.util.List;
@@ -254,9 +255,14 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
         Objects.requireNonNull(target);
 
         final URI sourceContext = TermOccurrence.resolveContext(target.getUri());
+        LOG.debug("Removing all occurrences from {}", sourceContext);
+        final StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         em.createNativeQuery("DROP GRAPH ?context")
                 .setParameter("context", sourceContext)
                 .executeUpdate();
+        stopWatch.stop();
+        LOG.debug("Removed all occurrences from {} in {} ms", sourceContext, stopWatch.getTotalTimeMillis());
     }
 
     /**

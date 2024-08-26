@@ -8,31 +8,23 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class MockedFutureTask<T> extends FutureTask<T> implements ScheduledFuture<T> {
+public class ScheduledFutureTask<T> extends FutureTask<T> implements ScheduledFuture<T> {
 
-    private final Callable<T> callable;
-
-    public MockedFutureTask(@NotNull Callable<T> callable) {
+    public ScheduledFutureTask(@NotNull Callable<T> callable) {
         super(callable);
-        this.callable = callable;
     }
 
-    public MockedFutureTask(@NotNull Runnable runnable, T result) {
+    public ScheduledFutureTask(@NotNull Runnable runnable, T result) {
         super(runnable, result);
-        this.callable = null;
-    }
-
-    public Callable<T> getCallable() {
-        return callable;
     }
 
     @Override
     public long getDelay(@NotNull TimeUnit unit) {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public int compareTo(@NotNull Delayed o) {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented");
     }
 }
