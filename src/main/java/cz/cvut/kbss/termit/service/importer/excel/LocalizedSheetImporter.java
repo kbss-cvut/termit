@@ -64,6 +64,8 @@ class LocalizedSheetImporter {
 
     private final Map<String, Term> labelToTerm = new LinkedHashMap<>();
     private final Map<URI, Term> idToTerm = new HashMap<>();
+    // Identifiers discovered in this sheet
+    private final Set<URI> sheetIdentifiers = new HashSet<>();
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
     LocalizedSheetImporter(Services services, PrefixMap prefixMap, List<Term> existingTerms,
@@ -140,7 +142,13 @@ class LocalizedSheetImporter {
             Term term = existingTerms.size() >= i ? existingTerms.get(i - 1) : new Term();
             getAttributeValue(termRow, JsonLd.ID).ifPresent(id -> {
                 term.setUri(resolveTermUri(id));
+                if (sheetIdentifiers.contains(term.getUri())) {
+                    throw new VocabularyImportException(
+                            "Sheet " + sheet.getSheetName() + " contains multiple terms with the same identifier: " + id,
+                            "error.vocabulary.import.excel.duplicateIdentifier");
+                }
                 idToTerm.put(term.getUri(), term);
+                sheetIdentifiers.add(term.getUri());
             });
             final Optional<String> label = getAttributeValue(termRow, SKOS.PREF_LABEL);
             if (label.isPresent()) {
