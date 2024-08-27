@@ -6,16 +6,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-public class ThrottledFuture<T> implements Future<T>, LongRunningTask {
+public class ThrottledFuture<T> implements CachableFuture<T>, LongRunningTask {
 
-    private final Object lock = new Object();
+    private final ReentrantLock lock = new ReentrantLock();
+
+    private T cachedResult = null;
 
     private final CompletableFuture<T> future;
 
@@ -49,10 +52,32 @@ public class ThrottledFuture<T> implements Future<T>, LongRunningTask {
     /**
      * @return already canceled future
      */
-    public static ThrottledFuture<Void> canceled() {
-        ThrottledFuture<Void> f = new ThrottledFuture<>();
+    public static <T> ThrottledFuture<T> canceled() {
+        ThrottledFuture<T> f = new ThrottledFuture<>();
         f.cancel(true);
+        assert f.isCancelled();
         return f;
+    }
+
+    /**
+     * @return already done future
+     */
+    public static <T> ThrottledFuture<T> done(T result) {
+        ThrottledFuture<T> f = ThrottledFuture.of(() -> result);
+        f.run();
+        assert f.isDone();
+        return f;
+    }
+
+    @Override
+    public Optional<T> getCachedResult() {
+        return Optional.ofNullable(cachedResult);
+    }
+
+    @Override
+    public ThrottledFuture<T> setCachedResult(@Nullable final T cachedResult) {
+        this.cachedResult = cachedResult;
+        return this;
     }
 
     @Override
@@ -70,59 +95,88 @@ public class ThrottledFuture<T> implements Future<T>, LongRunningTask {
         return future.isDone();
     }
 
+    /**
+     * Does not execute the task, blocks the current thread until some result is available.
+     *
+     * @return cached result when available, otherwise awaits future resolution.
+     */
     @Override
     public T get() throws InterruptedException, ExecutionException {
+        if (this.cachedResult != null) {
+            return this.cachedResult;
+        }
         return future.get();
     }
 
+    /**
+     * Does not execute the task, blocks the current thread until some result is available.
+     * @return cached result when available, otherwise awaits future resolution.
+     */
     @Override
     public T get(long timeout, @NotNull TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
+        if (this.cachedResult != null) {
+            return this.cachedResult;
+        }
         return future.get(timeout, unit);
     }
     /**
      * @param task the new task
      * @return If the current task is already running, was canceled or already completed, returns a new future for the given task.
-     * Otherwise, replaces the current task and returns this.
+     * Otherwise, replaces the current task and returns self.
      */
     protected ThrottledFuture<T> update(Supplier<T> task) {
-        synchronized (lock) {
-            if (isRunning() || future.isCancelled() || future.isDone()) {
+        try {
+            boolean locked = lock.tryLock();
+            if (!locked || isRunning() || isCompleted()) {
                 return ThrottledFuture.of(task);
             }
             this.task = task;
             return this;
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
     }
 
 
     /**
-     * Transfers the task from this object to the specified {@code throttledFuture}.
-     * If the current task is already running, canceled or completed, this method has no effect.
+     * Returns future with the task from the specified {@code throttledFuture}.
+     * If possible, transfers the task from this object to the specified {@code throttledFuture}.
      *
      * @param target the future to update
      * @return target when current future is already being executed, was canceled or completed.
      * New future when the target is being executed, was canceled or completed.
      */
     protected ThrottledFuture<T> transfer(ThrottledFuture<T> target) {
-        synchronized (lock) {
-            if (isRunning() || future.isCancelled() || future.isDone()) {
+        try {
+            boolean locked = lock.tryLock();
+            if (!locked || isRunning() || isCompleted()) {
                 return target;
             }
 
             ThrottledFuture<T> result = target.update(this.task);
             this.task = null;
             return result;
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
     }
 
     protected void run() {
-        synchronized (lock) {
-            if (isRunning() || future.isCancelled() || future.isDone()) {
+        boolean locked;
+        do {
+            locked = lock.tryLock();
+            if (isRunning() || isCompleted()) {
                 return;
+            } else if (!locked) {
+                Thread.yield();
             }
-            completingSince = Utils.timestamp();
-        }
+        } while (!locked);
+        completingSince = Utils.timestamp();
 
         if (task != null) {
             future.complete(task.get());
@@ -141,7 +195,7 @@ public class ThrottledFuture<T> implements Future<T>, LongRunningTask {
      */
     @Override
     public boolean isCompleted() {
-        return isDone() && isCancelled();
+        return isDone() || isCancelled();
     }
 
     @Override

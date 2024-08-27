@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.util.throttle;
+package cz.cvut.kbss.termit.util;
 
 
 import org.jetbrains.annotations.NotNull;

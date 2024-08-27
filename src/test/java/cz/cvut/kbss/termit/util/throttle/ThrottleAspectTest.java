@@ -5,7 +5,6 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -14,14 +13,12 @@ import org.springframework.scheduling.support.TaskUtils;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -509,5 +506,19 @@ class ThrottleAspectTest {
         assertDoesNotThrow(scheduled::run);
         ExecutionException e = assertThrows(ExecutionException.class, future::get);
         assertEquals(exceptionMessage, e.getCause().getMessage());
+    }
+
+    @Test
+    void resolvedFutureFromMethodIsReturnedWithoutSchedule() throws Throwable {
+        signatureA.setReturnType(Future.class);
+        final String result = "result of the method";
+        when(joinPointA.proceed()).then(invocation -> ThrottledFuture.done(result));
+
+        Future<String> future = (Future<String>) sut.throttleMethodCall(joinPointA, throttleA);
+
+        assertNotNull(future);
+        assertTrue(future.isDone());
+        assertFalse(future.isCancelled());
+        assertEquals(result, future.get());
     }
 }

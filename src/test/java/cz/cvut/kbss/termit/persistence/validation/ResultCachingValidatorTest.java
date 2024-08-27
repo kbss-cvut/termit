@@ -19,7 +19,9 @@ package cz.cvut.kbss.termit.persistence.validation;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +31,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.anySet;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.spy;
@@ -45,44 +57,62 @@ class ResultCachingValidatorTest {
     @Mock
     private Validator validator;
 
+    @Mock
+    private VocabularyDao vocabularyDao;
+
     private ResultCachingValidator sut;
+
+    private URI vocabulary;
+
+    private ValidationResult validationResult;
 
     @BeforeEach
     void setUp() {
-        this.sut = spy(new ResultCachingValidator());
+        this.sut = spy(new ResultCachingValidator(vocabularyDao));
         when(sut.getValidator()).thenReturn(validator);
+
+        vocabulary = Generator.generateUri();
+        Term term = Generator.generateTermWithId(vocabulary);
+        validationResult = new ValidationResult()
+                .setTermUri(term.getUri());
+
+        when(vocabularyDao.getTermToVocabularyMap(anySet())).thenReturn(Map.of(term.getUri(), vocabulary));
     }
 
     @Test
-    void invokesInternalValidatorWhenNoResultsAreCached() {
-        final List<ValidationResult> results = Collections.singletonList(new ValidationResult());
-        when(validator.validate(anyCollection())).thenReturn(results);
-        final Set<URI> vocabularies = Collections.singleton(Generator.generateUri());
-        final List<ValidationResult> result = sut.validate(vocabularies);
+    void invokesInternalValidatorWhenNoResultsAreCached() throws Exception {
+        final List<ValidationResult> results = Collections.singletonList(validationResult);
+        when(validator.runValidation(anyCollection())).thenReturn(results);
+        final Set<URI> vocabularies = Collections.singleton(vocabulary);
+        final List<ValidationResult> result = runFuture(sut.validate(vocabularies));
         assertEquals(results, result);
-        verify(validator).validate(vocabularies);
+        verify(validator).runValidation(vocabularies);
     }
 
     @Test
-    void returnsCachedResultsWhenArgumentsMatch() {
-        final List<ValidationResult> results = Collections.singletonList(new ValidationResult());
-        when(validator.validate(anyCollection())).thenReturn(results);
-        final Set<URI> vocabularies = Collections.singleton(Generator.generateUri());
-        final List<ValidationResult> resultOne = sut.validate(vocabularies);
-        final List<ValidationResult> resultTwo = sut.validate(vocabularies);
+    void returnsCachedResultsWhenArgumentsMatch() throws Exception {
+        final List<ValidationResult> results = Collections.singletonList(validationResult);
+        when(validator.runValidation(anyCollection())).thenReturn(results);
+        final Set<URI> vocabularies = Collections.singleton(vocabulary);
+        final List<ValidationResult> resultOne = runFuture(sut.validate(vocabularies));
+        verify(validator).runValidation(vocabularies);
+        final List<ValidationResult> resultTwo = runFuture(sut.validate(vocabularies));
         assertEquals(resultOne, resultTwo);
-        verify(validator).validate(vocabularies);
+        assertSame(results, resultOne);
+        verifyNoMoreInteractions(validator);
     }
 
     @Test
-    void evictCacheClearsCachedValidationResults() {
-        final List<ValidationResult> results = Collections.singletonList(new ValidationResult());
-        when(validator.validate(anyCollection())).thenReturn(results);
-        final Set<URI> vocabularies = Collections.singleton(Generator.generateUri());
-        final List<ValidationResult> resultOne = sut.validate(vocabularies);
-        sut.evictCache(new VocabularyContentModified(this, null));
-        final List<ValidationResult> resultTwo = sut.validate(vocabularies);
-        verify(validator, times(2)).validate(vocabularies);
-        assertNotSame(resultOne, resultTwo);
+    void evictCacheClearsCachedValidationResults() throws Exception {
+        final List<ValidationResult> results = Collections.singletonList(validationResult);
+        when(validator.runValidation(anyCollection())).thenReturn(results);
+        final Set<URI> vocabularies = Collections.singleton(vocabulary);
+        final List<ValidationResult> resultOne = runFuture(sut.validate(vocabularies));
+        verify(validator).runValidation(vocabularies);
+        sut.evictVocabularyCache(new VocabularyContentModified(this, vocabulary));
+        final List<ValidationResult> resultTwo = runFuture(sut.validate(vocabularies));
+        verify(validator, times(2)).runValidation(vocabularies);
+        assertEquals(resultOne, resultTwo);
+        assertSame(results, resultOne);
     }
 }

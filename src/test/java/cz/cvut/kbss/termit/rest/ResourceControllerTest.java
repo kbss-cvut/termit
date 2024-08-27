@@ -184,7 +184,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final MockMultipartFile upload = new MockMultipartFile("file", file.getLabel(), MediaType.TEXT_HTML_VALUE,
                                                                Files.readAllBytes(attachment.toPath())
         );
-        performAsync(multipart(PATH + "/" + FILE_NAME + "/content").file(upload)
+        mockMvc.perform(multipart(PATH + "/" + FILE_NAME + "/content").file(upload)
                                                                       .with(req -> {
                                                                           req.setMethod(HttpMethod.PUT.toString());
                                                                           return req;

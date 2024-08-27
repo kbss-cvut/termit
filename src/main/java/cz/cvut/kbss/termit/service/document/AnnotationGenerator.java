@@ -29,17 +29,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StopWatch;
 
 import java.io.InputStream;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 /**
  * Creates annotations (term occurrences) for vocabulary terms.
@@ -75,6 +70,7 @@ public class AnnotationGenerator {
      * @param source  Source file of the annotated document
      */
     @Transactional
+    @Throttle("{source.getUri()}")
     public void generateAnnotations(InputStream content, File source) {
         final TermOccurrenceResolver occurrenceResolver = findResolverFor(source);
         LOG.debug("Resolving annotations of file {}.", source);
@@ -153,7 +149,7 @@ public class AnnotationGenerator {
      */
     @Transactional
     @Throttle(value = "{#annotatedTerm.getUri()}")
-    public void generateAnnotationsSync(InputStream content, AbstractTerm annotatedTerm) {
+    public void generateAnnotations(InputStream content, AbstractTerm annotatedTerm) {
         // We assume the content (text analysis output) is HTML-compatible
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();
         LOG.debug("Resolving annotations of the definition of {}.", annotatedTerm);

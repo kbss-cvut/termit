@@ -18,6 +18,8 @@
 package cz.cvut.kbss.termit.persistence.validation;
 
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 import java.util.Collection;
@@ -36,5 +38,6 @@ public interface VocabularyContentValidator {
      * @param vocabularyIris Vocabulary identifiers
      * @return List of violations of validation rules. Empty list if there are not violations
      */
-    List<ValidationResult> validate(final Collection<URI> vocabularyIris);
+    @NotNull
+    ThrottledFuture<List<ValidationResult>> validate(@NotNull Collection<URI> vocabularyIris);
 }

@@ -17,9 +17,11 @@
  */
 package cz.cvut.kbss.termit.event;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEvent;
 
 import java.net.URI;
+import java.util.Objects;
 
 /**
  * Represents an event of modification of the content of a vocabulary.
@@ -30,8 +32,9 @@ public class VocabularyContentModified extends ApplicationEvent {
 
     private final URI vocabularyIri;
 
-    public VocabularyContentModified(Object source, URI vocabularyIri) {
+    public VocabularyContentModified(Object source, @NotNull URI vocabularyIri) {
         super(source);
+        Objects.requireNonNull(vocabularyIri);
         this.vocabularyIri = vocabularyIri;
     }
 
