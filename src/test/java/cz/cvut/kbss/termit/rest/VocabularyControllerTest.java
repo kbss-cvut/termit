@@ -55,7 +55,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.File;
@@ -86,13 +85,11 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -484,7 +481,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
         when(serviceMock.createSnapshot(any())).thenReturn(snapshot);
-        performAsync(post(PATH + "/" + FRAGMENT + "/versions"))
+        mockMvc.perform(post(PATH + "/" + FRAGMENT + "/versions"))
                .andExpect(status().isCreated());
         verify(serviceMock).createSnapshot(vocabulary);
     }
@@ -494,7 +491,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final Snapshot snapshot = Generator.generateSnapshot(vocabulary);
         when(serviceMock.createSnapshot(any())).thenReturn(snapshot);
-        final MvcResult mvcResult = performAsync(post(PATH + "/" + FRAGMENT + "/versions"))
+        final MvcResult mvcResult = mockMvc.perform(post(PATH + "/" + FRAGMENT + "/versions"))
                                            .andExpect(status().isCreated())
                                            .andReturn();
         verifyLocationEquals(PATH + "/" + IdentifierResolver.extractIdentifierFragment(snapshot.getUri()), mvcResult);

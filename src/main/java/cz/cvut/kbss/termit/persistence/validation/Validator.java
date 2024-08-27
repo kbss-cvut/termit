@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -36,6 +37,7 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +82,6 @@ public class Validator implements VocabularyContentValidator {
     private final EntityManager em;
     private final VocabularyContextMapper vocabularyContextMapper;
 
-    private com.github.sgov.server.Validator validator;
     private Model validationModel;
 
     @Autowired
@@ -102,8 +103,7 @@ public class Validator implements VocabularyContentValidator {
      */
     private void initValidator(String language) {
         try {
-            this.validator = new com.github.sgov.server.Validator();
-            this.validationModel = initValidationModel(validator, language);
+            this.validationModel = initValidationModel(new com.github.sgov.server.Validator(), language);
         } catch (IOException e) {
             throw new TermItException("Unable to initialize validator.", e);
         }
@@ -140,25 +140,35 @@ public class Validator implements VocabularyContentValidator {
 
     @Transactional(readOnly = true)
     @Override
-    public List<ValidationResult> validate(final Collection<URI> vocabularyIris) {
+    public @NotNull ThrottledFuture<List<ValidationResult>> validate(final @NotNull Collection<URI> vocabularyIris) {
+        if (vocabularyIris.isEmpty()) {
+            return ThrottledFuture.done(List.of());
+        }
+
+        return ThrottledFuture.of(() -> runValidation(vocabularyIris));
+    }
+
+    protected synchronized List<ValidationResult> runValidation(@NotNull Collection<URI> vocabularyIris) {
         LOG.debug("Validating {}", vocabularyIris);
         try {
             final Model dataModel = getModelFromRdf4jRepository(vocabularyIris);
-            org.topbraid.shacl.validation.ValidationReport report = validator.validate(dataModel, validationModel);
+            // TODO: would be better to cache the validator, but its not thread safe
+            org.topbraid.shacl.validation.ValidationReport report = new com.github.sgov.server.Validator()
+                    .validate(dataModel, validationModel);
             LOG.debug("Done.");
             return report.results().stream()
                          .sorted(new ValidationResultSeverityComparator()).map(result -> {
                         final URI termUri = URI.create(result.getFocusNode().toString());
                         final URI severity = URI.create(result.getSeverity().getURI());
                         final URI errorUri = result.getSourceShape().isURIResource() ?
-                                             URI.create(result.getSourceShape().getURI()) : null;
+                                URI.create(result.getSourceShape().getURI()) : null;
                         final URI resultPath = result.getPath() != null && result.getPath().isURIResource() ?
-                                               URI.create(result.getPath().getURI()) : null;
+                                URI.create(result.getPath().getURI()) : null;
                         final MultilingualString messages = new MultilingualString(result.getMessages().stream()
                                                                                          .map(RDFNode::asLiteral)
                                                                                          .collect(Collectors.toMap(
                                                                                                  lit -> lit.getLanguage().isBlank() ?
-                                                                                                        JsonLd.NONE : lit.getLanguage(),
+                                                                                                         JsonLd.NONE : lit.getLanguage(),
                                                                                                  Literal::getLexicalForm)));
 
                         return new ValidationResult()

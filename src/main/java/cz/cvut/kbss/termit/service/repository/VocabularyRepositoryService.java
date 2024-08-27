@@ -63,6 +63,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -319,14 +320,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    public List<ValidationResult> validateContents(URI vocabulary) {
-        try {
-            return vocabularyDao.validateContents(vocabulary);
-        } finally {
-            // we can be sure that validator allocated
-            //  quite a large memory amount which can be cleared now
-            System.gc();
-        }
+    public Optional<List<ValidationResult>> validateContents(URI vocabulary) {
+        return vocabularyDao.validateContents(vocabulary).getCachedResult();
     }
 
     public Integer getTermCount(Vocabulary vocabulary) {

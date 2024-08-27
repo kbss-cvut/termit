@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.validation;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -36,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Collections;
 import java.util.List;
 
+import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ValidatorTest extends BaseDaoTestRunner {
@@ -64,7 +66,12 @@ class ValidatorTest extends BaseDaoTestRunner {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
             final Validator sut = new Validator(em, vocabularyContextMapper, config);
-            final List<ValidationResult> result = sut.validate(Collections.singleton(vocabulary.getUri()));
+            final List<ValidationResult> result;
+            try {
+                result = runFuture(sut.validate(Collections.singleton(vocabulary.getUri())));
+            } catch (Exception e) {
+                throw new TermItException(e);
+            }
             assertTrue(result.stream().noneMatch(
                     vr -> vr.getMessage().get("en").contains("The term does not have a preferred label in Czech")));
             assertTrue(result.stream().noneMatch(

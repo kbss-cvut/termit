@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.service.jmx;
 
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.rest.dto.HealthInfo;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.Postman;
@@ -66,7 +65,6 @@ public class AppAdminBean implements SelfNaming {
         eventPublisher.publishEvent(new EvictCacheEvent(this));
         LOG.info("Refreshing last modified timestamps...");
         eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
-        eventPublisher.publishEvent(new VocabularyContentModified(this, null));
     }
 
     @ManagedOperation(description = "Sends test email to the specified address.")

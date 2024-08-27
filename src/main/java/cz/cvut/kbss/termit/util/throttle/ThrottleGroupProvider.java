@@ -18,4 +18,8 @@ public class ThrottleGroupProvider {
     public static String getTextAnalysisVocabularyAllTerms(URI vocabulary) {
         return TEXT_ANALYSIS_VOCABULARIES + "_" + vocabulary;
     }
+
+    public static String getTextAnalysisVocabularyTerm(URI vocabulary, URI term) {
+        return TEXT_ANALYSIS_VOCABULARIES + "_" + vocabulary + "_" + term;
+    }
 }

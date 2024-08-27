@@ -45,6 +45,8 @@ import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.throttle.CachableFuture;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,11 +60,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SIZE;
 import static cz.cvut.kbss.termit.util.Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
@@ -155,6 +160,38 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                                                 "}", URI.class)
                      .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                      .setParameter("x", vocabulary).getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * @return a map from term URI to vocabulary URI including all terms from all imported vocabularies
+     */
+    public Map<URI, URI> getTermToVocabularyMap(Set<URI> vocabularies) {
+        Objects.requireNonNull(vocabularies);
+        if (vocabularies.isEmpty()) return Map.of();
+        try {
+            return ((Stream<RdfsStatement>) em.createNativeQuery("""
+                                                      SELECT DISTINCT ?subject ?object WHERE {
+                                                          ?object a ?vocabulary.
+                                                          FILTER(?object in (?vocabularies))
+                                                          
+                                                          ?subject ?inVocabulary ?object ;
+                                                          a ?term .
+                                                      }""", "RDFStatement")
+                                              .setParameter("vocabularies", vocabularies)
+                                              .setParameter("vocabulary", typeUri)
+                                              .setParameter("term", URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Term.class)))
+                                              .setParameter("inVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                              .getResultStream())
+                    .reduce(new HashMap<>(), (map, statement) -> {
+                        map.put(statement.getSubject(), statement.getObject());
+                        return map;
+                    }, (mapA, mapB) -> {
+                        mapA.putAll(mapB);
+                        return mapA;
+                    });
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -356,8 +393,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         refreshLastModified();
     }
 
+    @Throttle("{#vocabulary}")
     @Transactional
-    public List<ValidationResult> validateContents(URI vocabulary) {
+    public CachableFuture<List<ValidationResult>> validateContents(URI vocabulary) {
         final VocabularyContentValidator validator = context.getBean(VocabularyContentValidator.class);
         final Collection<URI> importClosure = getTransitivelyImportedVocabularies(vocabulary);
         importClosure.add(vocabulary);

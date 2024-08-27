@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.util.throttle;
 import cz.cvut.kbss.termit.TermItApplication;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
+import cz.cvut.kbss.termit.util.Pair;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskRegister;
 import org.aspectj.lang.JoinPoint;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.annotation.Order;
@@ -102,7 +104,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
     private final @NotNull AtomicReference<Instant> lastClear;
 
     @Autowired
-    public ThrottleAspect(TaskScheduler taskScheduler, TransactionExecutor transactionExecutor) {
+    public ThrottleAspect(@Qualifier("threadPoolTaskScheduler") TaskScheduler taskScheduler, TransactionExecutor transactionExecutor) {
         this.taskScheduler = taskScheduler;
         this.transactionExecutor = transactionExecutor;
         throttledFutures = new HashMap<>();
@@ -240,13 +242,6 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static ThrottledFuture<Object> transferTask(@NotNull ThrottledFuture<?> source,
-                                                        @NotNull ThrottledFuture<?> target) {
-        // casting the type parameter to Object
-        return ((ThrottledFuture<Object>) source).transfer((ThrottledFuture<Object>) target);
-    }
-
     private EvaluationContext makeContext(JoinPoint joinPoint, Map<String, Object> parameters) {
         StandardEvaluationContext context = new StandardEvaluationContext();
         standardEvaluationContext.applyDelegatesTo(context);
@@ -278,12 +273,16 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             if (result instanceof ThrottledFuture<?> throttledMethodFuture) {
                 // future acquired by key or a new future supplied, ensuring the same type
                 // ThrottledFuture#updateOther will create a new future when required
-                throttledFuture = transferTask(throttledMethodFuture, throttledFuture);
+                if (throttledMethodFuture.isDone()) {
+                    throttledFuture = (ThrottledFuture<Object>) throttledMethodFuture;
+                } else {
+                    throttledFuture = ((ThrottledFuture<Object>) throttledMethodFuture).transfer(throttledFuture);
+                }
             } else {
                 throw new ThrottleAspectException("Returned value is not a ThrottledFuture");
             }
         } else {
-            throttledFuture.update(() -> {
+            throttledFuture = throttledFuture.update(() -> {
                 try {
                     return joinPoint.proceed();
                 } catch (Throwable e) {
@@ -313,11 +312,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
 
-            LOG.atTrace().addArgument(() -> {
-                synchronized (scheduledFutures) {
-                    return scheduledFutures.values().stream().filter(f -> !f.isDone() && !f.isCancelled()).count() - 1;
-                }
-            }).addArgument(identifier).log("Running throttled task [{} left] '{}'");
+            LOG.trace("Running throttled task [{} left] '{}'", scheduledFutures.size() - 1, identifier);
 
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
