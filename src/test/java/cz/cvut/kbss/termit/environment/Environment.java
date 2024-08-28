@@ -41,6 +41,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
@@ -81,11 +82,13 @@ public class Environment {
      *
      * @param user User to set as currently authenticated
      */
-    public static void setCurrentUser(UserAccount user) {
+    public static Authentication setCurrentUser(UserAccount user) {
         final TermItUserDetails userDetails = new TermItUserDetails(user, new HashSet<>());
         SecurityContext context = new SecurityContextImpl();
-        context.setAuthentication(new AuthenticationToken(userDetails.getAuthorities(), userDetails));
+        Authentication authentication = new AuthenticationToken(userDetails.getAuthorities(), userDetails);
+        context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
+        return authentication;
     }
 
     /**

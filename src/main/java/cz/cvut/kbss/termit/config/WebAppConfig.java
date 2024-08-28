@@ -153,12 +153,12 @@ public class WebAppConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public HttpMessageConverter<?> stringMessageConverter() {
+    public HttpMessageConverter<?> termitStringHttpMessageConverter() {
         return new StringHttpMessageConverter(StandardCharsets.UTF_8);
     }
 
     @Bean
-    public HttpMessageConverter<?> jsonLdMessageConverter() {
+    public HttpMessageConverter<?> termitJsonLdHttpMessageConverter() {
         final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(
                 jsonLdObjectMapper());
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.valueOf(JsonLd.MEDIA_TYPE)));
@@ -166,14 +166,14 @@ public class WebAppConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public HttpMessageConverter<?> jsonMessageConverter() {
+    public HttpMessageConverter<?> termitJsonHttpMessageConverter() {
         final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setObjectMapper(objectMapper());
         return converter;
     }
 
     @Bean
-    public HttpMessageConverter<?> resourceMessageConverter() {
+    public HttpMessageConverter<?> termitResourceHttpMessageConverter() {
         return new ResourceHttpMessageConverter();
     }
 

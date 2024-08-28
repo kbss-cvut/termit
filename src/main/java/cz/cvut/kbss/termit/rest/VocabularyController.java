@@ -27,7 +27,6 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -411,27 +410,6 @@ public class VocabularyController extends BaseController {
         final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
 
         return vocabularyService.getTermRelations(vocabulary);
-    }
-
-    @Operation(description = "Validates the terms in a vocabulary with the specified identifier.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "A collection of validation results."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
-    })
-    @PreAuthorize("permitAll()")    // TODO Authorize?
-    @GetMapping(value = "/{localName}/validate",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ValidationResult> validateVocabulary(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
-        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
-        return vocabularyService.validateContents(vocabulary);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
