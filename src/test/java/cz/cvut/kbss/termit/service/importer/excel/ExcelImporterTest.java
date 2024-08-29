@@ -44,6 +44,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -589,9 +591,14 @@ class ExcelImporterTest {
         input.write(bos);
 
         final VocabularyImportException ex = assertThrows(VocabularyImportException.class,
-                     () -> sut.importVocabulary(
-                             new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
-                             new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL, new ByteArrayInputStream(bos.toByteArray()))));
+                                                          () -> sut.importVocabulary(
+                                                                  new VocabularyImporter.ImportConfiguration(false,
+                                                                                                             vocabulary.getUri(),
+                                                                                                             prePersist),
+                                                                  new VocabularyImporter.ImportInput(
+                                                                          Constants.MediaType.EXCEL,
+                                                                          new ByteArrayInputStream(
+                                                                                  bos.toByteArray()))));
         assertEquals("error.vocabulary.import.excel.duplicateLabel", ex.getMessageId());
         verify(termService, never()).addRootTermToVocabulary(any(), eq(vocabulary));
     }
@@ -614,9 +621,51 @@ class ExcelImporterTest {
 
         final VocabularyImportException ex = assertThrows(VocabularyImportException.class,
                                                           () -> sut.importVocabulary(
-                                                                  new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
-                                                                  new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL, new ByteArrayInputStream(bos.toByteArray()))));
+                                                                  new VocabularyImporter.ImportConfiguration(false,
+                                                                                                             vocabulary.getUri(),
+                                                                                                             prePersist),
+                                                                  new VocabularyImporter.ImportInput(
+                                                                          Constants.MediaType.EXCEL,
+                                                                          new ByteArrayInputStream(
+                                                                                  bos.toByteArray()))));
         assertEquals("error.vocabulary.import.excel.duplicateIdentifier", ex.getMessageId());
         verify(termService, never()).addRootTermToVocabulary(any(), eq(vocabulary));
+    }
+
+    @Test
+    void importSupportsSpecifyingStateAndTypeOnlyInOneSheet() throws Exception {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
+        final Sheet englishSheet = input.getSheet("English");
+        englishSheet.getRow(1).createCell(0).setCellValue("Construction");
+        final Sheet czechSheet = input.getSheet("Czech");
+        czechSheet.getRow(1).createCell(0).setCellValue("Konstrukce");
+        czechSheet.getRow(1).createCell(9).setCellValue("Publikovaný pojem");
+        czechSheet.getRow(1).createCell(5).setCellValue("Typ objektu");
+        final Term type = Generator.generateTermWithId();
+        type.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/object-type"));
+        type.setLabel(MultilingualString.create("Object Type", Constants.DEFAULT_LANGUAGE));
+        type.getLabel().set("cs", "Typ objektu");
+        when(languageService.getTermTypes()).thenReturn(List.of(type));
+        final RdfsResource state = new RdfsResource(
+                URI.create("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/publikovaný-pojem"),
+                MultilingualString.create("Published term", Constants.DEFAULT_LANGUAGE), null,
+                "http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/stav-pojmu");
+        state.getLabel().set("cs", "Publikovaný pojem");
+        when(languageService.getTermStates()).thenReturn(List.of(state));
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        input.write(bos);
+
+        sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   new ByteArrayInputStream(bos.toByteArray())));
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertThat(captor.getValue().getTypes(), hasItem(type.getUri().toString()));
+        assertEquals(state.getUri(), captor.getValue().getState());
+        verify(languageService, never()).getInitialTermState();
     }
 }
