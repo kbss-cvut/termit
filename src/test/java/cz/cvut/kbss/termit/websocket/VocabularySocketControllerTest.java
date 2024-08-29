@@ -7,12 +7,10 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Answers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -21,26 +19,24 @@ import org.springframework.security.core.Authentication;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
 class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
 
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    Configuration configuration = new Configuration();
-
-    @Mock
+    @MockBean
     IdentifierResolver idResolver;
 
-    @Mock
+    @MockBean
     VocabularyService vocabularyService;
 
-    @InjectMocks
+    @SpyBean
     VocabularySocketController sut;
 
     Vocabulary vocabulary;
@@ -51,19 +47,17 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
 
     StompHeaderAccessor messageHeaders;
 
-    @Override
     @BeforeEach
     public void setup() {
-        super.setup();
         vocabulary = Generator.generateVocabularyWithId();
         fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri()).substring(1);
         namespace = vocabulary.getUri().toString().substring(0, vocabulary.getUri().toString().lastIndexOf('/'));
         when(idResolver.resolveIdentifier(namespace, fragment)).thenReturn(vocabulary.getUri());
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
-        registerController(sut);
 
         messageHeaders = StompHeaderAccessor.create(StompCommand.MESSAGE);
         messageHeaders.setSessionId("0");
+        messageHeaders.setSubscriptionId("0");
         Authentication auth = Environment.setCurrentUser(Generator.generateUserAccountWithPassword());
         messageHeaders.setUser(auth);
         messageHeaders.setSessionAttributes(new HashMap<>());
@@ -75,7 +69,7 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
         messageHeaders.setHeader("namespace", namespace);
         messageHeaders.setDestination("/vocabularies/" + fragment + "/validate");
 
-        this.annotationMethodHandler.handleMessage(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
+        this.serverInboundChannel.send(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
 
         verify(vocabularyService).validateContents(vocabulary);
     }
@@ -94,17 +88,18 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
         final List<ValidationResult> validationResults = List.of(validationResult);
         when(vocabularyService.validateContents(vocabulary)).thenReturn(validationResults);
 
-        this.annotationMethodHandler.handleMessage(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
+        this.serverInboundChannel.send(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
 
-        assertEquals(1, this.clientOutboundChannel.getMessages().size());
-        Message<?> reply = this.clientOutboundChannel.getMessages().get(0);
+        assertEquals(1, this.brokerChannelInterceptor.getMessages().size());
+        Message<?> reply = this.brokerChannelInterceptor.getMessages().get(0);
 
         assertNotNull(reply);
         StompHeaderAccessor replyHeaders = StompHeaderAccessor.wrap(reply);
         // as reply is sent to a common channel for all vocabularies, there must be header with vocabulary uri
         assertEquals(vocabulary.getUri(), replyHeaders.getHeader("vocabulary"), "Invalid or missing vocabulary header in the reply");
 
-        assertInstanceOf(List.class, reply.getPayload());
-        assertEquals(validationResults, reply.getPayload());
+        Optional<List<ValidationResult>> payload = readPayload(reply);
+        assertTrue(payload.isPresent());
+        assertEquals(validationResults, payload.get());
     }
 }
