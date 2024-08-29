@@ -37,6 +37,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -168,7 +169,9 @@ public class SecurityConfig {
     @Bean
     public AuthorizationManager<Message<?>> messageAuthorizationManager(
             MessageMatcherDelegatingAuthorizationManager.Builder messages) {
-        return messages.nullDestMatcher().denyAll()
+        return messages.simpTypeMatchers(SimpMessageType.CONNECT).authenticated()
+                       .simpTypeMatchers(SimpMessageType.DISCONNECT).authenticated()
+                       .nullDestMatcher().denyAll()
                        .anyMessage().authenticated()
                        .anyMessage().hasAuthority(SecurityConstants.ROLE_RESTRICTED_USER)
                        .build();
