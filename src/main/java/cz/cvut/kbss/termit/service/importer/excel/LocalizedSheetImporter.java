@@ -221,8 +221,8 @@ class LocalizedSheetImporter {
                 rtm -> mapSkosMatchProperties(term, SKOS.RELATED_MATCH, splitIntoMultipleValues(rtm)));
         getAttributeValue(termRow, SKOS.EXACT_MATCH).ifPresent(
                 exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
-        getAttributeValue(termRow, JsonLd.TYPE).flatMap(this::resolveTermType).ifPresent(t -> term.setTypes(Set.of(t)));
-        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null)).ifPresent(
+        getAttributeValue(termRow, JsonLd.TYPE).flatMap(t -> resolveTermType(t, term)).ifPresent(t -> term.setTypes(Set.of(t)));
+        resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null), term).ifPresent(
                 term::setState);
 
     }
@@ -296,14 +296,22 @@ class LocalizedSheetImporter {
                        new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
     }
 
-    private Optional<String> resolveTermType(String value) {
+    private Optional<String> resolveTermType(String value, Term term) {
+        if (!Utils.emptyIfNull(term.getTypes()).isEmpty()) {
+            // Type already present from previous sheet
+            return Optional.empty();
+        }
         return languageService.getTermTypes().stream()
                               .filter(t -> value.equals(t.getLabel().get(langTag)) || value.equals(
                                       t.getUri().toString())).findFirst()
                               .map(t -> t.getUri().toString());
     }
 
-    private Optional<URI> resolveTermState(String value) {
+    private Optional<URI> resolveTermState(String value, Term term) {
+        if (term.getState() != null) {
+            // State already present from previous sheet
+            return Optional.empty();
+        }
         if (value == null) {
             return languageService.getInitialTermState().map(RdfsResource::getUri);
         }
