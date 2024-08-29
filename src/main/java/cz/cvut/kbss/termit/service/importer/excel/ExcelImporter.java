@@ -99,7 +99,6 @@ public class ExcelImporter implements VocabularyImporter {
         }
         final Vocabulary targetVocabulary = vocabularyDao.find(config.vocabularyIri()).orElseThrow(
                 () -> NotFoundException.create(Vocabulary.class, config.vocabularyIri()));
-        final String termNamespace = resolveVocabularyTermNamespace(targetVocabulary);
         try {
             List<Term> terms = Collections.emptyList();
             Set<TermRelationship> rawDataToInsert = new HashSet<>();
@@ -114,17 +113,18 @@ public class ExcelImporter implements VocabularyImporter {
                         continue;
                     }
                     final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(
-                            new LocalizedSheetImporter.Services(termService, languageService, idResolver),
-                            prefixMap, terms, termNamespace);
+                            new LocalizedSheetImporter.Services(termService, languageService),
+                            prefixMap, terms);
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
-                terms.stream().filter(t -> t.getUri() != null && termService.exists(t.getUri())).forEach(t -> {
-                    LOG.trace("Term {} already exists. Removing old version.", t);
-                    termService.forceRemove(termService.findRequired(t.getUri()));
-                    // Flush changes to prevent EntityExistsExceptions when term is already managed in PC as different type (Term vs TermInfo)
-                    em.flush();
-                });
+                terms.stream().peek(t -> t.setUri(resolveTermIdentifier(targetVocabulary, t)))
+                     .filter(t -> termService.exists(t.getUri())).forEach(t -> {
+                         LOG.trace("Term {} already exists. Removing old version.", t);
+                         termService.forceRemove(termService.findRequired(t.getUri()));
+                         // Flush changes to prevent EntityExistsExceptions when term is already managed in PC as different type (Term vs TermInfo)
+                         em.flush();
+                     });
                 // Ensure all parents are saved before we start adding children
                 terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty())
                      .forEach(root -> {
@@ -171,6 +171,24 @@ public class ExcelImporter implements VocabularyImporter {
     private String resolveVocabularyTermNamespace(Vocabulary vocabulary) {
         return idResolver.buildNamespace(vocabulary.getUri().toString(),
                                          config.getNamespace().getTerm().getSeparator());
+    }
+
+    private URI resolveTermIdentifier(Vocabulary vocabulary, Term term) {
+        final String termNamespace = resolveVocabularyTermNamespace(vocabulary);
+        if (term.getUri() == null) {
+            return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
+                                                        config.getNamespace().getTerm().getSeparator(),
+                                                        term.getLabel().get(config.getPersistence().getLanguage()));
+        }
+        if (term.getUri() != null && !term.getUri().toString().startsWith(termNamespace)) {
+            LOG.trace(
+                    "Existing term identifier {} does not correspond to the expected vocabulary term namespace {}. Adjusting the term id.",
+                    Utils.uriToString(term.getUri()), termNamespace);
+            return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
+                                                        config.getNamespace().getTerm().getSeparator(),
+                                                        term.getLabel().get(config.getPersistence().getLanguage()));
+        }
+        return term.getUri();
     }
 
     /**

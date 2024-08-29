@@ -8,7 +8,6 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.export.util.TabularTermExportUtils;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
@@ -55,9 +54,6 @@ class LocalizedSheetImporter {
     private final LanguageService languageService;
     private final PrefixMap prefixMap;
     private final List<Term> existingTerms;
-    private final IdentifierResolver idResolver;
-    // Namespace expected based on the vocabulary into which the terms will be imported
-    private final String expectedTermNamespace;
 
     private Map<String, Integer> attributeToColumn;
     private String langTag;
@@ -68,14 +64,11 @@ class LocalizedSheetImporter {
     private final Set<URI> sheetIdentifiers = new HashSet<>();
     private List<ExcelImporter.TermRelationship> rawDataToInsert;
 
-    LocalizedSheetImporter(Services services, PrefixMap prefixMap, List<Term> existingTerms,
-                           String expectedTermNamespace) {
+    LocalizedSheetImporter(Services services, PrefixMap prefixMap, List<Term> existingTerms) {
         this.termRepositoryService = services.termRepositoryService();
         this.languageService = services.languageService();
         this.prefixMap = prefixMap;
         this.existingTerms = existingTerms;
-        this.idResolver = services.idResolver();
-        this.expectedTermNamespace = expectedTermNamespace;
         existingTerms.stream().filter(t -> t.getUri() != null).forEach(t -> idToTerm.put(t.getUri(), t));
     }
 
@@ -141,7 +134,7 @@ class LocalizedSheetImporter {
             final Row termRow = sheet.getRow(i);
             Term term = existingTerms.size() >= i ? existingTerms.get(i - 1) : new Term();
             getAttributeValue(termRow, JsonLd.ID).ifPresent(id -> {
-                term.setUri(resolveTermUri(id));
+                term.setUri(URI.create(prefixMap.resolvePrefixed(id)));
                 if (sheetIdentifiers.contains(term.getUri())) {
                     throw new VocabularyImportException(
                             "Sheet " + sheet.getSheetName() + " contains multiple terms with the same identifier: " + id,
@@ -171,31 +164,6 @@ class LocalizedSheetImporter {
         LOG.trace("Found {} term rows.", i - 1);
     }
 
-    /**
-     * If an identifier column is found in the sheet, attempt to use it for term ids.
-     * <p>
-     * This methods first resolves possible prefixes and then ensures the identifier matches the expected namespace
-     * provided by the vocabulary into which we are importing. If it does not match, a new identifier is generated based
-     * on the expected namespace and the local name extracted from the identifier present in the sheet.
-     *
-     * @param id Identifier extracted from the sheet
-     * @return Valid term identifier matching target vocabulary
-     */
-    private URI resolveTermUri(String id) {
-        // Handle prefix if it is used
-        id = prefixMap.resolvePrefixed(id);
-        final URI uriId = URI.create(id);
-        if (expectedTermNamespace.equals(IdentifierResolver.extractIdentifierNamespace(uriId))) {
-            return URI.create(id);
-        } else {
-            LOG.trace(
-                    "Existing term identifier {} does not correspond to the expected vocabulary term namespace {}. Adjusting the term id.",
-                    Utils.uriToString(uriId), expectedTermNamespace);
-            final String localName = IdentifierResolver.extractIdentifierFragment(uriId);
-            return idResolver.generateIdentifier(expectedTermNamespace, localName);
-        }
-    }
-
     private void mapRowToTermAttributes(Term term, Row termRow) {
         getAttributeValue(termRow, SKOS.DEFINITION).ifPresent(
                 d -> initSingularMultilingualString(term::getDefinition, term::setDefinition).set(langTag, d));
@@ -221,7 +189,8 @@ class LocalizedSheetImporter {
                 rtm -> mapSkosMatchProperties(term, SKOS.RELATED_MATCH, splitIntoMultipleValues(rtm)));
         getAttributeValue(termRow, SKOS.EXACT_MATCH).ifPresent(
                 exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
-        getAttributeValue(termRow, JsonLd.TYPE).flatMap(t -> resolveTermType(t, term)).ifPresent(t -> term.setTypes(Set.of(t)));
+        getAttributeValue(termRow, JsonLd.TYPE).flatMap(t -> resolveTermType(t, term))
+                                               .ifPresent(t -> term.setTypes(Set.of(t)));
         resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null), term).ifPresent(
                 term::setState);
 
@@ -373,7 +342,6 @@ class LocalizedSheetImporter {
                      .collect(Collectors.toSet());
     }
 
-    record Services(TermRepositoryService termRepositoryService, LanguageService languageService,
-                    IdentifierResolver idResolver) {
+    record Services(TermRepositoryService termRepositoryService, LanguageService languageService) {
     }
 }
