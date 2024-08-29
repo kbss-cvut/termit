@@ -430,8 +430,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         transactional(() -> sut.update(term));
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
-        final Optional<VocabularyContentModified> evt = captor.getAllValues().stream().filter(VocabularyContentModified.class::isInstance)
-                                                     .map(VocabularyContentModified.class::cast).findFirst();
+        final Optional<VocabularyContentModified> evt = captor.getAllValues().stream()
+                                                              .filter(VocabularyContentModified.class::isInstance)
+                                                              .map(VocabularyContentModified.class::cast).findFirst();
         assertTrue(evt.isPresent());
         assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
     }
@@ -751,9 +752,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final List<TermDto> result = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(4, result.size());
         assertEquals(Arrays
-                        .asList("China", "Germany", "Spain", "Syria"),
-                result.stream().map(r -> r.getLabel().get("en"))
-                      .toList());
+                             .asList("China", "Germany", "Spain", "Syria"),
+                     result.stream().map(r -> r.getLabel().get("en"))
+                           .toList());
     }
 
     /**
@@ -1352,5 +1353,23 @@ class TermDaoTest extends BaseTermDaoTestRunner {
                                                      .map(AssetUpdateEvent.class::cast).findFirst();
         assertTrue(evt.isPresent());
         assertEquals(term, evt.get().getAsset());
+    }
+
+    @Test
+    void findIdentifierByLabelReturnsIdentifierOfMatchingTerm() {
+        final List<Term> terms = generateTerms(2);
+        addTermsAndSave(new HashSet<>(terms), vocabulary);
+
+        final Term term = terms.get(0);
+        final String label = term.getLabel().get(Environment.LANGUAGE);
+        final Optional<URI> result = sut.findIdentifierByLabel(label, vocabulary, Environment.LANGUAGE);
+        assertTrue(result.isPresent());
+        assertEquals(term.getUri(), result.get());
+    }
+
+    @Test
+    void findIdentifierByLabelReturnsEmptyOptionalIfNoTermIsFound() {
+        final Optional<URI> result = sut.findIdentifierByLabel("foo", vocabulary, Environment.LANGUAGE);
+        assertFalse(result.isPresent());
     }
 }

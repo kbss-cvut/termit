@@ -333,12 +333,29 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param label      Label to check
      * @param vocabulary Vocabulary in which terms will be searched
-     * @param language   Language to check the existence in
+     * @param language   Language to check the existence in, optional. If not specified, any language is accepted
      * @return Whether term with {@code label} already exists in vocabulary
      */
     @Transactional(readOnly = true)
     public boolean existsInVocabulary(String label, Vocabulary vocabulary, String language) {
         return termDao.existsInVocabulary(label, vocabulary, language);
+    }
+
+    /**
+     * Gets the identifier of a term with the specified label in a vocabulary with the specified URI.
+     * <p>
+     * Note that this method uses comparison ignoring case, so that two labels differing just in character case are
+     * considered same here.
+     *
+     * @param label      Label to search by
+     * @param vocabulary Vocabulary in which terms will be searched
+     * @param language   Language tag of the label, optional. If not specified, any language is accepted
+     * @return Identifier of matching term wrapped in an {@code Optional}, empty {@code Optional} if there is no such
+     * term
+     */
+    @Transactional(readOnly = true)
+    public Optional<URI> findIdentifierByLabel(String label, Vocabulary vocabulary, String language) {
+        return termDao.findIdentifierByLabel(label, vocabulary, language);
     }
 
     /**
