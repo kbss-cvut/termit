@@ -22,6 +22,10 @@ public class CachingChannelInterceptor implements ChannelInterceptor {
         return message;
     }
 
+    public void reset() {
+        this.messages.clear();
+    }
+
     public List<Message<?>> getMessages() {
         return List.copyOf(messages);
     }
