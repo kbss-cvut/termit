@@ -52,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -628,5 +629,22 @@ class ExcelImporterTest {
         assertThat(captor.getValue().getTypes(), hasItem(type.getUri().toString()));
         assertEquals(state.getUri(), captor.getValue().getState());
         verify(languageService, never()).getInitialTermState();
+    }
+
+    @Test
+    void importThrowsVocabularyImportExceptionWhenVocabularyAlreadyContainsTermWithSameLabelAndDifferentIdentifier() {
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        when(termService.findIdentifierByLabel(any(), any(), any())).thenReturn(Optional.empty());
+        doReturn(Optional.of(URI.create(
+                vocabulary.getUri() + config.getNamespace().getTerm().getSeparator() + "/Construction"))).when(
+                termService).findIdentifierByLabel("Construction", vocabulary, Constants.DEFAULT_LANGUAGE);
+
+
+        assertThrows(VocabularyImportException.class, () -> sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   Environment.loadFile(
+                                                           "data/import-simple-en.xlsx"))));
     }
 }

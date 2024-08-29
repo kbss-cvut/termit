@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -119,6 +120,15 @@ public class ExcelImporter implements VocabularyImporter {
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
                 terms.stream().peek(t -> t.setUri(resolveTermIdentifier(targetVocabulary, t)))
+                     .peek(t -> t.getLabel().getValue().forEach((lang, value) -> {
+                         final Optional<URI> existingUri = termService.findIdentifierByLabel(value,
+                                                                                             targetVocabulary,
+                                                                                             lang);
+                         if (existingUri.isPresent() && !existingUri.get().equals(t.getUri())) {
+                             throw new VocabularyImportException(
+                                     "Vocabulary already contains a term with label '" + value + "' with a different identifier than the imported one.");
+                         }
+                     }))
                      .filter(t -> termService.exists(t.getUri())).forEach(t -> {
                          LOG.trace("Term {} already exists. Removing old version.", t);
                          termService.forceRemove(termService.findRequired(t.getUri()));
