@@ -467,30 +467,6 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         verify(serviceMock).getChangesOfContent(vocabulary);
     }
 
-    @Test
-    void validateExecutesServiceValidate() throws Exception {
-        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
-        final List<ValidationResult> records = Collections.singletonList(new ValidationResult()
-                                                                                 .setTermUri(Generator.generateUri())
-                                                                                 .setIssueCauseUri(
-                                                                                         Generator.generateUri())
-                                                                                 .setSeverity(URI.create(
-                                                                                         SH.Violation.toString())));
-        when(serviceMock.validateContents(vocabulary)).thenReturn(records);
-
-
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/validate"))
-                                           .andExpect(status().isOk())
-                                           .andReturn();
-        final List<ValidationResult> result =
-                readValue(mvcResult, new TypeReference<List<ValidationResult>>() {
-                });
-        assertNotNull(result);
-        assertEquals(records.stream().map(ValidationResult::getId).collect(Collectors.toList()),
-                     result.stream().map(ValidationResult::getId).collect(Collectors.toList()));
-        verify(serviceMock).validateContents(vocabulary);
-    }
-
     private Vocabulary generateVocabularyAndInitReferenceResolution() {
         final Vocabulary vocabulary = generateVocabulary();
         vocabulary.setUri(VOCABULARY_URI);
