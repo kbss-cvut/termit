@@ -163,9 +163,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         pruneEmptyTranslations(instance);
     }
 
-    private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
+    private URI generateIdentifier(URI vocabularyUri, MultilingualString termLabel) {
         return idResolver.generateDerivedIdentifier(vocabularyUri, config.getNamespace().getTerm().getSeparator(),
-                                                    multilingualString.get(config.getPersistence().getLanguage()));
+                                                    termLabel.get(config.getPersistence().getLanguage()));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
