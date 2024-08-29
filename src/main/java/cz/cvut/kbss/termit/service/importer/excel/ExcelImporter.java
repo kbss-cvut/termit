@@ -183,6 +183,17 @@ public class ExcelImporter implements VocabularyImporter {
                                          config.getNamespace().getTerm().getSeparator());
     }
 
+    /**
+     * Resolves term identifier.
+     * <p>
+     * If the term does not have an identifier, it is generated so that existing instance can be removed before
+     * inserting the imported term. If the term has an identifier, but it does not match the expected vocabulary-based
+     * namespace, it is adjusted so that it does. Otherwise, the identifier is used.
+     *
+     * @param vocabulary Vocabulary into which the term will be added
+     * @param term       The imported term
+     * @return Term identifier
+     */
     private URI resolveTermIdentifier(Vocabulary vocabulary, Term term) {
         final String termNamespace = resolveVocabularyTermNamespace(vocabulary);
         if (term.getUri() == null) {
