@@ -189,8 +189,8 @@ class LocalizedSheetImporter {
                 rtm -> mapSkosMatchProperties(term, SKOS.RELATED_MATCH, splitIntoMultipleValues(rtm)));
         getAttributeValue(termRow, SKOS.EXACT_MATCH).ifPresent(
                 exm -> mapSkosMatchProperties(term, SKOS.EXACT_MATCH, splitIntoMultipleValues(exm)));
-        getAttributeValue(termRow, JsonLd.TYPE).flatMap(t -> resolveTermType(t, term))
-                                               .ifPresent(t -> term.setTypes(Set.of(t)));
+        getAttributeValue(termRow, JsonLd.TYPE).map(str -> resolveTermTypes(splitIntoMultipleValues(str), term))
+                                               .ifPresent(term::setTypes);
         resolveTermState(getAttributeValue(termRow, Vocabulary.s_p_ma_stav_pojmu).orElse(null), term).ifPresent(
                 term::setState);
 
@@ -265,15 +265,19 @@ class LocalizedSheetImporter {
                        new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
     }
 
-    private Optional<String> resolveTermType(String value, Term term) {
+    private Set<String> resolveTermTypes(Set<String> values, Term term) {
         if (!Utils.emptyIfNull(term.getTypes()).isEmpty()) {
             // Type already present from previous sheet
-            return Optional.empty();
+            return term.getTypes();
         }
-        return languageService.getTermTypes().stream()
-                              .filter(t -> value.equals(t.getLabel().get(langTag)) || value.equals(
-                                      t.getUri().toString())).findFirst()
-                              .map(t -> t.getUri().toString());
+        final List<Term> availableTypes = languageService.getTermTypes();
+        return values.stream().map(str -> availableTypes.stream()
+                                                        .filter(t -> str.equals(
+                                                                t.getLabel().get(langTag)) || str.equals(
+                                                                t.getUri().toString())).findFirst()
+                                                        .map(t -> t.getUri().toString())
+                                                        .orElse(str))
+                     .collect(Collectors.toSet());
     }
 
     private Optional<URI> resolveTermState(String value, Term term) {

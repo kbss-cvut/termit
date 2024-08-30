@@ -46,6 +46,7 @@ import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -646,5 +647,35 @@ class ExcelImporterTest {
                 new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
                                                    Environment.loadFile(
                                                            "data/import-simple-en.xlsx"))));
+    }
+
+    @Test
+    void importSupportsMultipleTypesDeclaredForTerm() throws Exception {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
+        final Sheet englishSheet = input.getSheet("English");
+        englishSheet.getRow(1).createCell(0).setCellValue("Construction");
+        final Term objectType = Generator.generateTermWithId();
+        objectType.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/object-type"));
+        objectType.setLabel(MultilingualString.create("Object Type", Constants.DEFAULT_LANGUAGE));
+        final Term eventType = Generator.generateTermWithId();
+        eventType.setUri(URI.create("http://onto.fel.cvut.cz/ontologies/ufo/event-type"));
+        eventType.setLabel(MultilingualString.create("Event Type", Constants.DEFAULT_LANGUAGE));
+        when(languageService.getTermTypes()).thenReturn(List.of(objectType, eventType));
+        englishSheet.getRow(1).createCell(5)
+                    .setCellValue(objectType.getLabel().get() + ";" + eventType.getLabel().get());
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        input.write(bos);
+
+        sut.importVocabulary(
+                new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
+                new VocabularyImporter.ImportInput(Constants.MediaType.EXCEL,
+                                                   new ByteArrayInputStream(bos.toByteArray())));
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertThat(captor.getValue().getTypes(),
+                   hasItems(objectType.getUri().toString(), eventType.getUri().toString()));
     }
 }
