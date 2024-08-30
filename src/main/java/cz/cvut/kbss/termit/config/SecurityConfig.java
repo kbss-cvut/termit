@@ -169,12 +169,8 @@ public class SecurityConfig {
     @Bean
     public AuthorizationManager<Message<?>> messageAuthorizationManager(
             MessageMatcherDelegatingAuthorizationManager.Builder messages) {
-        return messages.simpTypeMatchers(SimpMessageType.CONNECT).authenticated()
-                       .simpTypeMatchers(SimpMessageType.DISCONNECT).authenticated()
-                       .nullDestMatcher().denyAll()
-                       .anyMessage().authenticated()
-                       .anyMessage().hasAuthority(SecurityConstants.ROLE_RESTRICTED_USER)
-                       .build();
+        return messages.simpTypeMatchers(SimpMessageType.DISCONNECT).permitAll()
+                       .anyMessage().authenticated().build();
     }
 
     @Bean

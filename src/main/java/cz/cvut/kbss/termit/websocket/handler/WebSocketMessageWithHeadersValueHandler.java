@@ -1,15 +1,15 @@
-package cz.cvut.kbss.termit.util;
+package cz.cvut.kbss.termit.websocket.handler;
 
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
+import cz.cvut.kbss.termit.websocket.ResultWithHeaders;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.MethodParameter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.invocation.HandlerMethodReturnValueHandler;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.support.MessageHeaderAccessor;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.messaging.simp.annotation.support.MissingSessionUserException;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 
 public class WebSocketMessageWithHeadersValueHandler implements HandlerMethodReturnValueHandler {
 
@@ -27,13 +27,18 @@ public class WebSocketMessageWithHeadersValueHandler implements HandlerMethodRet
     @Override
     public void handleReturnValue(Object returnValue, @NotNull MethodParameter returnType, @NotNull Message<?> message)
             throws Exception {
-        final MessageHeaderAccessor originalHeadersAccessor = MessageHeaderAccessor.getAccessor(message);
-        if (originalHeadersAccessor != null && returnValue instanceof ResultWithHeaders<?> resultWithHeaders) {
-            final Map<String, Object> headers = new HashMap<>();
-            headers.putAll(originalHeadersAccessor.toMap());
-            headers.putAll(resultWithHeaders.headers());
-
-            simpMessagingTemplate.convertAndSend(resultWithHeaders.destination(), resultWithHeaders.payload(), headers);
+        if (returnValue instanceof ResultWithHeaders<?> resultWithHeaders) {
+            final StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
+            resultWithHeaders.headers().forEach(headerAccessor::setNativeHeader);
+            if (resultWithHeaders.toUser()) {
+                final String sessionId = SimpMessageHeaderAccessor.getSessionId(headerAccessor.toMessageHeaders());
+                if (sessionId == null || sessionId.isBlank()) {
+                    throw new MissingSessionUserException(message);
+                }
+                simpMessagingTemplate.convertAndSendToUser(sessionId, resultWithHeaders.destination(), resultWithHeaders.payload(), headerAccessor.toMessageHeaders());
+            } else {
+                simpMessagingTemplate.convertAndSend(resultWithHeaders.destination(), resultWithHeaders.payload(), headerAccessor.toMessageHeaders());
+            }
             return;
         }
         throw new UnsupportedOperationException("Unable to process returned value: " + returnValue + " of type " + returnType.getParameterType() + " from " + returnType.getMethod());

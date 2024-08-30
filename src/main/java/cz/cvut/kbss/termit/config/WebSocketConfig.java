@@ -2,7 +2,9 @@ package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
-import cz.cvut.kbss.termit.util.WebSocketMessageWithHeadersValueHandler;
+import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
+import cz.cvut.kbss.termit.websocket.handler.WebSocketMessageWithHeadersValueHandler;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -97,16 +99,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").setAllowedOrigins(configuration.getCors().getAllowedOrigins().split(","));
+        registry.setErrorHandler(new StompExceptionHandler());
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes("/");
+        registry.setApplicationDestinationPrefixes("/")
+                .setUserDestinationPrefix("/user");
     }
 
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registry) {
-        registry.setTimeToFirstMessage(15 * 1000); /* client has 15s to send any message */
+        registry.setTimeToFirstMessage(Constants.WEBSOCKET_TIME_TO_FIRST_MESSAGE);
+        registry.setSendBufferSizeLimit(Constants.WEBSOCKET_SEND_BUFFER_SIZE_LIMIT);
     }
 
     @Override
