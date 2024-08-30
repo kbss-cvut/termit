@@ -1,9 +1,11 @@
-package cz.cvut.kbss.termit.util;
+package cz.cvut.kbss.termit.websocket;
 
+import cz.cvut.kbss.termit.websocket.handler.WebSocketMessageWithHeadersValueHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.messaging.handler.annotation.SendTo;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +21,8 @@ import java.util.Map;
  * @param <T>         The type of the payload
  * @see WebSocketMessageWithHeadersValueHandler processes results from methods
  */
-public record ResultWithHeaders<T>(T payload, @NotNull String destination, @NotNull Map<String, Object> headers) {
+public record ResultWithHeaders<T>(T payload, @NotNull String destination, @NotNull Map<String, String> headers,
+                                   boolean toUser) {
 
     public static <T> ResultWithHeadersBuilder<T> result(T payload) {
         return new ResultWithHeadersBuilder<>(payload);
@@ -29,19 +32,28 @@ public record ResultWithHeaders<T>(T payload, @NotNull String destination, @NotN
 
         private final T payload;
 
-        private @Nullable Map<String, Object> headers = null;
+        private @Nullable Map<String, String> headers = null;
 
         private ResultWithHeadersBuilder(T payload) {
             this.payload = payload;
         }
 
+        /**
+         * All values will be mapped to strings with {@link Object#toString()}
+         */
         public ResultWithHeadersBuilder<T> withHeaders(@NotNull Map<String, Object> headers) {
-            this.headers = headers;
+            this.headers = new HashMap<>();
+            headers.forEach((key, value) -> this.headers.put(key, value.toString()));
+            this.headers = Collections.unmodifiableMap(this.headers);
             return this;
         }
 
         public ResultWithHeaders<T> sendTo(String destination) {
-            return new ResultWithHeaders<>(payload, destination, headers == null ? new HashMap<>() : headers);
+            return new ResultWithHeaders<>(payload, destination, headers == null ? Map.of() : headers, false);
+        }
+
+        public ResultWithHeaders<T> sendToUser(String userDestination) {
+            return new ResultWithHeaders<>(payload, userDestination, headers == null ? Map.of() : headers, true);
         }
     }
 }

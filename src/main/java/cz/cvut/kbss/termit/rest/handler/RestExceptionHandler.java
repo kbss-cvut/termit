@@ -39,6 +39,7 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -47,8 +48,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Exception handlers for REST controllers.
@@ -60,28 +59,28 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestControllerAdvice
 public class RestExceptionHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RestExceptionHandler.class);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
-    private static void logException(TermItException ex, HttpServletRequest request) {
+    private void logException(TermItException ex, HttpServletRequest request) {
         if (shouldSuppressLogging(ex)) {
             return;
         }
         logException("Exception caught when processing request to '" + request.getRequestURI() + "'.", ex);
     }
 
-    private static boolean shouldSuppressLogging(TermItException ex) {
+    private boolean shouldSuppressLogging(TermItException ex) {
         return ex.getClass().getAnnotation(SuppressibleLogging.class) != null;
     }
 
-    private static void logException(Throwable ex, HttpServletRequest request) {
+    private void logException(Throwable ex, HttpServletRequest request) {
         logException("Exception caught when processing request to '" + request.getRequestURI() + "'.", ex);
     }
 
-    private static void logException(String message, Throwable ex) {
+    private void logException(String message, Throwable ex) {
         LOG.error(message, ex);
     }
 
-    private static ErrorInfo errorInfo(HttpServletRequest request, Throwable e) {
+    private ErrorInfo errorInfo(HttpServletRequest request, Throwable e) {
         return ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI());
     }
 

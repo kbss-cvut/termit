@@ -38,6 +38,7 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
                 headerAccessor.removeNativeHeader(HttpHeaders.AUTHORIZATION);
                 return process(message, authHeader, headerAccessor);
             }
+            throw new AuthorizationException("Authorization header is invalid");
         }
         return message;
     }

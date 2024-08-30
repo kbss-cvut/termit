@@ -8,7 +8,6 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.ResultWithHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -22,13 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static cz.cvut.kbss.termit.util.ResultWithHeaders.result;
+import static cz.cvut.kbss.termit.websocket.ResultWithHeaders.result;
 
 @Controller
 @MessageMapping("/vocabularies")
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class VocabularySocketController extends BaseController {
-
     private static final Logger LOG = LoggerFactory.getLogger(VocabularySocketController.class);
 
     private final VocabularyService vocabularyService;
@@ -49,6 +47,6 @@ public class VocabularySocketController extends BaseController {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         return result(vocabularyService.validateContents(vocabulary)).withHeaders(Map.of("vocabulary", identifier))
-                                                                     .sendTo("/vocabularies/validation");
+                                                                     .sendToUser("/vocabularies/validation");
     }
 }
