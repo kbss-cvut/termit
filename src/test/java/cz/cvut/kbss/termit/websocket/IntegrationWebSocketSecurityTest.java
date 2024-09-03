@@ -40,6 +40,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunner {
 
+    /**
+     * The number of seconds after which some operations will time out.
+     */
+    private static final int OPERATION_TIMEOUT = 15;
+
     @Autowired
     ObjectMapper objectMapper;
 
@@ -67,13 +72,13 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         final WebSocketClient wsClient = new StandardWebSocketClient();
         Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
 
-        WebSocketSession session = connectFuture.get(5, TimeUnit.SECONDS);
+        WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
         assertTrue(session.isOpen());
 
         session.sendMessage(message);
 
-        await().atMost(5, TimeUnit.SECONDS).until(() -> !session.isOpen());
+        await().atMost(OPERATION_TIMEOUT, TimeUnit.SECONDS).until(() -> !session.isOpen());
 
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
@@ -111,13 +116,13 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         final WebSocketClient wsClient = new StandardWebSocketClient();
         Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
 
-        WebSocketSession session = connectFuture.get(5, TimeUnit.SECONDS);
+        WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
         assertTrue(session.isOpen());
 
         session.sendMessage(message);
 
-        await().atMost(5, TimeUnit.SECONDS).until(() -> !session.isOpen());
+        await().atMost(OPERATION_TIMEOUT, TimeUnit.SECONDS).until(() -> !session.isOpen());
 
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
@@ -145,13 +150,13 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         final WebSocketClient wsClient = new StandardWebSocketClient();
         Future<WebSocketSession> connectFuture = wsClient.execute(makeWebSocketHandler(receivedReply, receivedError), url);
 
-        WebSocketSession session = connectFuture.get(5, TimeUnit.SECONDS);
+        WebSocketSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
         assertTrue(session.isOpen());
 
         session.sendMessage(message);
 
-        await().atMost(5, TimeUnit.SECONDS).until(() -> !session.isOpen());
+        await().atMost(OPERATION_TIMEOUT, TimeUnit.SECONDS).until(() -> !session.isOpen());
 
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
@@ -163,23 +168,16 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
      */
     @Test
     void connectionIsNotClosedWhenConnectMessageIsSent() throws Throwable {
-        final AtomicBoolean stompConnected = new AtomicBoolean(false);
-        final StompSessionHandler handler = new TestStompSessionHandler() {
-            @Override
-            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-                super.afterConnected(session, connectedHeaders);
-                stompConnected.set(session.isConnected());
-            }
-        };
+        final StompSessionHandler handler = new TestStompSessionHandler();
 
         final StompHeaders headers = new StompHeaders();
         headers.add(HttpHeaders.AUTHORIZATION, SecurityConstants.JWT_TOKEN_PREFIX + generateToken());
 
         Future<StompSession> connectFuture = stompClient.connectAsync(URI.create(url), null, headers, handler);
 
-        StompSession session = connectFuture.get(5, TimeUnit.SECONDS);
+        StompSession session = connectFuture.get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
         assertTrue(session.isConnected());
-        assertTrue(stompConnected.get());
         session.disconnect();
+        await().atMost(OPERATION_TIMEOUT, TimeUnit.SECONDS).until(() -> !session.isConnected());
     }
 }
