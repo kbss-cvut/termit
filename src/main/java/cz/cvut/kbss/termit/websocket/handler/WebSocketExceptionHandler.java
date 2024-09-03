@@ -34,6 +34,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+/**
+ * @implSpec Should reflect {@link cz.cvut.kbss.termit.rest.handler.RestExceptionHandler}
+ */
 @SendToUser
 @ControllerAdvice
 public class WebSocketExceptionHandler {
