@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.Ordered;
@@ -118,13 +119,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public boolean configureMessageConverters(List<MessageConverter> messageConverters) {
         messageConverters.add(termitJsonLdMessageConverter());
         messageConverters.add(termitStringMessageConverter());
-        return true;
+        return false; // do not add default converters
     }
 
+    @Bean
     public MessageConverter termitStringMessageConverter() {
         return new StringMessageConverter(StandardCharsets.UTF_8);
     }
 
+    @Bean
     public MessageConverter termitJsonLdMessageConverter() {
         return new MappingJackson2MessageConverter(jsonLdMapper);
     }
