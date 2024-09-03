@@ -19,7 +19,7 @@ import static org.mockito.Answers.RETURNS_SMART_NULLS;
 public class ThrottleAspectTestContextConfig {
 
     @Bean
-    public ThreadPoolTaskScheduler taskScheduler() {
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         return Mockito.mock(ThreadPoolTaskScheduler.class, RETURNS_SMART_NULLS);
     }
 
