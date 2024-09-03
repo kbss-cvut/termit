@@ -27,7 +27,6 @@ import static cz.cvut.kbss.termit.websocket.ResultWithHeaders.result;
 @MessageMapping("/vocabularies")
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class VocabularySocketController extends BaseController {
-    private static final Logger LOG = LoggerFactory.getLogger(VocabularySocketController.class);
 
     private final VocabularyService vocabularyService;
 

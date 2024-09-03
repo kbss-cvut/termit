@@ -96,7 +96,7 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
         assertNotNull(reply);
         StompHeaderAccessor replyHeaders = StompHeaderAccessor.wrap(reply);
         // as reply is sent to a common channel for all vocabularies, there must be header with vocabulary uri
-        assertEquals(vocabulary.getUri(), replyHeaders.getHeader("vocabulary"), "Invalid or missing vocabulary header in the reply");
+        assertEquals(vocabulary.getUri().toString(), replyHeaders.getFirstNativeHeader("vocabulary"), "Invalid or missing vocabulary header in the reply");
 
         Optional<List<ValidationResult>> payload = readPayload(reply);
         assertTrue(payload.isPresent());

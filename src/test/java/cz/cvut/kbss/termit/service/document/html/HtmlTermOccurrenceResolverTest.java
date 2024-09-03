@@ -32,6 +32,8 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -177,6 +179,7 @@ class HtmlTermOccurrenceResolverTest {
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // TODO: https://github.com/kbss-cvut/termit/issues/275
     void findTermOccurrencesSetsFoundOccurrencesAsApprovedWhenCorrespondingExistingOccurrenceWasApproved() throws Exception {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
