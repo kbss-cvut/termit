@@ -1,10 +1,5 @@
 package cz.cvut.kbss.termit.security;
 
-import cz.cvut.kbss.termit.exception.AuthorizationException;
-import cz.cvut.kbss.termit.exception.JwtException;
-import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.Message;
@@ -13,25 +8,32 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolderStrategy;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 /**
- * Authorizes STOMP CONNECT messages
+ * Authenticates STOMP CONNECT messages
  * <p>
- * Retrieves token from the {@code Authorization} header of STOMP message and validates JWT token.
+ * Retrieves token from the {@code Authorization} header and authenticates the session.
  */
+@Component
 public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor {
 
-    private final JwtUtils jwtUtils;
+    private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
-    private final TermItUserDetailsService userDetailsService;
+    private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
 
-    public WebSocketJwtAuthorizationInterceptor(JwtUtils jwtUtils, TermItUserDetailsService userDetailsService) {
-        this.jwtUtils = jwtUtils;
-        this.userDetailsService = userDetailsService;
+    public WebSocketJwtAuthorizationInterceptor(JwtAuthenticationProvider jwtAuthenticationProvider) {
+        this.jwtAuthenticationProvider = jwtAuthenticationProvider;
     }
 
     @Override
@@ -39,27 +41,48 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
         StompHeaderAccessor headerAccessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (headerAccessor != null && StompCommand.CONNECT.equals(headerAccessor.getCommand()) && headerAccessor.isMutable()) {
             final String authHeader = headerAccessor.getFirstNativeHeader(HttpHeaders.AUTHORIZATION);
-            if (authHeader != null && authHeader.startsWith(SecurityConstants.JWT_TOKEN_PREFIX)) {
+            if (authHeader != null) {
                 headerAccessor.removeNativeHeader(HttpHeaders.AUTHORIZATION);
-                return process(message, authHeader, headerAccessor);
+                process(headerAccessor, authHeader);
+                return message;
             }
-            throw new AuthorizationException("Authorization header is invalid");
+            throw new AuthenticationCredentialsNotFoundException("Invalid authorization header");
         }
         return message;
     }
 
-    private Message<?> process(final @NotNull Message<?> message, final @NotNull String authHeader,
-                               final @NotNull StompHeaderAccessor headerAccessor) {
-        final String authToken = authHeader.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
+    /**
+     * Authenticates user using JWT token in authentication header
+     * <p>
+     * According to <a href="https://openid.net/specs/openid-connect-core-1_0.html#TokenResponse">Open ID spec</a>,
+     * the token MUST be {@code Bearer}.
+     * And for example {@link org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider}
+     * also supports only {@code Bearer} tokens.
+     */
+    protected void process(StompHeaderAccessor stompHeaderAccessor, final @NotNull String authHeader) {
+        if (!StringUtils.startsWithIgnoreCase(authHeader, SecurityConstants.JWT_TOKEN_PREFIX)) {
+            throw new InvalidBearerTokenException("Invalid Bearer token in authorization header");
+        }
+
+        final String token = authHeader.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
+
+        BearerTokenAuthenticationToken authenticationRequest = new BearerTokenAuthenticationToken(token);
+
         try {
-            final TermItUserDetails userDetails = jwtUtils.extractUserInfo(authToken);
-            final TermItUserDetails existingDetails = userDetailsService.loadUserByUsername(userDetails.getUsername());
-            SecurityUtils.verifyAccountStatus(existingDetails.getUser());
-            Authentication authentication = SecurityUtils.setCurrentUser(existingDetails);
-            headerAccessor.setUser(authentication);
-            return message;
-        } catch (JwtException | DisabledException | LockedException | UsernameNotFoundException e) {
-            throw new AuthorizationException(e.getMessage());
+            Authentication authenticationResult = jwtAuthenticationProvider.authenticate(authenticationRequest);
+            if (authenticationResult != null && authenticationResult.isAuthenticated()) {
+                SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
+                context.setAuthentication(authenticationResult);
+                this.securityContextHolderStrategy.setContext(context);
+                stompHeaderAccessor.setUser(authenticationResult);
+                return; // all ok
+            }
+            throw new OAuth2AuthenticationException("Authentication failed");
+        } catch (Exception e) {
+            // ensure that context is cleared when any exception happens
+            stompHeaderAccessor.setUser(null);
+            this.securityContextHolderStrategy.clearContext();
+            throw e;
         }
     }
 }
