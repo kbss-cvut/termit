@@ -18,6 +18,11 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+/**
+ * Authorizes STOMP CONNECT messages
+ * <p>
+ * Retrieves token from the {@code Authorization} header of STOMP message and validates JWT token.
+ */
 public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor {
 
     private final JwtUtils jwtUtils;

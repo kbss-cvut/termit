@@ -10,6 +10,11 @@ import org.springframework.messaging.support.MessageBuilder;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Intercepts doConvert method and caches the returned payload before conversion
+ * mapped by resulting message id.
+ * Allows reading raw-returned values before serialization.
+ */
 public class ReturnValueCollectingSimpMessagingTemplate extends SimpMessagingTemplate {
 
     public static final String MESSAGE_IDENTIFIER_HEADER = "test-message-id";
