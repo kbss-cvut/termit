@@ -6,7 +6,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessagingTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationListener;
@@ -20,7 +19,6 @@ import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.SubscribableChannel;
 import org.springframework.messaging.converter.CompositeMessageConverter;
-import org.springframework.messaging.handler.invocation.HandlerMethodReturnValueHandler;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -37,7 +35,7 @@ import java.util.UUID;
 @EnableConfigurationProperties(Configuration.class)
 @Import({TestSecurityConfig.class, TestRestSecurityConfig.class, WebAppConfig.class, WebSocketConfig.class})
 @ComponentScan(basePackages = "cz.cvut.kbss.termit.websocket")
-public class TestWebsocketConfig
+public class TestWebSocketConfig
         implements ApplicationListener<ContextRefreshedEvent>, WebSocketMessageBrokerConfigurer {
 
     private final List<SubscribableChannel> channels;
@@ -46,14 +44,14 @@ public class TestWebsocketConfig
 
     @Autowired
     @Lazy
-    public TestWebsocketConfig(List<SubscribableChannel> channels, List<MessageHandler> handlers) {
+    public TestWebSocketConfig(List<SubscribableChannel> channels, List<MessageHandler> handlers) {
         this.channels = channels;
         this.handlers = handlers;
     }
 
     /**
-     * Unregisters MessageHandler's from the message channels to reduce processing during the test
-     *
+     * Unregisters MessageHandler's from the message channels to reduce processing during the test.
+     * Also stops further processing so for example user responses remain in the broker channel.
      * @param event the event to respond to
      */
     @Override

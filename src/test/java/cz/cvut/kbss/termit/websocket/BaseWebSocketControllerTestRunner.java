@@ -1,10 +1,9 @@
 package cz.cvut.kbss.termit.websocket;
 
-import cz.cvut.kbss.termit.environment.config.TestWebsocketConfig;
+import cz.cvut.kbss.termit.environment.config.TestWebSocketConfig;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.websocket.util.CachingChannelInterceptor;
 import jakarta.annotation.PostConstruct;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,7 +18,6 @@ import org.springframework.messaging.support.AbstractSubscribableChannel;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.event.annotation.BeforeTestClass;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Map;
@@ -33,7 +31,7 @@ import static cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessag
 @ExtendWith(MockitoExtension.class)
 @EnableConfigurationProperties({Configuration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@ContextConfiguration(classes = {TestWebsocketConfig.class},
+@ContextConfiguration(classes = {TestWebSocketConfig.class},
                       initializers = {ConfigDataApplicationContextInitializer.class})
 public abstract class BaseWebSocketControllerTestRunner {
 
