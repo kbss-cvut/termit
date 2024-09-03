@@ -25,6 +25,7 @@ import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.authorization.SpringAuthorizationEventPublisher;
+import org.springframework.security.config.annotation.web.socket.EnableWebSocketSecurity;
 import org.springframework.security.messaging.access.intercept.AuthorizationChannelInterceptor;
 import org.springframework.security.messaging.context.AuthenticationPrincipalArgumentResolver;
 import org.springframework.security.messaging.context.SecurityContextChannelInterceptor;
@@ -72,8 +73,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
-    /* WebSocket security setup (replaces @EnableWebSocketSecurity) */
-
+    /**
+     * WebSocket security setup (replaces {@link EnableWebSocketSecurity @EnableWebSocketSecurity})
+     */
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         AuthenticationPrincipalArgumentResolver resolver = new AuthenticationPrincipalArgumentResolver();
@@ -81,6 +83,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     /**
+     * WebSocket security setup (replaces {@link EnableWebSocketSecurity @EnableWebSocketSecurity})
      * @see <a href="https://github.com/spring-projects/spring-security/blob/6.3.x/config/src/main/java/org/springframework/security/config/annotation/web/socket/WebSocketMessageBrokerSecurityConfiguration.java#L97">Spring security source</a>
      */
     @Override
@@ -94,8 +97,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void addReturnValueHandlers(List<HandlerMethodReturnValueHandler> returnValueHandlers) {
         returnValueHandlers.add(new WebSocketMessageWithHeadersValueHandler(simpMessagingTemplate));
     }
-
-    /* WebSocket endpoint configuration */
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
