@@ -14,6 +14,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
+import cz.cvut.kbss.termit.exception.SuppressibleLogging;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
@@ -22,25 +23,49 @@ import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
-import cz.cvut.kbss.termit.rest.handler.RestExceptionHandler;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-@Component
+@SendToUser
 @ControllerAdvice
-public class WebSocketExceptionHandler extends RestExceptionHandler {
+public class WebSocketExceptionHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketExceptionHandler.class);
+
+    private static String destination(Message<?> message) {
+        return message.getHeaders().getOrDefault("destination", "missing destination").toString();
+    }
+
+    private static void logException(TermItException ex, Message<?> message) {
+        if (shouldSuppressLogging(ex)) {
+            return;
+        }
+        logException("Exception caught when processing request to '" + destination(message) + "'.", ex);
+    }
+
+    private static boolean shouldSuppressLogging(TermItException ex) {
+        return ex.getClass().getAnnotation(SuppressibleLogging.class) != null;
+    }
+
+    private static void logException(Throwable ex, Message<?> message) {
+        logException("Exception caught when processing request to '" + destination(message) + "'.", ex);
+    }
+
+    private static void logException(String message, Throwable ex) {
+        LOG.error(message, ex);
+    }
+
+    private static ErrorInfo errorInfo(Message<?> message, Throwable e) {
+        return ErrorInfo.createWithMessage(e.getMessage(), destination(message));
+    }
 
     @MessageExceptionHandler
     public void messageDeliveryException(Message<?> message, MessageDeliveryException e) {
@@ -48,152 +73,141 @@ public class WebSocketExceptionHandler extends RestExceptionHandler {
         LOG.error("Failed to send message with destination {}: {}", headerAccessor.getDestination(), e.getMessage());
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> persistenceException(HttpServletRequest request, PersistenceException e) {
-        return super.persistenceException(request, e);
+    @MessageExceptionHandler(PersistenceException.class)
+    public ErrorInfo persistenceException(Message<?> message, PersistenceException e) {
+        logException(e, message);
+        return errorInfo(message, e.getCause());
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> jopaException(HttpServletRequest request, OWLPersistenceException e) {
-        return super.jopaException(request, e);
+    @MessageExceptionHandler(OWLPersistenceException.class)
+    public ErrorInfo jopaException(Message<?> message, OWLPersistenceException e) {
+        logException("Persistence exception caught.", e);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> resourceExistsException(HttpServletRequest request, ResourceExistsException e) {
-        return super.resourceExistsException(request, e);
+    @MessageExceptionHandler(ResourceExistsException.class)
+    public ErrorInfo resourceExistsException(Message<?> message, ResourceExistsException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> resourceNotFound(HttpServletRequest request, NotFoundException e) {
-        return super.resourceNotFound(request, e);
+    @MessageExceptionHandler(NotFoundException.class)
+    public ErrorInfo resourceNotFound(Message<?> message, NotFoundException e) {
+        // Not necessary to log NotFoundException, they may be quite frequent and do not represent an issue with the application
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> usernameNotFound(HttpServletRequest request, UsernameNotFoundException e) {
-        return super.usernameNotFound(request, e);
+    @MessageExceptionHandler(UsernameNotFoundException.class)
+    public ErrorInfo usernameNotFound(Message<?> message, UsernameNotFoundException e) {
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> entityNotFoundException(HttpServletRequest request, EntityNotFoundException e) {
-        return super.entityNotFoundException(request, e);
+    @MessageExceptionHandler(EntityNotFoundException.class)
+    public ErrorInfo entityNotFoundException(Message<?> message, EntityNotFoundException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> authorizationException(HttpServletRequest request, AuthorizationException e) {
-        return super.authorizationException(request, e);
+    @MessageExceptionHandler(AuthorizationException.class)
+    public ErrorInfo authorizationException(Message<?> message, AuthorizationException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> validationException(HttpServletRequest request, ValidationException e) {
-        return super.validationException(request, e);
+    @MessageExceptionHandler(ValidationException.class)
+    public ErrorInfo validationException(Message<?> message, ValidationException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> webServiceIntegrationException(HttpServletRequest request,
-                                                                    WebServiceIntegrationException e) {
-        return super.webServiceIntegrationException(request, e);
+    @MessageExceptionHandler(WebServiceIntegrationException.class)
+    public ErrorInfo webServiceIntegrationException(Message<?> message, WebServiceIntegrationException e) {
+        logException(e.getCause(), message);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> annotationGenerationException(HttpServletRequest request,
-                                                                   AnnotationGenerationException e) {
-        return super.annotationGenerationException(request, e);
+    @MessageExceptionHandler(AnnotationGenerationException.class)
+    public ErrorInfo annotationGenerationException(Message<?> message, AnnotationGenerationException e) {
+        logException(e.getCause(), message);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> termItException(HttpServletRequest request, TermItException e) {
-        return super.termItException(request, e);
+    @MessageExceptionHandler(TermItException.class)
+    public ErrorInfo termItException(Message<?> message, TermItException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> jsonLdException(HttpServletRequest request, JsonLdException e) {
-        return super.jsonLdException(request, e);
+    @MessageExceptionHandler(JsonLdException.class)
+    public ErrorInfo jsonLdException(Message<?> message, JsonLdException e) {
+        logException(e, message);
+        return ErrorInfo.createWithMessage("Error when processing JSON-LD.", destination(message));
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> unsupportedAssetOperationException(HttpServletRequest request,
-                                                                        UnsupportedOperationException e) {
-        return super.unsupportedAssetOperationException(request, e);
+    @MessageExceptionHandler(UnsupportedOperationException.class)
+    public ErrorInfo unsupportedAssetOperationException(Message<?> message, UnsupportedOperationException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
-    @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
-                                                               VocabularyImportException e) {
-        return super.vocabularyImportException(request, e);
+    @MessageExceptionHandler(VocabularyImportException.class)
+    public ErrorInfo vocabularyImportException(Message<?> message, VocabularyImportException e) {
+        logException(e, message);
+        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), destination(message));
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> unsupportedImportMediaTypeException(HttpServletRequest request,
-                                                                         UnsupportedImportMediaTypeException e) {
-        return super.unsupportedImportMediaTypeException(request, e);
+    public ErrorInfo unsupportedImportMediaTypeException(Message<?> message, UnsupportedImportMediaTypeException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> assetRemovalException(HttpServletRequest request, AssetRemovalException e) {
-        return super.assetRemovalException(request, e);
+    public ErrorInfo assetRemovalException(Message<?> message, AssetRemovalException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidParameter(HttpServletRequest request, InvalidParameterException e) {
-        return super.invalidParameter(request, e);
+    public ErrorInfo invalidParameter(Message<?> message, InvalidParameterException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> maxUploadSizeExceededException(HttpServletRequest request,
-                                                                    MaxUploadSizeExceededException e) {
-        return super.maxUploadSizeExceededException(request, e);
+    public ErrorInfo maxUploadSizeExceededException(Message<?> message, MaxUploadSizeExceededException e) {
+        logException(e, message);
+        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), "error.file.maxUploadSizeExceeded", destination(message));
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> snapshotNotEditableException(HttpServletRequest request,
-                                                                  SnapshotNotEditableException e) {
-        return super.snapshotNotEditableException(request, e);
+    public ErrorInfo snapshotNotEditableException(Message<?> message, SnapshotNotEditableException e) {
+        logException(e, message);
+        return ErrorInfo.createWithMessage(e.getMessage(), destination(message));
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> unsupportedSearchFacetException(HttpServletRequest request,
-                                                                     UnsupportedSearchFacetException e) {
-        return super.unsupportedSearchFacetException(request, e);
+    public ErrorInfo unsupportedSearchFacetException(Message<?> message, UnsupportedSearchFacetException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidLanguageConstantException(HttpServletRequest request,
-                                                                      InvalidLanguageConstantException e) {
-        return super.invalidLanguageConstantException(request, e);
+    public ErrorInfo invalidLanguageConstantException(Message<?> message, InvalidLanguageConstantException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidTermStateException(HttpServletRequest request,
-                                                               InvalidTermStateException e) {
-        return super.invalidTermStateException(request, e);
+    public ErrorInfo invalidTermStateException(Message<?> message, InvalidTermStateException e) {
+        logException(e, message);
+        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), destination(message));
     }
 
-    @Override
     @MessageExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request,
-                                                                           InvalidPasswordChangeRequestException e) {
-        return super.invalidPasswordChangeRequestException(request, e);
+    public ErrorInfo invalidPasswordChangeRequestException(Message<?> message,
+                                                           InvalidPasswordChangeRequestException e) {
+        logException(e, message);
+        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), destination(message));
     }
 }

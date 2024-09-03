@@ -47,6 +47,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.socket.EnableWebSocketSecurity;
 import org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -153,6 +154,10 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * Part of {@link EnableWebSocketSecurity @EnableWebSocketSecurity} replacement
+     * @see WebSocketConfig
+     */
     @Bean
     @Scope("prototype")
     public MessageMatcherDelegatingAuthorizationManager.Builder messageAuthorizationManagerBuilder(
@@ -164,7 +169,7 @@ public class SecurityConfig {
     }
 
     /**
-     * WebSocket authorization
+     * WebSocket endpoint authorization
      */
     @Bean
     public AuthorizationManager<Message<?>> messageAuthorizationManager(
