@@ -1,7 +1,9 @@
 package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
+import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketMessageWithHeadersValueHandler;
@@ -12,6 +14,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Scope;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.messaging.Message;
@@ -20,15 +23,19 @@ import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.converter.StringMessageConverter;
 import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.messaging.handler.invocation.HandlerMethodReturnValueHandler;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.authorization.SpringAuthorizationEventPublisher;
 import org.springframework.security.config.annotation.web.socket.EnableWebSocketSecurity;
 import org.springframework.security.messaging.access.intercept.AuthorizationChannelInterceptor;
+import org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager;
 import org.springframework.security.messaging.context.AuthenticationPrincipalArgumentResolver;
 import org.springframework.security.messaging.context.SecurityContextChannelInterceptor;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -51,26 +58,25 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final ApplicationContext context;
 
-    private final AuthorizationManager<Message<?>> messageAuthorizationManager;
-
-    private final WebSocketJwtAuthorizationInterceptor jwtAuthorizationInterceptor;
-
     private final ObjectMapper jsonLdMapper;
 
     private final SimpMessagingTemplate simpMessagingTemplate;
 
+    private final JwtUtils jwtUtils;
+
+    private final TermItUserDetailsService userDetailsService;
+
     @Autowired
     public WebSocketConfig(cz.cvut.kbss.termit.util.Configuration configuration, ApplicationContext context,
-                           AuthorizationManager<Message<?>> messageAuthorizationManager,
-                           WebSocketJwtAuthorizationInterceptor jwtAuthorizationInterceptor,
                            @Qualifier("jsonLdMapper") ObjectMapper jsonLdMapper,
-                           @Lazy SimpMessagingTemplate simpMessagingTemplate) {
+                           @Lazy SimpMessagingTemplate simpMessagingTemplate, JwtUtils jwtUtils,
+                           TermItUserDetailsService userDetailsService) {
         this.configuration = configuration;
         this.context = context;
-        this.messageAuthorizationManager = messageAuthorizationManager;
-        this.jwtAuthorizationInterceptor = jwtAuthorizationInterceptor;
         this.jsonLdMapper = jsonLdMapper;
         this.simpMessagingTemplate = simpMessagingTemplate;
+        this.jwtUtils = jwtUtils;
+        this.userDetailsService = userDetailsService;
     }
 
     /**
@@ -88,9 +94,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void configureClientInboundChannel(@NotNull ChannelRegistration registration) {
-        AuthorizationChannelInterceptor interceptor = new AuthorizationChannelInterceptor(this.messageAuthorizationManager);
+        AuthorizationChannelInterceptor interceptor = new AuthorizationChannelInterceptor(messageAuthorizationManager());
         interceptor.setAuthorizationEventPublisher(new SpringAuthorizationEventPublisher(this.context));
-        registration.interceptors(jwtAuthorizationInterceptor, new SecurityContextChannelInterceptor(), interceptor);
+        registration.interceptors(webSocketJwtAuthorizationInterceptor(), new SecurityContextChannelInterceptor(), interceptor);
     }
 
     @Override
@@ -133,4 +139,29 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         return new MappingJackson2MessageConverter(jsonLdMapper);
     }
 
+    /**
+     * WebSocket security setup (replaces {@link EnableWebSocketSecurity @EnableWebSocketSecurity})
+     */
+    @Bean
+    @Scope("prototype")
+    public MessageMatcherDelegatingAuthorizationManager.Builder messageAuthorizationManagerBuilder() {
+        return MessageMatcherDelegatingAuthorizationManager.builder().simpDestPathMatcher(
+                () -> (context.getBeanNamesForType(SimpAnnotationMethodMessageHandler.class).length > 0)
+                        ? context.getBean(SimpAnnotationMethodMessageHandler.class).getPathMatcher()
+                        : new AntPathMatcher());
+    }
+
+    /**
+     * WebSocket endpoint authorization
+     */
+    @Bean
+    public AuthorizationManager<Message<?>> messageAuthorizationManager() {
+        return messageAuthorizationManagerBuilder().simpTypeMatchers(SimpMessageType.DISCONNECT).permitAll()
+                       .anyMessage().authenticated().build();
+    }
+
+    @Bean
+    public WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor() {
+        return new WebSocketJwtAuthorizationInterceptor(jwtUtils, userDetailsService);
+    }
 }

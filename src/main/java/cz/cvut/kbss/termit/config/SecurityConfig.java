@@ -23,36 +23,26 @@ import cz.cvut.kbss.termit.security.JwtAuthenticationFilter;
 import cz.cvut.kbss.termit.security.JwtAuthorizationFilter;
 import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
-import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.simp.SimpMessageType;
-import org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.socket.EnableWebSocketSecurity;
-import org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -152,34 +142,5 @@ public class SecurityConfig {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
-    }
-
-    /**
-     * Part of {@link EnableWebSocketSecurity @EnableWebSocketSecurity} replacement
-     * @see WebSocketConfig
-     */
-    @Bean
-    @Scope("prototype")
-    public MessageMatcherDelegatingAuthorizationManager.Builder messageAuthorizationManagerBuilder(
-            ApplicationContext context) {
-        return MessageMatcherDelegatingAuthorizationManager.builder().simpDestPathMatcher(
-                () -> (context.getBeanNamesForType(SimpAnnotationMethodMessageHandler.class).length > 0)
-                        ? context.getBean(SimpAnnotationMethodMessageHandler.class).getPathMatcher()
-                        : new AntPathMatcher());
-    }
-
-    /**
-     * WebSocket endpoint authorization
-     */
-    @Bean
-    public AuthorizationManager<Message<?>> messageAuthorizationManager(
-            MessageMatcherDelegatingAuthorizationManager.Builder messages) {
-        return messages.simpTypeMatchers(SimpMessageType.DISCONNECT).permitAll()
-                       .anyMessage().authenticated().build();
-    }
-
-    @Bean
-    public WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor() {
-        return new WebSocketJwtAuthorizationInterceptor(jwtUtils, userDetailsService);
     }
 }
