@@ -56,6 +56,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * The general pattern should be that unless an exception can be handled in a more appropriate place it bubbles up to a
  * REST controller which originally received the request. There, it is caught by this handler, logged and a reasonable
  * error message is returned to the user.
+ * @implSpec Should reflect {@link cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler}
  */
 @RestControllerAdvice
 public class RestExceptionHandler {
