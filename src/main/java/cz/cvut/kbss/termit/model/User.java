@@ -24,8 +24,8 @@ import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;
-
 import jakarta.validation.constraints.NotBlank;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;

@@ -36,7 +36,6 @@ import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
-import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
@@ -44,6 +43,7 @@ import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizatio
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
+import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;

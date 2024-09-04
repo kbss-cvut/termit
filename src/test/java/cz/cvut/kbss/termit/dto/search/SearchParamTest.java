@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.net.URI;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SearchParamTest {
 

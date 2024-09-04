@@ -24,10 +24,10 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.validation.ValidationResult;
+import jakarta.validation.Validator;
 import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;

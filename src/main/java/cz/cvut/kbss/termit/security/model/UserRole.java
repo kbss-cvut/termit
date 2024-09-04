@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.security.model;
 
 import cz.cvut.kbss.termit.util.Vocabulary;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;

@@ -24,7 +24,12 @@ import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserRole;
-import cz.cvut.kbss.termit.model.acl.*;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserGroupAccessControlRecord;
 import cz.cvut.kbss.termit.persistence.dao.acl.AccessControlListDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -47,8 +52,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RepositoryAccessControlListServiceTest {

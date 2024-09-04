@@ -28,8 +28,8 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.util.Vocabulary;
-
 import jakarta.validation.constraints.NotBlank;
+
 import java.io.Serializable;
 import java.util.Objects;
 

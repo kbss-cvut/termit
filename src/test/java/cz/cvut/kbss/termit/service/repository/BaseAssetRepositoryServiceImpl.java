@@ -21,9 +21,8 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import jakarta.validation.Validator;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class BaseAssetRepositoryServiceImpl extends BaseAssetRepositoryService<Term, Term> {
 

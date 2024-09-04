@@ -20,7 +20,11 @@ package cz.cvut.kbss.termit.workspace;
 import org.springframework.web.context.annotation.SessionScope;
 
 import java.net.URI;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Holds editable vocabularies for a session (if applicable).

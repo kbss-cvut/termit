@@ -23,10 +23,9 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
+import jakarta.validation.Validator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import jakarta.validation.Validator;
 
 /**
  * Base repository service implementation for asset managing services.

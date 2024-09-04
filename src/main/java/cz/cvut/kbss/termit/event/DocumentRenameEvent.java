@@ -18,8 +18,9 @@
 package cz.cvut.kbss.termit.event;
 
 import cz.cvut.kbss.termit.model.resource.Document;
-import java.util.Objects;
 import org.springframework.context.ApplicationEvent;
+
+import java.util.Objects;
 
 /**
  * Indicates that a {@link Document} asset has changed its label.
