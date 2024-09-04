@@ -4,10 +4,10 @@ import cz.cvut.kbss.termit.config.AppConfig;
 import cz.cvut.kbss.termit.config.SecurityConfig;
 import cz.cvut.kbss.termit.config.WebAppConfig;
 import cz.cvut.kbss.termit.config.WebSocketConfig;
+import cz.cvut.kbss.termit.config.WebSocketMessageBrokerConfig;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.config.TestConfig;
 import cz.cvut.kbss.termit.environment.config.TestPersistenceConfig;
-import cz.cvut.kbss.termit.environment.config.TestSecurityConfig;
 import cz.cvut.kbss.termit.environment.config.TestServiceConfig;
 import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
@@ -16,19 +16,14 @@ import cz.cvut.kbss.termit.util.Configuration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -37,7 +32,6 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -53,7 +47,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
 @ActiveProfiles("test")
 @EnableSpringConfigured
@@ -63,8 +56,8 @@ import static org.mockito.Mockito.when;
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @EnableConfigurationProperties({Configuration.class})
 @ContextConfiguration(
-        classes = {TestConfig.class, TestPersistenceConfig.class, TestConfig.class,
-                   TestServiceConfig.class, AppConfig.class, SecurityConfig.class, WebAppConfig.class, WebSocketConfig.class},
+        classes = {TestConfig.class, TestPersistenceConfig.class, TestServiceConfig.class, AppConfig.class,
+                   SecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class},
         initializers = {ConfigDataApplicationContextInitializer.class})
 @ComponentScan("cz.cvut.kbss.termit.security")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

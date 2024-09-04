@@ -30,8 +30,6 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
 
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
-    private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
-
     public WebSocketJwtAuthorizationInterceptor(JwtAuthenticationProvider jwtAuthenticationProvider) {
         this.jwtAuthenticationProvider = jwtAuthenticationProvider;
     }
@@ -71,9 +69,9 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
         try {
             Authentication authenticationResult = jwtAuthenticationProvider.authenticate(authenticationRequest);
             if (authenticationResult != null && authenticationResult.isAuthenticated()) {
-                SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
+                SecurityContext context = SecurityContextHolder.createEmptyContext();
                 context.setAuthentication(authenticationResult);
-                this.securityContextHolderStrategy.setContext(context);
+                SecurityContextHolder.setContext(context);
                 stompHeaderAccessor.setUser(authenticationResult);
                 return; // all ok
             }
@@ -81,7 +79,7 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
         } catch (Exception e) {
             // ensure that context is cleared when any exception happens
             stompHeaderAccessor.setUser(null);
-            this.securityContextHolderStrategy.clearContext();
+            SecurityContextHolder.clearContext();
             throw e;
         }
     }
