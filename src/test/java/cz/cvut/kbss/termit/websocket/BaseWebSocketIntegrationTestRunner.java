@@ -59,7 +59,8 @@ import static org.mockito.Mockito.doReturn;
         classes = {TestConfig.class, TestPersistenceConfig.class, TestServiceConfig.class, AppConfig.class,
                    SecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class},
         initializers = {ConfigDataApplicationContextInitializer.class})
-@ComponentScan("cz.cvut.kbss.termit.security")
+@ComponentScan(
+        {"cz.cvut.kbss.termit.security", "cz.cvut.kbss.termit.websocket", "cz.cvut.kbss.termit.websocket.handler"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class BaseWebSocketIntegrationTestRunner {

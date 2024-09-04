@@ -5,6 +5,7 @@ import cz.cvut.kbss.termit.config.WebSocketConfig;
 import cz.cvut.kbss.termit.config.WebSocketMessageBrokerConfig;
 import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessagingTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ import java.util.UUID;
 @EnableWebSocketMessageBroker
 @EnableConfigurationProperties(Configuration.class)
 @Import({TestSecurityConfig.class, TestRestSecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class})
-@ComponentScan(basePackages = {"cz.cvut.kbss.termit.websocket"})
+@ComponentScan(basePackages = {"cz.cvut.kbss.termit.websocket", "cz.cvut.kbss.termit.websocket.handler"})
 public class TestWebSocketConfig
         implements ApplicationListener<ContextRefreshedEvent>, WebSocketMessageBrokerConfigurer {
 

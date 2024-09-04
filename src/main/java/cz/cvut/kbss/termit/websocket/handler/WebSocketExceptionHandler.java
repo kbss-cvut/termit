@@ -87,6 +87,7 @@ public class WebSocketExceptionHandler {
                 .setMessage("Failed to send message with destination {}: {}")
                 .addArgument(()-> destination(message))
                 .addArgument(e.getMessage())
+                .setCause(e.getCause())
                 .log();
     }
 
