@@ -107,7 +107,7 @@ public class SecurityConfig {
                                   .logoutSuccessHandler(authenticationSuccessHandler))
             .authenticationManager(authManager)
             .addFilter(authenticationFilter(authManager))
-            .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, userDetailsService, objectMapper, jwtDecoder));
+            .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, objectMapper, jwtDecoder));
         return http.build();
     }
 

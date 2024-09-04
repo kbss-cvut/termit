@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.JwtException;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.rest.ConfigurationController;
 import cz.cvut.kbss.termit.rest.LanguageController;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
@@ -32,6 +33,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import jakarta.servlet.FilterChain;
@@ -61,18 +63,14 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private final JwtUtils jwtUtils;
 
-    private final TermItUserDetailsService userDetailsService;
-
     private final ObjectMapper objectMapper;
 
     private final TermitJwtDecoder jwtDecoder;
 
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils,
-                                  TermItUserDetailsService userDetailsService, ObjectMapper objectMapper,
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils, ObjectMapper objectMapper,
                                   TermitJwtDecoder jwtDecoder) {
         super(authenticationManager);
         this.jwtUtils = jwtUtils;
-        this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
         this.jwtDecoder = jwtDecoder;
     }
@@ -88,14 +86,14 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         final String authToken = authHeader.substring(SecurityConstants.JWT_TOKEN_PREFIX.length());
         try {
             Jwt jwt = jwtDecoder.decode(authToken);
-            final String username = jwt.getSubject();
-            if (username == null || username.isBlank()) {
+            final Object principal = jwt.getClaim(JwtClaimNames.SUB);
+            if (principal instanceof TermItUserDetails existingDetails) {
+                SecurityUtils.setCurrentUser(existingDetails);
+                refreshToken(authToken, response);
+                chain.doFilter(request, response);
+            } else {
                 throw new JwtException("Invalid JWT token contents");
             }
-            final TermItUserDetails existingDetails = userDetailsService.loadUserByUsername(username);
-            SecurityUtils.setCurrentUser(existingDetails);
-            refreshToken(authToken, response);
-            chain.doFilter(request, response);
         } catch (JwtException | org.springframework.security.oauth2.jwt.JwtException e) {
             if (shouldAllowThroughUnauthenticated(request)) {
                 chain.doFilter(request, response);

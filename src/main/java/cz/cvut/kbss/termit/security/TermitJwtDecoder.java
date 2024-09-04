@@ -49,7 +49,7 @@ public class TermitJwtDecoder implements org.springframework.security.oauth2.jwt
 
             claims.put("scope", existingDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority)
                                                .collect(Collectors.toSet()));
-            claims.putIfAbsent(JwtClaimNames.SUB, existingDetails);
+            claims.put(JwtClaimNames.SUB, existingDetails);
 
             return new Jwt(token, claims.getIssuedAt().toInstant(), claims.getExpiration()
                                                                           .toInstant(), expanded.getHeader(), claims);
