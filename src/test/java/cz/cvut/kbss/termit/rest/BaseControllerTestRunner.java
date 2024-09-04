@@ -28,7 +28,6 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.accept.ContentNegotiationManager;
-import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 
 import static cz.cvut.kbss.termit.environment.Environment.createDefaultMessageConverter;
 import static cz.cvut.kbss.termit.environment.Environment.createJsonLdMessageConverter;
