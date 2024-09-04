@@ -29,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +52,6 @@ class ResultCachingValidatorTest {
     @Mock
     private Validator validator;
 
-    @Mock
-    private VocabularyDao vocabularyDao;
-
     private ResultCachingValidator sut;
 
     private URI vocabulary;
@@ -62,15 +60,13 @@ class ResultCachingValidatorTest {
 
     @BeforeEach
     void setUp() {
-        this.sut = spy(new ResultCachingValidator(vocabularyDao));
+        this.sut = spy(new ResultCachingValidator());
         when(sut.getValidator()).thenReturn(validator);
 
         vocabulary = Generator.generateUri();
         Term term = Generator.generateTermWithId(vocabulary);
         validationResult = new ValidationResult()
                 .setTermUri(term.getUri());
-
-        when(vocabularyDao.getTermToVocabularyMap(anySet())).thenReturn(Map.of(term.getUri(), vocabulary));
     }
 
     @Test
@@ -78,7 +74,7 @@ class ResultCachingValidatorTest {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.runValidation(anyCollection())).thenReturn(results);
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
-        final List<ValidationResult> result = runFuture(sut.validate(vocabularies));
+        final Collection<ValidationResult> result = runFuture(sut.validate(vocabulary, vocabularies));
         assertEquals(results, result);
         verify(validator).runValidation(vocabularies);
     }
@@ -88,9 +84,9 @@ class ResultCachingValidatorTest {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.runValidation(anyCollection())).thenReturn(results);
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
-        final List<ValidationResult> resultOne = runFuture(sut.validate(vocabularies));
+        final Collection<ValidationResult> resultOne = runFuture(sut.validate(vocabulary, vocabularies));
         verify(validator).runValidation(vocabularies);
-        final List<ValidationResult> resultTwo = runFuture(sut.validate(vocabularies));
+        final Collection<ValidationResult> resultTwo = runFuture(sut.validate(vocabulary, vocabularies));
         assertEquals(resultOne, resultTwo);
         assertSame(results, resultOne);
         verifyNoMoreInteractions(validator);
@@ -101,10 +97,10 @@ class ResultCachingValidatorTest {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.runValidation(anyCollection())).thenReturn(results);
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
-        final List<ValidationResult> resultOne = runFuture(sut.validate(vocabularies));
+        final Collection<ValidationResult> resultOne = runFuture(sut.validate(vocabulary, vocabularies));
         verify(validator).runValidation(vocabularies);
         sut.evictVocabularyCache(new VocabularyContentModified(this, vocabulary));
-        final List<ValidationResult> resultTwo = runFuture(sut.validate(vocabularies));
+        final Collection<ValidationResult> resultTwo = runFuture(sut.validate(vocabulary, vocabularies));
         verify(validator, times(2)).runValidation(vocabularies);
         assertEquals(resultOne, resultTwo);
         assertSame(results, resultOne);

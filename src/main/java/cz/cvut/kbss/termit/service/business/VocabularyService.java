@@ -344,7 +344,7 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to validate
      */
-    public CachableFuture<List<ValidationResult>> validateContents(URI vocabulary) {
+    public CachableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         return repositoryService.validateContents(vocabulary);
     }
 

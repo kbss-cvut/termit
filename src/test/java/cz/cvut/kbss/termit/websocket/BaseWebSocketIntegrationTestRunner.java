@@ -13,7 +13,10 @@ import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
+import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -47,6 +50,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ActiveProfiles("test")
 @EnableSpringConfigured
@@ -61,11 +65,17 @@ import static org.mockito.Mockito.doReturn;
         initializers = {ConfigDataApplicationContextInitializer.class})
 @ComponentScan(
         {"cz.cvut.kbss.termit.security", "cz.cvut.kbss.termit.websocket", "cz.cvut.kbss.termit.websocket.handler"})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class BaseWebSocketIntegrationTestRunner {
 
     protected Logger LOG = LoggerFactory.getLogger(this.getClass());
+
+    @SpyBean
+    protected WebSocketExceptionHandler webSocketExceptionHandler;
+
+    @SpyBean
+    protected StompExceptionHandler stompExceptionHandler;
 
     protected WebSocketStompClient stompClient;
 
@@ -80,10 +90,6 @@ public abstract class BaseWebSocketIntegrationTestRunner {
 
     protected TermItUserDetails userDetails;
 
-    protected Future<StompSession> connect(StompSessionHandlerAdapter sessionHandler) {
-        return stompClient.connectAsync(url, sessionHandler);
-    }
-
     protected String generateToken() {
         return jwtUtils.generateToken(userDetails.getUser(), userDetails.getAuthorities());
     }
@@ -94,6 +100,11 @@ public abstract class BaseWebSocketIntegrationTestRunner {
 
         userDetails = new TermItUserDetails(Generator.generateUserAccountWithPassword());
         doReturn(userDetails).when(userDetailsService).loadUserByUsername(userDetails.getUsername());
+    }
+
+    @AfterEach
+    protected void runnerAfterEach() {
+        verifyNoMoreInteractions(webSocketExceptionHandler, stompExceptionHandler);
     }
 
     protected class TestWebSocketSessionHandler implements WebSocketHandler {

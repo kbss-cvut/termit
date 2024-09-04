@@ -3,8 +3,11 @@ package cz.cvut.kbss.termit.websocket;
 import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.environment.config.TestWebSocketConfig;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
+import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import cz.cvut.kbss.termit.websocket.util.CachingChannelInterceptor;
 import jakarta.annotation.PostConstruct;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.AbstractSubscribableChannel;
 import org.springframework.test.annotation.DirtiesContext;
@@ -26,17 +30,24 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessagingTemplate.MESSAGE_IDENTIFIER_HEADER;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @EnableConfigurationProperties({Configuration.class})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ContextConfiguration(classes = {TestRestSecurityConfig.class, TestWebSocketConfig.class},
                       initializers = {ConfigDataApplicationContextInitializer.class})
 public abstract class BaseWebSocketControllerTestRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(BaseWebSocketControllerTestRunner.class);
+
+    @SpyBean
+    protected WebSocketExceptionHandler webSocketExceptionHandler;
+
+    @SpyBean
+    protected StompExceptionHandler stompExceptionHandler;
 
     /**
      * Simulated messages from client to server
@@ -68,8 +79,8 @@ public abstract class BaseWebSocketControllerTestRunner {
 
     protected CachingChannelInterceptor brokerChannelInterceptor;
 
-    @PostConstruct
-    protected void runnerPostConstruct() {
+    @BeforeEach
+    protected void runnerBeforeEach() {
         this.brokerChannelInterceptor = new CachingChannelInterceptor();
         this.serverOutboundChannelInterceptor = new CachingChannelInterceptor();
 
@@ -77,11 +88,9 @@ public abstract class BaseWebSocketControllerTestRunner {
         this.serverOutboundChannel.addInterceptor(this.serverOutboundChannelInterceptor);
     }
 
-    @BeforeEach
-    protected void runnerBeforeEach() {
-        this.serverOutboundChannelInterceptor.reset();
-        this.brokerChannelInterceptor.reset();
-        this.returnedValuesMap.clear();
+    @AfterEach
+    protected void runnerAfterEach() {
+        verifyNoMoreInteractions(webSocketExceptionHandler, stompExceptionHandler);
     }
 
     /**

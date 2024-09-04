@@ -17,6 +17,7 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandler;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketMessage;
@@ -37,6 +38,10 @@ import java.util.stream.Stream;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.verify;
 
 class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunner {
 
@@ -49,10 +54,11 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
     ObjectMapper objectMapper;
 
     /**
-     * @return Stream of argument pairs with StompCommand (CONNECT excluded) and true + false value for each command
+     * @return Stream of argument pairs with StompCommand (CONNECT & DISCONNECT excluded) and true + false value for each command
      */
     public static Stream<Arguments> stompCommands() {
-        return Arrays.stream(StompCommand.values()).filter(c -> c != StompCommand.CONNECT).map(Enum::name)
+        return Arrays.stream(StompCommand.values()).filter(c -> c != StompCommand.CONNECT && c != StompCommand.DISCONNECT)
+                     .map(Enum::name)
                      .flatMap(name -> Stream.of(Arguments.of(name, true), Arguments.of(name, false)));
     }
 
@@ -83,6 +89,7 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
         assertFalse(receivedReply.get());
+        verify(webSocketExceptionHandler).messageDeliveryException(notNull(), notNull());
     }
 
     WebSocketHandler makeWebSocketHandler(AtomicBoolean receivedReply, AtomicBoolean receivedError) {
@@ -127,6 +134,7 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
         assertFalse(receivedReply.get());
+        verify(webSocketExceptionHandler).messageDeliveryException(notNull(), notNull());
     }
 
     /**
@@ -161,6 +169,8 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
         assertFalse(receivedReply.get());
+
+        verify(webSocketExceptionHandler).messageDeliveryException(notNull(), notNull());
     }
 
     /**

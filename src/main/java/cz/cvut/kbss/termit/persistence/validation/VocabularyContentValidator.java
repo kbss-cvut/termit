@@ -35,9 +35,10 @@ public interface VocabularyContentValidator {
      * <p>
      * The vocabularies are validated together, as a single unit.
      *
-     * @param vocabularyIris Vocabulary identifiers
+     * @param originVocabularyIri the origin vocabulary IRI
+     * @param vocabularyIris Vocabulary identifiers (including {@code originVocabularyIri}
      * @return List of violations of validation rules. Empty list if there are not violations
      */
     @NotNull
-    ThrottledFuture<List<ValidationResult>> validate(@NotNull Collection<URI> vocabularyIris);
+    ThrottledFuture<Collection<ValidationResult>> validate(@NotNull URI originVocabularyIri, @NotNull Collection<URI> vocabularyIris);
 }

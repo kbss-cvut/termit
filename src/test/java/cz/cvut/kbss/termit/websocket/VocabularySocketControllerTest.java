@@ -55,6 +55,7 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
         namespace = vocabulary.getUri().toString().substring(0, vocabulary.getUri().toString().lastIndexOf('/'));
         when(idResolver.resolveIdentifier(namespace, fragment)).thenReturn(vocabulary.getUri());
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyService.validateContents(vocabulary.getUri())).thenReturn(ThrottledFuture.done(List.of()));
 
         messageHeaders = StompHeaderAccessor.create(StompCommand.MESSAGE);
         messageHeaders.setSessionId("0");
