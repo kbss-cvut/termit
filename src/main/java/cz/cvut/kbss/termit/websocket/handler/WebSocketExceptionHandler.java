@@ -34,7 +34,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
+import static cz.cvut.kbss.termit.util.ExceptionUtils.isCausedBy;
 
 /**
  * @implSpec Should reflect {@link cz.cvut.kbss.termit.rest.handler.RestExceptionHandler}
@@ -70,7 +73,10 @@ public class WebSocketExceptionHandler {
     }
 
     private static void logException(String message, Throwable ex) {
-        LOG.error(message, ex);
+        // prevents from logging exceptions caused be broken connection with a client
+        if (!isCausedBy(ex, AsyncRequestNotUsableException.class)) {
+            LOG.error(message, ex);
+        }
     }
 
     private static ErrorInfo errorInfo(Message<?> message, Throwable e) {

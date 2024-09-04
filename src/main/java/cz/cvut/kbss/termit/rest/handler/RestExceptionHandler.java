@@ -49,7 +49,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
+import static cz.cvut.kbss.termit.util.ExceptionUtils.isCausedBy;
 
 /**
  * Exception handlers for REST controllers.
@@ -80,7 +83,10 @@ public class RestExceptionHandler {
     }
 
     private static void logException(String message, Throwable ex) {
-        LOG.error(message, ex);
+        // prevents from logging exceptions caused be broken connection with a client
+        if (!isCausedBy(ex, AsyncRequestNotUsableException.class)) {
+            LOG.error(message, ex);
+        }
     }
 
     private static ErrorInfo errorInfo(HttpServletRequest request, Throwable e) {
