@@ -87,7 +87,7 @@ public class OAuth2SecurityConfig {
     }
 
     /**
-     * An attempt to replicate auth provider from HttpSecurity
+     * Supplies auth provider which is not exposed by HttpSecurity
      * @see cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor
      */
     @Bean
