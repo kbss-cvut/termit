@@ -2,6 +2,8 @@ package cz.cvut.kbss.termit.environment.config;
 
 import cz.cvut.kbss.termit.config.WebAppConfig;
 import cz.cvut.kbss.termit.config.WebSocketConfig;
+import cz.cvut.kbss.termit.config.WebSocketMessageBrokerConfig;
+import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessagingTemplate;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,8 @@ import org.springframework.messaging.simp.annotation.support.SimpAnnotationMetho
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.support.AbstractSubscribableChannel;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 import java.util.HashMap;
@@ -32,9 +36,10 @@ import java.util.Map;
 import java.util.UUID;
 
 @TestConfiguration
+@EnableWebSocketMessageBroker
 @EnableConfigurationProperties(Configuration.class)
-@Import({TestSecurityConfig.class, TestRestSecurityConfig.class, WebAppConfig.class, WebSocketConfig.class})
-@ComponentScan(basePackages = "cz.cvut.kbss.termit.websocket")
+@Import({TestSecurityConfig.class, TestRestSecurityConfig.class, WebAppConfig.class, WebSocketConfig.class, WebSocketMessageBrokerConfig.class})
+@ComponentScan(basePackages = {"cz.cvut.kbss.termit.websocket"})
 public class TestWebSocketConfig
         implements ApplicationListener<ContextRefreshedEvent>, WebSocketMessageBrokerConfigurer {
 
@@ -94,5 +99,10 @@ public class TestWebSocketConfig
         SimpMessagingTemplate template = new ReturnValueCollectingSimpMessagingTemplate(brokerChannel, returnedValuesMap());
         template.setMessageConverter(brokerMessageConverter);
         return template;
+    }
+
+    @Bean
+    public WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor(JwtAuthenticationProvider jwtAuthenticationProvider) {
+        return new WebSocketJwtAuthorizationInterceptor(jwtAuthenticationProvider);
     }
 }

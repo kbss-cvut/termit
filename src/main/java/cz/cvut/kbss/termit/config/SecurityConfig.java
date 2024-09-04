@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.security.JwtAuthenticationFilter;
 import cz.cvut.kbss.termit.security.JwtAuthorizationFilter;
 import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.security.TermitJwtDecoder;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.slf4j.Logger;
@@ -40,7 +41,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -92,7 +95,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, TermitJwtDecoder jwtDecoder) throws Exception {
         LOG.debug("Using internal security mechanisms.");
         final AuthenticationManager authManager = buildAuthenticationManager(http);
         http.authorizeHttpRequests((auth) -> auth.requestMatchers(antMatcher("/rest/query")).permitAll()
@@ -104,7 +107,7 @@ public class SecurityConfig {
                                   .logoutSuccessHandler(authenticationSuccessHandler))
             .authenticationManager(authManager)
             .addFilter(authenticationFilter(authManager))
-            .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, userDetailsService, objectMapper));
+            .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, userDetailsService, objectMapper, jwtDecoder));
         return http.build();
     }
 
@@ -149,5 +152,10 @@ public class SecurityConfig {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
+    }
+
+    @Bean
+    public TermitJwtDecoder jwtDecoder() {
+        return new TermitJwtDecoder(jwtUtils, userDetailsService);
     }
 }

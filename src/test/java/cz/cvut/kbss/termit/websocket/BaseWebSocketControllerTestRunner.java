@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.websocket;
 
+import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.environment.config.TestWebSocketConfig;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.websocket.util.CachingChannelInterceptor;
@@ -31,7 +32,7 @@ import static cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessag
 @ExtendWith(MockitoExtension.class)
 @EnableConfigurationProperties({Configuration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@ContextConfiguration(classes = {TestWebSocketConfig.class},
+@ContextConfiguration(classes = {TestRestSecurityConfig.class, TestWebSocketConfig.class},
                       initializers = {ConfigDataApplicationContextInitializer.class})
 public abstract class BaseWebSocketControllerTestRunner {
 
