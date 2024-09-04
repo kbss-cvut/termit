@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Wrapper carrying a result from WebSocket controller
@@ -52,7 +53,7 @@ public record ResultWithHeaders<T>(T payload, @NotNull String destination, @NotN
          */
         public ResultWithHeadersBuilder<T> withHeaders(@NotNull Map<String, Object> headers) {
             this.headers = new HashMap<>();
-            headers.forEach((key, value) -> this.headers.put(key, value.toString()));
+            headers.forEach((key, value) -> this.headers.put(key, Objects.toString(value)));
             this.headers = Collections.unmodifiableMap(this.headers);
             return this;
         }

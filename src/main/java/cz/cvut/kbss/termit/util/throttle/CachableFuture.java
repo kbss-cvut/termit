@@ -1,10 +1,17 @@
 package cz.cvut.kbss.termit.util.throttle;
 
+import cz.cvut.kbss.termit.exception.TermItException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
+/**
+ * A future which can provide a cached result before its completion.
+ * @see Future
+ */
 public interface CachableFuture<T> extends Future<T> {
 
     /**
@@ -19,4 +26,22 @@ public interface CachableFuture<T> extends Future<T> {
      * @return self
      */
     CachableFuture<T> setCachedResult(@Nullable final T cachedResult);
+
+    /**
+     * @return the future result if it is available, cached result otherwise.
+     */
+    default Optional<T> getNow() {
+        try {
+            if (isDone() && !isCancelled()) {
+                return Optional.of(get());
+            }
+        } catch (ExecutionException e) {
+            throw new TermItException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
+        }
+
+        return getCachedResult();
+    }
 }

@@ -8,6 +8,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.throttle.CachableFuture;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -36,6 +37,7 @@ public class VocabularySocketController extends BaseController {
 
     /**
      * Validates the terms in a vocabulary with the specified identifier.
+     * Immediately responds with a result from the cache, if available.
      */
     @MessageMapping("/{localName}/validate")
     public ResultWithHeaders<List<ValidationResult>> validateVocabulary(@DestinationVariable String localName,
@@ -43,7 +45,12 @@ public class VocabularySocketController extends BaseController {
                                                                                 required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
-        return result(vocabularyService.validateContents(vocabulary)).withHeaders(Map.of("vocabulary", identifier))
-                                                                     .sendToUser("/vocabularies/validation");
+
+        final CachableFuture<List<ValidationResult>> future = vocabularyService.validateContents(vocabulary.getUri());
+
+        return future.getNow()
+                     .map(validationResults -> result(validationResults).withHeaders(Map.of("vocabulary", identifier, "cached", !future.isDone()))
+                                                                        .sendToUser("/vocabularies/validation"))
+                     .orElse(null);
     }
 }

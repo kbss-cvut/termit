@@ -45,7 +45,9 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.throttle.CachableFuture;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +74,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
@@ -345,9 +348,8 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to validate
      */
-    @Throttle("{#vocabulary}")
-    public Future<List<ValidationResult>> validateContents(URI vocabulary) {
-        return ThrottledFuture.of(() -> repositoryService.validateContents(vocabulary));
+    public CachableFuture<List<ValidationResult>> validateContents(URI vocabulary) {
+        return repositoryService.validateContents(vocabulary);
     }
 
     /**
