@@ -7,6 +7,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -71,7 +72,7 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
 
         this.serverInboundChannel.send(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
 
-        verify(vocabularyService).validateContents(vocabulary);
+        verify(vocabularyService).validateContents(vocabulary.getUri());
     }
 
     @Test
@@ -86,7 +87,7 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
                                                                         .setSeverity(Generator.generateUri())
                                                                         .setIssueCauseUri(Generator.generateUri());
         final List<ValidationResult> validationResults = List.of(validationResult);
-        when(vocabularyService.validateContents(vocabulary)).thenReturn(validationResults);
+        when(vocabularyService.validateContents(vocabulary.getUri())).thenReturn(ThrottledFuture.done(validationResults));
 
         this.serverInboundChannel.send(MessageBuilder.withPayload("").setHeaders(messageHeaders).build());
 

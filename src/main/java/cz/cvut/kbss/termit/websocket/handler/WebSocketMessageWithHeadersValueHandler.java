@@ -25,8 +25,9 @@ public class WebSocketMessageWithHeadersValueHandler implements HandlerMethodRet
     }
 
     @Override
-    public void handleReturnValue(Object returnValue, @NotNull MethodParameter returnType, @NotNull Message<?> message)
-            throws Exception {
+    public void handleReturnValue(Object returnValue, @NotNull MethodParameter returnType,
+                                  @NotNull Message<?> message) {
+        if (returnValue == null) return;
         if (returnValue instanceof ResultWithHeaders<?> resultWithHeaders) {
             final StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
             resultWithHeaders.headers().forEach(headerAccessor::setNativeHeader);

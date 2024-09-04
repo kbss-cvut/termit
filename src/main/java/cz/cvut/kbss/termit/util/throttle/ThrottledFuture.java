@@ -102,7 +102,7 @@ public class ThrottledFuture<T> implements CachableFuture<T>, LongRunningTask {
      */
     @Override
     public T get() throws InterruptedException, ExecutionException {
-        if (this.cachedResult != null) {
+        if (!isDone() && this.cachedResult != null) {
             return this.cachedResult;
         }
         return future.get();
@@ -115,7 +115,7 @@ public class ThrottledFuture<T> implements CachableFuture<T>, LongRunningTask {
     @Override
     public T get(long timeout, @NotNull TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
-        if (this.cachedResult != null) {
+        if (!isDone() && this.cachedResult != null) {
             return this.cachedResult;
         }
         return future.get(timeout, unit);
