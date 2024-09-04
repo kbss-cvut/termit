@@ -5,7 +5,6 @@ import cz.cvut.kbss.termit.config.WebSocketConfig;
 import cz.cvut.kbss.termit.config.WebSocketMessageBrokerConfig;
 import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessagingTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;

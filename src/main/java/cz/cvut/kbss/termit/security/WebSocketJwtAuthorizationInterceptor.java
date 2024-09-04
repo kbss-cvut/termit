@@ -1,7 +1,5 @@
 package cz.cvut.kbss.termit.security;
 
-import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.Message;
