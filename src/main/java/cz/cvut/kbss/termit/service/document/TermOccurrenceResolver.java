@@ -28,7 +28,6 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
