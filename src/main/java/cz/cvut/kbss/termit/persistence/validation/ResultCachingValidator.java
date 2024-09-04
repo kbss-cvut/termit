@@ -20,12 +20,11 @@ package cz.cvut.kbss.termit.persistence.validation;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
-import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
@@ -33,10 +32,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,70 +48,53 @@ public class ResultCachingValidator implements VocabularyContentValidator {
     private static final Logger LOG = LoggerFactory.getLogger(ResultCachingValidator.class);
 
     /**
-     * Map of vocabulary IRI to boolean.
-     * True when cache for the vocabulary is dirty.
+     * Map of origin vocabulary IRI to vocabulary iri closure of imported vocabularies.
+     * When the value is null, then the cache entry is considered dirty.
      */
-    private final Map<URI, Boolean> cacheDirtiness = new ConcurrentHashMap<>();
+    private final Map<URI, @NotNull Collection<URI>> vocabularyClosure = new ConcurrentHashMap<>();
 
-    private final Map<URI, List<ValidationResult>> validationCache = new HashMap<>();
-
-    private final VocabularyDao vocabularyDao;
-
-    @Autowired
-    public ResultCachingValidator(VocabularyDao vocabularyDao) {
-        this.vocabularyDao = vocabularyDao;
-    }
+    private final Map<URI, @NotNull List<ValidationResult>> validationCache = new HashMap<>();
 
     /**
      * @return true when the cache contents are dirty and should be refreshed; false otherwise.
      */
-    public boolean isDirty(URI vocabularyIris) {
-        return cacheDirtiness.getOrDefault(vocabularyIris, true);
+    public boolean isNotDirty(@NotNull URI originVocabularyIri) {
+        return vocabularyClosure.containsKey(originVocabularyIri);
     }
 
-    private List<ValidationResult> getCached(Set<URI> vocabularyIris) {
+    private List<ValidationResult> getCached(@NotNull URI originVocabularyIri) {
         synchronized (validationCache) {
-            return vocabularyIris.stream().flatMap(v -> validationCache.getOrDefault(v, List.of()).stream()).toList();
+            return validationCache.getOrDefault(originVocabularyIri, List.of());
         }
     }
 
     @Override
-    public @NotNull ThrottledFuture<List<ValidationResult>> validate(@NotNull Collection<URI> vocabularyIris) {
-        final Set<URI> iris = new HashSet<>(vocabularyIris);
+    public @NotNull ThrottledFuture<Collection<ValidationResult>> validate(@NotNull URI originVocabularyIri, @NotNull Collection<URI> vocabularyIris) {
+        final Set<URI> iris = Set.copyOf(vocabularyIris);
 
         if (iris.isEmpty()) {
             return ThrottledFuture.done(List.of());
         }
 
-        boolean cacheDirty = iris.stream().anyMatch(this::isDirty);
-        List<ValidationResult> cached = getCached(iris);
-        if (!cacheDirty) {
+        List<ValidationResult> cached = getCached(originVocabularyIri);
+        if (isNotDirty(originVocabularyIri)) {
             return ThrottledFuture.done(cached);
         }
 
-        return ThrottledFuture.of(() -> runValidation(iris)).setCachedResult(cached.isEmpty() ? null : cached);
+        return ThrottledFuture.of(() -> runValidation(originVocabularyIri, iris)).setCachedResult(cached.isEmpty() ? null : cached);
     }
 
 
-    private @NotNull List<ValidationResult> runValidation(@NotNull final Set<URI> iris) {
-        final List<ValidationResult> results = getValidator().runValidation(iris);
-
-        final Map<URI, URI> termToVocabularyMap = vocabularyDao.getTermToVocabularyMap(iris);
-
-        boolean cacheDirty = iris.stream().anyMatch(this::isDirty);
-        if (!cacheDirty) {
-            return getCached(iris);
+    private @NotNull Collection<ValidationResult> runValidation(@NotNull URI originVocabularyIri, @NotNull final Set<URI> iris) {
+        if (isNotDirty(originVocabularyIri)) {
+            return getCached(originVocabularyIri);
         }
 
+        final List<ValidationResult> results = getValidator().runValidation(iris);
+
         synchronized (validationCache) {
-            iris.forEach(vocabulary -> {
-                cacheDirtiness.put(vocabulary, false);
-                validationCache.computeIfAbsent(vocabulary, k -> new ArrayList<>()).clear();
-            });
-            results.parallelStream().forEach(result -> {
-                final URI vocabulary = termToVocabularyMap.get(result.getTermUri());
-                validationCache.get(vocabulary).add(result);
-            });
+            vocabularyClosure.put(originVocabularyIri, Collections.unmodifiableCollection(iris));
+            validationCache.put(originVocabularyIri, Collections.unmodifiableList(results));
         }
 
         return results;
@@ -127,13 +108,25 @@ public class ResultCachingValidator implements VocabularyContentValidator {
     @EventListener
     public void evictVocabularyCache(VocabularyContentModified event) {
         LOG.debug("Vocabulary content modified, marking cache as dirty for {}.", event.getVocabularyIri());
-        cacheDirtiness.put(event.getVocabularyIri(), true);
+        // marked as dirty for specified vocabulary
+        vocabularyClosure.remove(event.getVocabularyIri());
+        // now mark all vocabularies importing modified vocabulary as dirty too
+        synchronized (validationCache) {
+            vocabularyClosure.keySet().forEach(originVocabularyIri -> {
+                final @Nullable Collection<URI> closure = vocabularyClosure.get(originVocabularyIri);
+                if (closure != null && closure.contains(event.getVocabularyIri())) {
+                    vocabularyClosure.remove(originVocabularyIri);
+                }
+            });
+        }
     }
 
     @EventListener(EvictCacheEvent.class)
     public void evictCache() {
         LOG.debug("Validation cache cleared");
-        cacheDirtiness.clear();
-        validationCache.clear();
+        synchronized (validationCache) {
+            vocabularyClosure.clear();
+            validationCache.clear();
+        }
     }
 }

@@ -21,6 +21,7 @@ import com.github.sgov.server.ValidationResultSeverityComparator;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.event.VocabularyValidationFinished;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -81,15 +83,17 @@ public class Validator implements VocabularyContentValidator {
 
     private final EntityManager em;
     private final VocabularyContextMapper vocabularyContextMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     private Model validationModel;
 
     @Autowired
     public Validator(EntityManager em,
                      VocabularyContextMapper vocabularyContextMapper,
-                     Configuration config) {
+                     Configuration config, ApplicationEventPublisher eventPublisher) {
         this.em = em;
         this.vocabularyContextMapper = vocabularyContextMapper;
+        this.eventPublisher = eventPublisher;
         initValidator(config.getPersistence().getLanguage());
     }
 
@@ -140,12 +144,16 @@ public class Validator implements VocabularyContentValidator {
 
     @Transactional(readOnly = true)
     @Override
-    public @NotNull ThrottledFuture<List<ValidationResult>> validate(final @NotNull Collection<URI> vocabularyIris) {
+    public @NotNull ThrottledFuture<Collection<ValidationResult>> validate(final @NotNull URI originVocabularyIri, final @NotNull Collection<URI> vocabularyIris) {
         if (vocabularyIris.isEmpty()) {
             return ThrottledFuture.done(List.of());
         }
 
-        return ThrottledFuture.of(() -> runValidation(vocabularyIris));
+        return ThrottledFuture.of(() -> {
+            final List<ValidationResult> results = runValidation(vocabularyIris);
+            eventPublisher.publishEvent(new VocabularyValidationFinished(this, originVocabularyIri, vocabularyIris, results));
+            return results;
+        });
     }
 
     protected synchronized List<ValidationResult> runValidation(@NotNull Collection<URI> vocabularyIris) {

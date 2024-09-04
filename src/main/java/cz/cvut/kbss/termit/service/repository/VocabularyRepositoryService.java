@@ -320,7 +320,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    public CachableFuture<List<ValidationResult>> validateContents(URI vocabulary) {
+    public CachableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         return vocabularyDao.validateContents(vocabulary);
     }
 
