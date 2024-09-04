@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.config;
 import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
+import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketMessageWithHeadersValueHandler;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContext;
@@ -51,13 +52,16 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     private final MappingJackson2MessageConverter termitJsonLdMessageConverter;
 
+    private final WebSocketExceptionHandler webSocketExceptionHandler;
+
     public WebSocketMessageBrokerConfig(AuthorizationManager<Message<?>> messageAuthorizationManager,
                                         ApplicationContext context,
                                         WebSocketJwtAuthorizationInterceptor webSocketJwtAuthorizationInterceptor,
                                         @Lazy SimpMessagingTemplate simpMessagingTemplate,
                                         StringMessageConverter termitStringMessageConverter,
                                         MappingJackson2MessageConverter termitJsonLdMessageConverter,
-                                        cz.cvut.kbss.termit.util.Configuration configuration) {
+                                        cz.cvut.kbss.termit.util.Configuration configuration,
+                                        WebSocketExceptionHandler webSocketExceptionHandler) {
         this.messageAuthorizationManager = messageAuthorizationManager;
         this.context = context;
         this.webSocketJwtAuthorizationInterceptor = webSocketJwtAuthorizationInterceptor;
@@ -66,6 +70,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
         this.termitJsonLdMessageConverter = termitJsonLdMessageConverter;
 
         this.allowedOrigins = configuration.getCors().getAllowedOrigins();
+        this.webSocketExceptionHandler = webSocketExceptionHandler;
     }
 
     /**
@@ -97,7 +102,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").setAllowedOrigins(allowedOrigins.split(","));
-        registry.setErrorHandler(new StompExceptionHandler());
+        registry.setErrorHandler(new StompExceptionHandler(webSocketExceptionHandler));
     }
 
     @Override

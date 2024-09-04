@@ -30,9 +30,14 @@ import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @implSpec Should reflect {@link cz.cvut.kbss.termit.rest.handler.RestExceptionHandler}
@@ -44,7 +49,12 @@ public class WebSocketExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketExceptionHandler.class);
 
     private static String destination(Message<?> message) {
-        return message.getHeaders().getOrDefault("destination", "missing destination").toString();
+        return message.getHeaders().getOrDefault("destination", "(missing destination)").toString();
+    }
+
+    private static boolean hasDestination(Message<?> message) {
+        final String dst = (String) message.getHeaders().getOrDefault("destination", "");
+        return dst != null && !dst.isBlank();
     }
 
     private static void logException(TermItException ex, Message<?> message) {
@@ -72,8 +82,12 @@ public class WebSocketExceptionHandler {
 
     @MessageExceptionHandler
     public void messageDeliveryException(Message<?> message, MessageDeliveryException e) {
-        final StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
-        LOG.error("Failed to send message with destination {}: {}", headerAccessor.getDestination(), e.getMessage());
+        // messages without destination will be logged only on trace
+        (hasDestination(message) ? LOG.atError() : LOG.atTrace())
+                .setMessage("Failed to send message with destination {}: {}")
+                .addArgument(()-> destination(message))
+                .addArgument(e.getMessage())
+                .log();
     }
 
     @MessageExceptionHandler(PersistenceException.class)
@@ -114,6 +128,28 @@ public class WebSocketExceptionHandler {
     @MessageExceptionHandler(AuthorizationException.class)
     public ErrorInfo authorizationException(Message<?> message, AuthorizationException e) {
         logException(e, message);
+        return errorInfo(message, e);
+    }
+
+    @MessageExceptionHandler(AuthenticationException.class)
+    public ErrorInfo authenticationException(Message<?> message, AuthenticationException e) {
+        LOG.atDebug().setCause(e).log(e.getMessage());
+        LOG.error("Authentication failure during message processing: {}\nMessage: {}", e.getMessage(), message.toString());
+        return errorInfo(message, e);
+    }
+
+    /**
+     * Fired, for example, on method security violation
+     */
+    @MessageExceptionHandler(AccessDeniedException.class)
+    public ErrorInfo accessDeniedException(Message<?> message, AccessDeniedException e) {
+        LOG.atWarn().setMessage("[{}] Unauthorized access: {}").addArgument(() -> {
+            StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+            if (accessor.getUser() != null) {
+                return accessor.getUser().getName();
+            }
+            return "(unknown user)";
+        }).addArgument(e.getMessage()).log();
         return errorInfo(message, e);
     }
 

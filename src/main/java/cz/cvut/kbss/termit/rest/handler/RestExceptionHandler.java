@@ -43,6 +43,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -124,6 +127,27 @@ public class RestExceptionHandler {
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ErrorInfo> authorizationException(HttpServletRequest request, AuthorizationException e) {
         logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorInfo> authenticationException(HttpServletRequest request, AuthenticationException e) {
+        LOG.warn("Authentication failure during HTTP request to {}: {}", request.getRequestURI(), e.getMessage());
+        LOG.atDebug().setCause(e).log(e.getMessage());
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Fired, for example, on method security violation
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorInfo> accessDeniedException(HttpServletRequest request, AccessDeniedException e) {
+        LOG.atWarn().setMessage("[{}] Unauthorized access: {}").addArgument(() -> {
+            if (request.getUserPrincipal() != null) {
+                return request.getUserPrincipal().getName();
+            }
+            return "(unknown user)";
+        }).addArgument(e.getMessage()).log();
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.FORBIDDEN);
     }
 
