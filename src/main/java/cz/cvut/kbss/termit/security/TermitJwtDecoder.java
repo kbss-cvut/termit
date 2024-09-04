@@ -5,11 +5,17 @@ import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtException;
 
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+/**
+ * @see #decode(String)
+ */
 public class TermitJwtDecoder implements org.springframework.security.oauth2.jwt.JwtDecoder {
 
     private final JwtUtils jwtUtils;
@@ -21,6 +27,11 @@ public class TermitJwtDecoder implements org.springframework.security.oauth2.jwt
         this.userDetailsService = userDetailsService;
     }
 
+    /**
+     * Decodes JWT token (without the {@code Bearer} prefix)
+     * and ensures its validity.
+     * @throws JwtException with cause, when token could not be decoded or verified
+     */
     @Override
     public Jwt decode(String token) throws JwtException {
         try {
@@ -35,6 +46,10 @@ public class TermitJwtDecoder implements org.springframework.security.oauth2.jwt
             final TermItUserDetails existingDetails = userDetailsService.loadUserByUsername(tokenDetails.getUsername());
 
             SecurityUtils.verifyAccountStatus(existingDetails.getUser());
+
+            claims.put("scope", existingDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+                                               .collect(Collectors.toSet()));
+            claims.putIfAbsent(JwtClaimNames.SUB, existingDetails);
 
             return new Jwt(token, claims.getIssuedAt().toInstant(), claims.getExpiration()
                                                                           .toInstant(), expanded.getHeader(), claims);

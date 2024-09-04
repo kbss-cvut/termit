@@ -86,9 +86,15 @@ public class OAuth2SecurityConfig {
         return http.build();
     }
 
+    /**
+     * An attempt to replicate auth provider from HttpSecurity
+     * @see cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor
+     */
     @Bean
     public JwtAuthenticationProvider jwtAuthenticationProvider(JwtDecoder jwtDecoder) {
-        return new JwtAuthenticationProvider(jwtDecoder);
+        final JwtAuthenticationProvider provider = new JwtAuthenticationProvider(jwtDecoder);
+        provider.setJwtAuthenticationConverter(grantedAuthoritiesExtractor());
+        return provider;
     }
 
     private CorsConfigurationSource corsConfigurationSource() {

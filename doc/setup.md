@@ -172,10 +172,35 @@ termit:
 
 TermIt can operate in two authentication modes:
 
-1. Internal authentication means
-2. [Keycloak](https://www.keycloak.org/) -based
+1. Internal authentication
+2. OAuth2 based (e.g. [Keycloak](https://www.keycloak.org/))
 
-By default, Keycloak is disabled (see `keycloak.enabled` in `application.yml`). To enable it, set `keycloak.enabled` to `true` and
-provide additional required Keycloak parameters - see the [Keycloak Spring Boot integration docs](https://www.keycloak.org/docs/latest/securing_apps/#_spring_boot_adapter).
-TermIt will automatically configure its security (it is using Spring's [`ConditionalOnProperty`](https://www.baeldung.com/spring-conditionalonproperty))
-accordingly.
+By default, OAuth2 is disabled and internal authentication is used  
+To enable it, set termit security provider to `oidc`
+and provide issuer-uri and jwk-set-uri.
+
+**`application.yml` example:**
+```yml
+spring:
+    security:
+        oauth2:
+            resourceserver:
+                jwt:
+                    issuer-uri: http://keycloak.lan/realms/termit
+                    jwk-set-uri: http://keycloak.lan/realms/termit/protocol/openid-connect/certs
+termit:
+    security:
+        provider: "oidc"
+```
+
+**Environmental variables example:**
+```
+SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI=http://keycloak.lan/realms/termit
+SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI=http://keycloak.lan/realms/termit/protocol/openid-connect/certs
+TERMIT_SECURITY_PROVIDER=oidc
+```
+
+TermIt will automatically configure its security accordingly
+(it is using Spring's [`ConditionalOnProperty`](https://www.baeldung.com/spring-conditionalonproperty)).
+
+**Note that termit-ui needs to be configured for mathcing authentication mode.**

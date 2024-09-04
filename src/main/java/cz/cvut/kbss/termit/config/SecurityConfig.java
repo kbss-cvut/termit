@@ -41,10 +41,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -126,9 +126,20 @@ public class SecurityConfig {
         return authenticationFilter;
     }
 
+    /**
+     * @see cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor
+     */
     @Bean
     public JwtAuthenticationProvider jwtAuthenticationProvider(JwtDecoder jwtDecoder) {
-        return new JwtAuthenticationProvider(jwtDecoder);
+        final JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        authoritiesConverter.setAuthorityPrefix(""); // this removes default "SCOPE_" prefix
+        // otherwise, all granted authorities would have this prefix
+        // (like "SCOPE_ROLE_RESTRICTED_USER", we want just ROLE_...)
+        final JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+        final JwtAuthenticationProvider provider = new JwtAuthenticationProvider(jwtDecoder);
+        provider.setJwtAuthenticationConverter(converter);
+        return provider;
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
