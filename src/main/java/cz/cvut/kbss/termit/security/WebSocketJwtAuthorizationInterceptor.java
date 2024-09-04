@@ -1,5 +1,7 @@
 package cz.cvut.kbss.termit.security;
 
+import cz.cvut.kbss.termit.security.model.TermItUserDetails;
+import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.Message;
@@ -12,7 +14,6 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
@@ -23,7 +24,9 @@ import org.springframework.util.StringUtils;
 /**
  * Authenticates STOMP CONNECT messages
  * <p>
- * Retrieves token from the {@code Authorization} header and authenticates the session.
+ * Retrieves token from the {@code Authorization} header
+ * and uses {@link JwtAuthenticationProvider} to authenticate the token.
+ * @see <a href="https://stackoverflow.com/a/45405333/12690791">Consult this Stackoverflow answer</a>
  */
 @Component
 public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor {
