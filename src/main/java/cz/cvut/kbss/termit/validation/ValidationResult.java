@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.validation;
 
 import jakarta.validation.ConstraintViolation;
+
 import java.io.Serializable;
 import java.util.Collection;
 

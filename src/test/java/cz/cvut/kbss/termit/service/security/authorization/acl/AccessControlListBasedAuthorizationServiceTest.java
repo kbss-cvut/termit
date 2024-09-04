@@ -22,7 +22,11 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.acl.*;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserGroupAccessControlRecord;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,8 +42,12 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccessControlListBasedAuthorizationServiceTest {

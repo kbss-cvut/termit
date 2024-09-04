@@ -18,12 +18,11 @@
 package cz.cvut.kbss.termit.config;
 
 import cz.cvut.kbss.termit.security.SecurityConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.servlet.annotation.WebListener;
 import jakarta.servlet.http.HttpSessionEvent;
 import jakarta.servlet.http.HttpSessionListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @WebListener
 public class SessionTimeoutManager implements HttpSessionListener {

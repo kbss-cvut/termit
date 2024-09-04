@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.rest.util;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
-import jakarta.servlet.http.Cookie;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -37,7 +37,10 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RestUtilsTest {
 

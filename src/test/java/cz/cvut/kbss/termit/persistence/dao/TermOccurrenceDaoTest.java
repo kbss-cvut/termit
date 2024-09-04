@@ -21,14 +21,15 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.JOPAPersistenceProperties;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
-import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
@@ -44,14 +45,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TermOccurrenceDaoTest extends BaseDaoTestRunner {

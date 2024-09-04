@@ -21,6 +21,8 @@ import cz.cvut.kbss.jopa.Persistence;
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
 import cz.cvut.kbss.ontodriver.rdf4j.config.Rdf4jOntoDriverProperties;
 import cz.cvut.kbss.termit.persistence.MainPersistenceFactory;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -28,11 +30,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.Map;
 
-import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.*;
+import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.DATA_SOURCE_CLASS;
+import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.LANG;
+import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.ONTOLOGY_PHYSICAL_URI_KEY;
+import static cz.cvut.kbss.jopa.model.JOPAPersistenceProperties.PREFER_MULTILINGUAL_STRING;
 
 @Configuration
 @EnableConfigurationProperties(cz.cvut.kbss.termit.util.Configuration.class)

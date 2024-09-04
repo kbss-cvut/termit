@@ -22,8 +22,8 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.util.Configuration.Persistence;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 

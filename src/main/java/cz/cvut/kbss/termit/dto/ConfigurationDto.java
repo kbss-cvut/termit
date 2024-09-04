@@ -17,7 +17,11 @@
  */
 package cz.cvut.kbss.termit.dto;
 
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.Id;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.UserRole;

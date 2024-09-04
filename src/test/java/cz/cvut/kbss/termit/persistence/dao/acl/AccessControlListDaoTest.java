@@ -23,7 +23,11 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.acl.*;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.StaticContexts;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
@@ -37,8 +41,14 @@ import java.util.Optional;
 
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AccessControlListDaoTest extends BaseDaoTestRunner {
 

@@ -28,7 +28,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AssertedInferredValueDifferentiatorTest {

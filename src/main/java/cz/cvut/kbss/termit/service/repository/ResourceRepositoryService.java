@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import jakarta.validation.Validator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.validation.Validator;
 import java.util.Objects;
 
 @Service

@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.model.util.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+
 import java.net.URI;
 
 /**

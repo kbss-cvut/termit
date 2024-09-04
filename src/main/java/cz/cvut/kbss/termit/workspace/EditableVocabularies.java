@@ -26,7 +26,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
 

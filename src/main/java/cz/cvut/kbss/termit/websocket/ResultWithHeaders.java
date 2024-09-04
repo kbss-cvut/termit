@@ -1,10 +1,10 @@
 package cz.cvut.kbss.termit.websocket;
 
 import cz.cvut.kbss.termit.websocket.handler.WebSocketMessageWithHeadersValueHandler;
-import org.springframework.messaging.handler.invocation.HandlerMethodReturnValueHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.handler.invocation.HandlerMethodReturnValueHandler;
 import org.springframework.messaging.simp.annotation.SendToUser;
 
 import java.util.Collections;

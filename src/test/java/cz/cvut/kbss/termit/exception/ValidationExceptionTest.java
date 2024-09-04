@@ -19,10 +19,9 @@ package cz.cvut.kbss.termit.exception;
 
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.validation.ValidationResult;
-import org.junit.jupiter.api.Test;
-
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;

@@ -25,7 +25,6 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -52,7 +51,11 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component

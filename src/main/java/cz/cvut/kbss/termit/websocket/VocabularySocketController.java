@@ -8,8 +8,6 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;

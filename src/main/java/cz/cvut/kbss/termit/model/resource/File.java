@@ -19,7 +19,11 @@ package cz.cvut.kbss.termit.model.resource;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
+import cz.cvut.kbss.jopa.model.annotations.Inferred;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.util.SupportsStorage;
