@@ -27,7 +27,7 @@ import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
-import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Term_;
@@ -369,9 +369,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
 
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
-        final Optional<VocabularyContentModified> evt = captor.getAllValues().stream()
-                                                              .filter(VocabularyContentModified.class::isInstance)
-                                                              .map(VocabularyContentModified.class::cast).findFirst();
+        final Optional<VocabularyContentModifiedEvent> evt = captor.getAllValues().stream()
+                                                              .filter(VocabularyContentModifiedEvent.class::isInstance)
+                                                              .map(VocabularyContentModifiedEvent.class::cast).findFirst();
         assertTrue(evt.isPresent());
         assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
     }
@@ -430,9 +430,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         transactional(() -> sut.update(term));
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
-        final Optional<VocabularyContentModified> evt = captor.getAllValues().stream()
-                                                              .filter(VocabularyContentModified.class::isInstance)
-                                                              .map(VocabularyContentModified.class::cast).findFirst();
+        final Optional<VocabularyContentModifiedEvent> evt = captor.getAllValues().stream()
+                                                              .filter(VocabularyContentModifiedEvent.class::isInstance)
+                                                              .map(VocabularyContentModifiedEvent.class::cast).findFirst();
         assertTrue(evt.isPresent());
         assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
     }
@@ -1306,9 +1306,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         transactional(() -> sut.remove(term));
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
-        final Optional<VocabularyContentModified> evt = captor.getAllValues().stream()
-                                                              .filter(VocabularyContentModified.class::isInstance)
-                                                              .map(VocabularyContentModified.class::cast).findFirst();
+        final Optional<VocabularyContentModifiedEvent> evt = captor.getAllValues().stream()
+                                                              .filter(VocabularyContentModifiedEvent.class::isInstance)
+                                                              .map(VocabularyContentModifiedEvent.class::cast).findFirst();
         assertTrue(evt.isPresent());
         assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
     }

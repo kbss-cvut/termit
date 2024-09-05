@@ -28,11 +28,11 @@ import java.util.Objects;
  * <p>
  * This typically means a term is added, removed or modified. Modification of vocabulary metadata themselves is not considered here.
  */
-public class VocabularyContentModified extends ApplicationEvent {
+public class VocabularyContentModifiedEvent extends ApplicationEvent {
 
     private final URI vocabularyIri;
 
-    public VocabularyContentModified(Object source, @NotNull URI vocabularyIri) {
+    public VocabularyContentModifiedEvent(Object source, @NotNull URI vocabularyIri) {
         super(source);
         Objects.requireNonNull(vocabularyIri);
         this.vocabularyIri = vocabularyIri;

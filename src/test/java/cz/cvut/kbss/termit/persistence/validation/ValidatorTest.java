@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.persistence.validation;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.event.VocabularyValidationFinished;
+import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
@@ -42,7 +42,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -114,8 +113,8 @@ class ValidatorTest extends BaseDaoTestRunner {
             ArgumentCaptor<ApplicationEvent> eventCaptor = ArgumentCaptor.forClass(ApplicationEvent.class);
             verify(eventPublisher).publishEvent(eventCaptor.capture());
             final ApplicationEvent event = eventCaptor.getValue();
-            assertInstanceOf(VocabularyValidationFinished.class, event);
-            final VocabularyValidationFinished finished = (VocabularyValidationFinished) event;
+            assertInstanceOf(VocabularyValidationFinishedEvent.class, event);
+            final VocabularyValidationFinishedEvent finished = (VocabularyValidationFinishedEvent) event;
             assertIterableEquals(result, finished.getValidationResults());
             assertIterableEquals(iris, finished.getVocabularyIris());
         });

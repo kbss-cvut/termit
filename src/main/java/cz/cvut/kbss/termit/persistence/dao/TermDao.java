@@ -28,7 +28,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
-import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -174,7 +174,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             entity.setVocabulary(null); // This is inferred
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
             evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
-            eventPublisher.publishEvent(new VocabularyContentModified(this, vocabulary.getUri()));
+            eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, vocabulary.getUri()));
             eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -194,7 +194,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
             final Term result = em.merge(entity, descriptorFactory.termDescriptor(entity));
-            eventPublisher.publishEvent(new VocabularyContentModified(this, original.getVocabulary()));
+            eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, original.getVocabulary()));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -790,7 +790,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public void remove(Term entity) {
         super.remove(entity);
         evictCachedSubTerms(entity.getParentTerms(), Collections.emptySet());
-        eventPublisher.publishEvent(new VocabularyContentModified(this, entity.getVocabulary()));
+        eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, entity.getVocabulary()));
     }
 
     @Override
