@@ -190,7 +190,7 @@ public class ThrottledFuture<T> implements CachableFuture<T>, LongRunningTask {
     }
 
     @Override
-    public @Nullable Instant runningSince() {
-        return completingSince;
+    public @NotNull Optional<Instant> runningSince() {
+        return Optional.ofNullable(completingSince);
     }
 }
