@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.util.throttle;
 import cz.cvut.kbss.termit.TermItApplication;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Pair;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskRegister;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,17 +47,18 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static cz.cvut.kbss.termit.util.Constants.THROTTLE_DISCARD_THRESHOLD;
 import static cz.cvut.kbss.termit.util.Constants.THROTTLE_THRESHOLD;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_SINGLETON;
 
 /**
+ * @see Throttle
  * @implNote The aspect is configured in {@code spring-aop.xml}, this uses Spring AOP instead of AspectJ.
  */
 @Order
@@ -67,44 +70,67 @@ public class ThrottleAspect implements LongRunningTaskRegister {
     private static final Logger LOG = LoggerFactory.getLogger(ThrottleAspect.class);
 
     /**
-     * group, identifier -> future
+     * <p>Throttled futures are returned as results of method calls.</p>
+     * <p>Tasks inside them can be replaced by a newer ones allowing
+     * to merge multiple (throttled) method calls into a single one while always executing the newest one possible.</p>
+     * <p>A task inside a throttled future represents
+     * a heavy/long-running task acquired from the body of an throttled method</p>
      *
-     * @implSpec Synchronize in the field definition order before modification
+     * @implSpec Synchronize in the field declaration order before modification
      */
-    private final Map<Identifier, ThrottledFuture<Object>> throttledFutures;
+    private final Map<@NotNull Identifier, @NotNull ThrottledFuture<Object>> throttledFutures;
 
     /**
-     * @implSpec Synchronize in the field definition order before modification
+     * The last run is updated every time a task is finished.
+     * @implSpec Synchronize in the field declaration order before modification
      */
-    private final Map<Identifier, Instant> lastRun;
+    private final Map<@NotNull Identifier, @NotNull Instant> lastRun;
 
     /**
-     * group, identifier -> future
+     * Scheduled futures are returned from {@link #taskScheduler}.
+     * Futures are completed by execution of tasks created in {@link #createRunnableToSchedule}.
      *
-     * @implSpec Synchronize in the field definition order before modification
+     * @implSpec Synchronize in the field declaration order before modification
      */
-    private final NavigableMap<Identifier, Future<Object>> scheduledFutures;
+    private final NavigableMap<Identifier, @NotNull Future<Object>> scheduledFutures;
 
     /**
-     * thread safe set holding identifiers of threads
-     * currently executing a throttled task
+     * Thread safe set holding identifiers of threads that are
+     * currently executing a throttled task.
      */
     private final Set<Long> throttledThreads = ConcurrentHashMap.newKeySet();
 
+    /**
+     * Parser for Spring Expression Language
+     */
     private final ExpressionParser parser = new SpelExpressionParser();
 
     private final TaskScheduler taskScheduler;
 
+    /**
+     * A base context for evaluation of SpEL expressions
+     */
     private final StandardEvaluationContext standardEvaluationContext;
 
+    /**
+     * Used for acquiring {@link #lastRun} timestamps.
+     * @implNote for testing purposes
+     */
     private final Clock clock;
 
-    private final TransactionExecutor transactionExecutor;
+    /**
+     * Wrapper for executions in a transaction context
+     */
+    private final SynchronousTransactionExecutor transactionExecutor;
 
+    /**
+     * A timestamp of the last time maps were cleaned.
+     * @see #clearOldFutures()
+     */
     private final @NotNull AtomicReference<Instant> lastClear;
 
     @Autowired
-    public ThrottleAspect(@Qualifier("threadPoolTaskScheduler") TaskScheduler taskScheduler, TransactionExecutor transactionExecutor) {
+    public ThrottleAspect(@Qualifier("threadPoolTaskScheduler") TaskScheduler taskScheduler, SynchronousTransactionExecutor transactionExecutor) {
         this.taskScheduler = taskScheduler;
         this.transactionExecutor = transactionExecutor;
         throttledFutures = new HashMap<>();
@@ -118,7 +144,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
     protected ThrottleAspect(Map<Identifier, ThrottledFuture<Object>> throttledFutures,
                              Map<Identifier, Instant> lastRun,
                              NavigableMap<Identifier, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
-                             Clock clock, TransactionExecutor transactionExecutor) {
+                             Clock clock, SynchronousTransactionExecutor transactionExecutor) {
         this.throttledFutures = throttledFutures;
         this.lastRun = lastRun;
         this.scheduledFutures = scheduledFutures;
@@ -346,23 +372,28 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         };
     }
 
+    /**
+     * Discards futures from {@link #throttledFutures}, {@link #lastRun} and {@link #scheduledFutures} maps.
+     * <p>Every completed future for which a {@link Constants#THROTTLE_DISCARD_THRESHOLD} expired is discarded.</p>
+     * @see #isThresholdExpired(Identifier)
+     */
     private void clearOldFutures() {
         // if the last clear was performed less than a threshold ago, skip it for now
         Instant last = lastClear.get();
-        if (last.isAfter(Instant.now(clock).minus(THROTTLE_THRESHOLD))) {
+        if (last.isAfter(Instant.now(clock).minus(THROTTLE_THRESHOLD).minus(THROTTLE_DISCARD_THRESHOLD))) {
             return;
         }
         if (!lastClear.compareAndSet(last, Instant.now(clock))) {
             return;
         }
-        synchronized (throttledFutures) {
+        synchronized (throttledFutures) { // synchronize in the filed declaration order
             synchronized (lastRun) {
                 synchronized (scheduledFutures) {
                     Stream.of(throttledFutures.keySet().stream(), scheduledFutures.keySet().stream(), lastRun.keySet()
                                                                                                              .stream())
                           .flatMap(s -> s).distinct().toList() // ensures safe modification of maps
                           .forEach(identifier -> {
-                              if (isThresholdExpired(identifier)) {
+                              if (isThresholdExpiredByMoreThan(identifier, THROTTLE_DISCARD_THRESHOLD)) {
                                   Optional.ofNullable(throttledFutures.get(identifier)).ifPresent(throttled -> {
                                       if (throttled.isDone() || throttled.isCancelled()) {
                                           throttledFutures.remove(identifier);
@@ -379,6 +410,16 @@ public class ThrottleAspect implements LongRunningTaskRegister {
                 }
             }
         }
+    }
+
+    /**
+     * @param identifier of the task
+     * @param duration to add to the throttle threshold
+     * @return Whether the last time when a task with specified {@code identifier} run
+     * is older than ({@link Constants#THROTTLE_THRESHOLD} + {@code duration})
+     */
+    private boolean isThresholdExpiredByMoreThan(Identifier identifier, Duration duration) {
+        return lastRun.getOrDefault(identifier, Instant.MAX).isBefore(Instant.now(clock).minus(THROTTLE_THRESHOLD).minus(duration));
     }
 
     /**
@@ -406,7 +447,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         if (throttleAnnotation.getGroup().isBlank()) {
             return;
         }
-        synchronized (throttledFutures) {
+        synchronized (throttledFutures) { // synchronize in the filed declaration order
             synchronized (scheduledFutures) {
                 // look for any futures with higher group
                 // cancel them and remove from maps

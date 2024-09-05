@@ -54,7 +54,7 @@ class ThrottleAspectTest {
 
     TaskScheduler taskScheduler;
 
-    TransactionExecutor transactionExecutor;
+    SynchronousTransactionExecutor transactionExecutor;
 
     OrderedMap<Runnable, Instant> taskSchedulerTasks;
 
@@ -141,7 +141,7 @@ class ThrottleAspectTest {
         Clock mockedClock = mock(Clock.class);
         when(mockedClock.instant()).then(invocation -> getInstant());
 
-        transactionExecutor = mock(TransactionExecutor.class);
+        transactionExecutor = mock(SynchronousTransactionExecutor.class);
         doAnswer(invocation -> {
             invocation.getArgument(0, Runnable.class).run();
             return null;

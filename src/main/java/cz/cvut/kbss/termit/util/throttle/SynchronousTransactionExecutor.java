@@ -7,12 +7,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.concurrent.Executor;
 
 /**
- * Executes the runnable in a transaction
+ * Executes the runnable in a transaction synchronously.
  *
  * @see Transactional
  */
 @Component
-public class TransactionExecutor implements Executor {
+public class SynchronousTransactionExecutor implements Executor {
 
     @Transactional
     @Override

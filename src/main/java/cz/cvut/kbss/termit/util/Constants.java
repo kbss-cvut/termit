@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.util.throttle.ThrottleAspect;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -56,6 +57,12 @@ public class Constants {
      * @see cz.cvut.kbss.termit.util.throttle.ThrottleAspect
      */
     public static final Duration THROTTLE_THRESHOLD = Duration.ofSeconds(10);
+
+    /**
+     * After how much time, should complete futures be discarded.
+     * @see ThrottleAspect#clearOldFutures()
+     */
+    public static final Duration THROTTLE_DISCARD_THRESHOLD = Duration.ofMinutes(1);
 
     /**
      * The amount of millis used as timeout for async REST tasks (REST controllers returning Callable):
