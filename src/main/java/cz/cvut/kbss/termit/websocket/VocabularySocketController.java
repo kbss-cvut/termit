@@ -71,7 +71,7 @@ public class VocabularySocketController extends BaseWebSocketController {
         messagingTemplate.convertAndSend(
                 DESTINATION_VOCABULARIES_VALIDATION,
                 event.getValidationResults(),
-                Map.of("vocabulary", event.getOriginVocabularyIri(), "cached", false)
+                Map.of("vocabulary", event.getVocabularyIri(), "cached", false)
         );
     }
 }

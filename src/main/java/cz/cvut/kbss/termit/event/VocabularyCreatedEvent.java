@@ -17,14 +17,16 @@
  */
 package cz.cvut.kbss.termit.event;
 
-import org.springframework.context.ApplicationEvent;
+import org.jetbrains.annotations.NotNull;
+
+import java.net.URI;
 
 /**
  * Indicates that a vocabulary has been created.
  */
-public class VocabularyCreatedEvent extends ApplicationEvent {
+public class VocabularyCreatedEvent extends VocabularyEvent {
 
-    public VocabularyCreatedEvent(Object source) {
-        super(source);
+    public VocabularyCreatedEvent(Object source, @NotNull URI vocabularyIri) {
+        super(source, vocabularyIri);
     }
 }

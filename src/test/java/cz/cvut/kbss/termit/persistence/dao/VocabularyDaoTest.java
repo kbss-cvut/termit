@@ -372,7 +372,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.persist(voc));
 
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
-        verify(eventPublisher).publishEvent(captor.capture());
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<AssetPersistEvent> evt = captor.getAllValues().stream()
                                                       .filter(AssetPersistEvent.class::isInstance)
                                                       .map(AssetPersistEvent.class::cast).findFirst();
@@ -767,7 +767,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         VocabularyWillBeRemovedEvent event = eventCaptor.getValue();
         assertNotNull(event);
 
-        assertEquals(event.getVocabulary(), vocabulary.getUri());
+        assertEquals(event.getVocabularyIri(), vocabulary.getUri());
 
         assertFalse(em.createNativeQuery("ASK WHERE{ GRAPH ?vocabulary { ?s ?p ?o }}", Boolean.class)
                       .setParameter("vocabulary", vocabulary.getUri())

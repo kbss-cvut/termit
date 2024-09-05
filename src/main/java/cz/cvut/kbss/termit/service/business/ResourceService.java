@@ -98,7 +98,7 @@ public class ResourceService
      */
     @EventListener
     public void onVocabularyRemoval(VocabularyWillBeRemovedEvent event) {
-        vocabularyService.find(event.getVocabulary()).ifPresent(vocabulary -> {
+        vocabularyService.find(event.getVocabularyIri()).ifPresent(vocabulary -> {
             if(vocabulary.getDocument() != null) {
                 remove(vocabulary.getDocument());
             }

@@ -74,6 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.inOrder;
@@ -275,7 +276,7 @@ class VocabularyServiceTest {
     @Test
     void persistCreatesAccessControlListAndSetsItOnVocabularyInstance() {
         final AccessControlList acl = Generator.generateAccessControlList(true);
-        final Vocabulary toPersist = Generator.generateVocabulary();
+        final Vocabulary toPersist = Generator.generateVocabularyWithId();
         when(aclService.createFor(toPersist)).thenReturn(acl);
 
         sut.persist(toPersist);
@@ -379,9 +380,10 @@ class VocabularyServiceTest {
 
         sut.importVocabulary(false, fileToImport);
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
-        verify(eventPublisher).publishEvent(captor.capture());
-        assertInstanceOf(VocabularyCreatedEvent.class, captor.getValue());
-        assertEquals(persisted, captor.getValue().getSource());
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
+        Optional<VocabularyCreatedEvent> event = captor.getAllValues().stream().filter(e -> e instanceof VocabularyCreatedEvent).map(e->(VocabularyCreatedEvent)e).findAny();
+        assertTrue(event.isPresent());
+        assertEquals(persisted.getUri(), event.get().getVocabularyIri());
     }
 
     @Test
