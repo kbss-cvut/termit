@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.service.repository;
+package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Term;
@@ -34,10 +35,9 @@ import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
-import cz.cvut.kbss.termit.service.business.AccessControlListService;
-import cz.cvut.kbss.termit.service.business.TermService;
-import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
+import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
+import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
@@ -49,6 +49,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
@@ -73,6 +74,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -105,6 +108,7 @@ class VocabularyServiceTest {
     @Mock
     private ApplicationContext appContext;
 
+    @Spy
     @InjectMocks
     private VocabularyService sut;
 
@@ -390,5 +394,16 @@ class VocabularyServiceTest {
         assertEquals(ExportFormat.EXCEL.getMediaType(), result.getMediaType().get());
         final File expectedFile = new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI());
         assertEquals(expectedFile, result.getFile());
+    }
+
+    /**
+     * The goal for this is to get the results cached and do not force users to wait for validation
+     * when they request it.
+     */
+    @Test
+    void publishingVocabularyContentModifiedEventTriggersContentsValidation() {
+        final VocabularyContentModifiedEvent event = new VocabularyContentModifiedEvent(this, Generator.generateUri());
+        sut.onVocabularyContentModified(event);
+        verify(repositoryService).validateContents(event.getVocabularyIri());
     }
 }

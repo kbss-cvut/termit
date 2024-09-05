@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Indicates that validation for a set of vocabularies was finished.
  */
-public class VocabularyValidationFinished extends ApplicationEvent {
+public class VocabularyValidationFinishedEvent extends ApplicationEvent {
 
     /**
      * Vocabulary closure of {@link #originVocabularyIri}.
@@ -39,9 +39,9 @@ public class VocabularyValidationFinished extends ApplicationEvent {
      * @param vocabularyIris IRI of the vocabulary on which the validation was triggered.
      * @param validationResults results of the validation
      */
-    public VocabularyValidationFinished(@NotNull Object source, @NotNull URI originVocabularyIri,
-                                        @NotNull Collection<URI> vocabularyIris,
-                                        @NotNull List<ValidationResult> validationResults) {
+    public VocabularyValidationFinishedEvent(@NotNull Object source, @NotNull URI originVocabularyIri,
+                                             @NotNull Collection<URI> vocabularyIris,
+                                             @NotNull List<ValidationResult> validationResults) {
         super(source);
         this.vocabularyIris = Collections.unmodifiableCollection(vocabularyIris);
         this.validationResults = Collections.unmodifiableCollection(validationResults);

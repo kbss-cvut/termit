@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.websocket;
 
-import cz.cvut.kbss.termit.event.VocabularyValidationFinished;
+import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.security.SecurityConstants;
@@ -67,7 +67,7 @@ public class VocabularySocketController extends BaseWebSocketController {
      * Publishes results of validation to users.
      */
     @EventListener
-    public void onVocabularyValidationFinished(VocabularyValidationFinished event) {
+    public void onVocabularyValidationFinished(VocabularyValidationFinishedEvent event) {
         messagingTemplate.convertAndSend(
                 DESTINATION_VOCABULARIES_VALIDATION,
                 event.getValidationResults(),

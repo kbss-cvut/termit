@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -53,6 +54,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -117,6 +119,16 @@ public class VocabularyService
         this.aclService = aclService;
         this.authorizationService = authorizationService;
         this.context = context;
+    }
+
+    /**
+     * Receives {@link VocabularyContentModifiedEvent} and triggers validation.
+     * The goal for this is to get the results cached and do not force users to wait for validation
+     * when they request it.
+     */
+    @EventListener
+    public void onVocabularyContentModified(VocabularyContentModifiedEvent event) {
+        repositoryService.validateContents(event.getVocabularyIri());
     }
 
     @Override

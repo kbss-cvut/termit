@@ -18,10 +18,9 @@
 package cz.cvut.kbss.termit.persistence.validation;
 
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
-import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,14 +31,12 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.anyCollection;
-import static org.mockito.Mockito.anySet;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -99,7 +96,7 @@ class ResultCachingValidatorTest {
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
         final Collection<ValidationResult> resultOne = runFuture(sut.validate(vocabulary, vocabularies));
         verify(validator).runValidation(vocabularies);
-        sut.evictVocabularyCache(new VocabularyContentModified(this, vocabulary));
+        sut.evictVocabularyCache(new VocabularyContentModifiedEvent(this, vocabulary));
         final Collection<ValidationResult> resultTwo = runFuture(sut.validate(vocabulary, vocabularies));
         verify(validator, times(2)).runValidation(vocabularies);
         assertEquals(resultOne, resultTwo);

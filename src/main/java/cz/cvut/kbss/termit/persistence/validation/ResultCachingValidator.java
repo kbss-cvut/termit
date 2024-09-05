@@ -18,7 +18,7 @@
 package cz.cvut.kbss.termit.persistence.validation;
 
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
-import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
@@ -123,7 +123,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
     }
 
     @EventListener
-    public void evictVocabularyCache(VocabularyContentModified event) {
+    public void evictVocabularyCache(VocabularyContentModifiedEvent event) {
         LOG.debug("Vocabulary content modified, marking cache as dirty for {}.", event.getVocabularyIri());
         // marked as dirty for specified vocabulary
         vocabularyClosure.remove(event.getVocabularyIri());

@@ -21,7 +21,7 @@ import com.github.sgov.server.ValidationResultSeverityComparator;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.event.VocabularyValidationFinished;
+import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
@@ -153,7 +153,7 @@ public class Validator implements VocabularyContentValidator {
 
         return ThrottledFuture.of(() -> {
             final List<ValidationResult> results = runValidation(vocabularyIris);
-            eventPublisher.publishEvent(new VocabularyValidationFinished(this, originVocabularyIri, vocabularyIris, results));
+            eventPublisher.publishEvent(new VocabularyValidationFinishedEvent(this, originVocabularyIri, vocabularyIris, results));
             return results;
         });
     }
