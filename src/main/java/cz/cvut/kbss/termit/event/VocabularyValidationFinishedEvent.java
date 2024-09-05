@@ -13,11 +13,11 @@ import java.util.List;
 /**
  * Indicates that validation for a set of vocabularies was finished.
  */
-public class VocabularyValidationFinishedEvent extends ApplicationEvent {
+public class VocabularyValidationFinishedEvent extends VocabularyEvent {
 
     /**
-     * Vocabulary closure of {@link #originVocabularyIri}.
-     * IRIs of vocabularies that are imported by {@link #originVocabularyIri} and were part of the validation.
+     * Vocabulary closure of {@link #vocabularyIri}.
+     * IRIs of vocabularies that are imported by {@link #vocabularyIri} and were part of the validation.
      */
     @NotNull
     @Unmodifiable
@@ -28,24 +28,17 @@ public class VocabularyValidationFinishedEvent extends ApplicationEvent {
     private final Collection<ValidationResult> validationResults;
 
     /**
-     * IRI of the vocabulary on which the validation was triggered.
-     */
-    @NotNull
-    private final URI originVocabularyIri;
-
-    /**
      * @param source the source of the event
-     * @param originVocabularyIri Vocabulary closure of {@link #originVocabularyIri}.
+     * @param originVocabularyIri Vocabulary closure of {@link #vocabularyIri}.
      * @param vocabularyIris IRI of the vocabulary on which the validation was triggered.
      * @param validationResults results of the validation
      */
     public VocabularyValidationFinishedEvent(@NotNull Object source, @NotNull URI originVocabularyIri,
                                              @NotNull Collection<URI> vocabularyIris,
                                              @NotNull List<ValidationResult> validationResults) {
-        super(source);
+        super(source, originVocabularyIri);
         this.vocabularyIris = Collections.unmodifiableCollection(vocabularyIris);
         this.validationResults = Collections.unmodifiableCollection(validationResults);
-        this.originVocabularyIri = originVocabularyIri;
     }
 
     public @NotNull Collection<URI> getVocabularyIris() {
@@ -54,9 +47,5 @@ public class VocabularyValidationFinishedEvent extends ApplicationEvent {
 
     public @NotNull Collection<ValidationResult> getValidationResults() {
         return validationResults;
-    }
-
-    public @NotNull URI getOriginVocabularyIri() {
-        return originVocabularyIri;
     }
 }

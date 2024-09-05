@@ -18,27 +18,17 @@
 package cz.cvut.kbss.termit.event;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.context.ApplicationEvent;
 
 import java.net.URI;
-import java.util.Objects;
 
 /**
  * Represents an event of modification of the content of a vocabulary.
  * <p>
  * This typically means a term is added, removed or modified. Modification of vocabulary metadata themselves is not considered here.
  */
-public class VocabularyContentModifiedEvent extends ApplicationEvent {
-
-    private final URI vocabularyIri;
+public class VocabularyContentModifiedEvent extends VocabularyEvent {
 
     public VocabularyContentModifiedEvent(Object source, @NotNull URI vocabularyIri) {
-        super(source);
-        Objects.requireNonNull(vocabularyIri);
-        this.vocabularyIri = vocabularyIri;
-    }
-
-    public URI getVocabularyIri() {
-        return vocabularyIri;
+        super(source, vocabularyIri);
     }
 }

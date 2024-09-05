@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
+import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
@@ -126,8 +128,8 @@ public class VocabularyService
      * The goal for this is to get the results cached and do not force users to wait for validation
      * when they request it.
      */
-    @EventListener
-    public void onVocabularyContentModified(VocabularyContentModifiedEvent event) {
+    @EventListener({VocabularyContentModifiedEvent.class, VocabularyCreatedEvent.class})
+    public void onVocabularyContentModified(VocabularyEvent event) {
         repositoryService.validateContents(event.getVocabularyIri());
     }
 
@@ -181,7 +183,7 @@ public class VocabularyService
         repositoryService.persist(instance);
         final AccessControlList acl = aclService.createFor(instance);
         instance.setAcl(acl.getUri());
-        eventPublisher.publishEvent(new VocabularyCreatedEvent(instance));
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(this, instance.getUri()));
     }
 
     @Override
@@ -244,7 +246,7 @@ public class VocabularyService
         final Vocabulary imported = repositoryService.importVocabulary(rename, file);
         final AccessControlList acl = aclService.createFor(imported);
         imported.setAcl(acl.getUri());
-        eventPublisher.publishEvent(new VocabularyCreatedEvent(imported));
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(this, imported.getUri()));
         return imported;
     }
 
@@ -384,7 +386,7 @@ public class VocabularyService
     @PreAuthorize("@vocabularyAuthorizationService.canCreateSnapshot(#vocabulary)")
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
-        eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(this, s.getUri()));
         cloneAccessControlList(s, vocabulary);
         return s;
     }
