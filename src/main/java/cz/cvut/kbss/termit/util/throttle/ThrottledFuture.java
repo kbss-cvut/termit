@@ -96,28 +96,19 @@ public class ThrottledFuture<T> implements CachableFuture<T>, LongRunningTask {
     }
 
     /**
-     * Does not execute the task, blocks the current thread until some result is available.
-     *
-     * @return cached result when available, otherwise awaits future resolution.
+     * Does not execute the task, blocks the current thread until the result is available.
      */
     @Override
     public T get() throws InterruptedException, ExecutionException {
-        if (!isDone() && this.cachedResult != null) {
-            return this.cachedResult;
-        }
         return future.get();
     }
 
     /**
-     * Does not execute the task, blocks the current thread until some result is available.
-     * @return cached result when available, otherwise awaits future resolution.
+     * Does not execute the task, blocks the current thread until the result is available.
      */
     @Override
     public T get(long timeout, @NotNull TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
-        if (!isDone() && this.cachedResult != null) {
-            return this.cachedResult;
-        }
         return future.get(timeout, unit);
     }
     /**

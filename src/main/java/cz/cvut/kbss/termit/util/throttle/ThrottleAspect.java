@@ -99,7 +99,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
 
     private final Clock clock;
 
-    private final Executor transactionExecutor;
+    private final TransactionExecutor transactionExecutor;
 
     private final @NotNull AtomicReference<Instant> lastClear;
 
@@ -317,15 +317,15 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
             try {
-                // update last run timestamp
-                synchronized (lastRun) {
-                    lastRun.put(identifier, Instant.now(clock));
-                }
                 // fulfill the future
                 if (withTransaction) {
                     transactionExecutor.execute(throttledFuture::run);
                 } else {
                     throttledFuture.run();
+                }
+                // update last run timestamp
+                synchronized (lastRun) {
+                    lastRun.put(identifier, Instant.now(clock));
                 }
             } finally {
                 // clear the security context

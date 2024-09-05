@@ -138,21 +138,7 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorInfo> authenticationException(HttpServletRequest request, AuthenticationException e) {
         LOG.warn("Authentication failure during HTTP request to {}: {}", request.getRequestURI(), e.getMessage());
         LOG.atDebug().setCause(e).log(e.getMessage());
-        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.FORBIDDEN);
-    }
-
-    /**
-     * Fired, for example, on method security violation
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorInfo> accessDeniedException(HttpServletRequest request, AccessDeniedException e) {
-        LOG.atWarn().setMessage("[{}] Unauthorized access: {}").addArgument(() -> {
-            if (request.getUserPrincipal() != null) {
-                return request.getUserPrincipal().getName();
-            }
-            return "(unknown user)";
-        }).addArgument(e.getMessage()).log();
-        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(ValidationException.class)
