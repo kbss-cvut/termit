@@ -4,7 +4,6 @@ import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
-import cz.cvut.kbss.termit.websocket.handler.WebSocketMessageWithHeadersValueHandler;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +15,6 @@ import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.converter.StringMessageConverter;
 import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
-import org.springframework.messaging.handler.invocation.HandlerMethodReturnValueHandler;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -92,11 +90,6 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
         AuthorizationChannelInterceptor interceptor = new AuthorizationChannelInterceptor(messageAuthorizationManager);
         interceptor.setAuthorizationEventPublisher(new SpringAuthorizationEventPublisher(context));
         registration.interceptors(webSocketJwtAuthorizationInterceptor, new SecurityContextChannelInterceptor(), interceptor);
-    }
-
-    @Override
-    public void addReturnValueHandlers(List<HandlerMethodReturnValueHandler> returnValueHandlers) {
-        returnValueHandlers.add(new WebSocketMessageWithHeadersValueHandler(simpMessagingTemplate));
     }
 
     @Override

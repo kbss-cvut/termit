@@ -47,6 +47,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.CachableFuture;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -361,7 +362,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         refreshLastModified();
     }
 
-    @Throttle("{#vocabulary}")
     @Transactional
     public CachableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         final VocabularyContentValidator validator = context.getBean(VocabularyContentValidator.class);

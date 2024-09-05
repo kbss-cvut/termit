@@ -19,7 +19,9 @@ package cz.cvut.kbss.termit.persistence.validation;
 
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +32,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.Collection;
@@ -37,8 +40,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 @Component("cachingValidator")
 @Primary
@@ -53,7 +58,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
      */
     private final Map<URI, @NotNull Collection<URI>> vocabularyClosure = new ConcurrentHashMap<>();
 
-    private final Map<URI, @NotNull List<ValidationResult>> validationCache = new HashMap<>();
+    private final Map<URI, @NotNull Collection<ValidationResult>> validationCache = new HashMap<>();
 
     /**
      * @return true when the cache contents are dirty and should be refreshed; false otherwise.
@@ -62,12 +67,14 @@ public class ResultCachingValidator implements VocabularyContentValidator {
         return vocabularyClosure.containsKey(originVocabularyIri);
     }
 
-    private List<ValidationResult> getCached(@NotNull URI originVocabularyIri) {
+    private Optional<Collection<ValidationResult>> getCached(@NotNull URI originVocabularyIri) {
         synchronized (validationCache) {
-            return validationCache.getOrDefault(originVocabularyIri, List.of());
+            return Optional.ofNullable(validationCache.get(originVocabularyIri));
         }
     }
 
+    @Throttle("{#originVocabularyIri}")
+    @Transactional
     @Override
     public @NotNull ThrottledFuture<Collection<ValidationResult>> validate(@NotNull URI originVocabularyIri, @NotNull Collection<URI> vocabularyIris) {
         final Set<URI> iris = Set.copyOf(vocabularyIris);
@@ -76,25 +83,35 @@ public class ResultCachingValidator implements VocabularyContentValidator {
             return ThrottledFuture.done(List.of());
         }
 
-        List<ValidationResult> cached = getCached(originVocabularyIri);
-        if (isNotDirty(originVocabularyIri)) {
-            return ThrottledFuture.done(cached);
+        Optional<Collection<ValidationResult>> cached = getCached(originVocabularyIri);
+        if (isNotDirty(originVocabularyIri) && cached.isPresent()) {
+            return ThrottledFuture.done(cached.get());
         }
 
-        return ThrottledFuture.of(() -> runValidation(originVocabularyIri, iris)).setCachedResult(cached.isEmpty() ? null : cached);
+        return ThrottledFuture.of(() -> runValidation(originVocabularyIri, iris)).setCachedResult(cached.orElse(null));
     }
 
 
     private @NotNull Collection<ValidationResult> runValidation(@NotNull URI originVocabularyIri, @NotNull final Set<URI> iris) {
-        if (isNotDirty(originVocabularyIri)) {
-            return getCached(originVocabularyIri);
+        Optional<Collection<ValidationResult>> cached = getCached(originVocabularyIri);
+        if (isNotDirty(originVocabularyIri) && cached.isPresent()) {
+            return cached.get();
         }
 
-        final List<ValidationResult> results = getValidator().runValidation(iris);
+        final Collection<ValidationResult> results;
+        try {
+            // executes real validation
+            results = getValidator().validate(originVocabularyIri, iris).get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
+        } catch (ExecutionException e) {
+            throw new TermItException(e.getCause());
+        }
 
         synchronized (validationCache) {
             vocabularyClosure.put(originVocabularyIri, Collections.unmodifiableCollection(iris));
-            validationCache.put(originVocabularyIri, Collections.unmodifiableList(results));
+            validationCache.put(originVocabularyIri, Collections.unmodifiableCollection(results));
         }
 
         return results;

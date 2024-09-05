@@ -143,7 +143,8 @@ public class WebSocketExceptionHandler {
     @MessageExceptionHandler(AuthenticationException.class)
     public ErrorInfo authenticationException(Message<?> message, AuthenticationException e) {
         LOG.atDebug().setCause(e).log(e.getMessage());
-        LOG.error("Authentication failure during message processing: {}\nMessage: {}", e.getMessage(), message.toString());
+        LOG.atError().setMessage("Authentication failure during message processing: {}\nMessage: {}")
+           .addArgument(e.getMessage()).addArgument(message::toString).log();
         return errorInfo(message, e);
     }
 
@@ -152,13 +153,11 @@ public class WebSocketExceptionHandler {
      */
     @MessageExceptionHandler(AccessDeniedException.class)
     public ErrorInfo accessDeniedException(Message<?> message, AccessDeniedException e) {
-        LOG.atWarn().setMessage("[{}] Unauthorized access: {}").addArgument(() -> {
-            StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-            if (accessor.getUser() != null) {
-                return accessor.getUser().getName();
-            }
-            return "(unknown user)";
-        }).addArgument(e.getMessage()).log();
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        if (accessor.getUser() != null) {
+            LOG.atWarn().setMessage("[{}] Unauthorized access: {}").addArgument(() -> accessor.getUser().getName())
+               .addArgument(e.getMessage()).log();
+        }
         return errorInfo(message, e);
     }
 

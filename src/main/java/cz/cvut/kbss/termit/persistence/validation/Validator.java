@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -142,6 +143,7 @@ public class Validator implements VocabularyContentValidator {
         }
     }
 
+    @Throttle("{#originVocabularyIri}")
     @Transactional(readOnly = true)
     @Override
     public @NotNull ThrottledFuture<Collection<ValidationResult>> validate(final @NotNull URI originVocabularyIri, final @NotNull Collection<URI> vocabularyIris) {
@@ -159,7 +161,9 @@ public class Validator implements VocabularyContentValidator {
     protected synchronized List<ValidationResult> runValidation(@NotNull Collection<URI> vocabularyIris) {
         LOG.debug("Validating {}", vocabularyIris);
         try {
+            LOG.trace("Constructing model from RDF4J repository...");
             final Model dataModel = getModelFromRdf4jRepository(vocabularyIris);
+            LOG.trace("Model constructed, running validation...");
             // TODO: would be better to cache the validator, but its not thread safe
             org.topbraid.shacl.validation.ValidationReport report = new com.github.sgov.server.Validator()
                     .validate(dataModel, validationModel);
