@@ -150,7 +150,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
      * @throws IllegalCallerException when the annotated method returns another type than {@code void}, {@link Void} or {@link Future}
      * @implNote Around advice configured in {@code spring-aop.xml}
      */
-    public synchronized @Nullable Object throttleMethodCall(@NotNull ProceedingJoinPoint joinPoint,
+    public @Nullable Object throttleMethodCall(@NotNull ProceedingJoinPoint joinPoint,
                                                             @NotNull Throttle throttleAnnotation) throws Throwable {
 
         // if the current thread is already executing a throttled code, we want to skip further throttling
@@ -164,6 +164,12 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             }
             return result;
         }
+
+        return doThrottle(joinPoint, throttleAnnotation);
+    }
+
+    private synchronized @Nullable Object doThrottle(@NotNull ProceedingJoinPoint joinPoint,
+                                                     @NotNull Throttle throttleAnnotation) throws Throwable {
 
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
