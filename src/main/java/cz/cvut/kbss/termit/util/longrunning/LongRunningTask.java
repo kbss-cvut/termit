@@ -17,10 +17,15 @@ public interface LongRunningTask {
     boolean isRunning();
 
     /**
-     * @return true when the task has finished, false otherwise.
-     * Returns true regardless of whether the task succeeded.
+     * Returns {@code true} if this task completed.
+     *
+     * Completion may be due to normal termination, an exception, or
+     * cancellation -- in all of these cases, this method will return
+     * {@code true}.
+     *
+     * @return {@code true} if this task completed
      */
-    boolean isCompleted();
+    boolean isDone();
 
     /**
      * @return a timestamp of the task execution start,

@@ -1,28 +1,34 @@
 package cz.cvut.kbss.termit.util.throttle;
 
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class ThrottledFuture<T> implements CachableFuture<T>, LongRunningTask {
+public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private T cachedResult = null;
+    private @Nullable T cachedResult = null;
 
     private final CompletableFuture<T> future;
 
     private @Nullable Supplier<T> task;
+
+    private final List<Consumer<T>> onCompletion = new ArrayList<>();
 
     /**
      * Access only with acquired {@link #lock}
@@ -116,16 +122,19 @@ public class ThrottledFuture<T> implements CachableFuture<T>, LongRunningTask {
      * @return If the current task is already running, was canceled or already completed, returns a new future for the given task.
      * Otherwise, replaces the current task and returns self.
      */
-    protected ThrottledFuture<T> update(Supplier<T> task) {
+    protected ThrottledFuture<T> update(Supplier<T> task, List<Consumer<T>> onCompletion) {
+        boolean locked = false;
         try {
-            boolean locked = lock.tryLock();
-            if (!locked || isRunning() || isCompleted()) {
-                return ThrottledFuture.of(task);
+             locked = lock.tryLock();
+            ThrottledFuture<T> updatedFuture = this;
+            if (!locked || isRunning() || isDone()) {
+                updatedFuture = ThrottledFuture.of(task);
             }
-            this.task = task;
-            return this;
+            updatedFuture.task = task;
+            updatedFuture.onCompletion.addAll(onCompletion);
+            return updatedFuture;
         } finally {
-            if (lock.isHeldByCurrentThread()) {
+            if (locked) {
                 lock.unlock();
             }
         }
@@ -141,56 +150,81 @@ public class ThrottledFuture<T> implements CachableFuture<T>, LongRunningTask {
      * New future when the target is being executed, was canceled or completed.
      */
     protected ThrottledFuture<T> transfer(ThrottledFuture<T> target) {
+        boolean locked = false;
         try {
-            boolean locked = lock.tryLock();
-            if (!locked || isRunning() || isCompleted()) {
+            locked = lock.tryLock();
+            if (!locked || isRunning() || isDone()) {
                 return target;
             }
 
-            ThrottledFuture<T> result = target.update(this.task);
+            ThrottledFuture<T> result = target.update(this.task, this.onCompletion);
             this.task = null;
+            this.onCompletion.clear();
             return result;
         } finally {
-            if (lock.isHeldByCurrentThread()) {
+            if (locked) {
                 lock.unlock();
             }
         }
     }
 
     protected void run() {
-        boolean locked;
-        do {
-            locked = lock.tryLock();
-            if (isRunning() || isCompleted()) {
-                return;
-            } else if (!locked) {
-                Thread.yield();
-            }
-        } while (!locked);
-        completingSince = Utils.timestamp();
+        boolean locked = false;
+        try {
+            do {
+                locked = lock.tryLock();
+                if (isRunning() || isDone()) {
+                    return;
+                } else if (!locked) {
+                    Thread.yield();
+                }
+            } while (!locked);
+            completingSince = Utils.timestamp();
 
-        if (task != null) {
-            future.complete(task.get());
-        } else {
-            future.complete(null);
+            T result = null;
+            if (task != null) {
+                result = task.get();
+                final T finalResult = result;
+                onCompletion.forEach(c -> c.accept(finalResult));
+            }
+            future.complete(result);
+        } finally {
+            if (locked) {
+                lock.unlock();
+            }
         }
     }
 
     @Override
     public boolean isRunning() {
-        return completingSince != null;
-    }
-
-    /**
-     * @return true if the future is done or canceled, false otherwise
-     */
-    @Override
-    public boolean isCompleted() {
-        return isDone() || isCancelled();
+        return completingSince != null && !isDone();
     }
 
     @Override
     public @NotNull Optional<Instant> runningSince() {
         return Optional.ofNullable(completingSince);
+    }
+
+    @Override
+    public void then(Consumer<T> action) {
+        try {
+            lock.lock();
+            if (future.isDone() && !future.isCancelled()) {
+                try {
+                    action.accept(future.get());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new TermItException(e);
+                } catch (ExecutionException e) {
+                    throw new TermItException(e);
+                }
+            } else {
+                onCompletion.add(action);
+            }
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
 }

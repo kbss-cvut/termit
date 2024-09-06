@@ -41,7 +41,7 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.throttle.CachableFuture;
+import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import jakarta.validation.Validator;
 import org.apache.tika.Tika;
@@ -320,7 +320,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    public CachableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         return vocabularyDao.validateContents(vocabulary);
     }
 

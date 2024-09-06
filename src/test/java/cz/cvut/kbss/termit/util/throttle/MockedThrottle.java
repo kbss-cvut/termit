@@ -9,11 +9,11 @@ import java.lang.annotation.Annotation;
  */
 public class MockedThrottle implements Throttle {
 
-    private String value;
+    private @NotNull String value;
 
-    private String group;
+    private @NotNull String group;
 
-    public MockedThrottle(String value, String group) {
+    public MockedThrottle(@NotNull String value, @NotNull String group) {
         this.value = value;
         this.group = group;
     }
@@ -33,11 +33,11 @@ public class MockedThrottle implements Throttle {
         return Throttle.class;
     }
 
-    public void setValue(String value) {
+    public void setValue(@NotNull String value) {
         this.value = value;
     }
 
-    public void setGroup(String group) {
+    public void setGroup(@NotNull String group) {
         this.group = group;
     }
 }

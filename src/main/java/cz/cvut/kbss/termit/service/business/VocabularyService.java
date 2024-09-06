@@ -46,13 +46,12 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import cz.cvut.kbss.termit.util.throttle.CachableFuture;
+import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
@@ -358,7 +357,7 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to validate
      */
-    public CachableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         return repositoryService.validateContents(vocabulary);
     }
 

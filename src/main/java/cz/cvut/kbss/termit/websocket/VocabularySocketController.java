@@ -8,7 +8,7 @@ import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
-import cz.cvut.kbss.termit.util.throttle.CachableFuture;
+import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageHeaders;
@@ -51,16 +51,25 @@ public class VocabularySocketController extends BaseWebSocketController {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
 
-        final CachableFuture<Collection<ValidationResult>> future = vocabularyService.validateContents(vocabulary.getUri());
+        final CacheableFuture<Collection<ValidationResult>> future = vocabularyService.validateContents(vocabulary.getUri());
 
-        future.getNow().ifPresent(validationResults ->
+        future.getNow().ifPresentOrElse(validationResults ->
                 sendToSession(
                         DESTINATION_VOCABULARIES_VALIDATION,
                         validationResults,
                         Map.of("vocabulary", identifier,
                                 "cached", !future.isDone()),
                         messageHeaders
-                ));
+                ), () ->
+                future.then(results -> sendToSession(
+                        DESTINATION_VOCABULARIES_VALIDATION,
+                        results,
+                        Map.of("vocabulary", identifier,
+                                "cached", false),
+                        messageHeaders
+                ))
+        );
+
     }
 
     /**

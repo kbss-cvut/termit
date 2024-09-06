@@ -78,21 +78,22 @@ public class ThrottleAspect implements LongRunningTaskRegister {
      *
      * @implSpec Synchronize in the field declaration order before modification
      */
-    private final Map<@NotNull Identifier, @NotNull ThrottledFuture<Object>> throttledFutures;
+    private final Map<Identifier, ThrottledFuture<Object>> throttledFutures;
 
     /**
      * The last run is updated every time a task is finished.
      * @implSpec Synchronize in the field declaration order before modification
      */
-    private final Map<@NotNull Identifier, @NotNull Instant> lastRun;
+    private final Map<Identifier, Instant> lastRun;
 
     /**
      * Scheduled futures are returned from {@link #taskScheduler}.
      * Futures are completed by execution of tasks created in {@link #createRunnableToSchedule}.
+     * Records about them are used for their cancellation in case of debouncing.
      *
      * @implSpec Synchronize in the field declaration order before modification
      */
-    private final NavigableMap<Identifier, @NotNull Future<Object>> scheduledFutures;
+    private final NavigableMap<Identifier, Future<Object>> scheduledFutures;
 
     /**
      * Thread safe set holding identifiers of threads that are
@@ -127,7 +128,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
      * A timestamp of the last time maps were cleaned.
      * @see #clearOldFutures()
      */
-    private final @NotNull AtomicReference<Instant> lastClear;
+    private final @NotNull AtomicReference<@NotNull Instant> lastClear;
 
     @Autowired
     public ThrottleAspect(@Qualifier("threadPoolTaskScheduler") TaskScheduler taskScheduler, SynchronousTransactionExecutor transactionExecutor) {
@@ -141,6 +142,9 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         lastClear = new AtomicReference<>(Instant.now(clock));
     }
 
+    /**
+     * Constructor for testing environment
+     */
     protected ThrottleAspect(Map<Identifier, ThrottledFuture<Object>> throttledFutures,
                              Map<Identifier, Instant> lastRun,
                              NavigableMap<Identifier, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
@@ -211,7 +215,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
                 if (lowerEntry != null) {
                     final Future<Object> lowerFuture = lowerEntry.getValue();
                     boolean hasGroupPrefix = identifier.hasGroupPrefix(lowerEntry.getKey().getGroup());
-                    if (hasGroupPrefix && !lowerFuture.isDone() && !lowerFuture.isCancelled()) {
+                    if (hasGroupPrefix && !lowerFuture.isDone()) {
                         LOG.trace("Throttling canceled due to scheduled lower task '{}'", lowerEntry.getKey());
                         return ThrottledFuture.canceled();
                     }
@@ -224,10 +228,13 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         // if there is a scheduled task and this throttled instance was executed in the last THROTTLE_THRESHOLD
         // cancel the scheduled task
         // -> the execution is further delayed
-        Future<Object> oldFuture = scheduledFutures.get(identifier);
+        Future<Object> oldScheduledFuture = scheduledFutures.get(identifier);
         boolean throttleExpired = isThresholdExpired(identifier);
-        if (oldFuture != null && !throttleExpired) {
-            oldFuture.cancel(false);
+        if (oldScheduledFuture != null && !throttleExpired) {
+            oldScheduledFuture.cancel(false);
+            synchronized (scheduledFutures) {
+                scheduledFutures.remove(identifier);
+            }
         }
 
         // acquire a throttled future from a map, or make a new one
@@ -236,19 +243,20 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         Pair<Runnable, ThrottledFuture<Object>> pair = getFutureTask(joinPoint, identifier, oldThrottledFuture);
         Runnable task = pair.getFirst();
         ThrottledFuture<Object> future = pair.getSecond();
-        // update the throttled future in the map
+        // update the throttled future in the map, it might be just the same future, but it might be a new one
         synchronized (throttledFutures) {
             throttledFutures.put(identifier, future);
         }
 
         Object result = resultVoidOrFuture(signature, future);
 
-        if (future.isCompleted() || future.isRunning()) {
+        if (future.isDone() || future.isRunning()) {
             return result;
         }
 
-        if (oldFuture == null || oldFuture.isDone() || oldFuture.isCancelled()) {
-            schedule(identifier, task, throttleExpired);
+        if (oldScheduledFuture == null || oldThrottledFuture != future || oldScheduledFuture.isDone()) {
+            boolean oldFutureIsDone = oldScheduledFuture == null || oldScheduledFuture.isDone();
+            schedule(identifier, task, throttleExpired && oldFutureIsDone);
         }
 
         return result;
@@ -308,6 +316,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
                 if (throttledMethodFuture.isDone()) {
                     throttledFuture = (ThrottledFuture<Object>) throttledMethodFuture;
                 } else {
+                    // transfer the newer task from methodFuture -> to the (old) throttled future
                     throttledFuture = ((ThrottledFuture<Object>) throttledMethodFuture).transfer(throttledFuture);
                 }
             } else {
@@ -321,7 +330,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
                     // exception happened inside throttled method
                     throw new TermItException(e);
                 }
-            });
+            }, List.of());
         }
 
         final boolean withTransaction = methodSignature.getMethod() != null && methodSignature.getMethod()
@@ -337,7 +346,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
                                               boolean withTransaction) {
         final Supplier<SecurityContext> securityContext = SecurityContextHolder.getDeferredContext();
         return () -> {
-            if (throttledFuture.isCancelled() || throttledFuture.isDone()) {
+            if (throttledFuture.isDone()) {
                 return;
             }
             // mark the thread as throttled
@@ -395,12 +404,12 @@ public class ThrottleAspect implements LongRunningTaskRegister {
                           .forEach(identifier -> {
                               if (isThresholdExpiredByMoreThan(identifier, THROTTLE_DISCARD_THRESHOLD)) {
                                   Optional.ofNullable(throttledFutures.get(identifier)).ifPresent(throttled -> {
-                                      if (throttled.isDone() || throttled.isCancelled()) {
+                                      if (throttled.isDone()) {
                                           throttledFutures.remove(identifier);
                                       }
                                   });
                                   Optional.ofNullable(scheduledFutures.get(identifier)).ifPresent(scheduled -> {
-                                      if (scheduled.isDone() || scheduled.isCancelled()) {
+                                      if (scheduled.isDone()) {
                                           scheduledFutures.remove(identifier);
                                       }
                                   });
@@ -462,11 +471,10 @@ public class ThrottleAspect implements LongRunningTaskRegister {
                     higherFuture = scheduledFutures.get(higherKey);
                     higherFuture.cancel(false);
                     final ThrottledFuture<Object> throttledFuture = throttledFutures.get(higherKey);
-                    if (throttledFuture != null) {
-                        throttledFuture.cancel(false);
-                        if (throttledFuture.isCancelled()) {
-                            throttledFutures.remove(higherKey);
-                        }
+
+                    // cancels future if it's not null (should not be) and removes it from map if it was canceled
+                    if (throttledFuture != null && throttledFuture.cancel(false)) {
+                        throttledFutures.remove(higherKey);
                     }
 
                     scheduledFutures.remove(higherKey);
@@ -555,8 +563,8 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             return this.getSecond();
         }
 
-        public boolean hasGroupPrefix(String group) {
-            return this.getGroup().indexOf(group) == 0;
+        public boolean hasGroupPrefix(@NotNull String group) {
+            return this.getGroup().indexOf(group) == 0 && !this.getGroup().isBlank() && !group.isBlank();
         }
 
         @Override
