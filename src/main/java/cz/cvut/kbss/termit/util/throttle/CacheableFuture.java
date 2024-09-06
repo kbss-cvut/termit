@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
  * A future which can provide a cached result before its completion.
  * @see Future
  */
-public interface CachableFuture<T> extends Future<T> {
+public interface CacheableFuture<T> extends ChainableFuture<T> {
 
     /**
      * @return the cached result when available
@@ -24,7 +24,7 @@ public interface CachableFuture<T> extends Future<T> {
      * @param cachedResult the result to set, or null to clear the cache
      * @return self
      */
-    CachableFuture<T> setCachedResult(@Nullable final T cachedResult);
+    CacheableFuture<T> setCachedResult(@Nullable final T cachedResult);
 
     /**
      * @return the future result if it is available, cached result otherwise.

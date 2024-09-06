@@ -46,9 +46,7 @@ import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.throttle.CachableFuture;
-import cz.cvut.kbss.termit.util.throttle.Throttle;
-import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
+import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,14 +60,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SIZE;
 import static cz.cvut.kbss.termit.util.Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
@@ -365,7 +360,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     @Transactional
-    public CachableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         final VocabularyContentValidator validator = context.getBean(VocabularyContentValidator.class);
         final Collection<URI> importClosure = getTransitivelyImportedVocabularies(vocabulary);
         importClosure.add(vocabulary);

@@ -13,25 +13,27 @@ import java.util.concurrent.Future;
 /**
  * Indicates that calls to this method will be throttled & debounced.
  * <p>
- * Body of the annotated method will be executed on the first call of the method,
+ * The task created from the method will be executed on the first call of the method,
  * then every next call which comes earlier than {@link Constants#THROTTLE_THRESHOLD}
  * will return a pending future which might be resolved by a newer call.
  * Future will be resolved once per {@link Constants#THROTTLE_THRESHOLD} (+ duration to execute the future).
  * <p>
- * <img src="https://github.com/lukaskabc/termit/blob/lukaskabc/Performance-285-throttle/doc/throttle-debounce.png?raw=true" />
+ * <img src="https://github.com/kbss-cvut/termit/tree/master/doc/throttle-debounce.png?raw=true" />
  * <p>
  * Every annotated method should be tested for throttling to ensure it has the desired effect.
  * <p>
  * Method can't use any parameters that are part of persistent context as the method will be executed on separated thread,
  * objects need to be re-requested.<br>
  * Call to this method cannot be part of an existing transaction.
+ * If {@link org.springframework.transaction.annotation.Transactional @Transactional} is present with this annotation,
+ * new transaction is created for the task execution.
  * <p>
  * Available only for methods returning {@code void}, {@link Void} and {@link ThrottledFuture},
  * method signature may be {@link Future},
  * or another type assignable from {@link ThrottledFuture},
  * but the returned concrete object has to be {@link ThrottledFuture}, <b>method call will throw otherwise!</b>
  * <p>
- * Whole body of method with {@code void} or {@link Void} return types will be considered as task to be executed later.
+ * Whole body of method with {@code void} or {@link Void} return types will be considered as task which will be executed later.
  * In case of {@link Future} return type, only task in returned {@link ThrottledFuture} is throttled,
  * meaning that actual body of the method will be executed every call.
  * <p>
@@ -43,7 +45,16 @@ import java.util.concurrent.Future;
  * <pre><code>
  *  {@code @}Throttle(value = "{#paramObj, #anotherParam}")
  *  public Future&lt;String&gt; myFunction(Object paramObj, Object anotherParam) {
- *      return ThrottledFuture.of(() -> doStuff());
+ *      // this will execute on every call as the return type is future
+ *      LOG.trace("my function called");
+ *      return ThrottledFuture.of(() -> doStuff()); // doStuff() will be throttled
+ *  }
+ * </code></pre>
+ * <pre><code>
+ *  {@code @}Throttle(value = "{#paramObj, #anotherParam}")
+ *  public void myFunction(Object paramObj, Object anotherParam) {
+ *      // whole method body will be throttled, as return type is not future
+ *      LOG.trace("my function called");
  *  }
  * </code></pre>
  *
@@ -83,6 +94,7 @@ public @interface Throttle {
      *        -&gt; task <b>A is canceled</b> as the task C has lower group than A
      * </pre>
      * Blank string disables any group processing.
+     * @see String#compareTo(String)
      */
     @NotNull String group() default "";
 }

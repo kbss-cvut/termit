@@ -2,7 +2,11 @@ package cz.cvut.kbss.termit.util.throttle;
 
 import java.net.URI;
 
-@SuppressWarnings("unused")
+/**
+ * Provides static methods allowing construction of dynamic group identifiers
+ * used in {@link Throttle @Throttle} annotations.
+ */
+@SuppressWarnings("unused") // it is used from SpEL expressions
 public class ThrottleGroupProvider {
 
     private ThrottleGroupProvider() {

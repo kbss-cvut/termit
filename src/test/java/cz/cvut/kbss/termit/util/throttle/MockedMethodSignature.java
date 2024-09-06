@@ -9,13 +9,15 @@ import java.lang.reflect.Method;
  */
 public class MockedMethodSignature implements MethodSignature {
 
+    private final String methodName;
     private Class<?> returnType;
 
     private Class<?>[] parameterTypes;
 
     private String[] parameterNames;
 
-    public MockedMethodSignature(Class<?> returnType, Class[] parameterTypes, String[] parameterNames) {
+    public MockedMethodSignature(String methodName, Class<?> returnType, Class[] parameterTypes, String[] parameterNames) {
+        this.methodName = methodName;
         this.returnType = returnType;
         this.parameterTypes = parameterTypes;
         this.parameterNames = parameterNames;
@@ -52,17 +54,17 @@ public class MockedMethodSignature implements MethodSignature {
 
     @Override
     public String toShortString() {
-        return "shortMethodSignatureString";
+        return "shortMethodSignatureString" + methodName;
     }
 
     @Override
     public String toLongString() {
-        return "longMethodSignatureString";
+        return "longMethodSignatureString" + methodName;
     }
 
     @Override
     public String getName() {
-        return "testingMethodName";
+        return methodName;
     }
 
     @Override
