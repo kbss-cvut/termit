@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.util.longrunning;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -32,5 +31,5 @@ public interface LongRunningTask {
      * or empty if the task execution has not yet started.
      */
     @NotNull
-    Optional<Instant> runningSince();
+    Optional<Instant> startedAt();
 }

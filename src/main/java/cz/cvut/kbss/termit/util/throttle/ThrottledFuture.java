@@ -14,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -33,7 +34,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     /**
      * Access only with acquired {@link #lock}
      */
-    private @Nullable Instant completingSince = null;
+    private AtomicReference<@Nullable Instant> startedAt = new AtomicReference<>(null);
 
     private ThrottledFuture(@NotNull final Supplier<T> task) {
         this.task = task;
@@ -61,7 +62,6 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     public static <T> ThrottledFuture<T> canceled() {
         ThrottledFuture<T> f = new ThrottledFuture<>();
         f.cancel(true);
-        assert f.isCancelled();
         return f;
     }
 
@@ -71,7 +71,6 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     public static <T> ThrottledFuture<T> done(T result) {
         ThrottledFuture<T> f = ThrottledFuture.of(() -> result);
         f.run();
-        assert f.isDone();
         return f;
     }
 
@@ -179,7 +178,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
                     Thread.yield();
                 }
             } while (!locked);
-            completingSince = Utils.timestamp();
+            startedAt.set(Utils.timestamp());
 
             T result = null;
             if (task != null) {
@@ -197,12 +196,12 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
 
     @Override
     public boolean isRunning() {
-        return completingSince != null && !isDone();
+        return startedAt.get() != null && !isDone();
     }
 
     @Override
-    public @NotNull Optional<Instant> runningSince() {
-        return Optional.ofNullable(completingSince);
+    public @NotNull Optional<Instant> startedAt() {
+        return Optional.ofNullable(startedAt.get());
     }
 
     @Override

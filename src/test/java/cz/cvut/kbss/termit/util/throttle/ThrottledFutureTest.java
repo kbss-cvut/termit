@@ -2,11 +2,15 @@ package cz.cvut.kbss.termit.util.throttle;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -114,5 +118,74 @@ class ThrottledFutureTest {
         assertFalse(completed.get()); // action was not executed yet
         future.cancel(false);
         assertFalse(completed.get());
+    }
+
+    @Test
+    void callingRunWillExecuteFutureOnlyOnce() {
+        AtomicInteger count = new AtomicInteger(0);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
+            count.incrementAndGet();
+        });
+
+        future.run();
+        final Optional<Instant> runningSince = future.startedAt();
+        assertTrue(runningSince.isPresent());
+        assertTrue(future.isDone());
+        assertFalse(future.isCancelled());
+        assertFalse(future.isRunning());
+
+        future.run();
+        assertTrue(future.isDone());
+        assertFalse(future.isCancelled());
+        assertFalse(future.isRunning());
+
+        // verify that timestamp did not change
+        assertTrue(future.startedAt().isPresent());
+        assertEquals(runningSince.get(), future.startedAt().get());
+    }
+
+    /**
+     * Verifies locks and that second thread exists fast when calls run on already running future.
+     */
+    @Test
+    void callingRunWillExecuteFutureOnlyOnceAndWontBlockSecondThreadAsync() throws Throwable {
+        AtomicBoolean allowExit = new AtomicBoolean(false);
+        AtomicInteger count = new AtomicInteger(0);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
+            count.incrementAndGet();
+            while (!allowExit.get()) {
+                Thread.yield();
+            }
+        });
+        final Thread threadA = new Thread(future::run);
+        final Thread threadB = new Thread(future::run);
+        threadA.start();
+
+        await("count incrementation").atMost(Duration.ofSeconds(30)).until(() -> count.get() > 0);
+        // now there is a threadA spinning in the future task
+        // locks in the future should be held
+        assertTrue(future.isRunning());
+        assertFalse(future.isDone());
+        assertFalse(future.isCancelled());
+
+        final Optional<Instant> runningSince = future.startedAt();
+        assertTrue(runningSince.isPresent());
+
+        threadB.start();
+
+        // thread B should not be blocked
+        await("threadB start").atMost(Duration.ofSeconds(30)).until(() -> threadB.getState().equals(Thread.State.TERMINATED));
+        assertTrue(future.isRunning());
+
+        allowExit.set(true);
+        threadA.join(60 * 1000);
+        threadB.join(60 * 1000);
+
+        assertFalse(threadA.isAlive());
+        assertFalse(threadB.isAlive());
+
+        assertEquals(1, count.get());
+        assertTrue(future.startedAt().isPresent());
+        assertEquals(runningSince.get(), future.startedAt().get());
     }
 }
