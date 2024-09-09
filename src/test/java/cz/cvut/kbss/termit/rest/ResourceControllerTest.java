@@ -198,7 +198,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final File file = generateFile();
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, FILE_NAME)).thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
-        performAsync(put(PATH + "/" + FILE_NAME + "/text-analysis").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
+        mockMvc.perform(put(PATH + "/" + FILE_NAME + "/text-analysis").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
                .andExpect(status().isNoContent());
         verify(resourceServiceMock).runTextAnalysis(file, Collections.emptySet());
     }
@@ -210,7 +210,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
         final Set<String> vocabularies = IntStream.range(0, 3).mapToObj(i -> Generator.generateUri().toString())
                                                   .collect(Collectors.toSet());
-        performAsync(put(PATH + "/" + FILE_NAME + "/text-analysis").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
+        mockMvc.perform(put(PATH + "/" + FILE_NAME + "/text-analysis").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE)
                                                                       .param("vocabulary",
                                                                              vocabularies.toArray(new String[0])))
                .andExpect(status().isNoContent());

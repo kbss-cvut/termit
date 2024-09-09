@@ -131,7 +131,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
     private final @NotNull AtomicReference<@NotNull Instant> lastClear;
 
     @Autowired
-    public ThrottleAspect(@Qualifier("threadPoolTaskScheduler") TaskScheduler taskScheduler, SynchronousTransactionExecutor transactionExecutor) {
+    public ThrottleAspect(@Qualifier("longRunningTaskScheduler") TaskScheduler taskScheduler, SynchronousTransactionExecutor transactionExecutor) {
         this.taskScheduler = taskScheduler;
         this.transactionExecutor = transactionExecutor;
         throttledFutures = new HashMap<>();

@@ -193,7 +193,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final URI termUri = initTermUriResolution();
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
-        performAsync(put(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME).content(toJson(term)).contentType(
+        mockMvc.perform(put(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME).content(toJson(term)).contentType(
                 MediaType.APPLICATION_JSON_VALUE)).andExpect(status().isNoContent());
         verify(termServiceMock).update(term);
     }
@@ -632,7 +632,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term term = Generator.generateTerm();
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         term.setUri(termUri);
-        performAsync(
+        mockMvc.perform(
                 put("/terms/" + TERM_NAME).param(QueryParams.NAMESPACE, NAMESPACE).content(toJson(term)).contentType(
                         MediaType.APPLICATION_JSON_VALUE)).andExpect(status().isNoContent());
         verify(idResolverMock).resolveIdentifier(NAMESPACE, TERM_NAME);
@@ -770,7 +770,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         when(termServiceMock.findRequired(termUri)).thenReturn(toAnalyze);
 
-        performAsync(
+        mockMvc.perform(
                        put(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/text-analysis"))
                .andExpect(status().isNoContent());
         verify(termServiceMock).analyzeTermDefinition(toAnalyze, URI.create(VOCABULARY_URI));

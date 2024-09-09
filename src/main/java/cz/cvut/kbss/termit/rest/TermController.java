@@ -72,7 +72,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 
@@ -359,7 +358,7 @@ public class TermController extends BaseController {
     @PutMapping(value = "/vocabularies/{localName}/terms/{termLocalName}",
                 consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Callable<Void> update(
+    public void update(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
@@ -370,11 +369,8 @@ public class TermController extends BaseController {
             @RequestBody Term term) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
         verifyRequestAndEntityIdentifier(term, termUri);
-        return () -> {
-            termService.update(term);
-            LOG.debug("Term {} updated.", term);
-            return null;
-        };
+        termService.update(term);
+        LOG.debug("Term {} updated.", term);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -386,7 +382,7 @@ public class TermController extends BaseController {
     })
     @PutMapping(value = "/terms/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Callable<Void> update(
+    public void update(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -397,11 +393,8 @@ public class TermController extends BaseController {
             @RequestBody Term term) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         verifyRequestAndEntityIdentifier(term, termUri);
-        return () -> {
-            termService.update(term);
-            LOG.debug("Term {} updated.", term);
-            return null;
-        };
+        termService.update(term);
+        LOG.debug("Term {} updated.", term);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -612,18 +605,14 @@ public class TermController extends BaseController {
     })
     @PutMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Callable<Void> runTextAnalysisOnTerm(
+    public void runTextAnalysisOnTerm(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        return () -> {
-            termService.analyzeTermDefinition(getById(localName, termLocalName, namespace),
-                    getVocabularyUri(namespace, localName));
-            return null;
-        };
+        termService.analyzeTermDefinition(getById(localName, termLocalName, namespace), getVocabularyUri(namespace, localName));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

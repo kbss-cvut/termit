@@ -65,12 +65,6 @@ public class Constants {
     public static final Duration THROTTLE_DISCARD_THRESHOLD = Duration.ofMinutes(1);
 
     /**
-     * The amount of millis used as timeout for async REST tasks (REST controllers returning Callable):
-     * 5 minutes
-     */
-    public static final long REST_ASYNC_TIMEOUT = (long) 1000 * 60 * 5;
-
-    /**
      * Default page size.
      * <p>
      * Implemented as maximum integer so that a default page specification corresponds to a find all query.
