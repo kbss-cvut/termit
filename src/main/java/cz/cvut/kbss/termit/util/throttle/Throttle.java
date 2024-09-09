@@ -20,8 +20,6 @@ import java.util.concurrent.Future;
  * <p>
  * <img src="https://github.com/kbss-cvut/termit/tree/master/doc/throttle-debounce.png?raw=true" />
  * <p>
- * Every annotated method should be tested for throttling to ensure it has the desired effect.
- * <p>
  * Method can't use any parameters that are part of persistent context as the method will be executed on separated thread,
  * objects need to be re-requested.<br>
  * Call to this method cannot be part of an existing transaction.

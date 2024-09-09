@@ -19,6 +19,8 @@ package cz.cvut.kbss.termit.persistence.validation;
 
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
+import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
+import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
@@ -54,7 +56,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
 
     /**
      * Map of origin vocabulary IRI to vocabulary iri closure of imported vocabularies.
-     * When the value is null, then the cache entry is considered dirty.
+     * When the record is missing, the cache is considered as dirty.
      */
     private final Map<URI, @NotNull Collection<URI>> vocabularyClosure = new ConcurrentHashMap<>();
 
@@ -80,6 +82,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
         final Set<URI> iris = Set.copyOf(vocabularyIris);
 
         if (iris.isEmpty()) {
+            LOG.warn("Validation of empty IRI list was requested for {}", originVocabularyIri);
             return ThrottledFuture.done(List.of());
         }
 
@@ -122,8 +125,8 @@ public class ResultCachingValidator implements VocabularyContentValidator {
         return null;    // Will be replaced by Spring
     }
 
-    @EventListener
-    public void evictVocabularyCache(VocabularyContentModifiedEvent event) {
+    @EventListener({VocabularyContentModifiedEvent.class, VocabularyCreatedEvent.class})
+    public void evictVocabularyCache(VocabularyEvent event) {
         LOG.debug("Vocabulary content modified, marking cache as dirty for {}.", event.getVocabularyIri());
         // marked as dirty for specified vocabulary
         vocabularyClosure.remove(event.getVocabularyIri());
@@ -135,6 +138,9 @@ public class ResultCachingValidator implements VocabularyContentValidator {
                     vocabularyClosure.remove(originVocabularyIri);
                 }
             });
+            if (event instanceof VocabularyCreatedEvent) {
+                validationCache.remove(event.getVocabularyIri());
+            }
         }
     }
 
