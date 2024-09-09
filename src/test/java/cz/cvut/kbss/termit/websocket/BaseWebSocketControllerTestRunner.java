@@ -6,7 +6,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import cz.cvut.kbss.termit.websocket.util.CachingChannelInterceptor;
-import jakarta.annotation.PostConstruct;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;

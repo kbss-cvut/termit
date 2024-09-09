@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Allows validating the content of vocabularies based on preconfigured rules.

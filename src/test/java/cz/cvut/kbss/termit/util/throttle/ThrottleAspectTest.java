@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.expression.spel.SpelParseException;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.TaskUtils;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;

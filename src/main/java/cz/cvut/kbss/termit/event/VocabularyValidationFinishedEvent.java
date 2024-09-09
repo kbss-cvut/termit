@@ -3,7 +3,6 @@ package cz.cvut.kbss.termit.event;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
-import org.springframework.context.ApplicationEvent;
 
 import java.net.URI;
 import java.util.Collection;

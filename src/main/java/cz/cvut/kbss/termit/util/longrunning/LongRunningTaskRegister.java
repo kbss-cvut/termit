@@ -3,7 +3,6 @@ package cz.cvut.kbss.termit.util.longrunning;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * An object that will schedule a long-running tasks
