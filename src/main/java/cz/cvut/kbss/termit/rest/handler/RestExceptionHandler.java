@@ -57,6 +57,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
  * The general pattern should be that unless an exception can be handled in a more appropriate place it bubbles up to a
  * REST controller which originally received the request. There, it is caught by this handler, logged and a reasonable
  * error message is returned to the user.
+ *
  * @implSpec Should reflect {@link cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler}
  */
 @RestControllerAdvice
@@ -85,6 +86,10 @@ public class RestExceptionHandler {
 
     private static ErrorInfo errorInfo(HttpServletRequest request, Throwable e) {
         return ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI());
+    }
+
+    private static ErrorInfo errorInfo(HttpServletRequest request, TermItException e) {
+        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI());
     }
 
     @ExceptionHandler(PersistenceException.class)
@@ -170,8 +175,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(TermItException.class)
-    public ResponseEntity<ErrorInfo> termItException(HttpServletRequest request,
-                                                     TermItException e) {
+    public ResponseEntity<ErrorInfo> termItException(HttpServletRequest request, TermItException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -260,8 +264,11 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request, InvalidPasswordChangeRequestException e) {
+    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request,
+                                                                           InvalidPasswordChangeRequestException e) {
         logException(e, request);
-        return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()), HttpStatus.CONFLICT);
+        return new ResponseEntity<>(
+                ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
+                HttpStatus.CONFLICT);
     }
 }

@@ -24,6 +24,11 @@ package cz.cvut.kbss.termit.exception;
  */
 public class TermItException extends RuntimeException {
 
+    /**
+     * Identifier of localized frontend message.
+     */
+    private String messageId;
+
     protected TermItException() {
     }
 
@@ -31,11 +36,29 @@ public class TermItException extends RuntimeException {
         super(message);
     }
 
+    public TermItException(String message, String messageId) {
+        super(message);
+        this.messageId = messageId;
+    }
+
     public TermItException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    public TermItException(String message, String messageId, Throwable cause) {
+        super(message, cause);
+        this.messageId = messageId;
+    }
+
     public TermItException(Throwable cause) {
         super(cause);
+    }
+
+    public String getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(String messageId) {
+        this.messageId = messageId;
     }
 }
