@@ -319,4 +319,12 @@ class IdentifierResolverTest {
         final URI result = sut.generateIdentifier(namespace, label);
         assertEquals(URI.create(namespace + "/je-povinným-subjektem-podle-2-zákona-106-1999-sb."), result);
     }
+
+    @Test
+    void generateIdentifierRemovesSquareBrackets() {
+        final String namespace = Vocabulary.s_c_slovnik;
+        final String label = "Délka dostřiku [m]";
+        final URI result = sut.generateIdentifier(namespace, label);
+        assertEquals(URI.create(namespace + "/délka-dostřiku-m"), result);
+    }
 }
