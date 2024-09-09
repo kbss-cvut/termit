@@ -12,5 +12,5 @@ public interface ChainableFuture<T> extends Future<T> {
      * If the future is already completed, action is executed synchronously.
      * @param action action to be executed
      */
-    void then(Consumer<T> action);
+    ChainableFuture then(Consumer<T> action);
 }
