@@ -1,5 +1,8 @@
 package cz.cvut.kbss.termit.websocket;
 
+import cz.cvut.kbss.termit.event.VocabularyEvent;
+import cz.cvut.kbss.termit.event.VocabularyFileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.VocabularyTermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Controller;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,8 +32,6 @@ import java.util.Optional;
 @MessageMapping("/vocabularies")
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class VocabularySocketController extends BaseWebSocketController {
-
-    private static final String DESTINATION_VOCABULARIES_VALIDATION = "/vocabularies/validation";
 
     private final VocabularyService vocabularyService;
 
@@ -56,20 +58,20 @@ public class VocabularySocketController extends BaseWebSocketController {
         future.getNow().ifPresentOrElse(validationResults ->
             // if there is a result present (returned from cache), send it
             sendToSession(
-                    DESTINATION_VOCABULARIES_VALIDATION,
+                    WebSocketDestinations.VOCABULARIES_VALIDATION,
                     validationResults,
-                    Map.of("vocabulary", identifier,
+                    getHeaders(identifier,
                             // results are cached if we received a future result, but the future is not done yet
-                            "cached", !future.isDone()),
+                            Map.of("cached", !future.isDone())),
                     messageHeaders
             ), () ->
             // otherwise reply will be sent once the future is resolved
             future.then(results ->
                 sendToSession(
-                        DESTINATION_VOCABULARIES_VALIDATION,
+                        WebSocketDestinations.VOCABULARIES_VALIDATION,
                         results,
-                        Map.of("vocabulary", identifier,
-                                "cached", false),
+                        getHeaders(identifier,
+                                Map.of("cached", false)),
                         messageHeaders
                 ))
         );
@@ -82,9 +84,41 @@ public class VocabularySocketController extends BaseWebSocketController {
     @EventListener
     public void onVocabularyValidationFinished(VocabularyValidationFinishedEvent event) {
         messagingTemplate.convertAndSend(
-                DESTINATION_VOCABULARIES_VALIDATION,
+                WebSocketDestinations.VOCABULARIES_VALIDATION,
                 event.getValidationResults(),
-                Map.of("vocabulary", event.getVocabularyIri(), "cached", false)
+                getHeaders(event.getVocabularyIri(), Map.of("cached", false))
         );
+    }
+
+    @EventListener
+    public void onFileTextAnalysisFinished(VocabularyFileTextAnalysisFinishedEvent event) {
+        messagingTemplate.convertAndSend(
+                WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FINISHED_FILE,
+                event.getFileUri(),
+                getHeaders(event)
+        );
+    }
+
+    @EventListener
+    public void onTermDefinitionTextAnalysisFinished(VocabularyTermDefinitionTextAnalysisFinishedEvent event) {
+        messagingTemplate.convertAndSend(
+                WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FINISHED_TERM_DEFINITION,
+                event.getTermUri(),
+                getHeaders(event)
+        );
+    }
+
+    protected @NotNull Map<String, Object> getHeaders(@NotNull VocabularyEvent event) {
+        return getHeaders(event.getVocabularyIri());
+    }
+
+    protected @NotNull Map<String, Object> getHeaders(@NotNull URI vocabularyUri) {
+        return getHeaders(vocabularyUri, Map.of());
+    }
+
+    protected @NotNull Map<String, Object> getHeaders(@NotNull URI vocabularyUri, Map<String, Object> headers) {
+        final Map<String, Object> headersMap = new HashMap<>(headers);
+        headersMap.put("vocabulary", vocabularyUri);
+        return headersMap;
     }
 }

@@ -148,7 +148,6 @@ public class AnnotationGenerator {
      * @param annotatedTerm Term whose definition was annotated
      */
     @Transactional
-    @Throttle(value = "{#annotatedTerm.getUri()}")
     public void generateAnnotations(InputStream content, AbstractTerm annotatedTerm) {
         // We assume the content (text analysis output) is HTML-compatible
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();

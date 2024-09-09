@@ -325,6 +325,7 @@ public class VocabularyController extends BaseController {
                                                      example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace) {
+        LOG.warn("Called legacy endpoint intended for internal use or testing only! (/vocabularies/{}/terms/text-analysis)", localName);
         vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
     }
 
@@ -340,6 +341,7 @@ public class VocabularyController extends BaseController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     public void runTextAnalysisOnAllVocabularies() {
+        LOG.warn("Called legacy endpoint intended for internal use or testing only! (/vocabularies/text-analysis)");
         vocabularyService.runTextAnalysisOnAllVocabularies();
     }
 

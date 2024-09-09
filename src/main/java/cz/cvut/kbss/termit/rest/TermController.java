@@ -612,6 +612,7 @@ public class TermController extends BaseController {
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        LOG.warn("Called legacy endpoint intended for internal use or testing only! (/vocabularies/{}/terms/{}/text-analysis)", localName, termLocalName);
         termService.analyzeTermDefinition(getById(localName, termLocalName, namespace), getVocabularyUri(namespace, localName));
     }
 

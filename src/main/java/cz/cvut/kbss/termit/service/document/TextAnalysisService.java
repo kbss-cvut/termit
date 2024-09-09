@@ -18,6 +18,8 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
+import cz.cvut.kbss.termit.event.VocabularyFileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.VocabularyTermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -29,6 +31,7 @@ import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -62,14 +65,18 @@ public class TextAnalysisService {
 
     private final TextAnalysisRecordDao recordDao;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @Autowired
     public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
-                               AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao) {
+                               AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao,
+                               ApplicationEventPublisher eventPublisher) {
         this.restClient = restClient;
         this.config = config;
         this.documentManager = documentManager;
         this.annotationGenerator = annotationGenerator;
         this.recordDao = recordDao;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -89,6 +96,7 @@ public class TextAnalysisService {
         input.setVocabularyContexts(vocabularyContexts);
         invokeTextAnalysisOnFile(file, input);
         LOG.debug("Text analysis finished for resource {}.", file.getUri());
+        eventPublisher.publishEvent(new VocabularyFileTextAnalysisFinishedEvent(this, file));
     }
 
     private TextAnalysisInput createAnalysisInput(File file) {
@@ -182,6 +190,7 @@ public class TextAnalysisService {
             input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
 
             invokeTextAnalysisOnTerm(term, input);
+            eventPublisher.publishEvent(new VocabularyTermDefinitionTextAnalysisFinishedEvent(this, term));
         }
     }
 

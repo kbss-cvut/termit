@@ -298,7 +298,7 @@ public class ResourceController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Runs text analysis on the content of the resource with the specified identifier.")
+               description = "Runs text analysis on the content of the resource with the specified identifier. Analysis will be performed asynchronously sometime in the future.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Text analysis executed."),
             @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
