@@ -256,7 +256,13 @@ public class ThrottleAspect implements LongRunningTaskRegister {
 
         if (oldScheduledFuture == null || oldThrottledFuture != future || oldScheduledFuture.isDone()) {
             boolean oldFutureIsDone = oldScheduledFuture == null || oldScheduledFuture.isDone();
-            schedule(identifier, task, throttleExpired && oldFutureIsDone);
+            if (oldThrottledFuture != future) {
+                oldThrottledFuture.then(ignored ->
+                        schedule(identifier, task, throttleExpired && oldFutureIsDone)
+                );
+            } else {
+                schedule(identifier, task, throttleExpired && oldFutureIsDone);
+            }
         }
 
         return result;
@@ -353,7 +359,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
 
-            LOG.trace("Running throttled task [{} left] '{}'", scheduledFutures.size() - 1, identifier);
+            LOG.trace("Running throttled task [{} left] [{} running] '{}'", scheduledFutures.size() - 1, throttledThreads.size(), identifier);
 
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
@@ -371,7 +377,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             } finally {
                 // clear the security context
                 SecurityContextHolder.clearContext();
-                LOG.trace("Throttled task run finished '{}'", identifier);
+                LOG.trace("Finished throttled task [{} left] [{} running] '{}'", scheduledFutures.size() - 1, throttledThreads.size(), identifier);
 
                 clearOldFutures();
 

@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
 
     private final ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock callbackLock = new ReentrantLock();
 
     private @Nullable T cachedResult = null;
 
@@ -124,7 +125,8 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     protected ThrottledFuture<T> update(Supplier<T> task, List<Consumer<T>> onCompletion) {
         boolean locked = false;
         try {
-             locked = lock.tryLock();
+            this.callbackLock.lock();
+            locked = lock.tryLock();
             ThrottledFuture<T> updatedFuture = this;
             if (!locked || isRunning() || isDone()) {
                 updatedFuture = ThrottledFuture.of(task);
@@ -136,6 +138,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
             if (locked) {
                 lock.unlock();
             }
+            this.callbackLock.unlock();
         }
     }
 
@@ -151,6 +154,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     protected ThrottledFuture<T> transfer(ThrottledFuture<T> target) {
         boolean locked = false;
         try {
+            this.callbackLock.lock();
             locked = lock.tryLock();
             if (!locked || isRunning() || isDone()) {
                 return target;
@@ -164,6 +168,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
             if (locked) {
                 lock.unlock();
             }
+            this.callbackLock.unlock();
         }
     }
 
@@ -184,7 +189,9 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
             if (task != null) {
                 result = task.get();
                 final T finalResult = result;
+                callbackLock.lock();
                 onCompletion.forEach(c -> c.accept(finalResult));
+                callbackLock.unlock();
             }
             future.complete(result);
         } finally {
@@ -207,7 +214,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     @Override
     public void then(Consumer<T> action) {
         try {
-            lock.lock();
+            callbackLock.lock();
             if (future.isDone() && !future.isCancelled()) {
                 try {
                     action.accept(future.get());
@@ -221,9 +228,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
                 onCompletion.add(action);
             }
         } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
+            callbackLock.unlock();
         }
     }
 }

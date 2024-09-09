@@ -19,17 +19,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Optional;
-import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -38,28 +29,12 @@ import java.util.stream.Stream;
 import static cz.cvut.kbss.termit.util.Constants.THROTTLE_DISCARD_THRESHOLD;
 import static cz.cvut.kbss.termit.util.Constants.THROTTLE_THRESHOLD;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ThrottleAspectTest {
+    private static final long THREAD_JOIN_TIMEOUT_MILLIS = 60 * 1000;
 
     /**
      * Throttled futures from {@link #sut}
@@ -239,6 +214,14 @@ class ThrottleAspectTest {
     void executeScheduledTasks() {
         taskSchedulerTasks.forEach((runnable, instant) -> runnable.run());
         taskSchedulerTasks.clear();
+    }
+
+    void joinThread(Thread thread) throws InterruptedException {
+        thread.join(THREAD_JOIN_TIMEOUT_MILLIS);
+        if (thread.isAlive()) {
+            thread.interrupt();
+            fail("task thread thread interrupted due to timeout");
+        }
     }
 
     /**
@@ -464,72 +447,6 @@ class ThrottleAspectTest {
         assertEquals(secondResult, firstFuture.get());
     }
 
-    /**
-     * When task is currently being executed and last execution did not happen in last threshold period,
-     * next call should not be executed immediately.
-     * That is because there is already same task running and so a new call should be debounced.
-     */
-    @Test
-    void callToAMethodDuringTaskExecutionOutsideOfThresholdWillResolveToScheduleOfNewFuture() throws Throwable {
-        AtomicBoolean allowTaskToFinish = new AtomicBoolean(false);
-        AtomicBoolean taskRunning = new AtomicBoolean(false);
-
-        // method return type is void, whole method body is considered as a task
-        when(joinPointA.proceed()).then(invocation -> {
-            // simulate long running task
-            taskRunning.set(true);
-            while (!allowTaskToFinish.get()) {
-                Thread.yield();
-            }
-            return null;
-        });
-
-        // first method call
-        // there was no call before, which means the task should be scheduled for immediate execution
-        sut.throttleMethodCall(joinPointA, throttleA);
-
-        Thread taskThread = new Thread(taskSchedulerTasks.getKey(0));
-
-        try {
-            // start long task execution
-            taskThread.start();
-
-            await("task execution start").atMost(Duration.ofSeconds(30)).untilTrue(taskRunning);
-
-            assertEquals(1, throttledFutures.size());
-            assertTrue(throttledFutures.getValue(0).isRunning());
-            final Map.Entry<Runnable, Instant> immediateSchedule = taskSchedulerTasks.entrySet().getValue(0);
-
-            assertNotNull(immediateSchedule);
-            // verify that the task was scheduled immediately
-            assertEquals(getInstant(), immediateSchedule.getValue());
-
-            // move time by a second
-            addSecond();
-
-            // this is second method call in the throttled threshold (time moved only by a second)
-            sut.throttleMethodCall(joinPointA, throttleA);
-            // task should not be scheduled for immediate execution
-            // verify a new task was scheduled
-            assertEquals(2, taskSchedulerTasks.size());
-
-            final Map.Entry<Runnable, Instant> scheduled = taskSchedulerTasks.entrySet().getValue(1);
-            assertNotEquals(immediateSchedule, scheduled);
-
-            // the second task should be debounced by a throttle threshold
-            final Instant expectedSchedule = immediateSchedule.getValue().plusSeconds(1) // added second to the clock
-                                                              .plus(THROTTLE_THRESHOLD); // should be debounced
-            assertEquals(expectedSchedule, scheduled.getValue());
-        } finally { // ensure that the thread will be terminated in the test
-            allowTaskToFinish.set(true);
-            taskThread.join(60 * 1000); /* one minute, ensures that the test won't run indefinitely*/
-            if (taskThread.isAlive()) {
-                taskThread.interrupt();
-                fail("task thread thread interrupted due to timeout");
-            }
-        }
-    }
-
     @Test
     void cancelsAllScheduledFuturesWhenNewTaskWithLowerGroupIsScheduled() throws Throwable {
         throttleA.setGroup("'the.group.identifier.first'");
@@ -609,11 +526,7 @@ class ThrottleAspectTest {
         Thread runThread = new Thread(taskSchedulerTasks.getKey(0));
         runThread.start();
 
-        runThread.join(15 * 1000);
-        if (runThread.isAlive()) {
-            runThread.interrupt();
-            fail("task thread thread interrupted due to timeout");
-        }
+        joinThread(runThread);
 
         assertNotEquals(-1, threadId.get());
         assertEquals(runThread.getId(), threadId.get());
@@ -650,11 +563,7 @@ class ThrottleAspectTest {
         Thread runThread = new Thread(taskSchedulerTasks.getKey(0));
         runThread.start();
 
-        runThread.join(15 * 1000);
-        if (runThread.isAlive()) {
-            runThread.interrupt();
-            fail("task thread thread interrupted due to timeout");
-        }
+        joinThread(runThread);
 
         assertNotEquals(-1, threadId.get());
         assertEquals(runThread.getId(), threadId.get());
@@ -842,6 +751,8 @@ class ThrottleAspectTest {
         assertTrue(future.isDone());
         assertFalse(future.isCancelled());
         assertEquals(result, future.get());
+        assertTrue(scheduledFutures.isEmpty());
+        assertTrue(taskSchedulerTasks.isEmpty());
     }
 
     @Test
@@ -935,5 +846,49 @@ class ThrottleAspectTest {
 
         assertEquals(2, scheduledFutures.size());
         assertEquals(2, throttledFutures.size());
+    }
+
+    /**
+     * Scenario:<br>
+     * <ol>
+     *     <li>Method is called</li>
+     *     <li>Task is scheduled</li>
+     *     <li>Task execution starts</li>
+     *     <li>Method is called again</li>
+     *     <li>New task should be scheduled, but the old one is still executing</li>
+     * </ol>
+     * This test verify that the second task won't start execution until the old one finishes.
+     */
+    @Test
+    void noTwoTasksWithTheSameIdentifierShouldBeExecutedConcurrently() throws Throwable {
+        final AtomicBoolean taskRunning = new AtomicBoolean(false);
+        final AtomicBoolean allowFinish = new AtomicBoolean(false);
+        when(joinPointA.proceed()).then(invocation -> {
+            taskRunning.set(true);
+            while(!allowFinish.get()) {
+                Thread.yield();
+            }
+            return null;
+        });
+
+        sut.throttleMethodCall(joinPointA, throttleA);
+
+        final Thread firstTask = new Thread(taskSchedulerTasks.getKey(0));
+        firstTask.start();
+
+        await("task execution start").atMost(Duration.ofSeconds(30)).untilTrue(taskRunning);
+
+        assertEquals(1, taskSchedulerTasks.size());
+        final ThrottledFuture<?> oldFuture = throttledFutures.getValue(0);
+
+        sut.throttleMethodCall(joinPointA, throttleA);
+
+        assertEquals(1, taskSchedulerTasks.size());
+        assertNotEquals(oldFuture, throttledFutures.getValue(0));
+
+        allowFinish.set(true);
+        joinThread(firstTask);
+
+        assertEquals(2, taskSchedulerTasks.size()); // new task scheduled after the old one finished
     }
 }

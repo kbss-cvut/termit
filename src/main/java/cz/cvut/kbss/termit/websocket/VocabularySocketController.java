@@ -54,14 +54,18 @@ public class VocabularySocketController extends BaseWebSocketController {
         final CacheableFuture<Collection<ValidationResult>> future = vocabularyService.validateContents(vocabulary.getUri());
 
         future.getNow().ifPresentOrElse(validationResults ->
+            // if there is a result present (returned from cache), send it
+            sendToSession(
+                    DESTINATION_VOCABULARIES_VALIDATION,
+                    validationResults,
+                    Map.of("vocabulary", identifier,
+                            // results are cached if we received a future result, but the future is not done yet
+                            "cached", !future.isDone()),
+                    messageHeaders
+            ), () ->
+            // otherwise reply will be sent once the future is resolved
+            future.then(results ->
                 sendToSession(
-                        DESTINATION_VOCABULARIES_VALIDATION,
-                        validationResults,
-                        Map.of("vocabulary", identifier,
-                                "cached", !future.isDone()),
-                        messageHeaders
-                ), () ->
-                future.then(results -> sendToSession(
                         DESTINATION_VOCABULARIES_VALIDATION,
                         results,
                         Map.of("vocabulary", identifier,
