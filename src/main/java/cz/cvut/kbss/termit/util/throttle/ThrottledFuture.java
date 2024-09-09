@@ -32,10 +32,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
 
     private final List<Consumer<T>> onCompletion = new ArrayList<>();
 
-    /**
-     * Access only with acquired {@link #lock}
-     */
-    private AtomicReference<@Nullable Instant> startedAt = new AtomicReference<>(null);
+    private final AtomicReference<@Nullable Instant> startedAt = new AtomicReference<>(null);
 
     private ThrottledFuture(@NotNull final Supplier<T> task) {
         this.task = task;
@@ -122,11 +119,11 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
      * @return If the current task is already running, was canceled or already completed, returns a new future for the given task.
      * Otherwise, replaces the current task and returns self.
      */
-    protected ThrottledFuture<T> update(Supplier<T> task, List<Consumer<T>> onCompletion) {
+    protected ThrottledFuture<T> update(Supplier<T> task, @NotNull List<Consumer<T>> onCompletion) {
         boolean locked = false;
         try {
-            this.callbackLock.lock();
             locked = lock.tryLock();
+            this.callbackLock.lock();
             ThrottledFuture<T> updatedFuture = this;
             if (!locked || isRunning() || isDone()) {
                 updatedFuture = ThrottledFuture.of(task);
@@ -154,8 +151,8 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     protected ThrottledFuture<T> transfer(ThrottledFuture<T> target) {
         boolean locked = false;
         try {
-            this.callbackLock.lock();
             locked = lock.tryLock();
+            this.callbackLock.lock();
             if (!locked || isRunning() || isDone()) {
                 return target;
             }
@@ -212,7 +209,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     }
 
     @Override
-    public void then(Consumer<T> action) {
+    public ThrottledFuture<T> then(Consumer<T> action) {
         try {
             callbackLock.lock();
             if (future.isDone() && !future.isCancelled()) {
@@ -230,5 +227,6 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
         } finally {
             callbackLock.unlock();
         }
+        return this;
     }
 }
