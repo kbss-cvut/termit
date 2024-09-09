@@ -164,7 +164,6 @@ public class Validator implements VocabularyContentValidator {
             LOG.trace("Constructing model from RDF4J repository...");
             final Model dataModel = getModelFromRdf4jRepository(vocabularyIris);
             LOG.trace("Model constructed, running validation...");
-            // TODO: would be better to cache the validator, but its not thread safe
             org.topbraid.shacl.validation.ValidationReport report = new com.github.sgov.server.Validator()
                     .validate(dataModel, validationModel);
             LOG.debug("Done.");
