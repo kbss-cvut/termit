@@ -192,7 +192,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             }
             refreshLastModified();
             eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
-            eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, entity.getUri()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
