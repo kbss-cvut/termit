@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service;
 
+import cz.cvut.kbss.termit.exception.InvalidIdentifierException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import org.springframework.stereotype.Service;
 
@@ -85,7 +86,7 @@ public class IdentifierResolver {
      * <li>Transforming the value to lower case</li>
      * <li>Trimming the string</li>
      * <li>Replacing white spaces and slashes with dashes</li>
-     * <li>Removing parentheses</li>
+     * <li>Removing invalid characters such as parentheses, square brackets, dollar sign, exclamation mark, etc.</li>
      * </ul>
      * <p>
      * Based on <a href="https://gist.github.com/rponte/893494">https://gist.github.com/rponte/893494</a>
@@ -98,7 +99,7 @@ public class IdentifierResolver {
         return value.toLowerCase()
                     .trim()
                     .replaceAll("[\\s/\\\\]", Character.toString(REPLACEMENT_CHARACTER))
-                    .replaceAll("[(?&$#§),\\[\\]]", "");
+                    .replaceAll("[(?&$#§),\\[\\]@]", "");
     }
 
     /**
@@ -138,7 +139,13 @@ public class IdentifierResolver {
         if (!namespace.endsWith("/") && !namespace.endsWith("#")) {
             namespace += "/";
         }
-        return URI.create(namespace + normalize(comps));
+        try {
+            return URI.create(namespace + normalize(comps));
+        } catch (IllegalArgumentException e) {
+            throw new InvalidIdentifierException(
+                    "Generated identifier " + namespace + normalize(comps) + " is not a valid URI.",
+                    "error.identifier.invalidCharacters");
+        }
     }
 
     private static boolean isUri(String value) {
@@ -170,7 +177,8 @@ public class IdentifierResolver {
     /**
      * Generates a synthetic identifier using the specified base URL.
      * <p>
-     * This particular implementation uses the current system time in millis to generate the locally unique part of the identifier.
+     * This particular implementation uses the current system time in millis to generate the locally unique part of the
+     * identifier.
      *
      * @param base URL base
      * @return Synthetic identifier containing the specified base
@@ -185,8 +193,8 @@ public class IdentifierResolver {
      * This method assumes that the fragment is a normalized string uniquely identifying a resource in the specified
      * namespace.
      * <p>
-     * Basically, the returned identifier should be the same as would be returned for non-normalized fragments by {@link
-     * #generateIdentifier(String, String...)}.
+     * Basically, the returned identifier should be the same as would be returned for non-normalized fragments by
+     * {@link #generateIdentifier(String, String...)}.
      *
      * @param namespace Identifier namespace
      * @param fragment  Normalized string unique in the specified namespace

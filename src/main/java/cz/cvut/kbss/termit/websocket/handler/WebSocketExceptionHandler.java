@@ -6,6 +6,7 @@ import cz.cvut.kbss.jsonld.exception.JsonLdException;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
+import cz.cvut.kbss.termit.exception.InvalidIdentifierException;
 import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
@@ -75,6 +76,10 @@ public class WebSocketExceptionHandler {
 
     private static ErrorInfo errorInfo(Message<?> message, Throwable e) {
         return ErrorInfo.createWithMessage(e.getMessage(), destination(message));
+    }
+
+    private static ErrorInfo errorInfo(Message<?> message, TermItException e) {
+        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), destination(message));
     }
 
     @MessageExceptionHandler
@@ -190,7 +195,7 @@ public class WebSocketExceptionHandler {
     @MessageExceptionHandler(VocabularyImportException.class)
     public ErrorInfo vocabularyImportException(Message<?> message, VocabularyImportException e) {
         logException(e, message);
-        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), destination(message));
+        return errorInfo(message, e);
     }
 
     @MessageExceptionHandler
@@ -220,7 +225,7 @@ public class WebSocketExceptionHandler {
     @MessageExceptionHandler
     public ErrorInfo snapshotNotEditableException(Message<?> message, SnapshotNotEditableException e) {
         logException(e, message);
-        return ErrorInfo.createWithMessage(e.getMessage(), destination(message));
+        return errorInfo(message, e);
     }
 
     @MessageExceptionHandler
@@ -238,13 +243,19 @@ public class WebSocketExceptionHandler {
     @MessageExceptionHandler
     public ErrorInfo invalidTermStateException(Message<?> message, InvalidTermStateException e) {
         logException(e, message);
-        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), destination(message));
+        return errorInfo(message, e);
     }
 
     @MessageExceptionHandler
     public ErrorInfo invalidPasswordChangeRequestException(Message<?> message,
                                                            InvalidPasswordChangeRequestException e) {
         logException(e, message);
-        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), destination(message));
+        return errorInfo(message, e);
+    }
+
+    @MessageExceptionHandler
+    public ErrorInfo invalidIdentifierException(Message<?> message, InvalidIdentifierException e) {
+        logException(e, message);
+        return errorInfo(message, e);
     }
 }
