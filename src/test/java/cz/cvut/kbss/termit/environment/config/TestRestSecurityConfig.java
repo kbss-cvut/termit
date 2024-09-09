@@ -76,7 +76,7 @@ public class TestRestSecurityConfig {
     }
 
     @Bean
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+    public ThreadPoolTaskScheduler longRunningTaskScheduler() {
         return mock(ThreadPoolTaskScheduler.class);
     }
 }

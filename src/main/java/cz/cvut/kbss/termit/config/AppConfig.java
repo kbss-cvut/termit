@@ -50,7 +50,7 @@ public class AppConfig implements AsyncConfigurer {
      * This thread pool is responsible for executing long-running tasks in the application.
      */
     @Bean(destroyMethod = "destroy")
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler(cz.cvut.kbss.termit.util.Configuration config) {
+    public ThreadPoolTaskScheduler longRunningTaskScheduler(cz.cvut.kbss.termit.util.Configuration config) {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
         threadPoolTaskScheduler.setPoolSize(config.getAsyncThreadCount());
         threadPoolTaskScheduler.setThreadNamePrefix("TermItScheduler-");

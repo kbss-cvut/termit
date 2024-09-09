@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 class ThrottleAspectBeanTest {
 
     @Autowired
-    ThreadPoolTaskScheduler taskScheduler;
+    ThreadPoolTaskScheduler longRunningTaskScheduler;
 
     @SpyBean
     ThrottleAspect throttleAspect;
@@ -41,8 +41,8 @@ class ThrottleAspectBeanTest {
 
     @BeforeEach
     void beforeEach() {
-        reset(taskScheduler);
-        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).then(invocation -> {
+        reset(longRunningTaskScheduler);
+        when(longRunningTaskScheduler.schedule(any(Runnable.class), any(Instant.class))).then(invocation -> {
             Runnable task = invocation.getArgument(0, Runnable.class);
             return new ScheduledFutureTask<>(task, null);
         });

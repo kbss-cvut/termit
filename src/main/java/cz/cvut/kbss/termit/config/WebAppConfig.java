@@ -49,7 +49,6 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerTypePredicate;
-import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
@@ -201,10 +200,5 @@ public class WebAppConfig implements WebMvcConfigurer {
                                                         .bearerFormat("JWT")))
                             .info(new Info().title("TermIt REST API").description("TermIt REST API definition.")
                                             .version(version));
-    }
-
-    @Override
-    public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
-        configurer.setDefaultTimeout(Constants.REST_ASYNC_TIMEOUT);
     }
 }

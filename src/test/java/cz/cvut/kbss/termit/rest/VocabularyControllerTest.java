@@ -412,13 +412,13 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = generateVocabulary();
         vocabulary.setUri(VOCABULARY_URI);
         when(sut.getById(FRAGMENT, Optional.of(NAMESPACE))).thenReturn(vocabulary);
-        performAsync(put(PATH + "/" + FRAGMENT + "/terms/text-analysis")).andExpect(status().isAccepted());
+        mockMvc.perform(put(PATH + "/" + FRAGMENT + "/terms/text-analysis")).andExpect(status().isAccepted());
         verify(serviceMock).runTextAnalysisOnAllTerms(vocabulary);
     }
 
     @Test
     void runTextAnalysisOnAllVocabulariesInvokesTextAnalysisOnAllVocabulariesFromService() throws Exception {
-        performAsync(get(PATH + "/text-analysis")).andExpect(status().isAccepted());
+        mockMvc.perform(get(PATH + "/text-analysis")).andExpect(status().isAccepted());
         verify(serviceMock).runTextAnalysisOnAllVocabularies();
     }
 

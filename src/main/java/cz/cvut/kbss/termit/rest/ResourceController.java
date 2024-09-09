@@ -64,7 +64,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 @Tag(name = "Resources", description = "Resource management API")
 @RestController
@@ -307,7 +306,7 @@ public class ResourceController extends BaseController {
     })
     @PutMapping(value = "/{localName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Callable<Void> runTextAnalysis(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+    public void runTextAnalysis(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
                                                      example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
                                           @PathVariable String localName,
                                           @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
@@ -318,11 +317,8 @@ public class ResourceController extends BaseController {
                                                   description = "Identifiers of vocabularies whose terms are used to seed text analysis.")
                                           @RequestParam(name = "vocabulary", required = false,
                                                         defaultValue = "") Set<URI> vocabularies) {
-        return () -> {
-            final Resource resource = getResource(localName, namespace);
-            resourceService.runTextAnalysis(resource, vocabularies);
-            return null;
-        };
+        final Resource resource = getResource(localName, namespace);
+        resourceService.runTextAnalysis(resource, vocabularies);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

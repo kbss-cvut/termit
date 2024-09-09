@@ -62,11 +62,6 @@ public class BaseControllerTestRunner {
                                       .build();
     }
 
-    protected ResultActions performAsync(RequestBuilder requestBuilder) throws Exception {
-        MvcResult async = mockMvc.perform(requestBuilder).andExpect(request().asyncStarted()).andReturn();
-        return mockMvc.perform(asyncDispatch(async));
-    }
-
     protected void setupObjectMappers() {
         this.objectMapper = Environment.getObjectMapper();
         this.jsonLdObjectMapper = Environment.getJsonLdObjectMapper();

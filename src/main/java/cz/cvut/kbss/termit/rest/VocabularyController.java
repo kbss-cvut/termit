@@ -68,7 +68,6 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 
 /**
  * Vocabulary management REST API.
@@ -319,17 +318,14 @@ public class VocabularyController extends BaseController {
                description = "Runs text analysis on the definitions of all terms in the vocabulary with the specified identifier.")
     @PutMapping(value = "/{localName}/terms/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Callable<Void> runTextAnalysisOnAllTerms(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+    public void runTextAnalysisOnAllTerms(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                                                      example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
                                           @PathVariable String localName,
                                           @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                                                      example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace) {
-        return () -> {
-            vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
-            return null;
-        };
+        vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
     }
 
     /**
@@ -343,11 +339,8 @@ public class VocabularyController extends BaseController {
     @GetMapping(value = "/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
-    public Callable<Void> runTextAnalysisOnAllVocabularies() {
-        return () -> {
-            vocabularyService.runTextAnalysisOnAllVocabularies();
-            return null;
-        };
+    public void runTextAnalysisOnAllVocabularies() {
+        vocabularyService.runTextAnalysisOnAllVocabularies();
     }
 
     /**
