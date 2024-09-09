@@ -98,7 +98,7 @@ public class IdentifierResolver {
         return value.toLowerCase()
                     .trim()
                     .replaceAll("[\\s/\\\\]", Character.toString(REPLACEMENT_CHARACTER))
-                    .replaceAll("[(?&$#§),]", "");
+                    .replaceAll("[(?&$#§),\\[\\]]", "");
     }
 
     /**
