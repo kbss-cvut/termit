@@ -97,8 +97,7 @@ public class ErrorInfo {
      * @return New {@code ErrorInfo} instance
      */
     public static ErrorInfo createWithMessageAndMessageId(String message, String messageId, String requestUri) {
-        final ErrorInfo errorInfo = new ErrorInfo(requestUri);
-        errorInfo.setMessage(message);
+        ErrorInfo errorInfo = createWithMessage(message, requestUri);
         errorInfo.setMessageId(messageId);
         return errorInfo;
     }
