@@ -17,20 +17,25 @@
  */
 package cz.cvut.kbss.termit.service.document;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
+import cz.cvut.kbss.termit.event.VocabularyFileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.VocabularyTermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +49,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -67,6 +73,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
@@ -100,6 +107,9 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     @Autowired
     private Configuration config;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @Autowired
     private DocumentManager documentManager;
 
@@ -128,12 +138,14 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         this.file = new File();
         file.setUri(Generator.generateUri());
         file.setLabel(FILE_NAME);
+        file.setDocument(Generator.generateDocumentWithId());
+        file.getDocument().setVocabulary(vocabulary.getUri());
         generateFile();
         this.documentManagerSpy = spy(documentManager);
         doCallRealMethod().when(documentManagerSpy).loadFileContent(any());
         doNothing().when(documentManagerSpy).createBackup(any());
         this.sut = new TextAnalysisService(restTemplate, config, documentManagerSpy, annotationGeneratorMock,
-                textAnalysisRecordDao);
+                textAnalysisRecordDao, eventPublisher);
     }
 
     @Test
@@ -149,8 +161,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
         config.getFile().setStorage(dir.getAbsolutePath());
-        final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
-                file.getDirectoryName());
+        final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator + file.getDirectoryName());
         Files.createDirectory(docDir.toPath());
         docDir.deleteOnExit();
         final java.io.File content = new java.io.File(
@@ -406,5 +417,39 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
         sut.analyzeTermDefinition(term, vocabulary.getUri());
         mockServer.verify();
+    }
+
+    @Test
+    void analyzeFilePublishesAnalysisFinishedEvent() {
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+        sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
+
+        ArgumentCaptor<VocabularyFileTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyFileTextAnalysisFinishedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertNotNull(eventCaptor.getValue());
+        assertEquals(file.getUri(), eventCaptor.getValue().getFileUri());
+        assertEquals(vocabulary.getUri(), eventCaptor.getValue().getVocabularyIri());
+    }
+
+    @Test
+    void analyzeTermDefinitionPublishesAnalysisFinishedEvent() throws JsonProcessingException {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        final TextAnalysisInput input = textAnalysisInput();
+        input.setContent(term.getDefinition().get(Environment.LANGUAGE));
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+
+        sut.analyzeTermDefinition(term, vocabulary.getUri());
+
+        ArgumentCaptor<VocabularyTermDefinitionTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyTermDefinitionTextAnalysisFinishedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertNotNull(eventCaptor.getValue());
+        assertEquals(term.getUri(), eventCaptor.getValue().getTermUri());
+        assertEquals(vocabulary.getUri(), eventCaptor.getValue().getVocabularyIri());
     }
 }
