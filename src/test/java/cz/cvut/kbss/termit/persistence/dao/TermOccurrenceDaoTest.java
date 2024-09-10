@@ -72,9 +72,6 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     @Autowired
     private EntityManager em;
 
-//    @Autowired
-//    private ScheduledContextRemover contextRemover;
-
     @Autowired
     private TermOccurrenceDao sut;
 
@@ -269,7 +266,6 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                 })));
         transactional(() -> {
             sut.removeAll(file);
-//            contextRemover.runContextRemoval();
         });
         assertTrue(sut.findAllTargeting(file).isEmpty());
         assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
@@ -291,7 +287,6 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                 })));
         transactional(() -> {
             sut.removeAll(file);
-//            contextRemover.runContextRemoval();
         });
 
         assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class).setParameter("target",
