@@ -117,7 +117,7 @@ public abstract class TermOccurrenceResolver {
     }
 
     @FunctionalInterface
-    public static interface OccurrenceConsumer {
+    public interface OccurrenceConsumer {
         void accept(TermOccurrence termOccurrence) throws InterruptedException;
     }
 }

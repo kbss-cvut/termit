@@ -30,7 +30,6 @@ import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
