@@ -127,10 +127,8 @@ class VocabularyServiceTest {
         when(repositoryService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(Collections.emptyList());
         when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         sut.runTextAnalysisOnAllTerms(vocabulary);
-        Map<Term, URI> expected = Map.of(termOne, vocabulary.getUri(), termTwo, vocabulary.getUri());
-        for(final Map.Entry<Term, URI> entry : expected.entrySet()) {
-            verify(termService).analyzeTermDefinition(entry.getKey(), entry.getValue());
-        }
+        verify(termService).analyzeTermDefinition(termOne, vocabulary.getUri());
+        verify(termService).analyzeTermDefinition(termTwo, vocabulary.getUri());
     }
 
     @Test
