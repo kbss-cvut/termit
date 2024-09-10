@@ -317,7 +317,7 @@ class TermServiceTest {
     }
 
     @Test
-    void persistChildInvokesTextAnalysisOnPersistedChildTerm() {
+    void persistChildInvokesTextAnalysisOnAllTermsInVocabulary() {
         when(vocabularyService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
@@ -327,7 +327,7 @@ class TermServiceTest {
     }
 
     @Test
-    void persistRootInvokesTextAnalysisOnPersistedRootTerm() {
+    void persistRootInvokesTextAnalysisOnAllTermsInVocabulary() {
         final Term toPersist = generateTermWithId();
         sut.persistRoot(toPersist, vocabulary);
         verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
@@ -349,7 +349,7 @@ class TermServiceTest {
     }
 
     @Test
-    void updateOfTermLabelInvokesTextAnalysisOnAllTerms() {
+    void updateOfTermLabelInvokesTextAnalysisOnAllTermsInVocabulary() {
         final Term original = generateTermWithId(vocabulary.getUri());
         final Term toUpdate = new Term(original.getUri());
         toUpdate.setLabel(MultilingualString.create("new Label", Environment.LANGUAGE));
