@@ -244,6 +244,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         Runnable task = pair.getFirst();
         ThrottledFuture<Object> future = pair.getSecond();
         // update the throttled future in the map, it might be just the same future, but it might be a new one
+        // update the throttled future in the map, it might be just the same future, but it might be a new one
         synchronized (throttledFutures) {
             throttledFutures.put(identifier, future);
         }
@@ -348,6 +349,22 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         return new Pair<>(toSchedule, throttledFuture);
     }
 
+    /**
+     * @return the number of throttled futures that are neither done nor running.
+     */
+    private long countRemaining() {
+        synchronized (throttledFutures) {
+            return throttledFutures.values().stream().filter(f -> !f.isDone() && !f.isRunning()).count();
+        }
+    }
+
+    /**
+     * @return count of throttled threads
+     */
+    private long countRunning() {
+        return throttledThreads.size();
+    }
+
     private Runnable createRunnableToSchedule(ThrottledFuture<?> throttledFuture, Identifier identifier,
                                               boolean withTransaction) {
         final Supplier<SecurityContext> securityContext = SecurityContextHolder.getDeferredContext();
@@ -359,7 +376,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
 
-            LOG.trace("Running throttled task [{} left] [{} running] '{}'", scheduledFutures.size() - 1, throttledThreads.size(), identifier);
+            LOG.trace("Running throttled task [{} left] [{} running] '{}'", countRemaining() - 1, countRunning(), identifier);
 
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
@@ -377,7 +394,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             } finally {
                 // clear the security context
                 SecurityContextHolder.clearContext();
-                LOG.trace("Finished throttled task [{} left] [{} running] '{}'", scheduledFutures.size() - 1, throttledThreads.size(), identifier);
+                LOG.trace("Finished throttled task [{} left] [{} running] '{}'", countRemaining(), countRunning() - 1, identifier);
 
                 clearOldFutures();
 
@@ -543,7 +560,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
     @Override
     public @NotNull Collection<LongRunningTask> getTasks() {
         synchronized (throttledFutures) {
-            return List.copyOf(throttledFutures.values());
+            return throttledFutures.values().stream().filter(f -> !f.isDone()).map(f -> (LongRunningTask) f).toList();
         }
     }
 

@@ -256,13 +256,10 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
         final URI sourceContext = TermOccurrence.resolveContext(target.getUri());
         LOG.debug("Removing all occurrences from {}", sourceContext);
-        final StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
         em.createNativeQuery("DROP GRAPH ?context")
                 .setParameter("context", sourceContext)
                 .executeUpdate();
-        stopWatch.stop();
-        LOG.debug("Removed all occurrences from {} in {} ms", sourceContext, stopWatch.getTotalTimeMillis());
+        LOG.debug("Removed all occurrences from {}", sourceContext);
     }
 
     /**
