@@ -75,7 +75,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
         }
     }
 
-    @Throttle("{#originVocabularyIri}")
+    @Throttle(value = "{#originVocabularyIri}", name="vocabularyValidation")
     @Transactional
     @Override
     public @NotNull ThrottledFuture<Collection<ValidationResult>> validate(@NotNull URI originVocabularyIri, @NotNull Collection<URI> vocabularyIris) {

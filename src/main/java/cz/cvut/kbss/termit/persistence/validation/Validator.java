@@ -143,7 +143,7 @@ public class Validator implements VocabularyContentValidator {
         }
     }
 
-    @Throttle("{#originVocabularyIri}")
+    @Throttle(value = "{#originVocabularyIri}", name = "vocabularyValidation")
     @Transactional(readOnly = true)
     @Override
     public @NotNull ThrottledFuture<Collection<ValidationResult>> validate(final @NotNull URI originVocabularyIri, final @NotNull Collection<URI> vocabularyIris) {

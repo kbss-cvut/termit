@@ -108,6 +108,7 @@ public class WebAppConfig implements WebMvcConfigurer {
         jsonLdModule.configure(cz.cvut.kbss.jsonld.ConfigParam.SCAN_PACKAGE, "cz.cvut.kbss.termit");
         jsonLdModule.configure(SerializationConstants.FORM, SerializationConstants.FORM_COMPACT_WITH_CONTEXT);
         mapper.registerModule(jsonLdModule);
+        mapper.registerModule(new JavaTimeModule());
         return mapper;
     }
 

@@ -3,12 +3,12 @@ package cz.cvut.kbss.termit.util.throttle;
 import com.vladsch.flexmark.util.collection.OrderedMap;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
-import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.expression.spel.SpelParseException;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.TaskUtils;
@@ -19,7 +19,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -42,10 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -142,6 +139,8 @@ class ThrottleAspectTest {
      */
     ProceedingJoinPoint joinPointC;
 
+    ApplicationEventPublisher eventPublisher;
+
     Clock clock = Clock.fixed(Instant.now(), ZoneId.of("UTC"));
 
     void mockA() throws Throwable {
@@ -206,8 +205,9 @@ class ThrottleAspectTest {
         when(mockedClock.instant()).then(invocation -> getInstant());
 
         transactionExecutor = spy(SynchronousTransactionExecutor.class);
+        eventPublisher = mock(ApplicationEventPublisher.class);
 
-        sut = new ThrottleAspect(throttledFutures, lastRun, scheduledFutures, taskScheduler, mockedClock, transactionExecutor);
+        sut = new ThrottleAspect(throttledFutures, lastRun, scheduledFutures, taskScheduler, mockedClock, transactionExecutor, eventPublisher);
     }
 
     /**
@@ -781,18 +781,6 @@ class ThrottleAspectTest {
     }
 
     @Test
-    void getTasksReturnsCopyOfThrottledFutures() throws Throwable {
-        sut.throttleMethodCall(joinPointA, throttleA);
-        sut.throttleMethodCall(joinPointB, throttleB);
-        sut.throttleMethodCall(joinPointC, throttleC);
-
-        final Collection<LongRunningTask> tasks = sut.getTasks();
-        // assert a COPY returned, so they are not the same
-        assertNotSame(throttledFutures.values(), tasks);
-        assertIterableEquals(throttledFutures.values(), tasks);
-    }
-
-    @Test
     void aspectThrowsOnMalformedSpel() {
         throttleA.setValue("invalid spel expression");
         assertThrows(SpelParseException.class, () -> sut.throttleMethodCall(joinPointA, throttleA));
@@ -824,7 +812,7 @@ class ThrottleAspectTest {
 
     @Test
     void aspectConstructsFromAutowiredConstructor() {
-        assertDoesNotThrow(() -> new ThrottleAspect(taskScheduler, transactionExecutor));
+        assertDoesNotThrow(() -> new ThrottleAspect(taskScheduler, transactionExecutor, eventPublisher));
     }
 
     @Test

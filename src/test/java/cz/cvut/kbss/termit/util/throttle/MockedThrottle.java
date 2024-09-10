@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
@@ -26,6 +27,11 @@ public class MockedThrottle implements Throttle {
     @Override
     public @NotNull String group() {
         return group;
+    }
+
+    @Override
+    public @Nullable String name() {
+        return "NameOfMockedThrottle"+group+value;
     }
 
     @Override

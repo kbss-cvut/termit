@@ -90,7 +90,7 @@ class ThrottledFutureTest {
         final ThrottledFuture<?> future = ThrottledFuture.of(() -> result);
         final AtomicBoolean completed = new AtomicBoolean(false);
         final AtomicReference<Object> futureResult = new AtomicReference<>(null);
-        future.run();
+        future.run(null);
         assertTrue(future.isDone());
         assertFalse(future.isCancelled());
         future.then(fResult -> {
@@ -123,7 +123,7 @@ class ThrottledFutureTest {
         });
         assertNull(fResult.get());
         assertFalse(completed.get()); // action was not executed yet
-        future.run();
+        future.run(null);
         assertTrue(completed.get());
         assertEquals(result, fResult.get());
     }
@@ -146,14 +146,14 @@ class ThrottledFutureTest {
             count.incrementAndGet();
         });
 
-        future.run();
+        future.run(null);
         final Optional<Instant> runningSince = future.startedAt();
         assertTrue(runningSince.isPresent());
         assertTrue(future.isDone());
         assertFalse(future.isCancelled());
         assertFalse(future.isRunning());
 
-        future.run();
+        future.run(null);
         assertTrue(future.isDone());
         assertFalse(future.isCancelled());
         assertFalse(future.isRunning());
@@ -176,8 +176,8 @@ class ThrottledFutureTest {
                 Thread.yield();
             }
         });
-        final Thread threadA = new Thread(future::run);
-        final Thread threadB = new Thread(future::run);
+        final Thread threadA = new Thread(() -> future.run(null));
+        final Thread threadB = new Thread(() -> future.run(null));
         threadA.start();
 
         await("count incrementation").atMost(Duration.ofSeconds(30)).until(() -> count.get() > 0);
@@ -242,7 +242,7 @@ class ThrottledFutureTest {
         final String futureResult = "future";
         final String cachedResult = "cached";
         ThrottledFuture<String> future = ThrottledFuture.of(() -> futureResult).setCachedResult(cachedResult);
-        future.run();
+        future.run(null);
 
         Optional<String> result = future.getNow();
         assertTrue(result.isPresent());
@@ -266,7 +266,7 @@ class ThrottledFutureTest {
         final AtomicBoolean callbackExecuted = new AtomicBoolean(false);
         final ThrottledFuture<?> future = new ThrottledFuture<>();
         future.then(ignored -> callbackExecuted.set(true));
-        future.run();
+        future.run(null);
         assertFalse(callbackExecuted.get());
     }
 
@@ -428,5 +428,20 @@ class ThrottledFutureTest {
 
         final ThrottledFuture<String> result = future.update(()->"", List.of());
         assertNotEquals(future, result);
+    }
+
+    @Test
+    void runExecutionCallbackIsExecutedAfterStartedAtIsSetAndBeforeTaskExecution() {
+        final AtomicBoolean taskExecuted = new AtomicBoolean(false);
+        final ThrottledFuture<Void> future = ThrottledFuture.of(()->{
+            taskExecuted.set(true);
+        });
+
+        future.run(f -> {
+            assertEquals(future, f);
+            assertTrue(f.startedAt().isPresent());
+        });
+
+        assertTrue(taskExecuted.get());
     }
 }

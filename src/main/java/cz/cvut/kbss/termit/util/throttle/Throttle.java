@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.util.throttle;
 
 import cz.cvut.kbss.termit.util.Constants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -95,4 +96,6 @@ public @interface Throttle {
      * @see String#compareTo(String)
      */
     @NotNull String group() default "";
+
+    @Nullable String name() default "";
 }
