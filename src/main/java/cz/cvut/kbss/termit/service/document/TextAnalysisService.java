@@ -88,7 +88,7 @@ public class TextAnalysisService {
      * @param file               File whose content shall be analyzed
      * @param vocabularyContexts Identifiers of repository contexts containing vocabularies intended for text analysis
      */
-    @Throttle("{#file.getUri()}")
+    @Throttle(value = "{#file.getUri()}", name = "fileAnalysis")
     @Transactional
     public void analyzeFile(File file, Set<URI> vocabularyContexts) {
         Objects.requireNonNull(file);

@@ -14,7 +14,7 @@ public class TestFutureRunner {
      * @implNote Note that this method is intended only for testing purposes.
      */
     public static <T> T runFuture(ThrottledFuture<T> future) {
-        future.run();
+        future.run(null);
         try {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {

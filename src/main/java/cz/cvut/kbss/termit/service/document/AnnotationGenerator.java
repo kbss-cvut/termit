@@ -70,7 +70,7 @@ public class AnnotationGenerator {
      * @param source  Source file of the annotated document
      */
     @Transactional
-    @Throttle("{source.getUri()}")
+    @Throttle(value = "{source.getUri()}", name = "documentAnnotationGeneration")
     public void generateAnnotations(InputStream content, File source) {
         final TermOccurrenceResolver occurrenceResolver = findResolverFor(source);
         LOG.debug("Resolving annotations of file {}.", source);

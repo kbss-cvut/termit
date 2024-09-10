@@ -5,8 +5,7 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Pair;
-import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
-import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskRegister;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskScheduler;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -16,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.annotation.Order;
@@ -65,7 +65,7 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 @Scope(SCOPE_SINGLETON)
 @Component("throttleAspect")
 @Profile("!test")
-public class ThrottleAspect implements LongRunningTaskRegister {
+public class ThrottleAspect extends LongRunningTaskScheduler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThrottleAspect.class);
 
@@ -131,7 +131,10 @@ public class ThrottleAspect implements LongRunningTaskRegister {
     private final @NotNull AtomicReference<@NotNull Instant> lastClear;
 
     @Autowired
-    public ThrottleAspect(@Qualifier("longRunningTaskScheduler") TaskScheduler taskScheduler, SynchronousTransactionExecutor transactionExecutor) {
+    public ThrottleAspect(@Qualifier("longRunningTaskScheduler") TaskScheduler taskScheduler,
+                          SynchronousTransactionExecutor transactionExecutor,
+                          ApplicationEventPublisher eventPublisher) {
+        super(eventPublisher);
         this.taskScheduler = taskScheduler;
         this.transactionExecutor = transactionExecutor;
         throttledFutures = new HashMap<>();
@@ -148,7 +151,9 @@ public class ThrottleAspect implements LongRunningTaskRegister {
     protected ThrottleAspect(Map<Identifier, ThrottledFuture<Object>> throttledFutures,
                              Map<Identifier, Instant> lastRun,
                              NavigableMap<Identifier, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
-                             Clock clock, SynchronousTransactionExecutor transactionExecutor) {
+                             Clock clock, SynchronousTransactionExecutor transactionExecutor,
+                             ApplicationEventPublisher eventPublisher) {
+        super(eventPublisher);
         this.throttledFutures = throttledFutures;
         this.lastRun = lastRun;
         this.scheduledFutures = scheduledFutures;
@@ -189,7 +194,7 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             final Object result = joinPoint.proceed();
             if (result instanceof ThrottledFuture<?> throttledFuture) {
                 // directly run throttled future
-                throttledFuture.run();
+                throttledFuture.run(null);
                 return throttledFuture;
             }
             return result;
@@ -240,10 +245,9 @@ public class ThrottleAspect implements LongRunningTaskRegister {
         // acquire a throttled future from a map, or make a new one
         ThrottledFuture<Object> oldThrottledFuture = throttledFutures.getOrDefault(identifier, new ThrottledFuture<>());
 
-        Pair<Runnable, ThrottledFuture<Object>> pair = getFutureTask(joinPoint, identifier, oldThrottledFuture);
-        Runnable task = pair.getFirst();
+        final Pair<Runnable, ThrottledFuture<Object>> pair = getFutureTask(joinPoint, identifier, oldThrottledFuture);
         ThrottledFuture<Object> future = pair.getSecond();
-        // update the throttled future in the map, it might be just the same future, but it might be a new one
+        future.setName(throttleAnnotation.name());
         // update the throttled future in the map, it might be just the same future, but it might be a new one
         synchronized (throttledFutures) {
             throttledFutures.put(identifier, future);
@@ -259,10 +263,10 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             boolean oldFutureIsDone = oldScheduledFuture == null || oldScheduledFuture.isDone();
             if (oldThrottledFuture != future) {
                 oldThrottledFuture.then(ignored ->
-                        schedule(identifier, task, throttleExpired && oldFutureIsDone)
+                    schedule(identifier, pair, throttleExpired && oldFutureIsDone)
                 );
             } else {
-                schedule(identifier, task, throttleExpired && oldFutureIsDone);
+                schedule(identifier, pair, throttleExpired && oldFutureIsDone);
             }
         }
 
@@ -383,15 +387,16 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             try {
                 // fulfill the future
                 if (withTransaction) {
-                    transactionExecutor.execute(throttledFuture::run);
+                    transactionExecutor.execute(()->throttledFuture.run(this::notifyTaskChanged));
                 } else {
-                    throttledFuture.run();
+                    throttledFuture.run(this::notifyTaskChanged);
                 }
                 // update last run timestamp
                 synchronized (lastRun) {
                     lastRun.put(identifier, Instant.now(clock));
                 }
             } finally {
+                notifyTaskChanged(throttledFuture); // task done
                 // clear the security context
                 SecurityContextHolder.clearContext();
                 LOG.trace("Finished throttled task [{} left] [{} running] '{}'", countRemaining(), countRunning() - 1, identifier);
@@ -463,16 +468,17 @@ public class ThrottleAspect implements LongRunningTaskRegister {
     }
 
     @SuppressWarnings("unchecked")
-    private void schedule(Identifier identifier, Runnable task, boolean immediately) {
+    private void schedule(Identifier identifier, Pair<Runnable, ThrottledFuture<Object>> future, boolean immediately) {
         Instant startTime = Instant.now(clock).plus(THROTTLE_THRESHOLD);
         if (immediately) {
             startTime = Instant.now(clock);
         }
         synchronized (scheduledFutures) {
-            Future<?> scheduled = taskScheduler.schedule(task, startTime);
+            Future<?> scheduled = taskScheduler.schedule(future.getFirst(), startTime);
             // casting the type parameter to Object
             scheduledFutures.put(identifier, (Future<Object>) scheduled);
         }
+        notifyTaskChanged(future.getSecond()); // task scheduled
     }
 
     private void cancelWithHigherGroup(Identifier throttleAnnotation) {
@@ -554,13 +560,6 @@ public class ThrottleAspect implements LongRunningTaskRegister {
             return identifierList.stream().map(Object::toString).collect(Collectors.joining("-"));
         } catch (EvaluationException | ClassCastException | NullPointerException e) {
             throw new ThrottleAspectException("The expression: '" + expression + "' has not been resolved to a Collection<Object> or String", e);
-        }
-    }
-
-    @Override
-    public @NotNull Collection<LongRunningTask> getTasks() {
-        synchronized (throttledFutures) {
-            return throttledFutures.values().stream().filter(f -> !f.isDone()).map(f -> (LongRunningTask) f).toList();
         }
     }
 

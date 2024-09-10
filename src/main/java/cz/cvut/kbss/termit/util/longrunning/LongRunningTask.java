@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.util.longrunning;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -10,6 +11,9 @@ import java.util.Optional;
  */
 public interface LongRunningTask {
 
+    @Nullable
+    String getName();
+
     /**
      * @return true when the task is being actively executed, false otherwise.
      */
@@ -17,7 +21,7 @@ public interface LongRunningTask {
 
     /**
      * Returns {@code true} if this task completed.
-     *
+     * <p>
      * Completion may be due to normal termination, an exception, or
      * cancellation -- in all of these cases, this method will return
      * {@code true}.

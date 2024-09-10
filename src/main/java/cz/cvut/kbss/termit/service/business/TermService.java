@@ -439,7 +439,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term          Term to analyze
      * @param vocabularyIri Identifier of the vocabulary used for analysis
      */
-    @Throttle(value = "{#vocabularyIri, #term.getUri()}", group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyTerm(#vocabulary.getUri(), #term.getUri())")
+    @Throttle(value = "{#vocabularyIri, #term.getUri()}",
+              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyTerm(#vocabulary.getUri(), #term.getUri())",
+              name="termDefinitionAnalysis")
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
         Objects.requireNonNull(term);

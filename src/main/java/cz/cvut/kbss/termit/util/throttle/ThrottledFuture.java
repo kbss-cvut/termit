@@ -34,6 +34,8 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
 
     private final AtomicReference<@Nullable Instant> startedAt = new AtomicReference<>(null);
 
+    private @Nullable String name = null;
+
     private ThrottledFuture(@NotNull final Supplier<T> task) {
         this.task = task;
         future = new CompletableFuture<>();
@@ -68,7 +70,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
      */
     public static <T> ThrottledFuture<T> done(T result) {
         ThrottledFuture<T> f = ThrottledFuture.of(() -> result);
-        f.run();
+        f.run(null);
         return f;
     }
 
@@ -169,7 +171,11 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
         }
     }
 
-    protected void run() {
+    /**
+     * Executes the task associated with this future
+     * @param startedCallback called once {@link #startedAt} is set and so execution is considered as running.
+     */
+    protected void run(@Nullable Consumer<ThrottledFuture<T>> startedCallback) {
         boolean locked = false;
         try {
             do {
@@ -180,7 +186,11 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
                     Thread.yield();
                 }
             } while (!locked);
+
             startedAt.set(Utils.timestamp());
+            if (startedCallback != null) {
+                startedCallback.accept(this);
+            }
 
             T result = null;
             if (task != null) {
@@ -196,6 +206,15 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
                 lock.unlock();
             }
         }
+    }
+
+    @Override
+    public @Nullable String getName() {
+        return this.name;
+    }
+
+    protected void setName(@Nullable String name) {
+        this.name = name;
     }
 
     @Override
