@@ -97,5 +97,11 @@ public @interface Throttle {
      */
     @NotNull String group() default "";
 
+    /**
+     * @return a key name of the task which is displayed on the frontend.
+     * Example: {@code name = "validation"} on frontend a translatable name with a key
+     * {@code "longrunningtasks.name.validation"} is displayed.
+     * Leave blank to hide the task on the frontend.
+     */
     @Nullable String name() default "";
 }
