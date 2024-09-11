@@ -51,6 +51,8 @@ public class LongRunningTaskStatus implements Serializable {
         if (startedAt != null) {
             builder.append(", startedAt=").append(startedAt);
         }
+        builder.append(", ");
+        builder.append(uuid);
         builder.append("}");
         return builder.toString();
     }
