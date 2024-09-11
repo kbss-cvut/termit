@@ -13,6 +13,7 @@ import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -75,6 +77,9 @@ public abstract class BaseWebSocketIntegrationTestRunner {
 
     @SpyBean
     protected StompExceptionHandler stompExceptionHandler;
+
+    @MockBean
+    protected LongRunningTasksRegistry longRunningTasksRegistry;
 
     protected WebSocketStompClient stompClient;
 

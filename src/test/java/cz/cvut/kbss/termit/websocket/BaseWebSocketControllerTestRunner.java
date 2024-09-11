@@ -4,13 +4,13 @@ import cz.cvut.kbss.termit.environment.config.TestRestSecurityConfig;
 import cz.cvut.kbss.termit.environment.config.TestWebSocketConfig;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import cz.cvut.kbss.termit.websocket.util.CachingChannelInterceptor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +53,9 @@ public abstract class BaseWebSocketControllerTestRunner {
 
     @MockBean
     protected IdentifierResolver identifierResolver;
+
+    @MockBean
+    protected LongRunningTasksRegistry longRunningTasksRegistry;
 
     /**
      * Simulated messages from client to server

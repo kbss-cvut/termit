@@ -10,11 +10,14 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.user.DestinationUserNameProvider;
+import org.springframework.util.LinkedMultiValueMap;
 
 import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import static org.springframework.messaging.support.NativeMessageHeaderAccessor.NATIVE_HEADERS;
 
 public class BaseWebSocketController extends BaseController {
 
@@ -41,6 +44,7 @@ public class BaseWebSocketController extends BaseController {
                 .ifPresentOrElse(sessionId -> { // session id present
                             StompHeaderAccessor headerAccessor = StompHeaderAccessor.create(StompCommand.MESSAGE);
                             // add reply headers as native headers
+                            headerAccessor.setHeader(NATIVE_HEADERS, new LinkedMultiValueMap<>(replyHeaders.size()));
                             replyHeaders.forEach((name, value) -> headerAccessor.addNativeHeader(name, Objects.toString(value)));
                             headerAccessor.setSessionId(sessionId); // pass session id to new headers
                             // send to user session

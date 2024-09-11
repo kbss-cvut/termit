@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,8 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
 
     private final ReentrantLock lock = new ReentrantLock();
     private final ReentrantLock callbackLock = new ReentrantLock();
+
+    private final UUID uuid = UUID.randomUUID();
 
     private @Nullable T cachedResult = null;
 
@@ -225,6 +228,11 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     @Override
     public @NotNull Optional<Instant> startedAt() {
         return Optional.ofNullable(startedAt.get());
+    }
+
+    @Override
+    public @NotNull UUID getUuid() {
+        return uuid;
     }
 
     @Override

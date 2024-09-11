@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * An asynchronously running task that is expected to run for some time.
@@ -36,4 +37,7 @@ public interface LongRunningTask {
      */
     @NotNull
     Optional<Instant> startedAt();
+
+    @NotNull
+    UUID getUuid();
 }
