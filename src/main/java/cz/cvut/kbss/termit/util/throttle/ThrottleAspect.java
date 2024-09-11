@@ -504,6 +504,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                     // cancels future if it's not null (should not be) and removes it from map if it was canceled
                     if (throttledFuture != null && throttledFuture.cancel(false)) {
                         throttledFutures.remove(higherKey);
+                        notifyTaskChanged(throttledFuture);
                     }
 
                     scheduledFutures.remove(higherKey);
