@@ -104,6 +104,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
         final Collection<ValidationResult> results;
         try {
             // executes real validation
+            // get is safe here as long as we are on throttled thread from #validate method
             results = getValidator().validate(originVocabularyIri, iris).get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
