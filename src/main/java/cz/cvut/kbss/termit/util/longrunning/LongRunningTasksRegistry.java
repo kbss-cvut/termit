@@ -21,17 +21,18 @@ public class LongRunningTasksRegistry {
 
     @EventListener
     public void onTaskChanged(LongRunningTaskChangedEvent event) {
+        final LongRunningTaskStatus status = event.getStatus();
         if (LOG.isTraceEnabled()) {
             synchronized (LongRunningTasksRegistry.class) {
-                LOG.atTrace().setMessage("Long running task changed state: {}{}").addArgument(event::getName)
-                   .addArgument(event::getStatus).log();
+                LOG.atTrace().setMessage("Long running task changed state: {}{}").addArgument(status::getName)
+                   .addArgument(status).log();
             }
         }
 
-        if(event.getStatus().getState() == LongRunningTaskStatus.State.DONE) {
-            registry.remove(event.getName());
+        if(status.getState() == LongRunningTaskStatus.State.DONE) {
+            registry.remove(status.getName());
         } else {
-            registry.put(event.getName(), event.getStatus());
+            registry.put(status.getName(), status);
         }
     }
 
