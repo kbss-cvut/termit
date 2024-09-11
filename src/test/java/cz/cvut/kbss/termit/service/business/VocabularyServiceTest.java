@@ -123,7 +123,6 @@ class VocabularyServiceTest {
         when(termService.findAll(vocabulary)).thenReturn(terms);
         when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         when(repositoryService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(Collections.emptyList());
-        when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         sut.runTextAnalysisOnAllTerms(vocabulary);
         verify(termService).analyzeTermDefinition(termOne, vocabulary.getUri());
         verify(termService).analyzeTermDefinition(termTwo, vocabulary.getUri());
