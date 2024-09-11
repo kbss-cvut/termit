@@ -32,9 +32,6 @@ import static org.mockito.Mockito.when;
 class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
 
     @MockBean
-    IdentifierResolver idResolver;
-
-    @MockBean
     VocabularyService vocabularyService;
 
     @SpyBean
@@ -53,7 +50,7 @@ class VocabularySocketControllerTest extends BaseWebSocketControllerTestRunner {
         vocabulary = Generator.generateVocabularyWithId();
         fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri()).substring(1);
         namespace = vocabulary.getUri().toString().substring(0, vocabulary.getUri().toString().lastIndexOf('/'));
-        when(idResolver.resolveIdentifier(namespace, fragment)).thenReturn(vocabulary.getUri());
+        when(identifierResolver.resolveIdentifier(namespace, fragment)).thenReturn(vocabulary.getUri());
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyService.validateContents(vocabulary.getUri())).thenReturn(ThrottledFuture.done(List.of()));
 
