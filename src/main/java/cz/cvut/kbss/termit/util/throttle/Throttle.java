@@ -21,8 +21,6 @@ import java.util.concurrent.Future;
  * <p>
  * <img src="https://github.com/kbss-cvut/termit/tree/master/doc/throttle-debounce.png?raw=true" />
  * <p>
- * Method can't use any parameters that are part of persistent context as the method will be executed on separated thread,
- * objects need to be re-requested.<br>
  * Call to this method cannot be part of an existing transaction.
  * If {@link org.springframework.transaction.annotation.Transactional @Transactional} is present with this annotation,
  * new transaction is created for the task execution.
