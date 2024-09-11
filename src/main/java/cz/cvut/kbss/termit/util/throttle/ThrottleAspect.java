@@ -263,11 +263,12 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             boolean oldFutureIsDone = oldScheduledFuture == null || oldScheduledFuture.isDone();
             if (oldThrottledFuture != future) {
                 oldThrottledFuture.then(ignored ->
-                    schedule(identifier, pair, throttleExpired && oldFutureIsDone)
+                    schedule(identifier, pair.getFirst(), throttleExpired && oldFutureIsDone)
                 );
             } else {
-                schedule(identifier, pair, throttleExpired && oldFutureIsDone);
+                schedule(identifier, pair.getFirst(), throttleExpired && oldFutureIsDone);
             }
+            notifyTaskChanged(future);
         }
 
         return result;
@@ -468,17 +469,16 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
     }
 
     @SuppressWarnings("unchecked")
-    private void schedule(Identifier identifier, Pair<Runnable, ThrottledFuture<Object>> future, boolean immediately) {
+    private void schedule(Identifier identifier, Runnable task, boolean immediately) {
         Instant startTime = Instant.now(clock).plus(THROTTLE_THRESHOLD);
         if (immediately) {
             startTime = Instant.now(clock);
         }
         synchronized (scheduledFutures) {
-            Future<?> scheduled = taskScheduler.schedule(future.getFirst(), startTime);
+            Future<?> scheduled = taskScheduler.schedule(task, startTime);
             // casting the type parameter to Object
             scheduledFutures.put(identifier, (Future<Object>) scheduled);
         }
-        notifyTaskChanged(future.getSecond()); // task scheduled
     }
 
     private void cancelWithHigherGroup(Identifier throttleAnnotation) {
