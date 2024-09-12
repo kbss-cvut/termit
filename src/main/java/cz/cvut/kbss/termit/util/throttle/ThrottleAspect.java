@@ -399,6 +399,9 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                     lastRun.put(identifier, Instant.now(clock));
                 }
             } finally {
+                if (!throttledFuture.isDone()) {
+                    throttledFuture.cancel(false);
+                }
                 notifyTaskChanged(throttledFuture); // task done
                 // clear the security context
                 SecurityContextHolder.clearContext();

@@ -165,6 +165,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
             ThrottledFuture<T> result = target.update(this.task, this.onCompletion);
             this.task = null;
             this.onCompletion.clear();
+            this.cancel(false);
             return result;
         } finally {
             if (locked) {
@@ -195,15 +196,19 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
                 startedCallback.accept(this);
             }
 
-            T result = null;
-            if (task != null) {
-                result = task.get();
-                final T finalResult = result;
-                callbackLock.lock();
-                onCompletion.forEach(c -> c.accept(finalResult));
-                callbackLock.unlock();
+            try {
+                T result = null;
+                if (task != null) {
+                    result = task.get();
+                    final T finalResult = result;
+                    callbackLock.lock();
+                    onCompletion.forEach(c -> c.accept(finalResult));
+                    callbackLock.unlock();
+                }
+                future.complete(result);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
             }
-            future.complete(result);
         } finally {
             if (locked) {
                 lock.unlock();
