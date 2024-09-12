@@ -126,8 +126,11 @@ public class ResultCachingValidator implements VocabularyContentValidator {
         return null;    // Will be replaced by Spring
     }
 
+    /**
+     * Marks cache related to the vocabulary from the event as dirty
+     */
     @EventListener({VocabularyContentModifiedEvent.class, VocabularyCreatedEvent.class})
-    public void evictVocabularyCache(VocabularyEvent event) {
+    public void markCacheDirty(VocabularyEvent event) {
         LOG.debug("Vocabulary content modified, marking cache as dirty for {}.", event.getVocabularyIri());
         // marked as dirty for specified vocabulary
         vocabularyClosure.remove(event.getVocabularyIri());

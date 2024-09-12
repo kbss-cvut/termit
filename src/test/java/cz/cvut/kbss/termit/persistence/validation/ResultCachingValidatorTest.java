@@ -98,7 +98,7 @@ class ResultCachingValidatorTest {
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
         final Collection<ValidationResult> resultOne = runFuture(sut.validate(vocabulary, vocabularies));
         verify(validator).validate(vocabulary, vocabularies);
-        sut.evictVocabularyCache(new VocabularyContentModifiedEvent(this, vocabulary));
+        sut.markCacheDirty(new VocabularyContentModifiedEvent(this, vocabulary));
         final Collection<ValidationResult> resultTwo = runFuture(sut.validate(vocabulary, vocabularies));
         verify(validator, times(2)).validate(vocabulary, vocabularies);
         assertEquals(resultOne, resultTwo);
