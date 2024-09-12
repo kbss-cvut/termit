@@ -52,6 +52,9 @@ class TextPositionSelectorGenerator implements SelectorGenerator {
     }
 
     /**
+     * This code was extracted from {@link #extractNodeText} and related functions
+     * to prevent constructing whole string contents for only getting its length.
+     * Now only length is counted from the contents of text nodes.
      * @see SelectorGenerator#extractNodeText(Iterable)
      * @see Element#wholeText()
      * @see TextNode#getWholeText()
@@ -59,19 +62,20 @@ class TextPositionSelectorGenerator implements SelectorGenerator {
     private int resolveStartPosition(Element element) {
         final Elements ancestors = element.parents();
         Element previous = element;
+        // atomic required for access from lambda
         AtomicInteger counter = new AtomicInteger();
+        NodeVisitor consumer = (node, depth) -> {
+            if (node instanceof TextNode textNode) {
+                counter.addAndGet(textNode.getWholeText().length());
+            } else if (node.normalName().equals("br")) {
+                counter.getAndIncrement();
+            }
+        };
         for (Element parent : ancestors) {
             final List<Node> previousSiblings = parent.childNodes().subList(0, previous.siblingIndex());
 
             for (final Node sibling : previousSiblings) {
-                    NodeVisitor consumer = (node, depth) -> {
-                        if (node instanceof TextNode textNode) {
-                            counter.addAndGet(textNode.getWholeText().length());
-                        } else if (node.normalName().equals("br")) {
-                            counter.getAndIncrement();
-                        }
-                    };
-                    NodeTraversor.traverse(consumer, sibling);
+                NodeTraversor.traverse(consumer, sibling);
             }
 
             previous = parent;
