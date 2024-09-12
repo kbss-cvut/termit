@@ -17,13 +17,13 @@ import java.util.List;
 import static org.mockito.Mockito.inOrder;
 
 @ExtendWith(MockitoExtension.class)
-class SynchronousTermOccurrenceSaverTest {
+class TermOccurrenceSaverTest {
 
     @Mock
     private TermOccurrenceDao occurrenceDao;
 
     @InjectMocks
-    private SynchronousTermOccurrenceSaver sut;
+    private TermOccurrenceSaver sut;
 
     @Test
     void saveOccurrencesRemovesAllExistingOccurrencesAndPersistsSpecifiedOnes() {
