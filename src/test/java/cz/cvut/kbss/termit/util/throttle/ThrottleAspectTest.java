@@ -742,20 +742,26 @@ class ThrottleAspectTest {
         assertDoesNotThrow(() -> taskSchedulerTasks.forEach((r, i) -> r.run()));
     }
 
+    /**
+     * Ensures that when an exception is thrown during throttled task execution,
+     * it is stored within the future and rethrown on future#get.
+     */
     @Test
     void exceptionPropagatedFromFutureTask() throws Throwable {
         final String exceptionMessage = "termit exception";
-        when(joinPointA.proceed()).then(invocation -> new ThrottledFuture<>().update(() -> {
+        when(joinPointA.proceed()).then(invocation -> ThrottledFuture.of(() -> {
             throw new TermItException(exceptionMessage);
-        }, List.of()));
+        }));
         signatureA.setReturnType(Future.class);
 
         sut.throttleMethodCall(joinPointA, throttleA);
 
         assertEquals(1, taskSchedulerTasks.size());
         assertEquals(1, scheduledFutures.size());
+        assertEquals(1, throttledFutures.size());
         Runnable scheduled = taskSchedulerTasks.getKey(0);
-        Future<?> future = scheduledFutures.firstEntry().getValue();
+        Future<?> scheduledFuture = scheduledFutures.firstEntry().getValue();
+        Future<?> future = throttledFutures.getValue(0);
 
         assertNotNull(scheduled);
         assertNotNull(future);
@@ -763,6 +769,8 @@ class ThrottleAspectTest {
         // exception is then re-thrown during future#get()
         ExecutionException e = assertThrows(ExecutionException.class, future::get);
         assertEquals(exceptionMessage, e.getCause().getMessage());
+        assertTrue(scheduledFuture.isDone());
+        assertTrue(future.isDone());
     }
 
     @Test

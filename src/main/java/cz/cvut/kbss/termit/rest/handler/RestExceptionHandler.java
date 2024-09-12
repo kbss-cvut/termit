@@ -84,7 +84,7 @@ public class RestExceptionHandler {
     }
 
     private static void logException(String message, Throwable ex) {
-        // prevents from logging exceptions caused be broken connection with a client
+        // Prevents exceptions caused by broken connection with a client from logging
         if (!isCausedBy(ex, AsyncRequestNotUsableException.class)) {
             LOG.error(message, ex);
         }
