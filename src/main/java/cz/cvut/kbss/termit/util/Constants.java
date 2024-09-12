@@ -49,22 +49,6 @@ public class Constants {
     public static final String REST_MAPPING_PATH = "/rest";
 
     /**
-     * The amount of time in which calls of methods
-     * with {@link cz.cvut.kbss.termit.util.throttle.Throttle} annotation
-     * should be merged.
-     *
-     * @see cz.cvut.kbss.termit.util.throttle.Throttle
-     * @see cz.cvut.kbss.termit.util.throttle.ThrottleAspect
-     */
-    public static final Duration THROTTLE_THRESHOLD = Duration.ofSeconds(10);
-
-    /**
-     * After how much time, should complete futures be discarded.
-     * @see ThrottleAspect#clearOldFutures()
-     */
-    public static final Duration THROTTLE_DISCARD_THRESHOLD = Duration.ofMinutes(1);
-
-    /**
      * Default page size.
      * <p>
      * Implemented as maximum integer so that a default page specification corresponds to a find all query.

@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.util.throttle;
 import com.vladsch.flexmark.util.collection.OrderedMap;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,8 +34,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static cz.cvut.kbss.termit.util.Constants.THROTTLE_DISCARD_THRESHOLD;
-import static cz.cvut.kbss.termit.util.Constants.THROTTLE_THRESHOLD;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -56,6 +55,7 @@ import static org.mockito.Mockito.when;
 
 class ThrottleAspectTest {
     private static final long THREAD_JOIN_TIMEOUT_MILLIS = 60 * 1000;
+    private final Configuration configuration = new Configuration();
 
     /**
      * Throttled futures from {@link #sut}
@@ -206,7 +206,7 @@ class ThrottleAspectTest {
         transactionExecutor = spy(SynchronousTransactionExecutor.class);
         longRunningTasksRegistry = mock(LongRunningTasksRegistry.class);
 
-        sut = new ThrottleAspect(throttledFutures, lastRun, scheduledFutures, taskScheduler, mockedClock, transactionExecutor, longRunningTasksRegistry);
+        sut = new ThrottleAspect(throttledFutures, lastRun, scheduledFutures, taskScheduler, mockedClock, transactionExecutor, longRunningTasksRegistry, configuration);
     }
 
     /**
@@ -221,13 +221,13 @@ class ThrottleAspectTest {
     }
 
     void skipThreshold() {
-        clock = Clock.fixed(clock.instant().plus(THROTTLE_THRESHOLD), ZoneId.of("UTC"));
+        clock = Clock.fixed(clock.instant().plus(configuration.getThrottleThreshold()), ZoneId.of("UTC"));
     }
 
     void skipDiscardThreshold() {
         clock = Clock.fixed(clock.instant()
-                                 .plus(THROTTLE_DISCARD_THRESHOLD)
-                                 .plus(THROTTLE_THRESHOLD)
+                                 .plus(configuration.getThrottleDiscardThreshold())
+                                 .plus(configuration.getThrottleThreshold())
                                  .plusSeconds(1),
                 ZoneId.of("UTC"));
     }
@@ -618,8 +618,8 @@ class ThrottleAspectTest {
 
     /**
      * When a task is executed, all three maps are cleared from
-     * entries older than {@link cz.cvut.kbss.termit.util.Constants#THROTTLE_DISCARD_THRESHOLD THROTTLE_DISCARD_THRESHOLD}
-     * plus {@link cz.cvut.kbss.termit.util.Constants#THROTTLE_THRESHOLD THROTTLE_THRESHOLD}
+     * entries older than {@link Configuration#throttleDiscardThreshold throttleDiscardThreshold}
+     * plus {@link Configuration#throttleThreshold throttleThreshold}
      */
     @Test
     void allMapsAreClearedAfterDiscardThreshold() throws Throwable {
@@ -819,7 +819,7 @@ class ThrottleAspectTest {
 
     @Test
     void aspectConstructsFromAutowiredConstructor() {
-        assertDoesNotThrow(() -> new ThrottleAspect(taskScheduler, transactionExecutor, longRunningTasksRegistry));
+        assertDoesNotThrow(() -> new ThrottleAspect(taskScheduler, transactionExecutor, longRunningTasksRegistry, configuration));
     }
 
     @Test

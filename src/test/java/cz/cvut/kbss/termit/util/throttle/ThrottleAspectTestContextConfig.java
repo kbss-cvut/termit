@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.util.throttle;
 
+import cz.cvut.kbss.termit.util.Configuration;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -26,5 +27,10 @@ public class ThrottleAspectTestContextConfig {
     @Bean
     public ThrottledService throttledService() {
         return new ThrottledService();
+    }
+
+    @Bean
+    public Configuration configuration() {
+        return new Configuration();
     }
 }
