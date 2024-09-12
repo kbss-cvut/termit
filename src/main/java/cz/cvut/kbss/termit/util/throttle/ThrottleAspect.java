@@ -311,6 +311,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         final Class<?> returnType = methodSignature.getReturnType();
         final boolean isFuture = returnType.isAssignableFrom(ThrottledFuture.class);
+        final boolean isVoid = returnType.equals(Void.class) || returnType.equals(Void.TYPE);
 
         ThrottledFuture<Object> throttledFuture = future;
 
@@ -335,15 +336,21 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             } else {
                 throw new ThrottleAspectException("Returned value is not a ThrottledFuture");
             }
-        } else {
+        } else if (isVoid) {
             throttledFuture = throttledFuture.update(() -> {
                 try {
                     return joinPoint.proceed();
                 } catch (Throwable e) {
-                    // exception happened inside throttled method
+                    // exception happened inside throttled method,
+                    // and the method returns null, if we rethrow the exception
+                    // it will be stored inside the future
+                    // and never retrieved (as the method returned null)
+                    LOG.error("Exception thrown during task execution", e);
                     throw new TermItException(e);
                 }
             }, List.of());
+        } else {
+            throw new ThrottleAspectException("Invalid return type for " + joinPoint.getSignature() + " annotated with @Debounce, only Future or void allowed!");
         }
 
         final boolean withTransaction = methodSignature.getMethod() != null && methodSignature.getMethod()
