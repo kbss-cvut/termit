@@ -62,24 +62,12 @@ class TextPositionSelectorGenerator implements SelectorGenerator {
     private int resolveStartPosition(Element element) {
         final Elements ancestors = element.parents();
         Element previous = element;
-        // atomic required for access from lambda
-        AtomicInteger counter = new AtomicInteger();
-        NodeVisitor consumer = (node, depth) -> {
-            if (node instanceof TextNode textNode) {
-                counter.addAndGet(textNode.getWholeText().length());
-            } else if (node.normalName().equals("br")) {
-                counter.getAndIncrement();
-            }
-        };
+        int counter = 0;
         for (Element parent : ancestors) {
             final List<Node> previousSiblings = parent.childNodes().subList(0, previous.siblingIndex());
-
-            for (final Node sibling : previousSiblings) {
-                NodeTraversor.traverse(consumer, sibling);
-            }
-
+            counter += extractNodeText(previousSiblings).length();
             previous = parent;
         }
-        return counter.get();
+        return counter;
     }
 }
