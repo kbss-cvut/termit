@@ -148,6 +148,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     /**
      * Returns future with the task from the specified {@code throttledFuture}.
      * If possible, transfers the task from this object to the specified {@code throttledFuture}.
+     * If the task was successfully transferred, this future is canceled.
      *
      * @param target the future to update
      * @return target when current future is already being executed, was canceled or completed.
