@@ -4,9 +4,11 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import org.springframework.lang.NonNull;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Indicates that validation for a set of vocabularies was finished.
@@ -17,9 +19,9 @@ public class VocabularyValidationFinishedEvent extends VocabularyEvent {
      * Vocabulary closure of {@link #vocabularyIri}.
      * IRIs of vocabularies that are imported by {@link #vocabularyIri} and were part of the validation.
      */
-    private final Collection<URI> vocabularyIris;
+    private final List<URI> vocabularyIris;
 
-    private final Collection<ValidationResult> validationResults;
+    private final List<ValidationResult> validationResults;
 
     /**
      * @param source the source of the event
@@ -31,17 +33,18 @@ public class VocabularyValidationFinishedEvent extends VocabularyEvent {
                                              @NonNull Collection<URI> vocabularyIris,
                                              @NonNull List<ValidationResult> validationResults) {
         super(source, originVocabularyIri);
-        this.vocabularyIris = Collections.unmodifiableCollection(vocabularyIris);
-        this.validationResults = Collections.unmodifiableCollection(validationResults);
+        // defensive copy
+        this.vocabularyIris = new ArrayList<>(vocabularyIris);
+        this.validationResults = new ArrayList<>(validationResults);
     }
 
     @NonNull
-    public Collection<URI> getVocabularyIris() {
-        return vocabularyIris;
+    public List<URI> getVocabularyIris() {
+        return Collections.unmodifiableList(vocabularyIris);
     }
 
     @NonNull
-    public Collection<ValidationResult> getValidationResults() {
-        return validationResults;
+    public List<ValidationResult> getValidationResults() {
+        return Collections.unmodifiableList(validationResults);
     }
 }
