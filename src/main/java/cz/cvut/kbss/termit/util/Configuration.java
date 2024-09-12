@@ -18,7 +18,9 @@
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.util.throttle.ThrottleAspect;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -63,6 +65,25 @@ public class Configuration {
      */
     @Min(1)
     private Integer asyncThreadCount = Runtime.getRuntime().availableProcessors();
+
+    /**
+     * The amount of time in which calls of throttled methods
+     * should be merged.
+     * The value must be positive ({@code > 0}).
+     * @configurationdoc.default 10 seconds
+     * @see cz.cvut.kbss.termit.util.throttle.Throttle
+     * @see cz.cvut.kbss.termit.util.throttle.ThrottleAspect
+     */
+    private Duration throttleThreshold = Duration.ofSeconds(10);
+
+    /**
+     * After how much time, should objects with completed futures be discarded.
+     * The value must be positive ({@code > 0}).
+     * @configurationdoc.default 1 minute
+     * @see ThrottleAspect#clearOldFutures()
+     */
+    private Duration throttleDiscardThreshold = Duration.ofMinutes(1);
+
     @Valid
     private Persistence persistence = new Persistence();
     @Valid
@@ -276,6 +297,22 @@ public class Configuration {
 
     public void setTemplate(Template template) {
         this.template = template;
+    }
+
+    public Duration getThrottleThreshold() {
+        return throttleThreshold;
+    }
+
+    public void setThrottleThreshold(Duration throttleThreshold) {
+        this.throttleThreshold = throttleThreshold;
+    }
+
+    public Duration getThrottleDiscardThreshold() {
+        return throttleDiscardThreshold;
+    }
+
+    public void setThrottleDiscardThreshold(Duration throttleDiscardThreshold) {
+        this.throttleDiscardThreshold = throttleDiscardThreshold;
     }
 
     @Validated

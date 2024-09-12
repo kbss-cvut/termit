@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.util.throttle;
 import cz.cvut.kbss.termit.TermItApplication;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
-import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Pair;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskScheduler;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
@@ -53,8 +53,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static cz.cvut.kbss.termit.util.Constants.THROTTLE_DISCARD_THRESHOLD;
-import static cz.cvut.kbss.termit.util.Constants.THROTTLE_THRESHOLD;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_SINGLETON;
 
 /**
@@ -131,13 +129,16 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      */
     private final AtomicReference<Instant> lastClear;
 
+    private final Configuration configuration;
+
     @Autowired
     public ThrottleAspect(@Qualifier("longRunningTaskScheduler") TaskScheduler taskScheduler,
                           SynchronousTransactionExecutor transactionExecutor,
-                          LongRunningTasksRegistry longRunningTasksRegistry) {
+                          LongRunningTasksRegistry longRunningTasksRegistry, Configuration configuration) {
         super(longRunningTasksRegistry);
         this.taskScheduler = taskScheduler;
         this.transactionExecutor = transactionExecutor;
+        this.configuration = configuration;
         throttledFutures = new HashMap<>();
         lastRun = new HashMap<>();
         scheduledFutures = new TreeMap<>();
@@ -153,7 +154,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                              Map<Identifier, Instant> lastRun,
                              NavigableMap<Identifier, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
                              Clock clock, SynchronousTransactionExecutor transactionExecutor,
-                             LongRunningTasksRegistry longRunningTasksRegistry) {
+                             LongRunningTasksRegistry longRunningTasksRegistry, Configuration configuration) {
         super(longRunningTasksRegistry);
         this.throttledFutures = throttledFutures;
         this.lastRun = lastRun;
@@ -161,6 +162,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         this.taskScheduler = taskScheduler;
         this.clock = clock;
         this.transactionExecutor = transactionExecutor;
+        this.configuration = configuration;
         standardEvaluationContext = makeDefaultContext();
         lastClear = new AtomicReference<>(Instant.now(clock));
     }
@@ -231,7 +233,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             }
         }
 
-        // if there is a scheduled task and this throttled instance was executed in the last THROTTLE_THRESHOLD
+        // if there is a scheduled task and this throttled instance was executed in the last configuration.getThrottleThreshold()
         // cancel the scheduled task
         // -> the execution is further delayed
         Future<Object> oldScheduledFuture = scheduledFutures.get(identifier);
@@ -423,13 +425,13 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
     /**
      * Discards futures from {@link #throttledFutures}, {@link #lastRun} and {@link #scheduledFutures} maps.
-     * <p>Every completed future for which a {@link Constants#THROTTLE_DISCARD_THRESHOLD} expired is discarded.</p>
+     * <p>Every completed future for which a {@link Configuration#throttleDiscardThreshold throttleDiscardThreshold} expired is discarded.</p>
      * @see #isThresholdExpired(Identifier)
      */
     private void clearOldFutures() {
         // if the last clear was performed less than a threshold ago, skip it for now
         Instant last = lastClear.get();
-        if (last.isAfter(Instant.now(clock).minus(THROTTLE_THRESHOLD).minus(THROTTLE_DISCARD_THRESHOLD))) {
+        if (last.isAfter(Instant.now(clock).minus(configuration.getThrottleThreshold()).minus(configuration.getThrottleDiscardThreshold()))) {
             return;
         }
         if (!lastClear.compareAndSet(last, Instant.now(clock))) {
@@ -442,7 +444,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                                                                                                              .stream())
                           .flatMap(s -> s).distinct().toList() // ensures safe modification of maps
                           .forEach(identifier -> {
-                              if (isThresholdExpiredByMoreThan(identifier, THROTTLE_DISCARD_THRESHOLD)) {
+                              if (isThresholdExpiredByMoreThan(identifier, configuration.getThrottleDiscardThreshold())) {
                                   Optional.ofNullable(throttledFutures.get(identifier)).ifPresent(throttled -> {
                                       if (throttled.isDone()) {
                                           throttledFutures.remove(identifier);
@@ -465,10 +467,10 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      * @param identifier of the task
      * @param duration to add to the throttle threshold
      * @return Whether the last time when a task with specified {@code identifier} run
-     * is older than ({@link Constants#THROTTLE_THRESHOLD} + {@code duration})
+     * is older than ({@link Configuration#throttleThreshold throttleThreshold} + {@code duration})
      */
     private boolean isThresholdExpiredByMoreThan(Identifier identifier, Duration duration) {
-        return lastRun.getOrDefault(identifier, Instant.MAX).isBefore(Instant.now(clock).minus(THROTTLE_THRESHOLD).minus(duration));
+        return lastRun.getOrDefault(identifier, Instant.MAX).isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()).minus(duration));
     }
 
     /**
@@ -476,12 +478,12 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      * true when the task had never run
      */
     private boolean isThresholdExpired(Identifier identifier) {
-        return lastRun.getOrDefault(identifier, Instant.EPOCH).isBefore(Instant.now(clock).minus(THROTTLE_THRESHOLD));
+        return lastRun.getOrDefault(identifier, Instant.EPOCH).isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()));
     }
 
     @SuppressWarnings("unchecked")
     private void schedule(Identifier identifier, Runnable task, boolean immediately) {
-        Instant startTime = Instant.now(clock).plus(THROTTLE_THRESHOLD);
+        Instant startTime = Instant.now(clock).plus(configuration.getThrottleThreshold());
         if (immediately) {
             startTime = Instant.now(clock);
         }
