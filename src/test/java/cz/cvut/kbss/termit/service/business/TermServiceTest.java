@@ -312,6 +312,7 @@ class TermServiceTest {
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term toAnalyze = generateTermWithId();
+        when(termRepositoryService.findRequired(toAnalyze.getUri())).thenReturn(toAnalyze);
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
         verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
     }

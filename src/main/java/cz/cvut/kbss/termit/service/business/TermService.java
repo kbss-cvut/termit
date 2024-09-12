@@ -445,6 +445,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     @Transactional
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
+        term = findRequired(term.getUri()); // required when throttling for persistent context
         Objects.requireNonNull(term);
         if (term.getDefinition() == null || term.getDefinition().isEmpty()) {
             return;
