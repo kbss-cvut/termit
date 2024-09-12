@@ -237,23 +237,20 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
 
     @Override
     public String toString() {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("Vocabulary{")
-                .append(getLabel())
-                .append(" ")
-                .append(Utils.uriToString(getUri()));
+        String result = "Vocabulary{"+
+                getLabel() + " "
+                + Utils.uriToString(getUri());
         try {
-            builder.append(", glossary=" + glossary);
+            result += ", glossary=" + glossary;
             if (importedVocabularies != null) {
-                builder.append(", importedVocabularies = [" +
+                result +=", importedVocabularies = [" +
                         importedVocabularies.stream().map(Utils::uriToString)
-                                            .collect(Collectors.joining(", ")) + "]");
+                                            .collect(Collectors.joining(", ")) + "]";
             }
-
         } catch (LazyLoadingException e) {
             // persistent context not available
         }
 
-        return builder.toString();
+        return result;
     }
 }

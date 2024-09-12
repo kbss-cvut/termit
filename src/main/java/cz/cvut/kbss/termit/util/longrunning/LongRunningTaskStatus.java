@@ -46,15 +46,7 @@ public class LongRunningTaskStatus implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("{").append(this.state.name());
-        if (startedAt != null) {
-            builder.append(", startedAt=").append(startedAt);
-        }
-        builder.append(", ");
-        builder.append(uuid);
-        builder.append("}");
-        return builder.toString();
+        return "{" + state.name() + (startedAt == null ? "" : ", startedAt=" + startedAt) + ", " + uuid + "}";
     }
 
     public enum State {

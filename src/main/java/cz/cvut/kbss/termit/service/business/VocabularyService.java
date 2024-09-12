@@ -309,6 +309,7 @@ public class VocabularyService
               name = "allTermsVocabularyAnalysis")
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
     public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
+        vocabulary = findRequired(vocabulary.getUri()); // required when throttling for persistent context
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
