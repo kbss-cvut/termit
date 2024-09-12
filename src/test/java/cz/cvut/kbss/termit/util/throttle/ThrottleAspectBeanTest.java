@@ -1,11 +1,13 @@
 package cz.cvut.kbss.termit.util.throttle;
 
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.test.annotation.DirtiesContext;
@@ -35,6 +37,9 @@ class ThrottleAspectBeanTest {
 
     @SpyBean
     ThrottleAspect throttleAspect;
+
+    @MockBean
+    LongRunningTasksRegistry longRunningTasksRegistry;
 
     @Autowired
     ThrottledService throttledService;

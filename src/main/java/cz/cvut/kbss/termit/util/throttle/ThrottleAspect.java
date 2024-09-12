@@ -6,6 +6,7 @@ import cz.cvut.kbss.termit.exception.ThrottleAspectException;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Pair;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskScheduler;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -134,8 +135,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
     @Autowired
     public ThrottleAspect(@Qualifier("longRunningTaskScheduler") TaskScheduler taskScheduler,
                           SynchronousTransactionExecutor transactionExecutor,
-                          ApplicationEventPublisher eventPublisher) {
-        super(eventPublisher);
+                          LongRunningTasksRegistry longRunningTasksRegistry) {
+        super(longRunningTasksRegistry);
         this.taskScheduler = taskScheduler;
         this.transactionExecutor = transactionExecutor;
         throttledFutures = new HashMap<>();
@@ -153,8 +154,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                              Map<Identifier, Instant> lastRun,
                              NavigableMap<Identifier, Future<Object>> scheduledFutures, TaskScheduler taskScheduler,
                              Clock clock, SynchronousTransactionExecutor transactionExecutor,
-                             ApplicationEventPublisher eventPublisher) {
-        super(eventPublisher);
+                             LongRunningTasksRegistry longRunningTasksRegistry) {
+        super(longRunningTasksRegistry);
         this.throttledFutures = throttledFutures;
         this.lastRun = lastRun;
         this.scheduledFutures = scheduledFutures;

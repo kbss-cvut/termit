@@ -5,6 +5,7 @@ import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -21,7 +22,7 @@ public class LongRunningTaskStatus implements Serializable {
     public LongRunningTaskStatus(@NonNull LongRunningTask task) {
         Objects.requireNonNull(task.getName());
         this.name = task.getName();
-        this.startedAt = task.startedAt().orElse(null);
+        this.startedAt = task.startedAt().map(time -> time.truncatedTo(ChronoUnit.SECONDS)).orElse(null);
         this.state = State.of(task);
         this.uuid = task.getUuid();
     }

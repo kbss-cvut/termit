@@ -1,7 +1,5 @@
 package cz.cvut.kbss.termit.util.longrunning;
 
-import cz.cvut.kbss.termit.event.LongRunningTaskChangedEvent;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.lang.NonNull;
 
 /**
@@ -9,15 +7,16 @@ import org.springframework.lang.NonNull;
  * @see LongRunningTask
  */
 public abstract class LongRunningTaskScheduler {
-    protected final ApplicationEventPublisher eventPublisher;
+    private final LongRunningTasksRegistry registry;
 
-    protected LongRunningTaskScheduler(ApplicationEventPublisher eventPublisher) {
-        this.eventPublisher = eventPublisher;
+    protected LongRunningTaskScheduler(LongRunningTasksRegistry registry) {
+        this.registry = registry;
     }
 
     protected final void notifyTaskChanged(final @NonNull LongRunningTask task) {
-        if (task.getName() != null && !task.getName().isBlank()) {
-            eventPublisher.publishEvent(new LongRunningTaskChangedEvent(this, task));
+        final String name = task.getName();
+        if (name != null && !name.isBlank()) {
+            registry.onTaskChanged(task);
         }
     }
 }
