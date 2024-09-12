@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.websocket;
 
 import cz.cvut.kbss.termit.event.VocabularyEvent;
-import cz.cvut.kbss.termit.event.VocabularyFileTextAnalysisFinishedEvent;
-import cz.cvut.kbss.termit.event.VocabularyTermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -12,8 +12,8 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.event.EventListener;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
@@ -49,7 +49,7 @@ public class VocabularySocketController extends BaseWebSocketController {
     public void validateVocabulary(@DestinationVariable String localName,
                                    @Header(name = Constants.QueryParams.NAMESPACE,
                                            required = false) Optional<String> namespace,
-                                   @NotNull MessageHeaders messageHeaders) {
+                                   @NonNull MessageHeaders messageHeaders) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
 
@@ -91,7 +91,7 @@ public class VocabularySocketController extends BaseWebSocketController {
     }
 
     @EventListener
-    public void onFileTextAnalysisFinished(VocabularyFileTextAnalysisFinishedEvent event) {
+    public void onFileTextAnalysisFinished(FileTextAnalysisFinishedEvent event) {
         messagingTemplate.convertAndSend(
                 WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FINISHED_FILE,
                 event.getFileUri(),
@@ -100,7 +100,7 @@ public class VocabularySocketController extends BaseWebSocketController {
     }
 
     @EventListener
-    public void onTermDefinitionTextAnalysisFinished(VocabularyTermDefinitionTextAnalysisFinishedEvent event) {
+    public void onTermDefinitionTextAnalysisFinished(TermDefinitionTextAnalysisFinishedEvent event) {
         messagingTemplate.convertAndSend(
                 WebSocketDestinations.VOCABULARIES_TEXT_ANALYSIS_FINISHED_TERM_DEFINITION,
                 event.getTermUri(),
@@ -108,15 +108,15 @@ public class VocabularySocketController extends BaseWebSocketController {
         );
     }
 
-    protected @NotNull Map<String, Object> getHeaders(@NotNull VocabularyEvent event) {
+    protected @NonNull Map<String, Object> getHeaders(@NonNull VocabularyEvent event) {
         return getHeaders(event.getVocabularyIri());
     }
 
-    protected @NotNull Map<String, Object> getHeaders(@NotNull URI vocabularyUri) {
+    protected @NonNull Map<String, Object> getHeaders(@NonNull URI vocabularyUri) {
         return getHeaders(vocabularyUri, Map.of());
     }
 
-    protected @NotNull Map<String, Object> getHeaders(@NotNull URI vocabularyUri, Map<String, Object> headers) {
+    protected @NonNull Map<String, Object> getHeaders(@NonNull URI vocabularyUri, Map<String, Object> headers) {
         final Map<String, Object> headersMap = new HashMap<>(headers);
         headersMap.put("vocabulary", vocabularyUri);
         return headersMap;

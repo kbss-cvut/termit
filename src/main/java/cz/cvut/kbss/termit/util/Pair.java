@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.util;
 
 
-import org.jetbrains.annotations.NotNull;
+import org.springframework.lang.NonNull;
 
 import java.util.Objects;
 
@@ -28,15 +28,15 @@ public class Pair<T, V> {
     /**
      * First compares the first value, if they are equal, compares the second value.
      */
-    public static class Comparable<T extends java.lang.Comparable<T>, V extends java.lang.Comparable<V>>
-            extends Pair<T, V> implements java.lang.Comparable<Comparable<T, V>> {
+    public static class ComparablePair<T extends java.lang.Comparable<T>, V extends java.lang.Comparable<V>>
+            extends Pair<T, V> implements java.lang.Comparable<ComparablePair<T, V>> {
 
-        public Comparable(T first, V second) {
+        public ComparablePair(T first, V second) {
             super(first, second);
         }
 
         @Override
-        public int compareTo(@NotNull Comparable<T, V> o) {
+        public int compareTo(@NonNull Pair.ComparablePair<T, V> o) {
             final int firstComparison = this.getFirst().compareTo(o.getFirst());
             if (firstComparison != 0) {
                 return firstComparison;
@@ -48,7 +48,7 @@ public class Pair<T, V> {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            Comparable<?, ?> that = (Comparable<?, ?>) o;
+            ComparablePair<?, ?> that = (ComparablePair<?, ?>) o;
             return Objects.equals(getFirst(), that.getFirst()) && Objects.equals(getSecond(), that.getSecond());
         }
 

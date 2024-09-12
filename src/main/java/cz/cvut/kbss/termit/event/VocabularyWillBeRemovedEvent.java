@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.event;
 
-import org.jetbrains.annotations.NotNull;
+import org.springframework.lang.NonNull;
 
 import java.net.URI;
 
@@ -9,7 +9,7 @@ import java.net.URI;
  */
 public class VocabularyWillBeRemovedEvent extends VocabularyEvent {
 
-    public VocabularyWillBeRemovedEvent(Object source, @NotNull URI vocabularyIri) {
+    public VocabularyWillBeRemovedEvent(@NonNull Object source, @NonNull URI vocabularyIri) {
         super(source, vocabularyIri);
     }
 }

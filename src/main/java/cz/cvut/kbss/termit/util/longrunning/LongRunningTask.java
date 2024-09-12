@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.util.longrunning;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -35,9 +35,9 @@ public interface LongRunningTask {
      * @return a timestamp of the task execution start,
      * or empty if the task execution has not yet started.
      */
-    @NotNull
+    @NonNull
     Optional<Instant> startedAt();
 
-    @NotNull
+    @NonNull
     UUID getUuid();
 }

@@ -2,23 +2,22 @@ package cz.cvut.kbss.termit.event;
 
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskStatus;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.lang.NonNull;
 
 /**
  * Indicates a status change of a long-running task.
  */
 public class LongRunningTaskChangedEvent extends ApplicationEvent {
 
-    @NotNull
     private final LongRunningTaskStatus status;
 
-    public LongRunningTaskChangedEvent(@NotNull Object source, final @NotNull LongRunningTask longRunningTask) {
+    public LongRunningTaskChangedEvent(@NonNull Object source, final @NonNull LongRunningTask longRunningTask) {
         super(source);
         this.status = new LongRunningTaskStatus(longRunningTask);
     }
 
-    public @NotNull LongRunningTaskStatus getStatus() {
+    public @NonNull LongRunningTaskStatus getStatus() {
         return status;
     }
 }

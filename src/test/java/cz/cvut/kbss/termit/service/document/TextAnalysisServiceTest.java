@@ -24,8 +24,8 @@ import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
-import cz.cvut.kbss.termit.event.VocabularyFileTextAnalysisFinishedEvent;
-import cz.cvut.kbss.termit.event.VocabularyTermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.Term;
@@ -424,7 +424,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                   .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
 
-        ArgumentCaptor<VocabularyFileTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyFileTextAnalysisFinishedEvent.class);
+        ArgumentCaptor<FileTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(FileTextAnalysisFinishedEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         assertNotNull(eventCaptor.getValue());
         assertEquals(file.getUri(), eventCaptor.getValue().getFileUri());
@@ -444,7 +444,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
         sut.analyzeTermDefinition(term, vocabulary.getUri());
 
-        ArgumentCaptor<VocabularyTermDefinitionTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyTermDefinitionTextAnalysisFinishedEvent.class);
+        ArgumentCaptor<TermDefinitionTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(TermDefinitionTextAnalysisFinishedEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         assertNotNull(eventCaptor.getValue());
         assertEquals(term.getUri(), eventCaptor.getValue().getTermUri());

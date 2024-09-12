@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import cz.cvut.kbss.termit.util.Constants;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -69,7 +69,7 @@ public @interface Throttle {
      * returning a List of Objects or a String which will be used to construct the unique identifier
      * for this throttled instance.
      */
-    @NotNull String value() default "";
+    @NonNull String value() default "";
 
     /**
      * The Spring-EL expression
@@ -93,7 +93,7 @@ public @interface Throttle {
      * Blank string disables any group processing.
      * @see String#compareTo(String)
      */
-    @NotNull String group() default "";
+    @NonNull String group() default "";
 
     /**
      * @return a key name of the task which is displayed on the frontend.

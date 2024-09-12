@@ -39,13 +39,13 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -146,7 +146,8 @@ public class Validator implements VocabularyContentValidator {
     @Throttle(value = "{#originVocabularyIri}", name = "vocabularyValidation")
     @Transactional(readOnly = true)
     @Override
-    public @NotNull ThrottledFuture<Collection<ValidationResult>> validate(final @NotNull URI originVocabularyIri, final @NotNull Collection<URI> vocabularyIris) {
+    @NonNull
+    public ThrottledFuture<Collection<ValidationResult>> validate(final @NonNull URI originVocabularyIri, final @NonNull Collection<URI> vocabularyIris) {
         if (vocabularyIris.isEmpty()) {
             return ThrottledFuture.done(List.of());
         }
@@ -158,7 +159,7 @@ public class Validator implements VocabularyContentValidator {
         });
     }
 
-    protected synchronized List<ValidationResult> runValidation(@NotNull Collection<URI> vocabularyIris) {
+    protected synchronized List<ValidationResult> runValidation(@NonNull Collection<URI> vocabularyIris) {
         LOG.debug("Validating {}", vocabularyIris);
         try {
             LOG.trace("Constructing model from RDF4J repository...");

@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.event;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.lang.NonNull;
 
 import java.net.URI;
 import java.util.Objects;
@@ -12,7 +12,7 @@ import java.util.Objects;
 public abstract class VocabularyEvent extends ApplicationEvent {
     protected final URI vocabularyIri;
 
-    protected VocabularyEvent(Object source, @NotNull URI vocabularyIri) {
+    protected VocabularyEvent(@NonNull Object source, @NonNull URI vocabularyIri) {
         super(source);
         Objects.requireNonNull(vocabularyIri);
         this.vocabularyIri = vocabularyIri;

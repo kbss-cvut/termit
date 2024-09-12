@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.util.throttle;
 
-import org.jetbrains.annotations.NotNull;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +16,7 @@ public class SynchronousTransactionExecutor implements Executor {
 
     @Transactional
     @Override
-    public void execute(@NotNull Runnable command) {
+    public void execute(@NonNull Runnable command) {
         command.run();
     }
 }

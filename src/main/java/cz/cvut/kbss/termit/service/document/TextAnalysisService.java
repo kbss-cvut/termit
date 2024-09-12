@@ -18,8 +18,8 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
-import cz.cvut.kbss.termit.event.VocabularyFileTextAnalysisFinishedEvent;
-import cz.cvut.kbss.termit.event.VocabularyTermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -96,7 +96,7 @@ public class TextAnalysisService {
         input.setVocabularyContexts(vocabularyContexts);
         invokeTextAnalysisOnFile(file, input);
         LOG.debug("Text analysis finished for resource {}.", file.getUri());
-        eventPublisher.publishEvent(new VocabularyFileTextAnalysisFinishedEvent(this, file));
+        eventPublisher.publishEvent(new FileTextAnalysisFinishedEvent(this, file));
     }
 
     private TextAnalysisInput createAnalysisInput(File file) {
@@ -190,7 +190,7 @@ public class TextAnalysisService {
             input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
 
             invokeTextAnalysisOnTerm(term, input);
-            eventPublisher.publishEvent(new VocabularyTermDefinitionTextAnalysisFinishedEvent(this, term));
+            eventPublisher.publishEvent(new TermDefinitionTextAnalysisFinishedEvent(this, term));
         }
     }
 

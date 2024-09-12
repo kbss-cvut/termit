@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.util.longrunning;
 
 import cz.cvut.kbss.termit.event.LongRunningTaskChangedEvent;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.lang.NonNull;
 
 /**
  * An object that will schedule a long-running tasks
@@ -15,7 +15,7 @@ public abstract class LongRunningTaskScheduler {
         this.eventPublisher = eventPublisher;
     }
 
-    protected final void notifyTaskChanged(final @NotNull LongRunningTask task) {
+    protected final void notifyTaskChanged(final @NonNull LongRunningTask task) {
         if (task.getName() != null && !task.getName().isBlank()) {
             eventPublisher.publishEvent(new LongRunningTaskChangedEvent(this, task));
         }
