@@ -281,8 +281,9 @@ class ThrottledFutureTest {
         verify(secondFuture).update(eq(firstTask), anyList());
 
         // now verifies that the task in the first future is null
-        firstFuture.transfer(secondFuture);
-        verify(secondFuture).update(isNull(), anyList());
+        Object task = ReflectionTestUtils.getField(firstFuture, "task");
+        assertNull(task);
+        assertTrue(firstFuture.isCancelled());
     }
 
     @Test
