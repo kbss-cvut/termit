@@ -9,10 +9,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -20,7 +22,7 @@ public class LongRunningTasksRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(LongRunningTasksRegistry.class);
 
-    private final ConcurrentHashMap<String, LongRunningTaskStatus> registry = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, LongRunningTaskStatus> registry = new ConcurrentHashMap<>();
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -29,6 +31,7 @@ public class LongRunningTasksRegistry {
         this.eventPublisher = eventPublisher;
     }
 
+    @Order(0) // ensures that registry is updated before controllers
     @EventListener
     public void onTaskChanged(LongRunningTaskChangedEvent event) {
         final LongRunningTaskStatus status = event.getStatus();
@@ -40,9 +43,9 @@ public class LongRunningTasksRegistry {
         }
 
         if(status.getState() == LongRunningTaskStatus.State.DONE) {
-            registry.remove(status.getName());
+            registry.remove(status.getUuid());
         } else {
-            registry.put(status.getName(), status);
+            registry.put(status.getUuid(), status);
         }
         if (registry.isEmpty()) {
             eventPublisher.publishEvent(new AllLongRunningTasksCompletedEvent(this));
@@ -52,7 +55,7 @@ public class LongRunningTasksRegistry {
 
     @NotNull
     @UnmodifiableView
-    public Map<String, LongRunningTaskStatus> getTasks() {
+    public Map<UUID, LongRunningTaskStatus> getTasks() {
         return Collections.unmodifiableMap(registry);
     }
 }
