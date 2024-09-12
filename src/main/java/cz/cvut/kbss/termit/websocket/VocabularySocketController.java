@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.websocket;
 
-import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;

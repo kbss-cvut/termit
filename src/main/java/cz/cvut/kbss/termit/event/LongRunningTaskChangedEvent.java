@@ -1,6 +1,5 @@
 package cz.cvut.kbss.termit.event;
 
-import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskStatus;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.lang.NonNull;
