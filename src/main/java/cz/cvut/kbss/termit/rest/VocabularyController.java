@@ -262,7 +262,6 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getChanges(vocabulary);
     }
 
-
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets summary info about changes made to the content of the vocabulary (term creation, editing).")
     @ApiResponses({
@@ -325,7 +324,6 @@ public class VocabularyController extends BaseController {
                                                      example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace) {
-        LOG.warn("Called legacy endpoint intended for internal use or testing only! (/vocabularies/{}/terms/text-analysis)", localName);
         vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
     }
 
@@ -341,7 +339,6 @@ public class VocabularyController extends BaseController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     public void runTextAnalysisOnAllVocabularies() {
-        LOG.warn("Called legacy endpoint intended for internal use or testing only! (/vocabularies/text-analysis)");
         vocabularyService.runTextAnalysisOnAllVocabularies();
     }
 
@@ -384,11 +381,11 @@ public class VocabularyController extends BaseController {
     @GetMapping(value = "/{localName}/relations")
     public List<RdfsStatement> relations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                                                     example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                 @PathVariable String localName,
+                                         @PathVariable String localName,
                                          @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                            example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                 @RequestParam(name = QueryParams.NAMESPACE,
-                                               required = false) Optional<String> namespace) {
+                                                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                                         @RequestParam(name = QueryParams.NAMESPACE,
+                                                       required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
 
@@ -404,11 +401,11 @@ public class VocabularyController extends BaseController {
     @GetMapping(value = "/{localName}/terms/relations")
     public List<RdfsStatement> termsRelations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                                                          example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                        @PathVariable String localName,
+                                              @PathVariable String localName,
                                               @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                   example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                        @RequestParam(name = QueryParams.NAMESPACE,
-                                                      required = false) Optional<String> namespace) {
+                                                         example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                                              @RequestParam(name = QueryParams.NAMESPACE,
+                                                            required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
 
@@ -587,15 +584,10 @@ public class VocabularyController extends BaseController {
      * A couple of constants for the {@link VocabularyController} API documentation.
      */
     public static final class ApiDoc {
-
         public static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
-
         public static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
-
         public static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
-
         public static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/slovnik/";
-
         public static final String ID_NOT_FOUND_DESCRIPTION = "Vocabulary with the specified identifier not found.";
 
         private ApiDoc() {
