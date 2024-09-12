@@ -33,18 +33,17 @@ public class LongRunningTasksWebSocketController extends BaseWebSocketController
 
     @SubscribeMapping("/update")
     public void tasksRequest(@NotNull MessageHeaders messageHeaders) {
-        sendToSession(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, "", Map.of("reset", true), messageHeaders);
-        registry.getTasks().values()
-                .forEach(status -> sendToSession(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, status, Map.of(), messageHeaders));
+        sendToSession(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, registry.getTasks(), Map.of(), messageHeaders);
     }
 
     @EventListener(AllLongRunningTasksCompletedEvent.class)
     public void onAllTasksCompleted() {
-        messagingTemplate.convertAndSend(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, "", Map.of("reset", true));
+        // sending empty payload
+        messagingTemplate.convertAndSend(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, Map.of());
     }
 
-    @EventListener
-    public void onTaskChanged(LongRunningTaskChangedEvent event) {
-        messagingTemplate.convertAndSend(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, event.getStatus());
+    @EventListener(LongRunningTaskChangedEvent.class)
+    public void onTaskChanged() {
+        messagingTemplate.convertAndSend(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, registry.getTasks());
     }
 }
