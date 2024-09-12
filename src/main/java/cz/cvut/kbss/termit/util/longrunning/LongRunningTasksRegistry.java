@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class LongRunningTasksRegistry {
@@ -25,6 +26,8 @@ public class LongRunningTasksRegistry {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    private final ReentrantLock lock = new ReentrantLock(true); // using fair ordering
+
     @Autowired
     public LongRunningTasksRegistry(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -32,13 +35,21 @@ public class LongRunningTasksRegistry {
 
     @Order(0) // ensures that registry is updated before controllers
     @EventListener
-    public void onTaskChanged(LongRunningTaskChangedEvent event) {
+    public void onTaskChanged(final LongRunningTaskChangedEvent event) {
+        // using fair ReentrantLock guarantees receiving events in the order
+        lock.lock();
+        try {
+            handleTaskChanged(event);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void handleTaskChanged(final LongRunningTaskChangedEvent event) {
         final LongRunningTaskStatus status = event.getStatus();
         if (LOG.isTraceEnabled()) {
-            synchronized (LongRunningTasksRegistry.class) {
-                LOG.atTrace().setMessage("Long running task changed state: {}{}").addArgument(status::getName)
-                   .addArgument(status).log();
-            }
+            LOG.atTrace().setMessage("Long running task changed state: {}{}").addArgument(status::getName)
+               .addArgument(status).log();
         }
 
         if(status.getState() == LongRunningTaskStatus.State.DONE) {
