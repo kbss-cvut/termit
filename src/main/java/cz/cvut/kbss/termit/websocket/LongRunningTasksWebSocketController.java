@@ -1,6 +1,5 @@
 package cz.cvut.kbss.termit.websocket;
 
-import cz.cvut.kbss.termit.event.AllLongRunningTasksCompletedEvent;
 import cz.cvut.kbss.termit.event.LongRunningTaskChangedEvent;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -34,12 +33,6 @@ public class LongRunningTasksWebSocketController extends BaseWebSocketController
     @SubscribeMapping("/update")
     public void tasksRequest(@NonNull MessageHeaders messageHeaders) {
         sendToSession(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, registry.getTasks(), Map.of(), messageHeaders);
-    }
-
-    @EventListener(AllLongRunningTasksCompletedEvent.class)
-    public void onAllTasksCompleted() {
-        // sending empty payload
-        messagingTemplate.convertAndSend(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, Map.of());
     }
 
     @EventListener(LongRunningTaskChangedEvent.class)

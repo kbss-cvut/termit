@@ -3,6 +3,7 @@ package cz.cvut.kbss.termit.util.throttle;
 import com.vladsch.flexmark.util.collection.OrderedMap;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
+import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,7 +140,7 @@ class ThrottleAspectTest {
      */
     ProceedingJoinPoint joinPointC;
 
-    ApplicationEventPublisher eventPublisher;
+    LongRunningTasksRegistry longRunningTasksRegistry;
 
     Clock clock = Clock.fixed(Instant.now(), ZoneId.of("UTC"));
 
@@ -205,9 +206,9 @@ class ThrottleAspectTest {
         when(mockedClock.instant()).then(invocation -> getInstant());
 
         transactionExecutor = spy(SynchronousTransactionExecutor.class);
-        eventPublisher = mock(ApplicationEventPublisher.class);
+        longRunningTasksRegistry = mock(LongRunningTasksRegistry.class);
 
-        sut = new ThrottleAspect(throttledFutures, lastRun, scheduledFutures, taskScheduler, mockedClock, transactionExecutor, eventPublisher);
+        sut = new ThrottleAspect(throttledFutures, lastRun, scheduledFutures, taskScheduler, mockedClock, transactionExecutor, longRunningTasksRegistry);
     }
 
     /**
@@ -812,7 +813,7 @@ class ThrottleAspectTest {
 
     @Test
     void aspectConstructsFromAutowiredConstructor() {
-        assertDoesNotThrow(() -> new ThrottleAspect(taskScheduler, transactionExecutor, eventPublisher));
+        assertDoesNotThrow(() -> new ThrottleAspect(taskScheduler, transactionExecutor, longRunningTasksRegistry));
     }
 
     @Test

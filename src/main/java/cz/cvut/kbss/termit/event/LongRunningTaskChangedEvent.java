@@ -12,9 +12,9 @@ public class LongRunningTaskChangedEvent extends ApplicationEvent {
 
     private final LongRunningTaskStatus status;
 
-    public LongRunningTaskChangedEvent(@NonNull Object source, final @NonNull LongRunningTask longRunningTask) {
+    public LongRunningTaskChangedEvent(@NonNull Object source, final @NonNull LongRunningTaskStatus status) {
         super(source);
-        this.status = new LongRunningTaskStatus(longRunningTask);
+        this.status = status;
     }
 
     public @NonNull LongRunningTaskStatus getStatus() {
