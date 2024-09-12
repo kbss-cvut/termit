@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.util.longrunning;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -10,17 +10,15 @@ import java.util.UUID;
 
 public class LongRunningTaskStatus implements Serializable {
 
-    @NotNull
     private final String name;
 
-    @NotNull
     private final UUID uuid;
 
     private final State state;
 
-    private final @Nullable Instant startedAt;
+    private final Instant startedAt;
 
-    public LongRunningTaskStatus(@NotNull LongRunningTask task) {
+    public LongRunningTaskStatus(@NonNull LongRunningTask task) {
         Objects.requireNonNull(task.getName());
         this.name = task.getName();
         this.startedAt = task.startedAt().orElse(null);
@@ -28,7 +26,7 @@ public class LongRunningTaskStatus implements Serializable {
         this.uuid = task.getUuid();
     }
 
-    public @NotNull String getName() {
+    public @NonNull String getName() {
         return name;
     }
 
@@ -40,7 +38,7 @@ public class LongRunningTaskStatus implements Serializable {
         return startedAt;
     }
 
-    public @NotNull UUID getUuid() {
+    public @NonNull UUID getUuid() {
         return uuid;
     }
 
@@ -52,7 +50,7 @@ public class LongRunningTaskStatus implements Serializable {
     public enum State {
         PENDING, RUNNING, DONE;
 
-        public static State of(@NotNull LongRunningTask task) {
+        public static State of(@NonNull LongRunningTask task) {
             if (task.isRunning()) {
                 return RUNNING;
             } else if (task.isDone()) {

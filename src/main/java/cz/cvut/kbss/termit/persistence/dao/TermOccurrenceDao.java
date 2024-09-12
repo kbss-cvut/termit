@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermOccurrenceMapper;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -258,7 +259,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
         em.createNativeQuery("DROP GRAPH ?context")
                 .setParameter("context", sourceContext)
                 .executeUpdate();
-        LOG.debug("Removed all occurrences from {}", sourceContext);
+        LOG.atDebug().setMessage("Removed all occurrences from {}")
+           .addArgument(() -> Utils.uriToString(sourceContext)).log();
     }
 
     /**

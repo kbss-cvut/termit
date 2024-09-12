@@ -6,8 +6,8 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.event.EventListener;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -32,7 +32,7 @@ public class LongRunningTasksWebSocketController extends BaseWebSocketController
     }
 
     @SubscribeMapping("/update")
-    public void tasksRequest(@NotNull MessageHeaders messageHeaders) {
+    public void tasksRequest(@NonNull MessageHeaders messageHeaders) {
         sendToSession(WebSocketDestinations.LONG_RUNNING_TASKS_UPDATE, registry.getTasks(), Map.of(), messageHeaders);
     }
 

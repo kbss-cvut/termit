@@ -9,8 +9,6 @@ import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskScheduler;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +25,8 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.DataBindingPropertyAccessor;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.expression.spel.support.StandardTypeLocator;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -126,9 +126,10 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
     /**
      * A timestamp of the last time maps were cleaned.
+     * The reference might be null.
      * @see #clearOldFutures()
      */
-    private final @NotNull AtomicReference<@NotNull Instant> lastClear;
+    private final AtomicReference<Instant> lastClear;
 
     @Autowired
     public ThrottleAspect(@Qualifier("longRunningTaskScheduler") TaskScheduler taskScheduler,
@@ -185,8 +186,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      * @throws IllegalCallerException when the annotated method returns another type than {@code void}, {@link Void} or {@link Future}
      * @implNote Around advice configured in {@code spring-aop.xml}
      */
-    public @Nullable Object throttleMethodCall(@NotNull ProceedingJoinPoint joinPoint,
-                                                            @NotNull Throttle throttleAnnotation) throws Throwable {
+    public @Nullable Object throttleMethodCall(@NonNull ProceedingJoinPoint joinPoint,
+                                               @NonNull Throttle throttleAnnotation) throws Throwable {
 
         // if the current thread is already executing a throttled code, we want to skip further throttling
         if (throttledThreads.contains(Thread.currentThread().getId())) {
@@ -203,8 +204,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return doThrottle(joinPoint, throttleAnnotation);
     }
 
-    private synchronized @Nullable Object doThrottle(@NotNull ProceedingJoinPoint joinPoint,
-                                                     @NotNull Throttle throttleAnnotation) throws Throwable {
+    private synchronized @Nullable Object doThrottle(@NonNull ProceedingJoinPoint joinPoint,
+                                                     @NonNull Throttle throttleAnnotation) throws Throwable {
 
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
@@ -302,9 +303,9 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return context;
     }
 
-    private Pair<Runnable, ThrottledFuture<Object>> getFutureTask(@NotNull ProceedingJoinPoint joinPoint,
-                                                                  @NotNull Identifier identifier,
-                                                                  @NotNull ThrottledFuture<Object> future)
+    private Pair<Runnable, ThrottledFuture<Object>> getFutureTask(@NonNull ProceedingJoinPoint joinPoint,
+                                                                  @NonNull Identifier identifier,
+                                                                  @NonNull ThrottledFuture<Object> future)
             throws Throwable {
 
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
@@ -522,7 +523,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return new Identifier(groupIdentifier, joinPoint.getSignature().toShortString() + "-" + identifier);
     }
 
-    private @Nullable Object resultVoidOrFuture(@NotNull MethodSignature signature, ThrottledFuture<Object> future)
+    private @Nullable Object resultVoidOrFuture(@NonNull MethodSignature signature, ThrottledFuture<Object> future)
             throws IllegalCallerException {
         Class<?> returnType = signature.getReturnType();
         if (returnType.isAssignableFrom(ThrottledFuture.class)) {
@@ -536,7 +537,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
 
     @SuppressWarnings({"unchecked"})
-    private @NotNull String constructIdentifier(JoinPoint joinPoint, String expression) throws ThrottleAspectException {
+    private @NonNull String constructIdentifier(JoinPoint joinPoint, String expression) throws ThrottleAspectException {
         if (expression == null || expression.isBlank()) {
             return "";
         }
@@ -572,7 +573,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      * </code></pre>
      * Implements comparable, first comparing group, then identifier.
      */
-    protected static class Identifier extends Pair.Comparable<String, String> {
+    protected static class Identifier extends Pair.ComparablePair<String, String> {
 
         public Identifier(String group, String identifier) {
             super(group, identifier);
@@ -586,7 +587,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             return this.getSecond();
         }
 
-        public boolean hasGroupPrefix(@NotNull String group) {
+        public boolean hasGroupPrefix(@NonNull String group) {
             return this.getGroup().indexOf(group) == 0 && !this.getGroup().isBlank() && !group.isBlank();
         }
 

@@ -1,7 +1,6 @@
 package cz.cvut.kbss.termit.util.throttle;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.springframework.lang.NonNull;
 
 import java.lang.annotation.Annotation;
 
@@ -10,27 +9,27 @@ import java.lang.annotation.Annotation;
  */
 public class MockedThrottle implements Throttle {
 
-    private @NotNull String value;
+    private String value;
 
-    private @NotNull String group;
+    private String group;
 
-    public MockedThrottle(@NotNull String value, @NotNull String group) {
+    public MockedThrottle(@NonNull String value, @NonNull String group) {
         this.value = value;
         this.group = group;
     }
 
     @Override
-    public @NotNull String value() {
+    public @NonNull String value() {
         return value;
     }
 
     @Override
-    public @NotNull String group() {
+    public @NonNull String group() {
         return group;
     }
 
     @Override
-    public @Nullable String name() {
+    public String name() {
         return "NameOfMockedThrottle"+group+value;
     }
 
@@ -39,11 +38,11 @@ public class MockedThrottle implements Throttle {
         return Throttle.class;
     }
 
-    public void setValue(@NotNull String value) {
+    public void setValue(@NonNull String value) {
         this.value = value;
     }
 
-    public void setGroup(@NotNull String group) {
+    public void setGroup(@NonNull String group) {
         this.group = group;
     }
 }

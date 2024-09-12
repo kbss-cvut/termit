@@ -3,8 +3,8 @@ package cz.cvut.kbss.termit.util.throttle;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,11 +35,11 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
 
     private final List<Consumer<T>> onCompletion = new ArrayList<>();
 
-    private final AtomicReference<@Nullable Instant> startedAt = new AtomicReference<>(null);
+    private final AtomicReference<Instant> startedAt = new AtomicReference<>(null);
 
     private @Nullable String name = null;
 
-    private ThrottledFuture(@NotNull final Supplier<T> task) {
+    private ThrottledFuture(@NonNull final Supplier<T> task) {
         this.task = task;
         future = new CompletableFuture<>();
     }
@@ -48,11 +48,11 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
         future = new CompletableFuture<>();
     }
 
-    public static <T> ThrottledFuture<T> of(@NotNull final Supplier<T> supplier) {
+    public static <T> ThrottledFuture<T> of(@NonNull final Supplier<T> supplier) {
         return new ThrottledFuture<>(supplier);
     }
 
-    public static ThrottledFuture<Void> of(@NotNull final Runnable runnable) {
+    public static ThrottledFuture<Void> of(@NonNull final Runnable runnable) {
         return new ThrottledFuture<>(() -> {
             runnable.run();
             return null;
@@ -115,7 +115,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
      * Does not execute the task, blocks the current thread until the result is available.
      */
     @Override
-    public T get(long timeout, @NotNull TimeUnit unit)
+    public T get(long timeout, @NonNull TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
         return future.get(timeout, unit);
     }
@@ -124,7 +124,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
      * @return If the current task is already running, was canceled or already completed, returns a new future for the given task.
      * Otherwise, replaces the current task and returns self.
      */
-    protected ThrottledFuture<T> update(Supplier<T> task, @NotNull List<Consumer<T>> onCompletion) {
+    protected ThrottledFuture<T> update(Supplier<T> task, @NonNull List<Consumer<T>> onCompletion) {
         boolean locked = false;
         try {
             locked = lock.tryLock();
@@ -226,12 +226,12 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     }
 
     @Override
-    public @NotNull Optional<Instant> startedAt() {
+    public @NonNull Optional<Instant> startedAt() {
         return Optional.ofNullable(startedAt.get());
     }
 
     @Override
-    public @NotNull UUID getUuid() {
+    public @NonNull UUID getUuid() {
         return uuid;
     }
 

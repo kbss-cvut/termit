@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import cz.cvut.kbss.termit.exception.TermItException;
-import org.jetbrains.annotations.Nullable;
+import org.springframework.lang.Nullable;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;

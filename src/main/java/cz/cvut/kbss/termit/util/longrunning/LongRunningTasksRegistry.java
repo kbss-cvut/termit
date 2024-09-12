@@ -2,14 +2,13 @@ package cz.cvut.kbss.termit.util.longrunning;
 
 import cz.cvut.kbss.termit.event.AllLongRunningTasksCompletedEvent;
 import cz.cvut.kbss.termit.event.LongRunningTaskChangedEvent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.UnmodifiableView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -53,8 +52,7 @@ public class LongRunningTasksRegistry {
         }
     }
 
-    @NotNull
-    @UnmodifiableView
+    @NonNull
     public Map<UUID, LongRunningTaskStatus> getTasks() {
         return Collections.unmodifiableMap(registry);
     }

@@ -3,7 +3,7 @@ package cz.cvut.kbss.termit.websocket;
 import cz.cvut.kbss.termit.rest.BaseController;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.jetbrains.annotations.NotNull;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -38,8 +38,8 @@ public class BaseWebSocketController extends BaseController {
      * @param replyHeaders  native headers for the reply
      * @param sourceHeaders original headers containing session id or name of the user
      */
-    protected void sendToSession(@NotNull String destination, @NotNull Object payload,
-                                 @NotNull Map<String, Object> replyHeaders, @NotNull MessageHeaders sourceHeaders) {
+    protected void sendToSession(@NonNull String destination, @NonNull Object payload,
+                                 @NonNull Map<String, Object> replyHeaders, @NonNull MessageHeaders sourceHeaders) {
         getSessionId(sourceHeaders)
                 .ifPresentOrElse(sessionId -> { // session id present
                             StompHeaderAccessor headerAccessor = StompHeaderAccessor.create(StompCommand.MESSAGE);
@@ -60,11 +60,11 @@ public class BaseWebSocketController extends BaseController {
      *
      * @return name or session id, or empty when information is not available.
      */
-    protected @NotNull Optional<String> getUser(@NotNull MessageHeaders messageHeaders) {
+    protected @NonNull Optional<String> getUser(@NonNull MessageHeaders messageHeaders) {
         return getUserName(messageHeaders).or(() -> getSessionId(messageHeaders));
     }
 
-    private @NotNull Optional<String> getSessionId(@NotNull MessageHeaders messageHeaders) {
+    private @NonNull Optional<String> getSessionId(@NonNull MessageHeaders messageHeaders) {
         return Optional.ofNullable(SimpMessageHeaderAccessor.getSessionId(messageHeaders));
     }
 
@@ -73,7 +73,7 @@ public class BaseWebSocketController extends BaseController {
      *
      * @return the name or null
      */
-    private @NotNull Optional<String> getUserName(MessageHeaders headers) {
+    private @NonNull Optional<String> getUserName(MessageHeaders headers) {
         Principal principal = SimpMessageHeaderAccessor.getUser(headers);
         if (principal != null) {
             final String name = (principal instanceof DestinationUserNameProvider provider ?

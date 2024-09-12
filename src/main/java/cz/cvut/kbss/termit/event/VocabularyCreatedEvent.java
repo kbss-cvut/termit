@@ -17,7 +17,7 @@
  */
 package cz.cvut.kbss.termit.event;
 
-import org.jetbrains.annotations.NotNull;
+import org.springframework.lang.NonNull;
 
 import java.net.URI;
 
@@ -26,7 +26,7 @@ import java.net.URI;
  */
 public class VocabularyCreatedEvent extends VocabularyEvent {
 
-    public VocabularyCreatedEvent(Object source, @NotNull URI vocabularyIri) {
+    public VocabularyCreatedEvent(@NonNull Object source, @NonNull URI vocabularyIri) {
         super(source, vocabularyIri);
     }
 }

@@ -145,17 +145,17 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     /**
      * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
      *
-     * @param vocabulary Base vocabulary, whose imports should be retrieved
+     * @param vocabularyIri Identifier of base vocabulary, whose imports should be retrieved
      * @return Collection of (transitively) imported vocabularies
      */
-    public Collection<URI> getTransitivelyImportedVocabularies(URI vocabulary) {
-        Objects.requireNonNull(vocabulary);
+    public Collection<URI> getTransitivelyImportedVocabularies(URI vocabularyIri) {
+        Objects.requireNonNull(vocabularyIri);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?imported WHERE {" +
                                                 "?x ?imports+ ?imported ." +
                                                 "}", URI.class)
                      .setParameter("imports", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                     .setParameter("x", vocabulary).getResultList();
+                     .setParameter("x", vocabularyIri).getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
