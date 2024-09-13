@@ -51,6 +51,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
@@ -442,7 +443,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     @Throttle(value = "{#vocabularyIri, #term.getUri()}",
               group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyTerm(#vocabulary.getUri(), #term.getUri())",
               name="termDefinitionAnalysis")
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
         term = findRequired(term.getUri()); // required when throttling for persistent context
