@@ -24,24 +24,15 @@ import cz.cvut.kbss.termit.exception.TermItException;
  */
 public class VocabularyImportException extends TermItException {
 
-    private final String messageId;
-
     public VocabularyImportException(String message) {
         super(message);
-        this.messageId = null;
     }
 
     public VocabularyImportException(String message, String messageId) {
-        super(message);
-        this.messageId = messageId;
+        super(message, messageId);
     }
 
     public VocabularyImportException(String message, Throwable cause) {
         super(message, cause);
-        this.messageId = null;
-    }
-
-    public String getMessageId() {
-        return messageId;
     }
 }
