@@ -126,7 +126,10 @@ public class ExcelImporter implements VocabularyImporter {
                                                                                              lang);
                          if (existingUri.isPresent() && !existingUri.get().equals(t.getUri())) {
                              throw new VocabularyImportException(
-                                     "Vocabulary already contains a term with label '" + value + "' with a different identifier than the imported one.");
+                                     "Vocabulary already contains a term with label '" + value + "' with a different identifier than the imported one.",
+                                     "error.vocabulary.import.excel.labelWithDifferentIdentifierExists")
+                                     .addParameter("label", value)
+                                     .addParameter("existingUri", Utils.uriToString(existingUri.get()));
                          }
                      }))
                      .filter(t -> termService.exists(t.getUri())).forEach(t -> {

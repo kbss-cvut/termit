@@ -17,6 +17,13 @@
  */
 package cz.cvut.kbss.termit.exception;
 
+import cz.cvut.kbss.termit.util.Utils;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Application-specific exception.
  * <p>
@@ -25,15 +32,34 @@ package cz.cvut.kbss.termit.exception;
 public class TermItException extends RuntimeException {
 
     /**
-     * Identifier of localized frontend message.
+     * Error message identifier.
+     * <p>
+     * This identifier can be used by the UI to display a corresponding localized error message.
      */
-    private String messageId;
+    protected String messageId;
+
+    /**
+     * Exception related information
+     */
+    protected final Map<String, String> parameters = new HashMap<>();
 
     protected TermItException() {
+        messageId = null;
     }
 
     public TermItException(String message) {
         super(message);
+        messageId = null;
+    }
+
+    public TermItException(String message, Throwable cause) {
+        super(message, cause);
+        this.messageId = null;
+    }
+
+    public TermItException(Throwable cause) {
+        super(cause);
+        this.messageId = null;
     }
 
     public TermItException(String message, String messageId) {
@@ -41,24 +67,41 @@ public class TermItException extends RuntimeException {
         this.messageId = messageId;
     }
 
-    public TermItException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public TermItException(String message, String messageId, Throwable cause) {
+    public TermItException(String message, Throwable cause, String messageId) {
         super(message, cause);
         this.messageId = messageId;
     }
 
-    public TermItException(Throwable cause) {
-        super(cause);
+    public TermItException(String message, Throwable cause, String messageId, @NonNull Map<String, String> parameters) {
+        super(message, cause);
+        this.messageId = messageId;
+        addParameters(parameters);
     }
 
+    public TermItException addParameters(@NonNull Map<String, String> parameters) {
+        this.parameters.putAll(parameters);
+        return this;
+    }
+
+    public TermItException addParameter(@NonNull String key, @NonNull String value) {
+        this.parameters.put(key, value);
+        return this;
+    }
+
+    @Nullable
     public String getMessageId() {
         return messageId;
     }
 
-    public void setMessageId(String messageId) {
-        this.messageId = messageId;
+    public Map<String, String> getParameters() {
+        return parameters;
+    }
+
+    @Override
+    public String toString() {
+        String params = Utils.mapToString(parameters);
+        return super.toString() +
+                (messageId == null ? "" : ", messageId=" + messageId) +
+                (params.isBlank() ? "" : ", parameters=" + params);
     }
 }

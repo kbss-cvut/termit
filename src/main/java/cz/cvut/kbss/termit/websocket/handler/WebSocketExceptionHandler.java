@@ -85,7 +85,7 @@ public class WebSocketExceptionHandler {
     }
 
     private static ErrorInfo errorInfo(Message<?> message, TermItException e) {
-        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), destination(message));
+        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), destination(message), e.getParameters());
     }
 
     @MessageExceptionHandler

@@ -95,7 +95,7 @@ public class RestExceptionHandler {
     }
 
     private static ErrorInfo errorInfo(HttpServletRequest request, TermItException e) {
-        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI());
+        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), request.getRequestURI(), e.getParameters());
     }
 
     @ExceptionHandler(PersistenceException.class)
@@ -191,9 +191,7 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
                                                                VocabularyImportException e) {
         logException(e, request);
-        return new ResponseEntity<>(
-                ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
-                HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
