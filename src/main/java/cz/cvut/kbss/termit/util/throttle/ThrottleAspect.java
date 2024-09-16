@@ -56,8 +56,8 @@ import java.util.stream.Stream;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_SINGLETON;
 
 /**
- * @see Throttle
  * @implNote The aspect is configured in {@code spring-aop.xml}, this uses Spring AOP instead of AspectJ.
+ * @see Throttle
  */
 @Order
 @Scope(SCOPE_SINGLETON)
@@ -80,22 +80,21 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
     /**
      * The last run is updated every time a task is finished.
+     *
      * @implSpec Synchronize in the field declaration order before modification
      */
     private final Map<Identifier, Instant> lastRun;
 
     /**
-     * Scheduled futures are returned from {@link #taskScheduler}.
-     * Futures are completed by execution of tasks created in {@link #createRunnableToSchedule}.
-     * Records about them are used for their cancellation in case of debouncing.
+     * Scheduled futures are returned from {@link #taskScheduler}. Futures are completed by execution of tasks created
+     * in {@link #createRunnableToSchedule}. Records about them are used for their cancellation in case of debouncing.
      *
      * @implSpec Synchronize in the field declaration order before modification
      */
     private final NavigableMap<Identifier, Future<Object>> scheduledFutures;
 
     /**
-     * Thread safe set holding identifiers of threads that are
-     * currently executing a throttled task.
+     * Thread safe set holding identifiers of threads that are currently executing a throttled task.
      */
     private final Set<Long> throttledThreads = ConcurrentHashMap.newKeySet();
 
@@ -113,6 +112,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
     /**
      * Used for acquiring {@link #lastRun} timestamps.
+     *
      * @implNote for testing purposes
      */
     private final Clock clock;
@@ -123,8 +123,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
     private final SynchronousTransactionExecutor transactionExecutor;
 
     /**
-     * A timestamp of the last time maps were cleaned.
-     * The reference might be null.
+     * A timestamp of the last time maps were cleaned. The reference might be null.
+     *
      * @see #clearOldFutures()
      */
     private final AtomicReference<Instant> lastClear;
@@ -185,7 +185,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
     /**
      * @return future or null
      * @throws TermItException        when the target method throws
-     * @throws IllegalCallerException when the annotated method returns another type than {@code void}, {@link Void} or {@link Future}
+     * @throws IllegalCallerException when the annotated method returns another type than {@code void}, {@link Void} or
+     *                                {@link Future}
      * @implNote Around advice configured in {@code spring-aop.xml}
      */
     public @Nullable Object throttleMethodCall(@NonNull ProceedingJoinPoint joinPoint,
@@ -265,8 +266,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         if (oldScheduledFuture == null || oldThrottledFuture != future || oldScheduledFuture.isDone()) {
             boolean oldFutureIsDone = oldScheduledFuture == null || oldScheduledFuture.isDone();
             if (oldThrottledFuture != future) {
-                oldThrottledFuture.then(ignored ->
-                    schedule(identifier, pair.getFirst(), throttleExpired && oldFutureIsDone)
+                oldThrottledFuture.then(ignored -> schedule(identifier, pair.getFirst(),
+                                                            throttleExpired && oldFutureIsDone)
                 );
             } else {
                 schedule(identifier, pair.getFirst(), throttleExpired && oldFutureIsDone);
@@ -352,11 +353,13 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                 }
             }, List.of());
         } else {
-            throw new ThrottleAspectException("Invalid return type for " + joinPoint.getSignature() + " annotated with @Debounce, only Future or void allowed!");
+            throw new ThrottleAspectException(
+                    "Invalid return type for " + joinPoint.getSignature() + " annotated with @Debounce, only Future or void allowed!");
         }
 
         final boolean withTransaction = methodSignature.getMethod() != null && methodSignature.getMethod()
-                                                                                              .isAnnotationPresent(Transactional.class);
+                                                                                              .isAnnotationPresent(
+                                                                                                      Transactional.class);
 
         // create a task which will be scheduled with executor
         final Runnable toSchedule = createRunnableToSchedule(throttledFuture, identifier, withTransaction);
@@ -391,14 +394,15 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             final Long threadId = Thread.currentThread().getId();
             throttledThreads.add(threadId);
 
-            LOG.trace("Running throttled task [{} left] [{} running] '{}'", countRemaining() - 1, countRunning(), identifier);
+            LOG.trace("Running throttled task [{} left] [{} running] '{}'", countRemaining() - 1, countRunning(),
+                      identifier);
 
             // restore the security context
             SecurityContextHolder.setContext(securityContext.get());
             try {
                 // fulfill the future
                 if (withTransaction) {
-                    transactionExecutor.execute(()->throttledFuture.run(this::notifyTaskChanged));
+                    transactionExecutor.execute(() -> throttledFuture.run(this::notifyTaskChanged));
                 } else {
                     throttledFuture.run(this::notifyTaskChanged);
                 }
@@ -413,7 +417,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                 notifyTaskChanged(throttledFuture); // task done
                 // clear the security context
                 SecurityContextHolder.clearContext();
-                LOG.trace("Finished throttled task [{} left] [{} running] '{}'", countRemaining(), countRunning() - 1, identifier);
+                LOG.trace("Finished throttled task [{} left] [{} running] '{}'", countRemaining(), countRunning() - 1,
+                          identifier);
 
                 clearOldFutures();
 
@@ -425,13 +430,16 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
     /**
      * Discards futures from {@link #throttledFutures}, {@link #lastRun} and {@link #scheduledFutures} maps.
-     * <p>Every completed future for which a {@link Configuration#throttleDiscardThreshold throttleDiscardThreshold} expired is discarded.</p>
+     * <p>
+     * Every completed future for which a {@link Configuration#getThrottleDiscardThreshold()} expired is discarded.
+     *
      * @see #isThresholdExpired(Identifier)
      */
     private void clearOldFutures() {
         // if the last clear was performed less than a threshold ago, skip it for now
         Instant last = lastClear.get();
-        if (last.isAfter(Instant.now(clock).minus(configuration.getThrottleThreshold()).minus(configuration.getThrottleDiscardThreshold()))) {
+        if (last.isAfter(Instant.now(clock).minus(configuration.getThrottleThreshold())
+                                .minus(configuration.getThrottleDiscardThreshold()))) {
             return;
         }
         if (!lastClear.compareAndSet(last, Instant.now(clock))) {
@@ -444,7 +452,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                                                                                                              .stream())
                           .flatMap(s -> s).distinct().toList() // ensures safe modification of maps
                           .forEach(identifier -> {
-                              if (isThresholdExpiredByMoreThan(identifier, configuration.getThrottleDiscardThreshold())) {
+                              if (isThresholdExpiredByMoreThan(identifier,
+                                                               configuration.getThrottleDiscardThreshold())) {
                                   Optional.ofNullable(throttledFutures.get(identifier)).ifPresent(throttled -> {
                                       if (throttled.isDone()) {
                                           throttledFutures.remove(identifier);
@@ -465,20 +474,22 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
     /**
      * @param identifier of the task
-     * @param duration to add to the throttle threshold
-     * @return Whether the last time when a task with specified {@code identifier} run
-     * is older than ({@link Configuration#throttleThreshold throttleThreshold} + {@code duration})
+     * @param duration   to add to the throttle threshold
+     * @return Whether the last time when a task with specified {@code identifier} run is older than
+     * ({@link Configuration#getThrottleThreshold()} + {@code duration})
      */
     private boolean isThresholdExpiredByMoreThan(Identifier identifier, Duration duration) {
-        return lastRun.getOrDefault(identifier, Instant.MAX).isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()).minus(duration));
+        return lastRun.getOrDefault(identifier, Instant.MAX)
+                      .isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()).minus(duration));
     }
 
     /**
-     * @return Whether the time when the identifier last run is older than the threshold,
-     * true when the task had never run
+     * @return Whether the time when the identifier last run is older than the threshold, true when the task had never
+     * run
      */
     private boolean isThresholdExpired(Identifier identifier) {
-        return lastRun.getOrDefault(identifier, Instant.EPOCH).isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()));
+        return lastRun.getOrDefault(identifier, Instant.EPOCH)
+                      .isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()));
     }
 
     @SuppressWarnings("unchecked")
@@ -544,7 +555,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         if (Void.TYPE.equals(returnType) || Void.class.equals(returnType)) {
             return null;
         }
-        throw new ThrottleAspectException("Invalid return type for " + signature + " annotated with @Debounce, only Future or void allowed!");
+        throw new ThrottleAspectException(
+                "Invalid return type for " + signature + " annotated with @Debounce, only Future or void allowed!");
     }
 
 
@@ -573,7 +585,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             Objects.requireNonNull(identifierList);
             return identifierList.stream().map(Object::toString).collect(Collectors.joining("-"));
         } catch (EvaluationException | ClassCastException | NullPointerException e) {
-            throw new ThrottleAspectException("The expression: '" + expression + "' has not been resolved to a Collection<Object> or String", e);
+            throw new ThrottleAspectException(
+                    "The expression: '" + expression + "' has not been resolved to a Collection<Object> or String", e);
         }
     }
 
