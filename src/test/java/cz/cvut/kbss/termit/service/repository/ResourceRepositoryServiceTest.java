@@ -62,7 +62,7 @@ class ResourceRepositoryServiceTest {
     private TermOccurrenceDao occurrenceDao;
 
     @Spy
-    private IdentifierResolver idResolver = new IdentifierResolver();
+    private IdentifierResolver idResolver = new IdentifierResolver(new Configuration());
 
     @Spy
     private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();

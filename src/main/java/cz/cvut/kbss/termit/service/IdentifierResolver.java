@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.exception.InvalidIdentifierException;
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -80,6 +81,12 @@ public class IdentifierResolver {
         Arrays.sort(ILLEGAL_FILENAME_CHARS);
     }
 
+    private final boolean asciiOnlyIdentifiers;
+
+    public IdentifierResolver(Configuration config) {
+        this.asciiOnlyIdentifiers = config.isAsciiIdentifiers();
+    }
+
     /**
      * Normalizes the specified value which includes:
      * <ul>
@@ -139,11 +146,12 @@ public class IdentifierResolver {
         if (!namespace.endsWith("/") && !namespace.endsWith("#")) {
             namespace += "/";
         }
+        final String localPart = asciiOnlyIdentifiers ? normalizeToAscii(comps) : normalize(comps);
         try {
-            return URI.create(namespace + normalize(comps));
+            return URI.create(namespace + localPart);
         } catch (IllegalArgumentException e) {
             throw new InvalidIdentifierException(
-                    "Generated identifier " + namespace + normalize(comps) + " is not a valid URI.",
+                    "Generated identifier " + namespace + localPart + " is not a valid URI.",
                     "error.identifier.invalidCharacters");
         }
     }

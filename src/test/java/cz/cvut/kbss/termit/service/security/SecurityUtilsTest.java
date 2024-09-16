@@ -69,10 +69,10 @@ class SecurityUtilsTest {
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Spy
-    private IdentifierResolver idResolver = new IdentifierResolver();
+    private Configuration config = new Configuration();
 
     @Spy
-    private Configuration config = new Configuration();
+    private IdentifierResolver idResolver = new IdentifierResolver(config);
 
     @InjectMocks
     private SecurityUtils sut;

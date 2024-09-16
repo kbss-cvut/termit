@@ -86,7 +86,7 @@ class ExcelImporterTest {
 
     @SuppressWarnings("unused")
     @Spy
-    private IdentifierResolver idResolver = new IdentifierResolver();
+    private IdentifierResolver idResolver = new IdentifierResolver(new Configuration());
 
     @InjectMocks
     private ExcelImporter sut;
