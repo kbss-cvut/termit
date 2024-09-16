@@ -19,10 +19,12 @@ package cz.cvut.kbss.termit.service.repository;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
+import cz.cvut.kbss.termit.exception.InvalidIdentifierException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.validation.ValidationResult;
 import jakarta.validation.Validator;
 import org.springframework.lang.NonNull;
@@ -173,6 +175,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      */
     protected void prePersist(@NonNull T instance) {
         validate(instance);
+        validateUri(instance.getUri());
     }
 
     /**
@@ -208,6 +211,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @param instance The instance to be updated, not {@code null}
      */
     protected void preUpdate(@NonNull T instance) {
+        validateUri(instance.getUri());
         if (!exists(instance.getUri())) {
             throw NotFoundException.create(instance.getClass().getSimpleName(), instance.getUri());
         }
@@ -280,6 +284,19 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
         final ValidationResult<T> validationResult = ValidationResult.of(validator.validate(instance));
         if (!validationResult.isValid()) {
             throw new ValidationException(validationResult);
+        }
+    }
+
+    /**
+     * Validates the specified uri.
+     *
+     * @param uri the uri to validate
+     * @throws cz.cvut.kbss.termit.exception.InvalidIdentifierException when the URI is invalid
+     * @see cz.cvut.kbss.termit.service.IdentifierResolver#isUri(String)
+     */
+    protected void validateUri(URI uri) throws InvalidIdentifierException {
+        if (uri != null && !IdentifierResolver.isUri(uri.toString())) {
+            throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier").addParameter("uri", uri.toString());
         }
     }
 }

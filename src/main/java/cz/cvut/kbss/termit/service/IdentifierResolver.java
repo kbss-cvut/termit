@@ -152,11 +152,17 @@ public class IdentifierResolver {
         } catch (IllegalArgumentException e) {
             throw new InvalidIdentifierException(
                     "Generated identifier " + namespace + localPart + " is not a valid URI.",
+                    e,
                     "error.identifier.invalidCharacters");
         }
     }
 
-    private static boolean isUri(String value) {
+    /**
+     * @param value the URI to check
+     * @return {@code true} when the URI is prefixed with protocol ({@code http/s, ftp or file}
+     * and it is a valid {@link URI}. {@code false} otherwise
+     */
+    public static boolean isUri(String value) {
         try {
             if (!value.matches("^(https?|ftp|file)://.+")) {
                 return false;
