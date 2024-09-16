@@ -18,9 +18,7 @@
 package cz.cvut.kbss.termit.util;
 
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
-import cz.cvut.kbss.termit.util.throttle.ThrottleAspect;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -61,15 +59,16 @@ public class Configuration {
 
     /**
      * The number of threads for thread pool executing asynchronous and long-running tasks.
+     *
      * @configurationdoc.default The number of processors available to the Java virtual machine.
      */
     @Min(1)
     private Integer asyncThreadCount = Runtime.getRuntime().availableProcessors();
 
     /**
-     * The amount of time in which calls of throttled methods
-     * should be merged.
-     * The value must be positive ({@code > 0}).
+     * The amount of time in which calls of throttled methods should be merged. The value must be positive
+     * ({@code > 0}).
+     *
      * @configurationdoc.default 10 seconds
      * @see cz.cvut.kbss.termit.util.throttle.Throttle
      * @see cz.cvut.kbss.termit.util.throttle.ThrottleAspect
@@ -77,11 +76,21 @@ public class Configuration {
     private Duration throttleThreshold = Duration.ofSeconds(10);
 
     /**
-     * After how much time, should objects with completed futures be discarded.
-     * The value must be positive ({@code > 0}).
+     * After how much time, should objects with completed futures be discarded. The value must be positive
+     * ({@code > 0}).
+     *
      * @configurationdoc.default 1 minute
      */
     private Duration throttleDiscardThreshold = Duration.ofMinutes(1);
+
+    /**
+     * Whether to generate ASCII-only identifiers.
+     * <p>
+     * By default, generated identifiers may contain accented characters (like č). Setting this configuration to
+     * {@code true} ensures all generated identifiers are ASCII-only and accented character are normalized to ASCII.
+     * @configurationdoc.default false
+     */
+    private boolean asciiIdentifiers = false;
 
     @Valid
     private Persistence persistence = new Persistence();
@@ -144,6 +153,14 @@ public class Configuration {
 
     public void setAsyncThreadCount(@Min(1) Integer asyncThreadCount) {
         this.asyncThreadCount = asyncThreadCount;
+    }
+
+    public boolean isAsciiIdentifiers() {
+        return asciiIdentifiers;
+    }
+
+    public void setAsciiIdentifiers(boolean asciiIdentifiers) {
+        this.asciiIdentifiers = asciiIdentifiers;
     }
 
     public Persistence getPersistence() {
