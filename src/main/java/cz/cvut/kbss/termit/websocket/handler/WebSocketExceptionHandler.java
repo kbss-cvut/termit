@@ -38,6 +38,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import java.net.URISyntaxException;
+
 import static cz.cvut.kbss.termit.util.ExceptionUtils.isCausedBy;
 
 /**
@@ -74,8 +76,8 @@ public class WebSocketExceptionHandler {
     }
 
     private static void logException(String message, Throwable ex) {
-        // prevents from logging exceptions caused be broken connection with a client
-        if (!isCausedBy(ex, AsyncRequestNotUsableException.class)) {
+        // prevents from logging exceptions caused by broken connection with a client
+        if (isCausedBy(ex, AsyncRequestNotUsableException.class).isEmpty()) {
             LOG.error(message, ex);
         }
     }
@@ -260,6 +262,12 @@ public class WebSocketExceptionHandler {
 
     @MessageExceptionHandler
     public ErrorInfo invalidIdentifierException(Message<?> message, InvalidIdentifierException e) {
+        logException(e, message);
+        return errorInfo(message, e);
+    }
+
+    @MessageExceptionHandler
+    public ErrorInfo uriSyntaxException(Message<?> message, URISyntaxException e) {
         logException(e, message);
         return errorInfo(message, e);
     }
