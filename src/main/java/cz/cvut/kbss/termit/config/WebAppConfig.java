@@ -29,7 +29,6 @@ import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.jsonld.jackson.serialization.SerializationConstants;
 import cz.cvut.kbss.termit.rest.servlet.DiagnosticsContextFilter;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
 import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
@@ -137,8 +136,10 @@ public class WebAppConfig implements WebMvcConfigurer {
         final cz.cvut.kbss.termit.util.Configuration.Repository repository = config.getRepository();
         p.setProperty("targetUri", repository.getUrl());
         p.setProperty("log", "false");
-        p.setProperty(ConfigParam.REPO_USERNAME.toString(), repository.getUsername() != null ? repository.getUsername() : "");
-        p.setProperty(ConfigParam.REPO_PASSWORD.toString(), repository.getPassword() != null ? repository.getPassword() : "");
+        p.setProperty(AdjustedUriTemplateProxyServlet.REPO_USERNAME_PARAM,
+                      repository.getUsername() != null ? repository.getUsername() : "");
+        p.setProperty(AdjustedUriTemplateProxyServlet.REPO_PASSWORD_PARAM,
+                      repository.getPassword() != null ? repository.getPassword() : "");
         controller.setInitParameters(p);
         controller.afterPropertiesSet();
         return controller;
@@ -149,7 +150,7 @@ public class WebAppConfig implements WebMvcConfigurer {
         SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
         mapping.setOrder(0);
         final Map<String, Object> urlMap = Collections.singletonMap(Constants.REST_MAPPING_PATH + "/query",
-                sparqlEndpointController());
+                                                                    sparqlEndpointController());
         mapping.setUrlMap(urlMap);
         return mapping;
     }
@@ -195,10 +196,10 @@ public class WebAppConfig implements WebMvcConfigurer {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI().components(new Components().addSecuritySchemes("bearer-key",
-                                    new SecurityScheme().type(
-                                                                SecurityScheme.Type.HTTP)
-                                                        .scheme("bearer")
-                                                        .bearerFormat("JWT")))
+                                                                            new SecurityScheme().type(
+                                                                                                        SecurityScheme.Type.HTTP)
+                                                                                                .scheme("bearer")
+                                                                                                .bearerFormat("JWT")))
                             .info(new Info().title("TermIt REST API").description("TermIt REST API definition.")
                                             .version(version));
     }

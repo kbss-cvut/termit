@@ -80,7 +80,6 @@ public class Configuration {
      * After how much time, should objects with completed futures be discarded.
      * The value must be positive ({@code > 0}).
      * @configurationdoc.default 1 minute
-     * @see ThrottleAspect#clearOldFutures()
      */
     private Duration throttleDiscardThreshold = Duration.ofMinutes(1);
 
