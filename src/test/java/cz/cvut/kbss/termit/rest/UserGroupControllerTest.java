@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.UserGroupService;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,7 +57,7 @@ class UserGroupControllerTest extends BaseControllerTestRunner {
     private UserGroupService groupService;
 
     @Spy
-    private IdentifierResolver identifierResolver = new IdentifierResolver();
+    private IdentifierResolver identifierResolver = new IdentifierResolver(new Configuration());
 
     @InjectMocks
     private UserGroupController sut;

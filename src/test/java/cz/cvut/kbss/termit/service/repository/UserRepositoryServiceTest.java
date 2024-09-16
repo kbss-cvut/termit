@@ -62,10 +62,10 @@ class UserRepositoryServiceTest {
     private UserAccountDao userAccountDao;
 
     @Spy
-    private IdentifierResolver identifierResolver;
+    private Configuration configuration = new Configuration();
 
     @Spy
-    private Configuration configuration = new Configuration();
+    private IdentifierResolver identifierResolver = new IdentifierResolver(configuration);
 
     @Spy
     private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
