@@ -76,7 +76,7 @@ public class WebSocketExceptionHandler {
     }
 
     private static void logException(String message, Throwable ex) {
-        // prevents from logging exceptions caused by broken connection with a client
+        // Prevents exceptions caused by broken connection with a client from logging
         if (isCausedBy(ex, AsyncRequestNotUsableException.class).isEmpty()) {
             LOG.error(message, ex);
         }
