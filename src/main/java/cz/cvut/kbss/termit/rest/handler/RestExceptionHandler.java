@@ -56,7 +56,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
-import static cz.cvut.kbss.termit.util.ExceptionUtils.isCausedBy;
+import static cz.cvut.kbss.termit.util.ExceptionUtils.findCause;
 
 /**
  * Exception handlers for REST controllers.
@@ -89,7 +89,7 @@ public class RestExceptionHandler {
 
     private static void logException(String message, Throwable ex) {
         // Prevents exceptions caused by broken connection with a client from logging
-        if (isCausedBy(ex, AsyncRequestNotUsableException.class).isEmpty()) {
+        if (findCause(ex, AsyncRequestNotUsableException.class).isEmpty()) {
             LOG.error(message, ex);
         }
     }
@@ -179,7 +179,7 @@ public class RestExceptionHandler {
     @ExceptionHandler(JsonLdException.class)
     public ResponseEntity<ErrorInfo> jsonLdException(HttpServletRequest request, JsonLdException e) {
         logException(e, request);
-        Optional<URISyntaxException> uriSyntaxException = ExceptionUtils.isCausedBy(e, URISyntaxException.class);
+        Optional<URISyntaxException> uriSyntaxException = ExceptionUtils.findCause(e, URISyntaxException.class);
         if (uriSyntaxException.isPresent()) {
             return uriSyntaxException(request, uriSyntaxException.get());
         }

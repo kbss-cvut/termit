@@ -15,7 +15,7 @@ public class ExceptionUtils {
      * Resolves all nested causes of the {@code throwable}
      * @return any cause of the {@code throwable} matching the {@code cause} class, or empty when not found
      */
-    public static <T extends Throwable> Optional<T> isCausedBy(final Throwable throwable, @NonNull final Class<T> cause) {
+    public static <T extends Throwable> Optional<T> findCause(final Throwable throwable, @NonNull final Class<T> cause) {
         Throwable t = throwable;
         final Set<Throwable> visited = new HashSet<>();
         while (t != null) {
