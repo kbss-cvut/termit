@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.util.longrunning;
 
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 
 /**
  * An object that will schedule a long-running tasks
@@ -13,7 +13,7 @@ public abstract class LongRunningTaskScheduler {
         this.registry = registry;
     }
 
-    protected final void notifyTaskChanged(final @NonNull LongRunningTask task) {
+    protected final void notifyTaskChanged(final @Nonnull LongRunningTask task) {
         final String name = task.getName();
         if (name != null && !name.isBlank()) {
             registry.onTaskChanged(task);

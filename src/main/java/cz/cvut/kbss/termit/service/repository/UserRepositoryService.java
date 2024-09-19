@@ -23,8 +23,8 @@ import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
+import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -78,13 +78,13 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
     }
 
     @Override
-    protected UserAccount postLoad(@NotNull UserAccount instance) {
+    protected UserAccount postLoad(@Nonnull UserAccount instance) {
         instance.erasePassword();
         return instance;
     }
 
     @Override
-    protected void prePersist(@NotNull UserAccount instance) {
+    protected void prePersist(@Nonnull UserAccount instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(idResolver
@@ -96,7 +96,7 @@ public class UserRepositoryService extends BaseRepositoryService<UserAccount, Us
     }
 
     @Override
-    protected void preUpdate(@NotNull UserAccount instance) {
+    protected void preUpdate(@Nonnull UserAccount instance) {
         final UserAccount original = userAccountDao.find(instance.getUri()).orElseThrow(
                 () -> new NotFoundException("User " + instance + " does not exist."));
         if (instance.getPassword() != null) {

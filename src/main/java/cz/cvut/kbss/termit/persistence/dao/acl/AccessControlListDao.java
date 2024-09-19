@@ -29,7 +29,7 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Repository;
 
 import java.net.URI;
@@ -170,7 +170,7 @@ public class AccessControlListDao {
      * @param agent Agent whose access is examined
      * @return List of matching assets
      */
-    public List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@NonNull AccessControlAgent agent) {
+    public List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@Nonnull AccessControlAgent agent) {
         Objects.requireNonNull(agent);
         return em.createNativeQuery("SELECT ?a WHERE { " +
                                             "?a a ?type ; " +

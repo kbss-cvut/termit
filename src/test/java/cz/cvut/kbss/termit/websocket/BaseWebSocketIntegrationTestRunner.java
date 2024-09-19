@@ -16,7 +16,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -150,22 +150,22 @@ public abstract class BaseWebSocketIntegrationTestRunner {
         }
 
         @Override
-        public void handleFrame(@NotNull StompHeaders headers, Object payload) {
+        public void handleFrame(@Nonnull StompHeaders headers, Object payload) {
             super.handleFrame(headers, payload);
             exception.set(new Exception(headers.toString()));
             LOG.error("STOMP frame: {}", headers);
         }
 
         @Override
-        public void handleException(@NotNull StompSession session, StompCommand command, @NotNull StompHeaders headers,
-                                    byte @NotNull [] payload, @NotNull Throwable exception) {
+        public void handleException(@Nonnull StompSession session, StompCommand command, @Nonnull StompHeaders headers,
+                                    @Nonnull byte[] payload, @Nonnull Throwable exception) {
             super.handleException(session, command, headers, payload, exception);
             this.exception.set(exception);
             LOG.error("STOMP exception", exception);
         }
 
         @Override
-        public void handleTransportError(@NotNull StompSession session, @NotNull Throwable exception) {
+        public void handleTransportError(@Nonnull StompSession session, @Nonnull Throwable exception) {
             super.handleTransportError(session, exception);
             this.exception.set(exception);
             LOG.error("STOMP transport error", exception);

@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.util;
 
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +13,7 @@ public class ExceptionUtils {
     /**
      * Resolves all nested causes of the {@code throwable} and returns true if any is matching the {@code cause}
      */
-    public static boolean isCausedBy(final Throwable throwable, @NonNull final Class<? extends Throwable> cause) {
+    public static boolean isCausedBy(final Throwable throwable, @Nonnull final Class<? extends Throwable> cause) {
         Throwable t = throwable;
         final Set<Throwable> visited = new HashSet<>();
         while (t != null) {

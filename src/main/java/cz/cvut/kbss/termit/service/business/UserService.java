@@ -38,12 +38,11 @@ import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -222,7 +221,7 @@ public class UserService {
         repositoryService.update(update.asUserAccount());
     }
 
-    @NotNull
+    @Nonnull
     private UserAccount getCurrentUser(UserUpdateDto update) {
         UserAccount currentUser = securityUtils.getCurrentUser();
 
@@ -344,7 +343,7 @@ public class UserService {
      * @param user User whose access to check
      * @return List of RDFS resources representing the managed assets
      */
-    public List<RdfsResource> getManagedAssets(@NonNull UserAccount user) {
+    public List<RdfsResource> getManagedAssets(@Nonnull UserAccount user) {
         Objects.requireNonNull(user);
         return aclService.findAssetsByAgentWithSecurityAccess(user.toUser()).stream()
                          .map(dtoMapper::assetToRdfsResource).collect(Collectors.toList());

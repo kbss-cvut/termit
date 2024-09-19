@@ -24,10 +24,10 @@ import cz.cvut.kbss.termit.persistence.dao.UserGroupDao;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.UserGroupService;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,7 +99,7 @@ public class UserGroupRepositoryService extends BaseRepositoryService<UserGroup,
     }
 
     @Override
-    protected void postRemove(@NonNull UserGroup instance) {
+    protected void postRemove(@Nonnull UserGroup instance) {
         super.postRemove(instance);
         // TODO Remove group from ACLs
     }

@@ -18,8 +18,8 @@
 package cz.cvut.kbss.termit.exception;
 
 import cz.cvut.kbss.termit.util.Utils;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,18 +72,18 @@ public class TermItException extends RuntimeException {
         this.messageId = messageId;
     }
 
-    public TermItException(String message, Throwable cause, String messageId, @NonNull Map<String, String> parameters) {
+    public TermItException(String message, Throwable cause, String messageId, @Nonnull Map<String, String> parameters) {
         super(message, cause);
         this.messageId = messageId;
         addParameters(parameters);
     }
 
-    public TermItException addParameters(@NonNull Map<String, String> parameters) {
+    public TermItException addParameters(@Nonnull Map<String, String> parameters) {
         this.parameters.putAll(parameters);
         return this;
     }
 
-    public TermItException addParameter(@NonNull String key, @NonNull String value) {
+    public TermItException addParameter(@Nonnull String key, @Nonnull String value) {
         this.parameters.put(key, value);
         return this;
     }

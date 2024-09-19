@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.util;
 
 
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 
 import java.util.Objects;
 
@@ -36,7 +36,7 @@ public class Pair<T, V> {
         }
 
         @Override
-        public int compareTo(@NonNull Pair.ComparablePair<T, V> o) {
+        public int compareTo(@Nonnull Pair.ComparablePair<T, V> o) {
             final int firstComparison = this.getFirst().compareTo(o.getFirst());
             if (firstComparison != 0) {
                 return firstComparison;

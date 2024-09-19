@@ -20,9 +20,8 @@ package cz.cvut.kbss.termit.service.cache;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.persistence.dao.acl.AccessControlListDao;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.cache.interceptor.KeyGenerator;
-import org.springframework.lang.NonNull;
 
 import java.lang.reflect.Method;
 
@@ -36,12 +35,12 @@ public class AccessControlListCacheKeyGenerator implements KeyGenerator {
 
     private final AccessControlListDao aclDao;
 
-    public AccessControlListCacheKeyGenerator(@NonNull AccessControlListDao aclDao) {
+    public AccessControlListCacheKeyGenerator(@Nonnull AccessControlListDao aclDao) {
         this.aclDao = aclDao;
     }
 
     @Override
-    public @NotNull Object generate(@NotNull Object target, @NotNull Method method, Object @NotNull ... params) {
+    public @Nonnull Object generate(@Nonnull Object target, @Nonnull Method method, Object... params) {
         assert params.length == 1 && params[0] instanceof AccessControlList;
         final AccessControlList acl = (AccessControlList) params[0];
         return aclDao.resolveSubjectOf(acl)

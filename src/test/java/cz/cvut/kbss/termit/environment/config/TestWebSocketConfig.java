@@ -6,7 +6,7 @@ import cz.cvut.kbss.termit.config.WebSocketMessageBrokerConfig;
 import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.websocket.util.ReturnValueCollectingSimpMessagingTemplate;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -60,7 +60,7 @@ public class TestWebSocketConfig
      * @param event the event to respond to
      */
     @Override
-    public void onApplicationEvent(@NotNull ContextRefreshedEvent event) {
+    public void onApplicationEvent(@Nonnull ContextRefreshedEvent event) {
         for (MessageHandler handler : handlers) {
             if (handler instanceof SimpAnnotationMethodMessageHandler) {
                 continue;

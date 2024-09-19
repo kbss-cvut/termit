@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.event;
 
 import cz.cvut.kbss.termit.model.AbstractTerm;
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 
@@ -11,7 +11,7 @@ import java.net.URI;
 public class TermDefinitionTextAnalysisFinishedEvent extends VocabularyEvent {
     private final URI termUri;
 
-    public TermDefinitionTextAnalysisFinishedEvent(@NonNull Object source, @NonNull AbstractTerm term) {
+    public TermDefinitionTextAnalysisFinishedEvent(@Nonnull Object source, @Nonnull AbstractTerm term) {
         super(source, term.getVocabulary());
         this.termUri = term.getUri();
     }

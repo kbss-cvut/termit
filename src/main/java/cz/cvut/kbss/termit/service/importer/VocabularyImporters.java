@@ -4,8 +4,8 @@ import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeExcepti
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.skos.SKOSImporter;
 import cz.cvut.kbss.termit.service.importer.excel.ExcelImporter;
+import jakarta.annotation.Nonnull;
 import org.springframework.context.ApplicationContext;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,7 +21,7 @@ public class VocabularyImporters implements VocabularyImporter {
     }
 
     @Override
-    public Vocabulary importVocabulary(@NonNull ImportConfiguration config, @NonNull ImportInput data) {
+    public Vocabulary importVocabulary(@Nonnull ImportConfiguration config, @Nonnull ImportInput data) {
         if (SKOSImporter.supportsMediaType(data.mediaType())) {
             return getSkosImporter().importVocabulary(config, data);
         }

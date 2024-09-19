@@ -12,8 +12,8 @@ import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
+import jakarta.annotation.Nonnull;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.NonNull;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
@@ -49,7 +49,7 @@ public class VocabularySocketController extends BaseWebSocketController {
     public void validateVocabulary(@DestinationVariable String localName,
                                    @Header(name = Constants.QueryParams.NAMESPACE,
                                            required = false) Optional<String> namespace,
-                                   @NonNull MessageHeaders messageHeaders) {
+                                   @Nonnull MessageHeaders messageHeaders) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
 
@@ -108,15 +108,15 @@ public class VocabularySocketController extends BaseWebSocketController {
         );
     }
 
-    protected @NonNull Map<String, Object> getHeaders(@NonNull VocabularyEvent event) {
+    protected @Nonnull Map<String, Object> getHeaders(@Nonnull VocabularyEvent event) {
         return getHeaders(event.getVocabularyIri());
     }
 
-    protected @NonNull Map<String, Object> getHeaders(@NonNull URI vocabularyUri) {
+    protected @Nonnull Map<String, Object> getHeaders(@Nonnull URI vocabularyUri) {
         return getHeaders(vocabularyUri, Map.of());
     }
 
-    protected @NonNull Map<String, Object> getHeaders(@NonNull URI vocabularyUri, Map<String, Object> headers) {
+    protected @Nonnull Map<String, Object> getHeaders(@Nonnull URI vocabularyUri, Map<String, Object> headers) {
         final Map<String, Object> headersMap = new HashMap<>(headers);
         headersMap.put("vocabulary", vocabularyUri);
         return headersMap;

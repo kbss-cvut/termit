@@ -37,7 +37,7 @@ import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
@@ -125,7 +125,7 @@ public class JwtUtils {
         }
     }
 
-    public TermItUserDetails extractUserInfo(final @NotNull Claims claims) {
+    public TermItUserDetails extractUserInfo(final @Nonnull Claims claims) {
         Objects.requireNonNull(claims);
         try {
             verifyAttributePresence(claims);

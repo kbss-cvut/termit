@@ -7,6 +7,8 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Pair;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskScheduler;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -25,8 +27,6 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.DataBindingPropertyAccessor;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.expression.spel.support.StandardTypeLocator;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -189,8 +189,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
      *                                {@link Future}
      * @implNote Around advice configured in {@code spring-aop.xml}
      */
-    public @Nullable Object throttleMethodCall(@NonNull ProceedingJoinPoint joinPoint,
-                                               @NonNull Throttle throttleAnnotation) throws Throwable {
+    public @Nullable Object throttleMethodCall(@Nonnull ProceedingJoinPoint joinPoint,
+                                               @Nonnull Throttle throttleAnnotation) throws Throwable {
 
         // if the current thread is already executing a throttled code, we want to skip further throttling
         if (throttledThreads.contains(Thread.currentThread().getId())) {
@@ -207,8 +207,8 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return doThrottle(joinPoint, throttleAnnotation);
     }
 
-    private synchronized @Nullable Object doThrottle(@NonNull ProceedingJoinPoint joinPoint,
-                                                     @NonNull Throttle throttleAnnotation) throws Throwable {
+    private synchronized @Nullable Object doThrottle(@Nonnull ProceedingJoinPoint joinPoint,
+                                                     @Nonnull Throttle throttleAnnotation) throws Throwable {
 
         final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
@@ -306,9 +306,9 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return context;
     }
 
-    private Pair<Runnable, ThrottledFuture<Object>> getFutureTask(@NonNull ProceedingJoinPoint joinPoint,
-                                                                  @NonNull Identifier identifier,
-                                                                  @NonNull ThrottledFuture<Object> future)
+    private Pair<Runnable, ThrottledFuture<Object>> getFutureTask(@Nonnull ProceedingJoinPoint joinPoint,
+                                                                  @Nonnull Identifier identifier,
+                                                                  @Nonnull ThrottledFuture<Object> future)
             throws Throwable {
 
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
@@ -546,7 +546,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return new Identifier(groupIdentifier, joinPoint.getSignature().toShortString() + "-" + identifier);
     }
 
-    private @Nullable Object resultVoidOrFuture(@NonNull MethodSignature signature, ThrottledFuture<Object> future)
+    private @Nullable Object resultVoidOrFuture(@Nonnull MethodSignature signature, ThrottledFuture<Object> future)
             throws IllegalCallerException {
         Class<?> returnType = signature.getReturnType();
         if (returnType.isAssignableFrom(ThrottledFuture.class)) {
@@ -561,7 +561,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
 
     @SuppressWarnings({"unchecked"})
-    private @NonNull String constructIdentifier(JoinPoint joinPoint, String expression) throws ThrottleAspectException {
+    private @Nonnull String constructIdentifier(JoinPoint joinPoint, String expression) throws ThrottleAspectException {
         if (expression == null || expression.isBlank()) {
             return "";
         }
@@ -612,7 +612,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             return this.getSecond();
         }
 
-        public boolean hasGroupPrefix(@NonNull String group) {
+        public boolean hasGroupPrefix(@Nonnull String group) {
             return this.getGroup().indexOf(group) == 0 && !this.getGroup().isBlank() && !group.isBlank();
         }
 

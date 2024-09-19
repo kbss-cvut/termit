@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.event;
 
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTaskStatus;
+import jakarta.annotation.Nonnull;
 import org.springframework.context.ApplicationEvent;
-import org.springframework.lang.NonNull;
 
 /**
  * Indicates a status change of a long-running task.
@@ -11,12 +11,12 @@ public class LongRunningTaskChangedEvent extends ApplicationEvent {
 
     private final LongRunningTaskStatus status;
 
-    public LongRunningTaskChangedEvent(@NonNull Object source, final @NonNull LongRunningTaskStatus status) {
+    public LongRunningTaskChangedEvent(@Nonnull Object source, final @Nonnull LongRunningTaskStatus status) {
         super(source);
         this.status = status;
     }
 
-    public @NonNull LongRunningTaskStatus getStatus() {
+    public @Nonnull LongRunningTaskStatus getStatus() {
         return status;
     }
 }
