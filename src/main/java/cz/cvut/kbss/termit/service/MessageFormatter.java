@@ -1,8 +1,8 @@
 package cz.cvut.kbss.termit.service;
 
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
 
 import java.text.MessageFormat;
 import java.util.Locale;
@@ -21,7 +21,7 @@ public class MessageFormatter {
 
     private final ResourceBundle messages;
 
-    public MessageFormatter(@NonNull String lang) {
+    public MessageFormatter(@Nonnull String lang) {
         Objects.requireNonNull(lang);
         final Locale locale = new Locale(lang);
         this.messages = ResourceBundle.getBundle("i18n/messages", locale);
@@ -35,7 +35,7 @@ public class MessageFormatter {
      * @param params    Parameters to substitute into the message string
      * @return Formatted message
      */
-    public String formatMessage(@NonNull String messageId, Object... params) {
+    public String formatMessage(@Nonnull String messageId, Object... params) {
         Objects.requireNonNull(messageId);
         try {
             final MessageFormat formatter = new MessageFormat(messages.getString(messageId));

@@ -19,7 +19,7 @@ package cz.cvut.kbss.termit.persistence.validation;
 
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.util.Collection;
@@ -38,6 +38,6 @@ public interface VocabularyContentValidator {
      * @param vocabularyIris Vocabulary identifiers (including {@code originVocabularyIri}
      * @return List of violations of validation rules. Empty list if there are not violations
      */
-    @NonNull
-    ThrottledFuture<Collection<ValidationResult>> validate(@NonNull URI originVocabularyIri, @NonNull Collection<URI> vocabularyIris);
+    @Nonnull
+    ThrottledFuture<Collection<ValidationResult>> validate(@Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris);
 }

@@ -25,7 +25,7 @@ import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 
@@ -159,7 +159,7 @@ public abstract class BaseDao<T extends HasIdentifier> implements GenericDao<T>,
     }
 
     @Override
-    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }

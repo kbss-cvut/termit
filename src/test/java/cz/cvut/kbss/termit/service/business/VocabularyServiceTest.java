@@ -41,7 +41,7 @@ import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -233,7 +233,7 @@ class VocabularyServiceTest {
         verify(aclService).addRecord(acl, record);
     }
 
-    @NotNull
+    @Nonnull
     private UserAccessControlRecord generateAccessControlRecord() {
         final UserAccessControlRecord record = new UserAccessControlRecord();
         record.setHolder(Generator.generateUserWithId());

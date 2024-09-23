@@ -17,6 +17,7 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -24,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -221,7 +221,7 @@ public class ExcelImporter implements VocabularyImporter {
      * @param mediaType Media type to check
      * @return {@code true} when media type is supported, {@code false} otherwise
      */
-    public static boolean supportsMediaType(@NonNull String mediaType) {
+    public static boolean supportsMediaType(@Nonnull String mediaType) {
         return Constants.MediaType.EXCEL.equals(mediaType) || XLS_MEDIA_TYPE.equals(mediaType);
     }
 

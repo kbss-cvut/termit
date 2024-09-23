@@ -36,10 +36,10 @@ import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
 import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,13 +94,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    public void persist(@NonNull Term instance) {
+    public void persist(@Nonnull Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
     }
 
     @Override
-    protected void preUpdate(@NonNull Term instance) {
+    protected void preUpdate(@Nonnull Term instance) {
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
@@ -125,7 +125,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    protected void postUpdate(@NonNull Term instance) {
+    protected void postUpdate(@Nonnull Term instance) {
         final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.getGlossary().removeRootTerm(instance);
@@ -406,7 +406,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @throws AssetRemovalException If the specified term cannot be removed
      */
     @Override
-    protected void preRemove(@NonNull Term instance) {
+    protected void preRemove(@Nonnull Term instance) {
         super.preRemove(instance);
         final List<TermOccurrences> ai = getOccurrenceInfo(instance);
         if (!ai.isEmpty()) {
@@ -438,7 +438,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    protected void postRemove(@NonNull Term instance) {
+    protected void postRemove(@Nonnull Term instance) {
         super.postRemove(instance);
         if (!instance.hasParentInSameVocabulary()) {
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
@@ -455,7 +455,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @param instance Term to remove
      */
     @Transactional
-    public void forceRemove(@NonNull Term instance) {
+    public void forceRemove(@Nonnull Term instance) {
         super.preRemove(instance);
         termDao.remove(instance);
         postRemove(instance);

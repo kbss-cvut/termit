@@ -26,8 +26,8 @@ import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.validation.ValidationResult;
+import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
-import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
@@ -148,7 +148,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The loaded instance, not {@code null}
      */
-    protected T postLoad(@NonNull T instance) {
+    protected T postLoad(@Nonnull T instance) {
         // Do nothing
         return instance;
     }
@@ -159,7 +159,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @param instance The instance to persist
      */
     @Transactional
-    public void persist(@NonNull T instance) {
+    public void persist(@Nonnull T instance) {
         Objects.requireNonNull(instance);
         prePersist(instance);
         getPrimaryDao().persist(instance);
@@ -173,7 +173,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The instance to be persisted, not {@code null}
      */
-    protected void prePersist(@NonNull T instance) {
+    protected void prePersist(@Nonnull T instance) {
         validate(instance);
         validateUri(instance.getUri());
     }
@@ -183,7 +183,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The persisted instance, not {@code null}
      */
-    protected void postPersist(@NonNull T instance) {
+    protected void postPersist(@Nonnull T instance) {
         // Do nothing
     }
 
@@ -210,7 +210,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The instance to be updated, not {@code null}
      */
-    protected void preUpdate(@NonNull T instance) {
+    protected void preUpdate(@Nonnull T instance) {
         validateUri(instance.getUri());
         if (!exists(instance.getUri())) {
             throw NotFoundException.create(instance.getClass().getSimpleName(), instance.getUri());
@@ -223,7 +223,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The updated instance which will be returned by {@link #update(HasIdentifier)}, not {@code null}
      */
-    protected void postUpdate(@NonNull T instance) {
+    protected void postUpdate(@Nonnull T instance) {
         // Do nothing
     }
 
@@ -247,7 +247,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The instance to be removed, not {@code null}
      */
-    protected void preRemove(@NonNull T instance) {
+    protected void preRemove(@Nonnull T instance) {
         // Do nothing
     }
 
@@ -258,7 +258,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The removed instance, not {@code null}
      */
-    protected void postRemove(@NonNull T instance) {
+    protected void postRemove(@Nonnull T instance) {
         // Do nothing
     }
 

@@ -4,12 +4,12 @@ import cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
+import jakarta.annotation.Nonnull;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
@@ -86,7 +86,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
      * @see <a href="https://github.com/spring-projects/spring-security/blob/6.3.x/config/src/main/java/org/springframework/security/config/annotation/web/socket/WebSocketMessageBrokerSecurityConfiguration.java#L97">Spring security source</a>
      */
     @Override
-    public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
+    public void configureClientInboundChannel(@Nonnull ChannelRegistration registration) {
         AuthorizationChannelInterceptor interceptor = new AuthorizationChannelInterceptor(messageAuthorizationManager);
         interceptor.setAuthorizationEventPublisher(new SpringAuthorizationEventPublisher(context));
         registration.interceptors(webSocketJwtAuthorizationInterceptor, new SecurityContextChannelInterceptor(), interceptor);

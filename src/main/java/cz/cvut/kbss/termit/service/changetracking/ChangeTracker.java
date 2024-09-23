@@ -29,11 +29,11 @@ import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingHelperDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -102,7 +102,7 @@ public class ChangeTracker {
      */
     @Transactional
     @EventListener
-    public void onAssetPersistEvent(@NonNull AssetPersistEvent event) {
+    public void onAssetPersistEvent(@Nonnull AssetPersistEvent event) {
         final Asset<?> added = event.getAsset();
         if (added instanceof File) {
             LOG.trace("Skipping recording of creation of file {}.", added);

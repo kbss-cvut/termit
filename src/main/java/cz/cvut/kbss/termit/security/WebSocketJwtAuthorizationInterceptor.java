@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.security;
 
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -36,7 +36,7 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
     }
 
     @Override
-    public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
+    public Message<?> preSend(@Nonnull Message<?> message, @Nonnull MessageChannel channel) {
         StompHeaderAccessor headerAccessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (headerAccessor != null && StompCommand.CONNECT.equals(headerAccessor.getCommand()) && headerAccessor.isMutable()) {
             final String authHeader = headerAccessor.getFirstNativeHeader(HttpHeaders.AUTHORIZATION);
@@ -58,7 +58,7 @@ public class WebSocketJwtAuthorizationInterceptor implements ChannelInterceptor 
      * And for example {@link org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider}
      * also supports only {@code Bearer} tokens.
      */
-    protected void process(StompHeaderAccessor stompHeaderAccessor, final @NotNull String authHeader) {
+    protected void process(StompHeaderAccessor stompHeaderAccessor, final @Nonnull String authHeader) {
         if (!StringUtils.startsWithIgnoreCase(authHeader, SecurityConstants.JWT_TOKEN_PREFIX)) {
             throw new InvalidBearerTokenException("Invalid Bearer token in authorization header");
         }

@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.websocket.util;
 
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -17,7 +17,7 @@ public class CachingChannelInterceptor implements ChannelInterceptor {
     private final BlockingQueue<Message<?>> messages = new ArrayBlockingQueue<>(100);
 
     @Override
-    public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
+    public Message<?> preSend(@Nonnull Message<?> message, @Nonnull MessageChannel channel) {
         this.messages.add(message);
         return message;
     }

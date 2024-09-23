@@ -25,13 +25,13 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,11 +64,11 @@ public class ResultCachingValidator implements VocabularyContentValidator {
     /**
      * @return true when the cache contents are dirty and should be refreshed; false otherwise.
      */
-    public boolean isNotDirty(@NonNull URI originVocabularyIri) {
+    public boolean isNotDirty(@Nonnull URI originVocabularyIri) {
         return vocabularyClosure.containsKey(originVocabularyIri);
     }
 
-    private Optional<Collection<ValidationResult>> getCached(@NonNull URI originVocabularyIri) {
+    private Optional<Collection<ValidationResult>> getCached(@Nonnull URI originVocabularyIri) {
         synchronized (validationCache) {
             return Optional.ofNullable(validationCache.get(originVocabularyIri));
         }
@@ -77,8 +77,8 @@ public class ResultCachingValidator implements VocabularyContentValidator {
     @Throttle(value = "{#originVocabularyIri}", name="vocabularyValidation")
     @Transactional
     @Override
-    @NonNull
-    public ThrottledFuture<Collection<ValidationResult>> validate(@NonNull URI originVocabularyIri, @NonNull Collection<URI> vocabularyIris) {
+    @Nonnull
+    public ThrottledFuture<Collection<ValidationResult>> validate(@Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris) {
         final Set<URI> iris = Set.copyOf(vocabularyIris);
 
         if (iris.isEmpty()) {
@@ -94,8 +94,8 @@ public class ResultCachingValidator implements VocabularyContentValidator {
         return ThrottledFuture.of(() -> runValidation(originVocabularyIri, iris)).setCachedResult(cached.orElse(null));
     }
 
-    @NonNull
-    private Collection<ValidationResult> runValidation(@NonNull URI originVocabularyIri, @NonNull final Set<URI> iris) {
+    @Nonnull
+    private Collection<ValidationResult> runValidation(@Nonnull URI originVocabularyIri, @Nonnull final Set<URI> iris) {
         Optional<Collection<ValidationResult>> cached = getCached(originVocabularyIri);
         if (isNotDirty(originVocabularyIri) && cached.isPresent()) {
             return cached.get();

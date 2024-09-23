@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.websocket.util;
 
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.core.MessagePostProcessor;
@@ -28,7 +28,7 @@ public class ReturnValueCollectingSimpMessagingTemplate extends SimpMessagingTem
     }
 
     @Override
-    protected @NotNull Message<?> doConvert(@NotNull Object payload, Map<String, Object> headers,
+    protected @Nonnull Message<?> doConvert(@Nonnull Object payload, Map<String, Object> headers,
                                             MessagePostProcessor postProcessor) {
         final Message<?> converted = super.doConvert(payload, headers, postProcessor);
 

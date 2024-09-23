@@ -43,11 +43,11 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
+import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -109,7 +109,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    protected Vocabulary postLoad(@NotNull Vocabulary instance) {
+    protected Vocabulary postLoad(@Nonnull Vocabulary instance) {
         super.postLoad(instance);
         if (!config.getWorkspace().isAllVocabulariesEditable() && !editableVocabularies.isEditable(instance)) {
             instance.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
@@ -125,12 +125,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @CacheEvict(allEntries = true)
     @Override
     @Transactional
-    public void persist(@NotNull Vocabulary instance) {
+    public void persist(@Nonnull Vocabulary instance) {
         super.persist(instance);
     }
 
     @Override
-    protected void prePersist(@NotNull Vocabulary instance) {
+    protected void prePersist(@Nonnull Vocabulary instance) {
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(
@@ -170,7 +170,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     }
 
     @Override
-    protected void preUpdate(@NotNull Vocabulary instance) {
+    protected void preUpdate(@Nonnull Vocabulary instance) {
         super.preUpdate(instance);
         final Vocabulary original = findRequired(instance.getUri());
         verifyVocabularyImports(instance, original);
@@ -286,7 +286,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * @param instance The instance to be removed, not {@code null}
      */
     @Override
-    protected void preRemove(@NotNull Vocabulary instance) {
+    protected void preRemove(@Nonnull Vocabulary instance) {
         ensureNotImported(instance);
         ensureNoTermRelationsExists(instance);
         super.preRemove(instance);

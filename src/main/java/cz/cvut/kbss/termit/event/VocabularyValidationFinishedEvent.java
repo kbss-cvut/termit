@@ -1,7 +1,7 @@
 package cz.cvut.kbss.termit.event;
 
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -28,21 +28,21 @@ public class VocabularyValidationFinishedEvent extends VocabularyEvent {
      * @param vocabularyIris IRI of the vocabulary on which the validation was triggered.
      * @param validationResults results of the validation
      */
-    public VocabularyValidationFinishedEvent(@NonNull Object source, @NonNull URI originVocabularyIri,
-                                             @NonNull Collection<URI> vocabularyIris,
-                                             @NonNull List<ValidationResult> validationResults) {
+    public VocabularyValidationFinishedEvent(@Nonnull Object source, @Nonnull URI originVocabularyIri,
+                                             @Nonnull Collection<URI> vocabularyIris,
+                                             @Nonnull List<ValidationResult> validationResults) {
         super(source, originVocabularyIri);
         // defensive copy
         this.vocabularyIris = new ArrayList<>(vocabularyIris);
         this.validationResults = new ArrayList<>(validationResults);
     }
 
-    @NonNull
+    @Nonnull
     public List<URI> getVocabularyIris() {
         return Collections.unmodifiableList(vocabularyIris);
     }
 
-    @NonNull
+    @Nonnull
     public List<ValidationResult> getValidationResults() {
         return Collections.unmodifiableList(validationResults);
     }

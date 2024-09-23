@@ -48,7 +48,7 @@ import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -497,7 +497,7 @@ public class VocabularyService
     }
 
     @Override
-    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }

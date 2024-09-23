@@ -1,6 +1,6 @@
 package cz.cvut.kbss.termit.websocket.handler;
 
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
@@ -25,8 +25,8 @@ public class StompExceptionHandler extends StompSubProtocolErrorHandler {
     }
 
     @Override
-    protected @NotNull Message<byte[]> handleInternal(@NotNull StompHeaderAccessor errorHeaderAccessor,
-                                                      byte @NotNull [] errorPayload, Throwable cause,
+    protected @Nonnull Message<byte[]> handleInternal(@Nonnull StompHeaderAccessor errorHeaderAccessor,
+                                                      @Nonnull byte[] errorPayload, Throwable cause,
                                                       StompHeaderAccessor clientHeaderAccessor) {
         final Message<?> message = MessageBuilder.withPayload(errorPayload).setHeaders(errorHeaderAccessor).build();
         boolean handled = false;

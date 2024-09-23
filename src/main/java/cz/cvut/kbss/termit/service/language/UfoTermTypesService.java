@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.LanguageRetrievalException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -29,7 +30,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
@@ -76,7 +76,7 @@ public class UfoTermTypesService {
         }).collect(Collectors.toList());
     }
 
-    @NotNull
+    @Nonnull
     private List<Term> loadTermTypes() {
         try {
             final Model model = Rio.parse(languageTtlUrl.getInputStream(), RDFFormat.TURTLE);

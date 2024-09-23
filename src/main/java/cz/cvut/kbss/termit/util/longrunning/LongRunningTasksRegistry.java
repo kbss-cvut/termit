@@ -1,11 +1,11 @@
 package cz.cvut.kbss.termit.util.longrunning;
 
 import cz.cvut.kbss.termit.event.LongRunningTaskChangedEvent;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class LongRunningTasksRegistry {
         this.eventPublisher = eventPublisher;
     }
 
-    public void onTaskChanged(@NonNull final LongRunningTask task) {
+    public void onTaskChanged(@Nonnull final LongRunningTask task) {
         final LongRunningTaskStatus status = new LongRunningTaskStatus(task);
 
         if (LOG.isTraceEnabled()) {
@@ -38,7 +38,7 @@ public class LongRunningTasksRegistry {
         eventPublisher.publishEvent(new LongRunningTaskChangedEvent(this, status));
     }
 
-    private void handleTaskChanged(@NonNull final LongRunningTask task) {
+    private void handleTaskChanged(@Nonnull final LongRunningTask task) {
         if(task.isDone()) {
             registry.remove(task.getUuid());
         } else {
@@ -57,7 +57,7 @@ public class LongRunningTasksRegistry {
         }
     }
 
-    @NonNull
+    @Nonnull
     public List<LongRunningTaskStatus> getTasks() {
         return registry.values().stream().map(LongRunningTaskStatus::new).toList();
     }

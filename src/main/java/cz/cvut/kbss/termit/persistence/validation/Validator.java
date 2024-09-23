@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
+import jakarta.annotation.Nonnull;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -45,7 +46,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -146,8 +146,8 @@ public class Validator implements VocabularyContentValidator {
     @Throttle(value = "{#originVocabularyIri}", name = "vocabularyValidation")
     @Transactional(readOnly = true)
     @Override
-    @NonNull
-    public ThrottledFuture<Collection<ValidationResult>> validate(final @NonNull URI originVocabularyIri, final @NonNull Collection<URI> vocabularyIris) {
+    @Nonnull
+    public ThrottledFuture<Collection<ValidationResult>> validate(final @Nonnull URI originVocabularyIri, final @Nonnull Collection<URI> vocabularyIris) {
         if (vocabularyIris.isEmpty()) {
             return ThrottledFuture.done(List.of());
         }
@@ -159,7 +159,7 @@ public class Validator implements VocabularyContentValidator {
         });
     }
 
-    protected synchronized List<ValidationResult> runValidation(@NonNull Collection<URI> vocabularyIris) {
+    protected synchronized List<ValidationResult> runValidation(@Nonnull Collection<URI> vocabularyIris) {
         LOG.debug("Validating {}", vocabularyIris);
         try {
             LOG.trace("Constructing model from RDF4J repository...");

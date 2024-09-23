@@ -21,7 +21,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -46,7 +46,7 @@ public class SearchAuthorizationService {
      * @param instance Search result to authorize access to
      * @return {@code true} if the current user can read the specified instance, {@code false} otherwise
      */
-    public boolean canRead(@NonNull FullTextSearchResult instance) {
+    public boolean canRead(@Nonnull FullTextSearchResult instance) {
         Objects.requireNonNull(instance);
         if (instance.getVocabulary() != null) {
             assert instance.hasType(SKOS.CONCEPT);
@@ -65,7 +65,7 @@ public class SearchAuthorizationService {
      * @param instance Faceted search result to authorize access to
      * @return {@code true} if the current user can read the specified instance, {@code false} otherwise
      */
-    public boolean canRead(@NonNull FacetedSearchResult instance) {
+    public boolean canRead(@Nonnull FacetedSearchResult instance) {
         Objects.requireNonNull(instance);
         return vocabularyAuthorizationService.canRead(new Vocabulary(instance.getVocabulary()));
     }
