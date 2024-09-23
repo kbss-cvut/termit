@@ -40,6 +40,7 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
+import cz.cvut.kbss.termit.util.ExceptionUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import static cz.cvut.kbss.termit.util.ExceptionUtils.isCausedBy;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
+import static cz.cvut.kbss.termit.util.ExceptionUtils.findCause;
 
 /**
  * Exception handlers for REST controllers.
@@ -85,7 +89,7 @@ public class RestExceptionHandler {
 
     private static void logException(String message, Throwable ex) {
         // Prevents exceptions caused by broken connection with a client from logging
-        if (!isCausedBy(ex, AsyncRequestNotUsableException.class)) {
+        if (findCause(ex, AsyncRequestNotUsableException.class).isEmpty()) {
             LOG.error(message, ex);
         }
     }
@@ -175,6 +179,10 @@ public class RestExceptionHandler {
     @ExceptionHandler(JsonLdException.class)
     public ResponseEntity<ErrorInfo> jsonLdException(HttpServletRequest request, JsonLdException e) {
         logException(e, request);
+        Optional<URISyntaxException> uriSyntaxException = ExceptionUtils.findCause(e, URISyntaxException.class);
+        if (uriSyntaxException.isPresent()) {
+            return uriSyntaxException(request, uriSyntaxException.get());
+        }
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessage("Error when processing JSON-LD.", request.getRequestURI()),
                 HttpStatus.INTERNAL_SERVER_ERROR);
@@ -267,5 +275,19 @@ public class RestExceptionHandler {
                                                                 InvalidIdentifierException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> uriSyntaxException(HttpServletRequest request, URISyntaxException e) {
+        logException(e, request);
+        // when the index is less than zero, its unknown, and we will use more general message
+        final String messageId = e.getIndex() < 0 ? "error.invalidIdentifier" : "error.invalidUriCharacter";
+        TermItException exception = new InvalidIdentifierException(e.getMessage(), e, messageId)
+                .addParameter("uri", e.getInput())
+                .addParameter("reason", e.getReason())
+                .addParameter("message", e.getMessage())
+                .addParameter("index", Integer.toString(e.getIndex()))
+                .addParameter("char", Character.toString(e.getInput().charAt(e.getIndex())));
+        return new ResponseEntity<>(errorInfo(request, exception), HttpStatus.CONFLICT);
     }
 }

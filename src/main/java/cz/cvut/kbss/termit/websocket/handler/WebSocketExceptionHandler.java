@@ -38,7 +38,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import static cz.cvut.kbss.termit.util.ExceptionUtils.isCausedBy;
+import java.net.URISyntaxException;
+
+import static cz.cvut.kbss.termit.util.ExceptionUtils.findCause;
 
 /**
  * @implSpec Should reflect {@link cz.cvut.kbss.termit.rest.handler.RestExceptionHandler}
@@ -74,8 +76,8 @@ public class WebSocketExceptionHandler {
     }
 
     private static void logException(String message, Throwable ex) {
-        // prevents from logging exceptions caused be broken connection with a client
-        if (!isCausedBy(ex, AsyncRequestNotUsableException.class)) {
+        // Prevents exceptions caused by broken connection with a client from logging
+        if (findCause(ex, AsyncRequestNotUsableException.class).isEmpty()) {
             LOG.error(message, ex);
         }
     }
@@ -260,6 +262,12 @@ public class WebSocketExceptionHandler {
 
     @MessageExceptionHandler
     public ErrorInfo invalidIdentifierException(Message<?> message, InvalidIdentifierException e) {
+        logException(e, message);
+        return errorInfo(message, e);
+    }
+
+    @MessageExceptionHandler
+    public ErrorInfo uriSyntaxException(Message<?> message, URISyntaxException e) {
         logException(e, message);
         return errorInfo(message, e);
     }
