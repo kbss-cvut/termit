@@ -38,12 +38,12 @@ import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
-import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
@@ -214,6 +214,7 @@ class TermServiceTest {
     void updateUsesRepositoryServiceToUpdateTerm() {
         final Term term = generateTermWithId();
         when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+        when(termRepositoryService.update(term)).thenReturn(term);
         sut.update(term);
         verify(termRepositoryService).update(term);
     }
@@ -311,26 +312,26 @@ class TermServiceTest {
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term toAnalyze = generateTermWithId();
+        when(termRepositoryService.findRequired(toAnalyze.getUri())).thenReturn(toAnalyze);
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
         verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
     }
 
     @Test
-    void persistChildInvokesTextAnalysisOnPersistedChildTerm() {
-        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
+    void persistChildInvokesTextAnalysisOnAllTermsInVocabulary() {
+        when(vocabularyService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
         sut.persistChild(childToPersist, parent);
-        verify(textAnalysisService).analyzeTermDefinition(childToPersist, parent.getVocabulary());
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
     }
 
     @Test
-    void persistRootInvokesTextAnalysisOnPersistedRootTerm() {
-        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
+    void persistRootInvokesTextAnalysisOnAllTermsInVocabulary() {
         final Term toPersist = generateTermWithId();
         sut.persistRoot(toPersist, vocabulary);
-        verify(textAnalysisService).analyzeTermDefinition(toPersist, vocabulary.getUri());
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
     }
 
     @Test
@@ -338,12 +339,29 @@ class TermServiceTest {
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term original = generateTermWithId(vocabulary.getUri());
         final Term toUpdate = new Term(original.getUri());
+        toUpdate.setLabel(original.getLabel());
         final String newDefinition = "This term has acquired a new definition";
         toUpdate.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
+        when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
         sut.update(toUpdate);
         verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
+    }
+
+    @Test
+    void updateOfTermLabelInvokesTextAnalysisOnAllTermsInVocabulary() {
+        final Term original = generateTermWithId(vocabulary.getUri());
+        final Term toUpdate = new Term(original.getUri());
+        toUpdate.setLabel(MultilingualString.create("new Label", Environment.LANGUAGE));
+        final String newDefinition = "This term has acquired a new definition";
+        toUpdate.setVocabulary(vocabulary.getUri());
+        toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
+        when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
+        when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+        sut.update(toUpdate);
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
     }
 
     @Test
@@ -456,7 +474,6 @@ class TermServiceTest {
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
         when(vocabularyService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
 
         sut.persistChild(childToPersist, parent);
         final InOrder inOrder = inOrder(termRepositoryService, vocabularyService);
@@ -474,6 +491,7 @@ class TermServiceTest {
         update.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(termRepositoryService.update(update)).thenReturn(update);
         update.getLabel().set(Environment.LANGUAGE, "updatedLabel");
 
         sut.update(update);
@@ -637,6 +655,7 @@ class TermServiceTest {
         update.setDescription(new MultilingualString(original.getDescription().getValue()));
         update.setVocabulary(vocabulary.getUri());
         update.setState(Generator.randomItem(Generator.TERM_STATES));
+        when(termRepositoryService.update(update)).thenReturn(update);
         sut.update(update);
         final InOrder inOrder = inOrder(languageService, termRepositoryService);
         inOrder.verify(languageService).verifyStateExists(update.getState());

@@ -29,9 +29,9 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
-import cz.cvut.kbss.termit.persistence.dao.util.ScheduledContextRemover;
 import cz.cvut.kbss.termit.persistence.dao.util.SparqlResultToTermOccurrenceMapper;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,12 +80,9 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     private final Configuration.Persistence config;
 
-    private final ScheduledContextRemover contextRemover;
-
-    public TermOccurrenceDao(EntityManager em, Configuration config, ScheduledContextRemover contextRemover) {
+    public TermOccurrenceDao(EntityManager em, Configuration config) {
         super(TermOccurrence.class, em);
         this.config = config.getPersistence();
-        this.contextRemover = contextRemover;
     }
 
     /**
@@ -258,12 +255,12 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
         Objects.requireNonNull(target);
 
         final URI sourceContext = TermOccurrence.resolveContext(target.getUri());
-        final URI targetContext = URI.create(sourceContext + "-for-removal-" + System.currentTimeMillis());
-        em.createNativeQuery("MOVE GRAPH ?g TO ?targetContext")
-          .setParameter("g", sourceContext)
-          .setParameter("targetContext", targetContext)
-          .executeUpdate();
-        contextRemover.scheduleForRemoval(targetContext);
+        LOG.debug("Removing all occurrences from {}", sourceContext);
+        em.createNativeQuery("DROP GRAPH ?context")
+                .setParameter("context", sourceContext)
+                .executeUpdate();
+        LOG.atDebug().setMessage("Removed all occurrences from {}")
+           .addArgument(() -> Utils.uriToString(sourceContext)).log();
     }
 
     /**

@@ -49,6 +49,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -397,5 +398,19 @@ public class Utils {
             return;
         }
         str.getValue().entrySet().removeIf(e -> e.getValue().isBlank());
+    }
+
+    /**
+     * Converts the map into a string
+     * @return Empty string when the map is {@code null}, otherwise the String in format
+     * {@code {key=value, key=value}}
+     */
+    public static <A, B> String mapToString(Map<A, B> map) {
+        if (map == null) {
+            return "";
+        }
+        return map.keySet().stream()
+                           .map(key -> key + "=" + map.get(key))
+                           .collect(Collectors.joining(", ", "{", "}"));
     }
 }

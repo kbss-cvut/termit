@@ -18,7 +18,11 @@
 package cz.cvut.kbss.termit.model.assignment;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.CascadeType;
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.selector.Selector;

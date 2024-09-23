@@ -18,10 +18,11 @@
 package cz.cvut.kbss.termit.persistence.validation;
 
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Allows validating the content of vocabularies based on preconfigured rules.
@@ -33,8 +34,10 @@ public interface VocabularyContentValidator {
      * <p>
      * The vocabularies are validated together, as a single unit.
      *
-     * @param vocabularyIris Vocabulary identifiers
+     * @param originVocabularyIri the origin vocabulary IRI
+     * @param vocabularyIris Vocabulary identifiers (including {@code originVocabularyIri}
      * @return List of violations of validation rules. Empty list if there are not violations
      */
-    List<ValidationResult> validate(final Collection<URI> vocabularyIris);
+    @Nonnull
+    ThrottledFuture<Collection<ValidationResult>> validate(@Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris);
 }

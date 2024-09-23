@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import cz.cvut.kbss.jopa.exception.LazyLoadingException;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.CascadeType;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
@@ -236,13 +237,20 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
 
     @Override
     public String toString() {
-        return "Vocabulary{" +
-                getLabel() +
-                " " + Utils.uriToString(getUri()) +
-                ", glossary=" + glossary +
-                (importedVocabularies != null ?
-                 ", importedVocabularies = [" + importedVocabularies.stream().map(Utils::uriToString).collect(
-                         Collectors.joining(", ")) + "]" : "") +
-                '}';
+        String result = "Vocabulary{"+
+                getLabel() + " "
+                + Utils.uriToString(getUri());
+        try {
+            result += ", glossary=" + glossary;
+            if (importedVocabularies != null) {
+                result +=", importedVocabularies = [" +
+                        importedVocabularies.stream().map(Utils::uriToString)
+                                            .collect(Collectors.joining(", ")) + "]";
+            }
+        } catch (LazyLoadingException e) {
+            // persistent context not available
+        }
+
+        return result;
     }
 }

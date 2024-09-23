@@ -30,6 +30,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.authentication.AuthenticationProvider;
 
 import static org.mockito.Mockito.mock;
@@ -72,5 +73,10 @@ public class TestRestSecurityConfig {
     @Bean
     public TermItUserDetailsService userDetailsService() {
         return mock(TermItUserDetailsService.class);
+    }
+
+    @Bean
+    public ThreadPoolTaskScheduler longRunningTaskScheduler() {
+        return mock(ThreadPoolTaskScheduler.class);
     }
 }

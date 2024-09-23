@@ -19,6 +19,8 @@ package cz.cvut.kbss.termit.service;
 
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.InvalidIdentifierException;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,11 @@ import org.junit.jupiter.api.Test;
 import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -37,7 +43,7 @@ class IdentifierResolverTest {
 
     @BeforeEach
     void setUp() {
-        this.sut = new IdentifierResolver();
+        this.sut = new IdentifierResolver(new Configuration());
     }
 
     @Test
@@ -314,5 +320,31 @@ class IdentifierResolverTest {
         final String label = "je povinným subjektem podle §2 zákona 106/1999 Sb.";
         final URI result = sut.generateIdentifier(namespace, label);
         assertEquals(URI.create(namespace + "/je-povinným-subjektem-podle-2-zákona-106-1999-sb."), result);
+    }
+
+    @Test
+    void generateIdentifierRemovesSquareBrackets() {
+        final String namespace = Vocabulary.s_c_slovnik;
+        final String label = "Délka dostřiku [m]";
+        final URI result = sut.generateIdentifier(namespace, label);
+        assertEquals(URI.create(namespace + "/délka-dostřiku-m"), result);
+    }
+
+    @Test
+    void generateIdentifierThrowsInvalidIdentifierExceptionWhenComponentsContainsUnforeseenInvalidCharacters() {
+        final String namespace = Vocabulary.s_c_slovnik;
+        final String label = "label with emoji \u3000"; // Ideographic space
+        assertThrows(InvalidIdentifierException.class, () -> sut.generateIdentifier(namespace, label));
+    }
+
+    @Test
+    void generateIdentifierNormalizesAccentedCharactersToAsciiWhenAsciiIdentifiersAreConfigured() {
+        final Configuration asciiOnlyConfig = new Configuration();
+        asciiOnlyConfig.setAsciiIdentifiers(true);
+        this.sut = new IdentifierResolver(asciiOnlyConfig);
+        final String namespace = "http://onto.fel.cvut.cz/ontologies/termit/test-slovnik";
+        final String label = "Délka dostřiku [m]";
+        final URI result = sut.generateIdentifier(namespace, label);
+        assertEquals(URI.create(namespace + "/delka-dostriku-m"), result);
     }
 }

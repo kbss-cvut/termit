@@ -19,6 +19,7 @@ server:
                 name: TermItSessionId
     tomcat:
         max-swallow-size: -1
+    forward-headers-strategy: framework
 spring:
     servlet:
         multipart:
@@ -66,7 +67,7 @@ termit:
     file:
         storage: /tmp/termit
     textAnalysis:
-        url: http://localhost/annotace/annotate
+        url: http://localhost:8081/annotace/annotate
     changetracking:
         context:
             extension: /zmeny

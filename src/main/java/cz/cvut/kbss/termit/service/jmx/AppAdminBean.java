@@ -19,12 +19,11 @@ package cz.cvut.kbss.termit.service.jmx;
 
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.rest.dto.HealthInfo;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.Postman;
 import cz.cvut.kbss.termit.util.Configuration;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +65,6 @@ public class AppAdminBean implements SelfNaming {
         eventPublisher.publishEvent(new EvictCacheEvent(this));
         LOG.info("Refreshing last modified timestamps...");
         eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
-        eventPublisher.publishEvent(new VocabularyContentModified(this, null));
     }
 
     @ManagedOperation(description = "Sends test email to the specified address.")
@@ -77,7 +75,7 @@ public class AppAdminBean implements SelfNaming {
     }
 
     @Override
-    public @NotNull ObjectName getObjectName() throws MalformedObjectNameException {
+    public @Nonnull ObjectName getObjectName() throws MalformedObjectNameException {
         return new ObjectName("bean:name=" + beanName);
     }
 

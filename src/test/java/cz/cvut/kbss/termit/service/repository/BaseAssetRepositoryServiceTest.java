@@ -31,6 +31,7 @@ import cz.cvut.kbss.termit.model.comment.Comment;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import jakarta.validation.Validator;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -49,7 +49,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class BaseAssetRepositoryServiceTest extends BaseServiceTestRunner {

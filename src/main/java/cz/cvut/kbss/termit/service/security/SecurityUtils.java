@@ -35,6 +35,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -70,12 +71,17 @@ public class SecurityUtils {
     public UserAccount getCurrentUser() {
         final SecurityContext context = SecurityContextHolder.getContext();
         assert context != null && context.getAuthentication().isAuthenticated();
-        if (context.getAuthentication().getPrincipal() instanceof Jwt) {
+        if (context.getAuthentication().getPrincipal() instanceof Jwt jwt) {
+            Object principal = jwt.getClaim(JwtClaimNames.SUB);
+            if(principal instanceof TermItUserDetails termItUserDetails) {
+                return termItUserDetails.getUser();
+            }
+
             return resolveAccountFromOAuthPrincipal(context);
-        } else {
-            final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
-            return userDetails.getUser();
         }
+
+        final TermItUserDetails userDetails = (TermItUserDetails) context.getAuthentication().getDetails();
+        return userDetails.getUser();
     }
 
     private UserAccount resolveAccountFromOAuthPrincipal(SecurityContext context) {

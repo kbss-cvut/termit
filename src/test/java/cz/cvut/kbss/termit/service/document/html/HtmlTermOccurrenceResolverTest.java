@@ -32,6 +32,8 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -45,6 +47,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
@@ -114,8 +117,7 @@ class HtmlTermOccurrenceResolverTest {
         final File file = initFile();
         final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
         sut.parseContent(is, file);
-        final List<TermOccurrence> result = sut.findTermOccurrences();
-        result.forEach(to -> {
+        sut.findTermOccurrences(to -> {
             assertNotNull(to.getScore());
             assertThat(to.getScore(), greaterThan(0.0));
         });
@@ -134,8 +136,7 @@ class HtmlTermOccurrenceResolverTest {
         final File file = initFile();
         final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple-no-score.html");
         sut.parseContent(is, file);
-        final List<TermOccurrence> result = sut.findTermOccurrences();
-        result.forEach(to -> assertNull(to.getScore()));
+        sut.findTermOccurrences(to -> assertNull(to.getScore()));
     }
 
     @Test
@@ -145,8 +146,7 @@ class HtmlTermOccurrenceResolverTest {
         final InputStream is = cz.cvut.kbss.termit.environment.Environment
                 .loadFile("data/rdfa-simple-invalid-score.html");
         sut.parseContent(is, file);
-        final List<TermOccurrence> result = sut.findTermOccurrences();
-        result.forEach(to -> assertNull(to.getScore()));
+        sut.findTermOccurrences(to -> assertNull(to.getScore()));
     }
 
     @Test
@@ -160,10 +160,14 @@ class HtmlTermOccurrenceResolverTest {
         final File file = initFile();
         final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
         sut.parseContent(is, file);
-        final List<TermOccurrence> result = sut.findTermOccurrences();
-        assertEquals(1, result.size());
-        assertThat(result.get(0).getUri().toString(), startsWith(file.getUri() + "/" + TermOccurrence.CONTEXT_SUFFIX));
-        assertThat(result.get(0).getUri().toString(), endsWith("1"));
+        AtomicInteger resultSize = new AtomicInteger(0);
+        sut.findTermOccurrences(to -> {
+            resultSize.incrementAndGet();
+            assertThat(to.getUri().toString(), startsWith(file.getUri() + "/" + TermOccurrence.CONTEXT_SUFFIX));
+            assertThat(to.getUri().toString(), endsWith("1"));
+        });
+        assertEquals(1,resultSize.get());
+
     }
 
     @Test
@@ -172,11 +176,11 @@ class HtmlTermOccurrenceResolverTest {
         final File file = initFile();
         final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
         sut.parseContent(is, file);
-        final List<TermOccurrence> result = sut.findTermOccurrences();
-        result.forEach(to -> assertThat(to.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+        sut.findTermOccurrences(to -> assertThat(to.getTypes(), hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // TODO: https://github.com/kbss-cvut/termit/issues/275
     void findTermOccurrencesSetsFoundOccurrencesAsApprovedWhenCorrespondingExistingOccurrenceWasApproved() throws Exception {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
@@ -188,9 +192,12 @@ class HtmlTermOccurrenceResolverTest {
         sut.parseContent(is, file);
         sut.setExistingOccurrences(List.of(existing));
 
-        final List<TermOccurrence> result = sut.findTermOccurrences();
-        assertEquals(1, result.size());
-        assertThat(result.get(0).getTypes(), not(hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+        AtomicInteger resultSize = new AtomicInteger(0);
+        sut.findTermOccurrences(to -> {
+            resultSize.incrementAndGet();
+            assertThat(to.getTypes(), not(hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
+        });
+        assertEquals(1, resultSize.get());
         final org.jsoup.nodes.Document document = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
         final Elements annotations = document.select("span[about]");
         assertEquals(1, annotations.size());

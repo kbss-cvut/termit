@@ -34,13 +34,13 @@ import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
+import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,8 +54,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
-import org.topbraid.shacl.vocabulary.SH;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.net.URI;
 import java.time.Instant;
@@ -263,12 +263,31 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     }
 
     @Test
+    void removeVocabularyCallsRemove() throws Exception {
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(VOCABULARY_URI);
+
+        when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
+                .thenReturn(VOCABULARY_URI);
+        when(serviceMock.findRequired(VOCABULARY_URI)).thenReturn(vocabulary);
+
+        mockMvc.perform(delete(PATH + "/" + FRAGMENT)).andExpect(status().is2xxSuccessful()).andReturn();
+
+        final ArgumentCaptor<Vocabulary> captor = ArgumentCaptor.forClass(Vocabulary.class);
+        verify(serviceMock).remove(captor.capture());
+
+        assertEquals(vocabulary, captor.getValue());
+        // ensures that the object was really a Vocabulary, and not a dto
+        assertEquals(Vocabulary.class, captor.getValue().getClass());
+    }
+
+    @Test
     void removeVocabularyReturns2xxForEmptyVocabulary() throws Exception {
         final Vocabulary vocabulary = Generator.generateVocabulary();
         vocabulary.setUri(VOCABULARY_URI);
         when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
                 .thenReturn(VOCABULARY_URI);
-        when(serviceMock.find(VOCABULARY_URI)).thenReturn(Optional.of(vocabulary));
+        when(serviceMock.findRequired(VOCABULARY_URI)).thenReturn(vocabulary);
         mockMvc.perform(delete(PATH + "/" + FRAGMENT)).andExpect(status().is2xxSuccessful()).andReturn();
     }
 
@@ -281,7 +300,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         vocabulary.setUri(VOCABULARY_URI);
         when(idResolverMock.resolveIdentifier(configMock.getNamespace().getVocabulary(), FRAGMENT))
                 .thenReturn(VOCABULARY_URI);
-        when(serviceMock.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        when(serviceMock.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final String fragment = IdentifierResolver.extractIdentifierFragment(vocabulary.getUri());
         mockMvc.perform(delete(PATH + "/" + fragment)).andExpect(status().is4xxClientError()).andReturn();
     }
@@ -444,30 +463,6 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertNotNull(result);
         assertEquals(changes, result);
         verify(serviceMock).getChangesOfContent(vocabulary);
-    }
-
-    @Test
-    void validateExecutesServiceValidate() throws Exception {
-        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
-        final List<ValidationResult> records = Collections.singletonList(new ValidationResult()
-                                                                                 .setTermUri(Generator.generateUri())
-                                                                                 .setIssueCauseUri(
-                                                                                         Generator.generateUri())
-                                                                                 .setSeverity(URI.create(
-                                                                                         SH.Violation.toString())));
-        when(serviceMock.validateContents(vocabulary)).thenReturn(records);
-
-
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/validate"))
-                                           .andExpect(status().isOk())
-                                           .andReturn();
-        final List<ValidationResult> result =
-                readValue(mvcResult, new TypeReference<List<ValidationResult>>() {
-                });
-        assertNotNull(result);
-        assertEquals(records.stream().map(ValidationResult::getId).collect(Collectors.toList()),
-                     result.stream().map(ValidationResult::getId).collect(Collectors.toList()));
-        verify(serviceMock).validateContents(vocabulary);
     }
 
     private Vocabulary generateVocabularyAndInitReferenceResolution() {
@@ -634,5 +629,17 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final AccessLevel result = readValue(mvcResult, AccessLevel.class);
         assertEquals(AccessLevel.SECURITY, result);
         verify(serviceMock).getAccessLevel(vocabulary);
+    }
+
+    @Test
+    void getExcelTemplateFileReturnsExcelTemplateFileRetrievedFromServiceAsAttachment() throws Exception {
+        when(serviceMock.getExcelTemplateFile()).thenReturn(new TypeAwareFileSystemResource(
+                new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI()),
+                Constants.MediaType.EXCEL));
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/import/template")).andReturn();
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
+                   containsString("filename=\"termit-import.xlsx\""));
     }
 }

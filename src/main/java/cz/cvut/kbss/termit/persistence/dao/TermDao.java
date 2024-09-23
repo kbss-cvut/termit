@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.persistence.dao;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -27,7 +28,7 @@ import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
-import cz.cvut.kbss.termit.event.VocabularyContentModified;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -173,7 +174,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             entity.setVocabulary(null); // This is inferred
             em.persist(entity, descriptorFactory.termDescriptor(vocabulary));
             evictCachedSubTerms(Collections.emptySet(), entity.getParentTerms());
-            eventPublisher.publishEvent(new VocabularyContentModified(this, vocabulary.getUri()));
+            eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, vocabulary.getUri()));
             eventPublisher.publishEvent(new AssetPersistEvent(this, entity));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -193,7 +194,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
             final Term result = em.merge(entity, descriptorFactory.termDescriptor(entity));
-            eventPublisher.publishEvent(new VocabularyContentModified(this, original.getVocabulary()));
+            eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, original.getVocabulary()));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -235,15 +236,15 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         eventPublisher.publishEvent(new AssetUpdateEvent(this, term));
         evictPossiblyCachedReferences(term);
         em.createNativeQuery("DELETE {" +
-                  "?t ?hasState ?oldState ." +
-                  "} INSERT {" +
-                  "GRAPH ?g {" +
-                  "?t ?hasState ?newState ." +
-                  "}} WHERE {" +
-                  "OPTIONAL {?t ?hasState ?oldState .}" +
-                  "GRAPH ?g {" +
-                  "?t ?inScheme ?glossary ." +
-                  "}}").setParameter("t", term)
+                                     "?t ?hasState ?oldState ." +
+                                     "} INSERT {" +
+                                     "GRAPH ?g {" +
+                                     "?t ?hasState ?newState ." +
+                                     "}} WHERE {" +
+                                     "OPTIONAL {?t ?hasState ?oldState .}" +
+                                     "GRAPH ?g {" +
+                                     "?t ?inScheme ?glossary ." +
+                                     "}}").setParameter("t", term)
           .setParameter("hasState", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu))
           .setParameter("inScheme", URI.create(SKOS.IN_SCHEME))
           .setParameter("newState", state).executeUpdate();
@@ -403,14 +404,15 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                      "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
+                                                                 "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
                                                                  "GRAPH ?context { " +
                                                                  "?term a ?type ;" +
                                                                  "?hasLabel ?label ." +
                                                                  "?vocabulary ?hasGlossary/?hasTerm ?term ." +
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
-                                                      "}} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence("?label") + "}",
+                                                                 "}} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
+                                                                 "?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
@@ -467,14 +469,15 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public List<TermDto> findAllRoots(Pageable pageSpec, Collection<URI> includeTerms) {
         Objects.requireNonNull(pageSpec);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                      "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
+                                                                 "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
                                                                  "?term a ?type ; " +
                                                                  "?hasLabel ?label . " +
                                                                  "?vocabulary ?hasGlossary/?hasTerm ?term . " +
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included)) . " +
                                                                  "FILTER NOT EXISTS {?term a ?snapshot .} " +
-                                                      "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence("?label") + "}",
+                                                                 "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
+                                                                 "?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
@@ -552,14 +555,15 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(pageSpec);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                      "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
+                                                                 "SELECT DISTINCT ?term ?hasLocaleLabel WHERE {" +
                                                                  "?term a ?type ;" +
                                                                  "?hasLabel ?label ." +
                                                                  "?vocabulary ?imports* ?parent ." +
                                                                  "?parent ?hasGlossary/?hasTerm ?term ." +
                                                                  "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
-                                                      "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence("?label") + "}",
+                                                                 "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
+                                                                 "?label") + "}",
                                                          TermDto.class);
         query = setCommonFindAllRootsQueryParams(query, true);
         try {
@@ -697,8 +701,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * Note that this method uses comparison ignoring case, so that two labels differing just in character case are
      * considered same here.
      *
-     * @param label      Label to check
-     * @param vocabulary Vocabulary in which terms will be searched
+     * @param label       Label to check
+     * @param vocabulary  Vocabulary in which terms will be searched
+     * @param languageTag Language tag of the label, optional. If {@code null}, any language is accepted
      * @return Whether term with {@code label} already exists in vocabulary
      */
     public boolean existsInVocabulary(String label, Vocabulary vocabulary, String languageTag) {
@@ -717,6 +722,41 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                      .setParameter("vocabulary", vocabulary.getUri())
                      .setParameter("searchString", label,
                                    languageTag != null ? languageTag : config.getLanguage()).getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Gets the identifier of a term with the specified label in a vocabulary with the specified URI.
+     * <p>
+     * Note that this method uses comparison ignoring case, so that two labels differing just in character case are
+     * considered same here.
+     *
+     * @param label       Label to search by
+     * @param vocabulary  Vocabulary in which terms will be searched
+     * @param languageTag Language tag of the label
+     * @return Identifier of matching term wrapped in an {@code Optional}, empty {@code Optional} if there is no such
+     * term
+     */
+    public Optional<URI> findIdentifierByLabel(String label, Vocabulary vocabulary, String languageTag) {
+        Objects.requireNonNull(label);
+        Objects.requireNonNull(vocabulary);
+        try {
+            return Optional.of(em.createNativeQuery("SELECT ?term { ?term a ?type ; " +
+                                                "?hasLabel ?label ;" +
+                                                "?inVocabulary ?vocabulary ." +
+                                                "FILTER (LCASE(?label) = LCASE(?searchString)) . "
+                                                + "}", URI.class)
+                     .setParameter("type", typeUri)
+                     .setParameter("hasLabel", LABEL_PROP)
+                     .setParameter("inVocabulary",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("vocabulary", vocabulary.getUri())
+                     .setParameter("searchString", label,
+                                   languageTag != null ? languageTag : config.getLanguage()).getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
@@ -750,7 +790,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public void remove(Term entity) {
         super.remove(entity);
         evictCachedSubTerms(entity.getParentTerms(), Collections.emptySet());
-        eventPublisher.publishEvent(new VocabularyContentModified(this, entity.getVocabulary()));
+        eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, entity.getVocabulary()));
     }
 
     @Override

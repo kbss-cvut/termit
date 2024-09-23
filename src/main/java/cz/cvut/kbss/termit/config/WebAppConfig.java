@@ -29,7 +29,6 @@ import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.jsonld.jackson.serialization.SerializationConstants;
 import cz.cvut.kbss.termit.rest.servlet.DiagnosticsContextFilter;
 import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
-import cz.cvut.kbss.termit.util.ConfigParam;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
 import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
@@ -62,19 +61,13 @@ import java.util.Properties;
 @Configuration
 public class WebAppConfig implements WebMvcConfigurer {
 
-    private final cz.cvut.kbss.termit.util.Configuration.Repository config;
+    private final cz.cvut.kbss.termit.util.Configuration config;
 
     @Value("${application.version:development}")
     private String version;
 
     public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config) {
-        this.config = config.getRepository();
-    }
-
-    @Bean(name = "objectMapper")
-    @Primary
-    public ObjectMapper objectMapper() {
-        return createJsonObjectMapper();
+        this.config = config;
     }
 
     /**
@@ -99,11 +92,6 @@ public class WebAppConfig implements WebMvcConfigurer {
         return objectMapper;
     }
 
-    @Bean(name = "jsonLdMapper")
-    public ObjectMapper jsonLdObjectMapper() {
-        return createJsonLdObjectMapper();
-    }
-
     /**
      * Creates an {@link ObjectMapper} for processing JSON-LD using the JB4JSON-LD library.
      * <p>
@@ -119,7 +107,19 @@ public class WebAppConfig implements WebMvcConfigurer {
         jsonLdModule.configure(cz.cvut.kbss.jsonld.ConfigParam.SCAN_PACKAGE, "cz.cvut.kbss.termit");
         jsonLdModule.configure(SerializationConstants.FORM, SerializationConstants.FORM_COMPACT_WITH_CONTEXT);
         mapper.registerModule(jsonLdModule);
+        mapper.registerModule(new JavaTimeModule());
         return mapper;
+    }
+
+    @Bean(name = "objectMapper")
+    @Primary
+    public ObjectMapper objectMapper() {
+        return createJsonObjectMapper();
+    }
+
+    @Bean(name = "jsonLdMapper")
+    public ObjectMapper jsonLdObjectMapper() {
+        return createJsonLdObjectMapper();
     }
 
     /**
@@ -133,10 +133,13 @@ public class WebAppConfig implements WebMvcConfigurer {
         controller.setServletClass(AdjustedUriTemplateProxyServlet.class);
         controller.setBeanName("sparqlEndpointProxyServlet");
         final Properties p = new Properties();
-        p.setProperty("targetUri", config.getUrl());
+        final cz.cvut.kbss.termit.util.Configuration.Repository repository = config.getRepository();
+        p.setProperty("targetUri", repository.getUrl());
         p.setProperty("log", "false");
-        p.setProperty(ConfigParam.REPO_USERNAME.toString(), config.getUsername() != null ? config.getUsername() : "");
-        p.setProperty(ConfigParam.REPO_PASSWORD.toString(), config.getPassword() != null ? config.getPassword() : "");
+        p.setProperty(AdjustedUriTemplateProxyServlet.REPO_USERNAME_PARAM,
+                      repository.getUsername() != null ? repository.getUsername() : "");
+        p.setProperty(AdjustedUriTemplateProxyServlet.REPO_PASSWORD_PARAM,
+                      repository.getPassword() != null ? repository.getPassword() : "");
         controller.setInitParameters(p);
         controller.afterPropertiesSet();
         return controller;
@@ -153,12 +156,12 @@ public class WebAppConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public HttpMessageConverter<?> stringMessageConverter() {
+    public HttpMessageConverter<?> termitStringHttpMessageConverter() {
         return new StringHttpMessageConverter(StandardCharsets.UTF_8);
     }
 
     @Bean
-    public HttpMessageConverter<?> jsonLdMessageConverter() {
+    public HttpMessageConverter<?> termitJsonLdHttpMessageConverter() {
         final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(
                 jsonLdObjectMapper());
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.valueOf(JsonLd.MEDIA_TYPE)));
@@ -166,14 +169,14 @@ public class WebAppConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public HttpMessageConverter<?> jsonMessageConverter() {
+    public HttpMessageConverter<?> termitJsonHttpMessageConverter() {
         final MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setObjectMapper(objectMapper());
         return converter;
     }
 
     @Bean
-    public HttpMessageConverter<?> resourceMessageConverter() {
+    public HttpMessageConverter<?> termitResourceHttpMessageConverter() {
         return new ResourceHttpMessageConverter();
     }
 

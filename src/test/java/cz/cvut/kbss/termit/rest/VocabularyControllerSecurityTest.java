@@ -35,7 +35,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 

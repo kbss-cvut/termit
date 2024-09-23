@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
+import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
@@ -37,13 +38,14 @@ import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemove
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,6 +91,18 @@ public class ResourceService
         this.textAnalysisService = textAnalysisService;
         this.vocabularyService = vocabularyService;
         this.changeRecordService = changeRecordService;
+    }
+
+    /**
+     * Ensures that document gets removed during Vocabulary removal
+     */
+    @EventListener
+    public void onVocabularyRemoval(VocabularyWillBeRemovedEvent event) {
+        vocabularyService.find(event.getVocabularyIri()).ifPresent(vocabulary -> {
+            if(vocabulary.getDocument() != null) {
+                remove(vocabulary.getDocument());
+            }
+        });
     }
 
     /**
@@ -360,7 +374,7 @@ public class ResourceService
     }
 
     @Override
-    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }

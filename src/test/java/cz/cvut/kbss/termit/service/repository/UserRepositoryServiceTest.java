@@ -25,6 +25,8 @@ import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -35,15 +37,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserRepositoryServiceTest {
@@ -55,10 +62,10 @@ class UserRepositoryServiceTest {
     private UserAccountDao userAccountDao;
 
     @Spy
-    private IdentifierResolver identifierResolver;
+    private Configuration configuration = new Configuration();
 
     @Spy
-    private Configuration configuration = new Configuration();
+    private IdentifierResolver identifierResolver = new IdentifierResolver(configuration);
 
     @Spy
     private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();

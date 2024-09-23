@@ -220,14 +220,16 @@ public class TermController extends BaseController {
             @Parameter(description = "Language of the label.")
             @RequestParam(name = "language", required = false) String language) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
-        final Vocabulary vocabulary = termService.getVocabularyReference(vocabularyUri);
-        if (prefLabel != null) {
-            final boolean exists = termService.existsInVocabulary(prefLabel, vocabulary, language);
-            return new ResponseEntity<>(exists ? HttpStatus.OK : HttpStatus.NOT_FOUND);
-        } else {
-            final Integer count = termService.getTermCount(vocabulary);
-            return ResponseEntity.ok().header(Constants.X_TOTAL_COUNT_HEADER, count.toString()).build();
-        }
+
+            final Vocabulary vocabulary = termService.getVocabularyReference(vocabularyUri);
+            if (prefLabel != null) {
+                final boolean exists = termService.existsInVocabulary(prefLabel, vocabulary, language);
+                return new ResponseEntity<>(exists ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+            } else {
+                final Integer count = termService.getTermCount(vocabulary);
+                return ResponseEntity.ok().header(Constants.X_TOTAL_COUNT_HEADER, count.toString()).build();
+            }
+
     }
 
     private Vocabulary getVocabulary(URI vocabularyUri) {
@@ -270,11 +272,13 @@ public class TermController extends BaseController {
             @Parameter(
                     description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
+
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
         return includeImported ?
-               termService
-                       .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
-               termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+                termService
+                        .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
+                termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -608,8 +612,8 @@ public class TermController extends BaseController {
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
-        termService.analyzeTermDefinition(getById(localName, termLocalName, namespace),
-                                          getVocabularyUri(namespace, localName));
+        LOG.warn("Called legacy endpoint intended for internal use or testing only! (/vocabularies/{}/terms/{}/text-analysis)", localName, termLocalName);
+        termService.analyzeTermDefinition(getById(localName, termLocalName, namespace), getVocabularyUri(namespace, localName));
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

@@ -17,7 +17,9 @@
  */
 package cz.cvut.kbss.termit.service;
 
+import cz.cvut.kbss.termit.exception.InvalidIdentifierException;
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -79,13 +81,19 @@ public class IdentifierResolver {
         Arrays.sort(ILLEGAL_FILENAME_CHARS);
     }
 
+    private final boolean asciiOnlyIdentifiers;
+
+    public IdentifierResolver(Configuration config) {
+        this.asciiOnlyIdentifiers = config.isAsciiIdentifiers();
+    }
+
     /**
      * Normalizes the specified value which includes:
      * <ul>
      * <li>Transforming the value to lower case</li>
      * <li>Trimming the string</li>
      * <li>Replacing white spaces and slashes with dashes</li>
-     * <li>Removing parentheses</li>
+     * <li>Removing invalid characters such as parentheses, square brackets, dollar sign, exclamation mark, etc.</li>
      * </ul>
      * <p>
      * Based on <a href="https://gist.github.com/rponte/893494">https://gist.github.com/rponte/893494</a>
@@ -98,7 +106,7 @@ public class IdentifierResolver {
         return value.toLowerCase()
                     .trim()
                     .replaceAll("[\\s/\\\\]", Character.toString(REPLACEMENT_CHARACTER))
-                    .replaceAll("[(?&$#§),]", "");
+                    .replaceAll("[(?&$#§),\\[\\]@]", "");
     }
 
     /**
@@ -138,10 +146,23 @@ public class IdentifierResolver {
         if (!namespace.endsWith("/") && !namespace.endsWith("#")) {
             namespace += "/";
         }
-        return URI.create(namespace + normalize(comps));
+        final String localPart = asciiOnlyIdentifiers ? normalizeToAscii(comps) : normalize(comps);
+        try {
+            return URI.create(namespace + localPart);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidIdentifierException(
+                    "Generated identifier " + namespace + localPart + " is not a valid URI.",
+                    e,
+                    "error.identifier.invalidCharacters");
+        }
     }
 
-    private static boolean isUri(String value) {
+    /**
+     * @param value the URI to check
+     * @return {@code true} when the URI is prefixed with protocol ({@code http/s, ftp or file}
+     * and it is a valid {@link URI}. {@code false} otherwise
+     */
+    public static boolean isUri(String value) {
         try {
             if (!value.matches("^(https?|ftp|file)://.+")) {
                 return false;
@@ -170,7 +191,8 @@ public class IdentifierResolver {
     /**
      * Generates a synthetic identifier using the specified base URL.
      * <p>
-     * This particular implementation uses the current system time in millis to generate the locally unique part of the identifier.
+     * This particular implementation uses the current system time in millis to generate the locally unique part of the
+     * identifier.
      *
      * @param base URL base
      * @return Synthetic identifier containing the specified base
@@ -185,8 +207,8 @@ public class IdentifierResolver {
      * This method assumes that the fragment is a normalized string uniquely identifying a resource in the specified
      * namespace.
      * <p>
-     * Basically, the returned identifier should be the same as would be returned for non-normalized fragments by {@link
-     * #generateIdentifier(String, String...)}.
+     * Basically, the returned identifier should be the same as would be returned for non-normalized fragments by
+     * {@link #generateIdentifier(String, String...)}.
      *
      * @param namespace Identifier namespace
      * @param fragment  Normalized string unique in the specified namespace

@@ -17,14 +17,14 @@
  */
 package cz.cvut.kbss.termit.util;
 
-import org.mitre.dsmiley.httpproxy.URITemplateProxyServlet;
-import org.springframework.http.HttpHeaders;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
+import org.mitre.dsmiley.httpproxy.URITemplateProxyServlet;
+import org.springframework.http.HttpHeaders;
+
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
@@ -38,12 +38,21 @@ import java.util.List;
  */
 public class AdjustedUriTemplateProxyServlet extends URITemplateProxyServlet {
 
+    /**
+     * Configuration parameter representing username to use when connecting to the repository.
+     */
+    public static final String REPO_USERNAME_PARAM = "repository.username";
+    /**
+     * Configuration parameter representing password to use when connecting to the repository.
+     */
+    public static final String REPO_PASSWORD_PARAM = "repository.password";
+
     @Override
     protected void service(HttpServletRequest servletRequest,
                            HttpServletResponse servletResponse)
             throws ServletException, IOException {
-        final String username = getConfigParam(ConfigParam.REPO_USERNAME.toString());
-        final String password = getConfigParam(ConfigParam.REPO_PASSWORD.toString());
+        final String username = getConfigParam(REPO_USERNAME_PARAM);
+        final String password = getConfigParam(REPO_PASSWORD_PARAM);
         super.service(new AuthenticatingServletRequestWrapper(servletRequest, username, password),
                 new HttpServletResponseWrapper(servletResponse) {
                     @Override

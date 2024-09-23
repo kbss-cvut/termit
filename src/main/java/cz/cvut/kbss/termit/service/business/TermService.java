@@ -42,6 +42,8 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
@@ -307,8 +310,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Gets a reference to a Term with the specified identifier.
      * <p>
-     * Note that this method is not protected by ACL-based authorization and should thus not be used without some
-     * other type of authorization.
+     * Note that this method is not protected by ACL-based authorization and should thus not be used without some other
+     * type of authorization.
      *
      * @param id Term identifier
      * @return Matching Term reference wrapped in an {@code Optional}
@@ -327,12 +330,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<Term> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
         return parent.getSubTerms() == null ? Collections.emptyList() :
-                parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                              () -> new NotFoundException(
-                                      "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                      .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
-                              Comparator.nullsLast(Comparator.naturalOrder())))
-                      .collect(Collectors.toList());
+               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
+                             () -> new NotFoundException(
+                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
+                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
+                                                  Comparator.nullsLast(Comparator.naturalOrder())))
+                     .collect(Collectors.toList());
     }
 
     /**
@@ -373,10 +376,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(owner);
         languageService.getInitialTermState().ifPresent(is -> term.setState(is.getUri()));
         repositoryService.addRootTermToVocabulary(term, owner);
-        if (!config.getTextAnalysis().isDisableVocabularyAnalysisOnTermEdit()) {
-            analyzeTermDefinition(term, owner.getUri());
-            vocabularyService.runTextAnalysisOnAllTerms(owner);
-        }
+        vocabularyService.runTextAnalysisOnAllTerms(owner);
     }
 
     /**
@@ -391,10 +391,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(parent);
         languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
-        if (!config.getTextAnalysis().isDisableVocabularyAnalysisOnTermEdit()) {
-            analyzeTermDefinition(child, parent.getVocabulary());
-            vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
-        }
+        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
     }
 
     /**
@@ -411,11 +408,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         checkForInvalidTerminalStateAssignment(original, term.getState());
         // Ensure the change is merged into the repo before analyzing other terms
         final Term result = repositoryService.update(term);
-        if (!Objects.equals(original.getDefinition(), term.getDefinition()) && !config.getTextAnalysis().isDisableVocabularyAnalysisOnTermEdit()) {
-            analyzeTermDefinition(term, original.getVocabulary());
-        }
-        if (!Objects.equals(original.getLabel(), term.getLabel()) && !config.getTextAnalysis().isDisableVocabularyAnalysisOnTermEdit()) {
-            vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(original.getVocabulary()));
+        // if the label changed, run analysis on all terms in the vocabulary
+        if (!Objects.equals(original.getLabel(), result.getLabel())) {
+            vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(result.getVocabulary()));
+            // if all terms have not been analyzed, check if the definition has changed,
+            // and if so, perform an analysis for the term definition
+        } else if (!Objects.equals(original.getDefinition(), result.getDefinition())) {
+            analyzeTermDefinition(result, result.getVocabulary());
         }
         return result;
     }
@@ -426,7 +425,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term Term to remove
      */
     @PreAuthorize("@termAuthorizationService.canRemove(#term)")
-    public void remove(Term term) {
+    public void remove(@Nonnull Term term) {
         Objects.requireNonNull(term);
         repositoryService.remove(term);
     }
@@ -440,8 +439,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term          Term to analyze
      * @param vocabularyIri Identifier of the vocabulary used for analysis
      */
+    @Throttle(value = "{#vocabularyIri, #term.getUri()}",
+              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyTerm(#vocabulary.getUri(), #term.getUri())",
+              name="termDefinitionAnalysis")
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
+        term = findRequired(term.getUri()); // required when throttling for persistent context
         Objects.requireNonNull(term);
         if (term.getDefinition() == null || term.getDefinition().isEmpty()) {
             return;
@@ -526,14 +530,17 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     private void checkForInvalidTerminalStateAssignment(Term term, URI state) {
         final List<RdfsResource> states = languageService.getTermStates();
         final Predicate<URI> isStateTerminal = (URI s) -> states.stream().filter(r -> r.getUri().equals(s)).findFirst()
-                                                                .map(r -> r.hasType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu))
+                                                                .map(r -> r.hasType(
+                                                                        cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu))
                                                                 .orElse(false);
         if (!isStateTerminal.test(state)) {
             return;
         }
         if (Utils.emptyIfNull(term.getSubTerms()).stream()
                  .anyMatch(Predicate.not(ti -> isStateTerminal.test(ti.getState())))) {
-            throw new InvalidTermStateException("Cannot set state of term " + term + " to terminal when at least one of its sub-terms is not in terminal state.", "error.term.state.terminal.liveChildren");
+            throw new InvalidTermStateException(
+                    "Cannot set state of term " + term + " to terminal when at least one of its sub-terms is not in terminal state.",
+                    "error.term.state.terminal.liveChildren");
         }
     }
 

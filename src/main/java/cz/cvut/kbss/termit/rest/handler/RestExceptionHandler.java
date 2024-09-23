@@ -23,6 +23,7 @@ import cz.cvut.kbss.jsonld.exception.JsonLdException;
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.AuthorizationException;
+import cz.cvut.kbss.termit.exception.InvalidIdentifierException;
 import cz.cvut.kbss.termit.exception.InvalidLanguageConstantException;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.InvalidPasswordChangeRequestException;
@@ -39,16 +40,23 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
+import cz.cvut.kbss.termit.util.ExceptionUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import jakarta.servlet.http.HttpServletRequest;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
+import static cz.cvut.kbss.termit.util.ExceptionUtils.findCause;
 
 /**
  * Exception handlers for REST controllers.
@@ -56,6 +64,8 @@ import jakarta.servlet.http.HttpServletRequest;
  * The general pattern should be that unless an exception can be handled in a more appropriate place it bubbles up to a
  * REST controller which originally received the request. There, it is caught by this handler, logged and a reasonable
  * error message is returned to the user.
+ *
+ * @implSpec Should reflect {@link cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler}
  */
 @RestControllerAdvice
 public class RestExceptionHandler {
@@ -78,11 +88,18 @@ public class RestExceptionHandler {
     }
 
     private static void logException(String message, Throwable ex) {
-        LOG.error(message, ex);
+        // Prevents exceptions caused by broken connection with a client from logging
+        if (findCause(ex, AsyncRequestNotUsableException.class).isEmpty()) {
+            LOG.error(message, ex);
+        }
     }
 
     private static ErrorInfo errorInfo(HttpServletRequest request, Throwable e) {
         return ErrorInfo.createWithMessage(e.getMessage(), request.getRequestURI());
+    }
+
+    private static ErrorInfo errorInfo(HttpServletRequest request, TermItException e) {
+        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), request.getRequestURI(), e.getParameters());
     }
 
     @ExceptionHandler(PersistenceException.class)
@@ -126,6 +143,13 @@ public class RestExceptionHandler {
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorInfo> authenticationException(HttpServletRequest request, AuthenticationException e) {
+        LOG.warn("Authentication failure during HTTP request to {}: {}", request.getRequestURI(), e.getMessage());
+        LOG.atDebug().setCause(e).log(e.getMessage());
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorInfo> validationException(HttpServletRequest request, ValidationException e) {
         logException(e, request);
@@ -147,8 +171,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(TermItException.class)
-    public ResponseEntity<ErrorInfo> termItException(HttpServletRequest request,
-                                                     TermItException e) {
+    public ResponseEntity<ErrorInfo> termItException(HttpServletRequest request, TermItException e) {
         logException(e, request);
         return new ResponseEntity<>(errorInfo(request, e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -156,6 +179,10 @@ public class RestExceptionHandler {
     @ExceptionHandler(JsonLdException.class)
     public ResponseEntity<ErrorInfo> jsonLdException(HttpServletRequest request, JsonLdException e) {
         logException(e, request);
+        Optional<URISyntaxException> uriSyntaxException = ExceptionUtils.findCause(e, URISyntaxException.class);
+        if (uriSyntaxException.isPresent()) {
+            return uriSyntaxException(request, uriSyntaxException.get());
+        }
         return new ResponseEntity<>(
                 ErrorInfo.createWithMessage("Error when processing JSON-LD.", request.getRequestURI()),
                 HttpStatus.INTERNAL_SERVER_ERROR);
@@ -172,9 +199,7 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
                                                                VocabularyImportException e) {
         logException(e, request);
-        return new ResponseEntity<>(
-                ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
-                HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler
@@ -228,7 +253,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> vocabularyImportException(HttpServletRequest request,
+    public ResponseEntity<ErrorInfo> invalidTermStateException(HttpServletRequest request,
                                                                InvalidTermStateException e) {
         logException(e, request);
         return new ResponseEntity<>(
@@ -237,8 +262,32 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request, InvalidPasswordChangeRequestException e) {
+    public ResponseEntity<ErrorInfo> invalidPasswordChangeRequestException(HttpServletRequest request,
+                                                                           InvalidPasswordChangeRequestException e) {
         logException(e, request);
-        return new ResponseEntity<>(ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()), HttpStatus.CONFLICT);
+        return new ResponseEntity<>(
+                ErrorInfo.createWithMessageAndMessageId(e.getMessage(), e.getMessageId(), request.getRequestURI()),
+                HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> invalidIdentifierException(HttpServletRequest request,
+                                                                InvalidIdentifierException e) {
+        logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> uriSyntaxException(HttpServletRequest request, URISyntaxException e) {
+        logException(e, request);
+        // when the index is less than zero, its unknown, and we will use more general message
+        final String messageId = e.getIndex() < 0 ? "error.invalidIdentifier" : "error.invalidUriCharacter";
+        TermItException exception = new InvalidIdentifierException(e.getMessage(), e, messageId)
+                .addParameter("uri", e.getInput())
+                .addParameter("reason", e.getReason())
+                .addParameter("message", e.getMessage())
+                .addParameter("index", Integer.toString(e.getIndex()))
+                .addParameter("char", Character.toString(e.getInput().charAt(e.getIndex())));
+        return new ResponseEntity<>(errorInfo(request, exception), HttpStatus.CONFLICT);
     }
 }

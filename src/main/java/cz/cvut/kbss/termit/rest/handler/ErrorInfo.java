@@ -17,16 +17,33 @@
  */
 package cz.cvut.kbss.termit.rest.handler;
 
+import cz.cvut.kbss.termit.util.Utils;
+
+import java.util.Map;
+
 /**
  * Contains information about an error and can be sent to client as JSON to let him know what is wrong.
  */
 public class ErrorInfo {
 
+    /**
+     * Readable message describing the error
+     */
     private String message;
 
+    /**
+     * Error message identifier.
+     * <p>
+     * This identifier can be used by the UI to display a corresponding localized error message.
+     */
     private String messageId;
 
     private String requestUri;
+
+    /**
+     * Parameters for translatable message identified by {@link #messageId}
+     */
+    private Map<String, String> values;
 
     public ErrorInfo() {
     }
@@ -66,9 +83,17 @@ public class ErrorInfo {
         this.requestUri = requestUri;
     }
 
+    public Map<String, String> getValues() {
+        return values;
+    }
+
+    public void setValues(Map<String, String> parameters) {
+        this.values = parameters;
+    }
+
     @Override
     public String toString() {
-        return "ErrorInfo{" + requestUri + ", messageId=" + messageId + ", message='" + message + "'}";
+        return "ErrorInfo{" + requestUri + ", messageId=" + messageId + ", message='" + message + "', parameters='"+ Utils.mapToString(values) +"'}";
     }
 
     /**
@@ -97,9 +122,23 @@ public class ErrorInfo {
      * @return New {@code ErrorInfo} instance
      */
     public static ErrorInfo createWithMessageAndMessageId(String message, String messageId, String requestUri) {
+        ErrorInfo errorInfo = createWithMessage(message, requestUri);
+        errorInfo.setMessageId(messageId);
+        return errorInfo;
+    }
+
+    public static ErrorInfo createParametrized(String messageId, String requestUri, Map<String, String> values) {
+        final ErrorInfo errorInfo = new ErrorInfo(requestUri);
+        errorInfo.setMessageId(messageId);
+        errorInfo.setValues(values);
+        return errorInfo;
+    }
+
+    public static ErrorInfo createParametrizedWithMessage(String message, String messageId, String requestUri, Map<String, String> values) {
         final ErrorInfo errorInfo = new ErrorInfo(requestUri);
         errorInfo.setMessage(message);
         errorInfo.setMessageId(messageId);
+        errorInfo.setValues(values);
         return errorInfo;
     }
 }

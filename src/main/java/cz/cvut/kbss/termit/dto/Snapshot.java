@@ -17,7 +17,14 @@
  */
 package cz.cvut.kbss.termit.dto;
 
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
+import cz.cvut.kbss.jopa.model.annotations.Id;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
+import cz.cvut.kbss.jopa.model.annotations.Types;
+import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.util.Vocabulary;

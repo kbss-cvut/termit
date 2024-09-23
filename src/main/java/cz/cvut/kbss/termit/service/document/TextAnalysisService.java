@@ -18,6 +18,8 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
+import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -25,11 +27,17 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -57,14 +65,18 @@ public class TextAnalysisService {
 
     private final TextAnalysisRecordDao recordDao;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @Autowired
     public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
-                               AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao) {
+                               AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao,
+                               ApplicationEventPublisher eventPublisher) {
         this.restClient = restClient;
         this.config = config;
         this.documentManager = documentManager;
         this.annotationGenerator = annotationGenerator;
         this.recordDao = recordDao;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -76,12 +88,15 @@ public class TextAnalysisService {
      * @param file               File whose content shall be analyzed
      * @param vocabularyContexts Identifiers of repository contexts containing vocabularies intended for text analysis
      */
+    @Throttle(value = "{#file.getUri()}", name = "fileAnalysis")
     @Transactional
     public void analyzeFile(File file, Set<URI> vocabularyContexts) {
         Objects.requireNonNull(file);
         final TextAnalysisInput input = createAnalysisInput(file);
         input.setVocabularyContexts(vocabularyContexts);
         invokeTextAnalysisOnFile(file, input);
+        LOG.debug("Text analysis finished for resource {}.", file.getUri());
+        eventPublisher.publishEvent(new FileTextAnalysisFinishedEvent(this, file));
     }
 
     private TextAnalysisInput createAnalysisInput(File file) {
@@ -175,6 +190,7 @@ public class TextAnalysisService {
             input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
 
             invokeTextAnalysisOnTerm(term, input);
+            eventPublisher.publishEvent(new TermDefinitionTextAnalysisFinishedEvent(this, term));
         }
     }
 

@@ -27,6 +27,8 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -35,6 +37,7 @@ import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
+import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
@@ -61,6 +64,8 @@ public class JwtUtils {
 
     private final ObjectMapper objectMapper;
 
+    private final JwtParser jwtParser;
+
     private final Key key;
 
     @Autowired
@@ -68,6 +73,10 @@ public class JwtUtils {
         this.objectMapper = objectMapper;
         this.key = Utils.isBlank(config.getJwt().getSecretKey()) ? Keys.secretKeyFor(SIGNATURE_ALGORITHM) :
                          Keys.hmacShaKeyFor(config.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+
+        this.jwtParser = Jwts.parserBuilder().setSigningKey(key)
+                             .deserializeJsonWith(new JacksonDeserializer<>(objectMapper))
+                             .build();
     }
 
     /**
@@ -109,7 +118,16 @@ public class JwtUtils {
     public TermItUserDetails extractUserInfo(String token) {
         Objects.requireNonNull(token);
         try {
-            final Claims claims = getClaimsFromToken(token);
+            final Claims claims = getClaimsFromToken(token).getBody();
+            return extractUserInfo(claims);
+        } catch (IllegalArgumentException e) {
+            throw new JwtException("Unable to parse user identifier from the specified JWT.", e);
+        }
+    }
+
+    public TermItUserDetails extractUserInfo(final @Nonnull Claims claims) {
+        Objects.requireNonNull(claims);
+        try {
             verifyAttributePresence(claims);
             final UserAccount user = new UserAccount();
             user.setUri(URI.create(claims.getId()));
@@ -121,7 +139,7 @@ public class JwtUtils {
         }
     }
 
-    private Claims getClaimsFromToken(String token) {
+    public Jws<Claims> getClaimsFromToken(String token) {
         try {
             return parseClaims(token);
         } catch (MalformedJwtException | UnsupportedJwtException e) {
@@ -133,10 +151,8 @@ public class JwtUtils {
         }
     }
 
-    private Claims parseClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(key)
-                   .deserializeJsonWith(new JacksonDeserializer<>(objectMapper))
-                   .build().parseClaimsJws(token).getBody();
+    private Jws<Claims> parseClaims(String token) {
+        return jwtParser.parseClaimsJws(token);
     }
 
     private static void verifyAttributePresence(Claims claims) {
@@ -171,7 +187,7 @@ public class JwtUtils {
      */
     public String refreshToken(String token) {
         Objects.requireNonNull(token);
-        final Claims claims = getClaimsFromToken(token);
+        final Claims claims = getClaimsFromToken(token).getBody();
         final Instant issued = issueTimestamp();
         claims.setIssuedAt(Date.from(issued));
         claims.setExpiration(Date.from(issued.plusMillis(SecurityConstants.SESSION_TIMEOUT)));
@@ -191,7 +207,7 @@ public class JwtUtils {
      */
     public URI getUserUri(String token) {
         try {
-            final Claims claims = parseClaims(token);
+            final Claims claims = parseClaims(token).getBody();
             return URI.create(claims.getId());
         } catch (ExpiredJwtException e) {
             return URI.create(e.getClaims().getId());
@@ -206,7 +222,7 @@ public class JwtUtils {
      */
     public Instant getTokenIssueTimestamp(String token) {
         try {
-            final Claims claims = parseClaims(token);
+            final Claims claims = parseClaims(token).getBody();
             return claims.getIssuedAt().toInstant();
         } catch (ExpiredJwtException e) {
             return e.getClaims().getIssuedAt().toInstant();

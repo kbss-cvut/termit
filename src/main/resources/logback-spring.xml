@@ -29,6 +29,12 @@
         <appender-ref ref="FILE"/>
     </logger>
 
+    <!-- Restrict logging of no explicitly mapped vocabulary contexts -->
+    <logger name="cz.cvut.kbss.termit.persistence.context.CachingVocabularyContextMapper" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
     <!-- Restrict logging inherited from the JwtAuthenticationFilter's parent class -->
     <logger name="cz.cvut.kbss.termit.security.JwtAuthenticationFilter" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>

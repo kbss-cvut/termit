@@ -148,8 +148,8 @@ public class ResourceController extends BaseController {
         try {
             final Optional<Instant> timestamp = at.map(RestUtils::parseTimestamp);
             final TypeAwareResource content = resourceService.getContent(resource,
-                                                                         new ResourceRetrievalSpecification(timestamp,
-                                                                                                            withoutUnconfirmedOccurrences));
+                    new ResourceRetrievalSpecification(timestamp,
+                            withoutUnconfirmedOccurrences));
             final ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                                                                      .contentLength(content.contentLength())
                                                                      .contentType(MediaType.parseMediaType(
@@ -172,23 +172,24 @@ public class ResourceController extends BaseController {
     })
     @PutMapping(value = "/{localName}/content")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveContent(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                       example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                            @PathVariable String localName,
-                            @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                       example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
-                            @Parameter(description = "File with the new content.")
-                            @RequestParam(name = "file") MultipartFile attachment) {
+    public Void saveContent(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                 example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                      @PathVariable String localName,
+                                      @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                                                 example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                      @RequestParam(name = QueryParams.NAMESPACE,
+                                                    required = false) Optional<String> namespace,
+                                      @Parameter(description = "File with the new content.")
+                                      @RequestParam(name = "file") MultipartFile attachment) {
+
         final Resource resource = getResource(localName, namespace);
         try {
             resourceService.saveContent(resource, attachment.getInputStream());
         } catch (IOException e) {
-            throw new TermItException(
-                    "Unable to read file (fileName=\"" + attachment.getOriginalFilename() + "\") content from request.",
-                    e);
+            throw new TermItException("Unable to read file (fileName=\"" + attachment.getOriginalFilename() + "\") content from request.", e);
         }
         LOG.debug("Content saved for resource {}.", resource);
+        return null;
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -212,8 +213,8 @@ public class ResourceController extends BaseController {
             return ResponseEntity.notFound().build();
         } else {
             final String contentType = resourceService.getContent(r,
-                                                                  new ResourceRetrievalSpecification(Optional.empty(),
-                                                                                                     false))
+                                                              new ResourceRetrievalSpecification(Optional.empty(),
+                                                                      false))
                                                       .getMediaType().orElse(null);
             return ResponseEntity.noContent().header(HttpHeaders.CONTENT_TYPE, contentType).build();
         }
@@ -297,7 +298,7 @@ public class ResourceController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Runs text analysis on the content of the resource with the specified identifier.")
+               description = "Runs text analysis on the content of the resource with the specified identifier. Analysis will be performed asynchronously sometime in the future.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Text analysis executed."),
             @ApiResponse(responseCode = "404", description = ResourceControllerDoc.ID_NOT_FOUND_DESCRIPTION),
@@ -306,19 +307,18 @@ public class ResourceController extends BaseController {
     @PutMapping(value = "/{localName}/text-analysis")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void runTextAnalysis(@Parameter(description = ResourceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                           example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
-                                @PathVariable String localName,
-                                @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
-                                           example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
-                                @RequestParam(name = QueryParams.NAMESPACE,
-                                              required = false) Optional<String> namespace,
-                                @Parameter(
-                                        description = "Identifiers of vocabularies whose terms are used to seed text analysis.")
-                                @RequestParam(name = "vocabulary", required = false,
-                                              defaultValue = "") Set<URI> vocabularies) {
+                                                     example = ResourceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
+                                          @PathVariable String localName,
+                                          @Parameter(description = ResourceControllerDoc.ID_NAMESPACE_DESCRIPTION,
+                                                     example = ResourceControllerDoc.ID_NAMESPACE_EXAMPLE)
+                                          @RequestParam(name = QueryParams.NAMESPACE,
+                                                        required = false) Optional<String> namespace,
+                                          @Parameter(
+                                                  description = "Identifiers of vocabularies whose terms are used to seed text analysis.")
+                                          @RequestParam(name = "vocabulary", required = false,
+                                                        defaultValue = "") Set<URI> vocabularies) {
         final Resource resource = getResource(localName, namespace);
         resourceService.runTextAnalysis(resource, vocabularies);
-        LOG.debug("Text analysis finished for resource {}.", resource);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -367,10 +367,15 @@ public class ResourceController extends BaseController {
      * A couple of constants for the {@link ResourceController} API documentation.
      */
     private static final class ResourceControllerDoc {
+
         private static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default resource namespace) unique part of the resource identifier.";
+
         private static final String ID_LOCAL_NAME_EXAMPLE = "mpp-draft.html";
+
         private static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default resource identifier namespace.";
+
         private static final String ID_NAMESPACE_EXAMPLE = "http://onto.fel.cvut.cz/ontologies/zdroj/";
+
         private static final String ID_NOT_FOUND_DESCRIPTION = "Resource with the specified identifier not found.";
     }
 }

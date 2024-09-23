@@ -32,10 +32,10 @@ import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
-import cz.cvut.kbss.termit.service.document.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
+import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -158,8 +158,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final java.io.File content = createTemporaryHtmlFile();
         when(resourceServiceMock.getContent(eq(file), any(ResourceRetrievalSpecification.class)))
                 .thenReturn(new TypeAwareFileSystemResource(content, MediaType.TEXT_HTML_VALUE));
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/" + FILE_NAME + "/content"))
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FILE_NAME + "/content"))
                 .andExpect(status().isOk()).andReturn();
         final String resultContent = mvcResult.getResponse().getContentAsString();
         assertEquals(HTML_CONTENT, resultContent);
@@ -379,8 +378,8 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final java.io.File content = createTemporaryHtmlFile();
         when(resourceServiceMock.getContent(eq(file), any(ResourceRetrievalSpecification.class)))
                 .thenReturn(new TypeAwareFileSystemResource(content, MediaType.TEXT_HTML_VALUE));
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/" + FILE_NAME + "/content").param("attachment", Boolean.toString(true)))
+        final MvcResult mvcResult = mockMvc.perform(
+                get(PATH + "/" + FILE_NAME + "/content").param("attachment", Boolean.toString(true)))
                 .andExpect(status().isOk()).andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
@@ -420,8 +419,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final Instant at = Utils.timestamp().truncatedTo(ChronoUnit.SECONDS);
         when(resourceServiceMock.getContent(eq(file), any(ResourceRetrievalSpecification.class)))
                 .thenReturn(new TypeAwareFileSystemResource(content, MediaType.TEXT_HTML_VALUE));
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/" + FILE_NAME + "/content")
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FILE_NAME + "/content")
                                  .queryParam("at", Constants.TIMESTAMP_FORMATTER.format(at)))
                 .andExpect(status().isOk()).andReturn();
         final String resultContent = mvcResult.getResponse().getContentAsString();
@@ -454,8 +452,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final java.io.File content = createTemporaryHtmlFile();
         when(resourceServiceMock.getContent(eq(file), any(ResourceRetrievalSpecification.class)))
                 .thenReturn(new TypeAwareFileSystemResource(content, MediaType.TEXT_HTML_VALUE));
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + "/" + FILE_NAME + "/content")
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FILE_NAME + "/content")
                                  .queryParam("withoutUnconfirmedOccurrences", Boolean.toString(true)))
                 .andExpect(status().isOk()).andReturn();
         final String resultContent = mvcResult.getResponse().getContentAsString();

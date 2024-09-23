@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.document.html;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import java.util.List;
@@ -47,6 +48,14 @@ class TextPositionSelectorGenerator implements SelectorGenerator {
         return selector;
     }
 
+    /**
+     * This code was extracted from {@link #extractNodeText} and related functions
+     * to prevent constructing whole string contents for only getting its length.
+     * Now only length is counted from the contents of text nodes.
+     * @see SelectorGenerator#extractNodeText(Iterable)
+     * @see Element#wholeText()
+     * @see TextNode#getWholeText()
+     */
     private int resolveStartPosition(Element element) {
         final Elements ancestors = element.parents();
         Element previous = element;

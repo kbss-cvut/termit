@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.security.JwtAuthenticationFilter;
 import cz.cvut.kbss.termit.security.JwtAuthorizationFilter;
 import cz.cvut.kbss.termit.security.JwtUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
+import cz.cvut.kbss.termit.security.TermitJwtDecoder;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Constants;
 import org.slf4j.Logger;
@@ -40,6 +41,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -90,7 +95,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, TermitJwtDecoder jwtDecoder) throws Exception {
         LOG.debug("Using internal security mechanisms.");
         final AuthenticationManager authManager = buildAuthenticationManager(http);
         http.authorizeHttpRequests((auth) -> auth.requestMatchers(antMatcher("/rest/query")).permitAll()
@@ -102,7 +107,7 @@ public class SecurityConfig {
                                   .logoutSuccessHandler(authenticationSuccessHandler))
             .authenticationManager(authManager)
             .addFilter(authenticationFilter(authManager))
-            .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, userDetailsService, objectMapper));
+            .addFilter(new JwtAuthorizationFilter(authManager, jwtUtils, objectMapper, jwtDecoder));
         return http.build();
     }
 
@@ -119,6 +124,22 @@ public class SecurityConfig {
         authenticationFilter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
         authenticationFilter.setAuthenticationFailureHandler(authenticationFailureHandler);
         return authenticationFilter;
+    }
+
+    /**
+     * @see cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor
+     */
+    @Bean
+    public JwtAuthenticationProvider jwtAuthenticationProvider(JwtDecoder jwtDecoder) {
+        final JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        authoritiesConverter.setAuthorityPrefix(""); // this removes default "SCOPE_" prefix
+        // otherwise, all granted authorities would have this prefix
+        // (like "SCOPE_ROLE_RESTRICTED_USER", we want just ROLE_...)
+        final JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+        final JwtAuthenticationProvider provider = new JwtAuthenticationProvider(jwtDecoder);
+        provider.setJwtAuthenticationConverter(converter);
+        return provider;
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
@@ -142,5 +163,10 @@ public class SecurityConfig {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
+    }
+
+    @Bean
+    public TermitJwtDecoder jwtDecoder() {
+        return new TermitJwtDecoder(jwtUtils, userDetailsService);
     }
 }

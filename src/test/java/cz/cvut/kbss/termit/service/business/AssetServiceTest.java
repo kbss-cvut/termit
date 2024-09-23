@@ -35,7 +35,7 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -211,7 +211,7 @@ class AssetServiceTest {
               .forEach(ra -> assertEquals(AssetService.MASK, ra.getLabel()));
     }
 
-    @NotNull
+    @Nonnull
     private List<RecentlyModifiedAsset> generateRecentlyModifiedWithForbiddenTerms() {
         final List<RecentlyModifiedAsset> allExpected = generateRecentlyModifiedAssets(6);
         when(assetDao.findLastEdited(any(Pageable.class))).thenReturn(new PageImpl<>(allExpected));
