@@ -408,7 +408,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         checkForInvalidTerminalStateAssignment(original, term.getState());
         // Ensure the change is merged into the repo before analyzing other terms
         final Term result = repositoryService.update(term);
-
         // if the label changed, run analysis on all terms in the vocabulary
         if (!Objects.equals(original.getLabel(), result.getLabel())) {
             vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(result.getVocabulary()));
