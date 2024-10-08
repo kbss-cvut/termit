@@ -124,9 +124,8 @@ public class VocabularyService
     }
 
     /**
-     * Receives {@link VocabularyContentModifiedEvent} and triggers validation.
-     * The goal for this is to get the results cached and do not force users to wait for validation
-     * when they request it.
+     * Receives {@link VocabularyContentModifiedEvent} and triggers validation. The goal for this is to get the results
+     * cached and do not force users to wait for validation when they request it.
      */
     @EventListener({VocabularyContentModifiedEvent.class, VocabularyCreatedEvent.class})
     public void onVocabularyContentModified(VocabularyEvent event) {
@@ -217,11 +216,26 @@ public class VocabularyService
         return repositoryService.getRelatedVocabularies(entity);
     }
 
+    /**
+     * Gets statements representing SKOS relationships between terms from the specified vocabulary and terms from other
+     * vocabularies.
+     *
+     * @param vocabulary Vocabulary whose terms' relationships to retrieve
+     * @return List of RDF statements
+     */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
     public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
         return repositoryService.getTermRelations(vocabulary);
     }
 
+    /**
+     * Gets statements representing relationships between the specified vocabulary and other vocabularies.
+     * <p>
+     * A selected set of relationships is excluded (for example, versioning relationships).
+     *
+     * @param vocabulary Vocabulary whose relationships to retrieve
+     * @return List of RDF statements
+     */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
     public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary) {
         return repositoryService.getVocabularyRelations(vocabulary, VOCABULARY_REMOVAL_IGNORED_RELATIONS);
