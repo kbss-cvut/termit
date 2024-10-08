@@ -53,6 +53,9 @@ public class ConfigurationDto implements Serializable {
     @OWLDataProperty(iri = Vocabulary.s_p_ma_oddelovac_verze)
     private String versionSeparator;
 
+    @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_adresu_modelovaciho_nastroje)
+    private String modelingToolUrl;
+
     public String getLanguage() {
         return language;
     }
@@ -91,5 +94,13 @@ public class ConfigurationDto implements Serializable {
 
     public void setVersionSeparator(String versionSeparator) {
         this.versionSeparator = versionSeparator;
+    }
+
+    public String getModelingToolUrl() {
+        return modelingToolUrl;
+    }
+
+    public void setModelingToolUrl(String modelingToolUrl) {
+        this.modelingToolUrl = modelingToolUrl;
     }
 }
