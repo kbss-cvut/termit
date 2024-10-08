@@ -640,3 +640,12 @@ termit-pojem:požadavek-na-změnu-hesla
             termit:glosář ;
     <http://www.w3.org/2004/02/skos/core#prefLabel>
             "Password reset request"@en , "Požadavek na změnu hesla"@cs .
+
+termit-pojem:má-adresu-modelovacího-nástroje
+    a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+    <http://www.w3.org/2004/02/skos/core#broader>
+            <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has modeling tool address"@en , "Má adresu modelovacího nástroje"@cs .
