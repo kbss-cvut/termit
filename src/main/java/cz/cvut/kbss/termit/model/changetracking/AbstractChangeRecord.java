@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.time.Instant;
@@ -37,7 +38,7 @@ import java.util.Objects;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
 @OWLClass(iri = Vocabulary.s_c_zmena)
-public class AbstractChangeRecord extends AbstractEntity {
+public class AbstractChangeRecord extends AbstractEntity implements Comparable<AbstractChangeRecord> {
 
     @ParticipationConstraints(nonEmpty = true)
     @OWLDataProperty(iri = Vocabulary.s_p_ma_datum_a_cas_modifikace)
@@ -105,5 +106,15 @@ public class AbstractChangeRecord extends AbstractEntity {
                 ", timestamp=" + timestamp +
                 ", author=" + author +
                 ", changedEntity=" + changedEntity;
+    }
+
+    @Override
+    public int compareTo(@Nonnull AbstractChangeRecord o) {
+        final int timestampDiff = getTimestamp().compareTo(o.getTimestamp());
+        if (timestampDiff != 0) {
+            return timestampDiff;
+        }
+
+        return getUri().compareTo(o.getUri());
     }
 }

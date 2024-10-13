@@ -33,6 +33,7 @@ import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,6 +45,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -69,6 +71,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
+
 /**
  * Vocabulary management REST API.
  * <p>
@@ -80,6 +84,8 @@ import java.util.Optional;
 @RequestMapping("/vocabularies")
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class VocabularyController extends BaseController {
+    static final String DEFAULT_PAGE_SIZE = "10";
+    static final String DEFAULT_PAGE = "0";
 
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyController.class);
 
@@ -281,6 +287,28 @@ public class VocabularyController extends BaseController {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChangesOfContent(vocabulary);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of changes made to the content of the vocabulary (term creation, editing).")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "List of change records."),
+                   @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)})
+    @GetMapping(value = "/{localName}/history-of-content/detail",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE) @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
+                                                                            required = false) Optional<String> namespace,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION) @RequestParam(
+                    name = Constants.QueryParams.PAGE_SIZE, required = false,
+                    defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION) @RequestParam(
+                    name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE) Integer pageNo) {
+        final Pageable pageReq = createPageRequest(pageSize, pageNo);
+        final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
+        return vocabularyService.getDetailedHistoryOfContent(vocabulary, pageReq);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
