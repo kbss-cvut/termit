@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
@@ -52,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -216,6 +218,18 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Transactional(readOnly = true)
     public List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary) {
         return vocabularyDao.getChangesOfContent(vocabulary);
+    }
+
+    /**
+     * Gets content change records of the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary whose content changes to get
+     * @param pageReq Specification of the size and number of the page to return
+     * @return List of change records, ordered by date in descending order
+     */
+    @Transactional(readOnly = true)
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
+        return vocabularyDao.getDetailedHistoryOfContent(vocabulary, pageReq);
     }
 
     @CacheEvict(allEntries = true)

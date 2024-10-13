@@ -56,6 +56,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -295,6 +296,17 @@ public class VocabularyService
      */
     public List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary) {
         return repositoryService.getChangesOfContent(vocabulary);
+    }
+
+    /**
+     * Gets content change records of the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary whose content changes to get
+     * @param pageReq Specification of the size and number of the page to return
+     * @return List of change records, ordered by date in descending order
+     */
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
+        return repositoryService.getDetailedHistoryOfContent(vocabulary, pageReq);
     }
 
     /**
