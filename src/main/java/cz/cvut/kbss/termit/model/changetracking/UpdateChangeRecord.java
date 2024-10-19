@@ -105,6 +105,9 @@ public class UpdateChangeRecord extends AbstractChangeRecord {
         if (o instanceof PersistChangeRecord) {
             return 1;
         }
+        if (o instanceof DeleteChangeRecord) {
+            return -1;
+        }
         return super.compareTo(o);
     }
 }
