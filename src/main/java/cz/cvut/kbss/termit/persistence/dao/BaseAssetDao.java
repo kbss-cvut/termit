@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
+import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
  * Base DAO implementation for assets managed by the application.
  *
  * @param <T> Type of the asset
+ * @param <L> Type of the asset's label
  */
 public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
 
@@ -63,6 +65,12 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
     public T update(T entity) {
         eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
         return super.update(entity);
+    }
+
+    @Override
+    public void remove(T entity) {
+        eventPublisher.publishEvent(new BeforeAssetDeleteEvent<T>(this, entity));
+        super.remove(entity);
     }
 
     /**

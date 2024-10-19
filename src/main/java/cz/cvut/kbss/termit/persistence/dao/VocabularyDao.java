@@ -30,6 +30,7 @@ import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
+import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
@@ -228,6 +229,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     @Override
     public void remove(Vocabulary entity) {
         eventPublisher.publishEvent(new VocabularyWillBeRemovedEvent(this, entity.getUri()));
+        eventPublisher.publishEvent(new BeforeAssetDeleteEvent<Vocabulary>(this, entity));
         this.removeVocabulary(entity, true);
     }
 
