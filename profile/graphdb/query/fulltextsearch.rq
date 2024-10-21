@@ -32,7 +32,7 @@ SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippet
     }
   }
     ?search :query ?wildCardSearchString ;
-          :snippetSize 2000 ;
+          :snippetSize 250 ;
           :entities ?entity .
   ?entity a ?type ;
           :score ?initScore ;
