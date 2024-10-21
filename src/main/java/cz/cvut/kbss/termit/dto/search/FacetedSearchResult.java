@@ -160,10 +160,9 @@ public class FacetedSearchResult extends Asset<MultilingualString> implements Ha
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FacetedSearchResult)) {
+        if (!(o instanceof FacetedSearchResult that)) {
             return false;
         }
-        FacetedSearchResult that = (FacetedSearchResult) o;
         return Objects.equals(getUri(), that.getUri());
     }
 

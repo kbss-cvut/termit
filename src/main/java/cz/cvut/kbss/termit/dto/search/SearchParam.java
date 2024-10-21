@@ -89,10 +89,9 @@ public class SearchParam {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof SearchParam)) {
+        if (!(o instanceof SearchParam that)) {
             return false;
         }
-        SearchParam that = (SearchParam) o;
         return Objects.equals(property, that.property)
                 && Objects.equals(value, that.value) && matchType == that.matchType;
     }
