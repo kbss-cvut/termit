@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
  * Base DAO implementation for assets managed by the application.
  *
  * @param <T> Type of the asset
- * @param <L> Type of the asset's label
  */
 public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
 
@@ -69,7 +68,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
 
     @Override
     public void remove(T entity) {
-        eventPublisher.publishEvent(new BeforeAssetDeleteEvent<T>(this, entity));
+        eventPublisher.publishEvent(new BeforeAssetDeleteEvent(this, entity));
         super.remove(entity);
     }
 

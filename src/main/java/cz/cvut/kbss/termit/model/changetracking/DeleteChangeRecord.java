@@ -2,41 +2,58 @@ package cz.cvut.kbss.termit.model.changetracking;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
-import cz.cvut.kbss.jopa.vocabulary.DC;
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.util.Objects;
 
 /**
  * Represents a record of asset deletion.
- * @param <T> The label type, {@link String} or {@link MultilingualString}
  */
-//@OWLClass(iri = Vocabulary.s_c_smazani_entity) TODO: ontology for DeleteChangeRecord
-public class DeleteChangeRecord<T extends Serializable> extends AbstractChangeRecord {
+@OWLClass(iri = Vocabulary.s_c_smazani_entity)
+public class DeleteChangeRecord extends AbstractChangeRecord {
     @ParticipationConstraints(nonEmpty = true)
-    @OWLAnnotationProperty(iri = DC.Terms.TITLE)
-    private T label;
+    @OWLAnnotationProperty(iri = RDFS.LABEL)
+    private MultilingualString label;
 
     @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
     private URI vocabulary;
 
-    public DeleteChangeRecord(Asset<T> changedEntity, URI vocabulary) {
+    /**
+     * Creates a new instance.
+     * @param changedEntity the changed asset
+     * @param vocabulary optional vocabulary URI
+     * @throws IllegalArgumentException If the label type is not String or MultilingualString
+     */
+    public DeleteChangeRecord(Asset<?> changedEntity, URI vocabulary) {
         super(changedEntity);
-        this.label = changedEntity.getLabel();
+
+        if (changedEntity.getLabel() instanceof String stringLabel) {
+            this.label = MultilingualString.create(stringLabel, null);
+        } else if (changedEntity.getLabel() instanceof MultilingualString multilingualLabel) {
+            this.label = multilingualLabel;
+        } else {
+            throw new IllegalArgumentException("Unsupported label type: " + changedEntity.getLabel().getClass());
+        }
+
         this.vocabulary = vocabulary;
     }
 
-    public T getLabel() {
+    public DeleteChangeRecord() {
+        super();
+    }
+
+    public MultilingualString getLabel() {
         return label;
     }
 
-    public void setLabel(T label) {
+    public void setLabel(MultilingualString label) {
         this.label = label;
     }
 
@@ -53,7 +70,7 @@ public class DeleteChangeRecord<T extends Serializable> extends AbstractChangeRe
         if (this == o) {
             return true;
         }
-        if (!(o instanceof DeleteChangeRecord<?> that)) {
+        if (!(o instanceof DeleteChangeRecord that)) {
             return false;
         }
         if (!super.equals(o)) {

@@ -40,7 +40,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
@@ -127,8 +126,8 @@ public class ChangeTracker {
      */
     @Transactional
     @EventListener
-    public <L extends Serializable, T extends Asset<L>> void onBeforeAssetDeleteEvent(@Nonnull BeforeAssetDeleteEvent<T> event) {
-        final T asset = event.getAsset();
+    public void onBeforeAssetDeleteEvent(@Nonnull BeforeAssetDeleteEvent event) {
+        final Asset<?> asset = event.getAsset();
         LOG.trace("Recording deletion of asset {}.", asset);
 
         URI vocabulary = null;
@@ -136,7 +135,7 @@ public class ChangeTracker {
             vocabulary = term.getVocabulary();
         }
 
-        final AbstractChangeRecord changeRecord = new DeleteChangeRecord<L>(asset, vocabulary);
+        final AbstractChangeRecord changeRecord = new DeleteChangeRecord(asset, vocabulary);
         changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
         changeRecord.setTimestamp(Utils.timestamp());
 

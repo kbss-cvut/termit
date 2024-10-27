@@ -62,12 +62,12 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SIZE;
 import static cz.cvut.kbss.termit.util.Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
@@ -229,7 +229,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     @Override
     public void remove(Vocabulary entity) {
         eventPublisher.publishEvent(new VocabularyWillBeRemovedEvent(this, entity.getUri()));
-        eventPublisher.publishEvent(new BeforeAssetDeleteEvent<Vocabulary>(this, entity));
+        eventPublisher.publishEvent(new BeforeAssetDeleteEvent(this, entity));
         this.removeVocabulary(entity, true);
     }
 
@@ -386,11 +386,13 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                 .setParameter("type", URI.create(
                         cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity)).getResultList();
         updates.forEach(u -> u.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity));
-        final List<AggregatedChangeInfo> result = new ArrayList<>(persists.size() + updates.size());
-        result.addAll(persists);
-        result.addAll(updates);
-        Collections.sort(result);
-        return result;
+        final List<AggregatedChangeInfo> deletitions =  createContentChangesQuery(vocabulary)
+                .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity)).getResultList();
+        deletitions.forEach(d -> d.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity));
+        return Stream.of(persists, updates, deletitions)
+                     .flatMap(List::stream)
+                     .sorted()
+                     .toList();
     }
 
     /**
