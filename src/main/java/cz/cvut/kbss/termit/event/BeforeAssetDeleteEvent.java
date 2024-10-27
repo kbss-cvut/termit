@@ -6,14 +6,14 @@ import org.springframework.context.ApplicationEvent;
 /**
  * Event published before an asset is deleted.
  */
-public class BeforeAssetDeleteEvent<T extends Asset<?>> extends ApplicationEvent {
-    final T asset;
-    public BeforeAssetDeleteEvent(Object source, T asset) {
+public class BeforeAssetDeleteEvent extends ApplicationEvent {
+    final Asset<?> asset;
+    public BeforeAssetDeleteEvent(Object source, Asset<?> asset) {
         super(source);
         this.asset = asset;
     }
 
-    public T getAsset() {
+    public Asset<?> getAsset() {
         return asset;
     }
 }
