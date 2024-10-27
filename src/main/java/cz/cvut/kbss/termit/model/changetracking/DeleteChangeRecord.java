@@ -3,14 +3,12 @@ package cz.cvut.kbss.termit.model.changetracking;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
-import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 
-import java.net.URI;
 import java.util.Objects;
 
 /**
@@ -22,16 +20,12 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
     @OWLAnnotationProperty(iri = RDFS.LABEL)
     private MultilingualString label;
 
-    @OWLObjectProperty(iri = Vocabulary.s_p_je_pojmem_ze_slovniku)
-    private URI vocabulary;
-
     /**
      * Creates a new instance.
      * @param changedEntity the changed asset
-     * @param vocabulary optional vocabulary URI
      * @throws IllegalArgumentException If the label type is not String or MultilingualString
      */
-    public DeleteChangeRecord(Asset<?> changedEntity, URI vocabulary) {
+    public DeleteChangeRecord(Asset<?> changedEntity) {
         super(changedEntity);
 
         if (changedEntity.getLabel() instanceof String stringLabel) {
@@ -41,8 +35,6 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
         } else {
             throw new IllegalArgumentException("Unsupported label type: " + changedEntity.getLabel().getClass());
         }
-
-        this.vocabulary = vocabulary;
     }
 
     public DeleteChangeRecord() {
@@ -57,14 +49,6 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
         this.label = label;
     }
 
-    public URI getVocabulary() {
-        return vocabulary;
-    }
-
-    public void setVocabulary(URI vocabulary) {
-        this.vocabulary = vocabulary;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -76,7 +60,7 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
         if (!super.equals(o)) {
             return false;
         }
-        return Objects.equals(label, that.label) && Objects.equals(vocabulary, that.vocabulary);
+        return Objects.equals(label, that.label);
     }
 
     @Override
@@ -84,7 +68,6 @@ public class DeleteChangeRecord extends AbstractChangeRecord {
         return "DeleteChangeRecord{" +
                 super.toString() +
                 ", label=" + label +
-                (vocabulary != null ? ", vocabulary=" + vocabulary : "") +
                 '}';
     }
 
