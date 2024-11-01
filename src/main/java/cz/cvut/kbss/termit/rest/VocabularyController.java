@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.filter.VocabularyContentChangeFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -301,6 +302,15 @@ public class VocabularyController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
                                                                             required = false) Optional<String> namespace,
+            @Parameter(description = "Term name to be used in filtering.")
+            @RequestParam(name = "term", required = false, defaultValue = "") String termName,
+            @Parameter(description = "Change type to be used in filtering.")
+            @RequestParam(name = "type", required = false) URI changeType,
+            @Parameter(description = "Author name to be used in filtering.")
+            @RequestParam(name = "author", required = false, defaultValue = "") String authorName,
+            @Parameter(description = "Changed attribute name to be used in filtering.")
+            @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName,
+
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION) @RequestParam(
                     name = Constants.QueryParams.PAGE_SIZE, required = false,
                     defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
@@ -308,7 +318,12 @@ public class VocabularyController extends BaseController {
                     name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE) Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
         final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
-        return vocabularyService.getDetailedHistoryOfContent(vocabulary, pageReq);
+        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        filter.setTermName(termName);
+        filter.setChangeType(changeType);
+        filter.setAuthorName(authorName);
+        filter.setChangedAttributeName(changedAttributeName);
+        return vocabularyService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
