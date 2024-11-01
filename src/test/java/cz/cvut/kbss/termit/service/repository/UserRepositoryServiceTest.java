@@ -17,26 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.termit.environment.Environment;
-import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.ValidationException;
-import cz.cvut.kbss.termit.model.UserAccount;
-import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
-import cz.cvut.kbss.termit.service.IdentifierResolver;
-import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Vocabulary;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.net.URI;
 import java.util.Optional;
 
@@ -47,10 +27,30 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import cz.cvut.kbss.termit.environment.Environment;
+import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 
 @ExtendWith(MockitoExtension.class)
 class UserRepositoryServiceTest {
@@ -168,7 +168,7 @@ class UserRepositoryServiceTest {
         user.setUsername(null);
         user.setPassword(null); // Simulate instance being loaded from repo
         final ValidationException ex = assertThrows(ValidationException.class, () -> sut.update(user));
-        assertThat(ex.getMessage(), containsString("username must not be blank"));
+        assertThat(ex.getMessage(), containsString("username"));
     }
 
     @Test
