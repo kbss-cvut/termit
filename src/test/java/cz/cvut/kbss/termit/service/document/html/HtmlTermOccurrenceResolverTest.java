@@ -183,7 +183,7 @@ class HtmlTermOccurrenceResolverTest {
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
         final Selector quoteSelector = new TextQuoteSelector("Územní plán", "RDFa simple", "hlavního města Prahy.");
-        final Selector posSelector = new TextPositionSelector(35, 46);
+        final Selector posSelector = new TextPositionSelector(29, 40);
         existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
         final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
         sut.parseContent(is, file);
