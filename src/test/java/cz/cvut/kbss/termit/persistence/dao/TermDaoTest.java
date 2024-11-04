@@ -1049,8 +1049,12 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         transactional(() -> {
             vocabulary.getGlossary().addRootTerm(parent);
             em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(parent, vocabulary.getUri(), em);
             em.persist(parent, descriptorFactory.termDescriptor(vocabulary));
-            children.forEach(child -> em.persist(child, descriptorFactory.termDescriptor(vocabulary)));
+            children.forEach(child -> {
+                em.persist(child, descriptorFactory.termDescriptor(vocabulary));
+                Generator.addTermInVocabularyRelationship(child, vocabulary.getUri(), em);
+            });
         });
         children.sort(Comparator.comparing(child -> child.getLabel().get(Environment.LANGUAGE)));
 
@@ -1371,5 +1375,23 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     void findIdentifierByLabelReturnsEmptyOptionalIfNoTermIsFound() {
         final Optional<URI> result = sut.findIdentifierByLabel("foo", vocabulary, Environment.LANGUAGE);
         assertFalse(result.isPresent());
+    }
+
+    @Test
+    void findByIdLoadsTermFromVocabularyContextOnly() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        addTermsAndSave(List.of(term), vocabulary);
+        final String property = "http://onto.fel.cvut.cz/ontologies/application/ontoGrapher/scheme";
+        transactional(() -> {
+            try (final RepositoryConnection con = em.unwrap(Repository.class).getConnection()) {
+                final ValueFactory vf = con.getValueFactory();
+                con.add(vf.createStatement(vf.createIRI(term.getUri().toString()), vf.createIRI(property),
+                                           vf.createIRI(vocabulary.getGlossary().getUri().toString()), vf.createIRI(Generator.generateUriString())));
+            }
+        });
+
+        final Optional<Term> result = sut.find(term.getUri());
+        assertTrue(result.isPresent());
+        assertFalse(result.get().getProperties().containsKey(property));
     }
 }

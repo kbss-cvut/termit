@@ -501,7 +501,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
         try (final RepositoryConnection conn = repo.getConnection()) {
             final ValueFactory vf = conn.getValueFactory();
             conn.add(vf.createIRI(related.getUri().toString()), vf.createIRI(property), vf
-                    .createIRI(term.getUri().toString()));
+                    .createIRI(term.getUri().toString()), vf.createIRI(related.getVocabulary().toString()));
         }
     }
 
