@@ -428,9 +428,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                              BIND(CONCAT(?firstName, " ", ?lastName) as ?authorFullName)
                              OPTIONAL {
                                 ?record ?hasChangedAttribute ?attribute .
-                                OPTIONAL {
-                                    ?attribute ?hasRdfsLabel ?changedAttributeName .
-                                }
+                                ?attribute ?hasRdfsLabel ?changedAttributeName .
                              }
                              OPTIONAL {
                                 ?term ?inVocabulary ?vocabulary ;
@@ -442,10 +440,10 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                              }
                              BIND(?termName as ?termNameVal)
                              BIND(?authorName as ?authorNameVal)
-                             BIND(?changedAttributeName as ?changedAttributeNameVal)
-                             FILTER (!BOUND(?termNameVal) || CONTAINS(LCASE(?label), LCASE(?termName)))
-                             FILTER (!BOUND(?authorNameVal) || CONTAINS(LCASE(?authorFullName), LCASE(?authorName)))
-                             FILTER (!BOUND(?changedAttributeName) || !BOUND(?changedAttributeNameVal) || CONTAINS(LCASE(?changedAttributeName), LCASE(?attributeName)))
+                             BIND(?attributeName as ?changedAttributeNameVal)
+                             FILTER (!BOUND(?termNameVal) || CONTAINS(LCASE(?label), LCASE(?termNameVal)))
+                             FILTER (!BOUND(?authorNameVal) || CONTAINS(LCASE(?authorFullName), LCASE(?authorNameVal)))
+                             FILTER (!BOUND(?changedAttributeName) || !BOUND(?changedAttributeNameVal) || CONTAINS(LCASE(?changedAttributeName), LCASE(?changedAttributeName)))
                          } ORDER BY DESC(?timestamp) ?attribute
                          """, AbstractChangeRecord.class)
                        .setParameter("changeContext", changeTrackingContextResolver.resolveChangeTrackingContext(vocabulary))
