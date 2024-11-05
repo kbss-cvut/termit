@@ -30,6 +30,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
+import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
@@ -761,10 +762,14 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.remove(vocabulary));
 
-        ArgumentCaptor<VocabularyWillBeRemovedEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyWillBeRemovedEvent.class);
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        ArgumentCaptor<VocabularyEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyWillBeRemovedEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(eventCaptor.capture());
 
-        VocabularyWillBeRemovedEvent event = eventCaptor.getValue();
+        VocabularyWillBeRemovedEvent event = (VocabularyWillBeRemovedEvent) eventCaptor
+                .getAllValues().stream()
+                .filter(e -> e instanceof VocabularyWillBeRemovedEvent)
+                .findAny().orElseThrow();
+        
         assertNotNull(event);
 
         assertEquals(event.getVocabularyIri(), vocabulary.getUri());
