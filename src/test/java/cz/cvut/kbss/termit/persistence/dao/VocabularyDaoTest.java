@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
+import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
@@ -47,8 +48,6 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
-import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.IRI;
@@ -84,9 +83,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -118,6 +120,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private TermDao termDao;
+    
+    @Autowired
+    private ChangeRecordDao changeRecordDao;
 
     private User author;
 
@@ -946,10 +951,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void getDetailedHistoryOfContentReturnsRecordsForAllChangeTypes() {
         enableRdfsInference(em);
-        final Configuration config = new Configuration();
-        config.getChangetracking().getContext().setExtension("/zmeny");
-        final ChangeTrackingContextResolver resolver = new ChangeTrackingContextResolver(em, config);
-        final ChangeRecordDao changeRecordDao = new ChangeRecordDao(resolver, em);
 
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term firstTerm = Generator.generateTermWithId(vocabulary.getUri());
@@ -994,10 +995,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void getDetailedHistoryOfContentReturnsRecordsOfExistingTermFilteredByTermName() {
         enableRdfsInference(em);
-        final Configuration config = new Configuration();
-        config.getChangetracking().getContext().setExtension("/zmeny");
-        final ChangeTrackingContextResolver resolver = new ChangeTrackingContextResolver(em, config);
-        final ChangeRecordDao changeRecordDao = new ChangeRecordDao(resolver, em);
 
         final String needle = "needle";
         final String haystack = "A label that contains needle somewhere";
@@ -1049,10 +1046,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Test
     void getDetailedHistoryOfContentReturnsRecordsOfDeletedTermFilteredByTermName() {
         enableRdfsInference(em);
-        final Configuration config = new Configuration();
-        config.getChangetracking().getContext().setExtension("/zmeny");
-        final ChangeTrackingContextResolver resolver = new ChangeTrackingContextResolver(em, config);
-        final ChangeRecordDao changeRecordDao = new ChangeRecordDao(resolver, em);
 
         final String needle = "needle";
         final String haystack = "A label that contains needle somewhere";
@@ -1103,5 +1096,115 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(1, persistCount);
         assertEquals(recordsCount - 2, updatesCount); // -1 persist record -1 delete record
         assertEquals(1, deleteCount);
+    }
+
+    @Test
+    void getDetailedHistoryOfContentReturnsRecordsOfExistingTermFilteredByChangedAttributeName() {
+        enableRdfsInference(em);
+
+        // Two terms with needle in the label, one term without needle in the label
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term firstTerm = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(vocabulary.getUri());
+
+        final List<AbstractChangeRecord> firstChanges = Generator.generateChangeRecords(firstTerm, author);
+        final List<AbstractChangeRecord> secondChanges = Generator.generateChangeRecords(secondTerm, author);
+
+        // randomize changed attributes
+        final Random random = new Random();
+        final AtomicInteger recordCount = new AtomicInteger(0);
+        final URI changedAttribute = URI.create(SKOS.DEFINITION);
+        final URI anotherChangedAttribute = URI.create(RDFS.LABEL);
+        final String changedAttributeName = "definition";
+
+        Stream.of(firstChanges, secondChanges).flatMap(Collection::stream)
+                .filter(r -> r instanceof UpdateChangeRecord)
+                .map(r -> (UpdateChangeRecord) r)
+              .forEach(r -> {
+                  if(random.nextBoolean() || recordCount.get() == 0) {
+                      r.setChangedAttribute(changedAttribute);
+                      recordCount.incrementAndGet();
+                  } else {
+                      r.setChangedAttribute(anotherChangedAttribute);
+                  }
+              });
+
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(firstTerm);
+            sut.persist(vocabulary);
+            Environment.addRelation(vocabulary.getUri(), URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), vocabulary.getGlossary().getUri(), em);
+
+            termDao.persist(firstTerm, vocabulary);
+            termDao.persist(secondTerm, vocabulary);
+
+            firstChanges.forEach(r -> changeRecordDao.persist(r, firstTerm));
+            secondChanges.forEach(r -> changeRecordDao.persist(r, secondTerm));
+        });
+
+        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        filter.setChangedAttributeName(changedAttributeName);
+
+        final Pageable pageable = Pageable.ofSize(recordCount.get() * 2);
+        final List<AbstractChangeRecord> contentChanges = sut.getDetailedHistoryOfContent(vocabulary, filter, pageable);
+
+        assertEquals(recordCount.get(), contentChanges.size());
+        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
+        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
+        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        assertEquals(0, persistCount);
+        assertEquals(recordCount.get(), updatesCount);
+        assertEquals(0, deleteCount);
+    }
+
+    @Test
+    void getDetailedHistoryOfContentReturnsRecordsOfExistingTermFilteredByAuthorName() {
+        enableRdfsInference(em);
+
+        // Two terms with needle in the label, one term without needle in the label
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term firstTerm = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(vocabulary.getUri());
+
+        final List<AbstractChangeRecord> firstChanges = Generator.generateChangeRecords(firstTerm, author);
+        final List<AbstractChangeRecord> secondChanges = Generator.generateChangeRecords(secondTerm, author);
+
+        // make new author
+        final User anotherAuthor = Generator.generateUserWithId();
+        anotherAuthor.setFirstName("Karel");
+        anotherAuthor.setLastName("Novák");
+        transactional(() -> em.persist(anotherAuthor));
+        Environment.setCurrentUser(anotherAuthor);
+
+        final int recordCount = 2;
+        // author is this.author (Environment current user)
+        firstChanges.add(Generator.generateUpdateChange(firstTerm));
+        secondChanges.add(Generator.generateUpdateChange(secondTerm));
+
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(firstTerm);
+            sut.persist(vocabulary);
+            Environment.addRelation(vocabulary.getUri(), URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), vocabulary.getGlossary().getUri(), em);
+
+            termDao.persist(firstTerm, vocabulary);
+            termDao.persist(secondTerm, vocabulary);
+
+            firstChanges.forEach(r -> changeRecordDao.persist(r, firstTerm));
+            secondChanges.forEach(r -> changeRecordDao.persist(r, secondTerm));
+        });
+
+        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        // full name without first two and last two characters
+        filter.setAuthorName(anotherAuthor.getFullName().substring(2, anotherAuthor.getFullName().length() - 2));
+
+        final Pageable pageable = Pageable.ofSize(4);
+        final List<AbstractChangeRecord> contentChanges = sut.getDetailedHistoryOfContent(vocabulary, filter, pageable);
+
+        assertEquals(recordCount, contentChanges.size());
+        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
+        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
+        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        assertEquals(0, persistCount);
+        assertEquals(recordCount, updatesCount);
+        assertEquals(0, deleteCount);
     }
 }

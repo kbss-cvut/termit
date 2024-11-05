@@ -455,7 +455,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                             BIND(?attributeName as ?changedAttributeNameVal)
                             FILTER (!BOUND(?termNameVal) || CONTAINS(LCASE(?label), LCASE(?termNameVal)))
                             FILTER (!BOUND(?authorNameVal) || CONTAINS(LCASE(?authorFullName), LCASE(?authorNameVal)))
-                            FILTER (!BOUND(?changedAttributeName) || !BOUND(?changedAttributeNameVal) || CONTAINS(LCASE(?changedAttributeName), LCASE(?changedAttributeName)))
+                            FILTER (!BOUND(?changedAttributeNameVal) || CONTAINS(LCASE(?changedAttributeName), LCASE(?changedAttributeNameVal)))
                          } ORDER BY DESC(?timestamp) ?attribute
                          """, AbstractChangeRecord.class)
                        .setParameter("changeContext", changeTrackingContextResolver.resolveChangeTrackingContext(vocabulary))
