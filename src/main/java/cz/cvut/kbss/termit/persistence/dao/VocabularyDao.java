@@ -415,42 +415,52 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     private TypedQuery<AbstractChangeRecord> createDetailedContentChangesQuery(Vocabulary vocabulary, VocabularyContentChangeFilterDto filter, Pageable pageReq) {
         TypedQuery<AbstractChangeRecord> query = em.createNativeQuery("""
-                         SELECT ?record WHERE {
+                         SELECT DISTINCT ?record WHERE {
+""" + /* Select anything from change context */ """
                             GRAPH ?changeContext {
                                 ?record a ?changeRecord .
                             }
+""" + /* The record should be a subclass of "zmena" */ """
                             ?changeRecord ?subClassOf+ ?zmena .
                             ?record ?relatesTo ?term ;
-                                 ?hasTime ?timestamp ;
-                                 ?hasAuthor ?author .
-                             ?author ?hasFirstName ?firstName ;
-                                 ?hasLastName ?lastName .
-                             BIND(CONCAT(?firstName, " ", ?lastName) as ?authorFullName)
-                             OPTIONAL {
-                                ?record ?hasChangedAttribute ?attribute .
-                                ?attribute ?hasRdfsLabel ?changedAttributeName .
-                             }
-                             OPTIONAL {
-                                ?term ?inVocabulary ?vocabulary ;
-                                    a ?termType ;
-                                    ?hasLabel ?label .
-                             }
-                             OPTIONAL {
-                                ?record ?hasRdfsLabel ?label .
-                             }
-                             BIND(?termName as ?termNameVal)
-                             BIND(?authorName as ?authorNameVal)
-                             BIND(?attributeName as ?changedAttributeNameVal)
-                             FILTER (!BOUND(?termNameVal) || CONTAINS(LCASE(?label), LCASE(?termNameVal)))
-                             FILTER (!BOUND(?authorNameVal) || CONTAINS(LCASE(?authorFullName), LCASE(?authorNameVal)))
-                             FILTER (!BOUND(?changedAttributeName) || !BOUND(?changedAttributeNameVal) || CONTAINS(LCASE(?changedAttributeName), LCASE(?changedAttributeName)))
+                                ?hasTime ?timestamp ;
+                                ?hasAuthor ?author .
+""" + /* Get author's name */ """
+                            ?author ?hasFirstName ?firstName ;
+                                ?hasLastName ?lastName .
+                            BIND(CONCAT(?firstName, " ", ?lastName) as ?authorFullName)
+""" + /* When its update record, there will be a changed attribute */ """
+                            OPTIONAL {
+                               ?record ?hasChangedAttribute ?attribute .
+                               ?attribute ?hasRdfsLabel ?changedAttributeName .
+                            }
+""" + /* Get term's name (but the term might have been already deleted) */ """
+                            OPTIONAL {
+                               ?term a ?termType ;
+                                   ?hasLabel ?label .
+                            }
+""" + /* then try to get the label from (delete) record */ """
+                            OPTIONAL {
+                               ?record ?hasRdfsLabel ?label .
+                            }
+""" + /* When label is still not bound, the term was probably deleted, find the delete record and get the label from it */ """
+                            OPTIONAL {
+                                FILTER(!BOUND(?label)) .
+                                ?deleteRecord a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/smazání-entity>;
+                                <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-změněnou-entitu> ?term;
+                                <http://www.w3.org/2000/01/rdf-schema#label> ?label.
+                            }
+                            BIND(?termName as ?termNameVal)
+                            BIND(?authorName as ?authorNameVal)
+                            BIND(?attributeName as ?changedAttributeNameVal)
+                            FILTER (!BOUND(?termNameVal) || CONTAINS(LCASE(?label), LCASE(?termNameVal)))
+                            FILTER (!BOUND(?authorNameVal) || CONTAINS(LCASE(?authorFullName), LCASE(?authorNameVal)))
+                            FILTER (!BOUND(?changedAttributeName) || !BOUND(?changedAttributeNameVal) || CONTAINS(LCASE(?changedAttributeName), LCASE(?changedAttributeName)))
                          } ORDER BY DESC(?timestamp) ?attribute
                          """, AbstractChangeRecord.class)
                        .setParameter("changeContext", changeTrackingContextResolver.resolveChangeTrackingContext(vocabulary))
                        .setParameter("subClassOf", URI.create(RDFS.SUB_CLASS_OF))
                        .setParameter("zmena", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
-                       .setParameter("inVocabulary", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                       .setParameter("vocabulary", vocabulary)
                        .setParameter("termType", URI.create(SKOS.CONCEPT))
                        .setParameter("relatesTo", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
                        .setParameter("hasTime", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
@@ -474,7 +484,11 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             query = query.setParameter("attributeName", filter.getChangedAttributeName().trim());
         }
 
-         return query.setFirstResult((int) pageReq.getOffset())
+        if(pageReq.isUnpaged()) {
+            return query;
+        }
+
+        return query.setFirstResult((int) pageReq.getOffset())
                  .setMaxResults(pageReq.getPageSize());
     }
 

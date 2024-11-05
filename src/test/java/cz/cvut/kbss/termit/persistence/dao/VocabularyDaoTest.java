@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.filter.VocabularyContentChangeFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
@@ -38,13 +39,18 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.DeleteChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -60,6 +66,7 @@ import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
@@ -108,6 +115,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private VocabularyDao sut;
+
+    @Autowired
+    private TermDao termDao;
 
     private User author;
 
@@ -931,5 +941,167 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                 Assertions.fail("The Relation object is neither a term nor a secondTerm");
             }
         });
+    }
+
+    @Test
+    void getDetailedHistoryOfContentReturnsRecordsForAllChangeTypes() {
+        enableRdfsInference(em);
+        final Configuration config = new Configuration();
+        config.getChangetracking().getContext().setExtension("/zmeny");
+        final ChangeTrackingContextResolver resolver = new ChangeTrackingContextResolver(em, config);
+        final ChangeRecordDao changeRecordDao = new ChangeRecordDao(resolver, em);
+
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term firstTerm = Generator.generateTermWithId(vocabulary.getUri());
+        final Term termToRemove = Generator.generateTermWithId(vocabulary.getUri());
+
+        final List<AbstractChangeRecord> firstChanges = Generator.generateChangeRecords(firstTerm, author);
+        final List<AbstractChangeRecord> termToRemoveChanges = Generator.generateChangeRecords(termToRemove, author);
+        final DeleteChangeRecord deleteChangeRecord = new DeleteChangeRecord();
+        deleteChangeRecord.setChangedEntity(termToRemove.getUri());
+        deleteChangeRecord.setTimestamp(Utils.timestamp());
+        deleteChangeRecord.setAuthor(author);
+        deleteChangeRecord.setLabel(termToRemove.getLabel());
+
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(firstTerm);
+            sut.persist(vocabulary);
+            Environment.addRelation(vocabulary.getUri(), URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), vocabulary.getGlossary().getUri(), em);
+
+            termDao.persist(firstTerm, vocabulary);
+            termDao.persist(termToRemove, vocabulary);
+
+            firstChanges.forEach(r -> changeRecordDao.persist(r, firstTerm));
+            termToRemoveChanges.forEach(r -> changeRecordDao.persist(r, termToRemove));
+            changeRecordDao.persist(deleteChangeRecord, termToRemove);
+        });
+
+        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        final int recordsCount = firstChanges.size() + termToRemoveChanges.size() + 1; // +1 for the delete record
+        final Pageable pageable = Pageable.ofSize(recordsCount * 3);
+        final List<AbstractChangeRecord> contentChanges = sut.getDetailedHistoryOfContent(vocabulary, filter, pageable);
+
+        assertEquals(recordsCount, contentChanges.size());
+        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
+        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
+        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        assertEquals(2, persistCount);
+        assertEquals(recordsCount - 3, updatesCount); // -2 persist records, -1 delete record
+        assertEquals(1, deleteCount);
+    }
+
+
+    @Test
+    void getDetailedHistoryOfContentReturnsRecordsOfExistingTermFilteredByTermName() {
+        enableRdfsInference(em);
+        final Configuration config = new Configuration();
+        config.getChangetracking().getContext().setExtension("/zmeny");
+        final ChangeTrackingContextResolver resolver = new ChangeTrackingContextResolver(em, config);
+        final ChangeRecordDao changeRecordDao = new ChangeRecordDao(resolver, em);
+
+        final String needle = "needle";
+        final String haystack = "A label that contains needle somewhere";
+        final String mud = "The n3edle is not here";
+
+        // Two terms with needle in the label, one term without needle in the label
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term firstTerm = Generator.generateTermWithId(vocabulary.getUri());
+        firstTerm.getLabel().set(Environment.LANGUAGE, haystack);
+        final Term secondTerm = Generator.generateTermWithId(vocabulary.getUri());
+        secondTerm.getLabel().set(mud + needle);
+        final Term thirdTerm = Generator.generateTermWithId(vocabulary.getUri());
+        thirdTerm.getLabel().set(Environment.LANGUAGE, mud);
+
+        final List<AbstractChangeRecord> firstChanges = Generator.generateChangeRecords(firstTerm, author);
+        final List<AbstractChangeRecord> secondChanges = Generator.generateChangeRecords(secondTerm, author);
+        final List<AbstractChangeRecord> thirdChanges = Generator.generateChangeRecords(thirdTerm, author);
+
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(firstTerm);
+            sut.persist(vocabulary);
+            Environment.addRelation(vocabulary.getUri(), URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), vocabulary.getGlossary().getUri(), em);
+
+            termDao.persist(firstTerm, vocabulary);
+            termDao.persist(secondTerm, vocabulary);
+            termDao.persist(thirdTerm, vocabulary);
+
+            firstChanges.forEach(r -> changeRecordDao.persist(r, firstTerm));
+            secondChanges.forEach(r -> changeRecordDao.persist(r, secondTerm));
+            thirdChanges.forEach(r -> changeRecordDao.persist(r, thirdTerm));
+        });
+
+        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        filter.setTermName(needle);
+
+        final int recordsCount = firstChanges.size() + secondChanges.size();
+        final Pageable pageable = Pageable.ofSize(recordsCount * 2);
+        final List<AbstractChangeRecord> contentChanges = sut.getDetailedHistoryOfContent(vocabulary, filter, pageable);
+
+        assertEquals(recordsCount, contentChanges.size());
+        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
+        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
+        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        assertEquals(2, persistCount);
+        assertEquals(recordsCount - 2, updatesCount); // -2 persist records
+        assertEquals(0, deleteCount);
+    }
+
+    @Test
+    void getDetailedHistoryOfContentReturnsRecordsOfDeletedTermFilteredByTermName() {
+        enableRdfsInference(em);
+        final Configuration config = new Configuration();
+        config.getChangetracking().getContext().setExtension("/zmeny");
+        final ChangeTrackingContextResolver resolver = new ChangeTrackingContextResolver(em, config);
+        final ChangeRecordDao changeRecordDao = new ChangeRecordDao(resolver, em);
+
+        final String needle = "needle";
+        final String haystack = "A label that contains needle somewhere";
+        final String mud = "The n3edle is not here";
+
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term firstTerm = Generator.generateTermWithId(vocabulary.getUri());
+        // the needle is placed in the term which will be removed
+        firstTerm.getLabel().set(Environment.LANGUAGE, mud);
+        final Term termToRemove = Generator.generateTermWithId(vocabulary.getUri());
+        termToRemove.getLabel().set(Environment.LANGUAGE, haystack);
+
+        final List<AbstractChangeRecord> firstChanges = Generator.generateChangeRecords(firstTerm, author);
+        final List<AbstractChangeRecord> termToRemoveChanges = Generator.generateChangeRecords(termToRemove, author);
+        final DeleteChangeRecord deleteChangeRecord = new DeleteChangeRecord();
+        deleteChangeRecord.setChangedEntity(termToRemove.getUri());
+        deleteChangeRecord.setTimestamp(Utils.timestamp());
+        deleteChangeRecord.setAuthor(author);
+        deleteChangeRecord.setLabel(termToRemove.getLabel());
+
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(firstTerm);
+            sut.persist(vocabulary);
+            Environment.addRelation(vocabulary.getUri(), URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), vocabulary.getGlossary().getUri(), em);
+
+            termDao.persist(firstTerm, vocabulary);
+            termDao.persist(termToRemove, vocabulary);
+
+            firstChanges.forEach(r -> changeRecordDao.persist(r, firstTerm));
+            termToRemoveChanges.forEach(r -> changeRecordDao.persist(r, termToRemove));
+            changeRecordDao.persist(deleteChangeRecord, termToRemove);
+
+            termToRemove.setVocabulary(vocabulary.getUri());
+            termDao.remove(termToRemove);
+        });
+
+        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        filter.setTermName(needle);
+
+        final int recordsCount = termToRemoveChanges.size() + 1; // +1 for the delete record
+        final Pageable pageable = Pageable.ofSize(recordsCount * 2);
+        final List<AbstractChangeRecord> contentChanges = sut.getDetailedHistoryOfContent(vocabulary, filter, pageable);
+
+        assertEquals(recordsCount, contentChanges.size());
+        final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
+        final long updatesCount = contentChanges.stream().filter(ch -> ch instanceof UpdateChangeRecord).count();
+        final long deleteCount = contentChanges.stream().filter(ch -> ch instanceof DeleteChangeRecord).count();
+        assertEquals(1, persistCount);
+        assertEquals(recordsCount - 2, updatesCount); // -1 persist record -1 delete record
+        assertEquals(1, deleteCount);
     }
 }
