@@ -60,9 +60,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
@@ -1206,5 +1208,63 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(0, persistCount);
         assertEquals(recordCount, updatesCount);
         assertEquals(0, deleteCount);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity,
+            cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity,
+            cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity,
+    })
+    void getDetailedHistoryOfContentReturnsRecordsOfExistingTermFilteredByChangeType(String type) {
+        enableRdfsInference(em);
+        final URI typeUri = URI.create(type);
+        final Class<? extends AbstractChangeRecord> typeClass = switch (type) {
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity -> UpdateChangeRecord.class;
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity -> PersistChangeRecord.class;
+            case cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity -> DeleteChangeRecord.class;
+            default -> throw new IllegalArgumentException("Unknown change type: " + type);
+        };
+
+        // Two terms with needle in the label, one term without needle in the label
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term firstTerm = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(vocabulary.getUri());
+
+        final List<AbstractChangeRecord> firstChanges = Generator.generateChangeRecords(firstTerm, author);
+        final List<AbstractChangeRecord> secondChanges = Generator.generateChangeRecords(secondTerm, author);
+        final DeleteChangeRecord deleteChangeRecord = new DeleteChangeRecord();
+        deleteChangeRecord.setChangedEntity(secondTerm.getUri());
+        deleteChangeRecord.setTimestamp(Utils.timestamp());
+        deleteChangeRecord.setAuthor(author);
+        deleteChangeRecord.setLabel(secondTerm.getLabel());
+
+        final int recordCount = (int) Stream.of(firstChanges, secondChanges, List.of(deleteChangeRecord)).flatMap(List::stream).filter(typeClass::isInstance).count();
+
+        transactional(() -> {
+            vocabulary.getGlossary().addRootTerm(firstTerm);
+            sut.persist(vocabulary);
+            Environment.addRelation(vocabulary.getUri(), URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar), vocabulary.getGlossary().getUri(), em);
+
+            termDao.persist(firstTerm, vocabulary);
+            termDao.persist(secondTerm, vocabulary);
+
+            firstChanges.forEach(r -> changeRecordDao.persist(r, firstTerm));
+            secondChanges.forEach(r -> changeRecordDao.persist(r, secondTerm));
+            changeRecordDao.persist(deleteChangeRecord, secondTerm);
+
+            secondTerm.setVocabulary(vocabulary.getUri());
+            termDao.remove(secondTerm);
+        });
+
+        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        // full name without first two and last two characters
+        filter.setChangeType(typeUri);
+
+        final Pageable pageable = Pageable.ofSize( recordCount * 2);
+        final List<AbstractChangeRecord> contentChanges = sut.getDetailedHistoryOfContent(vocabulary, filter, pageable);
+
+        assertEquals(recordCount, contentChanges.size());
+        assertTrue(contentChanges.stream().allMatch(typeClass::isInstance));
     }
 }
