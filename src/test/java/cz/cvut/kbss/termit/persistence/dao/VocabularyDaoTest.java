@@ -83,6 +83,7 @@ import java.util.stream.IntStream;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -926,5 +927,24 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                 Assertions.fail("The Relation object is neither a term nor a secondTerm");
             }
         });
+    }
+
+    @Test
+    void getLanguagesReturnsDistinctLanguagesUsedByVocabularyTerms() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term term2 = Generator.generateTermWithId(vocabulary.getUri());
+        term2.getLabel().set("cs", "Název v češtině");
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(term2, descriptorFactory.termDescriptor(term2));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(term2, vocabulary.getUri(), em);
+        });
+
+        final List<String> languages = sut.getLanguages(vocabulary.getUri());
+        assertEquals(2, languages.size());
+        assertThat(languages, hasItems(Environment.LANGUAGE, "cs"));
     }
 }

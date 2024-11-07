@@ -642,4 +642,16 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
                    containsString("filename=\"termit-import.xlsx\""));
     }
+
+    @Test
+    void getLanguagesRetrievesAndReturnsListOfLanguagesUsedInVocabulary() throws Exception {
+        when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(VOCABULARY_URI);
+        final List<String> languages = List.of(Environment.LANGUAGE, "cs", "de");
+        when(serviceMock.getLanguages(VOCABULARY_URI)).thenReturn(languages);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/languages").queryParam(QueryParams.NAMESPACE, NAMESPACE)).andReturn();
+        final List<String> result = readValue(mvcResult, new TypeReference<List<String>>() {});
+        assertEquals(languages, result);
+        verify(serviceMock).getLanguages(VOCABULARY_URI);
+    }
 }

@@ -316,7 +316,7 @@ public class VocabularyService
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq Specification of the size and number of the page to return
+     * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
@@ -520,6 +520,17 @@ public class VocabularyService
     public AccessLevel getAccessLevel(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return authorizationService.getAccessLevel(vocabulary);
+    }
+
+    /**
+     * Gets the list of languages used in the specified vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return List of languages
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabularyUri)")
+    public List<String> getLanguages(URI vocabularyUri) {
+        return repositoryService.getLanguages(vocabularyUri);
     }
 
     @Override
