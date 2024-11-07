@@ -107,7 +107,7 @@ public class TextAnalysisService {
                 publicUrl.isEmpty() || publicUrl.get().isEmpty() ? config.getRepository().getUrl() : publicUrl.get()
         );
         input.setVocabularyRepository(repositoryUrl);
-        input.setLanguage(config.getPersistence().getLanguage());
+        input.setLanguage(file.getLanguage() != null ? file.getLanguage() : config.getPersistence().getLanguage());
         input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
         input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
         return input;
