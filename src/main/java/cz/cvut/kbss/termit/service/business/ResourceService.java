@@ -37,6 +37,7 @@ import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
@@ -80,22 +81,26 @@ public class ResourceService
 
     private final ChangeRecordService changeRecordService;
 
+    private final Configuration config;
+
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public ResourceService(ResourceRepositoryService repositoryService, DocumentManager documentManager,
                            TextAnalysisService textAnalysisService, VocabularyService vocabularyService,
-                           ChangeRecordService changeRecordService) {
+                           ChangeRecordService changeRecordService, Configuration config) {
         this.repositoryService = repositoryService;
         this.documentManager = documentManager;
         this.textAnalysisService = textAnalysisService;
         this.vocabularyService = vocabularyService;
         this.changeRecordService = changeRecordService;
+        this.config = config;
     }
 
     /**
      * Ensures that document gets removed during Vocabulary removal
      */
+    @Transactional
     @EventListener
     public void onVocabularyRemoval(VocabularyWillBeRemovedEvent event) {
         vocabularyService.find(event.getVocabularyIri()).ifPresent(vocabulary -> {
@@ -239,6 +244,9 @@ public class ResourceService
             throw new UnsupportedAssetOperationException("Cannot add file to the specified resource " + document);
         }
         doc.addFile(file);
+        if (file.getLanguage() == null) {
+            file.setLanguage(config.getPersistence().getLanguage());
+        }
         if (doc.getVocabulary() != null) {
             final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
             repositoryService.persist(file, vocabulary);

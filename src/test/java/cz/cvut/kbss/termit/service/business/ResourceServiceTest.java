@@ -35,6 +35,8 @@ import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
@@ -47,6 +49,7 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
@@ -95,6 +98,9 @@ class ResourceServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Spy
+    private Configuration config = new Configuration();
 
     @InjectMocks
     private ResourceService sut;
@@ -514,5 +520,38 @@ class ResourceServiceTest {
                                                         new ResourceRetrievalSpecification(Optional.empty(), true));
         final org.jsoup.nodes.Document doc = Jsoup.parse(result.getInputStream(), StandardCharsets.UTF_8.name(), "");
         assertTrue(doc.select("span[score]").isEmpty());
+    }
+
+    @Test
+    void addFileToDocumentSetsFileLanguageToDefaultConfiguredWhenNotProvided() {
+        config.getPersistence().setLanguage(Constants.DEFAULT_LANGUAGE);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Document document = Generator.generateDocumentWithId();
+        document.setVocabulary(vocabulary.getUri());
+        final File file = Generator.generateFileWithId("test.hml");
+        when(resourceRepositoryService.exists(document.getUri())).thenReturn(true);
+        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+
+        sut.addFileToDocument(document, file);
+        verify(resourceRepositoryService).persist(file, vocabulary);
+        assertEquals(config.getPersistence().getLanguage(), file.getLanguage());
+    }
+
+    @Test
+    void addFileToDocumentDoesNotModifyLanguageWhenItIsAlreadySet() {
+        config.getPersistence().setLanguage(Constants.DEFAULT_LANGUAGE);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Document document = Generator.generateDocumentWithId();
+        document.setVocabulary(vocabulary.getUri());
+        final File file = Generator.generateFileWithId("test.hml");
+        file.setLanguage("cs");
+        when(resourceRepositoryService.exists(document.getUri())).thenReturn(true);
+        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+
+        sut.addFileToDocument(document, file);
+        verify(resourceRepositoryService).persist(file, vocabulary);
+        assertEquals("cs", file.getLanguage());
     }
 }
