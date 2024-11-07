@@ -98,7 +98,7 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void fileDescriptorContainsAlsoDescriptorForDocument() {
+    void fileDescriptorContainsAlsoDescriptorForDocument() throws Exception {
         final File file = Generator.generateFileWithId("test.html");
         final Document doc = Generator.generateDocumentWithId();
         doc.addFile(file);
@@ -106,7 +106,7 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         doc.setVocabulary(Generator.generateUri());
         final Descriptor result = sut.fileDescriptor(doc.getVocabulary());
         final FieldSpecification<?, ?> docFieldSpec = mock(FieldSpecification.class);
-        when(docFieldSpec.getJavaField()).thenReturn(File.getDocumentField());
+        when(docFieldSpec.getJavaField()).thenReturn(File.class.getDeclaredField("document"));
         final Descriptor docDescriptor = result.getAttributeDescriptor(docFieldSpec);
         assertNotNull(docDescriptor);
     }
