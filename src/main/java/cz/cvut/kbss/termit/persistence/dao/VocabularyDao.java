@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
@@ -35,6 +36,7 @@ import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
@@ -51,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -386,6 +389,41 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         result.addAll(updates);
         Collections.sort(result);
         return result;
+    }
+
+    /**
+     * Gets content change records of the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary whose content changes to get
+     * @param pageReq Specification of the size and number of the page to return
+     * @return List of change records, ordered by date in descending order
+     */
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
+        Objects.requireNonNull(vocabulary);
+        return createDetailedContentChangesQuery(vocabulary, pageReq).getResultList();
+    }
+
+    private TypedQuery<AbstractChangeRecord> createDetailedContentChangesQuery(Vocabulary vocabulary, Pageable pageReq) {
+        return em.createNativeQuery("""
+                         SELECT ?record WHERE {
+                             ?term ?inVocabulary ?vocabulary ;
+                                 a ?termType .
+                             ?record a ?changeRecord ;
+                                 ?relatesTo ?term ;
+                                 ?hasTime ?timestamp .
+                             OPTIONAL { ?record ?hasChangedAttribute ?attribute . }
+                         } ORDER BY DESC(?timestamp) ?attribute
+                         """, AbstractChangeRecord.class)
+                 .setParameter("inVocabulary",
+                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("vocabulary", vocabulary)
+                .setParameter("termType", URI.create(SKOS.CONCEPT))
+                 .setParameter("changeRecord", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
+                 .setParameter("relatesTo", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
+                 .setParameter("hasTime", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
+                 .setParameter("hasChangedAttribute", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmeneny_atribut))
+                 .setFirstResult((int) pageReq.getOffset())
+                 .setMaxResults(pageReq.getPageSize());
     }
 
     private Query createContentChangesQuery(Vocabulary vocabulary) {

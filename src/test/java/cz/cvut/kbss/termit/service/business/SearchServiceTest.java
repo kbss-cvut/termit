@@ -68,6 +68,7 @@ class SearchServiceTest {
         final FullTextSearchResult ftsr = new FullTextSearchResult(
                 Generator.generateUri(),
                 "test",
+                "Term definition",
                 vocabulary,
                 null,
                 SKOS.CONCEPT,
@@ -88,6 +89,7 @@ class SearchServiceTest {
         final FullTextSearchResult ftsr = new FullTextSearchResult(
                 Generator.generateUri(),
                 "test",
+                "Term definition",
                 vocabulary,
                 Generator.generateUri(),
                 SKOS.CONCEPT,

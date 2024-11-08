@@ -26,6 +26,7 @@ import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.model.annotations.VariableResult;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
@@ -41,6 +42,7 @@ import java.util.Set;
                                                       variables = {
                                                               @VariableResult(name = "entity", type = URI.class),
                                                               @VariableResult(name = "label", type = String.class),
+                                                              @VariableResult(name = "description", type = String.class),
                                                               @VariableResult(name = "vocabularyUri", type = URI.class),
                                                               @VariableResult(name = "state", type = URI.class),
                                                               @VariableResult(name = "type", type = String.class),
@@ -58,6 +60,10 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = RDFS.LABEL)
     private String label;
+
+    // This could be term definition, scope note or vocabulary description
+    @OWLAnnotationProperty(iri = DC.Terms.DESCRIPTION)
+    private String description;
 
     @OWLDataProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/fts/snippet-text")
     private String snippetText;
@@ -80,10 +86,11 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
     public FullTextSearchResult() {
     }
 
-    public FullTextSearchResult(URI uri, String label, URI vocabulary, URI state, String type, String snippetField,
-                                String snippetText, Double score) {
+    public FullTextSearchResult(URI uri, String label, String description, URI vocabulary, URI state, String type,
+                                String snippetField, String snippetText, Double score) {
         this.uri = uri;
         this.label = label;
+        this.description = description;
         this.vocabulary = vocabulary;
         this.state = state;
         this.types = Collections.singleton(type);
@@ -108,6 +115,14 @@ public class FullTextSearchResult implements HasIdentifier, HasTypes, Serializab
 
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public URI getVocabulary() {

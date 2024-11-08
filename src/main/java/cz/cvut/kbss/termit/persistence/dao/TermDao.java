@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
+import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -63,6 +64,8 @@ import java.util.stream.Collectors;
 public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term> {
 
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
+    private static final URI TERM_FROM_VOCABULARY = URI.create(
+            cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku);
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
 
@@ -87,9 +90,25 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     @Override
     public Optional<Term> find(URI id) {
-        final Optional<Term> result = super.find(id);
-        result.ifPresent(this::postLoad);
-        return result;
+        try {
+            final Optional<Term> result = Optional.ofNullable(
+                    em.find(Term.class, id, descriptorFactory.termDescriptor(resolveVocabularyId(id))));
+            result.ifPresent(this::postLoad);
+            return result;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    private URI resolveVocabularyId(URI termId) {
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
+                     .setParameter("t", termId)
+                     .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                     .getSingleResult();
+        } catch (NoResultException | NoUniqueResultException e) {
+            throw new PersistenceException("Unable to resolve term vocabulary.", e);
+        }
     }
 
     private void postLoad(Term r) {
@@ -282,9 +301,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                  .setParameter("type", typeUri)
                                                  .setParameter("vocabulary", vocabulary.getUri())
                                                  .setParameter("hasLabel", LABEL_PROP)
-                                                 .setParameter("inVocabulary",
-                                                               URI.create(
-                                                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                                  .setParameter("labelLang", config.getLanguage()));
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -322,9 +339,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                          .setParameter("context", context(vocabulary))
                                          .setParameter("vocabulary", vocabulary.getUri())
                                          .setParameter("hasLabel", LABEL_PROP)
-                                         .setParameter("inVocabulary",
-                                                       URI.create(
-                                                               cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                         .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                          .setParameter("labelLang", config.getLanguage()).getResultList();
             return termIris.stream().map(ti -> {
                 final Term t = find(ti).get();
@@ -378,9 +393,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "} ORDER BY " + orderSentence("?label"), TermDto.class)
                                       .setParameter("type", typeUri)
                                       .setParameter("hasLabel", LABEL_PROP)
-                                      .setParameter("inVocabulary",
-                                                    URI.create(
-                                                            cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                      .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                       .setParameter("imports",
                                                     URI.create(
                                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
@@ -604,8 +617,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                             .setParameter("type", typeUri)
                                             .setParameter("context", context(vocabulary))
                                             .setParameter("hasLabel", LABEL_PROP)
-                                            .setParameter("inVocabulary", URI.create(
-                                                    cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                            .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                             .setParameter("vocabulary", vocabulary.getUri())
                                             .setParameter("searchString", searchString, config.getLanguage());
         try {
@@ -635,8 +647,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
-                                            .setParameter("inVocabulary", URI.create(
-                                                    cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                            .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                             .setParameter("snapshot", URI.create(
                                                     cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
                                             .setParameter("searchString", searchString, config.getLanguage());
@@ -679,8 +690,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                TermDto.class)
                                             .setParameter("type", typeUri)
                                             .setParameter("hasLabel", LABEL_PROP)
-                                            .setParameter("inVocabulary", URI.create(
-                                                    cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                                            .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                             .setParameter("imports",
                                                           URI.create(
                                                                   cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
@@ -717,8 +727,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                 + "}", Boolean.class)
                      .setParameter("type", typeUri)
                      .setParameter("hasLabel", LABEL_PROP)
-                     .setParameter("inVocabulary",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                      .setParameter("vocabulary", vocabulary.getUri())
                      .setParameter("searchString", label,
                                    languageTag != null ? languageTag : config.getLanguage()).getSingleResult();
@@ -744,17 +753,17 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
         try {
             return Optional.of(em.createNativeQuery("SELECT ?term { ?term a ?type ; " +
-                                                "?hasLabel ?label ;" +
-                                                "?inVocabulary ?vocabulary ." +
-                                                "FILTER (LCASE(?label) = LCASE(?searchString)) . "
-                                                + "}", URI.class)
-                     .setParameter("type", typeUri)
-                     .setParameter("hasLabel", LABEL_PROP)
-                     .setParameter("inVocabulary",
-                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                     .setParameter("vocabulary", vocabulary.getUri())
-                     .setParameter("searchString", label,
-                                   languageTag != null ? languageTag : config.getLanguage()).getSingleResult());
+                                                            "?hasLabel ?label ;" +
+                                                            "?inVocabulary ?vocabulary ." +
+                                                            "FILTER (LCASE(?label) = LCASE(?searchString)) . "
+                                                            + "}", URI.class)
+                                 .setParameter("type", typeUri)
+                                 .setParameter("hasLabel", LABEL_PROP)
+                                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                                 .setParameter("vocabulary", vocabulary.getUri())
+                                 .setParameter("searchString", label,
+                                               languageTag != null ? languageTag : config.getLanguage())
+                                 .getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
         } catch (RuntimeException e) {
@@ -776,9 +785,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                             + "}",
                                     URI.class)
                  .setParameter("vocabulary", vocabulary.getUri())
-                 .setParameter("inVocabulary",
-                               URI.create(
-                                       cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                  .setParameter("hasTerm", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_prirazenim_termu))
                  .setParameter("hasTarget", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_cil))
                  .setParameter("hasSource", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zdroj))

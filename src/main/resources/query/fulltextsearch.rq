@@ -15,15 +15,26 @@ SELECT ?entity ?label ?vocabularyUri ?state ?type ?snippetField ?snippetText WHE
            skos:prefLabel ?label ;
            ?inVocabulary ?vocabularyUri .
         OPTIONAL { ?entity ?hasState ?state . }
+        OPTIONAL {
+            ?entity skos:definition ?definition .
+        }
+        OPTIONAL {
+            ?entity skos:scopeNote ?scopeNote .
+        }
         BIND (?term as ?type) .
     } UNION {
         ?entity a ?vocabulary ;
            dc:title ?label .
+        OPTIONAL {
+            ?entity dc:description ?dcDescription .
+        }
         BIND (?vocabulary as ?type) .
     }
     BIND (?label as ?snippetText) .
-    BIND (str("label") as ?snippetField) .
+    BIND (str("prefLabel") as ?snippetField) .
     FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .
     FILTER (lang(?label) = ?langTag)
     FILTER NOT EXISTS { ?entity a ?snapshot . }
+    BIND(COALESCE(?definition, COALESCE(?scopeNote, ?dcDescription)) AS ?description)
+    FILTER (!BOUND(?description) || lang(?description) = ?langTag)
 } ORDER BY ?label

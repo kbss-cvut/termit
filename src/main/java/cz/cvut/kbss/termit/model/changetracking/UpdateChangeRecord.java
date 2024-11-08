@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.util.Objects;
@@ -97,5 +98,13 @@ public class UpdateChangeRecord extends AbstractChangeRecord {
                 super.toString() +
                 "changedAttribute=" + changedAttribute +
                 "}";
+    }
+
+    @Override
+    public int compareTo(@Nonnull AbstractChangeRecord o) {
+        if (o instanceof PersistChangeRecord) {
+            return 1;
+        }
+        return super.compareTo(o);
     }
 }

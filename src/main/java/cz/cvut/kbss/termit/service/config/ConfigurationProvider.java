@@ -59,6 +59,7 @@ public class ConfigurationProvider {
         result.setRoles(new HashSet<>(service.findAll()));
         result.setMaxFileUploadSize(maxFileUploadSize);
         result.setVersionSeparator(config.getNamespace().getSnapshot().getSeparator());
+        result.setModelingToolUrl(config.getModelingToolUrl());
         return result;
     }
 }

@@ -26,6 +26,7 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.validation.constraints.NotBlank;
 
@@ -272,6 +273,6 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
 
     @Override
     public String toString() {
-        return "UserAccount{" + getFullName() + ", username='" + username + '\'' + '}';
+        return "UserAccount{" + Utils.uriToString(getUri()) + getFullName() + ", username='" + username + '\'' + '}';
     }
 }

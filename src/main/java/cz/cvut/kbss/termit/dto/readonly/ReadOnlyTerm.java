@@ -44,7 +44,7 @@ public class ReadOnlyTerm extends AbstractTerm {
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<MultilingualString> altLabels;
 
-    @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
+    @OWLAnnotationProperty(iri = SKOS.HIDDEN_LABEL)
     private Set<MultilingualString> hiddenLabels;
 
     @OWLAnnotationProperty(iri = SKOS.SCOPE_NOTE)

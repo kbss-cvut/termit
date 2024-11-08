@@ -49,6 +49,14 @@ public class Configuration {
      * It is used, for example, for links in emails sent to users.
      */
     private String url = "http://localhost:3000/#";
+
+    /**
+     * URL of the modeling tool.
+     * <p>
+     * The modeling tool can be used to further specify the relationships between terms.
+     */
+    private String modelingToolUrl;
+
     /**
      * Name of the JMX bean exported by TermIt.
      * <p>
@@ -88,6 +96,7 @@ public class Configuration {
      * <p>
      * By default, generated identifiers may contain accented characters (like č). Setting this configuration to
      * {@code true} ensures all generated identifiers are ASCII-only and accented character are normalized to ASCII.
+     *
      * @configurationdoc.default false
      */
     private boolean asciiIdentifiers = false;
@@ -137,6 +146,14 @@ public class Configuration {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getModelingToolUrl() {
+        return modelingToolUrl;
+    }
+
+    public void setModelingToolUrl(String modelingToolUrl) {
+        this.modelingToolUrl = modelingToolUrl;
     }
 
     public String getJmxBeanName() {
@@ -668,8 +685,6 @@ public class Configuration {
         @Min(8)
         private int textQuoteSelectorContextLength = 32;
 
-        private boolean disableVocabularyAnalysisOnTermEdit = false;
-
         public String getUrl() {
             return url;
         }
@@ -692,14 +707,6 @@ public class Configuration {
 
         public void setTextQuoteSelectorContextLength(int textQuoteSelectorContextLength) {
             this.textQuoteSelectorContextLength = textQuoteSelectorContextLength;
-        }
-
-        public boolean isDisableVocabularyAnalysisOnTermEdit() {
-            return disableVocabularyAnalysisOnTermEdit;
-        }
-
-        public void setDisableVocabularyAnalysisOnTermEdit(boolean disableVocabularyAnalysisOnTermEdit) {
-            this.disableVocabularyAnalysisOnTermEdit = disableVocabularyAnalysisOnTermEdit;
         }
     }
 

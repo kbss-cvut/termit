@@ -32,8 +32,6 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -180,13 +178,12 @@ class HtmlTermOccurrenceResolverTest {
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // TODO: https://github.com/kbss-cvut/termit/issues/275
     void findTermOccurrencesSetsFoundOccurrencesAsApprovedWhenCorrespondingExistingOccurrenceWasApproved() throws Exception {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
         final Selector quoteSelector = new TextQuoteSelector("Územní plán", "RDFa simple", "hlavního města Prahy.");
-        final Selector posSelector = new TextPositionSelector(21, 32);
+        final Selector posSelector = new TextPositionSelector(29, 40);
         existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
         final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
         sut.parseContent(is, file);

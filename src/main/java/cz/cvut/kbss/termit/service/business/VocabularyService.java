@@ -56,6 +56,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -123,9 +124,8 @@ public class VocabularyService
     }
 
     /**
-     * Receives {@link VocabularyContentModifiedEvent} and triggers validation.
-     * The goal for this is to get the results cached and do not force users to wait for validation
-     * when they request it.
+     * Receives {@link VocabularyContentModifiedEvent} and triggers validation. The goal for this is to get the results
+     * cached and do not force users to wait for validation when they request it.
      */
     @EventListener({VocabularyContentModifiedEvent.class, VocabularyCreatedEvent.class})
     public void onVocabularyContentModified(VocabularyEvent event) {
@@ -216,11 +216,26 @@ public class VocabularyService
         return repositoryService.getRelatedVocabularies(entity);
     }
 
+    /**
+     * Gets statements representing SKOS relationships between terms from the specified vocabulary and terms from other
+     * vocabularies.
+     *
+     * @param vocabulary Vocabulary whose terms' relationships to retrieve
+     * @return List of RDF statements
+     */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
     public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
         return repositoryService.getTermRelations(vocabulary);
     }
 
+    /**
+     * Gets statements representing relationships between the specified vocabulary and other vocabularies.
+     * <p>
+     * A selected set of relationships is excluded (for example, versioning relationships).
+     *
+     * @param vocabulary Vocabulary whose relationships to retrieve
+     * @return List of RDF statements
+     */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
     public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary) {
         return repositoryService.getVocabularyRelations(vocabulary, VOCABULARY_REMOVAL_IGNORED_RELATIONS);
@@ -295,6 +310,17 @@ public class VocabularyService
      */
     public List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary) {
         return repositoryService.getChangesOfContent(vocabulary);
+    }
+
+    /**
+     * Gets content change records of the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary whose content changes to get
+     * @param pageReq Specification of the size and number of the page to return
+     * @return List of change records, ordered by date in descending order
+     */
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
+        return repositoryService.getDetailedHistoryOfContent(vocabulary, pageReq);
     }
 
     /**
