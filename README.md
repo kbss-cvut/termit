@@ -31,29 +31,29 @@ See the [docs folder](doc/index.md) for additional information on implementation
 This section briefly lists the main technologies and principles used (or planned to be used) in the application.
 
 - Spring Boot 3, Spring Framework 6, Spring Security, Spring Data (paging, filtering)
-- Jackson 2.13
+- Jackson Databind
 - [JB4JSON-LD](https://github.com/kbss-cvut/jb4jsonld-jackson) - Java - JSON-LD (de)serialization library
 - [JOPA](https://github.com/kbss-cvut/jopa) - persistence library for the Semantic Web
-- JUnit 5 (RT used 4), Mockito 4 (RT used 1), Hamcrest 2 (RT used 1)
-- Servlet API 4 (RT used 3.0.1)
-- JSON Web Tokens (CSRF protection not necessary for JWT)
+- JUnit 5, Mockito 4, Hamcrest 2
+- Jakarta Servlet API 4
+- JSON Web Tokens
 - SLF4J + Logback
 - CORS (for separate frontend)
 - Java bean validation (JSR 380)
 
 
-## Ontology
+## Ontologies
 
-The ontology on which TermIt is based can be found in the `ontology` folder. For proper inference
-functionality, `termit-model.ttl`, the
-_popis-dat_ ontology model (http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat/model) and the SKOS vocabulary
-model
-(http://www.w3.org/TR/skos-reference/skos.rdf) need to be loaded into the repository used by TermIt (see `doc/setup.md`)
-for details.
+The ontology on which TermIt is based can be found in the `ontology` folder. It extends the
+_popis-dat_ ontology (http://onto.fel.cvut.cz/ontologies/slovnik/agendovy/popis-dat). TermIt vocabularies and terms
+use the SKOS vocabulary (http://www.w3.org/TR/skos-reference/skos.rdf).
+
+Relevant ontologies need to be loaded into the repository for proper inference functionality. See [setup.md](doc/setup.md)
+for more details.
 
 ## Monitoring
 
-We use [JavaMelody](https://github.com/javamelody/javamelody) for monitoring the application and its usage. The data are
+[JavaMelody](https://github.com/javamelody/javamelody) can be used for monitoring the application and its usage. The data are
 available on the `/monitoring` endpoint and are secured using _basic_ authentication. Credentials are configured using
 the `javamelody.init-parameters.authorized-users`
 parameter in `application.yml` (see
