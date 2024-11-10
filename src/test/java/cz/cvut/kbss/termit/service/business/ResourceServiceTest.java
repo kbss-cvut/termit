@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
@@ -426,9 +427,10 @@ class ResourceServiceTest {
     void getChangesLoadsChangeRecordsForSpecifiedAssetFromChangeRecordService() {
         final Resource resource = Generator.generateResourceWithId();
         final List<AbstractChangeRecord> records = Collections.singletonList(Generator.generatePersistChange(resource));
-        when(changeRecordService.getChanges(resource)).thenReturn(records);
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
+        when(changeRecordService.getChanges(resource, filterDto)).thenReturn(records);
         assertEquals(records, sut.getChanges(resource));
-        verify(changeRecordService).getChanges(resource);
+        verify(changeRecordService).getChanges(resource, filterDto);
     }
 
     @Test

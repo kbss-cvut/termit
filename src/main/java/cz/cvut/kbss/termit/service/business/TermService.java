@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.business;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.InvalidTermStateException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -545,9 +546,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     @Override
-    public List<AbstractChangeRecord> getChanges(Term term) {
+    public List<AbstractChangeRecord> getChanges(Term term, ChangeRecordFilterDto filterDto) {
         Objects.requireNonNull(term);
-        return changeRecordService.getChanges(term);
+        return changeRecordService.getChanges(term, filterDto);
     }
 
     /**

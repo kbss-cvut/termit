@@ -1,23 +1,26 @@
 package cz.cvut.kbss.termit.dto.filter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import cz.cvut.kbss.termit.util.Utils;
+
 import java.net.URI;
 import java.util.Objects;
 
 /**
  * Represents parameters for filtering vocabulary content changes.
  */
-public class VocabularyContentChangeFilterDto {
-    private String termName = "";
+public class ChangeRecordFilterDto {
+    private String assetLabel = "";
     private String changedAttributeName = "";
     private String authorName = "";
     private URI changeType = null;
 
-    public String getTermName() {
-        return termName;
+    public String getAssetLabel() {
+        return assetLabel;
     }
 
-    public void setTermName(String termName) {
-        this.termName = termName;
+    public void setAssetLabel(String assetLabel) {
+        this.assetLabel = assetLabel;
     }
 
     public String getChangedAttributeName() {
@@ -44,11 +47,22 @@ public class VocabularyContentChangeFilterDto {
         this.changeType = changeType;
     }
 
+    /**
+     * @return true when all attributes are empty or null
+     */
+    @JsonIgnore
+    public boolean isEmpty() {
+        return Utils.isBlank(assetLabel) &&
+                Utils.isBlank(changedAttributeName) &&
+                Utils.isBlank(authorName) &&
+                changeType == null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VocabularyContentChangeFilterDto that)) return false;
-        return Objects.equals(termName, that.termName) &&
+        if (!(o instanceof ChangeRecordFilterDto that)) return false;
+        return Objects.equals(assetLabel, that.assetLabel) &&
                 Objects.equals(changedAttributeName, that.changedAttributeName) &&
                 Objects.equals(authorName, that.authorName) &&
                 Objects.equals(changeType, that.changeType);
@@ -56,6 +70,6 @@ public class VocabularyContentChangeFilterDto {
 
     @Override
     public int hashCode() {
-        return Objects.hash(termName, changedAttributeName, authorName, changeType);
+        return Objects.hash(assetLabel, changedAttributeName, authorName, changeType);
     }
 }

@@ -22,7 +22,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
-import cz.cvut.kbss.termit.dto.filter.VocabularyContentChangeFilterDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -431,7 +431,8 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final List<AbstractChangeRecord> records =
                 Generator.generateChangeRecords(vocabulary, user);
-        when(serviceMock.getChanges(vocabulary)).thenReturn(records);
+        final ChangeRecordFilterDto emptyFilter = new ChangeRecordFilterDto();
+        when(serviceMock.getChanges(vocabulary, emptyFilter)).thenReturn(records);
 
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history")).andExpect(status().isOk())
@@ -441,7 +442,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 });
         assertNotNull(result);
         assertEquals(records, result);
-        verify(serviceMock).getChanges(vocabulary);
+        verify(serviceMock).getChanges(vocabulary,emptyFilter);
     }
 
     @Test
@@ -653,7 +654,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final Term term = Generator.generateTermWithId();
         final List<AbstractChangeRecord> changeRecords = IntStream.range(0, 5).mapToObj(i -> Generator.generateChangeRecords(term, user)).flatMap(List::stream).toList();
-        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
         final Pageable pageable = Pageable.ofSize(pageSize);
 
         doReturn(changeRecords).when(serviceMock).getDetailedHistoryOfContent(vocabulary, filter, pageable);

@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -360,7 +361,7 @@ public class ResourceController extends BaseController {
                           required = false) Optional<String> namespace) {
         final Resource resource = resourceService
                 .getReference(resolveIdentifier(resourceNamespace(namespace), localName));
-        return resourceService.getChanges(resource);
+        return resourceService.getChanges(resource, new ChangeRecordFilterDto()); // TODO: filter dto
     }
 
     /**

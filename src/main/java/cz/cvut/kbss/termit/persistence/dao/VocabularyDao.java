@@ -19,9 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
-import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
-import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
@@ -29,7 +27,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
-import cz.cvut.kbss.termit.dto.filter.VocabularyContentChangeFilterDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
@@ -45,6 +43,7 @@ import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
@@ -92,6 +91,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     private static final String REMOVE_GLOSSARY_TERMS_QUERY_FILE = "remove/removeGlossaryTerms.ru";
     private final ChangeTrackingContextResolver changeTrackingContextResolver;
+    private final ChangeRecordDao changeRecordDao;
 
     private volatile long lastModified;
 
@@ -102,12 +102,13 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
                          VocabularyContextMapper contextMapper, ApplicationContext context,
-                         ChangeTrackingContextResolver changeTrackingContextResolver) {
+                         ChangeTrackingContextResolver changeTrackingContextResolver, ChangeRecordDao changeRecordDao) {
         super(Vocabulary.class, em, config.getPersistence(), descriptorFactory);
         this.contextMapper = contextMapper;
         refreshLastModified();
         this.context = context;
         this.changeTrackingContextResolver = changeTrackingContextResolver;
+        this.changeRecordDao = changeRecordDao;
     }
 
     @Override
@@ -408,88 +409,15 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * @param pageReq Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, VocabularyContentChangeFilterDto filter, Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
         Objects.requireNonNull(vocabulary);
-        return createDetailedContentChangesQuery(vocabulary, filter, pageReq).getResultList();
-    }
-
-    private TypedQuery<AbstractChangeRecord> createDetailedContentChangesQuery(Vocabulary vocabulary, VocabularyContentChangeFilterDto filter, Pageable pageReq) {
-        TypedQuery<AbstractChangeRecord> query = em.createNativeQuery("""
-                         SELECT DISTINCT ?record WHERE {
-""" + /* Select anything from change context */ """
-                            GRAPH ?changeContext {
-                                ?record a ?changeRecord .
-                            }
-""" + /* The record should be a subclass of "zmena" */ """
-                            ?changeRecord ?subClassOf+ ?zmena .
-                            ?record ?relatesTo ?term ;
-                                ?hasTime ?timestamp ;
-                                ?hasAuthor ?author .
-""" + /* Get author's name */ """
-                            ?author ?hasFirstName ?firstName ;
-                                ?hasLastName ?lastName .
-                            BIND(CONCAT(?firstName, " ", ?lastName) as ?authorFullName)
-""" + /* When its update record, there will be a changed attribute */ """
-                            OPTIONAL {
-                               ?record ?hasChangedAttribute ?attribute .
-                               ?attribute ?hasRdfsLabel ?changedAttributeName .
-                            }
-""" + /* Get term's name (but the term might have been already deleted) */ """
-                            OPTIONAL {
-                               ?term a ?termType ;
-                                   ?hasLabel ?label .
-                            }
-""" + /* then try to get the label from (delete) record */ """
-                            OPTIONAL {
-                               ?record ?hasRdfsLabel ?label .
-                            }
-""" + /* When label is still not bound, the term was probably deleted, find the delete record and get the label from it */ """
-                            OPTIONAL {
-                                FILTER(!BOUND(?label)) .
-                                ?deleteRecord a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/smazání-entity>;
-                                <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/má-změněnou-entitu> ?term;
-                                <http://www.w3.org/2000/01/rdf-schema#label> ?label.
-                            }
-                            BIND(?termName as ?termNameVal)
-                            BIND(?authorName as ?authorNameVal)
-                            BIND(?attributeName as ?changedAttributeNameVal)
-                            FILTER (!BOUND(?termNameVal) || CONTAINS(LCASE(?label), LCASE(?termNameVal)))
-                            FILTER (!BOUND(?authorNameVal) || CONTAINS(LCASE(?authorFullName), LCASE(?authorNameVal)))
-                            FILTER (!BOUND(?changedAttributeNameVal) || CONTAINS(LCASE(?changedAttributeName), LCASE(?changedAttributeNameVal)))
-                         } ORDER BY DESC(?timestamp) ?attribute
-                         """, AbstractChangeRecord.class)
-                       .setParameter("changeContext", changeTrackingContextResolver.resolveChangeTrackingContext(vocabulary))
-                       .setParameter("subClassOf", URI.create(RDFS.SUB_CLASS_OF))
-                       .setParameter("zmena", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
-                       .setParameter("termType", URI.create(SKOS.CONCEPT))
-                       .setParameter("relatesTo", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
-                       .setParameter("hasTime", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                       .setParameter("hasChangedAttribute", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmeneny_atribut))
-                       .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL)) // term label
-                       .setParameter("hasAuthor", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_editora)) // record has author
-                       .setParameter("hasFirstName", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_krestni_jmeno))
-                       .setParameter("hasLastName", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_prijmeni))
-                       .setParameter("hasRdfsLabel", URI.create(RDFS.LABEL)); // changed attribute label
-
-        if(!Utils.isBlank(filter.getTermName())) {
-            query = query.setParameter("termName", filter.getTermName().trim());
-        }
-        if (!Utils.isBlank(filter.getAuthorName())) {
-            query = query.setParameter("authorName", filter.getAuthorName().trim());
-        }
-        if (filter.getChangeType() != null) {
-            query = query.setParameter("changeRecord", filter.getChangeType());
-        }
-        if (!Utils.isBlank(filter.getChangedAttributeName())) {
-            query = query.setParameter("attributeName", filter.getChangedAttributeName().trim());
-        }
-
-        if(pageReq.isUnpaged()) {
-            return query;
-        }
-
-        return query.setFirstResult((int) pageReq.getOffset())
-                 .setMaxResults(pageReq.getPageSize());
+        return changeRecordDao.findAllFiltered(
+                changeTrackingContextResolver.resolveChangeTrackingContext(vocabulary),
+                filter,
+                Optional.empty(),
+                Optional.of(URI.create(SKOS.CONCEPT)), // term
+                pageReq
+        );
     }
 
     private Query createContentChangesQuery(Vocabulary vocabulary) {

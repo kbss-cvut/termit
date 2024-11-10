@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
@@ -699,7 +700,7 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.getChanges(termService.findRequired(termUri));
+        return termService.getChanges(termService.findRequired(termUri), new ChangeRecordFilterDto()); // TODO: filter dto
     }
 
     /**
@@ -722,9 +723,21 @@ public class TermController extends BaseController {
                                                  @PathVariable String localName,
                                                  @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                                                             example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-                                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+                                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+                                                 @Parameter(description = "Change type used for filtering.")
+                                                 @RequestParam(name = "type", required = false) URI changeType,
+                                                 @Parameter(description = "Author name used for filtering.")
+                                                 @RequestParam(name = "author", required = false,
+                                                               defaultValue = "") String authorName,
+                                                 @Parameter(description = "Changed attribute name used for filtering.")
+                                                 @RequestParam(name = "attribute", required = false,
+                                                               defaultValue = "") String changedAttributeName) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return termService.getChanges(termService.findRequired(termUri));
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
+        filter.setChangeType(changeType);
+        filter.setAuthorName(authorName);
+        filter.setChangedAttributeName(changedAttributeName);
+        return termService.getChanges(termService.findRequired(termUri), filter);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

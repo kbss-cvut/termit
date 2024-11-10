@@ -22,7 +22,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
-import cz.cvut.kbss.termit.dto.filter.VocabularyContentChangeFilterDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
@@ -299,8 +299,8 @@ public class VocabularyService
     }
 
     @Override
-    public List<AbstractChangeRecord> getChanges(Vocabulary asset) {
-        return changeRecordService.getChanges(asset);
+    public List<AbstractChangeRecord> getChanges(Vocabulary asset, ChangeRecordFilterDto filterDto) {
+        return changeRecordService.getChanges(asset, filterDto);
     }
 
     /**
@@ -320,7 +320,7 @@ public class VocabularyService
      * @param pageReq Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, VocabularyContentChangeFilterDto filter, Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
         return repositoryService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 

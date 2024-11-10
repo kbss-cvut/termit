@@ -26,7 +26,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
-import cz.cvut.kbss.termit.dto.filter.VocabularyContentChangeFilterDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
@@ -978,7 +978,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             changeRecordDao.persist(deleteChangeRecord, termToRemove);
         });
 
-        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
         final int recordsCount = firstChanges.size() + termToRemoveChanges.size() + 1; // +1 for the delete record
         final Pageable pageable = Pageable.ofSize(recordsCount * 3);
         final List<AbstractChangeRecord> contentChanges = sut.getDetailedHistoryOfContent(vocabulary, filter, pageable);
@@ -1028,8 +1028,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             thirdChanges.forEach(r -> changeRecordDao.persist(r, thirdTerm));
         });
 
-        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
-        filter.setTermName(needle);
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
+        filter.setAssetLabel(needle);
 
         final int recordsCount = firstChanges.size() + secondChanges.size();
         final Pageable pageable = Pageable.ofSize(recordsCount * 2);
@@ -1083,8 +1083,8 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             termDao.remove(termToRemove);
         });
 
-        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
-        filter.setTermName(needle);
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
+        filter.setAssetLabel(needle);
 
         final int recordsCount = termToRemoveChanges.size() + 1; // +1 for the delete record
         final Pageable pageable = Pageable.ofSize(recordsCount * 2);
@@ -1142,7 +1142,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             secondChanges.forEach(r -> changeRecordDao.persist(r, secondTerm));
         });
 
-        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
         filter.setChangedAttributeName(changedAttributeName);
 
         final Pageable pageable = Pageable.ofSize(recordCount.get() * 2);
@@ -1193,7 +1193,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             secondChanges.forEach(r -> changeRecordDao.persist(r, secondTerm));
         });
 
-        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
         // full name without first two and last two characters
         filter.setAuthorName(anotherAuthor.getFullName().substring(2, anotherAuthor.getFullName().length() - 2));
 
@@ -1256,7 +1256,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             termDao.remove(secondTerm);
         });
 
-        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
         // full name without first two and last two characters
         filter.setChangeType(typeUri);
 

@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
@@ -369,8 +370,8 @@ public class ResourceService
     }
 
     @Override
-    public List<AbstractChangeRecord> getChanges(Resource asset) {
-        return changeRecordService.getChanges(asset);
+    public List<AbstractChangeRecord> getChanges(Resource asset, ChangeRecordFilterDto filterDto) {
+        return changeRecordService.getChanges(asset, filterDto);
     }
 
     @Override

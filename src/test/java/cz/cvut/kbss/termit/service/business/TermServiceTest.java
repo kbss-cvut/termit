@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -396,7 +397,7 @@ class TermServiceTest {
     void getChangesRetrievesChangeRecordsFromChangeRecordService() {
         final Term asset = Generator.generateTermWithId();
         sut.getChanges(asset);
-        verify(changeRecordService).getChanges(asset);
+        verify(changeRecordService).getChanges(asset, new ChangeRecordFilterDto());
     }
 
     @Test
