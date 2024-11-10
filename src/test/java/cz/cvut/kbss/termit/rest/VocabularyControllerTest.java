@@ -22,11 +22,13 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.filter.VocabularyContentChangeFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
@@ -50,6 +52,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -70,15 +73,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
+import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SIZE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalToObject;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -641,5 +649,24 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
                    containsString("filename=\"termit-import.xlsx\""));
+    }
+
+    @Test
+    void getDetailedHistoryOfContentReturnsListOfChangeRecordsWhenNoFilterIsSpecified() throws Exception {
+        final int pageSize = Integer.parseInt(VocabularyController.DEFAULT_PAGE_SIZE);
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final Term term = Generator.generateTermWithId();
+        final List<AbstractChangeRecord> changeRecords = IntStream.range(0, 5).mapToObj(i -> Generator.generateChangeRecords(term, user)).flatMap(List::stream).toList();
+        final VocabularyContentChangeFilterDto filter = new VocabularyContentChangeFilterDto();
+        final Pageable pageable = Pageable.ofSize(pageSize);
+
+        doReturn(changeRecords).when(serviceMock).getDetailedHistoryOfContent(vocabulary, filter, pageable);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history-of-content/detail")).andExpect(status().isOk()).andReturn();
+        final List<AbstractChangeRecord> result =
+                readValue(mvcResult, new TypeReference<List<AbstractChangeRecord>>() {});
+        assertNotNull(result);
+        assertEquals(changeRecords, result);
+        verify(serviceMock).getDetailedHistoryOfContent(vocabulary, filter, pageable);
     }
 }
