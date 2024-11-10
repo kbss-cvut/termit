@@ -361,7 +361,7 @@ public class ResourceController extends BaseController {
                           required = false) Optional<String> namespace) {
         final Resource resource = resourceService
                 .getReference(resolveIdentifier(resourceNamespace(namespace), localName));
-        return resourceService.getChanges(resource, new ChangeRecordFilterDto()); // TODO: filter dto
+        return resourceService.getChanges(resource, new ChangeRecordFilterDto());
     }
 
     /**

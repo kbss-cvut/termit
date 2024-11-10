@@ -698,9 +698,19 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+            @RequestParam(name = "type", required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+            @RequestParam(name = "author", required = false, defaultValue = "") String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+            @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.getChanges(termService.findRequired(termUri), new ChangeRecordFilterDto()); // TODO: filter dto
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
+        filterDto.setChangeType(changeType);
+        filterDto.setAuthorName(authorName);
+        filterDto.setChangedAttributeName(changedAttributeName);
+        return termService.getChanges(termService.findRequired(termUri), filterDto);
     }
 
     /**
@@ -708,7 +718,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
-     * @see #getHistory(String, String, Optional)
+     * @see #getHistory
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets a list of changes made to metadata of the term with the specified identifier.")

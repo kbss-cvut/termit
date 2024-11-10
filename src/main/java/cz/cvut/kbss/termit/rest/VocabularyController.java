@@ -263,10 +263,20 @@ public class VocabularyController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
+                          required = false) Optional<String> namespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+            @RequestParam(name = "type", required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+            @RequestParam(name = "author", required = false, defaultValue = "") String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+            @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
-        return vocabularyService.getChanges(vocabulary, new ChangeRecordFilterDto()); // TODO: filter dto
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
+        filterDto.setChangeType(changeType);
+        filterDto.setAuthorName(authorName);
+        filterDto.setChangedAttributeName(changedAttributeName);
+        return vocabularyService.getChanges(vocabulary, filterDto);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -302,15 +312,15 @@ public class VocabularyController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
                                                                             required = false) Optional<String> namespace,
-            @Parameter(description = "Term name used for filtering.") @RequestParam(name = "term",
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.TERM_NAME_DESCRIPTION) @RequestParam(name = "term",
                                                                                          required = false,
                                                                                          defaultValue = "") String termName,
-            @Parameter(description = "Change type used for filtering.") @RequestParam(name = "type",
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION) @RequestParam(name = "type",
                                                                                            required = false) URI changeType,
-            @Parameter(description = "Author name used for filtering.") @RequestParam(name = "author",
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION) @RequestParam(name = "author",
                                                                                            required = false,
                                                                                            defaultValue = "") String authorName,
-            @Parameter(description = "Changed attribute name used for filtering.") @RequestParam(
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION) @RequestParam(
                     name = "attribute", required = false, defaultValue = "") String changedAttributeName,
 
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION) @RequestParam(

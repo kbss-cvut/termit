@@ -72,4 +72,19 @@ public class ChangeRecordFilterDto {
     public int hashCode() {
         return Objects.hash(assetLabel, changedAttributeName, authorName, changeType);
     }
+
+
+    /**
+     * Constants for the Open API documentation of the REST API.
+     */
+    public static final class ApiDoc {
+        public static final String TERM_NAME_DESCRIPTION = "Name of the term used for filtering.";
+        public static final String CHANGE_TYPE_DESCRIPTION = "Type of the change used for filtering.";
+        public static final String AUTHOR_NAME_DESCRIPTION = "Name of the author of the change used for filtering.";
+        public static final String CHANGED_ATTRIBUTE_DESCRIPTION = "Name of the changed attribute used for filtering.";
+
+        private ApiDoc() {
+            throw new AssertionError();
+        }
+    }
 }
