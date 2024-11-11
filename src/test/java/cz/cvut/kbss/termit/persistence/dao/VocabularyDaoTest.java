@@ -1075,6 +1075,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             termDao.persist(firstTerm, vocabulary);
             termDao.persist(termToRemove, vocabulary);
 
+            Generator.addTermInVocabularyRelationship(firstTerm, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(termToRemove, vocabulary.getUri(), em);
+
             firstChanges.forEach(r -> changeRecordDao.persist(r, firstTerm));
             termToRemoveChanges.forEach(r -> changeRecordDao.persist(r, termToRemove));
             changeRecordDao.persist(deleteChangeRecord, termToRemove);
@@ -1247,6 +1250,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
             termDao.persist(firstTerm, vocabulary);
             termDao.persist(secondTerm, vocabulary);
+
+            Generator.addTermInVocabularyRelationship(firstTerm, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(secondTerm, vocabulary.getUri(), em);
 
             firstChanges.forEach(r -> changeRecordDao.persist(r, firstTerm));
             secondChanges.forEach(r -> changeRecordDao.persist(r, secondTerm));
