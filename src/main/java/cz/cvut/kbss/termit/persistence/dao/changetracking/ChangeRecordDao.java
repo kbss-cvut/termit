@@ -99,7 +99,18 @@ public class ChangeRecordDao {
                             ?record ?hasChangedEntity ?asset ;
                                 ?hasTime ?timestamp ;
                                 ?hasAuthor ?author .
-                            ?asset a ?assetType .
+""" + /* Find an asset type if it is known (deleted assets does not have a type */ """
+                            
+                            OPTIONAL {
+                                ?asset a ?assetType
+                            }
+                            OPTIONAL {
+                                ?asset a ?assetTypeVal .
+                                BIND(true as ?isAssetType)
+                            }
+""" + /* filter assets without a type (deleted) or with a matching type */ """
+                            BIND(?assetTypeVal as ?assetTypeVar)
+                            FILTER(!BOUND(?assetType) || !BOUND(?assetTypeVar) || BOUND(?isAssetType))
 """ + /* Get author's name */ """
                             ?author ?hasFirstName ?firstName ;
                                 ?hasLastName ?lastName .
@@ -124,8 +135,8 @@ public class ChangeRecordDao {
                             OPTIONAL {
                                 FILTER(!BOUND(?label)) .
                                 ?deleteRecord a ?deleteRecordType;
-                                    ?hasChangedEntity ?term;
-                                    ?hasRdfsLabel ?label.
+                                    ?hasChangedEntity ?asset;
+                                    ?hasRdfsLabel ?label .
                             }
                             BIND(?assetLabelValue as ?assetLabel)
                             BIND(?authorNameValue as ?authorName)
@@ -155,7 +166,7 @@ public class ChangeRecordDao {
         if(asset.isPresent() && asset.get().getUri() != null) {
             query = query.setParameter("asset", asset.get().getUri());
         } else if (assetType.isPresent()) {
-            query = query.setParameter("assetType", assetType.get());
+            query = query.setParameter("assetTypeVal", assetType.get());
         }
         
 
