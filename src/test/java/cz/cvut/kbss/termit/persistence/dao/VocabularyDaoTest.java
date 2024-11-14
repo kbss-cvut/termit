@@ -46,7 +46,6 @@ import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
-import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -117,9 +116,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @SpyBean
     private ChangeRecordDao changeRecordDao;
-
-    @SpyBean
-    private ChangeTrackingContextResolver changeTrackingContextResolver;
 
     private User author;
 
@@ -954,12 +950,10 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
         filterDto.setAuthorName("Name of the author");
 
-        doReturn(vocabulary.getUri()).when(changeTrackingContextResolver).resolveChangeTrackingContext(vocabulary);
         doReturn(records).when(changeRecordDao).findAllRelatedToType(vocabulary, filterDto, skosConcept, unpaged);
 
         sut.getDetailedHistoryOfContent(vocabulary, filterDto, unpaged);
 
-        verify(changeTrackingContextResolver).resolveChangeTrackingContext(vocabulary);
         verify(changeRecordDao).findAllRelatedToType(vocabulary, filterDto, skosConcept, unpaged);
     }
 }
