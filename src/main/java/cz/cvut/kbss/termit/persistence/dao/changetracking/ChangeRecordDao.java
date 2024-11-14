@@ -100,17 +100,16 @@ public class ChangeRecordDao {
                                 ?hasTime ?timestamp ;
                                 ?hasAuthor ?author .
 """ + /* Find an asset type if it is known (deleted assets does not have a type */ """
-                            
                             OPTIONAL {
-                                ?asset a ?assetType
+                                ?asset a ?assetType .
+                                OPTIONAL {
+                                    ?asset a ?assetTypeValue
+                                    BIND(true as ?isAssetType)
+                                }
                             }
-                            OPTIONAL {
-                                ?asset a ?assetTypeVal .
-                                BIND(true as ?isAssetType)
-                            }
+                            FILTER(!BOUND(?assetType) || ?isAssetType)
 """ + /* filter assets without a type (deleted) or with a matching type */ """
-                            BIND(?assetTypeVal as ?assetTypeVar)
-                            FILTER(!BOUND(?assetType) || !BOUND(?assetTypeVar) || BOUND(?isAssetType))
+                            
 """ + /* Get author's name */ """
                             ?author ?hasFirstName ?firstName ;
                                 ?hasLastName ?lastName .
@@ -122,26 +121,29 @@ public class ChangeRecordDao {
                             }
 """ + /* Get asset's name (but the asset might have been already deleted) */ """
                             OPTIONAL {
-                               ?asset ?hasLabel ?label .
+                                ?asset ?hasLabel ?assetPrefLabel .
+                                BIND(?assetPrefLabel as ?finalAssetLabel)
                             }
                             OPTIONAL {
-                                ?asset ?hasRdfsLabel ?label .
+                                ?asset ?hasRdfsLabel ?assetRdfsLabel .
+                                BIND(?assetRdfsLabel as ?finalAssetLabel)
                             }
 """ + /* then try to get the label from (delete) record */ """
                             OPTIONAL {
-                               ?record ?hasRdfsLabel ?label .
+                               ?record ?hasRdfsLabel ?recordRdfsLabel .
+                               BIND(?recordRdfsLabel as ?finalAssetLabel)
                             }
 """ + /* When label is still not bound, the term was probably deleted, find the delete record and get the label from it */ """
                             OPTIONAL {
-                                FILTER(!BOUND(?label)) .
                                 ?deleteRecord a ?deleteRecordType;
                                     ?hasChangedEntity ?asset;
-                                    ?hasRdfsLabel ?label .
+                                    ?hasRdfsLabel ?deleteRecordLabel .
+                                BIND(?deleteRecordLabel as ?finalAssetLabel)
                             }
                             BIND(?assetLabelValue as ?assetLabel)
                             BIND(?authorNameValue as ?authorName)
                             BIND(?attributeNameValue as ?changedAttributeName)
-                            FILTER (!BOUND(?assetLabel) || CONTAINS(LCASE(?label), LCASE(?assetLabel)))
+                            FILTER (!BOUND(?assetLabel) || CONTAINS(LCASE(?finalAssetLabel), LCASE(?assetLabel)))
                             FILTER (!BOUND(?authorName) || CONTAINS(LCASE(?authorFullName), LCASE(?authorName)))
                             FILTER (!BOUND(?changedAttributeName) || CONTAINS(LCASE(?changedAttributeLabel), LCASE(?changedAttributeName)))
                          } ORDER BY DESC(?timestamp) ?attribute
@@ -161,12 +163,12 @@ public class ChangeRecordDao {
                                                    .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
 
                                                    // Optional asset label
-                                                   .setParameter("deleteRecordType", Vocabulary.s_c_smazani_entity);
+                                                   .setParameter("deleteRecordType", URI.create(Vocabulary.s_c_smazani_entity));
 
         if(asset.isPresent() && asset.get().getUri() != null) {
             query = query.setParameter("asset", asset.get().getUri());
         } else if (assetType.isPresent()) {
-            query = query.setParameter("assetTypeVal", assetType.get());
+            query = query.setParameter("assetTypeValue", assetType.get());
         }
         
 

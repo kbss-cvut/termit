@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -1056,8 +1057,10 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         final Term firstTerm = Generator.generateTermWithId(vocabulary.getUri());
         // the needle is placed in the term which will be removed
         firstTerm.getLabel().set(Environment.LANGUAGE, mud);
+        firstTerm.setVocabulary(vocabulary.getUri());
         final Term termToRemove = Generator.generateTermWithId(vocabulary.getUri());
         termToRemove.getLabel().set(Environment.LANGUAGE, haystack);
+        termToRemove.setVocabulary(vocabulary.getUri());
 
         final List<AbstractChangeRecord> firstChanges = Generator.generateChangeRecords(firstTerm, author);
         final List<AbstractChangeRecord> termToRemoveChanges = Generator.generateChangeRecords(termToRemove, author);
@@ -1213,20 +1216,14 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity,
-            cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity,
-            cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity,
+    @ValueSource(classes = {
+            UpdateChangeRecord.class,
+            PersistChangeRecord.class,
+            DeleteChangeRecord.class
     })
-    void getDetailedHistoryOfContentReturnsRecordsOfExistingTermFilteredByChangeType(String type) {
+    void getDetailedHistoryOfContentReturnsRecordsOfExistingTermFilteredByChangeType(Class<? extends AbstractChangeRecord> typeClass) {
         enableRdfsInference(em);
-        final URI typeUri = URI.create(type);
-        final Class<? extends AbstractChangeRecord> typeClass = switch (type) {
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity -> UpdateChangeRecord.class;
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_vytvoreni_entity -> PersistChangeRecord.class;
-            case cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity -> DeleteChangeRecord.class;
-            default -> throw new IllegalArgumentException("Unknown change type: " + type);
-        };
+        final URI typeUri = URI.create(typeClass.getAnnotation(OWLClass.class).iri());
 
         // Two terms with needle in the label, one term without needle in the label
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
