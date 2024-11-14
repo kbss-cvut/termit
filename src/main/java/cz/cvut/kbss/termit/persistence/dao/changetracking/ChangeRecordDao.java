@@ -107,9 +107,8 @@ public class ChangeRecordDao {
                                     BIND(true as ?isAssetType)
                                 }
                             }
-                            FILTER(!BOUND(?assetType) || ?isAssetType)
 """ + /* filter assets without a type (deleted) or with a matching type */ """
-                            
+                            FILTER(!BOUND(?assetType) || ?isAssetType)
 """ + /* Get author's name */ """
                             ?author ?hasFirstName ?firstName ;
                                 ?hasLastName ?lastName .
