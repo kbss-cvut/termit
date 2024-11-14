@@ -71,6 +71,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ChangeRecordDaoTest extends BaseDaoTestRunner {
+    private static final URI SKOS_CONCEPT = URI.create(SKOS.CONCEPT);
 
     @Autowired
     private ChangeTrackingContextResolver contextResolver;
@@ -287,6 +288,11 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void voidFindAllReturnsChangeRecordsWithoutVocabularyChanges() {
+
+    }
+
+    @Test
     void findAllFilteredReturnsRecordsOfExistingTermFilteredByTermName() {
         enableRdfsInference(em);
 
@@ -306,6 +312,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final List<AbstractChangeRecord> secondChanges = Generator.generateChangeRecords(secondTerm, author);
         final List<AbstractChangeRecord> thirdChanges = Generator.generateChangeRecords(thirdTerm, author);
 
+        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         transactional(() -> {
@@ -319,7 +326,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
             Stream.of(firstChanges, secondChanges, thirdChanges)
                   .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, vocabularyDescriptor));
+                  .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -328,7 +335,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final int recordsCount = firstChanges.size() + secondChanges.size();
         final Pageable pageable = Pageable.ofSize(recordsCount * 2);
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllFiltered(vocabulary.getUri(), filter, Optional.empty(), Optional.of(URI.create(SKOS.CONCEPT)), pageable);
+        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordsCount, contentChanges.size());
         final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
@@ -364,6 +371,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         deleteChangeRecord.setAuthor(author);
         deleteChangeRecord.setLabel(termToRemove.getLabel());
 
+        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         transactional(() -> {
@@ -374,7 +382,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
             Stream.of(firstChanges, termToRemoveChanges, List.of(deleteChangeRecord))
                   .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, vocabularyDescriptor));
+                  .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -383,7 +391,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final int recordsCount = termToRemoveChanges.size() + 1; // +1 for the delete record
         final Pageable pageable = Pageable.unpaged();
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllFiltered(vocabulary.getUri(), filter, Optional.empty(), Optional.of(URI.create(SKOS.CONCEPT)), pageable);
+        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordsCount, contentChanges.size());
         final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
@@ -413,6 +421,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         final URI anotherChangedAttribute = URI.create(RDFS.LABEL);
         final String changedAttributeName = "definition";
 
+        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         Stream.of(firstChanges, secondChanges).flatMap(Collection::stream)
@@ -435,7 +444,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
             Stream.of(firstChanges, secondChanges)
                   .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, vocabularyDescriptor));
+                  .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -443,7 +452,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
         final Pageable pageable = Pageable.unpaged();
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllFiltered(vocabulary.getUri(), filter, Optional.empty(), Optional.of(URI.create(SKOS.CONCEPT)), pageable);
+        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordCount.get(), contentChanges.size());
         final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
@@ -477,6 +486,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
         firstChanges.add(Generator.generateUpdateChange(firstTerm));
         secondChanges.add(Generator.generateUpdateChange(secondTerm));
 
+        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         transactional(() -> {
@@ -487,7 +497,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
             Stream.of(firstChanges, secondChanges)
                   .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, vocabularyDescriptor));
+                  .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -496,7 +506,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
         final Pageable pageable = Pageable.unpaged();
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllFiltered(vocabulary.getUri(), filter, Optional.empty(), Optional.of(URI.create(SKOS.CONCEPT)), pageable);
+        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordCount, contentChanges.size());
         final long persistCount = contentChanges.stream().filter(ch -> ch instanceof PersistChangeRecord).count();
@@ -531,6 +541,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
         final int recordCount = (int) Stream.of(firstChanges, secondChanges, List.of(deleteChangeRecord)).flatMap(List::stream).filter(typeClass::isInstance).count();
 
+        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         final Descriptor vocabularyDescriptor = persistDescriptor(vocabulary.getUri());
 
         transactional(() -> {
@@ -541,7 +552,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
             Stream.of(firstChanges, secondChanges, List.of(deleteChangeRecord))
                   .flatMap(Collection::stream)
-                  .forEach(r -> em.persist(r, vocabularyDescriptor));
+                  .forEach(r -> em.persist(r, changeContextDescriptor));
         });
 
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
@@ -550,7 +561,7 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
 
         final Pageable pageable = Pageable.unpaged();
 
-        final List<AbstractChangeRecord> contentChanges = sut.findAllFiltered(vocabulary.getUri(), filter, Optional.empty(), Optional.of(URI.create(SKOS.CONCEPT)), pageable);
+        final List<AbstractChangeRecord> contentChanges = sut.findAllRelatedToType(vocabulary, filter, SKOS_CONCEPT, pageable);
 
         assertEquals(recordCount, contentChanges.size());
         assertTrue(contentChanges.stream().allMatch(typeClass::isInstance));

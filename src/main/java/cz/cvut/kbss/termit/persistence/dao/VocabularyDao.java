@@ -44,7 +44,6 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
-import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingContextResolver;
 import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
@@ -90,7 +89,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             "} GROUP BY ?date HAVING (?cnt > 0) ORDER BY ?date";
 
     private static final String REMOVE_GLOSSARY_TERMS_QUERY_FILE = "remove/removeGlossaryTerms.ru";
-    private final ChangeTrackingContextResolver changeTrackingContextResolver;
     private final ChangeRecordDao changeRecordDao;
 
     private volatile long lastModified;
@@ -102,12 +100,11 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
                          VocabularyContextMapper contextMapper, ApplicationContext context,
-                         ChangeTrackingContextResolver changeTrackingContextResolver, ChangeRecordDao changeRecordDao) {
+                         ChangeRecordDao changeRecordDao) {
         super(Vocabulary.class, em, config.getPersistence(), descriptorFactory);
         this.contextMapper = contextMapper;
         refreshLastModified();
         this.context = context;
-        this.changeTrackingContextResolver = changeTrackingContextResolver;
         this.changeRecordDao = changeRecordDao;
     }
 
@@ -411,13 +408,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      */
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
         Objects.requireNonNull(vocabulary);
-        return changeRecordDao.findAllFiltered(
-                changeTrackingContextResolver.resolveChangeTrackingContext(vocabulary),
-                filter,
-                Optional.empty(),
-                Optional.of(URI.create(SKOS.CONCEPT)), // term
-                pageReq
-        );
+        return changeRecordDao.findAllRelatedToType(vocabulary, filter, URI.create(SKOS.CONCEPT), pageReq);
     }
 
     private Query createContentChangesQuery(Vocabulary vocabulary) {

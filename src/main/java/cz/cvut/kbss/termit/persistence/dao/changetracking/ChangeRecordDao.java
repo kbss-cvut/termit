@@ -83,29 +83,49 @@ public class ChangeRecordDao {
         return findAll(asset, new ChangeRecordFilterDto());
     }
 
-    /**
-     *
-     * @param asset
-     * @param filterDto
-     * @return
-     */
-    public List<AbstractChangeRecord> findAll(Asset<?> asset, ChangeRecordFilterDto filterDto) {
-        URI changeTrackingContext = null;
+    private Optional<URI> resolveChangeTrackingContext(Asset<?> asset) {
         try {
-            changeTrackingContext = contextResolver.resolveChangeTrackingContext(asset);
+            return Optional.of(contextResolver.resolveChangeTrackingContext(asset));
         } catch (NoResultException e) {
-            return List.of();
+            return Optional.empty();
         }
-        return findAllFiltered(changeTrackingContext, filterDto, Optional.of(asset), Optional.empty(), Pageable.unpaged());
     }
 
     /**
+     * Finds all change records related to the specified asset matching the filter.
+     *
+     * @param asset the asset
+     * @param filterDto filter parameters
+     */
+    public List<AbstractChangeRecord> findAll(Asset<?> asset, ChangeRecordFilterDto filterDto) {
+        return resolveChangeTrackingContext(asset).map(context ->
+                findAllFiltered(context, filterDto, Optional.of(asset), Optional.empty(), Pageable.unpaged()))
+                    .orElseGet(List::of);
+    }
+
+    /**
+     * Finds all records from change context resolved from {@code changeContextAsset}
+     * that are matching the filter and are related to an entity of the type {@code relatedEntityType}.
+     */
+    public List<AbstractChangeRecord> findAllRelatedToType(Asset<?> changeContextAsset, ChangeRecordFilterDto filterDto, URI relatedEntityType, Pageable pageable) {
+        return resolveChangeTrackingContext(changeContextAsset).map(context ->
+            findAllFiltered(context,
+                filterDto,
+                Optional.empty(),
+                Optional.ofNullable(relatedEntityType),
+                pageable
+        )).orElseGet(List::of);
+    }
+
+    /**
+     * Finds all change records matching the filter.
+     *
      * @param changeContext the context of change records
      * @param filter filter parameters
      * @param asset if present, only changes of the asset will be returned
-     * @param assetType if present, only changes related to this asset type will be returned.
+     * @param assetType if present, only changes related to an asset of this type will be returned.
      */
-    public List<AbstractChangeRecord> findAllFiltered(URI changeContext, ChangeRecordFilterDto filter, Optional<Asset<?>> asset, Optional<URI> assetType, Pageable pageable) {
+    private List<AbstractChangeRecord> findAllFiltered(URI changeContext, ChangeRecordFilterDto filter, Optional<Asset<?>> asset, Optional<URI> assetType, Pageable pageable) {
         TypedQuery<AbstractChangeRecord> query = em.createNativeQuery("""
                          SELECT DISTINCT ?record WHERE {
 """ + /* Select anything from change context */ """

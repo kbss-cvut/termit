@@ -115,9 +115,6 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Autowired
     private VocabularyDao sut;
 
-    @Autowired
-    private TermDao termDao;
-
     @SpyBean
     private ChangeRecordDao changeRecordDao;
 
@@ -952,17 +949,17 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     void getDetailedHistoryOfContentCallsChangeRecordDaoWithFilter() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<AbstractChangeRecord> records = List.of();
-        final Optional<URI> skosConcept = Optional.of(URI.create(SKOS.CONCEPT));
+        final URI skosConcept = URI.create(SKOS.CONCEPT);
         final Pageable unpaged = Pageable.unpaged();
         final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
         filterDto.setAuthorName("Name of the author");
 
         doReturn(vocabulary.getUri()).when(changeTrackingContextResolver).resolveChangeTrackingContext(vocabulary);
-        doReturn(records).when(changeRecordDao).findAllFiltered(vocabulary.getUri(), filterDto, Optional.empty(), skosConcept, unpaged);
+        doReturn(records).when(changeRecordDao).findAllRelatedToType(vocabulary, filterDto, skosConcept, unpaged);
 
         sut.getDetailedHistoryOfContent(vocabulary, filterDto, unpaged);
 
         verify(changeTrackingContextResolver).resolveChangeTrackingContext(vocabulary);
-        verify(changeRecordDao).findAllFiltered(vocabulary.getUri(), filterDto, Optional.empty(), skosConcept, unpaged);
+        verify(changeRecordDao).findAllRelatedToType(vocabulary, filterDto, skosConcept, unpaged);
     }
 }
