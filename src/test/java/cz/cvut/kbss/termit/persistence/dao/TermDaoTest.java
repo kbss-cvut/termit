@@ -82,6 +82,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -1393,5 +1394,13 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final Optional<Term> result = sut.find(term.getUri());
         assertTrue(result.isPresent());
         assertFalse(result.get().getProperties().containsKey(property));
+    }
+
+    @Test
+    void findByIdReturnsOptionalEmptyWhenTermDoesNotExists() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        // trying to find a non-existing term
+        final Optional<Term> empty = assertDoesNotThrow(()-> sut.find(term.getUri()));
+        assertTrue(empty.isEmpty());
     }
 }
