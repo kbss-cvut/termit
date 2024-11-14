@@ -125,11 +125,16 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllRetrievesChangeRecordsRelatedToSpecifiedAsset() {
         enableRdfsInference(em);
-        final Term asset = Generator.generateTermWithId();
+        final Term asset = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(vocabulary);
+            em.persist(asset, persistDescriptor(vocabulary.getUri()));
+        });
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000L),
                                           asset.getUri())).collect(Collectors.toList());
-        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
+        final URI changeContext = contextResolver.resolveChangeTrackingContext(vocabulary);
+        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(changeContext))));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
         assertEquals(records.size(), result.size());
@@ -146,11 +151,16 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllReturnsChangeRecordsOrderedByTimestampDescending() {
         enableRdfsInference(em);
-        final Term asset = Generator.generateTermWithId();
+        final Term asset = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(() -> {
+            em.persist(vocabulary);
+            em.persist(asset, persistDescriptor(vocabulary.getUri()));
+        });
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() + i * 10000L),
                                           asset.getUri())).collect(Collectors.toList());
-        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(vocabulary.getUri()))));
+        final URI changeContext = contextResolver.resolveChangeTrackingContext(vocabulary);
+        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(changeContext))));
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
         records.sort(Comparator.comparing(AbstractChangeRecord::getTimestamp).reversed());
@@ -160,15 +170,18 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findAllReturnsChangeRecordsOrderedByTimestampDescendingAndChangedAttributeId() {
         enableRdfsInference(em);
-        final Term asset = Generator.generateTermWithId();
+        final Term asset = Generator.generateTermWithId(vocabulary.getUri());
         final Instant now = Utils.timestamp();
         final UpdateChangeRecord rOne = generateUpdateRecord(now, asset.getUri());
         rOne.setChangedAttribute(URI.create(SKOS.PREF_LABEL));
         final UpdateChangeRecord rTwo = generateUpdateRecord(now, asset.getUri());
         rTwo.setChangedAttribute(URI.create(SKOS.DEFINITION));
+        final Descriptor changeContextDescriptor = persistDescriptor(contextResolver.resolveChangeTrackingContext(vocabulary));
         transactional(() -> {
-            em.persist(rOne, persistDescriptor(vocabulary.getUri()));
-            em.persist(rTwo, persistDescriptor(vocabulary.getUri()));
+            em.persist(vocabulary);
+            em.persist(asset, persistDescriptor(vocabulary.getUri()));
+            em.persist(rOne, changeContextDescriptor);
+            em.persist(rTwo, changeContextDescriptor);
         });
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);

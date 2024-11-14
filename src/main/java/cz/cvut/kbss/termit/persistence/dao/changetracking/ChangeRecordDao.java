@@ -17,8 +17,8 @@
  */
 package cz.cvut.kbss.termit.persistence.dao.changetracking;
 
+import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
-import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
@@ -73,12 +73,30 @@ public class ChangeRecordDao {
         }
     }
 
+    /**
+     * Finds all change records related to the specified asset.
+     *
+     * @param asset the asset
+     * @return list of change records
+     */
+    public List<AbstractChangeRecord> findAll(Asset<?> asset) {
+        return findAll(asset, new ChangeRecordFilterDto());
+    }
+
+    /**
+     *
+     * @param asset
+     * @param filterDto
+     * @return
+     */
     public List<AbstractChangeRecord> findAll(Asset<?> asset, ChangeRecordFilterDto filterDto) {
-        if (filterDto.isEmpty()) {
-            // there is nothing to filter, simple query can be used
-            return findAll(asset);
+        URI changeTrackingContext = null;
+        try {
+            changeTrackingContext = contextResolver.resolveChangeTrackingContext(asset);
+        } catch (NoResultException e) {
+            return List.of();
         }
-        return findAllFiltered(contextResolver.resolveChangeTrackingContext(asset), filterDto, Optional.of(asset), Optional.empty(), Pageable.unpaged());
+        return findAllFiltered(changeTrackingContext, filterDto, Optional.of(asset), Optional.empty(), Pageable.unpaged());
     }
 
     /**
@@ -100,6 +118,7 @@ public class ChangeRecordDao {
                                 ?hasTime ?timestamp ;
                                 ?hasAuthor ?author .
 """ + /* Find an asset type if it is known (deleted assets does not have a type */ """
+                            BIND(?assetTypeValue as ?assetTypeVar)
                             OPTIONAL {
                                 ?asset a ?assetType .
                                 OPTIONAL {
@@ -108,7 +127,7 @@ public class ChangeRecordDao {
                                 }
                             }
 """ + /* filter assets without a type (deleted) or with a matching type */ """
-                            FILTER(!BOUND(?assetType) || ?isAssetType)
+                            FILTER(!BOUND(?assetTypeVar) || !BOUND(?assetType) || BOUND(?isAssetType))
 """ + /* Get author's name */ """
                             ?author ?hasFirstName ?firstName ;
                                 ?hasLastName ?lastName .
@@ -149,7 +168,7 @@ public class ChangeRecordDao {
                          """, AbstractChangeRecord.class)
                                                    .setParameter("changeContext", changeContext)
                                                    .setParameter("subClassOf", URI.create(RDFS.SUB_CLASS_OF))
-                                                    .setParameter("changeType", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
+                                                   .setParameter("changeType", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
                                                    .setParameter("hasChangedEntity", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
                                                    .setParameter("hasTime", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
                                                    .setParameter("hasAuthor", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_editora)) // record has author
@@ -184,39 +203,14 @@ public class ChangeRecordDao {
             query = query.setParameter("attributeNameValue", filter.getChangedAttributeName().trim());
         }
 
+        query = query.setDescriptor(new EntityDescriptor().anyLanguage());
+
         if(pageable.isUnpaged()) {
             return query.getResultList();
         }
 
         return query.setFirstResult((int) pageable.getOffset())
                     .setMaxResults(pageable.getPageSize()).getResultList();
-    }
-
-    /**
-     * Finds all change records to the specified asset.
-     *
-     * @param asset The changed asset
-     * @return List of change records ordered by timestamp (descending)
-     */
-    public List<AbstractChangeRecord> findAll(Asset<?> asset) {
-        Objects.requireNonNull(asset);
-        try {
-            final Descriptor descriptor = new EntityDescriptor();
-            descriptor.setLanguage(null);
-            return em.createNativeQuery("SELECT ?r WHERE {" +
-                             "?r a ?changeRecord ;" +
-                             "?relatesTo ?asset ;" +
-                             "?hasTime ?timestamp ." +
-                             "OPTIONAL { ?r ?hasChangedAttribute ?attribute . }" +
-                             "} ORDER BY DESC(?timestamp) ?attribute", AbstractChangeRecord.class)
-                     .setParameter("changeRecord", URI.create(Vocabulary.s_c_zmena))
-                     .setParameter("relatesTo", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
-                     .setParameter("hasChangedAttribute", URI.create(Vocabulary.s_p_ma_zmeneny_atribut))
-                     .setParameter("hasTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                     .setParameter("asset", asset.getUri()).setDescriptor(descriptor).getResultList();
-        } catch (RuntimeException e) {
-            throw new PersistenceException(e);
-        }
     }
 
     /**
