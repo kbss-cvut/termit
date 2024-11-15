@@ -153,15 +153,15 @@ class ChangeRecordDaoTest extends BaseDaoTestRunner {
     void findAllReturnsChangeRecordsOrderedByTimestampDescending() {
         enableRdfsInference(em);
         final Term asset = Generator.generateTermWithId(vocabulary.getUri());
-        transactional(() -> {
-            em.persist(vocabulary);
-            em.persist(asset, persistDescriptor(vocabulary.getUri()));
-        });
         final List<AbstractChangeRecord> records = IntStream.range(0, 5).mapToObj(
                 i -> generateUpdateRecord(Instant.ofEpochMilli(System.currentTimeMillis() + i * 10000L),
                                           asset.getUri())).collect(Collectors.toList());
         final URI changeContext = contextResolver.resolveChangeTrackingContext(vocabulary);
-        transactional(() -> records.forEach(r -> em.persist(r, persistDescriptor(changeContext))));
+        transactional(() -> {
+            em.persist(vocabulary);
+            em.persist(asset, persistDescriptor(vocabulary.getUri()));
+            records.forEach(r -> em.persist(r, persistDescriptor(changeContext)));
+        });
 
         final List<AbstractChangeRecord> result = sut.findAll(asset);
         records.sort(Comparator.comparing(AbstractChangeRecord::getTimestamp).reversed());

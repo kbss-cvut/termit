@@ -76,8 +76,8 @@ public class ChangeRecordDao {
     /**
      * Finds all change records related to the specified asset.
      *
-     * @param asset the asset
-     * @return list of change records
+     * @param asset The changed asset
+     * @return List of change records ordered by timestamp (descending)
      */
     public List<AbstractChangeRecord> findAll(Asset<?> asset) {
         return findAll(asset, new ChangeRecordFilterDto());
