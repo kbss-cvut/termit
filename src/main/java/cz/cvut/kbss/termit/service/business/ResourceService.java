@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -37,6 +38,7 @@ import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
@@ -80,22 +82,26 @@ public class ResourceService
 
     private final ChangeRecordService changeRecordService;
 
+    private final Configuration config;
+
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public ResourceService(ResourceRepositoryService repositoryService, DocumentManager documentManager,
                            TextAnalysisService textAnalysisService, VocabularyService vocabularyService,
-                           ChangeRecordService changeRecordService) {
+                           ChangeRecordService changeRecordService, Configuration config) {
         this.repositoryService = repositoryService;
         this.documentManager = documentManager;
         this.textAnalysisService = textAnalysisService;
         this.vocabularyService = vocabularyService;
         this.changeRecordService = changeRecordService;
+        this.config = config;
     }
 
     /**
      * Ensures that document gets removed during Vocabulary removal
      */
+    @Transactional
     @EventListener
     public void onVocabularyRemoval(VocabularyWillBeRemovedEvent event) {
         vocabularyService.find(event.getVocabularyIri()).ifPresent(vocabulary -> {
@@ -239,6 +245,9 @@ public class ResourceService
             throw new UnsupportedAssetOperationException("Cannot add file to the specified resource " + document);
         }
         doc.addFile(file);
+        if (file.getLanguage() == null) {
+            file.setLanguage(config.getPersistence().getLanguage());
+        }
         if (doc.getVocabulary() != null) {
             final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
             repositoryService.persist(file, vocabulary);
@@ -292,6 +301,7 @@ public class ResourceService
         verifyFileOperationPossible(resource, "Text analysis");
         LOG.trace("Invoking text analysis on resource {}.", resource);
         final File file = (File) resource;
+        verifyLanguageSupported(file);
         if (vocabularies.isEmpty()) {
             if (file.getDocument() == null || file.getDocument().getVocabulary() == null) {
                 throw new UnsupportedAssetOperationException(
@@ -302,6 +312,12 @@ public class ResourceService
                                                     Collections.singleton(file.getDocument().getVocabulary())));
         } else {
             textAnalysisService.analyzeFile(file, includeImportedVocabularies(vocabularies));
+        }
+    }
+
+    private void verifyLanguageSupported(File file) {
+        if (!textAnalysisService.supportsLanguage(file)) {
+            throw new UnsupportedTextAnalysisLanguageException("Text analysis service does not support language " + file.getLanguage(), file);
         }
     }
 

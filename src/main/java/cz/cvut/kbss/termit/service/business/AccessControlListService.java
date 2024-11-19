@@ -32,7 +32,7 @@ import java.util.Optional;
 /**
  * Service for managing {@link AccessControlList}s (ACLs).
  * <p>
- * Note that only management of ACLs is supported by this service. Access control itself is handled by TODO.
+ * Note that only management of ACLs is supported by this service. Access control itself is handled by {@link cz.cvut.kbss.termit.service.security.authorization.acl.AccessControlListBasedAuthorizationService}.
  */
 public interface AccessControlListService {
 

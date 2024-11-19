@@ -372,4 +372,15 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public PrefixDeclaration resolvePrefix(URI vocabularyUri) {
         return vocabularyDao.resolvePrefix(vocabularyUri);
     }
+
+    /**
+     * Returns the list of all distinct languages (language tags) used by terms in the specified vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return List of distinct languages
+     */
+    @Transactional(readOnly = true)
+    public List<String> getLanguages(URI vocabularyUri) {
+        return vocabularyDao.getLanguages(vocabularyUri);
+    }
 }
