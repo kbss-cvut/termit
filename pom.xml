@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>3.2.0</version>
+    <version>3.3.0</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -394,7 +394,7 @@
             </build>
         </profile>
 
-        <!-- Profiles for storages. Important for correct full text search functionality -->
+        <!-- Profile for GraphDB storage with Lucene connectors. Important for correct full text search functionality -->
         <profile>
             <id>graphdb</id>
             <properties>

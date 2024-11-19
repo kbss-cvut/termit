@@ -66,9 +66,6 @@ termit:
             separator: /verze
     file:
         storage: /tmp/termit
-    textAnalysis:
-        url: http://localhost:8081/annotace/annotate
-        languagesUrl: http://localhost:8081/annotace/languages
     changetracking:
         context:
             extension: /zmeny

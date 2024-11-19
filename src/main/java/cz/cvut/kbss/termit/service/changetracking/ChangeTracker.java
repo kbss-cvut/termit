@@ -19,9 +19,11 @@ package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
+import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.DeleteChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -113,5 +115,23 @@ public class ChangeTracker {
         changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
         changeRecord.setTimestamp(Utils.timestamp());
         changeRecordDao.persist(changeRecord, added);
+    }
+
+    /**
+     * Records an asset deletion from the repository.
+     *
+     * @param event Event representing the asset deletion
+     */
+    @Transactional
+    @EventListener
+    public void onBeforeAssetDeleteEvent(@Nonnull BeforeAssetDeleteEvent event) {
+        final Asset<?> asset = event.getAsset();
+        LOG.trace("Recording deletion of asset {}.", asset);
+
+        final AbstractChangeRecord changeRecord = new DeleteChangeRecord(asset);
+        changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
+        changeRecord.setTimestamp(Utils.timestamp());
+
+        changeRecordDao.persist(changeRecord, asset);
     }
 }

@@ -44,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -194,13 +195,20 @@ public class Utils {
         if (conceptUris.isEmpty()) {
             throw new IllegalArgumentException("No namespace candidate.");
         }
-
         final Iterator<String> i = conceptUris.iterator();
-
         final String conceptUri = i.next();
+        final String namespace = extractNamespace(termSeparator, conceptUri);
+        for (final String s : conceptUris) {
+            if (!s.startsWith(namespace)) {
+                throw new IllegalArgumentException(
+                        "Not all Concept IRIs have the same namespace: " + conceptUri + " vs. " + namespace);
+            }
+        }
+        return namespace;
+    }
 
+    private static String extractNamespace(String termSeparator, String conceptUri) {
         final String separator;
-
         if (conceptUri.lastIndexOf(termSeparator) > 0) {
             separator = termSeparator;
         } else if (conceptUri.lastIndexOf("#") > 0) {
@@ -210,16 +218,7 @@ public class Utils {
         } else {
             throw new IllegalArgumentException("The IRI does not have a proper format: " + conceptUri);
         }
-
-        final String namespace = conceptUri.substring(0, conceptUri.lastIndexOf(separator));
-
-        for (final String s : conceptUris) {
-            if (!s.startsWith(namespace)) {
-                throw new IllegalArgumentException(
-                        "Not all Concept IRIs have the same namespace: " + conceptUri + " vs. " + namespace);
-            }
-        }
-        return namespace;
+        return conceptUri.substring(0, conceptUri.lastIndexOf(separator));
     }
 
     /**
@@ -402,15 +401,25 @@ public class Utils {
 
     /**
      * Converts the map into a string
-     * @return Empty string when the map is {@code null}, otherwise the String in format
-     * {@code {key=value, key=value}}
+     *
+     * @return Empty string when the map is {@code null}, otherwise the String in format {@code {key=value, key=value}}
      */
     public static <A, B> String mapToString(Map<A, B> map) {
         if (map == null) {
             return "";
         }
         return map.keySet().stream()
-                           .map(key -> key + "=" + map.get(key))
-                           .collect(Collectors.joining(", ", "{", "}"));
+                  .map(key -> key + "=" + map.get(key))
+                  .collect(Collectors.joining(", ", "{", "}"));
+    }
+
+    /**
+     * Checks whether the {@code development} profile is active.
+     *
+     * @param activeProfiles Array of active profiles
+     * @return {@code true} if the {@code development} profile is active, {@code false} otherwise
+     */
+    public static boolean isDevelopmentProfile(String[] activeProfiles) {
+        return Arrays.binarySearch(activeProfiles, Constants.DEVELOPMENT_PROFILE) != -1;
     }
 }

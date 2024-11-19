@@ -42,6 +42,9 @@ public class PersistChangeRecord extends AbstractChangeRecord {
         if (o instanceof UpdateChangeRecord) {
             return -1;
         }
+        if (o instanceof DeleteChangeRecord) {
+            return -1;
+        }
         return super.compareTo(o);
     }
 }
