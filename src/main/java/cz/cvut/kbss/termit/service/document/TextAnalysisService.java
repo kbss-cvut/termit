@@ -20,11 +20,15 @@ package cz.cvut.kbss.termit.service.document;
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
+import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
@@ -32,20 +36,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -66,6 +74,8 @@ public class TextAnalysisService {
     private final TextAnalysisRecordDao recordDao;
 
     private final ApplicationEventPublisher eventPublisher;
+
+    private Set<String> supportedLanguages;
 
     @Autowired
     public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
@@ -126,6 +136,8 @@ public class TextAnalysisService {
             storeTextAnalysisRecord(file, input);
         } catch (WebServiceIntegrationException e) {
             throw e;
+        } catch (HttpClientErrorException e) {
+            throw handleTextAnalysisInvocationClientException(e, file);
         } catch (RuntimeException e) {
             throw new WebServiceIntegrationException("Text analysis invocation failed.", e);
         } catch (IOException e) {
@@ -140,11 +152,10 @@ public class TextAnalysisService {
             return Optional.empty();
         }
         final HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE);
-        LOG.debug("Invoking text analysis service at '{}' on input: {}", config.getTextAnalysis().getUrl(), input);
-        final ResponseEntity<Resource> resp = restClient
-                .exchange(config.getTextAnalysis().getUrl(), HttpMethod.POST,
-                          new HttpEntity<>(input, headers), Resource.class);
+        headers.addAll(HttpHeaders.ACCEPT, List.of(MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE));
+        LOG.debug("Invoking text analysis service at '{}' on input: {}", taUrl, input);
+        final ResponseEntity<Resource> resp = restClient.exchange(taUrl, HttpMethod.POST,
+                                                                  new HttpEntity<>(input, headers), Resource.class);
         if (!resp.hasBody()) {
             throw new WebServiceIntegrationException("Text analysis service returned empty response.");
         }
@@ -159,6 +170,16 @@ public class TextAnalysisService {
         final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
         record.setVocabularies(new HashSet<>(config.getVocabularyContexts()));
         recordDao.persist(record);
+    }
+
+    private TermItException handleTextAnalysisInvocationClientException(HttpClientErrorException ex, Asset<?> asset) {
+        if (ex.getStatusCode() == HttpStatus.CONFLICT) {
+            final ErrorInfo errorInfo = ex.getResponseBodyAs(ErrorInfo.class);
+            if (errorInfo != null && errorInfo.getMessage().contains("language")) {
+                throw new UnsupportedTextAnalysisLanguageException(errorInfo.getMessage(),asset);
+            }
+        }
+        throw new WebServiceIntegrationException("Text analysis invocation failed.", ex);
     }
 
     /**
@@ -205,10 +226,56 @@ public class TextAnalysisService {
             }
         } catch (WebServiceIntegrationException e) {
             throw e;
+        } catch (HttpClientErrorException e) {
+            throw handleTextAnalysisInvocationClientException(e, term);
         } catch (RuntimeException e) {
             throw new WebServiceIntegrationException("Text analysis invocation failed.", e);
         } catch (IOException e) {
             throw new WebServiceIntegrationException("Unable to read text analysis result from response.", e);
         }
+    }
+
+    /**
+     * Checks whether the text analysis service supports the language of the specified file.
+     * <p>
+     * If the text analysis service does not provide endpoint for getting supported languages (or it is not configured),
+     * it is assumed that any language is supported.
+     * <p>
+     * If the file does not have language set, it is assumed that it is supported as well.
+     *
+     * @param file File to be analyzed
+     * @return {@code true} if the file language is supported, {@code false} otherwise
+     */
+    public boolean supportsLanguage(File file) {
+        Objects.requireNonNull(file);
+        return file.getLanguage() == null || getSupportedLanguages().isEmpty() || getSupportedLanguages().contains(
+                file.getLanguage());
+    }
+
+    private synchronized Set<String> getSupportedLanguages() {
+        if (supportedLanguages != null) {
+            return supportedLanguages;
+        }
+        final String languagesEndpointUrl = config.getTextAnalysis().getLanguagesUrl();
+        if (languagesEndpointUrl == null || languagesEndpointUrl.isBlank()) {
+            LOG.warn(
+                    "Text analysis service languages endpoint URL not configured. Assuming any language is supported.");
+            this.supportedLanguages = Set.of();
+        } else {
+            try {
+                LOG.debug("Getting list of supported languages from text analysis service at '{}'.",
+                          languagesEndpointUrl);
+                ResponseEntity<Set<String>> response = restClient.exchange(languagesEndpointUrl, HttpMethod.GET, null,
+                                                                           new ParameterizedTypeReference<>() {
+                                                                           });
+                this.supportedLanguages = response.getBody();
+                LOG.trace("Text analysis supported languages: {}", supportedLanguages);
+            } catch (RuntimeException e) {
+                LOG.error("Unable to get list of supported languages from text analysis service at '{}'.",
+                          languagesEndpointUrl, e);
+                this.supportedLanguages = Set.of();
+            }
+        }
+        return supportedLanguages;
     }
 }

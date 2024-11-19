@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -300,6 +301,7 @@ public class ResourceService
         verifyFileOperationPossible(resource, "Text analysis");
         LOG.trace("Invoking text analysis on resource {}.", resource);
         final File file = (File) resource;
+        verifyLanguageSupported(file);
         if (vocabularies.isEmpty()) {
             if (file.getDocument() == null || file.getDocument().getVocabulary() == null) {
                 throw new UnsupportedAssetOperationException(
@@ -310,6 +312,12 @@ public class ResourceService
                                                     Collections.singleton(file.getDocument().getVocabulary())));
         } else {
             textAnalysisService.analyzeFile(file, includeImportedVocabularies(vocabularies));
+        }
+    }
+
+    private void verifyLanguageSupported(File file) {
+        if (!textAnalysisService.supportsLanguage(file)) {
+            throw new UnsupportedTextAnalysisLanguageException("Text analysis service does not support language " + file.getLanguage(), file);
         }
     }
 

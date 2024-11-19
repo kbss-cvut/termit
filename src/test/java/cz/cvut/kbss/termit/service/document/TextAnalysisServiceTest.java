@@ -27,14 +27,17 @@ import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitiali
 import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
+import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,6 +73,7 @@ import java.util.stream.IntStream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -87,6 +91,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withRequestConflict;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -203,7 +208,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                   .andExpect(method(HttpMethod.POST))
                   .andExpect(content().string(objectMapper.writeValueAsString(input)))
                   .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
-                  .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE))
+                  .andExpect(header(HttpHeaders.ACCEPT,MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE))
                   .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
@@ -477,5 +482,52 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                   .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
+    }
+
+    @Test
+    void analyzeFileThrowsUnsupportedLanguageExceptionWhenTextAnalysisInvocationReturnsConflictWithUnsupportedLanguageError()
+            throws Exception {
+        file.setLanguage("de");
+        final ErrorInfo respBody = ErrorInfo.createWithMessage("No taggers for language 'de' available.",
+                                                               "/annotace/annotate");
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andRespond(withRequestConflict().body(objectMapper.writeValueAsString(respBody))
+                                                   .contentType(MediaType.APPLICATION_JSON));
+
+        final UnsupportedTextAnalysisLanguageException ex = assertThrows(UnsupportedTextAnalysisLanguageException.class,
+                                                                         () -> sut.analyzeFile(file,
+                                                                                               Collections.singleton(
+                                                                                                       vocabulary.getUri())));
+        assertEquals("error.annotation.file.unsupportedLanguage", ex.getMessageId());
+    }
+
+    @Test
+    void supportsLanguageGetsListOfSupportedLanguagesFromTextAnalysisServiceAndChecksIfFileLanguageIsAmongThem() {
+        file.setLanguage("cs");
+        mockServer.expect(requestTo(config.getTextAnalysis().getLanguagesUrl()))
+                  .andExpect(method(HttpMethod.GET))
+                  .andRespond(withSuccess("[\"cs\", \"en\"]", MediaType.APPLICATION_JSON));
+        assertTrue(sut.supportsLanguage(file));
+        mockServer.verify();
+
+        file.setLanguage("de");
+        assertFalse(sut.supportsLanguage(file));
+    }
+
+    @Test
+    void supportsLanguageReturnsTrueWhenTextAnalysisServiceLanguagesEndpointUrlIsNotConfigured() {
+        String endpointUrl = config.getTextAnalysis().getLanguagesUrl();
+        file.setLanguage(Constants.DEFAULT_LANGUAGE);
+        config.getTextAnalysis().setLanguagesUrl(null);
+        assertTrue(sut.supportsLanguage(file));
+        // Reset configuration state
+        config.getTextAnalysis().setLanguagesUrl(endpointUrl);
+    }
+
+    @Test
+    void supportsLanguageReturnsTrueWhenFileHasNoLanguageSet() {
+        file.setLanguage(null);
+        assertTrue(sut.supportsLanguage(file));
     }
 }

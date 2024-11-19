@@ -30,7 +30,8 @@ termit:
     file:
         storage: /tmp/termit
     textAnalysis:
-        url: http://localhost/annotace
+        url: http://localhost/annotace/annotate
+        languagesUrl: http://localhost/annotace/languages
         termOccurrenceMinScore: 0.49
     comments:
         context: http://onto.fel.cvut.cz/ontologies/komentare

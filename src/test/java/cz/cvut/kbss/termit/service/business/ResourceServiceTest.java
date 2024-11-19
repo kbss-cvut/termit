@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -203,6 +204,7 @@ class ResourceServiceTest {
         file.setDocument(Generator.generateDocumentWithId());
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         file.getDocument().setVocabulary(vocabulary.getUri());
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
         sut.runTextAnalysis(file, Collections.emptySet());
         verify(textAnalysisService).analyzeFile(file, Collections.singleton(vocabulary.getUri()));
     }
@@ -218,6 +220,7 @@ class ResourceServiceTest {
     @Test
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenFileHasNoVocabularyAndNoVocabulariesAreSpecifiedEither() {
         final File file = Generator.generateFileWithId("test.html");
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
         assertThrows(UnsupportedAssetOperationException.class,
                      () -> sut.runTextAnalysis(file, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
@@ -227,6 +230,7 @@ class ResourceServiceTest {
     void runTextAnalysisInvokesAnalysisWithCustomVocabulariesWhenSpecified() {
         final File file = Generator.generateFileWithId("test.html");
         final Set<URI> vocabularies = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
         sut.runTextAnalysis(file, vocabularies);
         verify(textAnalysisService).analyzeFile(file, vocabularies);
     }
@@ -240,6 +244,7 @@ class ResourceServiceTest {
         final Set<URI> imported = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(imported);
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
 
         sut.runTextAnalysis(file, Collections.emptySet());
         final Set<URI> expected = new HashSet<>(imported);
@@ -259,6 +264,7 @@ class ResourceServiceTest {
         when(vocabularyService.getTransitivelyImportedVocabularies(vOne)).thenReturn(vOneImports);
         when(vocabularyService.getReference(vTwo.getUri())).thenReturn(vTwo);
         when(vocabularyService.getTransitivelyImportedVocabularies(vTwo)).thenReturn(vTwoImports);
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
 
         sut.runTextAnalysis(file, new HashSet<>(Arrays.asList(vOne.getUri(), vTwo.getUri())));
         final Set<URI> expected = new HashSet<>(vOneImports);
@@ -553,5 +559,17 @@ class ResourceServiceTest {
         sut.addFileToDocument(document, file);
         verify(resourceRepositoryService).persist(file, vocabulary);
         assertEquals("cs", file.getLanguage());
+    }
+
+    @Test
+    void runTextAnalysisThrowsUnsupportedTextAnalysisExceptionWhenTextAnalysisServiceDoesNotSupportFileLanguage() {
+        final File file = Generator.generateFileWithId("test.html");
+        file.setDocument(Generator.generateDocumentWithId());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        file.getDocument().setVocabulary(vocabulary.getUri());
+        file.setLanguage("sk");
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(false);
+        assertThrows(UnsupportedTextAnalysisLanguageException.class, () -> sut.runTextAnalysis(file, Set.of(vocabulary.getUri())));
+        verify(textAnalysisService).supportsLanguage(file);
     }
 }
