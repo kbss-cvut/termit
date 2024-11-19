@@ -139,6 +139,18 @@ class ThrottledFutureTest {
     }
 
     @Test
+    void thenActionIsNotExecutedWhenFutureCompletedExceptionally() {
+        final AtomicBoolean completed = new AtomicBoolean(false);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
+            throw new RuntimeException();
+        });
+        future.run(null);
+        assertFalse(completed.get());
+        future.then(futureResult -> completed.set(true));
+        assertFalse(completed.get());
+    }
+
+    @Test
     void callingRunWillExecuteFutureOnlyOnce() {
         AtomicInteger count = new AtomicInteger(0);
         final ThrottledFuture<?> future = ThrottledFuture.of(() -> {

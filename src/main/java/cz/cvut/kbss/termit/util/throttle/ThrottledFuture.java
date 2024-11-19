@@ -245,7 +245,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
     public ThrottledFuture<T> then(Consumer<T> action) {
         try {
             callbackLock.lock();
-            if (future.isDone() && !future.isCancelled()) {
+            if (future.isDone() && !future.isCancelled() && !future.isCompletedExceptionally()) {
                 try {
                     action.accept(future.get());
                 } catch (InterruptedException e) {
@@ -261,5 +261,13 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, LongRunningTask {
             callbackLock.unlock();
         }
         return this;
+    }
+
+    /**
+     * @return {@code true} if this future completed
+     * exceptionally
+     */
+    public boolean isCompletedExceptionally() {
+        return future.isCompletedExceptionally();
     }
 }
