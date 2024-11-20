@@ -89,11 +89,12 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
+        final boolean wasCanceled = isCancelled();
         if(!future.cancel(mayInterruptIfRunning)) {
             return false;
         }
 
-        if (task != null) {
+        if (!wasCanceled && task != null) {
             callbackLock.lock();
             onCompletion.forEach(c -> c.accept(this));
             callbackLock.unlock();
@@ -268,7 +269,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
 
     /**
      * @return {@code true} if this future completed
-     * exceptionally
+     * exceptionally or was cancelled.
      */
     public boolean isCompletedExceptionally() {
         return future.isCompletedExceptionally();

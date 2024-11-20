@@ -137,7 +137,59 @@ class ThrottledFutureTest {
     }
 
     @Test
-    void thenActionIsExecutedWhenFutureCompletedExceptionally() {
+    void thenActionIsExecutedOnlyOnceWhenFutureIsCancelled() {
+        final AtomicInteger executionCount = new AtomicInteger(0);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> null);
+        future.then(f -> executionCount.incrementAndGet());
+        assertEquals(0, executionCount.get());
+        future.cancel(false);
+        assertEquals(1, executionCount.get());
+        future.cancel(false);
+        future.cancel(true);
+        assertEquals(1, executionCount.get());
+    }
+
+    @Test
+    void thenActionIsExecutedWhenFutureCompletesExceptionally() {
+        final AtomicBoolean completed = new AtomicBoolean(false);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
+            throw new RuntimeException();
+        });
+        future.then(futureResult -> completed.set(true));
+        assertFalse(completed.get());
+        future.run(null);
+        assertTrue(completed.get());
+    }
+
+    @Test
+    void isCompletedExceptionallyReturnsTrueWhenFutureCompletesExceptionally() {
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
+            throw new RuntimeException();
+        });
+        future.run(null);
+        assertTrue(future.isCompletedExceptionally());
+    }
+
+    @Test
+    void isCompletedExceptionallyReturnsFalseWhenFutureCompletesNormally() {
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> null);
+        future.run(null);
+        assertFalse(future.isCompletedExceptionally());
+        assertFalse(future.isCancelled());
+        assertTrue(future.isDone());
+    }
+
+    @Test
+    void isCompletedExceptionallyReturnsTrueWhenFutureIsCancelled() {
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> null);
+        future.cancel(false);
+        assertTrue(future.isCompletedExceptionally());
+        assertTrue(future.isCancelled());
+        assertTrue(future.isDone());
+    }
+
+    @Test
+    void thenActionIsExecutedWhenFutureIsAlreadyCompletedExceptionally() {
         final AtomicBoolean completed = new AtomicBoolean(false);
         final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
             throw new RuntimeException();
