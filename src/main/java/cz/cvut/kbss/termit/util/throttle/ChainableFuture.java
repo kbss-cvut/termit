@@ -10,6 +10,8 @@ public interface ChainableFuture<T, F extends ChainableFuture<T, F>> extends Fut
      * Action is executed no matter if the future is completed successfully, exceptionally or cancelled.
      * <p>
      * If the future is already completed, it is executed synchronously.
+     * <p>
+     * Note that you <b>must</b> use the future passed as the parameter and not the original future object.
      * @param action action receiving this future after completion
      * @return this future
      */
