@@ -299,8 +299,8 @@ class ThrottledFutureTest {
 
     @Test
     void transferUpdatesSecondFutureWithCallbacks() {
-        final Consumer<String> firstCallback = (result) -> {};
-        final Consumer<String> secondCallback = (result) -> {};
+        final Consumer<ThrottledFuture<String>> firstCallback = (result) -> {};
+        final Consumer<ThrottledFuture<String>> secondCallback = (result) -> {};
         final ThrottledFuture<String> firstFuture = ThrottledFuture.of(()->"").then(firstCallback);
         final ThrottledFuture<String> secondFuture = ThrottledFuture.of(()->"").then(secondCallback);
         final ThrottledFuture<String> mocked = mock(ThrottledFuture.class);
@@ -323,14 +323,14 @@ class ThrottledFutureTest {
 
     @Test
     void callbacksAreClearedAfterTransferring() {
-        final Consumer<String> firstCallback = (result) -> {};
-        final Consumer<String> secondCallback = (result) -> {};
+        final Consumer<ThrottledFuture<String>> firstCallback = (result) -> {};
+        final Consumer<ThrottledFuture<String>> secondCallback = (result) -> {};
         final ThrottledFuture<String> future = ThrottledFuture.of(()->"").then(firstCallback).then(secondCallback);
         final ThrottledFuture<String> mocked = mock(ThrottledFuture.class);
 
         future.transfer(mocked);
 
-        final ArgumentCaptor<List<Consumer<String>>> captor = ArgumentCaptor.forClass(List.class);
+        final ArgumentCaptor<List<Consumer<ThrottledFuture<String>>>> captor = ArgumentCaptor.forClass(List.class);
 
         verify(mocked).update(notNull(), captor.capture());
         // captor takes the original list from the future
@@ -386,8 +386,8 @@ class ThrottledFutureTest {
 
     @Test
     void updateAddsCallbacksToTheCurrentOnes() {
-        final Consumer<String> callback = result -> {};
-        final Consumer<String> originalCallback = result -> {};
+        final Consumer<ThrottledFuture<String>> callback = result -> {};
+        final Consumer<ThrottledFuture<String>> originalCallback = result -> {};
         final ThrottledFuture<String> future = ThrottledFuture.of(() -> "").then(originalCallback);
 
         future.update(()->"", List.of(callback));

@@ -48,7 +48,7 @@ import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -366,7 +366,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     @Transactional
-    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         final VocabularyContentValidator validator = context.getBean(VocabularyContentValidator.class);
         final Collection<URI> importClosure = getTransitivelyImportedVocabularies(vocabulary);
         importClosure.add(vocabulary);
