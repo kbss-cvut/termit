@@ -167,7 +167,7 @@ public class TextAnalysisService {
         LOG.trace("Creating record of text analysis event for file {}.", file);
         assert config.getVocabularyContexts() != null;
 
-        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file, config.getLanguage());
         record.setVocabularies(new HashSet<>(config.getVocabularyContexts()));
         recordDao.persist(record);
     }

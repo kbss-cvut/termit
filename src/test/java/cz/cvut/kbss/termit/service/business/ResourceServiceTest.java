@@ -37,7 +37,6 @@ import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
@@ -388,7 +387,7 @@ class ResourceServiceTest {
     @Test
     void findLatestTextAnalysisRecordRetrievesLatestTextAnalysisRecordForResource() {
         final File file = Generator.generateFileWithId("test.html");
-        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file, Environment.LANGUAGE);
         when(textAnalysisService.findLatestAnalysisRecord(file)).thenReturn(Optional.of(record));
 
         final TextAnalysisRecord result = sut.findLatestTextAnalysisRecord(file);
@@ -530,7 +529,7 @@ class ResourceServiceTest {
 
     @Test
     void addFileToDocumentSetsFileLanguageToDefaultConfiguredWhenNotProvided() {
-        config.getPersistence().setLanguage(Constants.DEFAULT_LANGUAGE);
+        config.getPersistence().setLanguage(Environment.LANGUAGE);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Document document = Generator.generateDocumentWithId();
         document.setVocabulary(vocabulary.getUri());
@@ -546,7 +545,7 @@ class ResourceServiceTest {
 
     @Test
     void addFileToDocumentDoesNotModifyLanguageWhenItIsAlreadySet() {
-        config.getPersistence().setLanguage(Constants.DEFAULT_LANGUAGE);
+        config.getPersistence().setLanguage(Environment.LANGUAGE);
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Document document = Generator.generateDocumentWithId();
         document.setVocabulary(vocabulary.getUri());

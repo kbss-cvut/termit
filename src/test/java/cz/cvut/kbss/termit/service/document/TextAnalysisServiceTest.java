@@ -37,7 +37,6 @@ import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
-import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -326,6 +325,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
     @Test
     void analyzeFileCreatesTextAnalysisRecord() {
+        file.setLanguage("cs");
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
                   .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
                   .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
@@ -334,11 +334,12 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         verify(textAnalysisRecordDao).persist(captor.capture());
         assertEquals(file, captor.getValue().getAnalyzedResource());
         assertEquals(Collections.singleton(vocabulary.getUri()), captor.getValue().getVocabularies());
+        assertEquals(file.getLanguage(), captor.getValue().getLanguage());
     }
 
     @Test
     void findLatestAnalysisRecordFindsLatestTextAnalysisRecordForResource() {
-        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file, Environment.LANGUAGE);
         record.setVocabularies(Collections.singleton(vocabulary.getUri()));
         when(textAnalysisRecordDao.findLatest(file)).thenReturn(Optional.of(record));
 
@@ -518,7 +519,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     @Test
     void supportsLanguageReturnsTrueWhenTextAnalysisServiceLanguagesEndpointUrlIsNotConfigured() {
         String endpointUrl = config.getTextAnalysis().getLanguagesUrl();
-        file.setLanguage(Constants.DEFAULT_LANGUAGE);
+        file.setLanguage(Environment.LANGUAGE);
         config.getTextAnalysis().setLanguagesUrl(null);
         assertTrue(sut.supportsLanguage(file));
         // Reset configuration state

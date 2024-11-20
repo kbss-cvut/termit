@@ -326,7 +326,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         final File file = generateFile();
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, FILE_NAME)).thenReturn(file.getUri());
         when(resourceServiceMock.findRequired(file.getUri())).thenReturn(file);
-        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file, Environment.LANGUAGE);
         record.setVocabularies(Collections.singleton(Generator.generateUri()));
         when(resourceServiceMock.findLatestTextAnalysisRecord(file)).thenReturn(record);
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FILE_NAME + "/text-analysis/records/latest")
