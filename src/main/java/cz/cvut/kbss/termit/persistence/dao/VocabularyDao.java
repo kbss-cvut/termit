@@ -49,7 +49,7 @@ import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -223,10 +223,13 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     /**
      * Forcefully removes the specified vocabulary.
      * <p>
-     * This deletes the whole graph of the vocabulary, all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
-     * should be exercised when using this method. All relevant data, including documents and files, will be dropped.
+     * This deletes the whole graph of the vocabulary, all terms in the vocabulary's glossary and then removes the
+     * vocabulary itself. Extreme caution should be exercised when using this method. All relevant data, including
+     * documents and files, will be dropped.
      * <p>
-     * Publishes {@link VocabularyWillBeRemovedEvent} before the actual removal to allow other services to clean up related resources (e.g., delete the document).
+     * Publishes {@link VocabularyWillBeRemovedEvent} before the actual removal to allow other services to clean up
+     * related resources (e.g., delete the document).
+     *
      * @param entity The vocabulary to delete
      */
     @ModifiesData
@@ -242,9 +245,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * <p>
      * Forcefully removes the specified vocabulary.
      * <p>
-     * This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself.
-     * Extreme caution should be exercised when using this method,
-     * as it does not check for any references or usage and just drops all the relevant data.
+     * This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
+     * should be exercised when using this method, as it does not check for any references or usage and just drops all
+     * the relevant data.
      * <p>
      * The document is not removed.
      */
@@ -254,19 +257,19 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     /**
      * <p>
-     * Does not publish the {@link VocabularyWillBeRemovedEvent}.<br>
-     * You should use {@link #remove(Vocabulary)} instead.
+     * Does not publish the {@link VocabularyWillBeRemovedEvent}.<br> You should use {@link #remove(Vocabulary)}
+     * instead.
      * <p>
      * Forcefully removes the specified vocabulary.
      * <p>
      * This deletes all terms in the vocabulary's glossary and then removes the vocabulary itself. Extreme caution
      * should be exercised when using this method, as it does not check for any references or usage and just drops all
      * the relevant data.
-     * @param entity The vocabulary to delete
-     * @param dropGraph if false,
-     *                  executes {@code  src/main/resources/query/remove/removeGlossaryTerms.ru} removing terms,
-     *                  their relations, model, glossary and vocabulary itself, keeps the document.
-     *                  When true, the whole vocabulary graph is dropped.
+     *
+     * @param entity    The vocabulary to delete
+     * @param dropGraph if false, executes {@code  src/main/resources/query/remove/removeGlossaryTerms.ru} removing
+     *                  terms, their relations, model, glossary and vocabulary itself, keeps the document. When true,
+     *                  the whole vocabulary graph is dropped.
      */
     private void removeVocabulary(Vocabulary entity, boolean dropGraph) {
         Objects.requireNonNull(entity);
@@ -274,7 +277,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         try {
             final URI vocabularyContext = contextMapper.getVocabularyContext(entity.getUri());
 
-            if(dropGraph) {
+            if (dropGraph) {
                 // drops whole named graph
                 em.createNativeQuery("DROP GRAPH ?context")
                   .setParameter("context", vocabularyContext)
@@ -323,8 +326,8 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     /**
-     * Checks whether terms from the {@code subjectVocabulary} reference (as parent terms) any terms from the {@code
-     * targetVocabulary}.
+     * Checks whether terms from the {@code subjectVocabulary} reference (as parent terms) any terms from the
+     * {@code targetVocabulary}.
      *
      * @param subjectVocabulary Subject vocabulary identifier
      * @param targetVocabulary  Target vocabulary identifier
@@ -367,7 +370,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     @Transactional
-    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         final VocabularyContentValidator validator = context.getBean(VocabularyContentValidator.class);
         final Collection<URI> importClosure = getTransitivelyImportedVocabularies(vocabulary);
         importClosure.add(vocabulary);
@@ -403,7 +406,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq Specification of the size and number of the page to return
+     * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
@@ -561,16 +564,17 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
         try {
             return em.createNativeQuery("""
-                             SELECT DISTINCT ?object ?relation ?subject {
-                                 ?object a ?vocabularyType ;
-                                    ?relation ?subject . 
-                                 FILTER(?object != ?subject) .
-                                 FILTER(?relation NOT IN (?excluded)) .
-                             } ORDER BY ?object ?relation
-                             """, "RDFStatement")
+                                                SELECT DISTINCT ?object ?relation ?subject {
+                                                    ?object a ?vocabularyType ;
+                                                       ?relation ?subject .
+                                                    FILTER(?object != ?subject) .
+                                                    FILTER(?relation NOT IN (?excluded)) .
+                                                } ORDER BY ?object ?relation
+                                                """, "RDFStatement")
                      .setParameter("subject", vocabularyUri)
-                    .setParameter("excluded", excludedRelations)
-                     .setParameter("vocabularyType", URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Vocabulary.class)))
+                     .setParameter("excluded", excludedRelations)
+                     .setParameter("vocabularyType",
+                                   URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Vocabulary.class)))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -588,36 +592,64 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
         try {
             return em.createNativeQuery("""
-                             SELECT DISTINCT ?object ?relation ?subject WHERE {
-                                     ?term a ?termType;
-                                         ?inVocabulary ?vocabulary .
+                                                SELECT DISTINCT ?object ?relation ?subject WHERE {
+                                                        ?term a ?termType;
+                                                            ?inVocabulary ?vocabulary .
 
-                                     {
-                                        ?term ?relation ?secondTerm .
-                                        ?secondTerm a ?termType;
-                                            ?inVocabulary ?secondVocabulary .
-                                            
-                                        BIND(?term as ?object)
-                                        BIND(?secondTerm as ?subject)
-                                     } UNION {
-                                        ?secondTerm ?relation ?term .
-                                        ?secondTerm a ?termType;
-                                            ?inVocabulary ?secondVocabulary .
+                                                        {
+                                                           ?term ?relation ?secondTerm .
+                                                           ?secondTerm a ?termType;
+                                                               ?inVocabulary ?secondVocabulary .
 
-                                        BIND(?secondTerm as ?object)
-                                        BIND(?term as ?subject)
-                                     }
+                                                           BIND(?term as ?object)
+                                                           BIND(?secondTerm as ?subject)
+                                                        } UNION {
+                                                           ?secondTerm ?relation ?term .
+                                                           ?secondTerm a ?termType;
+                                                               ?inVocabulary ?secondVocabulary .
 
-                                     FILTER(?relation IN (?deniedRelations))
-                                     FILTER(?object != ?subject)
-                                     FILTER(?secondVocabulary != ?vocabulary)
-                             } ORDER by ?object ?relation ?subject
-                             """, "RDFStatement"
+                                                           BIND(?secondTerm as ?object)
+                                                           BIND(?term as ?subject)
+                                                        }
+
+                                                        FILTER(?relation IN (?deniedRelations))
+                                                        FILTER(?object != ?subject)
+                                                        FILTER(?secondVocabulary != ?vocabulary)
+                                                } ORDER by ?object ?relation ?subject
+                                                """, "RDFStatement"
                      ).setMaxResults(DEFAULT_PAGE_SIZE)
                      .setParameter("termType", termType)
                      .setParameter("inVocabulary", inVocabulary)
                      .setParameter("vocabulary", vocabularyUri)
                      .setParameter("deniedRelations", SKOS_CONCEPT_MATCH_RELATIONSHIPS)
+                     .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Returns the list of all distinct languages (language tags) used by terms in the specified vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return List of distinct languages
+     */
+    public List<String> getLanguages(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        try {
+            return em.createNativeQuery("""
+                                                SELECT DISTINCT ?lang WHERE {
+                                                    ?x a ?type ;
+                                                    ?inVocabulary ?vocabulary ;
+                                                    ?labelProp ?label .
+                                                    BIND (LANG(?label) as ?lang)
+                                                }
+                                                """, String.class)
+                     .setParameter("type", URI.create(SKOS.CONCEPT))
+                     .setParameter("inVocabulary",
+                                   URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                     .setParameter("vocabulary", vocabularyUri)
+                     .setParameter("labelProp", URI.create(SKOS.PREF_LABEL))
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

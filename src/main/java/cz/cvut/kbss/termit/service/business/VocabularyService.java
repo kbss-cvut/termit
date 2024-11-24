@@ -47,8 +47,8 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -317,7 +317,7 @@ public class VocabularyService
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq Specification of the size and number of the page to return
+     * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
@@ -385,7 +385,7 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to validate
      */
-    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         return repositoryService.validateContents(vocabulary);
     }
 
@@ -521,6 +521,17 @@ public class VocabularyService
     public AccessLevel getAccessLevel(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return authorizationService.getAccessLevel(vocabulary);
+    }
+
+    /**
+     * Gets the list of languages used in the specified vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return List of languages
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabularyUri)")
+    public List<String> getLanguages(URI vocabularyUri) {
+        return repositoryService.getLanguages(vocabularyUri);
     }
 
     @Override

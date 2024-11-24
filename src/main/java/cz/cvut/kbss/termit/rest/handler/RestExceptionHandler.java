@@ -36,6 +36,7 @@ import cz.cvut.kbss.termit.exception.SuppressibleLogging;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
@@ -99,7 +100,8 @@ public class RestExceptionHandler {
     }
 
     private static ErrorInfo errorInfo(HttpServletRequest request, TermItException e) {
-        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), request.getRequestURI(), e.getParameters());
+        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), request.getRequestURI(),
+                                                       e.getParameters());
     }
 
     @ExceptionHandler(PersistenceException.class)
@@ -289,5 +291,12 @@ public class RestExceptionHandler {
                 .addParameter("index", Integer.toString(e.getIndex()))
                 .addParameter("char", Character.toString(e.getInput().charAt(e.getIndex())));
         return new ResponseEntity<>(errorInfo(request, exception), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorInfo> unsupportedTextAnalysisLanguageException(HttpServletRequest request,
+                                                                              UnsupportedTextAnalysisLanguageException e) {
+        logException(e, request);
+        return new ResponseEntity<>(errorInfo(request, e), HttpStatus.CONFLICT);
     }
 }

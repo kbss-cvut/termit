@@ -153,6 +153,23 @@ public class Constants {
                     "Notation", "Example", "References")
     );
 
+
+    /**
+     * the maximum amount of data to buffer when sending messages to a WebSocket session
+     */
+    public static final int WEBSOCKET_SEND_BUFFER_SIZE_LIMIT = Integer.MAX_VALUE;
+
+    /**
+     * Set the maximum time allowed in milliseconds after the WebSocket connection is established
+     * and before the first sub-protocol message is received.
+     */
+    public static final int WEBSOCKET_TIME_TO_FIRST_MESSAGE = 15 * 1000 /* 15s */;
+
+    /**
+     * Development Spring profile.
+     */
+    public static final String DEVELOPMENT_PROFILE = "development";
+
     private Constants() {
         throw new AssertionError();
     }
@@ -247,32 +264,4 @@ public class Constants {
             throw new AssertionError();
         }
     }
-
-    public static final class DebouncingGroups {
-
-        /**
-         * Text analysis of all terms in specific vocabulary
-         */
-        public static final String TEXT_ANALYSIS_VOCABULARY_TERMS_ALL_DEFINITIONS = "TEXT_ANALYSIS_VOCABULARY_TERMS_ALL_DEFINITIONS";
-
-        /**
-         * Text analysis of all vocabularies
-         */
-        public static final String TEXT_ANALYSIS_VOCABULARY = "TEXT_ANALYSIS_VOCABULARY";
-
-        private DebouncingGroups() {
-            throw new AssertionError();
-        }
-    }
-
-    /**
-     * the maximum amount of data to buffer when sending messages to a WebSocket session
-     */
-    public static final int WEBSOCKET_SEND_BUFFER_SIZE_LIMIT = Integer.MAX_VALUE;
-
-    /**
-     * Set the maximum time allowed in milliseconds after the WebSocket connection is established
-     * and before the first sub-protocol message is received.
-     */
-    public static final int WEBSOCKET_TIME_TO_FIRST_MESSAGE = 15 * 1000 /* 15s */;
 }

@@ -85,8 +85,7 @@ class ThrottledFutureTest {
 
     @Test
     void thenActionIsExecutedSynchronouslyWhenFutureIsAlreadyDoneAndNotCanceled() {
-        final Object result = new Object();
-        final ThrottledFuture<?> future = ThrottledFuture.of(() -> result);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> null);
         final AtomicBoolean completed = new AtomicBoolean(false);
         final AtomicReference<Object> futureResult = new AtomicReference<>(null);
         future.run(null);
@@ -97,25 +96,24 @@ class ThrottledFutureTest {
             futureResult.set(fResult);
         });
         assertTrue(completed.get());
-        assertEquals(result, futureResult.get());
+        assertEquals(future, futureResult.get());
     }
 
     @Test
-    void thenActionIsNotExecutedWhenFutureIsAlreadyCancelled() {
+    void thenActionIsExecutedWhenFutureIsAlreadyCancelled() {
         final ThrottledFuture<?> future = ThrottledFuture.of(Object::new);
         final AtomicBoolean completed = new AtomicBoolean(false);
         future.cancel(false);
         assertTrue(future.isCancelled());
         future.then(result -> completed.set(true));
-        assertFalse(completed.get());
+        assertTrue(completed.get());
     }
 
     @Test
     void thenActionIsExecutedOnceFutureIsRun() {
-        final Object result = new Object();
         final AtomicBoolean completed = new AtomicBoolean(false);
         final AtomicReference<Object> fResult = new AtomicReference<>(null);
-        final ThrottledFuture<?> future = ThrottledFuture.of(() -> result);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> null);
         future.then(futureResult -> {
             completed.set(true);
             fResult.set(futureResult);
@@ -124,18 +122,82 @@ class ThrottledFutureTest {
         assertFalse(completed.get()); // action was not executed yet
         future.run(null);
         assertTrue(completed.get());
-        assertEquals(result, fResult.get());
+        assertEquals(future, fResult.get());
     }
 
     @Test
-    void thenActionIsNotExecutedOnceFutureIsCancelled() {
+    void thenActionIsExecutedOnceFutureIsCancelled() {
         final Object result = new Object();
         final AtomicBoolean completed = new AtomicBoolean(false);
         final ThrottledFuture<?> future = ThrottledFuture.of(() -> result);
         future.then(futureResult -> completed.set(true));
         assertFalse(completed.get()); // action was not executed yet
         future.cancel(false);
+        assertTrue(completed.get());
+    }
+
+    @Test
+    void thenActionIsExecutedOnlyOnceWhenFutureIsCancelled() {
+        final AtomicInteger executionCount = new AtomicInteger(0);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> null);
+        future.then(f -> executionCount.incrementAndGet());
+        assertEquals(0, executionCount.get());
+        future.cancel(false);
+        assertEquals(1, executionCount.get());
+        future.cancel(false);
+        future.cancel(true);
+        assertEquals(1, executionCount.get());
+    }
+
+    @Test
+    void thenActionIsExecutedWhenFutureCompletesExceptionally() {
+        final AtomicBoolean completed = new AtomicBoolean(false);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
+            throw new RuntimeException();
+        });
+        future.then(futureResult -> completed.set(true));
         assertFalse(completed.get());
+        future.run(null);
+        assertTrue(completed.get());
+    }
+
+    @Test
+    void isCompletedExceptionallyReturnsTrueWhenFutureCompletesExceptionally() {
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
+            throw new RuntimeException();
+        });
+        future.run(null);
+        assertTrue(future.isCompletedExceptionally());
+    }
+
+    @Test
+    void isCompletedExceptionallyReturnsFalseWhenFutureCompletesNormally() {
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> null);
+        future.run(null);
+        assertFalse(future.isCompletedExceptionally());
+        assertFalse(future.isCancelled());
+        assertTrue(future.isDone());
+    }
+
+    @Test
+    void isCompletedExceptionallyReturnsTrueWhenFutureIsCancelled() {
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> null);
+        future.cancel(false);
+        assertTrue(future.isCompletedExceptionally());
+        assertTrue(future.isCancelled());
+        assertTrue(future.isDone());
+    }
+
+    @Test
+    void thenActionIsExecutedWhenFutureIsAlreadyCompletedExceptionally() {
+        final AtomicBoolean completed = new AtomicBoolean(false);
+        final ThrottledFuture<?> future = ThrottledFuture.of(() -> {
+            throw new RuntimeException();
+        });
+        future.run(null);
+        assertFalse(completed.get());
+        future.then(futureResult -> completed.set(true));
+        assertTrue(completed.get());
     }
 
     @Test
@@ -287,8 +349,8 @@ class ThrottledFutureTest {
 
     @Test
     void transferUpdatesSecondFutureWithCallbacks() {
-        final Consumer<String> firstCallback = (result) -> {};
-        final Consumer<String> secondCallback = (result) -> {};
+        final Consumer<ThrottledFuture<String>> firstCallback = (result) -> {};
+        final Consumer<ThrottledFuture<String>> secondCallback = (result) -> {};
         final ThrottledFuture<String> firstFuture = ThrottledFuture.of(()->"").then(firstCallback);
         final ThrottledFuture<String> secondFuture = ThrottledFuture.of(()->"").then(secondCallback);
         final ThrottledFuture<String> mocked = mock(ThrottledFuture.class);
@@ -311,14 +373,14 @@ class ThrottledFutureTest {
 
     @Test
     void callbacksAreClearedAfterTransferring() {
-        final Consumer<String> firstCallback = (result) -> {};
-        final Consumer<String> secondCallback = (result) -> {};
+        final Consumer<ThrottledFuture<String>> firstCallback = (result) -> {};
+        final Consumer<ThrottledFuture<String>> secondCallback = (result) -> {};
         final ThrottledFuture<String> future = ThrottledFuture.of(()->"").then(firstCallback).then(secondCallback);
         final ThrottledFuture<String> mocked = mock(ThrottledFuture.class);
 
         future.transfer(mocked);
 
-        final ArgumentCaptor<List<Consumer<String>>> captor = ArgumentCaptor.forClass(List.class);
+        final ArgumentCaptor<List<Consumer<ThrottledFuture<String>>>> captor = ArgumentCaptor.forClass(List.class);
 
         verify(mocked).update(notNull(), captor.capture());
         // captor takes the original list from the future
@@ -374,8 +436,8 @@ class ThrottledFutureTest {
 
     @Test
     void updateAddsCallbacksToTheCurrentOnes() {
-        final Consumer<String> callback = result -> {};
-        final Consumer<String> originalCallback = result -> {};
+        final Consumer<ThrottledFuture<String>> callback = result -> {};
+        final Consumer<ThrottledFuture<String>> originalCallback = result -> {};
         final ThrottledFuture<String> future = ThrottledFuture.of(() -> "").then(originalCallback);
 
         future.update(()->"", List.of(callback));

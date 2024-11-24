@@ -332,6 +332,22 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of languages used in the vocabulary.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of languages.")
+    })
+    @GetMapping(value = "/{localName}/languages", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<String> getLanguages(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE) @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
+                                                                            required = false) Optional<String> namespace) {
+        final URI vocabularyUri = resolveVocabularyUri(localName, namespace);
+        return vocabularyService.getLanguages(vocabularyUri);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Updates metadata of vocabulary with the specified identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Vocabulary successfully updated."),

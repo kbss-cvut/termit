@@ -21,16 +21,16 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.Inferred;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.Types;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.util.SupportsStorage;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
-import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.Set;
 
@@ -43,6 +43,9 @@ public class File extends Resource implements SupportsStorage {
     @OWLObjectProperty(iri = Vocabulary.s_p_je_casti_dokumentu, fetch = FetchType.EAGER)
     private Document document;
 
+    @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
+    private String language;
+
     @Types
     private Set<String> types;
 
@@ -52,6 +55,14 @@ public class File extends Resource implements SupportsStorage {
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
     public Set<String> getTypes() {
@@ -74,14 +85,10 @@ public class File extends Resource implements SupportsStorage {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getUri());
-    }
-
-    @Override
     public String toString() {
         return "File{" +
-                super.toString() + (document != null ? "document=<" + document.getUri() + ">" : "") + '}';
+                super.toString() + (language != null ? "@" + language : "") +
+                (document != null ? "document=<" + document.getUri() + ">" : "") + '}';
     }
 
     /**
@@ -107,14 +114,6 @@ public class File extends Resource implements SupportsStorage {
             final int dotIndex = getLabel().indexOf('.');
             final String labelPart = dotIndex > 0 ? getLabel().substring(0, getLabel().indexOf('.')) : getLabel();
             return IdentifierResolver.normalizeToAscii(labelPart) + '_' + getUri().hashCode();
-        }
-    }
-
-    public static Field getDocumentField() {
-        try {
-            return File.class.getDeclaredField("document");
-        } catch (NoSuchFieldException e) {
-            throw new TermItException("Fatal error! Unable to retrieve \"document\" field.", e);
         }
     }
 }

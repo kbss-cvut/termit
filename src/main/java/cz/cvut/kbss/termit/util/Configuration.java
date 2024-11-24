@@ -674,6 +674,11 @@ public class Configuration {
         private String url;
 
         /**
+         * URL of the endpoint providing list of languages supported by the text analysis service.
+         */
+        private String languagesUrl;
+
+        /**
          * Score threshold for a term occurrence for it to be saved into the repository.
          */
         @NotNull
@@ -691,6 +696,14 @@ public class Configuration {
 
         public void setUrl(String url) {
             this.url = url;
+        }
+
+        public String getLanguagesUrl() {
+            return languagesUrl;
+        }
+
+        public void setLanguagesUrl(String languagesUrl) {
+            this.languagesUrl = languagesUrl;
         }
 
         public String getTermOccurrenceMinScore() {

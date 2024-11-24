@@ -43,7 +43,7 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
@@ -335,7 +335,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         return vocabularyDao.validateContents(vocabulary);
     }
 
@@ -372,5 +372,16 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Transactional(readOnly = true)
     public PrefixDeclaration resolvePrefix(URI vocabularyUri) {
         return vocabularyDao.resolvePrefix(vocabularyUri);
+    }
+
+    /**
+     * Returns the list of all distinct languages (language tags) used by terms in the specified vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return List of distinct languages
+     */
+    @Transactional(readOnly = true)
+    public List<String> getLanguages(URI vocabularyUri) {
+        return vocabularyDao.getLanguages(vocabularyUri);
     }
 }

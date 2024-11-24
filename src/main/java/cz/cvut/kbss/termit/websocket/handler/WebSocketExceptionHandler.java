@@ -19,6 +19,7 @@ import cz.cvut.kbss.termit.exception.SuppressibleLogging;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedSearchFacetException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
@@ -87,7 +88,8 @@ public class WebSocketExceptionHandler {
     }
 
     private static ErrorInfo errorInfo(Message<?> message, TermItException e) {
-        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), destination(message), e.getParameters());
+        return ErrorInfo.createParametrizedWithMessage(e.getMessage(), e.getMessageId(), destination(message),
+                                                       e.getParameters());
     }
 
     @MessageExceptionHandler
@@ -95,7 +97,7 @@ public class WebSocketExceptionHandler {
         // messages without destination will be logged only on trace
         (hasDestination(message) ? LOG.atError() : LOG.atTrace())
                 .setMessage("Failed to send message with destination {}: {}")
-                .addArgument(()-> destination(message))
+                .addArgument(() -> destination(message))
                 .addArgument(e.getMessage())
                 .setCause(e.getCause())
                 .log();
@@ -226,7 +228,8 @@ public class WebSocketExceptionHandler {
     @MessageExceptionHandler
     public ErrorInfo maxUploadSizeExceededException(Message<?> message, MaxUploadSizeExceededException e) {
         logException(e, message);
-        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), "error.file.maxUploadSizeExceeded", destination(message));
+        return ErrorInfo.createWithMessageAndMessageId(e.getMessage(), "error.file.maxUploadSizeExceeded",
+                                                       destination(message));
     }
 
     @MessageExceptionHandler
@@ -268,6 +271,13 @@ public class WebSocketExceptionHandler {
 
     @MessageExceptionHandler
     public ErrorInfo uriSyntaxException(Message<?> message, URISyntaxException e) {
+        logException(e, message);
+        return errorInfo(message, e);
+    }
+
+    @MessageExceptionHandler
+    public ErrorInfo unsupportedTextAnalysisLanguageException(Message<?> message,
+                                                              UnsupportedTextAnalysisLanguageException e) {
         logException(e, message);
         return errorInfo(message, e);
     }
