@@ -700,16 +700,13 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
-            @RequestParam(name = "type", required = false) URI changeType,
+            @RequestParam(name = "changeType", required = false) URI changeType,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
             @RequestParam(name = "author", required = false, defaultValue = "") String authorName,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
             @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
-        filterDto.setChangeType(changeType);
-        filterDto.setAuthorName(authorName);
-        filterDto.setChangedAttributeName(changedAttributeName);
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
         return termService.getChanges(termService.findRequired(termUri), filterDto);
     }
 
@@ -734,19 +731,16 @@ public class TermController extends BaseController {
                                                  @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                                                             example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
                                                  @RequestParam(name = QueryParams.NAMESPACE) String namespace,
-                                                 @Parameter(description = "Change type used for filtering.")
-                                                 @RequestParam(name = "type", required = false) URI changeType,
-                                                 @Parameter(description = "Author name used for filtering.")
+                                                 @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+                                                 @RequestParam(name = "changeType", required = false) URI changeType,
+                                                 @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
                                                  @RequestParam(name = "author", required = false,
                                                                defaultValue = "") String authorName,
-                                                 @Parameter(description = "Changed attribute name used for filtering.")
+                                                 @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
                                                  @RequestParam(name = "attribute", required = false,
                                                                defaultValue = "") String changedAttributeName) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
-        filter.setChangeType(changeType);
-        filter.setAuthorName(authorName);
-        filter.setChangedAttributeName(changedAttributeName);
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
         return termService.getChanges(termService.findRequired(termUri), filter);
     }
 

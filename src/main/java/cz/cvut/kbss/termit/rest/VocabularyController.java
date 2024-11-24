@@ -272,10 +272,7 @@ public class VocabularyController extends BaseController {
             @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
-        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
-        filterDto.setChangeType(changeType);
-        filterDto.setAuthorName(authorName);
-        filterDto.setChangedAttributeName(changedAttributeName);
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
         return vocabularyService.getChanges(vocabulary, filterDto);
     }
 
@@ -330,11 +327,7 @@ public class VocabularyController extends BaseController {
                     name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE) Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
         final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
-        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
-        filter.setAssetLabel(termName);
-        filter.setChangeType(changeType);
-        filter.setAuthorName(authorName);
-        filter.setChangedAttributeName(changedAttributeName);
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(termName, changedAttributeName, authorName, changeType);
         return vocabularyService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 

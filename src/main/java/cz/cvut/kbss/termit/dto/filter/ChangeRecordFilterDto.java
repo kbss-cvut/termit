@@ -15,6 +15,22 @@ public class ChangeRecordFilterDto {
     private String authorName = "";
     private URI changeType = null;
 
+    public ChangeRecordFilterDto() {
+    }
+
+    public ChangeRecordFilterDto(String changedAttributeName, String authorName, URI changeType) {
+        this.changedAttributeName = changedAttributeName;
+        this.authorName = authorName;
+        this.changeType = changeType;
+    }
+
+    public ChangeRecordFilterDto(String assetLabel, String changedAttributeName, String authorName, URI changeType) {
+        this.assetLabel = assetLabel;
+        this.changedAttributeName = changedAttributeName;
+        this.authorName = authorName;
+        this.changeType = changeType;
+    }
+
     public String getAssetLabel() {
         return assetLabel;
     }
