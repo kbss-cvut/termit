@@ -393,6 +393,17 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Gets the identifier of a vocabulary to which a term with the specified id belongs.
+     *
+     * @param termId Term identifier
+     * @return Vocabulary identifier wrapped in {@code Optional}
+     */
+    @Transactional(readOnly = true)
+    public Optional<URI> findTermVocabulary(URI termId) {
+        return termDao.findTermVocabulary(termId);
+    }
+
+    /**
      * Checks that a term can be removed.
      * <p>
      * A term can be removed if:
