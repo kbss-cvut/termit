@@ -76,7 +76,6 @@ public class TermOccurrenceController extends BaseController {
     })
     @PutMapping(consumes = {JsonLd.MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void saveOccurrence(@Parameter(description = "Term occurrence to save")
                                @RequestBody TermOccurrence occurrence) {
         occurrenceService.persistOrUpdate(occurrence);
@@ -91,7 +90,6 @@ public class TermOccurrenceController extends BaseController {
     })
     @PutMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void approveOccurrence(
             @Parameter(description = TermOccurrenceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
                        example = TermOccurrenceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
@@ -113,7 +111,6 @@ public class TermOccurrenceController extends BaseController {
     })
     @DeleteMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public void removeOccurrence(@Parameter(description = TermOccurrenceControllerDoc.ID_LOCAL_NAME_DESCRIPTION,
                                             example = TermOccurrenceControllerDoc.ID_LOCAL_NAME_EXAMPLE)
                                  @PathVariable String localName,

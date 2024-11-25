@@ -30,6 +30,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +59,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         this.resourceService = resourceService;
     }
 
+    @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrence)")
     @Transactional
     @Override
     public void persist(TermOccurrence occurrence) {
@@ -78,6 +80,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         }
     }
 
+    @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrence)")
     @Transactional
     @Override
     public void persistOrUpdate(TermOccurrence occurrence) {
@@ -95,6 +98,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         }
     }
 
+    @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrenceId)")
     @Async
     // Retry in case the occurrence has not been persisted, yet (see AsynchronousTermOccurrenceSaver)
     @Retryable(retryFor = NotFoundException.class, maxAttempts = 3, backoff = @Backoff(delay = 30000L))
@@ -108,6 +112,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         toApprove.markApproved();
     }
 
+    @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrenceId)")
     @Transactional
     @Override
     public void remove(URI occurrenceId) {
