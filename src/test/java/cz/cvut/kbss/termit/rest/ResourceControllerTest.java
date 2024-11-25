@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -396,7 +397,8 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         when(identifierResolverMock.resolveIdentifier(RESOURCE_NAMESPACE, RESOURCE_NAME)).thenReturn(resource.getUri());
         when(resourceServiceMock.getReference(RESOURCE_URI)).thenReturn(resource);
         final List<AbstractChangeRecord> records = Collections.singletonList(Generator.generatePersistChange(resource));
-        when(resourceServiceMock.getChanges(resource)).thenReturn(records);
+        final ChangeRecordFilterDto emptyFilter = new ChangeRecordFilterDto();
+        when(resourceServiceMock.getChanges(resource, emptyFilter)).thenReturn(records);
 
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + "/" + RESOURCE_NAME + "/history").param(QueryParams.NAMESPACE, RESOURCE_NAMESPACE))
@@ -406,7 +408,7 @@ class ResourceControllerTest extends BaseControllerTestRunner {
         });
         assertNotNull(result);
         assertEquals(records, result);
-        verify(resourceServiceMock).getChanges(resource);
+        verify(resourceServiceMock).getChanges(resource, emptyFilter);
     }
 
     @Test

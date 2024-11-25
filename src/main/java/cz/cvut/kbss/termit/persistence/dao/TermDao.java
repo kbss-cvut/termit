@@ -91,8 +91,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     @Override
     public Optional<Term> find(URI id) {
         try {
-            final Optional<Term> result = Optional.ofNullable(
-                    em.find(Term.class, id, descriptorFactory.termDescriptor(resolveVocabularyId(id))));
+            final Optional<Term> result = resolveVocabularyId(id).map(vocabulary ->
+                    em.find(Term.class, id, descriptorFactory.termDescriptor(vocabulary)));
             result.ifPresent(this::postLoad);
             return result;
         } catch (RuntimeException e) {
@@ -100,14 +100,14 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
-    private URI resolveVocabularyId(URI termId) {
+    private Optional<URI> resolveVocabularyId(URI termId) {
         try {
-            return em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
+            return Optional.of(em.createNativeQuery("SELECT DISTINCT ?v WHERE { ?t ?inVocabulary ?v . }", URI.class)
                      .setParameter("t", termId)
                      .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                     .getSingleResult();
+                     .getSingleResult());
         } catch (NoResultException | NoUniqueResultException e) {
-            throw new PersistenceException("Unable to resolve term vocabulary.", e);
+            return Optional.empty();
         }
     }
 

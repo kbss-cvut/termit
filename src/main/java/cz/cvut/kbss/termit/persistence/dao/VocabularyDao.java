@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.Query;
-import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
@@ -28,6 +27,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
@@ -43,6 +43,7 @@ import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
 import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
@@ -88,6 +89,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             "} GROUP BY ?date HAVING (?cnt > 0) ORDER BY ?date";
 
     private static final String REMOVE_GLOSSARY_TERMS_QUERY_FILE = "remove/removeGlossaryTerms.ru";
+    private final ChangeRecordDao changeRecordDao;
 
     private volatile long lastModified;
 
@@ -97,11 +99,13 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
-                         VocabularyContextMapper contextMapper, ApplicationContext context) {
+                         VocabularyContextMapper contextMapper, ApplicationContext context,
+                         ChangeRecordDao changeRecordDao) {
         super(Vocabulary.class, em, config.getPersistence(), descriptorFactory);
         this.contextMapper = contextMapper;
         refreshLastModified();
         this.context = context;
+        this.changeRecordDao = changeRecordDao;
     }
 
     @Override
@@ -405,34 +409,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
         Objects.requireNonNull(vocabulary);
-        return createDetailedContentChangesQuery(vocabulary, pageReq).getResultList();
-    }
-
-    private TypedQuery<AbstractChangeRecord> createDetailedContentChangesQuery(Vocabulary vocabulary,
-                                                                               Pageable pageReq) {
-        return em.createNativeQuery("""
-                                            SELECT ?record WHERE {
-                                                ?term ?inVocabulary ?vocabulary ;
-                                                    a ?termType .
-                                                ?record a ?changeRecord ;
-                                                    ?relatesTo ?term ;
-                                                    ?hasTime ?timestamp .
-                                                OPTIONAL { ?record ?hasChangedAttribute ?attribute . }
-                                            } ORDER BY DESC(?timestamp) ?attribute
-                                            """, AbstractChangeRecord.class)
-                 .setParameter("inVocabulary",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                 .setParameter("vocabulary", vocabulary)
-                 .setParameter("termType", URI.create(SKOS.CONCEPT))
-                 .setParameter("changeRecord", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_zmena))
-                 .setParameter("relatesTo", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmenenou_entitu))
-                 .setParameter("hasTime", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_datum_a_cas_modifikace))
-                 .setParameter("hasChangedAttribute",
-                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_zmeneny_atribut))
-                 .setFirstResult((int) pageReq.getOffset())
-                 .setMaxResults(pageReq.getPageSize());
+        return changeRecordDao.findAllRelatedToType(vocabulary, filter, URI.create(SKOS.CONCEPT), pageReq);
     }
 
     private Query createContentChangesQuery(Vocabulary vocabulary) {

@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -262,10 +263,17 @@ public class VocabularyController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
+                          required = false) Optional<String> namespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+            @RequestParam(name = "type", required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+            @RequestParam(name = "author", required = false, defaultValue = "") String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+            @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
-        return vocabularyService.getChanges(vocabulary);
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
+        return vocabularyService.getChanges(vocabulary, filterDto);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -301,6 +309,17 @@ public class VocabularyController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
                                                                             required = false) Optional<String> namespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.TERM_NAME_DESCRIPTION) @RequestParam(name = "term",
+                                                                                         required = false,
+                                                                                         defaultValue = "") String termName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION) @RequestParam(name = "type",
+                                                                                           required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION) @RequestParam(name = "author",
+                                                                                           required = false,
+                                                                                           defaultValue = "") String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION) @RequestParam(
+                    name = "attribute", required = false, defaultValue = "") String changedAttributeName,
+
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION) @RequestParam(
                     name = Constants.QueryParams.PAGE_SIZE, required = false,
                     defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
@@ -308,7 +327,8 @@ public class VocabularyController extends BaseController {
                     name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE) Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
         final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
-        return vocabularyService.getDetailedHistoryOfContent(vocabulary, pageReq);
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(termName, changedAttributeName, authorName, changeType);
+        return vocabularyService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

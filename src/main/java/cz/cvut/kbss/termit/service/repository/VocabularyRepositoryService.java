@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
@@ -228,8 +229,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * @return List of change records, ordered by date in descending order
      */
     @Transactional(readOnly = true)
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
-        return vocabularyDao.getDetailedHistoryOfContent(vocabulary, pageReq);
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
+        return vocabularyDao.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
     @CacheEvict(allEntries = true)

@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
@@ -697,9 +698,16 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+            @RequestParam(name = "changeType", required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+            @RequestParam(name = "author", required = false, defaultValue = "") String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+            @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.getChanges(termService.findRequired(termUri));
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
+        return termService.getChanges(termService.findRequired(termUri), filterDto);
     }
 
     /**
@@ -707,7 +715,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
-     * @see #getHistory(String, String, Optional)
+     * @see #getHistory
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets a list of changes made to metadata of the term with the specified identifier.")
@@ -722,9 +730,18 @@ public class TermController extends BaseController {
                                                  @PathVariable String localName,
                                                  @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                                                             example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-                                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+                                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+                                                 @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+                                                 @RequestParam(name = "changeType", required = false) URI changeType,
+                                                 @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+                                                 @RequestParam(name = "author", required = false,
+                                                               defaultValue = "") String authorName,
+                                                 @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+                                                 @RequestParam(name = "attribute", required = false,
+                                                               defaultValue = "") String changedAttributeName) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return termService.getChanges(termService.findRequired(termUri));
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
+        return termService.getChanges(termService.findRequired(termUri), filter);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
