@@ -282,6 +282,19 @@ public class VocabularyService
     }
 
     /**
+     * Imports translations of terms in the specified vocabulary from the specified file.
+     * @param vocabularyIri IRI of vocabulary for whose terms to import translations
+     * @param file File from which to import the translations
+     * @return The imported vocabulary metadata
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyIri)")
+    public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
+        // TODO
+        return null;
+    }
+
+    /**
      * Gets an Excel template file that can be used to import terms into TermIt.
      *
      * @return Template file as a resource

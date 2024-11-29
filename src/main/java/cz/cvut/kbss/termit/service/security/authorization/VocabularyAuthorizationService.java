@@ -165,6 +165,12 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
         return canRead(new Vocabulary(dto.getUri()));
     }
 
+    public boolean canModify(URI vocabularyIri) {
+        Objects.requireNonNull(vocabularyIri);
+        final Vocabulary vocabulary = new Vocabulary(vocabularyIri);
+        return canModify(vocabulary);
+    }
+
     @Override
     public boolean canModify(Vocabulary asset) {
         Objects.requireNonNull(asset);
