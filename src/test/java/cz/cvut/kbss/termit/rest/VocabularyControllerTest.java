@@ -442,7 +442,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 });
         assertNotNull(result);
         assertEquals(records, result);
-        verify(serviceMock).getChanges(vocabulary,emptyFilter);
+        verify(serviceMock).getChanges(vocabulary, emptyFilter);
     }
 
     @Test
@@ -653,15 +653,18 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final int pageSize = Integer.parseInt(VocabularyController.DEFAULT_PAGE_SIZE);
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final Term term = Generator.generateTermWithId();
-        final List<AbstractChangeRecord> changeRecords = IntStream.range(0, 5).mapToObj(i -> Generator.generateChangeRecords(term, user)).flatMap(List::stream).toList();
+        final List<AbstractChangeRecord> changeRecords = IntStream.range(0, 5).mapToObj(
+                i -> Generator.generateChangeRecords(term, user)).flatMap(List::stream).toList();
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
         final Pageable pageable = Pageable.ofSize(pageSize);
 
         doReturn(changeRecords).when(serviceMock).getDetailedHistoryOfContent(vocabulary, filter, pageable);
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history-of-content/detail")).andExpect(status().isOk()).andReturn();
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history-of-content/detail"))
+                                           .andExpect(status().isOk()).andReturn();
         final List<AbstractChangeRecord> result =
-                readValue(mvcResult, new TypeReference<List<AbstractChangeRecord>>() {});
+                readValue(mvcResult, new TypeReference<>() {
+                });
         assertNotNull(result);
         assertEquals(changeRecords, result);
         verify(serviceMock).getDetailedHistoryOfContent(vocabulary, filter, pageable);
@@ -673,9 +676,33 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final List<String> languages = List.of(Environment.LANGUAGE, "cs", "de");
         when(serviceMock.getLanguages(VOCABULARY_URI)).thenReturn(languages);
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/languages").queryParam(QueryParams.NAMESPACE, NAMESPACE)).andReturn();
-        final List<String> result = readValue(mvcResult, new TypeReference<List<String>>() {});
+        final MvcResult mvcResult = mockMvc.perform(
+                get(PATH + "/" + FRAGMENT + "/languages").queryParam(QueryParams.NAMESPACE, NAMESPACE)).andReturn();
+        final List<String> result = readValue(mvcResult, new TypeReference<>() {
+        });
         assertEquals(languages, result);
         verify(serviceMock).getLanguages(VOCABULARY_URI);
+    }
+
+    @Test
+    void reImportVocabularyRunsTermTranslationsImportForUploadedFileWhenTranslationsOnlyIsSpecified() throws Exception {
+        when(configMock.getNamespace().getVocabulary()).thenReturn(NAMESPACE);
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
+        when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(vocabulary.getUri());
+        when(serviceMock.importTermTranslations(any(URI.class), any())).thenReturn(vocabulary);
+        final MockMultipartFile upload = new MockMultipartFile("file", "vocabulary.xlsx",
+                                                               Constants.MediaType.EXCEL,
+                                                               Environment.loadFile("data/import-simple-en-cs.xlsx"));
+        final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/" + FRAGMENT + "/import").file(upload)
+                                                                                                .queryParam(
+                                                                                                        "translationsOnly",
+                                                                                                        "true"))
+                                           .andExpect(status().isCreated())
+                                           .andReturn();
+        verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.LOCATION),
+                   containsString(QueryParams.NAMESPACE + "=" + NAMESPACE));
+        verify(serviceMock).importTermTranslations(vocabulary.getUri(), upload);
     }
 }

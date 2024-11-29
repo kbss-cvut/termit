@@ -235,12 +235,22 @@ public class VocabularyController extends BaseController {
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace,
-            @Parameter(description = "File containing a SKOS glossary in RDF.")
-            @RequestParam(name = "file") MultipartFile file) {
+            @Parameter(
+                    description = "File containing a SKOS glossary in RDF or an Excel file with supported structure.")
+            @RequestParam(name = "file") MultipartFile file,
+            @Parameter(description = "Whether to import only translations of existing terms from the vocabulary.")
+            @RequestParam(name = "translationsOnly", required = false,
+                          defaultValue = "false") boolean translationsOnly) {
         final URI vocabularyIri = resolveVocabularyUri(localName, namespace);
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
-        LOG.debug("Vocabulary {} re-imported.", vocabulary);
-        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import/" + localName))
+        final Vocabulary result;
+        if (translationsOnly) {
+            result = vocabularyService.importTermTranslations(vocabularyIri, file);
+            LOG.debug("Translations of terms in vocabulary {} imported.", result);
+        } else {
+            result = vocabularyService.importVocabulary(vocabularyIri, file);
+            LOG.debug("Vocabulary {} re-imported.", result);
+        }
+        return ResponseEntity.created(locationWithout(generateLocation(result.getUri()), "/import/" + localName))
                              .build();
     }
 
@@ -310,13 +320,14 @@ public class VocabularyController extends BaseController {
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
                                                                             required = false) Optional<String> namespace,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.TERM_NAME_DESCRIPTION) @RequestParam(name = "term",
-                                                                                         required = false,
-                                                                                         defaultValue = "") String termName,
+                                                                                                       required = false,
+                                                                                                       defaultValue = "") String termName,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION) @RequestParam(name = "type",
-                                                                                           required = false) URI changeType,
-            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION) @RequestParam(name = "author",
-                                                                                           required = false,
-                                                                                           defaultValue = "") String authorName,
+                                                                                                         required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION) @RequestParam(
+                    name = "author",
+                    required = false,
+                    defaultValue = "") String authorName,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION) @RequestParam(
                     name = "attribute", required = false, defaultValue = "") String changedAttributeName,
 
@@ -327,7 +338,8 @@ public class VocabularyController extends BaseController {
                     name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE) Integer pageNo) {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
         final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
-        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(termName, changedAttributeName, authorName, changeType);
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(termName, changedAttributeName, authorName,
+                                                                       changeType);
         return vocabularyService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
