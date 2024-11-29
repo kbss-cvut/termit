@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -28,6 +29,7 @@ import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import jakarta.validation.constraints.NotNull;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -105,10 +107,11 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     @Override
-    public Vocabulary importVocabulary(ImportConfiguration config, ImportInput data) {
+    public Vocabulary importVocabulary(@Nonnull ImportConfiguration config, @Nonnull ImportInput data) {
         Objects.requireNonNull(config);
         Objects.requireNonNull(data);
-        return importVocabulary(config.allowReIdentify(), config.vocabularyIri(), data.mediaType(), config.prePersist(), data.data());
+        return importVocabulary(config.allowReIdentify(), config.vocabularyIri(), data.mediaType(), config.prePersist(),
+                                data.data());
     }
 
     private Vocabulary importVocabulary(final boolean rename,
@@ -361,6 +364,12 @@ public class SKOSImporter implements VocabularyImporter {
 
     private void setVocabularyDescriptionFromGlossary(final Vocabulary vocabulary) {
         handleGlossaryStringProperty(DCTERMS.DESCRIPTION, vocabulary::setDescription);
+    }
+
+    @Override
+    public Vocabulary importTermTranslations(@Nonnull URI vocabularyIri, @Nonnull ImportInput data) {
+        throw new UnsupportedOperationException(
+                "Importing term translations from SKOS file is currently not supported.");
     }
 
     /**

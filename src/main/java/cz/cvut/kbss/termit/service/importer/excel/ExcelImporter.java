@@ -92,7 +92,7 @@ public class ExcelImporter implements VocabularyImporter {
     }
 
     @Override
-    public Vocabulary importVocabulary(ImportConfiguration config, ImportInput data) {
+    public Vocabulary importVocabulary(@Nonnull ImportConfiguration config, @Nonnull ImportInput data) {
         Objects.requireNonNull(config);
         Objects.requireNonNull(data);
         if (config.vocabularyIri() == null || !vocabularyDao.exists(config.vocabularyIri())) {
@@ -213,6 +213,12 @@ public class ExcelImporter implements VocabularyImporter {
                                                         term.getLabel().get(config.getPersistence().getLanguage()));
         }
         return term.getUri();
+    }
+
+    @Override
+    public Vocabulary importTermTranslations(@Nonnull URI vocabularyIri, @Nonnull ImportInput data) {
+        // TODO
+        return null;
     }
 
     /**

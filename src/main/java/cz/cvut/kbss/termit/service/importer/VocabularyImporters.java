@@ -8,6 +8,8 @@ import jakarta.annotation.Nonnull;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
+
 /**
  * Ensures correct importer is invoked for provided media types.
  */
@@ -22,14 +24,22 @@ public class VocabularyImporters implements VocabularyImporter {
 
     @Override
     public Vocabulary importVocabulary(@Nonnull ImportConfiguration config, @Nonnull ImportInput data) {
-        if (SKOSImporter.supportsMediaType(data.mediaType())) {
-            return getSkosImporter().importVocabulary(config, data);
-        }
-        if (ExcelImporter.supportsMediaType(data.mediaType())) {
-            return getExcelImporter().importVocabulary(config, data);
+        return resolveImporter(data.mediaType()).importVocabulary(config, data);
+    }
+
+    private VocabularyImporter resolveImporter(String mediaType) {
+        if (SKOSImporter.supportsMediaType(mediaType)) {
+            return getSkosImporter();
+        } else if (ExcelImporter.supportsMediaType(mediaType)) {
+            return getExcelImporter();
         }
         throw new UnsupportedImportMediaTypeException(
-                "Unsupported media type '" + data.mediaType() + "' for vocabulary import.");
+                "Unsupported media type '" + mediaType + "' for vocabulary import.");
+    }
+
+    @Override
+    public Vocabulary importTermTranslations(@Nonnull URI vocabularyIri, @Nonnull ImportInput data) {
+        return resolveImporter(data.mediaType()).importTermTranslations(vocabularyIri, data);
     }
 
     private VocabularyImporter getSkosImporter() {

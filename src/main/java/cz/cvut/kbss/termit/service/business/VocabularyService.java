@@ -283,15 +283,15 @@ public class VocabularyService
 
     /**
      * Imports translations of terms in the specified vocabulary from the specified file.
+     *
      * @param vocabularyIri IRI of vocabulary for whose terms to import translations
-     * @param file File from which to import the translations
+     * @param file          File from which to import the translations
      * @return The imported vocabulary metadata
      * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
      */
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyIri)")
     public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
-        // TODO
-        return null;
+        return repositoryService.importTermTranslations(vocabularyIri, file);
     }
 
     /**
@@ -333,7 +333,8 @@ public class VocabularyService
      * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
+                                                                  Pageable pageReq) {
         return repositoryService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 

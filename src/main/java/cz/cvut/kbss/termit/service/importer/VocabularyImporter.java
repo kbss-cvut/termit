@@ -2,7 +2,7 @@ package cz.cvut.kbss.termit.service.importer;
 
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.Nonnull;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -26,7 +26,21 @@ public interface VocabularyImporter {
      * @throws IllegalArgumentException  Indicates invalid input data, e.g., no input streams, missing language tags
      *                                   etc.
      */
-    Vocabulary importVocabulary(@NotNull ImportConfiguration config, @NotNull ImportInput data);
+    Vocabulary importVocabulary(@Nonnull ImportConfiguration config, @Nonnull ImportInput data);
+
+    /**
+     * Imports term translations from the specified data into the specified vocabulary.
+     * <p>
+     * Only translations of existing terms are imported, no new terms are created. Only translations of multilingual
+     * attributes are imported. If a value in the specified language exists in the repository, it is preserved.
+     *
+     * @param vocabularyIri Vocabulary identifier
+     * @param data          Data to import
+     * @return Vocabulary whose content was changed
+     * @throws IllegalArgumentException Indicates invalid input data, e.g., no input streams, missing language tags
+     *                                  etc.
+     */
+    Vocabulary importTermTranslations(@Nonnull URI vocabularyIri, @Nonnull ImportInput data);
 
     /**
      * Vocabulary import configuration.
@@ -38,7 +52,7 @@ public interface VocabularyImporter {
      * @param prePersist      Procedure to call before persisting the resulting vocabulary
      */
     record ImportConfiguration(boolean allowReIdentify, URI vocabularyIri,
-                               @NotNull Consumer<Vocabulary> prePersist) {
+                               @Nonnull Consumer<Vocabulary> prePersist) {
     }
 
     /**
@@ -47,6 +61,6 @@ public interface VocabularyImporter {
      * @param mediaType Media type of the imported data
      * @param data      Streams containing the data
      */
-    record ImportInput(@NotNull String mediaType, InputStream... data) {
+    record ImportInput(@Nonnull String mediaType, InputStream... data) {
     }
 }
