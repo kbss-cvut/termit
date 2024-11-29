@@ -102,6 +102,7 @@ public class ExcelImporter implements VocabularyImporter {
         }
         final Vocabulary targetVocabulary = vocabularyDao.find(config.vocabularyIri()).orElseThrow(
                 () -> NotFoundException.create(Vocabulary.class, config.vocabularyIri()));
+        LOG.debug("Importing terms from Excel into vocabulary {}.", targetVocabulary);
         try {
             List<Term> terms = Collections.emptyList();
             Set<TermRelationship> rawDataToInsert = new HashSet<>();
