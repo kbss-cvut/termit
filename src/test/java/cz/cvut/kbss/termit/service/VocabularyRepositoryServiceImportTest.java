@@ -34,10 +34,12 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,6 +64,22 @@ class VocabularyRepositoryServiceImportTest {
         final ArgumentCaptor<VocabularyImporter.ImportInput> captor = ArgumentCaptor.forClass(
                 VocabularyImporter.ImportInput.class);
         verify(importer).importVocabulary(any(VocabularyImporter.ImportConfiguration.class), captor.capture());
+        assertNotNull(captor.getValue());
+        assertEquals(vocabulary, result);
+    }
+
+    @Test
+    void importTermTranslationsInvokesImporterWithProvidedData() throws IOException {
+        final MultipartFile input = new MockMultipartFile("vocabulary.xlsx", "vocabulary.xlsx",
+                                                          Constants.MediaType.EXCEL,
+                                                          Environment.loadFile("data/import-simple-en-cs.xlsx"));
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        when(importer.importTermTranslations(any(URI.class), any(VocabularyImporter.ImportInput.class))).thenReturn(
+                vocabulary);
+        final Vocabulary result = sut.importTermTranslations(vocabulary.getUri(), input);
+        final ArgumentCaptor<VocabularyImporter.ImportInput> captor = ArgumentCaptor.forClass(
+                VocabularyImporter.ImportInput.class);
+        verify(importer).importTermTranslations(eq(vocabulary.getUri()), captor.capture());
         assertNotNull(captor.getValue());
         assertEquals(vocabulary, result);
     }

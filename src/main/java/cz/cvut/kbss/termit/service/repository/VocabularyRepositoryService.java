@@ -245,7 +245,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
-            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage());
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage());
         }
     }
 
@@ -259,6 +259,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @CacheEvict(allEntries = true)
     @Transactional
     public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
+        Objects.requireNonNull(vocabularyIri);
         Objects.requireNonNull(file);
         try {
             String contentType = resolveContentType(file);
@@ -268,7 +269,21 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
-            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage(), e);
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
+        Objects.requireNonNull(vocabularyIri);
+        Objects.requireNonNull(file);
+        try {
+            String contentType = resolveContentType(file);
+            return importers.importTermTranslations(vocabularyIri, new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
+        } catch (VocabularyImportException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
         }
     }
 
