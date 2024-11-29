@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.service.importer.excel;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyDoesNotExistException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
@@ -21,6 +22,7 @@ import jakarta.annotation.Nonnull;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -119,43 +121,8 @@ public class ExcelImporter implements VocabularyImporter {
                     terms = sheetImporter.resolveTermsFromSheet(sheet);
                     rawDataToInsert.addAll(sheetImporter.getRawDataToInsert());
                 }
-                terms.stream().peek(t -> t.setUri(resolveTermIdentifier(targetVocabulary, t)))
-                     .peek(t -> t.getLabel().getValue().forEach((lang, value) -> {
-                         final Optional<URI> existingUri = termService.findIdentifierByLabel(value,
-                                                                                             targetVocabulary,
-                                                                                             lang);
-                         if (existingUri.isPresent() && !existingUri.get().equals(t.getUri())) {
-                             throw new VocabularyImportException(
-                                     "Vocabulary already contains a term with label '" + value + "' with a different identifier than the imported one.",
-                                     "error.vocabulary.import.excel.labelWithDifferentIdentifierExists")
-                                     .addParameter("label", value)
-                                     .addParameter("existingUri", Utils.uriToString(existingUri.get()));
-                         }
-                     }))
-                     .filter(t -> termService.exists(t.getUri())).forEach(t -> {
-                         LOG.trace("Term {} already exists. Removing old version.", t);
-                         termService.forceRemove(termService.findRequired(t.getUri()));
-                         // Flush changes to prevent EntityExistsExceptions when term is already managed in PC as different type (Term vs TermInfo)
-                         em.flush();
-                     });
-                // Ensure all parents are saved before we start adding children
-                terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty())
-                     .forEach(root -> {
-                         LOG.trace("Persisting root term {}.", root);
-                         termService.addRootTermToVocabulary(root, targetVocabulary);
-                         root.setVocabulary(targetVocabulary.getUri());
-                     });
-                terms.stream().filter(t -> !Utils.emptyIfNull(t.getParentTerms()).isEmpty())
-                     .forEach(t -> {
-                         t.setVocabulary(targetVocabulary.getUri());
-                         LOG.trace("Persisting child term {}.", t);
-                         termService.addChildTerm(t, t.getParentTerms().iterator().next());
-                     });
-                // Insert term relationships as raw data because of possible object conflicts in the persistence context -
-                // the same term being as multiple types (Term, TermInfo) in the same persistence context
-                dataDao.insertRawData(rawDataToInsert.stream().map(tr -> new Quad(tr.subject().getUri(), tr.property(),
-                                                                                  tr.object().getUri(),
-                                                                                  targetVocabulary.getUri())).toList());
+                prepareTermsForPersist(terms, targetVocabulary);
+                persistNewTerms(terms, targetVocabulary, rawDataToInsert);
             }
         } catch (IOException e) {
             throw new VocabularyImportException("Unable to read input as Excel.", e);
@@ -174,30 +141,17 @@ public class ExcelImporter implements VocabularyImporter {
     }
 
     /**
-     * Resolves namespace for identifiers of terms in the specified vocabulary.
-     * <p>
-     * It uses the vocabulary identifier and the configured term namespace separator.
-     *
-     * @param vocabulary Vocabulary whose term identifier namespace to resolve
-     * @return Resolved namespace
-     */
-    private String resolveVocabularyTermNamespace(Vocabulary vocabulary) {
-        return idResolver.buildNamespace(vocabulary.getUri().toString(),
-                                         config.getNamespace().getTerm().getSeparator());
-    }
-
-    /**
-     * Resolves term identifier.
+     * Resolves term identifier w.r.t. the target vocabulary.
      * <p>
      * If the term does not have an identifier, it is generated so that existing instance can be removed before
      * inserting the imported term. If the term has an identifier, but it does not match the expected vocabulary-based
      * namespace, it is adjusted so that it does. Otherwise, the identifier is used.
      *
-     * @param vocabulary Vocabulary into which the term will be added
      * @param term       The imported term
+     * @param vocabulary Vocabulary into which the term will be added
      * @return Term identifier
      */
-    private URI resolveTermIdentifier(Vocabulary vocabulary, Term term) {
+    private URI resolveTermIdentifierWrtVocabulary(Term term, Vocabulary vocabulary) {
         final String termNamespace = resolveVocabularyTermNamespace(vocabulary);
         if (term.getUri() == null) {
             return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
@@ -215,10 +169,169 @@ public class ExcelImporter implements VocabularyImporter {
         return term.getUri();
     }
 
+    /**
+     * Resolves namespace for identifiers of terms in the specified vocabulary.
+     * <p>
+     * It uses the vocabulary identifier and the configured term namespace separator.
+     *
+     * @param vocabulary Vocabulary whose term identifier namespace to resolve
+     * @return Resolved namespace
+     */
+    private String resolveVocabularyTermNamespace(Vocabulary vocabulary) {
+        return idResolver.buildNamespace(vocabulary.getUri().toString(),
+                                         config.getNamespace().getTerm().getSeparator());
+    }
+
+    /**
+     * Prepares terms for persist by:
+     * <ul>
+     *     <li>Resolving their identifiers and harmonizing them with vocabulary namespace</li>
+     *     <li>Removing possibly pre-existing terms</li>
+     * </ul>
+     *
+     * @param terms            Terms to process
+     * @param targetVocabulary Target vocabulary
+     */
+    private void prepareTermsForPersist(List<Term> terms, Vocabulary targetVocabulary) {
+        terms.stream().peek(t -> t.setUri(resolveTermIdentifierWrtVocabulary(t, targetVocabulary)))
+             .peek(t -> t.getLabel().getValue().forEach((lang, value) -> {
+                 final Optional<URI> existingUri = termService.findIdentifierByLabel(value,
+                                                                                     targetVocabulary,
+                                                                                     lang);
+                 if (existingUri.isPresent() && !existingUri.get().equals(t.getUri())) {
+                     throw new VocabularyImportException(
+                             "Vocabulary already contains a term with label '" + value + "' with a different identifier than the imported one.",
+                             "error.vocabulary.import.excel.labelWithDifferentIdentifierExists")
+                             .addParameter("label", value)
+                             .addParameter("existingUri", Utils.uriToString(existingUri.get()));
+                 }
+             }))
+             .filter(t -> termService.exists(t.getUri())).forEach(t -> {
+                 LOG.trace("Term {} already exists. Removing old version.", t);
+                 termService.forceRemove(termService.findRequired(t.getUri()));
+                 // Flush changes to prevent EntityExistsExceptions when term is already managed in PC as different type (Term vs TermInfo)
+                 em.flush();
+             });
+    }
+
+    private void persistNewTerms(List<Term> terms, Vocabulary targetVocabulary, Set<TermRelationship> rawDataToInsert) {
+        // Ensure all parents are saved before we start adding children
+        terms.stream().filter(t -> Utils.emptyIfNull(t.getParentTerms()).isEmpty())
+             .forEach(root -> {
+                 LOG.trace("Persisting root term {}.", root);
+                 termService.addRootTermToVocabulary(root, targetVocabulary);
+                 root.setVocabulary(targetVocabulary.getUri());
+             });
+        terms.stream().filter(t -> !Utils.emptyIfNull(t.getParentTerms()).isEmpty())
+             .forEach(t -> {
+                 t.setVocabulary(targetVocabulary.getUri());
+                 LOG.trace("Persisting child term {}.", t);
+                 termService.addChildTerm(t, t.getParentTerms().iterator().next());
+             });
+        // Insert term relationships as raw data because of possible object conflicts in the persistence context -
+        // the same term being as multiple types (Term, TermInfo) in the same persistence context
+        dataDao.insertRawData(rawDataToInsert.stream().map(tr -> new Quad(tr.subject().getUri(), tr.property(),
+                                                                          tr.object().getUri(),
+                                                                          targetVocabulary.getUri())).toList());
+    }
+
     @Override
     public Vocabulary importTermTranslations(@Nonnull URI vocabularyIri, @Nonnull ImportInput data) {
-        // TODO
-        return null;
+        Objects.requireNonNull(vocabularyIri);
+        Objects.requireNonNull(data);
+        final Vocabulary targetVocabulary = vocabularyDao.find(vocabularyIri).orElseThrow(
+                () -> NotFoundException.create(Vocabulary.class, vocabularyIri));
+        LOG.debug("Importing translations for terms in vocabulary {}.", vocabularyIri);
+        try {
+            final List<Term> terms = readTermsFromSheet(data);
+            terms.forEach(t -> {
+                identifyTermByLabelIfNecessary(t, targetVocabulary);
+                final Optional<Term> existingTerm = termService.find(t.getUri());
+                if (existingTerm.isEmpty() || !existingTerm.get().getVocabulary().equals(vocabularyIri)) {
+                    LOG.warn(
+                            "Term with identifier '{}' not found in vocabulary '{}'. Skipping record resolved from Excel file.",
+                            t.getUri(), vocabularyIri);
+                    return;
+                }
+                mergeTranslations(t, existingTerm.get());
+                termService.update(existingTerm.get());
+            });
+        } catch (IOException e) {
+            throw new VocabularyImportException("Unable to read input as Excel.", e);
+        }
+        return targetVocabulary;
+    }
+
+    private void identifyTermByLabelIfNecessary(Term t, Vocabulary targetVocabulary) {
+        if (t.getUri() == null) {
+            final String termLabel = t.getLabel().get(config.getPersistence().getLanguage());
+            if (termLabel == null) {
+                throw new VocabularyImportException(
+                        "Unable to identify terms in Excel - it contains neither term identifiers nor labels in primary language.",
+                        "error.vocabulary.import.excel.missingIdentifierOrLabel");
+            }
+            t.setUri(idResolver.generateDerivedIdentifier(targetVocabulary.getUri(),
+                                                          config.getNamespace().getTerm().getSeparator(),
+                                                          termLabel));
+        }
+    }
+
+    private List<Term> readTermsFromSheet(@NotNull ImportInput data) throws IOException {
+        List<Term> terms = Collections.emptyList();
+        for (InputStream input : data.data()) {
+            final Workbook workbook = new XSSFWorkbook(input);
+            assert workbook.getNumberOfSheets() > 0;
+            PrefixMap prefixMap = resolvePrefixMap(workbook);
+            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                final Sheet sheet = workbook.getSheetAt(i);
+                if (ExcelVocabularyExporter.PREFIX_SHEET_NAME.equals(sheet.getSheetName())) {
+                    // Skip already processed prefix sheet
+                    continue;
+                }
+                final LocalizedSheetImporter sheetImporter = new LocalizedSheetImporter(
+                        new LocalizedSheetImporter.Services(termService, languageService),
+                        prefixMap, terms);
+                terms = sheetImporter.resolveTermsFromSheet(sheet);
+            }
+        }
+        return terms;
+    }
+
+    private void mergeTranslations(Term source, Term target) {
+        target.setLabel(mergeSingularTranslations(source.getLabel(), target.getLabel()));
+        target.setDefinition(mergeSingularTranslations(source.getDefinition(), target.getDefinition()));
+        target.setDescription(mergeSingularTranslations(source.getDescription(), target.getDescription()));
+        assert target.getAltLabels() != null;
+        mergePluralTranslations(source.getAltLabels(), target.getAltLabels());
+        assert target.getHiddenLabels() != null;
+        mergePluralTranslations(source.getHiddenLabels(), target.getHiddenLabels());
+        assert target.getExamples() != null;
+        mergePluralTranslations(source.getExamples(), target.getExamples());
+    }
+
+    private MultilingualString mergeSingularTranslations(MultilingualString source, MultilingualString target) {
+        if (target == null) {
+            return source;
+        }
+        if (source == null) {
+            return target;
+        }
+        source.getValue().forEach((lang, value) -> {
+            if (!target.contains(lang)) {
+                target.set(lang, value);
+            }
+        });
+        return target;
+    }
+
+    private void mergePluralTranslations(Set<MultilingualString> source, Set<MultilingualString> target) {
+        if (Utils.emptyIfNull(source).isEmpty()) {
+            return;
+        }
+        // Remove just the existing language values
+        target.forEach(t -> t.getLanguages().forEach(lang -> source.forEach(mls -> mls.remove(lang))));
+        // Add the remainder
+        target.addAll(source.stream().filter(mls -> !mls.isEmpty()).toList());
     }
 
     /**
