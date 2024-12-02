@@ -256,6 +256,8 @@ public class ExcelImporter implements VocabularyImporter {
                 }
                 mergeTranslations(t, existingTerm.get());
                 termService.update(existingTerm.get());
+                // Flush changes to prevent EntityExistsExceptions when term is already managed in PC as different type (Term vs TermInfo)
+                em.flush();
             });
         } catch (IOException e) {
             throw new VocabularyImportException("Unable to read input as Excel.", e);
