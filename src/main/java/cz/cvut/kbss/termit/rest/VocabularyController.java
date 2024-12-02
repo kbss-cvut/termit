@@ -205,8 +205,13 @@ public class VocabularyController extends BaseController {
     @ApiResponse(responseCode = "200", description = "Template Excel file is returned as attachment")
     @GetMapping("/import/template")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<TypeAwareResource> getExcelTemplateFile() {
-        final TypeAwareResource template = vocabularyService.getExcelTemplateFile();
+    public ResponseEntity<TypeAwareResource> getExcelTemplateFile(
+            @Parameter(description = "Whether the file will be used to import only term translations")
+            @RequestParam(name = "translationsOnly", required = false,
+                          defaultValue = "false") boolean translationsOnly) {
+        final TypeAwareResource template =
+                translationsOnly ? vocabularyService.getExcelTranslationsImportTemplateFile() :
+                vocabularyService.getExcelImportTemplateFile();
         return ResponseEntity.ok()
                              .contentType(MediaType.parseMediaType(
                                      template.getMediaType().orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE)))

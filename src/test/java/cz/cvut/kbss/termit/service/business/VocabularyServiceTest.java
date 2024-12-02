@@ -383,9 +383,9 @@ class VocabularyServiceTest {
     }
 
     @Test
-    void getExcelTemplateFileReturnsResourceRepresentingExcelTemplateFile() throws Exception {
+    void getExcelTemplateFileReturnsResourceRepresentingExcelImportTemplateFile() throws Exception {
         when(appContext.getBean(Configuration.class)).thenReturn(new Configuration());
-        final TypeAwareResource result = sut.getExcelTemplateFile();
+        final TypeAwareResource result = sut.getExcelImportTemplateFile();
         assertTrue(result.getFileExtension().isPresent());
         assertEquals(ExportFormat.EXCEL.getFileExtension(), result.getFileExtension().get());
         assertTrue(result.getMediaType().isPresent());

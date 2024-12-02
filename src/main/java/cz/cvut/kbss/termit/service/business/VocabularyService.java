@@ -299,16 +299,28 @@ public class VocabularyService
      *
      * @return Template file as a resource
      */
-    public TypeAwareResource getExcelTemplateFile() {
+    public TypeAwareResource getExcelImportTemplateFile() {
+        return getExcelTemplate("termit-import");
+    }
+
+    private TypeAwareResource getExcelTemplate(String fileName) {
         final Configuration config = context.getBean(Configuration.class);
         return config.getTemplate().getExcelImport().map(File::new)
                      .map(f -> (TypeAwareResource) new TypeAwareFileSystemResource(f,
                                                                                    ExportFormat.EXCEL.getMediaType()))
                      .orElseGet(() -> {
-                         assert getClass().getClassLoader().getResource("template/termit-import.xlsx") != null;
-                         return new TypeAwareClasspathResource("template/termit-import.xlsx",
+                         assert getClass().getClassLoader().getResource("template/" + fileName + ExportFormat.EXCEL.getFileExtension()) != null;
+                         return new TypeAwareClasspathResource("template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
                                                                ExportFormat.EXCEL.getMediaType());
                      });
+    }
+
+    /**
+     * Gets an Excel template file that can be used to import term translations into TermIt.
+     * @return Template file as a resource
+     */
+    public TypeAwareResource getExcelTranslationsImportTemplateFile() {
+        return getExcelTemplate("termit-translations-import");
     }
 
     @Override

@@ -638,7 +638,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getExcelTemplateFileReturnsExcelTemplateFileRetrievedFromServiceAsAttachment() throws Exception {
-        when(serviceMock.getExcelTemplateFile()).thenReturn(new TypeAwareFileSystemResource(
+        when(serviceMock.getExcelImportTemplateFile()).thenReturn(new TypeAwareFileSystemResource(
                 new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI()),
                 Constants.MediaType.EXCEL));
 
@@ -646,6 +646,22 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
                    containsString("filename=\"termit-import.xlsx\""));
+        verify(serviceMock).getExcelImportTemplateFile();
+    }
+
+    @Test
+    void getExcelTemplateFileReturnsExcelTermTranslationsTemplateFileRetrievedFromServiceAsAttachment()
+            throws Exception {
+        when(serviceMock.getExcelTranslationsImportTemplateFile()).thenReturn(new TypeAwareFileSystemResource(
+                new File(getClass().getClassLoader().getResource("template/termit-translations-import.xlsx").toURI()),
+                Constants.MediaType.EXCEL));
+
+        final MvcResult mvcResult = mockMvc.perform(
+                get(PATH + "/import/template").queryParam("translationsOnly", Boolean.toString(true))).andReturn();
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
+                   containsString("filename=\"termit-translations-import.xlsx\""));
+        verify(serviceMock).getExcelTranslationsImportTemplateFile();
     }
 
     @Test
