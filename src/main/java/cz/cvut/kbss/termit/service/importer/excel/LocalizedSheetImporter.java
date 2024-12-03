@@ -84,7 +84,7 @@ class LocalizedSheetImporter {
      * @return Terms resolved from the sheet
      */
     List<Term> resolveTermsFromSheet(Sheet sheet) {
-        LOG.debug("Importing terms from sheet '{}'.", sheet.getSheetName());
+        LOG.debug("Reading terms from sheet '{}'.", sheet.getSheetName());
         this.rawDataToInsert = new ArrayList<>();
         final Optional<LanguageCode> lang = resolveLanguage(sheet);
         if (lang.isEmpty()) {

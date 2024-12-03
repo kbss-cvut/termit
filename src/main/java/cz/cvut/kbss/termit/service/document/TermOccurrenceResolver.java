@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Base class for resolving term occurrences in an annotated document.
@@ -50,7 +49,7 @@ public abstract class TermOccurrenceResolver {
      * Parses the specified input into some abstract representation from which new terms and term occurrences can be
      * extracted.
      * <p>
-     * Note that this method has to be called before calling {@link #findTermOccurrences(Consumer)}.
+     * Note that this method has to be called before calling {@link #findTermOccurrences(OccurrenceConsumer)}.
      *
      * @param input  The input to parse
      * @param source Original source of the input. Used for term occurrence generation

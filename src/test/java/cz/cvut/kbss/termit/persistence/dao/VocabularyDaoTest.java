@@ -25,11 +25,13 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
+import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Model;
@@ -43,6 +45,7 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -57,8 +60,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
@@ -83,6 +88,7 @@ import java.util.stream.IntStream;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -90,6 +96,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -107,6 +114,9 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private VocabularyDao sut;
+
+    @SpyBean
+    private ChangeRecordDao changeRecordDao;
 
     private User author;
 
@@ -761,10 +771,14 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
 
         transactional(() -> sut.remove(vocabulary));
 
-        ArgumentCaptor<VocabularyWillBeRemovedEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyWillBeRemovedEvent.class);
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        ArgumentCaptor<VocabularyEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyWillBeRemovedEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(eventCaptor.capture());
 
-        VocabularyWillBeRemovedEvent event = eventCaptor.getValue();
+        VocabularyWillBeRemovedEvent event = (VocabularyWillBeRemovedEvent) eventCaptor
+                .getAllValues().stream()
+                .filter(e -> e instanceof VocabularyWillBeRemovedEvent)
+                .findAny().orElseThrow();
+        
         assertNotNull(event);
 
         assertEquals(event.getVocabularyIri(), vocabulary.getUri());
@@ -926,5 +940,40 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
                 Assertions.fail("The Relation object is neither a term nor a secondTerm");
             }
         });
+    }
+
+    @Test
+    void getDetailedHistoryOfContentCallsChangeRecordDaoWithFilter() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final List<AbstractChangeRecord> records = List.of();
+        final URI skosConcept = URI.create(SKOS.CONCEPT);
+        final Pageable unpaged = Pageable.unpaged();
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
+        filterDto.setAuthorName("Name of the author");
+
+        doReturn(records).when(changeRecordDao).findAllRelatedToType(vocabulary, filterDto, skosConcept, unpaged);
+
+        sut.getDetailedHistoryOfContent(vocabulary, filterDto, unpaged);
+
+        verify(changeRecordDao).findAllRelatedToType(vocabulary, filterDto, skosConcept, unpaged);
+    }
+
+    @Test
+    void getLanguagesReturnsDistinctLanguagesUsedByVocabularyTerms() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term term2 = Generator.generateTermWithId(vocabulary.getUri());
+        term2.getLabel().set("cs", "Název v češtině");
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(term2, descriptorFactory.termDescriptor(term2));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(term2, vocabulary.getUri(), em);
+        });
+
+        final List<String> languages = sut.getLanguages(vocabulary.getUri());
+        assertEquals(2, languages.size());
+        assertThat(languages, hasItems(Environment.LANGUAGE, "cs"));
     }
 }

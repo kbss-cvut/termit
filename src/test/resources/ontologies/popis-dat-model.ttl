@@ -536,3 +536,7 @@ a-popis-dat-pojem:má-původní-hodnotu
         a                   <https://slovník.gov.cz/základní/pojem/typ-vztahu> ;
         rdfs:domain         a-popis-dat-pojem:úprava-entity ;
         rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vztah> .
+
+a-popis-dat-pojem:smazání-entity
+        a       <https://slovník.gov.cz/základní/pojem/typ-události>, owl:Class ;
+        rdfs:subClassOf a-popis-dat-pojem:změna .

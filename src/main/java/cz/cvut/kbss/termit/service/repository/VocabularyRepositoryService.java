@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.dto.mapper.DtoMapper;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
@@ -42,7 +43,7 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
@@ -228,8 +229,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * @return List of change records, ordered by date in descending order
      */
     @Transactional(readOnly = true)
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
-        return vocabularyDao.getDetailedHistoryOfContent(vocabulary, pageReq);
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
+        return vocabularyDao.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
     @CacheEvict(allEntries = true)
@@ -244,7 +245,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
-            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage());
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage());
         }
     }
 
@@ -258,6 +259,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @CacheEvict(allEntries = true)
     @Transactional
     public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
+        Objects.requireNonNull(vocabularyIri);
         Objects.requireNonNull(file);
         try {
             String contentType = resolveContentType(file);
@@ -267,7 +269,21 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
-            throw new VocabularyImportException("Unable to import vocabulary, because of: " + e.getMessage(), e);
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
+        Objects.requireNonNull(vocabularyIri);
+        Objects.requireNonNull(file);
+        try {
+            String contentType = resolveContentType(file);
+            return importers.importTermTranslations(vocabularyIri, new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
+        } catch (VocabularyImportException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
         }
     }
 
@@ -334,7 +350,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
-    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         return vocabularyDao.validateContents(vocabulary);
     }
 
@@ -371,5 +387,16 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     @Transactional(readOnly = true)
     public PrefixDeclaration resolvePrefix(URI vocabularyUri) {
         return vocabularyDao.resolvePrefix(vocabularyUri);
+    }
+
+    /**
+     * Returns the list of all distinct languages (language tags) used by terms in the specified vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return List of distinct languages
+     */
+    @Transactional(readOnly = true)
+    public List<String> getLanguages(URI vocabularyUri) {
+        return vocabularyDao.getLanguages(vocabularyUri);
     }
 }

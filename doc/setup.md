@@ -39,6 +39,7 @@ by the application:
 * `lucene` - decides whether Lucene text indexing is enabled and should be used in full text search queries.
 * `admin-registration-only` - decides whether new users can be registered only by application admin, or whether anyone can register.
 * `no-cache` - disables Ehcache, which is used to cache lists of resources and vocabularies for faster retrieval, and persistence cache.
+* `development` - indicates that the application is running is development. This, for example, means that mail server does not need to be configured.
 
 The `lucene` Spring profile is activated automatically by the `graphdb` Maven. `admin-registration-only` and `no-cache` have to be added
 either in `application.yml` directly, or one can pass the parameter to Maven build, e.g.:

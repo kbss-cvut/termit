@@ -22,11 +22,13 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
+import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
@@ -50,6 +52,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -79,6 +82,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -128,7 +132,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
-        final List<VocabularyDto> result = readValue(mvcResult, new TypeReference<List<VocabularyDto>>() {
+        final List<VocabularyDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertThat(result, containsSameEntities(vocabularies));
     }
@@ -382,7 +386,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/imports")).andExpect(status().isOk())
                        .andReturn();
-        final Set<URI> result = readValue(mvcResult, new TypeReference<Set<URI>>() {
+        final Set<URI> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(imports, result);
         verify(serviceMock).getReference(VOCABULARY_URI);
@@ -399,7 +403,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/imports")).andExpect(status().isOk())
                        .andReturn();
-        final Set<URI> result = readValue(mvcResult, new TypeReference<Set<URI>>() {
+        final Set<URI> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -427,17 +431,18 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
         final List<AbstractChangeRecord> records =
                 Generator.generateChangeRecords(vocabulary, user);
-        when(serviceMock.getChanges(vocabulary)).thenReturn(records);
+        final ChangeRecordFilterDto emptyFilter = new ChangeRecordFilterDto();
+        when(serviceMock.getChanges(vocabulary, emptyFilter)).thenReturn(records);
 
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history")).andExpect(status().isOk())
                        .andReturn();
         final List<AbstractChangeRecord> result =
-                readValue(mvcResult, new TypeReference<List<AbstractChangeRecord>>() {
+                readValue(mvcResult, new TypeReference<>() {
                 });
         assertNotNull(result);
         assertEquals(records, result);
-        verify(serviceMock).getChanges(vocabulary);
+        verify(serviceMock).getChanges(vocabulary, emptyFilter);
     }
 
     @Test
@@ -458,7 +463,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                        .andExpect(status().isOk())
                        .andReturn();
         final List<AggregatedChangeInfo> result =
-                readValue(mvcResult, new TypeReference<List<AggregatedChangeInfo>>() {
+                readValue(mvcResult, new TypeReference<>() {
                 });
         assertNotNull(result);
         assertEquals(changes, result);
@@ -510,7 +515,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                                                    get(PATH + "/" + FRAGMENT + "/versions").accept(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isOk())
                                            .andReturn();
-        final List<Snapshot> result = readValue(mvcResult, new TypeReference<List<Snapshot>>() {
+        final List<Snapshot> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertThat(result, containsSameEntities(snapshots));
         verify(serviceMock).findSnapshots(vocabulary);
@@ -633,7 +638,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
     @Test
     void getExcelTemplateFileReturnsExcelTemplateFileRetrievedFromServiceAsAttachment() throws Exception {
-        when(serviceMock.getExcelTemplateFile()).thenReturn(new TypeAwareFileSystemResource(
+        when(serviceMock.getExcelImportTemplateFile()).thenReturn(new TypeAwareFileSystemResource(
                 new File(getClass().getClassLoader().getResource("template/termit-import.xlsx").toURI()),
                 Constants.MediaType.EXCEL));
 
@@ -641,5 +646,79 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
                    containsString("filename=\"termit-import.xlsx\""));
+        verify(serviceMock).getExcelImportTemplateFile();
+    }
+
+    @Test
+    void getExcelTemplateFileReturnsExcelTermTranslationsTemplateFileRetrievedFromServiceAsAttachment()
+            throws Exception {
+        when(serviceMock.getExcelTranslationsImportTemplateFile()).thenReturn(new TypeAwareFileSystemResource(
+                new File(getClass().getClassLoader().getResource("template/termit-translations-import.xlsx").toURI()),
+                Constants.MediaType.EXCEL));
+
+        final MvcResult mvcResult = mockMvc.perform(
+                get(PATH + "/import/template").queryParam("translationsOnly", Boolean.toString(true))).andReturn();
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
+                   containsString("filename=\"termit-translations-import.xlsx\""));
+        verify(serviceMock).getExcelTranslationsImportTemplateFile();
+    }
+
+    @Test
+    void getDetailedHistoryOfContentReturnsListOfChangeRecordsWhenNoFilterIsSpecified() throws Exception {
+        final int pageSize = Integer.parseInt(VocabularyController.DEFAULT_PAGE_SIZE);
+        final Vocabulary vocabulary = generateVocabularyAndInitReferenceResolution();
+        final Term term = Generator.generateTermWithId();
+        final List<AbstractChangeRecord> changeRecords = IntStream.range(0, 5).mapToObj(
+                i -> Generator.generateChangeRecords(term, user)).flatMap(List::stream).toList();
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto();
+        final Pageable pageable = Pageable.ofSize(pageSize);
+
+        doReturn(changeRecords).when(serviceMock).getDetailedHistoryOfContent(vocabulary, filter, pageable);
+
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history-of-content/detail"))
+                                           .andExpect(status().isOk()).andReturn();
+        final List<AbstractChangeRecord> result =
+                readValue(mvcResult, new TypeReference<>() {
+                });
+        assertNotNull(result);
+        assertEquals(changeRecords, result);
+        verify(serviceMock).getDetailedHistoryOfContent(vocabulary, filter, pageable);
+    }
+
+    @Test
+    void getLanguagesRetrievesAndReturnsListOfLanguagesUsedInVocabulary() throws Exception {
+        when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(VOCABULARY_URI);
+        final List<String> languages = List.of(Environment.LANGUAGE, "cs", "de");
+        when(serviceMock.getLanguages(VOCABULARY_URI)).thenReturn(languages);
+
+        final MvcResult mvcResult = mockMvc.perform(
+                get(PATH + "/" + FRAGMENT + "/languages").queryParam(QueryParams.NAMESPACE, NAMESPACE)).andReturn();
+        final List<String> result = readValue(mvcResult, new TypeReference<>() {
+        });
+        assertEquals(languages, result);
+        verify(serviceMock).getLanguages(VOCABULARY_URI);
+    }
+
+    @Test
+    void reImportVocabularyRunsTermTranslationsImportForUploadedFileWhenTranslationsOnlyIsSpecified() throws Exception {
+        when(configMock.getNamespace().getVocabulary()).thenReturn(NAMESPACE);
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        vocabulary.setUri(URI.create(NAMESPACE + FRAGMENT));
+        when(idResolverMock.resolveIdentifier(NAMESPACE, FRAGMENT)).thenReturn(vocabulary.getUri());
+        when(serviceMock.importTermTranslations(any(URI.class), any())).thenReturn(vocabulary);
+        final MockMultipartFile upload = new MockMultipartFile("file", "vocabulary.xlsx",
+                                                               Constants.MediaType.EXCEL,
+                                                               Environment.loadFile("data/import-simple-en-cs.xlsx"));
+        final MvcResult mvcResult = mockMvc.perform(multipart(PATH + "/" + FRAGMENT + "/import").file(upload)
+                                                                                                .queryParam(
+                                                                                                        "translationsOnly",
+                                                                                                        "true"))
+                                           .andExpect(status().isCreated())
+                                           .andReturn();
+        verifyLocationEquals(PATH + "/" + FRAGMENT, mvcResult);
+        assertThat(mvcResult.getResponse().getHeader(HttpHeaders.LOCATION),
+                   containsString(QueryParams.NAMESPACE + "=" + NAMESPACE));
+        verify(serviceMock).importTermTranslations(vocabulary.getUri(), upload);
     }
 }

@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.DeleteChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -52,6 +53,8 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ChangeTrackingTest extends BaseServiceTestRunner {
 
@@ -141,7 +144,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             assertEquals(vocabulary.getUri(), chr.getChangedEntity());
             assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
             assertThat(((UpdateChangeRecord) chr).getChangedAttribute().toString(), anyOf(equalTo(DC.Terms.TITLE),
-                                                                                          equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)));
+                    equalTo(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik)));
         });
     }
 
@@ -214,7 +217,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
         assertEquals(1, result.size());
         assertEquals(Collections.singleton(originalDefinition),
-                     ((UpdateChangeRecord) result.get(0)).getOriginalValue());
+                ((UpdateChangeRecord) result.get(0)).getOriginalValue());
         assertEquals(Collections.singleton(newDefinition), ((UpdateChangeRecord) result.get(0)).getNewValue());
     }
 
@@ -270,5 +273,25 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
         assertThat(result.get(0), instanceOf(UpdateChangeRecord.class));
         assertEquals(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_stav_pojmu),
                 ((UpdateChangeRecord) result.get(0)).getChangedAttribute());
+    }
+
+    @Test
+    void deletingTermCreatesDeleteChangeRecord() {
+        enableRdfsInference(em);
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        transactional(()-> {
+            em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
+            term.setGlossary(vocabulary.getGlossary().getUri());
+            em.persist(term, descriptorFactory.termDescriptor(vocabulary));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
+
+        termService.remove(term);
+        final List<AbstractChangeRecord> result = changeRecordDao.findAll(term);
+        assertEquals(1, result.size());
+        final DeleteChangeRecord record = assertInstanceOf(DeleteChangeRecord.class, result.get(0));
+        assertEquals(term.getUri(), record.getChangedEntity());
+        assertNotNull(record.getLabel());
+        assertEquals(term.getLabel(), record.getLabel());
     }
 }

@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
@@ -46,8 +47,8 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import cz.cvut.kbss.termit.util.throttle.CacheableFuture;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -281,25 +282,50 @@ public class VocabularyService
     }
 
     /**
+     * Imports translations of terms in the specified vocabulary from the specified file.
+     *
+     * @param vocabularyIri IRI of vocabulary for whose terms to import translations
+     * @param file          File from which to import the translations
+     * @return The imported vocabulary metadata
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyIri)")
+    public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
+        return repositoryService.importTermTranslations(vocabularyIri, file);
+    }
+
+    /**
      * Gets an Excel template file that can be used to import terms into TermIt.
      *
      * @return Template file as a resource
      */
-    public TypeAwareResource getExcelTemplateFile() {
+    public TypeAwareResource getExcelImportTemplateFile() {
+        return getExcelTemplate("termit-import");
+    }
+
+    private TypeAwareResource getExcelTemplate(String fileName) {
         final Configuration config = context.getBean(Configuration.class);
         return config.getTemplate().getExcelImport().map(File::new)
                      .map(f -> (TypeAwareResource) new TypeAwareFileSystemResource(f,
                                                                                    ExportFormat.EXCEL.getMediaType()))
                      .orElseGet(() -> {
-                         assert getClass().getClassLoader().getResource("template/termit-import.xlsx") != null;
-                         return new TypeAwareClasspathResource("template/termit-import.xlsx",
+                         assert getClass().getClassLoader().getResource("template/" + fileName + ExportFormat.EXCEL.getFileExtension()) != null;
+                         return new TypeAwareClasspathResource("template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
                                                                ExportFormat.EXCEL.getMediaType());
                      });
     }
 
+    /**
+     * Gets an Excel template file that can be used to import term translations into TermIt.
+     * @return Template file as a resource
+     */
+    public TypeAwareResource getExcelTranslationsImportTemplateFile() {
+        return getExcelTemplate("termit-translations-import");
+    }
+
     @Override
-    public List<AbstractChangeRecord> getChanges(Vocabulary asset) {
-        return changeRecordService.getChanges(asset);
+    public List<AbstractChangeRecord> getChanges(Vocabulary asset, ChangeRecordFilterDto filterDto) {
+        return changeRecordService.getChanges(asset, filterDto);
     }
 
     /**
@@ -316,11 +342,12 @@ public class VocabularyService
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq Specification of the size and number of the page to return
+     * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, Pageable pageReq) {
-        return repositoryService.getDetailedHistoryOfContent(vocabulary, pageReq);
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
+                                                                  Pageable pageReq) {
+        return repositoryService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
     /**
@@ -384,7 +411,7 @@ public class VocabularyService
      *
      * @param vocabulary Vocabulary to validate
      */
-    public CacheableFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
         return repositoryService.validateContents(vocabulary);
     }
 
@@ -520,6 +547,17 @@ public class VocabularyService
     public AccessLevel getAccessLevel(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return authorizationService.getAccessLevel(vocabulary);
+    }
+
+    /**
+     * Gets the list of languages used in the specified vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return List of languages
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabularyUri)")
+    public List<String> getLanguages(URI vocabularyUri) {
+        return repositoryService.getLanguages(vocabularyUri);
     }
 
     @Override

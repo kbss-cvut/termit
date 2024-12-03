@@ -63,9 +63,10 @@ class TextAnalysisRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findLatestGetsLatestTextAnalysisRecordForResource() {
         final URI vocabulary = Generator.generateUri();
-        final TextAnalysisRecord old = new TextAnalysisRecord(Instant.ofEpochMilli(System.currentTimeMillis() - 10000), resource);
+        final TextAnalysisRecord old = new TextAnalysisRecord(Instant.ofEpochMilli(System.currentTimeMillis() - 10000),
+                                                              resource, Environment.LANGUAGE);
         old.setVocabularies(Collections.singleton(vocabulary));
-        final TextAnalysisRecord latest = new TextAnalysisRecord(Utils.timestamp(), resource);
+        final TextAnalysisRecord latest = new TextAnalysisRecord(Utils.timestamp(), resource, Environment.LANGUAGE);
         latest.setVocabularies(Collections.singleton(vocabulary));
         transactional(() -> {
             sut.persist(old);

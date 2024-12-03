@@ -23,6 +23,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -803,7 +804,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         term.setUri(termUri);
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
         final List<AbstractChangeRecord> records = generateChangeRecords(term);
-        when(termServiceMock.getChanges(term)).thenReturn(records);
+        final ChangeRecordFilterDto emptyFilter = new ChangeRecordFilterDto();
+        when(termServiceMock.getChanges(term, emptyFilter)).thenReturn(records);
 
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/history"))
@@ -812,6 +814,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         });
         assertNotNull(result);
         assertEquals(records, result);
+        verify(termServiceMock).getChanges(term, emptyFilter);
     }
 
     private List<AbstractChangeRecord> generateChangeRecords(Term term) {
@@ -833,7 +836,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         when(termServiceMock.findRequired(termUri)).thenReturn(term);
         final List<AbstractChangeRecord> records = generateChangeRecords(term);
-        when(termServiceMock.getChanges(term)).thenReturn(records);
+        final ChangeRecordFilterDto emptyFilter = new ChangeRecordFilterDto();
+        when(termServiceMock.getChanges(term, emptyFilter)).thenReturn(records);
 
         final MvcResult mvcResult = mockMvc
                 .perform(get("/terms/" + TERM_NAME + "/history").param(QueryParams.NAMESPACE, NAMESPACE))
@@ -843,6 +847,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         });
         assertNotNull(result);
         assertEquals(records, result);
+        verify(termServiceMock).getChanges(term, emptyFilter);
     }
 
     @Test

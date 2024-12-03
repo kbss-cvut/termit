@@ -38,6 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -86,7 +87,7 @@ class ExcelImporterTest {
 
     @SuppressWarnings("unused")
     @Spy
-    private IdentifierResolver idResolver = new IdentifierResolver(new Configuration());
+    private IdentifierResolver idResolver = new IdentifierResolver(config);
 
     @InjectMocks
     private ExcelImporter sut;
@@ -97,6 +98,7 @@ class ExcelImporterTest {
     void setUp() {
         this.vocabulary = Generator.generateVocabularyWithId();
         config.getNamespace().getTerm().setSeparator("/terms");
+        config.getPersistence().setLanguage(Environment.LANGUAGE);
     }
 
     @ParameterizedTest
@@ -350,9 +352,7 @@ class ExcelImporterTest {
 
     @Test
     void importSupportsTermIdentifiers() {
-        vocabulary.setUri(URI.create("http://example.com"));
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -378,11 +378,15 @@ class ExcelImporterTest {
                                       building.get().getUri(), vocabulary.getUri())), quadsCaptor.getValue());
     }
 
-    @Test
-    void importSupportsPrefixedTermIdentifiers() {
+    private void initVocabularyResolution() {
         vocabulary.setUri(URI.create("http://example.com"));
         when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+    }
+
+    @Test
+    void importSupportsPrefixedTermIdentifiers() {
+        initVocabularyResolution();
 
         final Vocabulary result = sut.importVocabulary(
                 new VocabularyImporter.ImportConfiguration(false, vocabulary.getUri(), prePersist),
@@ -431,9 +435,7 @@ class ExcelImporterTest {
 
     @Test
     void importRemovesExistingInstanceWhenImportedTermAlreadyExists() {
-        vocabulary.setUri(URI.create("http://example.com"));
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         final Term existingBuilding = Generator.generateTermWithId();
         existingBuilding.setUri(URI.create("http://example.com/terms/building"));
         final Term existingConstruction = Generator.generateTermWithId();
@@ -457,9 +459,7 @@ class ExcelImporterTest {
 
     @Test
     void importSupportsReferencesToOtherVocabulariesViaTermIdentifiersWhenReferencedTermsExist() {
-        vocabulary.setUri(URI.create("http://example.com"));
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         when(termService.exists(any())).thenReturn(false);
         when(termService.exists(URI.create("http://example.com/another-vocabulary/terms/relatedMatch"))).thenReturn(
                 true);
@@ -568,9 +568,7 @@ class ExcelImporterTest {
 
     @Test
     void importThrowsVocabularyImportExceptionWhenSheetContainsDuplicateIdentifiers() throws Exception {
-        vocabulary.setUri(URI.create("http://example.com"));
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
         final Sheet sheet = input.getSheet("English");
         sheet.shiftColumns(0, 12, 1);
@@ -597,9 +595,7 @@ class ExcelImporterTest {
 
     @Test
     void importSupportsSpecifyingStateAndTypeOnlyInOneSheet() throws Exception {
-        vocabulary.setUri(URI.create("http://example.com"));
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
         final Sheet englishSheet = input.getSheet("English");
         englishSheet.getRow(1).createCell(0).setCellValue("Construction");
@@ -651,9 +647,7 @@ class ExcelImporterTest {
 
     @Test
     void importSupportsMultipleTypesDeclaredForTerm() throws Exception {
-        vocabulary.setUri(URI.create("http://example.com"));
-        when(vocabularyDao.exists(vocabulary.getUri())).thenReturn(true);
-        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        initVocabularyResolution();
         final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
         final Sheet englishSheet = input.getSheet("English");
         englishSheet.getRow(1).createCell(0).setCellValue("Construction");
@@ -677,5 +671,101 @@ class ExcelImporterTest {
         verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
         assertThat(captor.getValue().getTypes(),
                    hasItems(objectType.getUri().toString(), eventType.getUri().toString()));
+    }
+
+    @Test
+    void importTermTranslationsFromExcelWithIdentifiersUpdatesExistingTerms() {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        final Term building = initTermBuilding();
+        final Term construction = initTermConstruction();
+
+        final Vocabulary result = sut.importTermTranslations(vocabulary.getUri(), new VocabularyImporter.ImportInput(
+                Constants.MediaType.EXCEL,
+                Environment.loadFile("data/import-with-identifiers-en-cs.xlsx")));
+        assertEquals(vocabulary, result);
+        assertEquals("Budova", building.getLabel().get("cs"));
+        List.of("Barák", "Dům").forEach(t -> assertTrue(
+                building.getAltLabels().stream().anyMatch(mls -> mls.contains("cs") && mls.get("cs").equals(t))));
+        assertEquals("Definice pojmu budova", building.getDefinition().get("cs"));
+        assertEquals("Doplňující poznámka pojmu budova", building.getDescription().get("cs"));
+        assertEquals("Stavba", construction.getLabel().get("cs"));
+        assertEquals("Proces výstavby budovy", construction.getDefinition().get("cs"));
+        assertTrue(construction.getAltLabels().stream()
+                               .anyMatch(mls -> mls.contains("cs") && mls.get("cs").equals("Staveniště")));
+        verify(termService).update(building);
+        verify(termService).update(construction);
+    }
+
+    private Term initTermBuilding() {
+        final Term building = new Term(URI.create("http://example.com/terms/budova"));
+        building.setLabel(MultilingualString.create("Building", "en"));
+        building.setAltLabels(new HashSet<>(Set.of(MultilingualString.create("Complex", "en"))));
+        building.setDefinition(MultilingualString.create("Definition of term Building", "en"));
+        building.setDescription(MultilingualString.create("Building scope note", "en"));
+        building.setHiddenLabels(new HashSet<>());
+        building.setExamples(new HashSet<>());
+        building.setVocabulary(vocabulary.getUri());
+        when(termService.find(building.getUri())).thenReturn(Optional.of(building));
+        return building;
+    }
+
+    private Term initTermConstruction() {
+        final Term construction = new Term(URI.create("http://example.com/terms/stavba"));
+        construction.setLabel(MultilingualString.create("Construction", "en"));
+        construction.setAltLabels(new HashSet<>(Set.of(MultilingualString.create("Construction site", "en"))));
+        construction.setDefinition(MultilingualString.create("The process of building a building", "en"));
+        construction.setHiddenLabels(new HashSet<>());
+        construction.setExamples(new HashSet<>());
+        construction.setVocabulary(vocabulary.getUri());
+        when(termService.find(construction.getUri())).thenReturn(Optional.of(construction));
+        return construction;
+    }
+
+    @Test
+    void importTermTranslationsPreservesExistingValues() {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        final Term building = initTermBuilding();
+
+        final Vocabulary result = sut.importTermTranslations(vocabulary.getUri(), new VocabularyImporter.ImportInput(
+                Constants.MediaType.EXCEL,
+                Environment.loadFile("data/import-with-identifiers-en-cs.xlsx")));
+        assertEquals(vocabulary, result);
+        assertEquals("Building", building.getLabel().get("en"));
+        assertEquals("Definition of term Building", building.getDefinition().get("en"));
+        assertTrue(building.getAltLabels().stream()
+                           .anyMatch(mls -> mls.contains("en") && mls.get("en").equals("Complex")));
+    }
+
+    @Test
+    void importTermTranslationsUsesTermLabelToResolveIdentifierWhenExcelDoesNotContainIdentifiers() {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+        config.getPersistence().setLanguage("cs");
+        final Term building = initTermBuilding();
+
+        sut.importTermTranslations(vocabulary.getUri(), new VocabularyImporter.ImportInput(
+                Constants.MediaType.EXCEL,
+                Environment.loadFile("data/import-simple-en-cs.xlsx")));
+        verify(termService).find(building.getUri());
+        assertEquals("Budova", building.getLabel().get("cs"));
+        verify(termService).update(any(Term.class));
+    }
+
+    @Test
+    void importTermTranslationsThrowsVocabularyImportExceptionWhenExcelDoesNotContainIdentifierAndSheetWithLabelsInPrimaryLanguage() {
+        vocabulary.setUri(URI.create("http://example.com"));
+        when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
+
+        VocabularyImportException ex = assertThrows(VocabularyImportException.class,
+                                                    () -> sut.importTermTranslations(vocabulary.getUri(),
+                                                                                     new VocabularyImporter.ImportInput(
+                                                                                             Constants.MediaType.EXCEL,
+                                                                                             Environment.loadFile(
+                                                                                                     "data/import-simple-de.xlsx"))
+                                                    ));
+        assertEquals("error.vocabulary.import.excel.missingIdentifierOrLabel", ex.getMessageId());
+        verify(termService, never()).update(any());
     }
 }

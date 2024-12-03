@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -184,10 +185,11 @@ class VocabularyServiceTest {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<AbstractChangeRecord> records = Generator.generateChangeRecords(vocabulary,
                                                                                    Generator.generateUserWithId());
-        when(changeRecordService.getChanges(vocabulary)).thenReturn(records);
+        final ChangeRecordFilterDto emptyFilter = new ChangeRecordFilterDto();
+        when(changeRecordService.getChanges(vocabulary, emptyFilter)).thenReturn(records);
         final List<AbstractChangeRecord> result = sut.getChanges(vocabulary);
         assertEquals(records, result);
-        verify(changeRecordService).getChanges(vocabulary);
+        verify(changeRecordService).getChanges(vocabulary, emptyFilter);
     }
 
     @Test
@@ -381,9 +383,9 @@ class VocabularyServiceTest {
     }
 
     @Test
-    void getExcelTemplateFileReturnsResourceRepresentingExcelTemplateFile() throws Exception {
+    void getExcelTemplateFileReturnsResourceRepresentingExcelImportTemplateFile() throws Exception {
         when(appContext.getBean(Configuration.class)).thenReturn(new Configuration());
-        final TypeAwareResource result = sut.getExcelTemplateFile();
+        final TypeAwareResource result = sut.getExcelImportTemplateFile();
         assertTrue(result.getFileExtension().isPresent());
         assertEquals(ExportFormat.EXCEL.getFileExtension(), result.getFileExtension().get());
         assertTrue(result.getMediaType().isPresent());
