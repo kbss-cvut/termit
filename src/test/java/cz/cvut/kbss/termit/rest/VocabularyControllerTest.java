@@ -132,7 +132,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
 
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
-        final List<VocabularyDto> result = readValue(mvcResult, new TypeReference<List<VocabularyDto>>() {
+        final List<VocabularyDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertThat(result, containsSameEntities(vocabularies));
     }
@@ -386,7 +386,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/imports")).andExpect(status().isOk())
                        .andReturn();
-        final Set<URI> result = readValue(mvcResult, new TypeReference<Set<URI>>() {
+        final Set<URI> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(imports, result);
         verify(serviceMock).getReference(VOCABULARY_URI);
@@ -403,7 +403,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult =
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/imports")).andExpect(status().isOk())
                        .andReturn();
-        final Set<URI> result = readValue(mvcResult, new TypeReference<Set<URI>>() {
+        final Set<URI> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -438,7 +438,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                 mockMvc.perform(get(PATH + "/" + FRAGMENT + "/history")).andExpect(status().isOk())
                        .andReturn();
         final List<AbstractChangeRecord> result =
-                readValue(mvcResult, new TypeReference<List<AbstractChangeRecord>>() {
+                readValue(mvcResult, new TypeReference<>() {
                 });
         assertNotNull(result);
         assertEquals(records, result);
@@ -463,7 +463,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                        .andExpect(status().isOk())
                        .andReturn();
         final List<AggregatedChangeInfo> result =
-                readValue(mvcResult, new TypeReference<List<AggregatedChangeInfo>>() {
+                readValue(mvcResult, new TypeReference<>() {
                 });
         assertNotNull(result);
         assertEquals(changes, result);
@@ -515,7 +515,7 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
                                                    get(PATH + "/" + FRAGMENT + "/versions").accept(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isOk())
                                            .andReturn();
-        final List<Snapshot> result = readValue(mvcResult, new TypeReference<List<Snapshot>>() {
+        final List<Snapshot> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertThat(result, containsSameEntities(snapshots));
         verify(serviceMock).findSnapshots(vocabulary);
