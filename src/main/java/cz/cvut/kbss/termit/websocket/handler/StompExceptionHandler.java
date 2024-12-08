@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.websocket.handler;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
@@ -23,10 +24,15 @@ public class StompExceptionHandler extends StompSubProtocolErrorHandler {
 
     @Override
     protected @Nonnull Message<byte[]> handleInternal(@Nonnull StompHeaderAccessor errorHeaderAccessor,
-                                                      @Nonnull byte[] errorPayload, Throwable cause,
-                                                      StompHeaderAccessor clientHeaderAccessor) {
+                                                      @Nonnull byte[] errorPayload,
+                                                      @Nullable Throwable cause,
+                                                      @Nullable StompHeaderAccessor clientHeaderAccessor) {
         final Message<?> message = MessageBuilder.withPayload(errorPayload).setHeaders(errorHeaderAccessor).build();
-        final boolean handled = webSocketExceptionHandler.delegate(message, cause);
+        Throwable causeToHandle = cause;
+        if (causeToHandle != null && causeToHandle.getCause() != null) {
+            causeToHandle = causeToHandle.getCause();
+        }
+        final boolean handled = webSocketExceptionHandler.delegate(message, causeToHandle);
 
         if (!handled) {
             LOG.error("STOMP sub-protocol exception", cause);

@@ -45,11 +45,15 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static cz.cvut.kbss.termit.util.ExceptionUtils.findCause;
 
 /**
- * @implSpec Should reflect {@link cz.cvut.kbss.termit.rest.handler.RestExceptionHandler}
+ * @implSpec Should reflect {@link cz.cvut.kbss.termit.rest.handler.RestExceptionHandler}.<br>
+ * In order for the delegation to work, the method signature of MessageExceptionHandler methods must be {@code (Message<?>, Exception)}
  */
 @SendToUser
 @ControllerAdvice
@@ -98,51 +102,73 @@ public class WebSocketExceptionHandler {
     }
 
     /**
-     * Tries to match method on this object that matches signature with params
+     * Searches available methods annotated with {@link MessageExceptionHandler} in this class
+     * when the method signature matches {@code (Message<?>, Exception)}
+     * and the exception parameter is assignable from the supplied throwable
+     * the method is called.
      *
+     * @param message the associated message
+     * @param throwable the exception to handle
      * @return true when a method was found and called, false otherwise
-     * @throws IllegalArgumentException never
      */
     public boolean delegate(Message<?> message, Throwable throwable) {
         try {
-            return delegateInternal(message, throwable.getCause());
+            return delegateInternal(message, throwable);
         } catch (InvocationTargetException invEx) {
+            // Exception handler method threw an exception
             LOG.error("Exception thrown during exception handler invocation", invEx);
         } catch (IllegalAccessException unexpected) {
-            // is checked by delegate
+            // is checked by delegateInternal
         }
         return false;
     }
 
     /**
-     * Tries to match method on this object that matches signature with params
+     * Searches available methods annotated with {@link MessageExceptionHandler} in this class
+     * when the method signature matches {@code (Message<?>, Exception)}
+     * and the exception parameter is assignable from the supplied throwable
+     * the method is called.
      *
+     * @param message the associated message
+     * @param throwable the exception to handle
      * @return true when a method was found and called, false otherwise
      * @throws IllegalArgumentException never
+     * @throws IllegalAccessException never
+     * @throws InvocationTargetException when the exception handler method throws an exception
      */
     private boolean delegateInternal(Message<?> message, Throwable throwable)
             throws InvocationTargetException, IllegalAccessException {
+        // handle only exceptions
         if (throwable instanceof Exception exception) {
-            Method[] methods = this.getClass().getMethods();
+            // find all methods annotated with MessageExceptionHandler
+            List<Method> methods = Arrays.stream(this.getClass().getMethods())
+                                         .filter(m -> m.isAnnotationPresent(MessageExceptionHandler.class)).toList();
             for (final Method method : methods) {
-                if (!method.canAccess(this) || method.getName().equals("delegate") || method.getName().equals("delegateInternal")) {
+                // check for reflection access to prevent IllegalAccessException
+                if (!method.canAccess(this)) {
                     continue;
                 }
+                // we are interested only in methods with exactly two parameters (message, exception)
                 Class<?>[] params = method.getParameterTypes();
                 if (params.length != 2) {
                     continue;
                 }
+                // check if the MessageExceptionHandler annotation has value with allowed exceptions
+                Class<? extends Throwable>[] allowedExceptions = Optional.ofNullable(method.getAnnotation(MessageExceptionHandler.class))
+                                                                         .map(MessageExceptionHandler::value).orElseGet(() -> new Class[0]);
+                // if the exception is not allowed by the annotation, skip the method
+                if (allowedExceptions.length > 0 && Arrays.stream(allowedExceptions).noneMatch(e -> e.isAssignableFrom(exception.getClass()))) {
+                    continue;
+                }
+                // validate the method signature
                 if (params[0].isAssignableFrom(message.getClass()) && params[1].isAssignableFrom(exception.getClass())) {
-                    // message, exception
+                    // call the method with message, exception parameters
                     method.invoke(this, message, exception);
-                    return true;
-                } else if (params[0].isAssignableFrom(exception.getClass()) && params[1].isAssignableFrom(message.getClass())) {
-                    // exception, message
-                    method.invoke(this, exception, message);
-                    return true;
+                    return true; // exception was handled
                 }
             }
         }
+        // throwable is not an exception or no suitable method was found
         return false;
     }
 
