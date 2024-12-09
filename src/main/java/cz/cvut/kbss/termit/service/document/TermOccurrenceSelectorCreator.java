@@ -10,6 +10,7 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.service.business.ResourceService;
 import cz.cvut.kbss.termit.service.document.html.HtmlSelectorGenerators;
+import cz.cvut.kbss.termit.util.Constants;
 import jakarta.annotation.Nonnull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -19,8 +20,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 import java.util.Set;
-
-import static cz.cvut.kbss.termit.service.document.html.HtmlTermOccurrenceResolver.BNODE_PREFIX;
 
 /**
  * Creates selectors for a new term occurrence.
@@ -45,7 +44,7 @@ public class TermOccurrenceSelectorCreator {
      * Creates selectors for a term occurrence in the specified target represented by an HTML element with the specified
      * id.
      *
-     * @param target    Asset in which the occurrence is to be found
+     * @param target       Asset in which the occurrence is to be found
      * @param elementAbout Value of the {@literal about} attribute of the occurrence element
      * @return Set of generated selectors for the occurrence element
      * @throws UnsupportedOperationException If the specified target is not supported
@@ -59,7 +58,8 @@ public class TermOccurrenceSelectorCreator {
         }
         final FileOccurrenceTarget ft = (FileOccurrenceTarget) target;
         final Document targetContent = loadTargetContent(ft);
-        final Elements elements = targetContent.select("[about=" + BNODE_PREFIX + elementAbout + "]");
+        final Elements elements = targetContent.select(
+                "[" + Constants.RDFa.ABOUT + "=" + Constants.BNODE_PREFIX + elementAbout + "]");
         if (elements.isEmpty()) {
             throw new SelectorGenerationException("No element with id " + elementAbout + " found in " + ft.getSource());
         }

@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.service.document.html;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
-import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
@@ -30,6 +29,7 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +42,7 @@ import org.springframework.http.MediaType;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -98,13 +99,8 @@ class HtmlTermOccurrenceResolverTest {
 
     @Test
     void supportsReturnsTrueForHtmlFileWithoutExtension() {
-        final Document document = new Document();
-        document.setLabel("testDocument");
-        document.setUri(Generator.generateUri());
         final File file = new File();
         file.setLabel("test");
-        file.setDocument(document);
-        document.addFile(file);
         when(documentManager.getContentType(file)).thenReturn(Optional.of(MediaType.TEXT_HTML_VALUE));
         assertTrue(sut.supports(file));
     }
@@ -195,9 +191,31 @@ class HtmlTermOccurrenceResolverTest {
             assertThat(to.getTypes(), not(hasItem(Vocabulary.s_c_navrzeny_vyskyt_termu)));
         });
         assertEquals(1, resultSize.get());
-        final org.jsoup.nodes.Document document = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
+        final Document document = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
         final Elements annotations = document.select("span[about]");
         assertEquals(1, annotations.size());
         assertFalse(annotations.get(0).hasAttr("score"));
+    }
+
+    @Test
+    void findTermOccurrencesReusesExistingApprovedOccurrencesThatAreNotPresentInAnnotatedContent() throws Exception {
+        when(termService.exists(TERM_URI)).thenReturn(true);
+        final File file = initFile();
+        final String id = "r2d2";
+        final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
+        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/" + id));
+        final Selector quoteSelector = new TextQuoteSelector("Prahy", " hlavního města ", ".");
+        final Selector posSelector = new TextPositionSelector(57, 62);
+        existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
+        final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
+        sut.parseContent(is, file);
+        sut.setExistingOccurrences(List.of(existing));
+
+        final List<TermOccurrence> result = new ArrayList<>();
+        sut.findTermOccurrences(result::add);
+        assertThat(result, hasItem(existing));
+        final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
+        final Elements addedAnnotation = resultDoc.select("span[about=_:" + id + "]");
+        assertFalse(addedAnnotation.isEmpty());
     }
 }
