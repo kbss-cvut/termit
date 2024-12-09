@@ -24,6 +24,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
@@ -60,7 +61,14 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
     @Types
     private Set<String> types;
 
+    @Transient
     private transient Double score;
+
+    /**
+     * ID of the HTML element representing the occurrence.
+     */
+    @Transient
+    private transient String elementId;
 
     public TermOccurrence() {
     }
@@ -117,6 +125,14 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
 
     public void setScore(Double score) {
         this.score = score;
+    }
+
+    public String getElementId() {
+        return elementId;
+    }
+
+    public void setElementId(String elementId) {
+        this.elementId = elementId;
     }
 
     /**

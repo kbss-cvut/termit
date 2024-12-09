@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
+import cz.cvut.kbss.termit.service.document.TermOccurrenceSelectorCreator;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,12 +52,16 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
 
     private final ResourceRepositoryService resourceService;
 
+    private final TermOccurrenceSelectorCreator selectorCreator;
+
     @Autowired
     public TermOccurrenceRepositoryService(TermOccurrenceDao termOccurrenceDao, TermRepositoryService termService,
-                                           ResourceRepositoryService resourceService) {
+                                           ResourceRepositoryService resourceService,
+                                           TermOccurrenceSelectorCreator selectorCreator) {
         this.termOccurrenceDao = termOccurrenceDao;
         this.termService = termService;
         this.resourceService = resourceService;
+        this.selectorCreator = selectorCreator;
     }
 
     @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrence)")
@@ -69,6 +74,10 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
                 occurrence.getTarget().getSource())) {
             throw new ValidationException(
                     "Occurrence references an unknown asset " + Utils.uriToString(occurrence.getTarget().getSource()));
+        }
+        if (occurrence.getElementId() != null) {
+            occurrence.getTarget()
+                      .setSelectors(selectorCreator.createSelectors(occurrence.getTarget(), occurrence.getElementId()));
         }
         termOccurrenceDao.persist(occurrence);
     }
