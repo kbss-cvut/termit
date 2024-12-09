@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 import java.util.Objects;
 import java.util.Set;
 
+import static cz.cvut.kbss.termit.service.document.html.HtmlTermOccurrenceResolver.BNODE_PREFIX;
+
 /**
  * Creates selectors for a new term occurrence.
  */
@@ -44,22 +46,22 @@ public class TermOccurrenceSelectorCreator {
      * id.
      *
      * @param target    Asset in which the occurrence is to be found
-     * @param elementId Element representing the occurrence
+     * @param elementAbout Value of the {@literal about} attribute of the occurrence element
      * @return Set of generated selectors for the occurrence element
      * @throws UnsupportedOperationException If the specified target is not supported
      * @throws SelectorGenerationException   If unable to generate selectors
      */
-    public Set<Selector> createSelectors(@Nonnull OccurrenceTarget target, @Nonnull String elementId) {
+    public Set<Selector> createSelectors(@Nonnull OccurrenceTarget target, @Nonnull String elementAbout) {
         Objects.requireNonNull(target);
-        Objects.requireNonNull(elementId);
+        Objects.requireNonNull(elementAbout);
         if (target instanceof DefinitionalOccurrenceTarget) {
             throw new UnsupportedOperationException("Cannot create selectors for a term definitional occurrence.");
         }
         final FileOccurrenceTarget ft = (FileOccurrenceTarget) target;
         final Document targetContent = loadTargetContent(ft);
-        final Elements elements = targetContent.select("#" + elementId);
+        final Elements elements = targetContent.select("[about=" + BNODE_PREFIX + elementAbout + "]");
         if (elements.isEmpty()) {
-            throw new SelectorGenerationException("No element with id " + elementId + " found in " + ft.getSource());
+            throw new SelectorGenerationException("No element with id " + elementAbout + " found in " + ft.getSource());
         }
         return selectorGenerators.generateSelectors(elements.toArray(new Element[]{}));
     }

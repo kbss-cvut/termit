@@ -148,7 +148,7 @@ class TermOccurrenceRepositoryServiceTest {
         final File resource = Generator.generateFileWithId("test.html");
         when(resourceService.exists(resource.getUri())).thenReturn(true);
         final TermFileOccurrence occurrence = new TermFileOccurrence(term.getUri(), new FileOccurrenceTarget(resource));
-        occurrence.setElementId("elementId");
+        occurrence.setElementAbout("elementId");
         final Set<Selector> selectors = Set.of(new TextQuoteSelector("test", "prefix", "suffix"));
         when(selectorCreator.createSelectors(occurrence.getTarget(), "elementId")).thenReturn(selectors);
 

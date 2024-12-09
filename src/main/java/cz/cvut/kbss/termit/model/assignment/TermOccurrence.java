@@ -62,13 +62,14 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
     private Set<String> types;
 
     @Transient
-    private transient Double score;
+    private Double score;
 
     /**
-     * ID of the HTML element representing the occurrence.
+     * Value of the {@literal about} attribute of the HTML element representing the occurrence.
      */
     @Transient
-    private transient String elementId;
+    @OWLDataProperty(iri = DC.Terms.IDENTIFIER)
+    private String elementAbout;
 
     public TermOccurrence() {
     }
@@ -127,12 +128,12 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
         this.score = score;
     }
 
-    public String getElementId() {
-        return elementId;
+    public String getElementAbout() {
+        return elementAbout;
     }
 
-    public void setElementId(String elementId) {
-        this.elementId = elementId;
+    public void setElementAbout(String elementAbout) {
+        this.elementAbout = elementAbout;
     }
 
     /**

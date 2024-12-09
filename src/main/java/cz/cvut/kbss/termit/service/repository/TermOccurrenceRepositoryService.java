@@ -75,9 +75,11 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
             throw new ValidationException(
                     "Occurrence references an unknown asset " + Utils.uriToString(occurrence.getTarget().getSource()));
         }
-        if (occurrence.getElementId() != null) {
+        if (occurrence.getElementAbout() != null) {
+            LOG.trace("Generating selectors for new term occurrence with ID '{}'.", occurrence.getUri());
             occurrence.getTarget()
-                      .setSelectors(selectorCreator.createSelectors(occurrence.getTarget(), occurrence.getElementId()));
+                      .setSelectors(
+                              selectorCreator.createSelectors(occurrence.getTarget(), occurrence.getElementAbout()));
         }
         termOccurrenceDao.persist(occurrence);
     }

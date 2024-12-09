@@ -27,7 +27,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,7 +38,7 @@ class TermOccurrenceSelectorCreatorTest {
                 <html>
                 <body>
                     <div>
-                        Text before the element, <span id="elem">test</span>, and text after the element.
+                        Text before the element, <span about="_:elem">test</span>, and text after the element.
                     </div>
                 </body>
             </html>
@@ -77,7 +76,7 @@ class TermOccurrenceSelectorCreatorTest {
         assertEquals(selectors, result);
         verify(documentManager).loadFileContent(f);
         final Document doc = Jsoup.parse(CONTENT);
-        Elements elem = doc.body().select("#elem");
+        Elements elem = doc.body().select("[about=_:elem]");
         final ArgumentCaptor<Element[]> captor = ArgumentCaptor.forClass(Element[].class);
         verify(selectorGenerators).generateSelectors(captor.capture());
         // equals does not work for elements from two documents loaded from the same content
