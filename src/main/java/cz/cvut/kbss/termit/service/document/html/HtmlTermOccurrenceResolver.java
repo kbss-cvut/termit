@@ -25,15 +25,19 @@ import cz.cvut.kbss.termit.model.assignment.OccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.Selector;
+import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.TermOccurrenceResolver;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.Vocabulary;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +54,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -63,12 +68,9 @@ import java.util.Set;
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
 
-    /**
-     * Blank node prefix.
-     */
-    public static final String BNODE_PREFIX = "_:";
-
     private static final String SCORE_ATTRIBUTE = "score";
+
+    private static final String ANNOTATION_ELEMENT = "span";
 
     private static final Logger LOG = LoggerFactory.getLogger(HtmlTermOccurrenceResolver.class);
 
@@ -203,6 +205,13 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                 }
             });
         }
+        try {
+            addRemainingExistingApprovedOccurrences(resultConsumer);
+        } catch (InterruptedException e) {
+            LOG.error("Thread interrupted while resolving term occurrences.");
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
+        }
     }
 
     private Optional<TermOccurrence> resolveAnnotation(Element rdfaElem, Asset<?> source) {
@@ -246,8 +255,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     private URI resolveOccurrenceId(Element rdfaElem, Asset<?> source) {
         final String base = TermOccurrence.resolveContext(source.getUri()) + "/";
         String about = rdfaElem.attr("about");
-        if (about.startsWith(BNODE_PREFIX)) {
-            about = about.substring(BNODE_PREFIX.length());
+        if (about.startsWith(Constants.BNODE_PREFIX)) {
+            about = about.substring(Constants.BNODE_PREFIX.length());
         }
         return URI.create(base + about);
     }
@@ -256,7 +265,9 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         final OccurrenceTarget target = newOccurrence.getTarget();
         assert target != null;
         final Set<Selector> selectors = target.getSelectors();
-        for (TermOccurrence to : existingOccurrences) {
+        final Iterator<TermOccurrence> it = existingApprovedOccurrences.iterator();
+        while (it.hasNext()) {
+            final TermOccurrence to = it.next();
             if (!to.getTerm().equals(newOccurrence.getTerm())) {
                 continue;
             }
@@ -264,11 +275,81 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             assert existingTarget != null;
             assert existingTarget.getSource().equals(target.getSource());
             // Same term, contains at least one identical selector
-            if (existingTarget.getSelectors().stream().anyMatch(selectors::contains) && !to.isSuggested()) {
+            if (existingTarget.getSelectors().stream().anyMatch(selectors::contains)) {
+                it.remove();
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Tries to add existing approved term occurrences to the content.
+     * <p>
+     * This means finding matching text using the {@link TextQuoteSelector} (as it is more resilient to minor changes in
+     * the content file) and inserting a corresponding annotation element into the text.
+     * <p>
+     * If a matching element can be created in the text, the existing term occurrence is processed just as a new one
+     * would be.
+     *
+     * @param consumer Consumer of the occurrences
+     */
+    private void addRemainingExistingApprovedOccurrences(OccurrenceConsumer consumer) throws InterruptedException {
+        LOG.debug("Adding existing approved occurrences to content.");
+        for (TermOccurrence to : existingApprovedOccurrences) {
+            final Optional<Selector> tqSelector = to.getTarget().getSelectors().stream().filter(
+                    TextQuoteSelector.class::isInstance).findFirst();
+            if (tqSelector.isEmpty()) {
+                LOG.trace("Existing approved occurrence does not have a {}. Skipping it.",
+                          TextQuoteSelector.class.getSimpleName());
+                continue;
+            }
+            final TextQuoteSelector tqs = (TextQuoteSelector) tqSelector.get();
+            final Elements containing = document.select(
+                    ":contains(" + tqs.getPrefix() + tqs.getExactMatch() + tqs.getSuffix() + ")");
+            if (containing.isEmpty()) {
+                LOG.trace("{} did not find any matching elements. Skipping term occurrence.",
+                          TextQuoteSelector.class.getSimpleName());
+                continue;
+            }
+            LOG.debug("Adding existing approved term occurrence {} to content.", to);
+            // Last should be the most specific one
+            final Element elem = containing.last();
+            assert elem != null;
+            final Element containingExactMatch = elem.selectFirst(":containsOwn(" + tqs.getExactMatch() + ")");
+            final Element annotationNode = createAnnotationElement(to, tqs);
+            assert containingExactMatch != null;
+            replaceContentWithAnnotation(containingExactMatch, tqs, annotationNode);
+            consumer.accept(to);
+        }
+    }
+
+    private static Element createAnnotationElement(TermOccurrence to, TextQuoteSelector tqs) {
+        final Element annotationNode = new Element(ANNOTATION_ELEMENT, "");
+        annotationNode.text(tqs.getExactMatch());
+        annotationNode.attr(Constants.RDFa.ABOUT, to.resolveElementAbout());
+        annotationNode.attr(Constants.RDFa.RESOURCE, to.getTerm().toString());
+        annotationNode.attr(Constants.RDFa.TYPE, Vocabulary.s_c_vyskyt_termu);
+        annotationNode.attr(Constants.RDFa.PROPERTY, Vocabulary.s_p_je_prirazenim_termu);
+        return annotationNode;
+    }
+
+    private static void replaceContentWithAnnotation(Element containingExactMatch, TextQuoteSelector tqs,
+                                                     Element annotationNode) {
+        for (Node n : containingExactMatch.childNodes()) {
+            if (!(n instanceof TextNode textNode) || !textNode.getWholeText().contains(tqs.getExactMatch())) {
+                continue;
+            }
+            final int exactMatchStart = textNode.getWholeText().indexOf(tqs.getExactMatch());
+            final int exactMatchEnd = exactMatchStart + tqs.getExactMatch().length();
+            final TextNode prefixNode = new TextNode(textNode.getWholeText().substring(0, exactMatchStart));
+            final TextNode suffixNode = new TextNode(textNode.getWholeText().substring(exactMatchEnd));
+            n.after(suffixNode);
+            n.after(annotationNode);
+            n.after(prefixNode);
+            n.remove();
+            break;
+        }
     }
 
     @Override

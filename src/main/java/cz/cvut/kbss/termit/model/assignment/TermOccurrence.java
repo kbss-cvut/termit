@@ -29,6 +29,7 @@ import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.validation.constraints.NotNull;
 
@@ -134,6 +135,12 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
 
     public void setElementAbout(String elementAbout) {
         this.elementAbout = elementAbout;
+    }
+
+    public String resolveElementAbout() {
+        final String strIri = getUri().toString();
+        this.elementAbout = Constants.BNODE_PREFIX + strIri.substring(strIri.lastIndexOf('/') + 1);
+        return elementAbout;
     }
 
     /**
