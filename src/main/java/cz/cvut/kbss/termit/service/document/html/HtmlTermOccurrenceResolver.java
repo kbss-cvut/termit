@@ -63,7 +63,10 @@ import java.util.Set;
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
 
-    private static final String BNODE_PREFIX = "_:";
+    /**
+     * Blank node prefix.
+     */
+    public static final String BNODE_PREFIX = "_:";
 
     private static final String SCORE_ATTRIBUTE = "score";
 
@@ -188,7 +191,9 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                             LOG.trace("Found term occurrence {}.", to);
                             resultConsumer.accept(to);
                         } else {
-                            LOG.trace("The confidence score of occurrence {} is lower than the configured threshold {}.", to, scoreThreshold);
+                            LOG.trace(
+                                    "The confidence score of occurrence {} is lower than the configured threshold {}.",
+                                    to, scoreThreshold);
                         }
                     }
                 } catch (InterruptedException e) {
@@ -232,7 +237,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             return;
         }
         if (!termService.exists(termUri)) {
-            throw new AnnotationGenerationException("Term with id " + Utils.uriToString(termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
+            throw new AnnotationGenerationException("Term with id " + Utils.uriToString(
+                    termUri) + " denoted by RDFa element '" + rdfaElem + "' not found.");
         }
         existingTermIds.add(termId);
     }
