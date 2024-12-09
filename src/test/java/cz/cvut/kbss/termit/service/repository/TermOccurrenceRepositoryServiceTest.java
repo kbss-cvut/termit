@@ -25,8 +25,10 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.selector.Selector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
+import cz.cvut.kbss.termit.service.document.TermOccurrenceSelectorCreator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -56,6 +58,9 @@ class TermOccurrenceRepositoryServiceTest {
 
     @Mock
     private ResourceRepositoryService resourceService;
+
+    @Mock
+    private TermOccurrenceSelectorCreator selectorCreator;
 
     @InjectMocks
     private TermOccurrenceRepositoryService sut;
@@ -120,7 +125,7 @@ class TermOccurrenceRepositoryServiceTest {
         when(termService.exists(newTerm.getUri())).thenReturn(true);
         final File resource = Generator.generateFileWithId("test.html");
         final TermDefinitionSource original = new TermDefinitionSource(originalTerm.getUri(),
-                                                                               new FileOccurrenceTarget(resource));
+                                                                       new FileOccurrenceTarget(resource));
         original.getTarget().setSelectors(Collections.singleton(new TextQuoteSelector("test")));
         original.setUri(Generator.generateUri());
         final TermDefinitionSource update = new TermDefinitionSource(newTerm.getUri(),
@@ -134,5 +139,21 @@ class TermOccurrenceRepositoryServiceTest {
         final ArgumentCaptor<TermOccurrence> captor = ArgumentCaptor.forClass(TermOccurrence.class);
         verify(dao).update(captor.capture());
         assertEquals(newTerm.getUri(), captor.getValue().getTerm());
+    }
+
+    @Test
+    void persistGeneratesSelectorsForFileOccurrenceBeingPersisted() {
+        final Term term = Generator.generateTermWithId();
+        when(termService.exists(term.getUri())).thenReturn(true);
+        final File resource = Generator.generateFileWithId("test.html");
+        when(resourceService.exists(resource.getUri())).thenReturn(true);
+        final TermFileOccurrence occurrence = new TermFileOccurrence(term.getUri(), new FileOccurrenceTarget(resource));
+        occurrence.setElementId("elementId");
+        final Set<Selector> selectors = Set.of(new TextQuoteSelector("test", "prefix", "suffix"));
+        when(selectorCreator.createSelectors(occurrence.getTarget(), "elementId")).thenReturn(selectors);
+
+        sut.persist(occurrence);
+        verify(selectorCreator).createSelectors(occurrence.getTarget(), "elementId");
+        assertEquals(selectors, occurrence.getTarget().getSelectors());
     }
 }
