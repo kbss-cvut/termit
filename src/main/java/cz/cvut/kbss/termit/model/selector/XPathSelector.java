@@ -50,6 +50,11 @@ public class XPathSelector extends Selector {
     }
 
     @Override
+    public XPathSelector copy() {
+        return new XPathSelector(value);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

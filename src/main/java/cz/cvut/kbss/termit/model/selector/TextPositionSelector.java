@@ -71,6 +71,11 @@ public class TextPositionSelector extends Selector {
     }
 
     @Override
+    public TextPositionSelector copy() {
+        return new TextPositionSelector(start, end);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
