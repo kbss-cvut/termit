@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import cz.cvut.kbss.termit.TermItApplication;
+import cz.cvut.kbss.termit.event.ClearLongRunningTaskQueueEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.EvaluationException;
@@ -39,6 +42,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -180,6 +184,51 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
         standardEvaluationContext.setTypeLocator(typeLocator);
         return standardEvaluationContext;
+    }
+
+    /**
+     * Prevents accepting new tasks by synchronization
+     * and cancels all scheduled tasks.
+     */
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @EventListener(ClearLongRunningTaskQueueEvent.class)
+    public void onClearLongRunningTaskQueueEvent() {
+        synchronized (throttledFutures) { // synchronize in the filed declaration order
+            synchronized (lastRun) {
+                synchronized (scheduledFutures) {
+                    LOG.info("Clearing throttled tasks...");
+
+                    long count = 0;
+                    Iterator<Map.Entry<Identifier, ThrottledFuture<Object>>> throttledIt =
+                            throttledFutures.entrySet().iterator();
+
+                    while(throttledIt.hasNext()) {
+                        final Map.Entry<Identifier, ThrottledFuture<Object>> entry = throttledIt.next();
+                        final ThrottledFuture<Object> future = entry.getValue();
+                        final Identifier identifier = entry.getKey();
+                        if(future.isRunning() || future.isDone()) continue;
+
+                        // cancel the throttled future
+                        future.cancel(false);
+                        // cancel the scheduled future
+                        Optional.ofNullable(scheduledFutures.get(identifier))
+                                .ifPresent(scheduled -> {
+                                    scheduled.cancel(false);
+                                    if (scheduled.isCancelled()) {
+                                        scheduledFutures.remove(identifier);
+                                    }
+                                });
+                        if (future.isCancelled()) {
+                            throttledIt.remove();
+                        }
+                        count++;
+                        notifyTaskChanged(future);
+                    }
+                    clearOldFutures();
+                    LOG.info("Cancelled {} pending throttled tasks", count);
+                }
+            }
+        }
     }
 
     /**

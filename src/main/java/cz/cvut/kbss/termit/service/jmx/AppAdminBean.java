@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.jmx;
 
+import cz.cvut.kbss.termit.event.ClearLongRunningTaskQueueEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.rest.dto.HealthInfo;
@@ -65,6 +66,12 @@ public class AppAdminBean implements SelfNaming {
         eventPublisher.publishEvent(new EvictCacheEvent(this));
         LOG.info("Refreshing last modified timestamps...");
         eventPublisher.publishEvent(new RefreshLastModifiedEvent(this));
+    }
+
+    @ManagedOperation(description = "Clears the queue of long-running tasks.")
+    public void clearLongRunningTasksQueue() {
+        LOG.info("Clearing long-running tasks queue...");
+        eventPublisher.publishEvent(new ClearLongRunningTaskQueueEvent(this));
     }
 
     @ManagedOperation(description = "Sends test email to the specified address.")

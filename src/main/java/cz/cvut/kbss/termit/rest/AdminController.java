@@ -59,4 +59,15 @@ public class AdminController {
         LOG.debug("Cache invalidation request received from client.");
         adminBean.invalidateCaches();
     }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Clears the queue of long-running tasks.")
+    @ApiResponse(responseCode = "204", description = "Long-running tasks queue cleared.")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
+    @DeleteMapping("/long-running-tasks")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void clearLongRunningTasksQueue() {
+        LOG.debug("Long-running task queue clearing request received from client.");
+        adminBean.clearLongRunningTasksQueue();
+    }
 }
