@@ -56,6 +56,6 @@ public class TermOccurrenceAuthorizationService {
 
     @Transactional(readOnly = true)
     public boolean canModify(URI occurrenceId) {
-        return dao.find(occurrenceId).map(this::canModify).orElse(false);
+        return dao.find(occurrenceId).map(this::canModify).orElse(true);
     }
 }
