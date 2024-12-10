@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.net.URI;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -79,8 +78,8 @@ class TermOccurrenceAuthorizationServiceTest {
     }
 
     @Test
-    void canModifyReturnsFalseWhenTermOccurrenceDoesNotExist() {
+    void canModifyReturnsTrueWhenTermOccurrenceDoesNotExist() {
         when(toDao.find(any())).thenReturn(Optional.empty());
-        assertFalse(sut.canModify(Generator.generateUri()));
+        assertTrue(sut.canModify(Generator.generateUri()));
     }
 }
