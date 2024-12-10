@@ -39,6 +39,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
@@ -56,6 +58,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -160,7 +163,7 @@ class HtmlTermOccurrenceResolverTest {
             assertThat(to.getUri().toString(), startsWith(file.getUri() + "/" + TermOccurrence.CONTEXT_SUFFIX));
             assertThat(to.getUri().toString(), endsWith("1"));
         });
-        assertEquals(1,resultSize.get());
+        assertEquals(1, resultSize.get());
 
     }
 
@@ -174,7 +177,8 @@ class HtmlTermOccurrenceResolverTest {
     }
 
     @Test
-    void findTermOccurrencesSetsFoundOccurrencesAsApprovedWhenCorrespondingExistingOccurrenceWasApproved() throws Exception {
+    void findTermOccurrencesSetsFoundOccurrencesAsApprovedWhenCorrespondingExistingOccurrenceWasApproved()
+            throws Exception {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
@@ -201,9 +205,8 @@ class HtmlTermOccurrenceResolverTest {
     void findTermOccurrencesReusesExistingApprovedOccurrencesThatAreNotPresentInAnnotatedContent() throws Exception {
         when(termService.exists(TERM_URI)).thenReturn(true);
         final File file = initFile();
-        final String id = "r2d2";
         final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
-        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/" + id));
+        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
         final Selector quoteSelector = new TextQuoteSelector("Prahy", " hlavního města ", ".");
         final Selector posSelector = new TextPositionSelector(57, 62);
         existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
@@ -213,9 +216,65 @@ class HtmlTermOccurrenceResolverTest {
 
         final List<TermOccurrence> result = new ArrayList<>();
         sut.findTermOccurrences(result::add);
-        assertThat(result, hasItem(existing));
+        final Optional<TermOccurrence> matchingExisting = result.stream()
+                                                                .filter(to -> Stream.of(quoteSelector, posSelector)
+                                                                                    .anyMatch(sel -> to.getTarget()
+                                                                                                       .getSelectors()
+                                                                                                       .contains(
+                                                                                                               sel)))
+                                                                .findFirst();
+        assertTrue(matchingExisting.isPresent());
         final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
-        final Elements addedAnnotation = resultDoc.select("span[about=_:" + id + "]");
+        final Elements addedAnnotation = resultDoc.select(
+                "span[about=" + matchingExisting.get().resolveElementAbout() + "]");
         assertFalse(addedAnnotation.isEmpty());
+    }
+
+    @Test
+    void findTermOccurrencesReusesExistingApprovedOccurrencesButCreatesTheirCopies() {
+        when(termService.exists(TERM_URI)).thenReturn(true);
+        final File file = initFile();
+        final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
+        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        final Selector quoteSelector = new TextQuoteSelector("Prahy", " hlavního města ", ".");
+        final Selector posSelector = new TextPositionSelector(57, 62);
+        existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
+        final InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
+        sut.parseContent(is, file);
+        sut.setExistingOccurrences(List.of(existing));
+
+        final List<TermOccurrence> result = new ArrayList<>();
+        sut.findTermOccurrences(result::add);
+        final Optional<TermOccurrence> existingCopy = result.stream().filter(to -> Stream.of(quoteSelector, posSelector)
+                                                                                         .anyMatch(sel -> to.getTarget()
+                                                                                                            .getSelectors()
+                                                                                                            .contains(
+                                                                                                                    sel)))
+                                                            .findFirst();
+        assertTrue(existingCopy.isPresent());
+        assertNotEquals(existing.getUri(), existingCopy.get().getUri());
+    }
+
+    @Test
+    void findTermOccurrencesReusesExistingApprovedOccurrenceElementInContent() throws Exception {
+        when(termService.exists(TERM_URI)).thenReturn(true);
+        final File file = initFile();
+        final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
+        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        final Selector quoteSelector = new TextQuoteSelector("Územní plán", "", " hlavního města Prahy.");
+        final Selector posSelector = new TextPositionSelector(29, 40);
+        existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
+        InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple.html");
+        final Document doc = Jsoup.parse(is, StandardCharsets.UTF_8.name(), "");
+        doc.select("span[about]").removeAttr("score");
+        is = new ByteArrayInputStream(doc.toString().getBytes(StandardCharsets.UTF_8));
+        sut.parseContent(is, file);
+        sut.setExistingOccurrences(List.of(existing));
+
+        final List<TermOccurrence> result = new ArrayList<>();
+        sut.findTermOccurrences(result::add);
+        assertEquals(1, result.size());
+        final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
+        assertEquals(1, resultDoc.select("span[about]").size());
     }
 }

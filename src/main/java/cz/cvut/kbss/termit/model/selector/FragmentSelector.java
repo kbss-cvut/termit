@@ -50,6 +50,11 @@ public class FragmentSelector extends Selector {
     }
 
     @Override
+    public FragmentSelector copy() {
+        return new FragmentSelector(value);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

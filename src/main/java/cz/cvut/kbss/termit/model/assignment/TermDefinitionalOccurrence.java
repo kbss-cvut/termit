@@ -44,4 +44,9 @@ public class TermDefinitionalOccurrence extends TermOccurrence {
     public void setTarget(DefinitionalOccurrenceTarget target) {
         this.target = target;
     }
+
+    @Override
+    public TermDefinitionalOccurrence copy() {
+        return new TermDefinitionalOccurrence(getTerm(), getTarget().copy());
+    }
 }

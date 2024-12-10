@@ -255,7 +255,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
         Objects.requireNonNull(target);
 
         final URI sourceContext = TermOccurrence.resolveContext(target.getUri());
-        LOG.debug("Removing all occurrences from {}", sourceContext);
+        LOG.debug("Removing all occurrences from {}", Utils.uriToString(sourceContext));
         em.createNativeQuery("DROP GRAPH ?context")
                 .setParameter("context", sourceContext)
                 .executeUpdate();

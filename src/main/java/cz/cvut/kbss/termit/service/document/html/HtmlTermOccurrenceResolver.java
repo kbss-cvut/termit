@@ -57,6 +57,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -111,6 +112,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     @Override
     public InputStream getContent() {
         assert document != null;
+        document.outputSettings().prettyPrint(false);
         return new ByteArrayInputStream(document.toString().getBytes(StandardCharsets.UTF_8));
     }
 
@@ -224,7 +226,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         verifyTermExists(rdfaElem, termUri, termId);
         final TermOccurrence occurrence = createOccurrence(termUri, source);
         occurrence.getTarget().setSelectors(selectorGenerators.generateSelectors(rdfaElem));
-        occurrence.setUri(resolveOccurrenceId(rdfaElem, source));
+        occurrence.setUri(resolveOccurrenceId(rdfaElem));
         final String strScore = rdfaElem.attr(SCORE_ATTRIBUTE);
         if (!strScore.isEmpty()) {
             try {
@@ -252,13 +254,16 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         existingTermIds.add(termId);
     }
 
-    private URI resolveOccurrenceId(Element rdfaElem, Asset<?> source) {
-        final String base = TermOccurrence.resolveContext(source.getUri()) + "/";
-        String about = rdfaElem.attr("about");
+    private URI resolveOccurrenceId(Element rdfaElem) {
+        String about = rdfaElem.attr(Constants.RDFa.ABOUT);
         if (about.startsWith(Constants.BNODE_PREFIX)) {
             about = about.substring(Constants.BNODE_PREFIX.length());
         }
-        return URI.create(base + about);
+        return composeOccurrenceUri(about);
+    }
+
+    private URI composeOccurrenceUri(String localId) {
+        return URI.create(TermOccurrence.resolveContext(source.getUri()) + "/" + localId);
     }
 
     private boolean existsApproved(TermOccurrence newOccurrence) {
@@ -296,6 +301,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
      */
     private void addRemainingExistingApprovedOccurrences(OccurrenceConsumer consumer) throws InterruptedException {
         LOG.debug("Adding existing approved occurrences to content.");
+        final Random random = new Random();
         for (TermOccurrence to : existingApprovedOccurrences) {
             final Optional<Selector> tqSelector = to.getTarget().getSelectors().stream().filter(
                     TextQuoteSelector.class::isInstance).findFirst();
@@ -312,15 +318,22 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                           TextQuoteSelector.class.getSimpleName());
                 continue;
             }
-            LOG.debug("Adding existing approved term occurrence {} to content.", to);
+            // Copy the existing occurrence, so that the old one can be removed, and we do not interfere with it
+            final TermOccurrence copy = to.copy();
+            // Generate new identifier for the copy
+            copy.setUri(composeOccurrenceUri(Integer.toString(random.nextInt(10000))));
+            LOG.debug("Adding {} - a copy of an existing approved term occurrence to content.", copy);
             // Last should be the most specific one
             final Element elem = containing.last();
             assert elem != null;
             final Element containingExactMatch = elem.selectFirst(":containsOwn(" + tqs.getExactMatch() + ")");
-            final Element annotationNode = createAnnotationElement(to, tqs);
             assert containingExactMatch != null;
-            replaceContentWithAnnotation(containingExactMatch, tqs, annotationNode);
-            consumer.accept(to);
+            // If it is a term occurrence element, then just skip its replacement
+            if (isNotTermOccurrence(containingExactMatch)) {
+                final Element annotationNode = createAnnotationElement(copy, tqs);
+                replaceContentWithAnnotation(containingExactMatch, tqs, annotationNode);
+                consumer.accept(copy);
+            }
         }
     }
 
@@ -344,10 +357,10 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             final int exactMatchEnd = exactMatchStart + tqs.getExactMatch().length();
             final TextNode prefixNode = new TextNode(textNode.getWholeText().substring(0, exactMatchStart));
             final TextNode suffixNode = new TextNode(textNode.getWholeText().substring(exactMatchEnd));
-            n.after(suffixNode);
-            n.after(annotationNode);
-            n.after(prefixNode);
-            n.remove();
+            textNode.text("");
+            n.before(prefixNode);
+            n.before(annotationNode);
+            n.before(suffixNode);
             break;
         }
     }
