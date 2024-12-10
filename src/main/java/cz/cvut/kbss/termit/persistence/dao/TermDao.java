@@ -239,18 +239,30 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermInfo.class, term.getUri(), null);
+        // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
         Utils.emptyIfNull(term.getParentTerms()).forEach(pt -> {
             em.getEntityManagerFactory().getCache().evict(Term.class, pt.getUri(), null);
             em.getEntityManagerFactory().getCache().evict(TermDto.class, pt.getUri(), null);
             subTermsCache.evict(pt.getUri());
         });
-        term.setSubTerms(getSubTerms(term));
         // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
-        Utils.emptyIfNull(term.getSubTerms())
-             .forEach(st -> {
-                 em.getEntityManagerFactory().getCache().evict(Term.class, st.getUri(), null);
-                 em.getEntityManagerFactory().getCache().evict(TermDto.class, st.getUri(), null);
-             });
+        evictAllCachedDescendants(term);
+    }
+
+    /**
+     * Evicts all descendants of the specified term from the cache - default context.
+     * <p>
+     * This is done to prevent stale references through the parentTerms chain.
+     *
+     * @param term Term whose descendants to evict
+     */
+    private void evictAllCachedDescendants(Term term) {
+        em.createNativeQuery("SELECT ?child WHERE { ?t ?hasChild* ?child . }", URI.class)
+          .setParameter("hasChild", URI.create(SKOS.NARROWER))
+          .setParameter("t", term).getResultStream().forEach(st -> {
+              em.getEntityManagerFactory().getCache().evict(Term.class, st, null);
+              em.getEntityManagerFactory().getCache().evict(TermDto.class, st, null);
+          });
     }
 
     /**
