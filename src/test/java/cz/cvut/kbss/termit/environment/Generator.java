@@ -521,10 +521,19 @@ public class Generator {
             r.setAccessLevel(AccessLevel.values()[Generator.randomIndex(AccessLevel.values())]);
             return (AccessControlRecord<?>) r;
         }).collect(Collectors.toList());
+
+        final RoleAccessControlRecord fr = new RoleAccessControlRecord();
+        final UserRole fullRole = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+        fr.setHolder(fullRole);
+        fr.setAccessLevel(AccessLevel.NONE);
+        result.add(fr);
+
         final RoleAccessControlRecord rr = new RoleAccessControlRecord();
-        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
-        rr.setHolder(role);
+        final UserRole restrictedRole = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER);
+        rr.setHolder(restrictedRole);
+        rr.setAccessLevel(AccessLevel.NONE);
         result.add(rr);
+
         return result;
     }
 }
