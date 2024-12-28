@@ -51,6 +51,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static cz.cvut.kbss.termit.security.SecurityConstants.ALLOWED_ANONYMOUS_ACCESS_LEVELS;
+
 @CacheConfig(cacheNames = "acls")
 @Service
 public class RepositoryAccessControlListService implements AccessControlListService {
@@ -164,6 +166,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         final AccessControlList toUpdate = findRequired(acl.getUri());
         LOG.debug("Adding record {} to ACL {}.", record, toUpdate);
         toUpdate.addRecord(record);
+        ensureValid(toUpdate);
         // Explicitly update to trigger merge of the new record
         dao.update(toUpdate);
     }
@@ -179,7 +182,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         LOG.debug("Removing record {} from ACL {}.", record, toUpdate);
         assert toUpdate.getRecords() != null;
         toUpdate.getRecords().removeIf(acr -> Objects.equals(acr.getUri(), record.getUri()));
-        verifyUserRoleRecordsArePresent(toUpdate);
+        ensureValid(toUpdate);
         // Explicitly update to remove orphans
         dao.update(toUpdate);
     }
@@ -201,6 +204,62 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         }
     }
 
+    /**
+     * Ensures that the specified ACL is valid.
+     * Throws otherwise.
+     *
+     * @param acl ACL to validate
+     * @throws UnsupportedOperationException if the ACL is not valid
+     */
+    public void ensureValid(AccessControlList acl) {
+        verifyUserRoleRecordsArePresent(acl);
+        acl.getRecords().forEach(this::ensureValid);
+    }
+
+    /**
+     * Checks whether the specified role
+     * is the {@link cz.cvut.kbss.termit.security.model.UserRole#ANONYMOUS_USER ANONYMOUS_USER} role.
+     *
+     * @param role Role to check
+     * @return {@code true} if the role is the anonymous user role, {@code false} otherwise
+     */
+    public static boolean isAnonymous(UserRole role) {
+        return cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER.getType()
+                                                                         .equals(role.getUri().toString());
+    }
+
+    /**
+     * Checks whether the specified role
+     * is the {@link cz.cvut.kbss.termit.security.model.UserRole#RESTRICTED_USER RESTRICTED_USER} role.
+     *
+     * @param role Role to check
+     * @return {@code true} if the role is the restricted user role, {@code false} otherwise
+     */
+    public static boolean isRestricted(UserRole role) {
+        return cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType()
+                                                                          .equals(role.getUri().toString());
+    }
+
+    /**
+     * Ensures that the specified access control record is valid.
+     * Throws otherwise.
+     *
+     * @param record Access control record to validate
+     * @throws UnsupportedOperationException if the record is not valid
+     */
+    public void ensureValid(AccessControlRecord<?> record) {
+        if (record.getHolder() instanceof UserRole role) {
+            // check that the anonymous user has only allowed access level (NONE or READ)
+            if (isAnonymous(role) && !ALLOWED_ANONYMOUS_ACCESS_LEVELS.contains(record.getAccessLevel())) {
+                throw new UnsupportedOperationException("Access control record for anonymous user must have access level NONE or READ only.");
+            }
+            // check that the reader role does not have SECURITY access level
+            if (isRestricted(role) && record.getAccessLevel().includes(AccessLevel.SECURITY)) {
+                throw new UnsupportedOperationException("Access control record for restricted user cannot have access level SECURITY.");
+            }
+        }
+    }
+
     @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
     @Transactional
     @Override
@@ -215,6 +274,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
                            record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
                  r.setAccessLevel(record.getAccessLevel());
              });
+        ensureValid(toUpdate);
     }
 
     @Transactional(readOnly = true)

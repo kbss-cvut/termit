@@ -17,6 +17,10 @@
  */
 package cz.cvut.kbss.termit.security;
 
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+
+import java.util.Set;
+
 /**
  * Security-related constants.
  */
@@ -76,6 +80,13 @@ public class SecurityConstants {
      * Restricted user role
      */
     public static final String ROLE_RESTRICTED_USER = "ROLE_RESTRICTED_USER";
+
+    /**
+     * Anonymous user role (not logged-in user)
+     */
+    public static final String ROLE_ANONYMOUS_USER = "ROLE_ANONYMOUS_USER";
+
+    public static final Set<AccessLevel> ALLOWED_ANONYMOUS_ACCESS_LEVELS = Set.of(AccessLevel.NONE, AccessLevel.READ);
 
     /**
      * Path of REST endpoints which are not secured.

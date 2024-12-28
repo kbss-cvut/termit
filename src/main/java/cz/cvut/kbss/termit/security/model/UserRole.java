@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_ADMIN;
+import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_ANONYMOUS_USER;
 import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_FULL_USER;
 import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_RESTRICTED_USER;
 
@@ -33,29 +34,35 @@ import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_RESTRICTED_USE
  * These roles are used for basic system authorization.
  */
 public enum UserRole {
+    /**
+     * Anonymous (not logged in) user.
+     * <p>
+     * Maps to {@link Vocabulary#s_c_anonymni_uzivatel_termitu}.
+     */
+    ANONYMOUS_USER(Vocabulary.s_c_anonymni_uzivatel_termitu, ROLE_ANONYMOUS_USER),
 
     /**
      * Restricted TermIt user.
      * <p>
      * Maps to {@link Vocabulary#s_c_omezeny_uzivatel_termitu}.
      */
-    RESTRICTED_USER(Vocabulary.s_c_omezeny_uzivatel_termitu, ROLE_RESTRICTED_USER),
+    RESTRICTED_USER(Vocabulary.s_c_omezeny_uzivatel_termitu, ROLE_RESTRICTED_USER, ANONYMOUS_USER),
 
     /**
      * Regular application user.
-     *
+     * <p>
      * Maps to {@link Vocabulary#s_c_plny_uzivatel_termitu}.
      * <p>
      * Does not map to any specific subclass of {@link Vocabulary#s_c_uzivatel_termitu}.
      */
-    FULL_USER(Vocabulary.s_c_plny_uzivatel_termitu, ROLE_FULL_USER, RESTRICTED_USER),
+    FULL_USER(Vocabulary.s_c_plny_uzivatel_termitu, ROLE_FULL_USER, RESTRICTED_USER, ANONYMOUS_USER),
 
     /**
      * Application administrator.
      * <p>
      * Maps to {@link Vocabulary#s_c_administrator_termitu}.
      */
-    ADMIN(Vocabulary.s_c_administrator_termitu, ROLE_ADMIN, FULL_USER, RESTRICTED_USER);
+    ADMIN(Vocabulary.s_c_administrator_termitu, ROLE_ADMIN, FULL_USER, RESTRICTED_USER, ANONYMOUS_USER);
 
     private final String type;
     private final String name;

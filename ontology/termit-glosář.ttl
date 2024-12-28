@@ -384,6 +384,17 @@ termit-pojem:omezený-uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#scopeNote>
                 "He or she can list and view vocabularies and terms. He or she can also comment on terms."@en , "Může prohlížet slovníky a pojmy. Pojmy může rovněž komentovat."@cs .
 
+termit-pojem:anonymní-uživatel-termitu
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Anonymous"@en , "Anonymní"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+        "A not logged in user"@en , "Nepřihlášený uživatel"@cs .
+
 termit-pojem:má-suffix-text-quote
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#broader>
