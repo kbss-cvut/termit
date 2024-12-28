@@ -51,8 +51,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static cz.cvut.kbss.termit.security.SecurityConstants.ALLOWED_ANONYMOUS_ACCESS_LEVELS;
-
 @CacheConfig(cacheNames = "acls")
 @Service
 public class RepositoryAccessControlListService implements AccessControlListService {
@@ -166,7 +164,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         final AccessControlList toUpdate = findRequired(acl.getUri());
         LOG.debug("Adding record {} to ACL {}.", record, toUpdate);
         toUpdate.addRecord(record);
-        ensureValid(toUpdate);
+        validate(toUpdate);
         // Explicitly update to trigger merge of the new record
         dao.update(toUpdate);
     }
@@ -182,7 +180,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         LOG.debug("Removing record {} from ACL {}.", record, toUpdate);
         assert toUpdate.getRecords() != null;
         toUpdate.getRecords().removeIf(acr -> Objects.equals(acr.getUri(), record.getUri()));
-        ensureValid(toUpdate);
+        validate(toUpdate);
         // Explicitly update to remove orphans
         dao.update(toUpdate);
     }
@@ -210,10 +208,12 @@ public class RepositoryAccessControlListService implements AccessControlListServ
      *
      * @param acl ACL to validate
      * @throws UnsupportedOperationException if the ACL is not valid
+     * @see #validate(AccessControlRecord)
+     * @see #verifyUserRoleRecordsArePresent(AccessControlList)
      */
-    public void ensureValid(AccessControlList acl) {
+    public void validate(AccessControlList acl) {
         verifyUserRoleRecordsArePresent(acl);
-        acl.getRecords().forEach(this::ensureValid);
+        acl.getRecords().forEach(this::validate);
     }
 
     /**
@@ -243,18 +243,24 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     /**
      * Ensures that the specified access control record is valid.
      * Throws otherwise.
+     * <p>
+     * The record is considered valid if:
+     * <ul>
+     *     <li>Does not grant greater access level than read to the anonymous user role</li>
+     *     <li>Does not grant security access level to the restricted user role</li>
+     * </ul>
      *
      * @param record Access control record to validate
      * @throws UnsupportedOperationException if the record is not valid
      */
-    public void ensureValid(AccessControlRecord<?> record) {
-        if (record.getHolder() instanceof UserRole role) {
-            // check that the anonymous user has only allowed access level (NONE or READ)
-            if (isAnonymous(role) && !ALLOWED_ANONYMOUS_ACCESS_LEVELS.contains(record.getAccessLevel())) {
-                throw new UnsupportedOperationException("Access control record for anonymous user must have access level NONE or READ only.");
-            }
+    public void validate(AccessControlRecord<?> controlRecord) {
+        if (controlRecord.getHolder() instanceof UserRole role) {
+            // check that the anonymous user does not have greater access level than READ
+            if (isAnonymous(role) && controlRecord.getAccessLevel().compareTo(AccessLevel.READ) > 0) {
+                throw new UnsupportedOperationException("Access control record for anonymous user cannot grant greater access level then READ.");
+            } else
             // check that the reader role does not have SECURITY access level
-            if (isRestricted(role) && record.getAccessLevel().includes(AccessLevel.SECURITY)) {
+            if (isRestricted(role) && controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
                 throw new UnsupportedOperationException("Access control record for restricted user cannot have access level SECURITY.");
             }
         }
@@ -274,7 +280,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
                            record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
                  r.setAccessLevel(record.getAccessLevel());
              });
-        ensureValid(toUpdate);
+        validate(toUpdate);
     }
 
     @Transactional(readOnly = true)
