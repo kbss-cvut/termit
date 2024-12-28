@@ -186,6 +186,10 @@ termit-pojem:selektor-text-quote
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
         rdfs:subClassOf  termit-pojem:selektor .
 
+termit-pojem:anonymní-uživatel-termitu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit-pojem:uživatelská-role ;
+        rdfs:subClassOf  termit-pojem:uživatel-termitu .
+
 termit-pojem:omezený-uživatel-termitu
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit-pojem:uživatelská-role ;
         rdfs:subClassOf  termit-pojem:uživatel-termitu .

@@ -24,6 +24,9 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.Objects;
 
+/**
+ * Authentication token holding {@link TermItUserDetails} as principal.
+ */
 public class AuthenticationToken extends AbstractAuthenticationToken implements Principal {
 
     private final TermItUserDetails userDetails;
