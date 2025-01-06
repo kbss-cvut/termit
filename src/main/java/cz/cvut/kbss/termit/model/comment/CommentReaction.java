@@ -34,11 +34,11 @@ import java.util.Set;
 public class CommentReaction extends AbstractEntity implements HasTypes {
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_actor)
+    @OWLObjectProperty(iri = Vocabulary.s_p_as_actor)
     private URI actor;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_object)
+    @OWLObjectProperty(iri = Vocabulary.s_p_as_object)
     private URI object;
 
     @ParticipationConstraints(nonEmpty = true)

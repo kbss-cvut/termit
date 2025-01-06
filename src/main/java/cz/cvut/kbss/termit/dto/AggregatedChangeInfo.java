@@ -47,7 +47,7 @@ public class AggregatedChangeInfo implements HasTypes, Comparable<AggregatedChan
     /**
      * Number of distinct changed assets
      */
-    @OWLDataProperty(iri = Vocabulary.s_p_totalItems)
+    @OWLDataProperty(iri = Vocabulary.s_p_as_totalItems)
     private Integer count;
 
     @Types
