@@ -124,15 +124,16 @@ public class RepositoryAccessControlListService implements AccessControlListServ
                            .forEach(u -> acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, u)));
         // Add record with configured access level for reader and editor user roles
         final List<UserRole> roles = userRoleService.findAll();
-        roles.stream().filter(ur -> cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType().equals(ur.getUri()
-                                                                                                             .toString()))
+        roles.stream().filter(RepositoryAccessControlListService::isFullUser)
              .findAny().ifPresent(
                      editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultEditorAccessLevel(), editor)));
         roles.stream()
-             .filter(ur -> cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType().equals(ur.getUri()
-                                                                                                          .toString()))
+             .filter(RepositoryAccessControlListService::isRestricted)
              .findAny().ifPresent(
                      editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultReaderAccessLevel(), editor)));
+        roles.stream().filter(RepositoryAccessControlListService::isAnonymous)
+                .findAny().ifPresent(
+                        anonymous -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultAnonymousAccessLevel(), anonymous)));
     }
 
     @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
@@ -218,6 +219,17 @@ public class RepositoryAccessControlListService implements AccessControlListServ
 
     /**
      * Checks whether the specified role
+     * is the {@link cz.cvut.kbss.termit.security.model.UserRole#FULL_USER FULL_USER} role.
+     *
+     * @param role Role to check
+     * @return {@code true} if the role is the full user role, {@code false} otherwise
+     */
+    public static boolean isFullUser(UserRole role) {
+        return cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType().equals(role.getUri().toString());
+    }
+
+    /**
+     * Checks whether the specified role
      * is the {@link cz.cvut.kbss.termit.security.model.UserRole#ANONYMOUS_USER ANONYMOUS_USER} role.
      *
      * @param role Role to check
@@ -250,7 +262,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
      *     <li>Does not grant security access level to the restricted user role</li>
      * </ul>
      *
-     * @param record Access control record to validate
+     * @param controlRecord Access control record to validate
      * @throws UnsupportedOperationException if the record is not valid
      */
     public void validate(AccessControlRecord<?> controlRecord) {

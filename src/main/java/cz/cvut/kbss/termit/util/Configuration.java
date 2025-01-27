@@ -893,6 +893,11 @@ public class Configuration {
          */
         private AccessLevel defaultReaderAccessLevel = AccessLevel.READ;
 
+        /**
+         * Default access level for anonymous (non-logged-in) users.
+         */
+        private AccessLevel defaultAnonymousAccessLevel = AccessLevel.NONE;
+
         public AccessLevel getDefaultEditorAccessLevel() {
             return defaultEditorAccessLevel;
         }
@@ -907,6 +912,14 @@ public class Configuration {
 
         public void setDefaultReaderAccessLevel(AccessLevel defaultReaderAccessLevel) {
             this.defaultReaderAccessLevel = defaultReaderAccessLevel;
+        }
+
+        public AccessLevel getDefaultAnonymousAccessLevel() {
+            return defaultAnonymousAccessLevel;
+        }
+
+        public void setDefaultAnonymousAccessLevel(AccessLevel defaultAnonymousAccessLevel) {
+            this.defaultAnonymousAccessLevel = defaultAnonymousAccessLevel;
         }
     }
 
