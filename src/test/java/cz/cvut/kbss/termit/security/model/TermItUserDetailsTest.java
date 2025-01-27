@@ -53,7 +53,7 @@ class TermItUserDetailsTest {
         final UserAccount user = Generator.generateUserAccount();
         user.addType(Vocabulary.s_c_administrator_termitu);
         final TermItUserDetails result = new TermItUserDetails(user);
-        assertEquals(3, result.getAuthorities().size());
+        assertEquals(4, result.getAuthorities().size());
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.ADMIN.getName())));
@@ -65,7 +65,7 @@ class TermItUserDetailsTest {
         final UserAccount user = Generator.generateUserAccount();
         user.addType(Vocabulary.s_c_administrator_termitu);
         final TermItUserDetails result = new TermItUserDetails(user, authorities);
-        assertEquals(4, result.getAuthorities().size());
+        assertEquals(5, result.getAuthorities().size());
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.ADMIN.getName())));
