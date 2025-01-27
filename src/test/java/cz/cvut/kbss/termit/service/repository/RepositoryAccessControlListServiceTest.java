@@ -149,8 +149,12 @@ class RepositoryAccessControlListServiceTest {
         update.setAccessLevel(AccessLevel.WRITE);
         sut.updateRecordAccessLevel(acl, update);
 
+        final AccessLevel updatedLevel = acl.getRecords().stream()
+                                            .filter(r -> update.getUri().equals(r.getUri()))
+                                            .findAny().map(AccessControlRecord::getAccessLevel).orElseThrow();
+
         assertEquals(generatedRecords + 1, acl.getRecords().size());
-        assertEquals(update.getAccessLevel(), acl.getRecords().iterator().next().getAccessLevel());
+        assertEquals(update.getAccessLevel(), updatedLevel);
     }
 
     @Test
