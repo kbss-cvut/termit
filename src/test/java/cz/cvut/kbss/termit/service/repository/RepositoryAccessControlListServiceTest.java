@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
+import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -267,14 +268,14 @@ class RepositoryAccessControlListServiceTest {
         assertDoesNotThrow(() -> sut.validate(result));
     }
 
-    private static Stream<AccessLevel> validateThrowsWhenRecordGrantsMoreThanRead() {
+    private static Stream<AccessLevel> getAccessLevelsGreaterThanRead() {
         return Arrays.stream(AccessLevel.values()).filter(level ->
             level.ordinal() > AccessLevel.READ.ordinal()
         );
     }
 
     @ParameterizedTest
-    @MethodSource("validateThrowsWhenRecordGrantsMoreThanRead")
+    @MethodSource("getAccessLevelsGreaterThanRead")
     void validateThrowsWhenRecordGrantsMoreThanReadToAnonymous(AccessLevel level) {
         final UserRole anonymous = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
         final RoleAccessControlRecord accessRecord = new RoleAccessControlRecord();
@@ -289,14 +290,14 @@ class RepositoryAccessControlListServiceTest {
         assertThrows(UnsupportedOperationException.class, () -> sut.validate(accessRecord));
     }
 
-    private static Stream<AccessLevel> validateDoesNotThrowWhenRecordGrantsLessOrEqualToRead() {
+    private static Stream<AccessLevel> getAccessLevelsLessOrEqualToRead() {
         return Arrays.stream(AccessLevel.values()).filter(level ->
             level.ordinal() <= AccessLevel.READ.ordinal()
         );
     }
 
     @ParameterizedTest
-    @MethodSource("validateDoesNotThrowWhenRecordGrantsLessOrEqualToRead")
+    @MethodSource("getAccessLevelsLessOrEqualToRead")
     void validateDoesNotThrowWhenRecordGrantsLessOrEqualToReadToAnonymous(AccessLevel level) {
         final UserRole anonymous = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
         final RoleAccessControlRecord accessRecord = new RoleAccessControlRecord();
@@ -324,6 +325,45 @@ class RepositoryAccessControlListServiceTest {
 
         assertThrows(UnsupportedOperationException.class, () -> sut.validate(acl));
         assertThrows(UnsupportedOperationException.class, () -> sut.validate(accessRecord));
+    }
+
+    @Test
+    void validateThrowsWhenRecordGrantsSecurityToUserGroup() {
+        final UserGroup group = new UserGroup();
+        group.setUri(Generator.generateUri());
+        final UserGroupAccessControlRecord accessRecord = new UserGroupAccessControlRecord();
+        accessRecord.setAccessLevel(AccessLevel.SECURITY);
+        accessRecord.setHolder(group);
+
+        when(userRoleService.findAll()).thenReturn(getAllUserRoles());
+        final AccessControlList acl = sut.createFor(Generator.generateVocabularyWithId());
+        acl.addRecord(accessRecord);
+
+        assertThrows(UnsupportedOperationException.class, () -> sut.validate(acl));
+        assertThrows(UnsupportedOperationException.class, () -> sut.validate(accessRecord));
+    }
+
+    private static Stream<AccessLevel> getAccessLevelsLessThanSecurity() {
+        return Arrays.stream(AccessLevel.values()).filter(level ->
+                level.ordinal() < AccessLevel.SECURITY.ordinal()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAccessLevelsLessThanSecurity")
+    void validateDoesNotThrowWhenRecordGrantsNonSecurityToUserGroup(AccessLevel level) {
+        final UserGroup group = new UserGroup();
+        group.setUri(Generator.generateUri());
+        final UserGroupAccessControlRecord accessRecord = new UserGroupAccessControlRecord();
+        accessRecord.setAccessLevel(level);
+        accessRecord.setHolder(group);
+
+        when(userRoleService.findAll()).thenReturn(getAllUserRoles());
+        final AccessControlList acl = sut.createFor(Generator.generateVocabularyWithId());
+        acl.addRecord(accessRecord);
+
+        assertDoesNotThrow(() -> sut.validate(acl));
+        assertDoesNotThrow(() -> sut.validate(accessRecord));
     }
 
 }

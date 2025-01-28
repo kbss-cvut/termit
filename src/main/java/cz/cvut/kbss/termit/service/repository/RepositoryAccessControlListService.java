@@ -23,6 +23,7 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.AccessControlAgent;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -187,19 +188,23 @@ public class RepositoryAccessControlListService implements AccessControlListServ
     }
 
     private void verifyUserRoleRecordsArePresent(AccessControlList acl) {
+        boolean anonymousFound = false;
         boolean readerFound = false;
         boolean editorFound = false;
         for (AccessControlRecord<?> record : acl.getRecords()) {
-            final String holderIri = record.getHolder().getUri().toString();
-            if (Objects.equals(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType(), holderIri)) {
-                readerFound = true;
-            } else if (Objects.equals(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType(), holderIri)) {
-                editorFound = true;
+            if (record.getHolder() instanceof UserRole role) {
+                if (isAnonymous(role)) {
+                    anonymousFound = true;
+                } else if (isRestricted(role)) {
+                    readerFound = true;
+                } else if (isFullUser(role)) {
+                    editorFound = true;
+                }
             }
         }
-        if (!readerFound || !editorFound) {
+        if (!readerFound || !editorFound || !anonymousFound) {
             throw new UnsupportedOperationException(
-                    "Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+                    "Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + ", " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
         }
     }
 
@@ -270,11 +275,17 @@ public class RepositoryAccessControlListService implements AccessControlListServ
             // check that the anonymous user does not have greater access level than READ
             if (isAnonymous(role) && controlRecord.getAccessLevel().compareTo(AccessLevel.READ) > 0) {
                 throw new UnsupportedOperationException("Access control record for anonymous user cannot grant greater access level then READ.");
-            } else
+            }
             // check that the reader role does not have SECURITY access level
             if (isRestricted(role) && controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
                 throw new UnsupportedOperationException("Access control record for restricted user cannot have access level SECURITY.");
             }
+
+        }
+        // check that a user group does not have SECURITY access level
+        if (controlRecord.getHolder() instanceof UserGroup &&
+                controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
+            throw new UnsupportedOperationException("Access control record for user group cannot have access level SECURITY.");
         }
     }
 
