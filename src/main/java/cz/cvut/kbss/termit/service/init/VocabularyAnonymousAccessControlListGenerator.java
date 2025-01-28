@@ -55,9 +55,11 @@ public class VocabularyAnonymousAccessControlListGenerator {
         final UserRole anonymousRole = userRoleRepositoryService.findAll().stream()
                                                                 .filter(RepositoryAccessControlListService::isAnonymous)
                                                                 .findAny().orElseThrow();
-        final List<URI> vocabsWithoutAcl = resolveVocabulariesWithAcl();
-        LOG.trace("Generating anonymous access control records for vocabularies: {}.", vocabsWithoutAcl);
-        vocabsWithoutAcl.forEach(vUri -> {
+        final List<URI> vocabsWithAcl = resolveVocabulariesWithAcl();
+        vocabsWithAcl.removeAll(resolveVocabulariesWithAnonymousRecord());
+
+        LOG.trace("Generating anonymous access control records for vocabularies: {}.", vocabsWithAcl);
+        vocabsWithAcl.forEach(vUri -> {
             final cz.cvut.kbss.termit.model.Vocabulary v = vocabularyService.findRequired(vUri);
             aclService.findFor(v).ifPresentOrElse(acl -> {
                 if (hasAnonymous(acl)) return; // skip if already has anonymous access
@@ -78,6 +80,25 @@ public class VocabularyAnonymousAccessControlListGenerator {
                          """, URI.class)
                  .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
                  .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                 .getResultList();
+    }
+
+    private List<URI> resolveVocabulariesWithAnonymousRecord() {
+        return em.createNativeQuery("""
+                         SELECT DISTINCT ?v WHERE {
+                             ?v a ?vocabulary ;
+                             ?hasAcl ?acl .
+                             ?acl ?hasRecord ?record .
+                             ?record a ?userRoleRecord ;
+                             ?hasHolder ?anonymousUser .
+                         }
+                         """, URI.class)
+                 .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+                 .setParameter("hasAcl", URI.create(Vocabulary.s_p_ma_seznam_rizeni_pristupu))
+                 .setParameter("hasRecord", URI.create(Vocabulary.s_p_ma_zaznam_rizeni_pristupu))
+                 .setParameter("userRoleRecord", URI.create(Vocabulary.s_c_zaznam_rizeni_pristupu_uzivatelske_role))
+                 .setParameter("hasHolder", URI.create(Vocabulary.s_p_ma_drzitele_pristupovych_opravneni))
+                 .setParameter("anonymousUser", URI.create(Vocabulary.s_c_anonymni_uzivatel_termitu))
                  .getResultList();
     }
 
