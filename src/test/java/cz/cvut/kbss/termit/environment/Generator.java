@@ -510,15 +510,17 @@ public class Generator {
     public static List<AccessControlRecord<?>> generateAccessControlRecords() {
         final List<AccessControlRecord<?>> result = IntStream.range(0, 5).mapToObj(i -> {
             final AccessControlRecord r;
+            int maxAccessLevel = AccessLevel.values().length; // exclusive
             if (Generator.randomBoolean()) {
                 r = new UserAccessControlRecord();
                 r.setHolder(Generator.generateUserWithId());
             } else {
                 r = new UserGroupAccessControlRecord();
                 r.setHolder(generateUserGroup());
+                maxAccessLevel = AccessLevel.SECURITY.ordinal();
             }
             r.setUri(Generator.generateUri());
-            r.setAccessLevel(AccessLevel.values()[Generator.randomIndex(AccessLevel.values())]);
+            r.setAccessLevel(AccessLevel.values()[Generator.randomInt(0, maxAccessLevel)]);
             return (AccessControlRecord<?>) r;
         }).collect(Collectors.toList());
 
@@ -533,6 +535,12 @@ public class Generator {
         rr.setHolder(restrictedRole);
         rr.setAccessLevel(AccessLevel.NONE);
         result.add(rr);
+
+        final RoleAccessControlRecord ar = new RoleAccessControlRecord();
+        final UserRole anonymousRole = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
+        ar.setHolder(anonymousRole);
+        ar.setAccessLevel(AccessLevel.NONE);
+        result.add(ar);
 
         return result;
     }
