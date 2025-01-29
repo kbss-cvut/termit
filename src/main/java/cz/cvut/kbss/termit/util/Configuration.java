@@ -895,6 +895,8 @@ public class Configuration {
 
         /**
          * Default access level for anonymous (non-logged-in) users.
+         * <p>
+         * Allowed values are {@link AccessLevel#NONE} and {@link AccessLevel#READ}.
          */
         private AccessLevel defaultAnonymousAccessLevel = AccessLevel.NONE;
 
