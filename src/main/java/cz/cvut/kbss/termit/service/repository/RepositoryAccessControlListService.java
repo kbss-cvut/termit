@@ -187,6 +187,15 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         dao.update(toUpdate);
     }
 
+    /**
+     * Ensures that the ACL contains a record for
+     * {@link cz.cvut.kbss.termit.security.model.UserRole#ANONYMOUS_USER UserRole#ANONYMOUS_USER},
+     * {@link cz.cvut.kbss.termit.security.model.UserRole#RESTRICTED_USER UserRole#RESTRICTED_USER} and
+     * {@link cz.cvut.kbss.termit.security.model.UserRole#FULL_USER UserRole#FULL_USER}
+     *
+     * @param acl the acl to verify
+     * @throws UnsupportedOperationException when some record is missing
+     */
     private void verifyUserRoleRecordsArePresent(AccessControlList acl) {
         boolean anonymousFound = false;
         boolean readerFound = false;
@@ -265,6 +274,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
      * <ul>
      *     <li>Does not grant greater access level than read to the anonymous user role</li>
      *     <li>Does not grant security access level to the restricted user role</li>
+     *     <li>Does not grant security access level to a user group</li>
      * </ul>
      *
      * @param controlRecord Access control record to validate
