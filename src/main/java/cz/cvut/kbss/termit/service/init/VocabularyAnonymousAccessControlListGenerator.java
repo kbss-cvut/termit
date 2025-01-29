@@ -9,7 +9,6 @@ import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.repository.RepositoryAccessControlListService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,21 +32,30 @@ public class VocabularyAnonymousAccessControlListGenerator {
 
     private final AccessControlListService aclService;
     private final UserRoleRepositoryService userRoleRepositoryService;
-    private final Configuration.ACL aclConfig;
 
 
     public VocabularyAnonymousAccessControlListGenerator(EntityManager em,
                                                          VocabularyRepositoryService vocabularyService,
                                                          AccessControlListService aclService,
-                                                         UserRoleRepositoryService userRoleRepositoryService,
-                                                         Configuration config) {
+                                                         UserRoleRepositoryService userRoleRepositoryService) {
         this.em = em;
         this.vocabularyService = vocabularyService;
         this.aclService = aclService;
         this.userRoleRepositoryService = userRoleRepositoryService;
-        this.aclConfig = config.getAcl();
     }
 
+    /**
+     * Creates {@link RoleAccessControlRecord}
+     * with {@link cz.cvut.kbss.termit.security.model.UserRole#ANONYMOUS_USER ANONYMOUS_USER}
+     * for {@link cz.cvut.kbss.termit.model.Vocabulary Vocabulary}s
+     * that are missing such record.
+     * <p>
+     * Access level is assigned based on an existing record for {@link cz.cvut.kbss.termit.security.model.UserRole#RESTRICTED_USER RESTRICTED_USER}.
+     * {@link AccessLevel#NONE AccessLevel#NONE} is assigned when the restricted user has no access,
+     * otherwise {@link AccessLevel#READ AccessLevel#READ} is assigned for the anonymous user.
+     * <p>
+     * This method is asynchronous to prevent slowing down the system startup.
+     */
     @Async
     @Transactional
     public void generateMissingAccessControlLists() {
@@ -56,6 +64,7 @@ public class VocabularyAnonymousAccessControlListGenerator {
                                                                 .filter(RepositoryAccessControlListService::isAnonymous)
                                                                 .findAny().orElseThrow();
         final List<URI> vocabsWithAcl = resolveVocabulariesWithAcl();
+        // remove vocabularies that already have anonymous user access record
         vocabsWithAcl.removeAll(resolveVocabulariesWithAnonymousRecord());
 
         LOG.trace("Generating anonymous access control records for vocabularies: {}.", vocabsWithAcl);
@@ -63,7 +72,7 @@ public class VocabularyAnonymousAccessControlListGenerator {
             final cz.cvut.kbss.termit.model.Vocabulary v = vocabularyService.findRequired(vUri);
             aclService.findFor(v).ifPresentOrElse(acl -> {
                 if (hasAnonymous(acl)) return; // skip if already has anonymous access
-                LOG.info("Generating missing anonymous access control record for vocabulary {}.", v);
+                LOG.debug("Generating missing anonymous access control record for vocabulary {}.", v);
                 final AccessLevel accessLevel = shouldAllowAnonymousAccess(acl) ? AccessLevel.READ : AccessLevel.NONE;
                 aclService.addRecord(acl, new RoleAccessControlRecord(accessLevel, anonymousRole));
             }, () -> LOG.warn("Vocabulary {} is missing an ACL.", v));
@@ -71,6 +80,9 @@ public class VocabularyAnonymousAccessControlListGenerator {
         LOG.trace("Finished generating vocabulary access control records for anonymous users.");
     }
 
+    /**
+     * @return list of vocabulary IRIs which have access control list
+     */
     private List<URI> resolveVocabulariesWithAcl() {
         return em.createNativeQuery("""
                          SELECT DISTINCT ?v WHERE {
@@ -83,6 +95,9 @@ public class VocabularyAnonymousAccessControlListGenerator {
                  .getResultList();
     }
 
+    /**
+     * @return list of vocabulary IRIs that already have access control record for anonymous user
+     */
     private List<URI> resolveVocabulariesWithAnonymousRecord() {
         return em.createNativeQuery("""
                          SELECT DISTINCT ?v WHERE {
