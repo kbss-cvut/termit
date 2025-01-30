@@ -6,7 +6,6 @@ import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
-import cz.cvut.kbss.termit.service.repository.RepositoryAccessControlListService;
 import cz.cvut.kbss.termit.service.repository.UserRoleRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Vocabulary;
@@ -60,9 +59,7 @@ public class VocabularyAnonymousAccessControlListGenerator {
     @Transactional
     public void generateMissingAccessControlLists() {
         LOG.debug("Generating missing vocabulary access control records for anonymous users.");
-        final UserRole anonymousRole = userRoleRepositoryService.findAll().stream()
-                                                                .filter(RepositoryAccessControlListService::isAnonymous)
-                                                                .findAny().orElseThrow();
+        final UserRole anonymousRole = userRoleRepositoryService.find(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
         final List<URI> vocabsWithAcl = resolveVocabulariesWithAcl();
         // remove vocabularies that already have anonymous user access record
         vocabsWithAcl.removeAll(resolveVocabulariesWithAnonymousRecord());

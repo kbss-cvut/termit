@@ -37,4 +37,8 @@ public class UserRoleRepositoryService {
     public List<UserRole> findAll() {
         return dao.findAll();
     }
+
+    public UserRole find(cz.cvut.kbss.termit.security.model.UserRole userRole) {
+        return dao.find(userRole);
+    }
 }
