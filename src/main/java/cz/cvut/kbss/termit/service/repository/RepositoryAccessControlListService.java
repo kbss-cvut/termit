@@ -284,7 +284,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         if (controlRecord.getHolder() instanceof UserRole role) {
             // check that the anonymous user does not have greater access level than READ
             if (isAnonymous(role) && controlRecord.getAccessLevel().compareTo(AccessLevel.READ) > 0) {
-                throw new UnsupportedOperationException("Access control record for anonymous user cannot grant greater access level then READ.");
+                throw new UnsupportedOperationException("Access control record for anonymous user cannot grant greater access level than READ.");
             }
             // check that the reader role does not have SECURITY access level
             if (isRestricted(role) && controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
