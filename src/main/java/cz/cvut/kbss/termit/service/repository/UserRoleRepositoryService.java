@@ -17,11 +17,13 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.persistence.dao.UserRoleDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.List;
 
 @Service
@@ -38,7 +40,8 @@ public class UserRoleRepositoryService {
         return dao.findAll();
     }
 
-    public UserRole find(cz.cvut.kbss.termit.security.model.UserRole userRole) {
-        return dao.find(userRole);
+    public UserRole findRequired(cz.cvut.kbss.termit.security.model.UserRole userRole) {
+        final URI id = URI.create(userRole.getType());
+        return dao.find(id).orElseThrow(() -> NotFoundException.create(UserRole.class, id));
     }
 }

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class UserRoleDao {
@@ -37,8 +38,7 @@ public class UserRoleDao {
         return em.createQuery("SELECT r FROM " + UserRole.class.getSimpleName() + " r", UserRole.class).getResultList();
     }
 
-    public UserRole find(cz.cvut.kbss.termit.security.model.UserRole userRole) {
-        return em.createQuery("SELECT r FROM " + UserRole.class.getSimpleName() + " r WHERE r.uri = :uri", UserRole.class)
-                 .setParameter("uri", URI.create(userRole.getType())).getSingleResult();
+    public Optional<UserRole> find(URI id) {
+        return Optional.ofNullable(em.find(UserRole.class, id));
     }
 }
