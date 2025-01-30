@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.UserRole;
 import org.springframework.stereotype.Repository;
 
+import java.net.URI;
 import java.util.List;
 
 @Repository
@@ -34,5 +35,10 @@ public class UserRoleDao {
 
     public List<UserRole> findAll() {
         return em.createQuery("SELECT r FROM " + UserRole.class.getSimpleName() + " r", UserRole.class).getResultList();
+    }
+
+    public UserRole find(cz.cvut.kbss.termit.security.model.UserRole userRole) {
+        return em.createQuery("SELECT r FROM " + UserRole.class.getSimpleName() + " r WHERE r.uri = :uri", UserRole.class)
+                 .setParameter("uri", URI.create(userRole.getType())).getSingleResult();
     }
 }
