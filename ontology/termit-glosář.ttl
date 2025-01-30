@@ -390,8 +390,8 @@ termit-pojem:anonymní-uživatel-termitu
                 termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
         <http://www.w3.org/2004/02/skos/core#inScheme>
                 termit:glosář ;
-        <http://www.w3.org/2004/02/skos/core#prefLabel>
-                "Anonymous"@en , "Anonymní"@cs ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel> 
+                "Anonymous"@en , "Anonym"@cs ;
         <http://www.w3.org/2004/02/skos/core#scopeNote>
         "A not logged in user"@en , "Nepřihlášený uživatel"@cs .
 
