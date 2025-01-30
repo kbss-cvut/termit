@@ -59,7 +59,7 @@ public class VocabularyAnonymousAccessControlListGenerator {
     @Transactional
     public void generateMissingAccessControlLists() {
         LOG.debug("Generating missing vocabulary access control records for anonymous users.");
-        final UserRole anonymousRole = userRoleRepositoryService.find(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
+        final UserRole anonymousRole = userRoleRepositoryService.findRequired(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
         final List<URI> vocabsWithAcl = resolveVocabulariesWithAcl();
         // remove vocabularies that already have anonymous user access record
         vocabsWithAcl.removeAll(resolveVocabulariesWithAnonymousRecord());
