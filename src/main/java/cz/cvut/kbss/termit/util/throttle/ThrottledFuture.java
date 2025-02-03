@@ -97,6 +97,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
         if (!wasCanceled && task != null) {
             callbackLock.lock();
             onCompletion.forEach(c -> c.accept(this));
+            onCompletion.clear(); // remove executed callbacks
             callbackLock.unlock();
         }
         return true;
@@ -186,7 +187,8 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
     }
 
     /**
-     * Executes the task associated with this future
+     * Executes the task associated with this future.
+     *
      * @param startedCallback called once {@link #startedAt} is set and so execution is considered as running.
      */
     protected void run(@Nullable Consumer<ThrottledFuture<T>> startedCallback) {
@@ -218,6 +220,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
                 if (task != null) {
                     callbackLock.lock();
                     onCompletion.forEach(c -> c.accept(this));
+                    onCompletion.clear(); // remove executed callbacks
                     callbackLock.unlock();
                 }
             }
@@ -265,6 +268,32 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
             callbackLock.unlock();
         }
         return this;
+    }
+
+    /**
+     * When the other future is not completed and not running,
+     * all {@link #onCompletion} callbacks are merged into this future,
+     * removed from the other and the other future is canceled.
+     * <p>
+     * Does nothing when the other future is completed or already running.
+     *
+     * @param other the future from where completion callbacks should be removed
+     */
+    public void consumeCallbacks(ThrottledFuture<T> other) {
+        try {
+            other.lock.lock();
+            other.callbackLock.lock();
+            if (!other.isDone() && !other.isRunning()) {
+                final List<Consumer<ThrottledFuture<T>>> otherCallbacks = new ArrayList<>(other.onCompletion);
+                other.onCompletion.clear();
+                this.then(ignored -> otherCallbacks.forEach(otherCallback -> otherCallback.accept(this)));
+                other.cancel(false);
+            }
+            // the other future is already done so we cannot consume callbacks
+        } finally {
+            other.lock.unlock();
+            other.callbackLock.unlock();
+        }
     }
 
     /**
