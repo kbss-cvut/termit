@@ -1,5 +1,6 @@
 package cz.cvut.kbss.termit.util.throttle;
 
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTask;
 import jakarta.annotation.Nonnull;
@@ -20,7 +21,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T, ThrottledFuture<T>>, LongRunningTask {
-
+    private static final int TRY_LOCK_MILLIS_TIMEOUT = 500;
     private final ReentrantLock lock = new ReentrantLock();
     private final ReentrantLock callbackLock = new ReentrantLock();
 
@@ -96,9 +97,12 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
 
         if (!wasCanceled && task != null) {
             callbackLock.lock();
-            onCompletion.forEach(c -> c.accept(this));
-            onCompletion.clear(); // remove executed callbacks
-            callbackLock.unlock();
+            try {
+                onCompletion.forEach(c -> c.accept(this));
+                onCompletion.clear(); // remove executed callbacks
+            } finally {
+                callbackLock.unlock();
+            }
         }
         return true;
     }
@@ -137,7 +141,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
     protected ThrottledFuture<T> update(Supplier<T> task, @Nonnull List<Consumer<ThrottledFuture<T>>> onCompletion) {
         boolean locked = false;
         try {
-            locked = lock.tryLock();
+            locked = lock.tryLock(TRY_LOCK_MILLIS_TIMEOUT, TimeUnit.MILLISECONDS);
             this.callbackLock.lock();
             ThrottledFuture<T> updatedFuture = this;
             if (!locked || isRunning() || isDone()) {
@@ -146,11 +150,16 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
             updatedFuture.task = task;
             updatedFuture.onCompletion.addAll(onCompletion);
             return updatedFuture;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
         } finally {
+            if (callbackLock.isHeldByCurrentThread()) {
+                this.callbackLock.unlock();
+            }
             if (locked) {
                 lock.unlock();
             }
-            this.callbackLock.unlock();
         }
     }
 
@@ -167,7 +176,7 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
     protected ThrottledFuture<T> transfer(ThrottledFuture<T> target) {
         boolean locked = false;
         try {
-            locked = lock.tryLock();
+            locked = lock.tryLock(TRY_LOCK_MILLIS_TIMEOUT, TimeUnit.MILLISECONDS);
             this.callbackLock.lock();
             if (!locked || isRunning() || isDone()) {
                 return target;
@@ -178,11 +187,16 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
             this.onCompletion.clear();
             this.cancel(false);
             return result;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
         } finally {
+            if (callbackLock.isHeldByCurrentThread()) {
+                this.callbackLock.unlock();
+            }
             if (locked) {
                 lock.unlock();
             }
-            this.callbackLock.unlock();
         }
     }
 
@@ -195,11 +209,9 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
         boolean locked = false;
         try {
             do {
-                locked = lock.tryLock();
+                locked = lock.tryLock(TRY_LOCK_MILLIS_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (isRunning() || isDone()) {
                     return;
-                } else if (!locked) {
-                    Thread.yield();
                 }
             } while (!locked);
 
@@ -219,11 +231,17 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
             } finally {
                 if (task != null) {
                     callbackLock.lock();
-                    onCompletion.forEach(c -> c.accept(this));
-                    onCompletion.clear(); // remove executed callbacks
-                    callbackLock.unlock();
+                    try {
+                        onCompletion.forEach(c -> c.accept(this));
+                        onCompletion.clear(); // remove executed callbacks
+                    } finally {
+                        callbackLock.unlock();
+                    }
                 }
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
         } finally {
             if (locked) {
                 lock.unlock();
@@ -265,23 +283,34 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
                 onCompletion.add(action);
             }
         } finally {
-            callbackLock.unlock();
+            if (callbackLock.isHeldByCurrentThread()) {
+                callbackLock.unlock();
+            }
         }
         return this;
     }
 
     /**
-     * When the other future is not completed and not running,
-     * all {@link #onCompletion} callbacks are merged into this future,
-     * removed from the other and the other future is canceled.
+     * When the {@code other} future is not completed,
+     * all {@link #onCompletion} callbacks are merged into this future using {@link #then(Consumer)},
+     * removed from the {@code other} and the {@code other} future is canceled.
      * <p>
-     * Does nothing when the other future is completed or already running.
+     * When this future is already done, then callbacks from {@code other} are executed synchronously using this future.
+     * <p>
+     * Does nothing when the other future is completed.
      *
      * @param other the future from where completion callbacks should be removed
      */
     public void consumeCallbacks(ThrottledFuture<T> other) {
         try {
-            other.lock.lock();
+            boolean locked = false;
+            do {
+                locked = lock.tryLock(TRY_LOCK_MILLIS_TIMEOUT, TimeUnit.MILLISECONDS);
+                if (other.isRunning()) {
+                    return;
+                }
+            } while (!locked);
+
             other.callbackLock.lock();
             if (!other.isDone() && !other.isRunning()) {
                 final List<Consumer<ThrottledFuture<T>>> otherCallbacks = new ArrayList<>(other.onCompletion);
@@ -290,9 +319,16 @@ public class ThrottledFuture<T> implements CacheableFuture<T>, ChainableFuture<T
                 other.cancel(false);
             }
             // the other future is already done so we cannot consume callbacks
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
         } finally {
-            other.lock.unlock();
-            other.callbackLock.unlock();
+            if (other.callbackLock.isHeldByCurrentThread()) {
+                other.callbackLock.lock();
+            }
+            if (other.lock.isHeldByCurrentThread()) {
+                other.lock.unlock();
+            }
         }
     }
 

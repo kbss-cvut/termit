@@ -52,6 +52,12 @@ public class LongRunningTasksRegistry {
         registry.entrySet().removeIf(entry -> {
             if (!entry.getValue().isRunning()) {
                 count.incrementAndGet();
+                if (entry.getValue().getName() != null) {
+                    // announce that the task is done
+                    final LongRunningTaskStatus doneStatus = new LongRunningTaskStatus(entry.getValue().getName(),
+                            entry.getKey(), LongRunningTaskStatus.State.DONE, null);
+                    eventPublisher.publishEvent(new LongRunningTaskChangedEvent(this, doneStatus));
+                }
                 return true;
             }
             return false;
