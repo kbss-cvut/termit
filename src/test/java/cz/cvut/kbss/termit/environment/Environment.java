@@ -49,7 +49,6 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -203,25 +202,6 @@ public class Environment {
 
     public static List<TermDto> termsToDtos(List<Term> terms) {
         return terms.stream().map(TermDto::new).collect(Collectors.toList());
-    }
-
-    /**
-     * Injects the specified {@link Configuration} object into the specified
-     * {@link cz.cvut.kbss.termit.model.Vocabulary} instance.
-     * <p>
-     * This simulates Spring {@code @Configurable} behavior.
-     *
-     * @param vocabulary Target instance
-     * @param config     Instance to inject
-     */
-    public static void injectConfiguration(cz.cvut.kbss.termit.model.Vocabulary vocabulary, Configuration config) {
-        try {
-            final Field configField = cz.cvut.kbss.termit.model.Vocabulary.class.getDeclaredField("config");
-            configField.setAccessible(true);
-            configField.set(vocabulary, config);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("Unable to inject configuration into Vocabulary instance.", e);
-        }
     }
 
     /**

@@ -2,6 +2,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
@@ -63,7 +64,7 @@ class BaseAssetDaoTest extends BaseDaoTestRunner{
     void updatePublishesAssetUpdateEvent() {
         final Term t = Generator.generateTermWithId();
         transactional(() -> em.persist(t));
-        t.setPrimaryLabel("Updated primary label");
+        t.setLabel(Environment.LANGUAGE, "Updated primary label");
 
         transactional(() -> sut.update(t));
 

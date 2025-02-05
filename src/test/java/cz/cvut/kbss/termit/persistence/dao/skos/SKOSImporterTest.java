@@ -314,7 +314,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                        Environment.loadFile("data/test-glossary.ttl")));
             assertNotNull(result);
             assertEquals(VOCABULARY_IRI, result.getUri());
-            assertEquals("Vocabulary of system TermIt - glossary", result.getPrimaryLabel());
+            assertEquals("Vocabulary of system TermIt - glossary", result.getLabel(Environment.LANGUAGE));
         });
     }
 

@@ -27,7 +27,6 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.Properties;
-import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jsonld.annotation.JsonLdAttributeOrder;
@@ -36,11 +35,8 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -49,15 +45,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Configurable
 @Audited
 @OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)
 @JsonLdAttributeOrder({"uri", "label", "description"})
 public class Vocabulary extends Asset<MultilingualString> implements HasTypes, SupportsSnapshots, Serializable {
-
-    @Autowired
-    @Transient
-    private transient Configuration config;
 
     @PrimaryNotBlank
     @ParticipationConstraints(nonEmpty = true)
@@ -112,35 +103,16 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
         this.label = label;
     }
 
-    /**
-     * Sets label in the application-configured language.
-     * <p>
-     * This is a convenience method allowing to skip working with {@link MultilingualString} instances.
-     *
-     * @param label Label value to set
-     * @see #setLabel(MultilingualString)
-     */
-    @JsonIgnore
-    public void setPrimaryLabel(String label) {
-        if (this.getLabel() == null) {
-            this.setLabel(MultilingualString.create(label, config.getPersistence().getLanguage()));
-        } else {
-            this.getLabel().set(config.getPersistence().getLanguage(), label);
-        }
+    public String getLabel(String language) {
+        return this.getLabel() != null ? this.getLabel().get(language) : null;
     }
 
-    /**
-     * Gets label in the application-configured language.
-     * <p>
-     * This is a convenience method allowing to skip working with {@link MultilingualString} instances.
-     *
-     * @return Label value
-     * @see #getLabel()
-     */
-    @JsonIgnore
-    @Override
-    public String getPrimaryLabel() {
-        return getLabel() != null ? getLabel().get(config.getPersistence().getLanguage()) : null;
+    public void setLabel(String language, String label) {
+        if (this.getLabel() == null) {
+            this.setLabel(MultilingualString.create(label, language));
+        } else {
+            this.getLabel().set(language, label);
+        }
     }
 
     public MultilingualString getDescription() {
