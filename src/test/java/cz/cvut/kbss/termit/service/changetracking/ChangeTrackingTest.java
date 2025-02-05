@@ -116,7 +116,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     void updatingVocabularyLiteralAttributeCreatesUpdateChangeRecord() {
         enableRdfsInference(em);
         transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
-        vocabulary.setPrimaryLabel("Updated vocabulary label");
+        vocabulary.setLabel(Environment.LANGUAGE, "Updated vocabulary label");
         transactional(() -> vocabularyService.update(vocabulary));
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(vocabulary);
@@ -134,7 +134,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(imported, descriptorFactory.vocabularyDescriptor(imported));
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
-        vocabulary.setPrimaryLabel("Updated vocabulary label");
+        vocabulary.setLabel(Environment.LANGUAGE, "Updated vocabulary label");
         vocabulary.setImportedVocabularies(Collections.singleton(imported.getUri()));
         transactional(() -> vocabularyService.update(vocabulary));
 

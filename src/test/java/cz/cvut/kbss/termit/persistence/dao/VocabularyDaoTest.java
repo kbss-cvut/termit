@@ -135,7 +135,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFor(v))));
 
         final List<Vocabulary> result = sut.findAll();
-        vocabularies.sort(Comparator.comparing(Vocabulary::getPrimaryLabel));
+        vocabularies.sort(Comparator.comparing(v -> v.getLabel(Environment.LANGUAGE)));
         for (int i = 0; i < vocabularies.size(); i++) {
             assertEquals(vocabularies.get(i).getUri(), result.get(i).getUri());
         }

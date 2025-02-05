@@ -101,6 +101,18 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         return label;
     }
 
+    public String getLabel(String language) {
+        return this.getLabel() != null ? this.getLabel().get(language) : null;
+    }
+
+    public void setLabel(String language, String label) {
+        if (this.getLabel() == null) {
+            this.setLabel(MultilingualString.create(label, language));
+        } else {
+            this.getLabel().set(language, label);
+        }
+    }
+
     @Override
     public void setLabel(MultilingualString label) {
         this.label = label;

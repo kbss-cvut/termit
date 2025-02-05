@@ -133,7 +133,7 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         final Optional<String> result = sut.getLabel(term.getUri());
         assertTrue(result.isPresent());
-        assertEquals(term.getPrimaryLabel(), result.get());
+        assertEquals(term.getLabel(Environment.LANGUAGE), result.get());
     }
 
     @Test
@@ -146,14 +146,14 @@ class DataDaoTest extends BaseDaoTestRunner {
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                               vf.createLiteral(term.getPrimaryLabel()));
+                        vf.createLiteral(term.getLabel(Environment.LANGUAGE)));
                 connection.commit();
             }
         });
 
         final Optional<String> result = sut.getLabel(term.getUri());
         assertTrue(result.isPresent());
-        assertEquals(term.getPrimaryLabel(), result.get());
+        assertEquals(term.getLabel(Environment.LANGUAGE), result.get());
     }
 
     @Test
@@ -177,7 +177,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                               vf.createLiteral(term.getPrimaryLabel()));
+                        vf.createLiteral(term.getLabel(Environment.LANGUAGE)));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
                                vf.createLiteral("Another label"));
                 connection.commit();
