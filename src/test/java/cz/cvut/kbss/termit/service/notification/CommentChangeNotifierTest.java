@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.notification;
 
-import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
@@ -52,6 +51,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static cz.cvut.kbss.termit.service.notification.CommentChangeNotifier.COMMENT_CHANGES_TEMPLATE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -179,7 +179,7 @@ class CommentChangeNotifierTest {
                 Collections.singletonList(comment));
         final String link = "http://localhost/termit";
         when(messageAssetFactory.create(term)).thenReturn(
-                new MessageAssetFactory.MessageAsset(term.getLabel(Environment.LANGUAGE), link));
+                new MessageAssetFactory.MessageAsset(getPrimaryLabel(term), link));
         when(messageComposer.composeMessage(any(), anyMap())).thenReturn("Test message content");
 
         final Optional<Message> result = sut.createCommentChangesMessage(from, to);
@@ -193,7 +193,7 @@ class CommentChangeNotifierTest {
         assertEquals(LocalDate.ofInstant(from, ZoneId.systemDefault()), variables.get("from"));
         assertEquals(LocalDate.ofInstant(to, ZoneId.systemDefault()), variables.get("to"));
         assertEquals(Collections.singletonList(new CommentChangeNotifier.AssetWithComments(
-                        new MessageAssetFactory.MessageAsset(term.getLabel(Environment.LANGUAGE), link),
+                        new MessageAssetFactory.MessageAsset(getPrimaryLabel(term), link),
                              Collections.singletonList(new CommentChangeNotifier.CommentForMessage(comment)))),
                      variables.get("commentedAssets"));
     }

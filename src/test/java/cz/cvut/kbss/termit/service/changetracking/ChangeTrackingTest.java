@@ -45,6 +45,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
+import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.empty;
@@ -116,7 +117,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
     void updatingVocabularyLiteralAttributeCreatesUpdateChangeRecord() {
         enableRdfsInference(em);
         transactional(() -> em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary)));
-        vocabulary.setLabel(Environment.LANGUAGE, "Updated vocabulary label");
+        setPrimaryLabel(vocabulary, "Updated vocabulary label");
         transactional(() -> vocabularyService.update(vocabulary));
 
         final List<AbstractChangeRecord> result = changeRecordDao.findAll(vocabulary);
@@ -134,7 +135,7 @@ public class ChangeTrackingTest extends BaseServiceTestRunner {
             em.persist(imported, descriptorFactory.vocabularyDescriptor(imported));
             em.persist(vocabulary, descriptorFactory.vocabularyDescriptor(vocabulary));
         });
-        vocabulary.setLabel(Environment.LANGUAGE, "Updated vocabulary label");
+        setPrimaryLabel(vocabulary, "Updated vocabulary label");
         vocabulary.setImportedVocabularies(Collections.singleton(imported.getUri()));
         transactional(() -> vocabularyService.update(vocabulary));
 

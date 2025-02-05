@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -120,7 +121,7 @@ class SKOSVocabularyExporterTest extends BaseServiceTestRunner {
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), RDF.TYPE, SKOS.CONCEPT_SCHEME)));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), RDF.TYPE, OWL.ONTOLOGY)));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), DCTERMS.TITLE,
-                vf.createLiteral(vocabulary.getLabel(Environment.LANGUAGE), lang()))));
+                vf.createLiteral(getPrimaryLabel(vocabulary), lang()))));
         assertThat(model, hasItem(vf.createStatement(glossaryIri(vocabulary), DCTERMS.DESCRIPTION,
                                                      vf.createLiteral(vocabulary.getDescription().get(lang()), lang()))));
     }

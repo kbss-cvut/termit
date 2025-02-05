@@ -53,6 +53,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
+import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
@@ -111,7 +113,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
     @Test
     void defaultFullTextSearchFindsTermsWithMatchingLabel() {
         final Collection<Term> matching = terms.stream()
-                                               .filter(t -> t.getLabel(Environment.LANGUAGE).contains("Matching"))
+                                               .filter(t -> getPrimaryLabel(t).contains("Matching"))
                                                .collect(Collectors.toList());
 
         final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
@@ -127,7 +129,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
             final boolean b = Generator.randomBoolean();
             final Term term = new Term();
             term.setUri(Generator.generateUri());
-            term.setLabel(Environment.LANGUAGE, b ? "Matching label " + i : "Unknown label " + i);
+            setPrimaryLabel(term, b ? "Matching label " + i : "Unknown label " + i);
             vocabulary.getGlossary().addRootTerm(term);
             term.setVocabulary(vocabulary.getUri());
             if (b) {
@@ -140,15 +142,14 @@ class SearchDaoTest extends BaseDaoTestRunner {
                                                               Environment.LANGUAGE)));
             terms.add(term);
         }
-        terms.sort(Comparator.comparing(t -> t.getLabel(Environment.LANGUAGE)));
+        terms.sort(Comparator.comparing(Environment::getPrimaryLabel));
         return terms;
     }
 
     @Test
     void defaultFullTextSearchFindsVocabulariesWithMatchingLabel() {
         final Collection<Vocabulary> matching = vocabularies.stream()
-                                                            .filter(v -> v.getLabel(Environment.LANGUAGE)
-                                                                          .contains("Matching"))
+                                                            .filter(v -> getPrimaryLabel(v).contains("Matching"))
                                                             .collect(Collectors.toList());
         final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
         final List<FullTextSearchResult> vocabularyResults = allResults.stream()
@@ -165,7 +166,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
         vocabularies.forEach(v -> {
             v.setUri(Generator.generateUri());
             if (Generator.randomBoolean()) {
-                v.setLabel(Environment.LANGUAGE, "Matching label " + Generator.randomInt());
+                setPrimaryLabel(v, "Matching label " + Generator.randomInt());
             }
         });
         return vocabularies;
@@ -174,10 +175,10 @@ class SearchDaoTest extends BaseDaoTestRunner {
     @Test
     void defaultFullTextSearchFindsVocabulariesAndTermsWithMatchingLabel() {
         final Collection<Term> matchingTerms = terms.stream()
-                                                    .filter(t -> t.getLabel(Environment.LANGUAGE).contains("Matching"))
+                                                    .filter(t -> getPrimaryLabel(t).contains("Matching"))
                                                     .toList();
         final Collection<Vocabulary> matchingVocabularies = vocabularies.stream()
-                                                                        .filter(v -> v.getLabel(Environment.LANGUAGE)
+                                                                        .filter(v -> getPrimaryLabel(v)
                                                                                       .contains("Matching"))
                                                                         .toList();
         final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
@@ -194,7 +195,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
     @Test
     void defaultFullTextSearchIncludesTermStateInResult() {
         final Collection<Term> matching = terms.stream()
-                                               .filter(t -> t.getLabel(Environment.LANGUAGE).contains("Matching"))
+                                               .filter(t -> getPrimaryLabel(t).contains("Matching"))
                                                .toList();
 
         final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
@@ -219,9 +220,9 @@ class SearchDaoTest extends BaseDaoTestRunner {
     void defaultFullTextSearchSkipsSnapshots() {
         final String matchingLabel = "Snapshot";
         final Vocabulary v = Generator.generateVocabularyWithId();
-        v.setLabel(Environment.LANGUAGE, matchingLabel + " 0");
+        setPrimaryLabel(v, matchingLabel + " 0");
         final Vocabulary snapshot = Generator.generateVocabularyWithId();
-        snapshot.setLabel(Environment.LANGUAGE, matchingLabel + " 1");
+        setPrimaryLabel(snapshot, matchingLabel + " 1");
         transactional(() -> {
             em.persist(v);
             em.persist(snapshot);
