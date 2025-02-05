@@ -31,6 +31,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
@@ -55,7 +56,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @EnableAutoConfiguration
 @EnableTransactionManagement
 @ExtendWith(MockitoExtension.class)
-//@EnableAspectJAutoProxy(proxyTargetClass = true) // aspectJ autoproxy
+@EnableAspectJAutoProxy
 @EnableConfigurationProperties({Configuration.class})
 @ContextConfiguration(
         classes = {TestConfig.class, TestPersistenceConfig.class, TestServiceConfig.class, AppConfig.class,
