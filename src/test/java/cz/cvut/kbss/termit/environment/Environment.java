@@ -220,4 +220,36 @@ public class Environment {
             conn.commit();
         }
     }
+
+    /**
+     * @return label in {@link #LANGUAGE}
+     */
+    public static String getPrimaryLabel(Term term) {
+        return term.getLabel(Environment.LANGUAGE);
+    }
+
+    /**
+     * @return label in {@link #LANGUAGE}
+     */
+    public static String getPrimaryLabel(cz.cvut.kbss.termit.model.Vocabulary vocabulary) {
+        return vocabulary.getLabel(Environment.LANGUAGE);
+    }
+
+    /**
+     * Sets label in {@link #LANGUAGE}
+     *
+     * @param label label to set
+     */
+    public static void setPrimaryLabel(Term term, String label) {
+        term.setLabel(Environment.LANGUAGE, label);
+    }
+
+    /**
+     * Sets label in {@link #LANGUAGE}
+     *
+     * @param label label to set
+     */
+    public static void setPrimaryLabel(cz.cvut.kbss.termit.model.Vocabulary vocabulary, String label) {
+        vocabulary.setLabel(Environment.LANGUAGE, label);
+    }
 }

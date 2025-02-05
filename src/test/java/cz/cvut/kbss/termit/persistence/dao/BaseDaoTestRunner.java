@@ -36,4 +36,5 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
 public abstract class BaseDaoTestRunner extends TransactionalTestRunner {
+
 }

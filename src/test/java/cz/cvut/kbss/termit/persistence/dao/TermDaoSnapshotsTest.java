@@ -22,7 +22,6 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
-import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -47,6 +46,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -213,7 +213,7 @@ public class TermDaoSnapshotsTest extends BaseTermDaoTestRunner {
         enableRdfsInference(em);
         final Term term = generateTermWithSnapshot();
 
-        final List<TermDto> result = sut.findAll(term.getLabel(Environment.LANGUAGE));
+        final List<TermDto> result = sut.findAll(getPrimaryLabel(term));
         assertEquals(Collections.singletonList(new TermDto(term)), result);
     }
 

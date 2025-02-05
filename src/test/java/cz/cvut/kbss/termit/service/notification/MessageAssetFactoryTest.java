@@ -33,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -72,7 +73,7 @@ class MessageAssetFactoryTest {
         when(dataService.getLabel(term.getVocabulary(), null)).thenReturn(Optional.of(vocabularyLabel));
 
         final MessageAssetFactory.MessageAsset result = sut.create(term);
-        assertEquals(term.getLabel(Environment.LANGUAGE) + " (" + vocabularyLabel + ")", result.getLabel());
+        assertEquals(getPrimaryLabel(term) + " (" + vocabularyLabel + ")", result.getLabel());
         assertEquals(term.getUri().toString(), result.getLink());
     }
 }
