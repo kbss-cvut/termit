@@ -1,4 +1,4 @@
-application.version: @project.version@
+application.version: '@project.version@'
 
 management:
     endpoints:
@@ -38,7 +38,7 @@ spring:
                     starttls:
                         enable: true
     profiles:
-        active: @spring.profiles.active@
+        active: '@spring.profiles.active@'
 javamelody:
     init-parameters:
         authorized-users: admin:kral0vnat3rm1t1st3
