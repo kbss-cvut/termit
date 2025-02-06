@@ -221,6 +221,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             entity.setDefinitionSource(original.getDefinitionSource());
             eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
+            evictCachedSubTerms(original.getExternalParentTerms(), entity.getExternalParentTerms());
             final Term result = em.merge(entity, descriptorFactory.termDescriptor(entity));
             eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, original.getVocabulary()));
             return result;
@@ -239,12 +240,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermInfo.class, term.getUri(), null);
-        // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
-        Utils.emptyIfNull(term.getParentTerms()).forEach(pt -> {
-            em.getEntityManagerFactory().getCache().evict(Term.class, pt.getUri(), null);
-            em.getEntityManagerFactory().getCache().evict(TermDto.class, pt.getUri(), null);
-            subTermsCache.evict(pt.getUri());
-        });
+        Utils.emptyIfNull(term.getParentTerms()).forEach(t -> subTermsCache.evict(t.getUri()));
+        Utils.emptyIfNull(term.getExternalParentTerms()).forEach(t -> subTermsCache.evict(t.getUri()));
         // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
         evictAllCachedDescendants(term);
     }
