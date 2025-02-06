@@ -87,7 +87,7 @@ public class TermOccurrenceSaver {
                     count++;
                 }
             }
-            LOG.debug("Saved {} term occurrences for assert {}.", count, source);
+            LOG.debug("Saved {} term occurrences for asset {}.", count, source);
         } catch (InterruptedException e) {
             LOG.error("Thread interrupted while waiting for occurrences to save.");
             Thread.currentThread().interrupt();

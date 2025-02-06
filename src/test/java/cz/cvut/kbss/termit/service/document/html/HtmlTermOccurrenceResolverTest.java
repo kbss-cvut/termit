@@ -277,4 +277,25 @@ class HtmlTermOccurrenceResolverTest {
         final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
         assertEquals(1, resultDoc.select("span[about]").size());
     }
+
+    @Test
+    void findTermOccurrencesReplacesTwoSuggestedOccurrencesWithSingleExistingApprovedOccurrence() throws Exception {
+        when(termService.exists(TERM_URI)).thenReturn(true);
+        when(termService.exists(URI.create("http://onto.fel.cvut.cz/ontologies/mpp/domains/plan"))).thenReturn(true);
+        final File file = initFile();
+        final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
+        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        final Selector quoteSelector = new TextQuoteSelector("Územní plán", "", " hlavního města Prahy.");
+        final Selector posSelector = new TextPositionSelector(29, 40);
+        existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
+        InputStream is = cz.cvut.kbss.termit.environment.Environment.loadFile("data/rdfa-simple-two-occurrences.html");
+        sut.parseContent(is, file);
+        sut.setExistingOccurrences(List.of(existing));
+
+        final List<TermOccurrence> result = new ArrayList<>();
+        sut.findTermOccurrences(result::add);
+        final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
+        assertEquals(1, resultDoc.select("span[about]").size());
+        assertTrue(result.stream().anyMatch(r -> !r.isSuggested() && r.getTarget().getSelectors().contains(quoteSelector)));
+    }
 }

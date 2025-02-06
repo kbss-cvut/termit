@@ -52,13 +52,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Resolves term occurrences from RDFa-annotated HTML document.
@@ -131,7 +134,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return map;
     }
 
-    private boolean isNotTermOccurrence(Element rdfaElem) {
+    private boolean isNotTermOccurrence(Node rdfaElem) {
         if (!rdfaElem.hasAttr(Constants.RDFa.RESOURCE) && !rdfaElem.hasAttr(Constants.RDFa.CONTENT)) {
             return true;
         }
@@ -312,7 +315,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             }
             final TextQuoteSelector tqs = (TextQuoteSelector) tqSelector.get();
             final Elements containing = document.select(
-                    ":contains(" + tqs.getPrefix() + tqs.getExactMatch() + tqs.getSuffix() + ")");
+                    ":containsWholeText(" + tqs.getPrefix() + tqs.getExactMatch() + tqs.getSuffix() + ")");
             if (containing.isEmpty()) {
                 LOG.trace("{} did not find any matching elements. Skipping term occurrence.",
                           TextQuoteSelector.class.getSimpleName());
@@ -326,12 +329,18 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             // Last should be the most specific one
             final Element elem = containing.last();
             assert elem != null;
-            final Element containingExactMatch = elem.selectFirst(":containsOwn(" + tqs.getExactMatch() + ")");
-            assert containingExactMatch != null;
+            final Elements containingExactMatch = elem.select(":containsWholeText(" + tqs.getExactMatch() + ")");
+            if (containingExactMatch.isEmpty()) {
+                LOG.trace("There is no element containing the exact match string '{}'. Skipping term occurrence.",
+                          tqs.getExactMatch());
+                continue;
+            }
+            final Element exactMatchElement = containingExactMatch.last();
+            assert exactMatchElement != null;
             // If it is a term occurrence element, then just skip its replacement
-            if (isNotTermOccurrence(containingExactMatch)) {
+            if (isNotTermOccurrence(exactMatchElement)) {
                 final Element annotationNode = createAnnotationElement(copy, tqs);
-                replaceContentWithAnnotation(containingExactMatch, tqs, annotationNode);
+                replaceContentWithAnnotation(exactMatchElement, tqs, annotationNode);
                 consumer.accept(copy);
             }
         }
@@ -347,8 +356,10 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         return annotationNode;
     }
 
-    private static void replaceContentWithAnnotation(Element containingExactMatch, TextQuoteSelector tqs,
-                                                     Element annotationNode) {
+    private void replaceContentWithAnnotation(Element containingExactMatch, TextQuoteSelector tqs,
+                                              Element annotationNode) {
+        removeSuggestedOccurrences(containingExactMatch, tqs);
+        joinAdjacentTextNodes(containingExactMatch);
         for (Node n : containingExactMatch.childNodes()) {
             if (!(n instanceof TextNode textNode) || !textNode.getWholeText().contains(tqs.getExactMatch())) {
                 continue;
@@ -362,6 +373,38 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             n.before(annotationNode);
             n.before(suffixNode);
             break;
+        }
+    }
+
+    private void removeSuggestedOccurrences(Element containingExactMatch, TextQuoteSelector tqs) {
+        for (Node n : containingExactMatch.childNodes()) {
+            if (!isNotTermOccurrence(n) && tqs.getExactMatch().contains(((Element) n).text())) {
+                // Do not remove the corresponding TermOccurrence instance, we will just ignore them in the repository,
+                // and they will be removed on the next annotation
+                n.unwrap();
+            }
+        }
+    }
+
+    private static void joinAdjacentTextNodes(Element containingExactMatch) {
+        final List<TextNode> adjacentTextNodes = new ArrayList<>();
+        for (int i = 0; i < containingExactMatch.childNodes().size(); i++) {
+            if (containingExactMatch.childNodes().get(i) instanceof TextNode tn) {
+                if (i == 0 || containingExactMatch.childNodes().get(i - 1) instanceof TextNode) {
+                    adjacentTextNodes.add(tn);
+                }
+            } else {
+                final String text = adjacentTextNodes.stream().map(TextNode::getWholeText)
+                                                     .collect(Collectors.joining());
+                adjacentTextNodes.forEach(Node::remove);
+                containingExactMatch.before(new TextNode(text));
+                adjacentTextNodes.clear();
+            }
+        }
+        if (!adjacentTextNodes.isEmpty()) {
+            final String text = adjacentTextNodes.stream().map(TextNode::getWholeText).collect(Collectors.joining());
+            adjacentTextNodes.forEach(Node::remove);
+            containingExactMatch.appendChild(new TextNode(text));
         }
     }
 

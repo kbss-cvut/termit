@@ -119,8 +119,12 @@ public abstract class TermOccurrenceResolver {
         return occurrence;
     }
 
-    @FunctionalInterface
     public interface OccurrenceConsumer {
+        /**
+         * Accepts a discovered term occurrence.
+         *
+         * @param termOccurrence Term occurrence found in the content
+         */
         void accept(TermOccurrence termOccurrence) throws InterruptedException;
     }
 }
