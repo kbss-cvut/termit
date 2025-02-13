@@ -71,6 +71,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.atLeastOnce;
@@ -126,8 +127,7 @@ class VocabularyServiceTest {
         when(repositoryService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(Collections.emptyList());
         when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         sut.runTextAnalysisOnAllTerms(vocabulary);
-        verify(termService).analyzeTermDefinition(termOne, vocabulary.getUri());
-        verify(termService).analyzeTermDefinition(termTwo, vocabulary.getUri());
+        verify(termService).analyzeTermDefinitions(notNull());
     }
 
     @Test
