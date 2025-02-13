@@ -61,6 +61,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -453,6 +454,10 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         }
         LOG.debug("Analyzing definition of term {}.", term);
         textAnalysisService.analyzeTermDefinition(term, vocabularyContextMapper.getVocabularyContext(vocabularyIri));
+    }
+
+    public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms) {
+        textAnalysisService.analyzeTermDefinitions(contextToTerms);
     }
 
     /**

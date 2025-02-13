@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -366,11 +367,17 @@ public class VocabularyService
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
-        getTransitivelyImportedVocabularies(vocabulary).forEach(
-                importedVocabulary -> allTerms.addAll(termService.findAll(getReference(importedVocabulary))));
-        final Map<TermDto, URI> termsToContexts = new HashMap<>(allTerms.size());
-        allTerms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
-        termsToContexts.forEach(termService::analyzeTermDefinition);
+        getTransitivelyImportedVocabularies(vocabulary)
+                .forEach(importedVocabulary ->
+                        allTerms.addAll(termService.findAll(getReference(importedVocabulary))));
+
+        final Map<URI, List<AbstractTerm>> contextToTerms = new HashMap<>(allTerms.size());
+        allTerms.forEach(t -> contextToTerms
+                .computeIfAbsent(contextMapper.getVocabularyContext(t.getVocabulary()),
+                        k -> new ArrayList<>())
+                .add(t)
+        );
+        termService.analyzeTermDefinitions(contextToTerms);
     }
 
     /**
