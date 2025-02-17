@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
@@ -38,7 +39,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
-import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -435,11 +435,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         }
         if (instance.getProperties() != null) {
             Set<String> props = instance.getProperties().keySet();
-            List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.getURI())) && !(
-                    s.equalsIgnoreCase(SKOS.changeNote.toString())
-                            || s.equalsIgnoreCase(SKOS.editorialNote.toString())
-                            || s.equalsIgnoreCase(SKOS.historyNote.toString())
-                            || s.equalsIgnoreCase(SKOS.note.toString()))).collect(toList());
+            List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.NAMESPACE)) && !(
+                    s.equalsIgnoreCase(SKOS.CHANGE_NOTE)
+                            || s.equalsIgnoreCase(SKOS.EDITORIAL_NOTE)
+                            || s.equalsIgnoreCase(SKOS.HISTORY_NOTE)
+                            || s.equalsIgnoreCase(SKOS.NOTE))).collect(toList());
             if (!properties.isEmpty()) {
                 throw new AssetRemovalException(
                         "Cannot delete the term. It is linked to another term through properties "

@@ -18,7 +18,6 @@
 package cz.cvut.kbss.termit.rest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.github.jsonldjava.utils.JsonUtils;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
@@ -265,7 +264,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findRequired(termUri)).thenReturn(term);
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME).accept(
                 JsonLd.MEDIA_TYPE)).andReturn();
-        final Map jsonObj = (Map) JsonUtils.fromString(mvcResult.getResponse().getContentAsString());
+        final Map<String, ?> jsonObj = readValue(mvcResult, new TypeReference<>() {
+        });
         assertTrue(jsonObj.containsKey(customProperty));
         assertEquals(value, jsonObj.get(customProperty));
     }

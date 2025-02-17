@@ -53,6 +53,7 @@
             <version>1.15</version>
         </dependency>
 
+        <!-- Note: Sticking to an old version because newer versions are significantly slower and consume much more memory -->
         <dependency>
             <groupId>org.topbraid</groupId>
             <artifactId>shacl</artifactId>
@@ -61,10 +62,6 @@
                 <exclusion>
                     <groupId>org.antlr</groupId>
                     <artifactId>antlr4-runtime</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.jena</groupId>
-                    <artifactId>jena-arq</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -92,21 +89,6 @@
             <groupId>cz.cvut.kbss.jopa</groupId>
             <artifactId>ontodriver-rdf4j</artifactId>
             <version>${cz.cvut.kbss.jopa.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>jena-arq</artifactId>
-            <version>4.4.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- For RDF/XML export -->
         <dependency>
