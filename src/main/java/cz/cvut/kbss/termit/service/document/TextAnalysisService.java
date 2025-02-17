@@ -87,10 +87,12 @@ public class TextAnalysisService {
      * Used for prefixing each merged term definition merged into a single input for text analysis.
      */
     private static final String TERM_DEFINITION_PREFIX = "<termdefinition id=\"";
+
     /**
      * Used for suffixing each merged term definition merged into a single input for text analysis.
      */
     private static final String TERM_DEFINITION_SUFFIX = "</termdefinition>";
+
     /**
      * Matches term definitions surrounded by {@link #TERM_DEFINITION_PREFIX} and {@link #TERM_DEFINITION_SUFFIX}.
      * <p>
@@ -100,7 +102,7 @@ public class TextAnalysisService {
      *     <li>Term definition</li>
      * </ol>
      */
-    private static final Pattern TERM_DEFINITION_PATTERN = Pattern.compile(TERM_DEFINITION_PREFIX + "([^\\\"]+)\" *\\>(.+?)" + TERM_DEFINITION_SUFFIX);
+    private static final Pattern TERM_DEFINITION_PATTERN = Pattern.compile(Pattern.quote(TERM_DEFINITION_PREFIX) + "([^\\\"]+)\" *\\>(.+?)" + Pattern.quote(TERM_DEFINITION_SUFFIX));
 
     @Autowired
     public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
