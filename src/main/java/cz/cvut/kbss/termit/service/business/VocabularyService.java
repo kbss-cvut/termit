@@ -362,8 +362,8 @@ public class VocabularyService
               group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabulary.getUri())",
               name = "allTermsVocabularyAnalysis")
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
-    public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
-        vocabulary = findRequired(vocabulary.getUri()); // required when throttling for persistent context
+    public void runTextAnalysisOnAllTerms(URI vocabualryUri) {
+        final Vocabulary vocabulary = findRequired(vocabualryUri); // required when throttling for persistent context
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
@@ -387,12 +387,8 @@ public class VocabularyService
     @Transactional
     public void runTextAnalysisOnAllVocabularies() {
         LOG.debug("Analyzing definitions of all terms in all vocabularies.");
-        final Map<TermDto, URI> termsToContexts = new HashMap<>();
-        repositoryService.findAll().forEach(v -> {
-            List<TermDto> terms = termService.findAll(new Vocabulary(v.getUri()));
-            terms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
-            termsToContexts.forEach(termService::analyzeTermDefinition);
-        });
+        repositoryService.findAll().stream().map(VocabularyDto::getUri).forEach(this::runTextAnalysisOnAllTerms);
+        LOG.debug("Finished definitions analysis for all terms in all vocabularies.");
     }
 
     /**
