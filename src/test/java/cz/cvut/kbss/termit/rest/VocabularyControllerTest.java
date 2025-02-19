@@ -69,7 +69,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -415,9 +414,9 @@ class VocabularyControllerTest extends BaseControllerTestRunner {
     void runTextAnalysisOnAllTermsInvokesTextAnalysisOnAllTermsFromService() throws Exception {
         final Vocabulary vocabulary = generateVocabulary();
         vocabulary.setUri(VOCABULARY_URI);
-        when(sut.getById(FRAGMENT, Optional.of(NAMESPACE))).thenReturn(vocabulary);
+        when(idResolverMock.resolveIdentifier(null, FRAGMENT)).thenReturn(vocabulary.getUri());
         mockMvc.perform(put(PATH + "/" + FRAGMENT + "/terms/text-analysis")).andExpect(status().isAccepted());
-        verify(serviceMock).runTextAnalysisOnAllTerms(vocabulary);
+        verify(serviceMock).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test

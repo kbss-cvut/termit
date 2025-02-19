@@ -320,19 +320,18 @@ class TermServiceTest {
 
     @Test
     void persistChildInvokesTextAnalysisOnAllTermsInVocabulary() {
-        when(vocabularyService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
         sut.persistChild(childToPersist, parent);
-        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
     void persistRootInvokesTextAnalysisOnAllTermsInVocabulary() {
         final Term toPersist = generateTermWithId();
         sut.persistRoot(toPersist, vocabulary);
-        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
@@ -360,9 +359,8 @@ class TermServiceTest {
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
         when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
         when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
-        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         sut.update(toUpdate);
-        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
@@ -466,7 +464,7 @@ class TermServiceTest {
         sut.persistRoot(term, vocabulary);
         final InOrder inOrder = inOrder(termRepositoryService, vocabularyService);
         inOrder.verify(termRepositoryService).addRootTermToVocabulary(term, vocabulary);
-        inOrder.verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        inOrder.verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
@@ -474,12 +472,11 @@ class TermServiceTest {
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
-        when(vocabularyService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.persistChild(childToPersist, parent);
         final InOrder inOrder = inOrder(termRepositoryService, vocabularyService);
         inOrder.verify(termRepositoryService).addChildTerm(childToPersist, parent);
-        inOrder.verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        inOrder.verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
@@ -491,12 +488,11 @@ class TermServiceTest {
         update.setDescription(new MultilingualString(original.getDescription().getValue()));
         update.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
-        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(termRepositoryService.update(update)).thenReturn(update);
         update.getLabel().set(Environment.LANGUAGE, "updatedLabel");
 
         sut.update(update);
-        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test

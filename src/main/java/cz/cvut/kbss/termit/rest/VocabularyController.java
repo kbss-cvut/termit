@@ -405,7 +405,7 @@ public class VocabularyController extends BaseController {
                                                      example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace) {
-        vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
+        vocabularyService.runTextAnalysisOnAllTerms(resolveVocabularyUri(localName, namespace));
     }
 
     /**

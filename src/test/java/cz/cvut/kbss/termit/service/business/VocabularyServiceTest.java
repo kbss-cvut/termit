@@ -126,7 +126,7 @@ class VocabularyServiceTest {
         when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         when(repositoryService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(Collections.emptyList());
         when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        sut.runTextAnalysisOnAllTerms(vocabulary);
+        sut.runTextAnalysisOnAllTerms(vocabulary.getUri());
         verify(termService).analyzeTermDefinitions(notNull());
     }
 
@@ -136,12 +136,13 @@ class VocabularyServiceTest {
         final List<VocabularyDto> vocabularies = Collections.singletonList(Environment.getDtoMapper()
                                                                                       .vocabularyToVocabularyDto(v));
         final Term term = Generator.generateTermWithId(v.getUri());
+        when(repositoryService.findRequired(v.getUri())).thenReturn(v);
         when(repositoryService.findAll()).thenReturn(vocabularies);
         when(contextMapper.getVocabularyContext(v.getUri())).thenReturn(v.getUri());
         when(termService.findAll(v)).thenReturn(Collections.singletonList(new TermDto(term)));
         sut.runTextAnalysisOnAllVocabularies();
 
-        verify(termService).analyzeTermDefinition(term, v.getUri());
+        verify(termService).analyzeTermDefinitions(any());
     }
 
     @Test
