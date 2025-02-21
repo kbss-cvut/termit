@@ -456,6 +456,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         textAnalysisService.analyzeTermDefinition(term, vocabularyContextMapper.getVocabularyContext(vocabularyIri));
     }
 
+    /**
+     * Analyzes term definitions for the given context-to-terms map.
+     * <p>
+     * Text analysis is invoked on all definitions merged for better efficiency.
+     *
+     * @param contextToTerms Map of vocabulary context URIs to lists of terms.
+     * @see TextAnalysisService#analyzeTermDefinitions(Map)
+     */
     public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms) {
         textAnalysisService.analyzeTermDefinitions(contextToTerms);
     }

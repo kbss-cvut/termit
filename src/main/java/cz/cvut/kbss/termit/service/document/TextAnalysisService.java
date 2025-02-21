@@ -84,12 +84,12 @@ public class TextAnalysisService {
     private Set<String> supportedLanguages;
 
     /**
-     * Used for prefixing each merged term definition merged into a single input for text analysis.
+     * Used for prefixing each term definition merged into a single input for text analysis.
      */
     private static final String TERM_DEFINITION_PREFIX = "<termdefinition id=\"";
 
     /**
-     * Used for suffixing each merged term definition merged into a single input for text analysis.
+     * Used for suffixing each term definition merged into a single input for text analysis.
      */
     private static final String TERM_DEFINITION_SUFFIX = "</termdefinition>";
 
