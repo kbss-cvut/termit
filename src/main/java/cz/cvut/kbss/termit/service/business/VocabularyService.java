@@ -355,15 +355,15 @@ public class VocabularyService
      * Runs text analysis on the definitions of all terms in the specified vocabulary, including terms in the
      * transitively imported vocabularies.
      *
-     * @param vocabulary Vocabulary to be analyzed
+     * @param vocabularyUri Vocabulary to be analyzed
      */
     @Transactional
-    @Throttle(value = "{#vocabulary.getUri()}",
-              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabulary.getUri())",
+    @Throttle(value = "{#vocabularyUri}",
+              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
               name = "allTermsVocabularyAnalysis")
-    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
-    public void runTextAnalysisOnAllTerms(URI vocabualryUri) {
-        final Vocabulary vocabulary = findRequired(vocabualryUri); // required when throttling for persistent context
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
+    public void runTextAnalysisOnAllTerms(URI vocabularyUri) {
+        final Vocabulary vocabulary = findRequired(vocabularyUri); // required when throttling for persistent context
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
         final List<TermDto> allTerms = termService.findAll(vocabulary);
