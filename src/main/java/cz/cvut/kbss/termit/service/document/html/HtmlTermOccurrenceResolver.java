@@ -315,7 +315,8 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             }
             final TextQuoteSelector tqs = (TextQuoteSelector) tqSelector.get();
             final Elements containing = document.select(
-                    ":containsWholeText(" + tqs.getPrefix() + tqs.getExactMatch() + tqs.getSuffix() + ")");
+                    ":containsWholeText(" + escapeTextForSelector(
+                            tqs.getPrefix() + tqs.getExactMatch() + tqs.getSuffix()) + ")");
             if (containing.isEmpty()) {
                 LOG.trace("{} did not find any matching elements. Skipping term occurrence.",
                           TextQuoteSelector.class.getSimpleName());
@@ -329,12 +330,14 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             // Last should be the most specific one
             final Element elem = containing.last();
             assert elem != null;
-            final Elements containingExactMatch = elem.select(":containsWholeText(" + tqs.getExactMatch() + ")");
+            final Elements containingExactMatch = elem.select(
+                    ":containsWholeText(" + escapeTextForSelector(tqs.getExactMatch()) + ")");
             if (containingExactMatch.isEmpty()) {
                 LOG.trace("There is no element containing the exact match string '{}'. Skipping term occurrence.",
                           tqs.getExactMatch());
                 continue;
             }
+            // What if the exact match occurs multiple times in the parent
             final Element exactMatchElement = containingExactMatch.last();
             assert exactMatchElement != null;
             // If it is a term occurrence element, then just skip its replacement
@@ -344,6 +347,11 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                 consumer.accept(copy);
             }
         }
+    }
+
+    private static String escapeTextForSelector(String content) {
+        return content.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)")
+                      .replaceAll("'", "\\\\'");
     }
 
     private static Element createAnnotationElement(TermOccurrence to, TextQuoteSelector tqs) {
