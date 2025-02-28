@@ -128,7 +128,7 @@ class VocabularyServiceTest {
         final Term termOne = Generator.generateTermWithId(vocabulary.getUri());
         final Term termTwo = Generator.generateTermWithId(vocabulary.getUri());
         List<TermDto> terms = termsToDtos(Arrays.asList(termOne, termTwo));
-        when(termService.findAll(vocabulary)).thenReturn(terms);
+        when(termService.findAllWithDefinition(vocabulary)).thenReturn(terms);
         when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         when(repositoryService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(Collections.emptyList());
         when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
@@ -161,8 +161,8 @@ class VocabularyServiceTest {
         when(repositoryService.findAll()).thenReturn(vocabularies);
         when(contextMapper.getVocabularyContext(v.getUri())).thenReturn(v.getUri());
 
-        when(termService.findAll(v)).thenReturn(terms);
-        when(termService.findAll(vv)).thenReturn(terms2);
+        when(termService.findAllWithDefinition(v)).thenReturn(terms);
+        when(termService.findAllWithDefinition(vv)).thenReturn(terms2);
         sut.runTextAnalysisOnAllVocabularies();
 
         verify(termService, times(vocabularies.size())).analyzeTermDefinitions(notNull());
