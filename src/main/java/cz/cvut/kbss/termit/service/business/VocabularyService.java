@@ -366,10 +366,10 @@ public class VocabularyService
         final Vocabulary vocabulary = findRequired(vocabularyUri); // required when throttling for persistent context
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
-        final List<TermDto> allTerms = termService.findAll(vocabulary);
+        final List<TermDto> allTerms = termService.findAllWithDefinition(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary)
                 .forEach(importedVocabulary ->
-                        allTerms.addAll(termService.findAll(getReference(importedVocabulary))));
+                        allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
 
         final Map<URI, List<AbstractTerm>> contextToTerms = new HashMap<>(allTerms.size());
         allTerms.forEach(t -> contextToTerms
