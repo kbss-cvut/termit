@@ -217,6 +217,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @return List of vocabulary term DTOs ordered by label
      */
+    @Transactional(readOnly = true)
     public List<TermDto> findAllWithDefinition(Vocabulary vocabulary) {
         return termDao.findAllWithDefinition(vocabulary);
     }
