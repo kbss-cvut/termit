@@ -326,6 +326,40 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         }
     }
 
+    /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
+     * Filters terms that have label and definition in the instance language.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs ordered by label
+     */
+    public List<TermDto> findAllWithDefinition(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                     "GRAPH ?context { " +
+                                     "?term a ?type ;" +
+                                     "?hasLabel ?label ;" +
+                                     "?hasDefinition ?definition ;" +
+                                     "FILTER (lang(?label) = ?labelLang) ." +
+                                     "FILTER (lang(?definition) = ?labelLang) ." +
+                                     "}" +
+                                     "?term ?inVocabulary ?vocabulary ." +
+                                     " } ORDER BY " + orderSentence("?label"),
+                             TermDto.class)
+                     .setParameter("context", context(vocabulary))
+                     .setParameter("type", typeUri)
+                     .setParameter("vocabulary", vocabulary.getUri())
+                     .setParameter("hasLabel", LABEL_PROP)
+                     .setParameter("hasDefinition", URI.create(SKOS.DEFINITION))
+                     .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                     .setParameter("labelLang", config.getLanguage())
+                     .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     private URI context(Vocabulary vocabulary) {
         return contextMapper.getVocabularyContext(vocabulary);
     }

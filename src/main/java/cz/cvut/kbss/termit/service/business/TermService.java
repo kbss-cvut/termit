@@ -140,6 +140,18 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
+     * Filters terms that have label and definition in the instance language.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs ordered by label
+     */
+    public List<TermDto> findAllWithDefinition(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return repositoryService.findAllWithDefinition(vocabulary);
+    }
+
+    /**
      * Gets the total number of terms in the specified vocabulary.
      *
      * @param vocabulary Vocabulary reference

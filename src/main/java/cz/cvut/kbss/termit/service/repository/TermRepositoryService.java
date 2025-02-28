@@ -211,6 +211,17 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
+     * Filters terms that have label and definition in the instance language.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs ordered by label
+     */
+    public List<TermDto> findAllWithDefinition(Vocabulary vocabulary) {
+        return termDao.findAllWithDefinition(vocabulary);
+    }
+
+    /**
      * Gets all terms from a vocabulary, regardless of their position in the term hierarchy.
      * <p>
      * This returns the full versions of all terms (complete metadata) contained in a vocabulary's glossary and thus its
