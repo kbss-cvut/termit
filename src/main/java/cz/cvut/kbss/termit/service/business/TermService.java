@@ -142,6 +142,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     /**
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
      * Filters terms that have label and definition in the instance language.
+     * <p>
+     * Terms are loaded <b>without</b> their subterms.
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
      * @return List of vocabulary term DTOs ordered by label
