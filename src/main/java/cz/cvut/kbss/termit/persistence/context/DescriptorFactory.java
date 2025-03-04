@@ -76,7 +76,14 @@ public class DescriptorFactory {
         return vocabularyDescriptor(vocabulary.getUri());
     }
 
-    private EntityDescriptor assetDescriptor(URI vocabularyUri) {
+    /**
+     * Creates a generic asset descriptor assuming the asset (and all its attribute values) are in the specified
+     * vocabulary's context.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Asset descriptor
+     */
+    public EntityDescriptor assetDescriptor(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         return new EntityDescriptor(contextMapper.getVocabularyContext(vocabularyUri));
     }
@@ -101,8 +108,8 @@ public class DescriptorFactory {
     }
 
     /**
-     * Creates a JOPA descriptor for a {@link Document} related to the specified vocabulary (presumably a {@link
-     * Vocabulary}).
+     * Creates a JOPA descriptor for a {@link Document} related to the specified vocabulary (presumably a
+     * {@link Vocabulary}).
      * <p>
      * This means that the context of the Document (and all its relevant attributes) is given by the specified
      * vocabulary's IRI.

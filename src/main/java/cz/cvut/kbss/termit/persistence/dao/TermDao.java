@@ -180,6 +180,21 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                 .getExactMatchTerms() : Collections.emptySet());
     }
 
+    /**
+     * Finds basic info about a term with the specified identifier.
+     *
+     * @param id Term identifier
+     * @return Term info wrapped in an {@code Optional}
+     */
+    public Optional<TermInfo> findTermInfo(URI id) {
+        try {
+            return findTermVocabulary(id).map(
+                    vocabulary -> em.find(TermInfo.class, id, descriptorFactory.assetDescriptor(vocabulary)));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     @Override
     public void persist(Term entity) {
         throw new UnsupportedOperationException(
@@ -327,8 +342,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
-     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
-     * Filters terms that have label and definition in the instance language.
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
+     * that have label and definition in the instance language.
      * <p>
      * Terms are loaded <b>without</b> their subterms.
      *
@@ -339,16 +354,16 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         Objects.requireNonNull(vocabulary);
         try {
             return em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                     "GRAPH ?context { " +
-                                     "?term a ?type ;" +
-                                     "?hasLabel ?label ;" +
-                                     "?hasDefinition ?definition ;" +
-                                     "FILTER (lang(?label) = ?labelLang) ." +
-                                     "FILTER (lang(?definition) = ?labelLang) ." +
-                                     "}" +
-                                     "?term ?inVocabulary ?vocabulary ." +
-                                     " } ORDER BY " + orderSentence("?label"),
-                             TermDto.class)
+                                                "GRAPH ?context { " +
+                                                "?term a ?type ;" +
+                                                "?hasLabel ?label ;" +
+                                                "?hasDefinition ?definition ;" +
+                                                "FILTER (lang(?label) = ?labelLang) ." +
+                                                "FILTER (lang(?definition) = ?labelLang) ." +
+                                                "}" +
+                                                "?term ?inVocabulary ?vocabulary ." +
+                                                " } ORDER BY " + orderSentence("?label"),
+                                        TermDto.class)
                      .setParameter("context", context(vocabulary))
                      .setParameter("type", typeUri)
                      .setParameter("vocabulary", vocabulary.getUri())

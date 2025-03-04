@@ -24,6 +24,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -196,6 +197,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         termDao.persist(instance, vocabulary);
     }
 
+    @Transactional(readOnly = true)
+    public TermInfo findRequiredTermInfo(URI id) {
+        return termDao.findTermInfo(id).orElseThrow(() -> NotFoundException.create(TermInfo.class.getSimpleName(), id));
+    }
+
     /**
      * Gets all terms from a vocabulary, regardless of their position in the term hierarchy.
      * <p>
@@ -211,8 +217,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
-     * Filters terms that have label and definition in the instance language.
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
+     * that have label and definition in the instance language.
      * <p>
      * Terms are loaded <b>without</b> their subterms.
      *

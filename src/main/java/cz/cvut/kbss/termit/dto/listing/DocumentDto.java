@@ -31,7 +31,7 @@ import java.net.URI;
 
 @NonEntity
 @OWLClass(iri = Vocabulary.s_c_dokument)
-@JsonLdAttributeOrder({"uri", "label", "description", "files"})
+@JsonLdAttributeOrder({"uri", "label", "description"})
 public class DocumentDto {
 
     @Id

@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -1200,7 +1201,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final TypeAwareByteArrayResource export = prepareTurtle();
         when(termServiceMock.exportGlossary(vocabulary, new ExportConfig(ExportType.SKOS,
-                ExportFormat.TURTLE.getMediaType()))).thenReturn(
+                                                                         ExportFormat.TURTLE.getMediaType()))).thenReturn(
                 Optional.of(export));
 
         final MvcResult mvcResult = mockMvc
@@ -1209,6 +1210,20 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .andReturn();
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION), containsString("attachment"));
         assertThat(mvcResult.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION),
-                containsString("filename=\"" + sanitizedName + ExportFormat.TURTLE.getFileExtension() + "\""));
+                   containsString("filename=\"" + sanitizedName + ExportFormat.TURTLE.getFileExtension() + "\""));
+    }
+
+    @Test
+    void getTermInfoByIdResolvesTermFullIdentifierAndLoadsTermInfoFromService() throws Exception {
+        final URI termUri = URI.create(NAMESPACE + TERM_NAME);
+        when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
+        final TermInfo term = new TermInfo(Generator.generateTerm());
+        term.setUri(termUri);
+        when(termServiceMock.findRequiredTermInfo(termUri)).thenReturn(term);
+        final MvcResult mvcResult = mockMvc.perform(get("/terms/" + TERM_NAME + "/info")
+                                                            .queryParam(QueryParams.NAMESPACE, NAMESPACE))
+                                           .andExpect(status().isOk()).andReturn();
+        final TermInfo result = readValue(mvcResult, TermInfo.class);
+        assertEquals(term, result);
     }
 }

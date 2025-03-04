@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -129,6 +130,17 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Gets basic info about a term with the specified identifier.
+     *
+     * @param id Term identifier
+     * @return Matching term info
+     * @throws NotFoundException If no such term exists
+     */
+    public TermInfo findRequiredTermInfo(URI id) {
+        return repositoryService.findRequiredTermInfo(id);
+    }
+
+    /**
      * Retrieves all terms from the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
@@ -140,8 +152,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
-     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
-     * Filters terms that have label and definition in the instance language.
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
+     * that have label and definition in the instance language.
      * <p>
      * Terms are loaded <b>without</b> their subterms.
      *
@@ -457,7 +469,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     @Throttle(value = "{#vocabularyIri, #term.getUri()}",
               group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyTerm(#vocabulary.getUri(), #term.getUri())",
-              name="termDefinitionAnalysis")
+              name = "termDefinitionAnalysis")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {

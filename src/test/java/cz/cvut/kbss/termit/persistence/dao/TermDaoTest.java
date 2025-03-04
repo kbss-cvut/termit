@@ -1405,4 +1405,14 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final Optional<Term> empty = assertDoesNotThrow(()-> sut.find(term.getUri()));
         assertTrue(empty.isEmpty());
     }
+
+    @Test
+    void findTermInfoReturnsTermInfo() {
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        addTermsAndSave(List.of(term), vocabulary);
+
+        final Optional<TermInfo> result = sut.findTermInfo(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(new TermInfo(term), result.get());
+    }
 }
