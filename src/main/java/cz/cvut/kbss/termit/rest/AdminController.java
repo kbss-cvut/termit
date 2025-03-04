@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.rest;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.jmx.AppAdminBean;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,12 +31,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Administration", description = "Application administration API")
 @RestController
+@PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
 @RequestMapping("/admin")
 @Profile("!test")
 public class AdminController {
@@ -52,7 +56,6 @@ public class AdminController {
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Evicts all application caches. Useful, for example, when data were modified manually in the repository.")
     @ApiResponse(responseCode = "204", description = "Caches evicted.")
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping("/cache")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void invalidateCaches() {
@@ -63,11 +66,20 @@ public class AdminController {
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Clears the queue of long-running tasks.")
     @ApiResponse(responseCode = "204", description = "Long-running tasks queue cleared.")
-    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
     @DeleteMapping("/long-running-tasks")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void clearLongRunningTasksQueue() {
         LOG.debug("Long-running task queue clearing request received from client.");
         adminBean.clearLongRunningTasksQueue();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Sends a test email to the specified recipient")
+    @ApiResponse(responseCode = "204", description = "Test email sent.")
+    @PostMapping("/test-email")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void sendTestEmail(@RequestBody
+                              @Parameter(description = "Email address of the recipient") String recipient) {
+        adminBean.sendTestEmail(recipient);
     }
 }
