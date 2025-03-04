@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.document.html;
 
+import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
@@ -30,6 +31,9 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,12 +49,14 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
@@ -58,6 +64,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -296,6 +303,35 @@ class HtmlTermOccurrenceResolverTest {
         sut.findTermOccurrences(result::add);
         final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
         assertEquals(1, resultDoc.select("span[about]").size());
-        assertTrue(result.stream().anyMatch(r -> !r.isSuggested() && r.getTarget().getSelectors().contains(quoteSelector)));
+        assertTrue(result.stream()
+                         .anyMatch(r -> !r.isSuggested() && r.getTarget().getSelectors().contains(quoteSelector)));
+    }
+
+    @Test
+    void findTermOccurrencesResolvesExistingApprovedOccurrenceInContentWithTwoOccurrencesOfSameTermInOneParent() throws Exception {
+        config.getTextAnalysis().setTextQuoteSelectorContextLength(8);
+        this.selectorGenerators = new HtmlSelectorGenerators(config);
+        this.sut = new HtmlTermOccurrenceResolver(termService, selectorGenerators, documentManager, config);
+        final File file = initFile();
+        final TermOccurrence existing = Generator.generateTermOccurrence(new Term(TERM_URI), file, false);
+        existing.setUri(URI.create(Vocabulary.s_c_vyskyt_termu + "/r2d2"));
+        final Selector quoteSelector = new TextQuoteSelector("Územní plán", "stovací ", " hlavníh");
+        final Selector posSelector = new TextPositionSelector(22, 33);
+        existing.getTarget().setSelectors(Set.of(quoteSelector, posSelector));
+        final InputStream is = Environment.loadFile("data/rdfa-two-occurrences-one-parent.html");
+        sut.parseContent(is, file);
+        sut.setExistingOccurrences(List.of(existing));
+
+        final List<TermOccurrence> result = new ArrayList<>();
+        sut.findTermOccurrences(result::add);
+        assertTrue(result.stream().filter(to -> !to.isSuggested()).noneMatch(to -> Objects.equals(to.getUri(), existing.getUri())));
+        final Document resultDoc = Jsoup.parse(sut.getContent(), StandardCharsets.UTF_8.name(), "");
+        final Element elem = resultDoc.select("span[about]").first();
+        assertNotNull(elem);
+        assertNotNull(elem.parent());
+        final Node previousSibling = elem.parent().previousSibling();
+        assertNotNull(previousSibling);
+        assertInstanceOf(TextNode.class, previousSibling);
+        assertThat(((TextNode) previousSibling).text(), containsString("Testovací"));
     }
 }

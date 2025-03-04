@@ -58,6 +58,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -169,6 +170,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
         assert document != null;
         final Set<String> visited = new HashSet<>();
         final Elements elements = document.getElementsByAttribute(Constants.RDFa.ABOUT);
+        LOG.trace("Found {} annotation elements in content.", elements.size());
         final Double scoreThreshold = Double.parseDouble(config.getTextAnalysis().getTermOccurrenceMinScore());
         for (Element element : elements) {
             if (isNotTermOccurrence(element)) {
@@ -337,8 +339,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
                           tqs.getExactMatch());
                 continue;
             }
-            // What if the exact match occurs multiple times in the parent
-            final Element exactMatchElement = containingExactMatch.last();
+            final Element exactMatchElement = findFirstMostSpecificElement(containingExactMatch);
             assert exactMatchElement != null;
             // If it is a term occurrence element, then just skip its replacement
             if (isNotTermOccurrence(exactMatchElement)) {
@@ -352,6 +353,19 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     private static String escapeTextForSelector(String content) {
         return content.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)")
                       .replaceAll("'", "\\\\'");
+    }
+
+    private Element findFirstMostSpecificElement(Elements elements) {
+        final List<Element> list = new ArrayList<>(elements);
+        final Set<Element> toRemove = new HashSet<>();
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (Objects.equals(list.get(i), list.get(i + 1).parent())) {
+                toRemove.add(list.get(i));
+            }
+        }
+        list.removeAll(toRemove);
+        assert !list.isEmpty();
+        return list.get(0);
     }
 
     private static Element createAnnotationElement(TermOccurrence to, TextQuoteSelector tqs) {
