@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.rest.readonly;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -36,6 +37,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -171,6 +173,23 @@ public class ReadOnlyTermController extends BaseController {
     ) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.findRequired(termUri);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets basic information about a term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Basic term information."),
+            @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}/info", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public TermInfo getTermInfoById(@Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                                               example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                                    @PathVariable String localName,
+                                    @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                                               example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                                    @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        return termService.findRequiredTermInfo(termUri);
     }
 
     @Operation(

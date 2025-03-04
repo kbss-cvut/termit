@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.business.readonly;
 
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -78,6 +79,10 @@ public class ReadOnlyTermService {
 
     public ReadOnlyTerm findRequired(URI termId) {
         return create(termService.findRequired(termId));
+    }
+
+    public TermInfo findRequiredTermInfo(URI termId) {
+        return termService.findRequiredTermInfo(termId);
     }
 
     private ReadOnlyTerm create(final Term term) {

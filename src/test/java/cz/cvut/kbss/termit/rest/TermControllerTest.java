@@ -248,7 +248,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/subterms"))
                 .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -283,7 +283,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                                                    get(PATH + VOCABULARY_NAME + "/terms")
                                                            .param(QueryParams.NAMESPACE, Environment.BASE_URI))
                                            .andExpect(status().isOk()).andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<List<TermDto>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
         verify(termServiceMock).findAll(vocabulary);
@@ -302,7 +302,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                                                            .param(QueryParams.NAMESPACE, Environment.BASE_URI)
                                                            .param("includeImported", Boolean.TRUE.toString()))
                                            .andExpect(status().isOk()).andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<List<TermDto>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
         verify(termServiceMock).findAllIncludingImported(vocabulary);
@@ -321,7 +321,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                                                             .param(QueryParams.NAMESPACE, Environment.BASE_URI)
                                                             .param("searchString", searchString))
                                            .andExpect(status().isOk()).andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<List<TermDto>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
         verify(termServiceMock).findAll(searchString, vocabulary);
@@ -654,7 +654,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
                 .perform(get("/terms/" + TERM_NAME + "/subterms").param(QueryParams.NAMESPACE, NAMESPACE))
                 .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<List<Term>>() {
+        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(children.size(), result.size());
         assertTrue(children.containsAll(result));
@@ -811,7 +811,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/history"))
                 .andExpect(status().isOk()).andReturn();
-        final List<AbstractChangeRecord> result = readValue(mvcResult, new TypeReference<List<AbstractChangeRecord>>() {
+        final List<AbstractChangeRecord> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertNotNull(result);
         assertEquals(records, result);
@@ -844,7 +844,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .perform(get("/terms/" + TERM_NAME + "/history").param(QueryParams.NAMESPACE, NAMESPACE))
                 .andExpect(status().isOk())
                 .andReturn();
-        final List<AbstractChangeRecord> result = readValue(mvcResult, new TypeReference<List<AbstractChangeRecord>>() {
+        final List<AbstractChangeRecord> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertNotNull(result);
         assertEquals(records, result);
@@ -877,7 +877,7 @@ class TermControllerTest extends BaseControllerTestRunner {
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments"))
                                            .andExpect(status().isOk()).andReturn();
-        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(comments, result);
         final ArgumentCaptor<Instant> toCaptor = ArgumentCaptor.forClass(Instant.class);
@@ -900,7 +900,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                                                             .param("from", from.toString())
                                                             .param("to", to.toString()))
                                            .andExpect(status().isOk()).andReturn();
-        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(comments, result);
         verify(termServiceMock).getComments(term, from, to);
@@ -929,7 +929,7 @@ class TermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
                 .perform(get("/terms/" + TERM_NAME + "/comments").param(QueryParams.NAMESPACE, NAMESPACE))
                 .andExpect(status().isOk()).andReturn();
-        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(comments, result);
         final ArgumentCaptor<Instant> toCaptor = ArgumentCaptor.forClass(Instant.class);
@@ -955,7 +955,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                                  .param("to", to.toString())
                                  .param(QueryParams.NAMESPACE, NAMESPACE))
                 .andExpect(status().isOk()).andReturn();
-        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(comments, result);
         verify(termServiceMock).getComments(term, from, to);
@@ -1143,7 +1143,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                                                                                            .accept(MediaType.APPLICATION_JSON_VALUE))
                                            .andExpect(status().isOk())
                                            .andReturn();
-        final List<Snapshot> result = readValue(mvcResult, new TypeReference<List<Snapshot>>() {
+        final List<Snapshot> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertThat(result, containsSameEntities(snapshots));
         verify(termServiceMock).findSnapshots(term);
