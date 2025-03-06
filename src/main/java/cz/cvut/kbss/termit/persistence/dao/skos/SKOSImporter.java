@@ -136,6 +136,7 @@ public class SKOSImporter implements VocabularyImporter {
         LOG.trace("Importing glossary {}.", glossaryIri);
         removeTopConceptOfAssertions();
         insertHasTopConceptAssertions();
+        removeSelfReferences();
 
         final String vocabularyIriFromData = resolveVocabularyIriFromImportedData();
         if (vocabularyIri != null && !vocabularyIri.toString().equals(vocabularyIriFromData)) {
@@ -262,6 +263,18 @@ public class SKOSImporter implements VocabularyImporter {
             if (!hasBroader && !isNarrower) {
                 model.add(glossaryIri, SKOS.HAS_TOP_CONCEPT, t);
             }
+        });
+    }
+
+    private void removeSelfReferences() {
+        LOG.trace("Removing self-referencing SKOS relationship statements.");
+        final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT)
+                                          .stream().map(Statement::getSubject).toList();
+        terms.forEach(t -> {
+            model.remove(t, SKOS.RELATED, t);
+            model.remove(t, SKOS.EXACT_MATCH, t);
+            model.remove(t, SKOS.RELATED_MATCH, t);
+            model.remove(t, SKOS.BROADER, t);
         });
     }
 

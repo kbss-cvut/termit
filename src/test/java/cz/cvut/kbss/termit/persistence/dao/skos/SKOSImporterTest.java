@@ -33,6 +33,7 @@ import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
@@ -529,5 +530,27 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     @Test
     void supportsMediaTypeReturnsFalseForUnsupportedMediaType() {
         assertFalse(SKOSImporter.supportsMediaType(Constants.MediaType.EXCEL));
+    }
+
+    @Test
+    void importVocabularyRemovesSelfReferencingSkosStatements() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                                                                    Environment.loadFile(
+                                                                            "data/test-glossary-self-referencing-terms.ttl")));
+        });
+
+        transactional(() -> {
+            final Repository repo = em.unwrap(Repository.class);
+            try (final RepositoryConnection conn = repo.getConnection()) {
+                final IRI term = conn.getValueFactory().createIRI(Vocabulary.s_c_uzivatel_termitu);
+                assertTrue(conn.hasStatement(term, RDF.TYPE, SKOS.CONCEPT, false));
+                assertFalse(conn.hasStatement(term, SKOS.RELATED, term, false));
+                assertFalse(conn.hasStatement(term, SKOS.RELATED_MATCH, term, false));
+                assertFalse(conn.hasStatement(term, SKOS.EXACT_MATCH, term, false));
+            }
+        });
     }
 }
