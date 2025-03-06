@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.net.URI;
 import java.util.Optional;
 
+import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
@@ -63,7 +64,7 @@ class BaseAssetDaoTest extends BaseDaoTestRunner{
     void updatePublishesAssetUpdateEvent() {
         final Term t = Generator.generateTermWithId();
         transactional(() -> em.persist(t));
-        t.setPrimaryLabel("Updated primary label");
+        setPrimaryLabel(t, "Updated primary label");
 
         transactional(() -> sut.update(t));
 

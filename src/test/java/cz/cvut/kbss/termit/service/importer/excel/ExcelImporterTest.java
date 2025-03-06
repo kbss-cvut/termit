@@ -20,6 +20,7 @@ import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -767,5 +768,30 @@ class ExcelImporterTest {
                                                     ));
         assertEquals("error.vocabulary.import.excel.missingIdentifierOrLabel", ex.getMessageId());
         verify(termService, never()).update(any());
+    }
+
+    @Test
+    void importSkipsUnknownParentDeclaration() throws Exception {
+        initVocabularyResolution();
+        final Workbook input = new XSSFWorkbook(Environment.loadFile("template/termit-import.xlsx"));
+        final Sheet sheet = input.getSheet("English");
+        sheet.shiftColumns(0, 12, 1);
+        sheet.getRow(0).createCell(0).setCellValue("Identifier");
+        sheet.getRow(1).createCell(0).setCellValue("http://example.com/terms/Construction");
+        sheet.getRow(1).getCell(1).setCellValue("Construction");
+        sheet.getRow(1).getCell(8).setCellValue("Unknown parent");
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        input.write(bos);
+
+        sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false,
+                                                                        vocabulary.getUri(),
+                                                                        prePersist),
+                             new VocabularyImporter.ImportInput(
+                                     Constants.MediaType.EXCEL,
+                                     new ByteArrayInputStream(
+                                             bos.toByteArray())));
+        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
+        verify(termService).addRootTermToVocabulary(captor.capture(), eq(vocabulary));
+        assertTrue(Utils.emptyIfNull(captor.getValue().getParentTerms()).isEmpty());
     }
 }

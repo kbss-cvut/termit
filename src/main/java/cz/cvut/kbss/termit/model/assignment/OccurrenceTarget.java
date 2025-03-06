@@ -26,6 +26,7 @@ import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.termit.model.AbstractEntity;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.selector.Selector;
+import cz.cvut.kbss.termit.model.util.Copyable;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -36,7 +37,7 @@ import java.util.Set;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "javaClass")
 @OWLClass(iri = Vocabulary.s_c_cil_vyskytu)
-public abstract class OccurrenceTarget extends AbstractEntity {
+public abstract class OccurrenceTarget extends AbstractEntity implements Copyable<OccurrenceTarget> {
 
     @NotNull
     @ParticipationConstraints(nonEmpty = true)

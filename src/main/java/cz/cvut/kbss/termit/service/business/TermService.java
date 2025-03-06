@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
@@ -61,6 +62,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -128,6 +130,17 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     }
 
     /**
+     * Gets basic info about a term with the specified identifier.
+     *
+     * @param id Term identifier
+     * @return Matching term info
+     * @throws NotFoundException If no such term exists
+     */
+    public TermInfo findRequiredTermInfo(URI id) {
+        return repositoryService.findRequiredTermInfo(id);
+    }
+
+    /**
      * Retrieves all terms from the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
@@ -136,6 +149,20 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public List<TermDto> findAll(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         return repositoryService.findAll(vocabulary);
+    }
+
+    /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
+     * that have label and definition in the instance language.
+     * <p>
+     * Terms are loaded <b>without</b> their subterms.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs ordered by label
+     */
+    public List<TermDto> findAllWithDefinition(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        return repositoryService.findAllWithDefinition(vocabulary);
     }
 
     /**
@@ -377,7 +404,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(owner);
         languageService.getInitialTermState().ifPresent(is -> term.setState(is.getUri()));
         repositoryService.addRootTermToVocabulary(term, owner);
-        vocabularyService.runTextAnalysisOnAllTerms(owner);
+        vocabularyService.runTextAnalysisOnAllTerms(owner.getUri());
     }
 
     /**
@@ -392,7 +419,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         Objects.requireNonNull(parent);
         languageService.getInitialTermState().ifPresent(is -> child.setState(is.getUri()));
         repositoryService.addChildTerm(child, parent);
-        vocabularyService.runTextAnalysisOnAllTerms(findVocabularyRequired(parent.getVocabulary()));
+        vocabularyService.runTextAnalysisOnAllTerms(parent.getVocabulary());
     }
 
     /**
@@ -411,7 +438,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         final Term result = repositoryService.update(term);
         // if the label changed, run analysis on all terms in the vocabulary
         if (!Objects.equals(original.getLabel(), result.getLabel())) {
-            vocabularyService.runTextAnalysisOnAllTerms(getVocabularyReference(result.getVocabulary()));
+            vocabularyService.runTextAnalysisOnAllTerms(result.getVocabulary());
             // if all terms have not been analyzed, check if the definition has changed,
             // and if so, perform an analysis for the term definition
         } else if (!Objects.equals(original.getDefinition(), result.getDefinition())) {
@@ -442,17 +469,29 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      */
     @Throttle(value = "{#vocabularyIri, #term.getUri()}",
               group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyTerm(#vocabulary.getUri(), #term.getUri())",
-              name="termDefinitionAnalysis")
+              name = "termDefinitionAnalysis")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
-        term = findRequired(term.getUri()); // required when throttling for persistent context
         Objects.requireNonNull(term);
+        term = repositoryService.findRequired(term.getUri()); // required when throttling for persistent context
         if (term.getDefinition() == null || term.getDefinition().isEmpty()) {
             return;
         }
         LOG.debug("Analyzing definition of term {}.", term);
         textAnalysisService.analyzeTermDefinition(term, vocabularyContextMapper.getVocabularyContext(vocabularyIri));
+    }
+
+    /**
+     * Analyzes term definitions for the given context-to-terms map.
+     * <p>
+     * Text analysis is invoked on all definitions merged for better efficiency.
+     *
+     * @param contextToTerms Map of vocabulary context URIs to lists of terms.
+     * @see TextAnalysisService#analyzeTermDefinitions(Map)
+     */
+    public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms) {
+        textAnalysisService.analyzeTermDefinitions(contextToTerms);
     }
 
     /**

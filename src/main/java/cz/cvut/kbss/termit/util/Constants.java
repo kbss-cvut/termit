@@ -160,8 +160,8 @@ public class Constants {
     public static final int WEBSOCKET_SEND_BUFFER_SIZE_LIMIT = Integer.MAX_VALUE;
 
     /**
-     * Set the maximum time allowed in milliseconds after the WebSocket connection is established
-     * and before the first sub-protocol message is received.
+     * Set the maximum time allowed in milliseconds after the WebSocket connection is established and before the first
+     * sub-protocol message is received.
      */
     public static final int WEBSOCKET_TIME_TO_FIRST_MESSAGE = 15 * 1000 /* 15s */;
 
@@ -169,6 +169,11 @@ public class Constants {
      * Development Spring profile.
      */
     public static final String DEVELOPMENT_PROFILE = "development";
+
+    /**
+     * Blank node prefix.
+     */
+    public static final String BNODE_PREFIX = "_:";
 
     private Constants() {
         throw new AssertionError();

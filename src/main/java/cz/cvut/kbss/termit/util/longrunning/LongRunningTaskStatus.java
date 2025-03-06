@@ -27,11 +27,22 @@ public class LongRunningTaskStatus implements Serializable {
         this.uuid = task.getUuid();
     }
 
+    public LongRunningTaskStatus(@Nonnull String name, @Nonnull UUID uuid, @Nonnull State state,
+                                 @Nullable Instant startedAt) {
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(uuid);
+        Objects.requireNonNull(state);
+        this.name = name;
+        this.uuid = uuid;
+        this.state = state;
+        this.startedAt = startedAt;
+    }
+
     public @Nonnull String getName() {
         return name;
     }
 
-    public State getState() {
+    public @Nonnull State getState() {
         return state;
     }
 

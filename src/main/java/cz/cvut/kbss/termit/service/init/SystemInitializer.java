@@ -44,6 +44,7 @@ public class SystemInitializer implements SmartInitializingSingleton, Ordered {
         LOG.info("Running startup tasks.");
         appContext.getBean(AdminAccountGenerator.class).initSystemAdmin();
         appContext.getBean(VocabularyAccessControlListGenerator.class).generateMissingAccessControlLists();
+        appContext.getBean(VocabularyAnonymousAccessControlListGenerator.class).generateMissingAccessControlLists();
     }
 
     @Override

@@ -18,11 +18,13 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -38,7 +40,6 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
-import org.apache.jena.vocabulary.SKOS;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -196,6 +197,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         termDao.persist(instance, vocabulary);
     }
 
+    @Transactional(readOnly = true)
+    public TermInfo findRequiredTermInfo(URI id) {
+        return termDao.findTermInfo(id).orElseThrow(() -> NotFoundException.create(TermInfo.class.getSimpleName(), id));
+    }
+
     /**
      * Gets all terms from a vocabulary, regardless of their position in the term hierarchy.
      * <p>
@@ -208,6 +214,20 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional(readOnly = true)
     public List<TermDto> findAll(Vocabulary vocabulary) {
         return termDao.findAll(vocabulary);
+    }
+
+    /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
+     * that have label and definition in the instance language.
+     * <p>
+     * Terms are loaded <b>without</b> their subterms.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs ordered by label
+     */
+    @Transactional(readOnly = true)
+    public List<TermDto> findAllWithDefinition(Vocabulary vocabulary) {
+        return termDao.findAllWithDefinition(vocabulary);
     }
 
     /**
@@ -435,11 +455,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         }
         if (instance.getProperties() != null) {
             Set<String> props = instance.getProperties().keySet();
-            List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.getURI())) && !(
-                    s.equalsIgnoreCase(SKOS.changeNote.toString())
-                            || s.equalsIgnoreCase(SKOS.editorialNote.toString())
-                            || s.equalsIgnoreCase(SKOS.historyNote.toString())
-                            || s.equalsIgnoreCase(SKOS.note.toString()))).collect(toList());
+            List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.NAMESPACE)) && !(
+                    s.equalsIgnoreCase(SKOS.CHANGE_NOTE)
+                            || s.equalsIgnoreCase(SKOS.EDITORIAL_NOTE)
+                            || s.equalsIgnoreCase(SKOS.HISTORY_NOTE)
+                            || s.equalsIgnoreCase(SKOS.NOTE))).collect(toList());
             if (!properties.isEmpty()) {
                 throw new AssetRemovalException(
                         "Cannot delete the term. It is linked to another term through properties "

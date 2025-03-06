@@ -84,6 +84,11 @@ public class TextQuoteSelector extends Selector {
     }
 
     @Override
+    public TextQuoteSelector copy() {
+        return new TextQuoteSelector(exactMatch, prefix, suffix);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

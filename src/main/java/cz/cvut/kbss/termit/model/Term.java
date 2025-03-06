@@ -36,10 +36,7 @@ import cz.cvut.kbss.termit.model.assignment.TermDefinitionSource;
 import cz.cvut.kbss.termit.model.changetracking.Audited;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
 
 import java.net.URI;
 import java.util.HashSet;
@@ -48,16 +45,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-@Configurable
 @Audited
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "description", "subTerms"})
 @JsonIgnoreProperties({"persistenceContext"})
 public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
-
-    @Autowired
-    @Transient
-    private transient Configuration config;
 
     @OWLAnnotationProperty(iri = SKOS.ALT_LABEL)
     private Set<MultilingualString> altLabels;
@@ -130,37 +122,6 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
 
     public Term(URI uri) {
         setUri(uri);
-    }
-
-    /**
-     * Sets label in the application-configured language.
-     * <p>
-     * This is a convenience method allowing to skip working with {@link MultilingualString} instances.
-     *
-     * @param label Label value to set
-     * @see #setLabel(MultilingualString)
-     */
-    @JsonIgnore
-    public void setPrimaryLabel(String label) {
-        if (this.getLabel() == null) {
-            this.setLabel(MultilingualString.create(label, config.getPersistence().getLanguage()));
-        } else {
-            this.getLabel().set(config.getPersistence().getLanguage(), label);
-        }
-    }
-
-    /**
-     * Gets label in the application-configured language.
-     * <p>
-     * This is a convenience method allowing to skip working with {@link MultilingualString} instances.
-     *
-     * @return Label value
-     * @see #getLabel()
-     */
-    @JsonIgnore
-    @Override
-    public String getPrimaryLabel() {
-        return getLabel() != null ? getLabel().get(config.getPersistence().getLanguage()) : null;
     }
 
     public Set<MultilingualString> getAltLabels() {

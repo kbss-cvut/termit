@@ -240,7 +240,7 @@ class LocalizedSheetImporter {
             try {
                 final Term objectTerm = getTerm(object);
                 if (objectTerm == null) {
-                    LOG.warn("No term with label '{}' found for term '{}' and relationship <{}>.", object,
+                    LOG.warn("No term identified by '{}' found for term '{}' and relationship <{}>.", object,
                              subject.getLabel().get(langTag), SKOS.RELATED);
                 } else {
                     // Term IDs may not be generated, yet
@@ -254,8 +254,13 @@ class LocalizedSheetImporter {
     }
 
     private Term getTerm(String identification) {
-        return labelToTerm.containsKey(identification) ? labelToTerm.get(identification) :
-               idToTerm.get(URI.create(prefixMap.resolvePrefixed(identification)));
+        try {
+            return labelToTerm.containsKey(identification) ? labelToTerm.get(identification) :
+                   idToTerm.get(URI.create(prefixMap.resolvePrefixed(identification)));
+        } catch (IllegalArgumentException e) {
+            LOG.warn("'{}' is not a known term label nor is it a valid URI. Skipping it.", identification);
+            return null;
+        }
     }
 
     private void mapSkosMatchProperties(Term subject, String property, Set<String> objects) {

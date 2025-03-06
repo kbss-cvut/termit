@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
@@ -112,10 +113,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         }
         final Term tOne = new Term();
         tOne.setUri(Generator.generateUri());
-        tOne.setPrimaryLabel("Term one");
+        setPrimaryLabel(tOne, "Term one");
         final Term tTwo = new Term();
         tTwo.setUri(Generator.generateUri());
-        tTwo.setPrimaryLabel("Term two");
+        setPrimaryLabel(tTwo, "Term two");
         final Map<Term, List<TermOccurrence>> map = new HashMap<>();
         map.put(tOne, new ArrayList<>());
         map.put(tTwo, new ArrayList<>());

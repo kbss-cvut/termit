@@ -53,6 +53,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -133,7 +134,7 @@ class DataDaoTest extends BaseDaoTestRunner {
 
         final Optional<String> result = sut.getLabel(term.getUri());
         assertTrue(result.isPresent());
-        assertEquals(term.getPrimaryLabel(), result.get());
+        assertEquals(getPrimaryLabel(term), result.get());
     }
 
     @Test
@@ -146,14 +147,14 @@ class DataDaoTest extends BaseDaoTestRunner {
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                               vf.createLiteral(term.getPrimaryLabel()));
+                        vf.createLiteral(getPrimaryLabel(term)));
                 connection.commit();
             }
         });
 
         final Optional<String> result = sut.getLabel(term.getUri());
         assertTrue(result.isPresent());
-        assertEquals(term.getPrimaryLabel(), result.get());
+        assertEquals(getPrimaryLabel(term), result.get());
     }
 
     @Test
@@ -177,7 +178,7 @@ class DataDaoTest extends BaseDaoTestRunner {
             try (final RepositoryConnection connection = repo.getConnection()) {
                 connection.add(vf.createIRI(term.getUri().toString()), RDF.TYPE, SKOS.CONCEPT);
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
-                               vf.createLiteral(term.getPrimaryLabel()));
+                        vf.createLiteral(getPrimaryLabel(term)));
                 connection.add(vf.createIRI(term.getUri().toString()), SKOS.PREF_LABEL,
                                vf.createLiteral("Another label"));
                 connection.commit();

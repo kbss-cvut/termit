@@ -20,9 +20,10 @@ package cz.cvut.kbss.termit.model.selector;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.AbstractEntity;
+import cz.cvut.kbss.termit.model.util.Copyable;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "javaClass")
 @OWLClass(iri = Vocabulary.s_c_selektor)
-public abstract class Selector extends AbstractEntity {
+public abstract class Selector extends AbstractEntity implements Copyable<Selector> {
 }

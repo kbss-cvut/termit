@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -354,23 +355,29 @@ public class VocabularyService
      * Runs text analysis on the definitions of all terms in the specified vocabulary, including terms in the
      * transitively imported vocabularies.
      *
-     * @param vocabulary Vocabulary to be analyzed
+     * @param vocabularyUri Vocabulary to be analyzed
      */
     @Transactional
-    @Throttle(value = "{#vocabulary.getUri()}",
-              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabulary.getUri())",
+    @Throttle(value = "{#vocabularyUri}",
+              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
               name = "allTermsVocabularyAnalysis")
-    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
-    public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
-        vocabulary = findRequired(vocabulary.getUri()); // required when throttling for persistent context
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
+    public void runTextAnalysisOnAllTerms(URI vocabularyUri) {
+        final Vocabulary vocabulary = findRequired(vocabularyUri); // required when throttling for persistent context
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
-        final List<TermDto> allTerms = termService.findAll(vocabulary);
-        getTransitivelyImportedVocabularies(vocabulary).forEach(
-                importedVocabulary -> allTerms.addAll(termService.findAll(getReference(importedVocabulary))));
-        final Map<TermDto, URI> termsToContexts = new HashMap<>(allTerms.size());
-        allTerms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
-        termsToContexts.forEach(termService::analyzeTermDefinition);
+        final List<TermDto> allTerms = termService.findAllWithDefinition(vocabulary);
+        getTransitivelyImportedVocabularies(vocabulary)
+                .forEach(importedVocabulary ->
+                        allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
+
+        final Map<URI, List<AbstractTerm>> contextToTerms = new HashMap<>(allTerms.size());
+        allTerms.forEach(t -> contextToTerms
+                .computeIfAbsent(contextMapper.getVocabularyContext(t.getVocabulary()),
+                        k -> new ArrayList<>())
+                .add(t)
+        );
+        termService.analyzeTermDefinitions(contextToTerms);
     }
 
     /**
@@ -380,12 +387,8 @@ public class VocabularyService
     @Transactional
     public void runTextAnalysisOnAllVocabularies() {
         LOG.debug("Analyzing definitions of all terms in all vocabularies.");
-        final Map<TermDto, URI> termsToContexts = new HashMap<>();
-        repositoryService.findAll().forEach(v -> {
-            List<TermDto> terms = termService.findAll(new Vocabulary(v.getUri()));
-            terms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
-            termsToContexts.forEach(termService::analyzeTermDefinition);
-        });
+        repositoryService.findAll().stream().map(VocabularyDto::getUri).forEach(this::runTextAnalysisOnAllTerms);
+        LOG.debug("Finished definitions analysis for all terms in all vocabularies.");
     }
 
     /**

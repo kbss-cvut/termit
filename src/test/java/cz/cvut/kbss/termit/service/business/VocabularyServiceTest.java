@@ -27,6 +27,7 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
@@ -59,23 +60,29 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -116,32 +123,49 @@ class VocabularyServiceTest {
     }
 
     @Test
-    void runTextAnalysisOnAllTermsInvokesTextAnalysisOnAllTermsInVocabulary() {
+    void runTextAnalysisOnAllTermsInvokesAnalyzeTermDefinitionsWithAllTerms() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final Term termOne = Generator.generateTermWithId(vocabulary.getUri());
         final Term termTwo = Generator.generateTermWithId(vocabulary.getUri());
         List<TermDto> terms = termsToDtos(Arrays.asList(termOne, termTwo));
-        when(termService.findAll(vocabulary)).thenReturn(terms);
+        when(termService.findAllWithDefinition(vocabulary)).thenReturn(terms);
         when(contextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         when(repositoryService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(Collections.emptyList());
         when(repositoryService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        sut.runTextAnalysisOnAllTerms(vocabulary);
-        verify(termService).analyzeTermDefinition(termOne, vocabulary.getUri());
-        verify(termService).analyzeTermDefinition(termTwo, vocabulary.getUri());
+        sut.runTextAnalysisOnAllTerms(vocabulary.getUri());
+
+        final ArgumentCaptor<Map<URI, List<AbstractTerm>>> captor = ArgumentCaptor.forClass(Map.class);
+        verify(termService).analyzeTermDefinitions(captor.capture());
+
+        final Map<URI, List<AbstractTerm>> contextToTerms = captor.getValue();
+        assertEquals(1, contextToTerms.size());
+        assertIterableEquals(terms, contextToTerms.get(vocabulary.getUri()));
     }
 
     @Test
-    void runTextAnalysisOnAllTermsInvokesTextAnalysisOnAllVocabularies() {
+    void runTextAnalysisOnAllVocabulariesInvokesAnalyzeTermDefinitionsForEachVocabulary() {
         final Vocabulary v = Generator.generateVocabularyWithId();
-        final List<VocabularyDto> vocabularies = Collections.singletonList(Environment.getDtoMapper()
-                                                                                      .vocabularyToVocabularyDto(v));
-        final Term term = Generator.generateTermWithId(v.getUri());
+        final Vocabulary vv = Generator.generateVocabularyWithId();
+
+        final List<VocabularyDto> vocabularies = List.of(Environment.getDtoMapper().vocabularyToVocabularyDto(v),
+                Environment.getDtoMapper().vocabularyToVocabularyDto(vv));
+
+        final List<TermDto> terms = Stream.of(Generator.generateTermWithId(v.getUri()), Generator.generateTermWithId(v.getUri()))
+                                          .map(TermDto::new).toList();
+        final List<TermDto> terms2 = Stream.of(Generator.generateTermWithId(vv.getUri()), Generator.generateTermWithId(vv.getUri()))
+                                           .map(TermDto::new).toList();
+
+        when(repositoryService.findRequired(v.getUri())).thenReturn(v);
+        when(repositoryService.findRequired(vv.getUri())).thenReturn(vv);
+
         when(repositoryService.findAll()).thenReturn(vocabularies);
         when(contextMapper.getVocabularyContext(v.getUri())).thenReturn(v.getUri());
-        when(termService.findAll(v)).thenReturn(Collections.singletonList(new TermDto(term)));
+
+        when(termService.findAllWithDefinition(v)).thenReturn(terms);
+        when(termService.findAllWithDefinition(vv)).thenReturn(terms2);
         sut.runTextAnalysisOnAllVocabularies();
 
-        verify(termService).analyzeTermDefinition(term, v.getUri());
+        verify(termService, times(vocabularies.size())).analyzeTermDefinitions(notNull());
     }
 
     @Test

@@ -40,7 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -92,7 +91,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
             c.setAsset(asset.getUri());
             c.setAuthor(author);
             return c;
-        }).collect(Collectors.toList());
+        }).toList();
         transactional(() -> {
             final EntityDescriptor descriptor = new EntityDescriptor(URI.create(config.getComments().getContext()));
             descriptor.addAttributeContext(Comment_.author, null);
@@ -202,7 +201,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
     @Test
     void addReactionToCreatesLikeByCurrentUser() {
         final Comment comment = persistComment();
-        final URI reaction = URI.create(Vocabulary.s_c_Like);
+        final URI reaction = URI.create(Vocabulary.s_c_as_Like);
 
         sut.addReactionTo(comment, reaction.toString());
         assertTrue(doesReactionExist(comment, reaction));
@@ -214,9 +213,9 @@ class CommentServiceTest extends BaseServiceTestRunner {
                 "?hasAuthor ?author ;" +
                 "?reactsTo ?comment .}", Boolean.class)
                 .setParameter("type", type)
-                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_actor))
+                .setParameter("hasAuthor", URI.create(Vocabulary.s_p_as_actor))
                 .setParameter("author", author)
-                .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
+                .setParameter("reactsTo", URI.create(Vocabulary.s_p_as_object))
                 .setParameter("comment", comment).getSingleResult();
     }
 
@@ -224,7 +223,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
     void addReactionToRemovesPreexistingCommentReaction() {
         final Comment comment = persistComment();
         final CommentReaction existingReaction = persistReaction(comment);
-        final URI reaction = URI.create(Vocabulary.s_c_Like);
+        final URI reaction = URI.create(Vocabulary.s_c_as_Like);
 
         sut.addReactionTo(comment, reaction.toString());
         assertNull(em.find(CommentReaction.class, existingReaction.getUri()));
@@ -233,7 +232,7 @@ class CommentServiceTest extends BaseServiceTestRunner {
 
     private CommentReaction persistReaction(Comment toComment) {
         final CommentReaction reaction = new CommentReaction(author, toComment);
-        reaction.addType(Vocabulary.s_c_Dislike);
+        reaction.addType(Vocabulary.s_c_as_Dislike);
         transactional(
                 () -> em.persist(reaction, new EntityDescriptor(URI.create(config.getComments().getContext()))));
         return reaction;

@@ -510,21 +510,38 @@ public class Generator {
     public static List<AccessControlRecord<?>> generateAccessControlRecords() {
         final List<AccessControlRecord<?>> result = IntStream.range(0, 5).mapToObj(i -> {
             final AccessControlRecord r;
+            int maxAccessLevel = AccessLevel.values().length; // exclusive
             if (Generator.randomBoolean()) {
                 r = new UserAccessControlRecord();
                 r.setHolder(Generator.generateUserWithId());
             } else {
                 r = new UserGroupAccessControlRecord();
                 r.setHolder(generateUserGroup());
+                maxAccessLevel = AccessLevel.SECURITY.ordinal();
             }
             r.setUri(Generator.generateUri());
-            r.setAccessLevel(AccessLevel.values()[Generator.randomIndex(AccessLevel.values())]);
+            r.setAccessLevel(AccessLevel.values()[Generator.randomInt(0, maxAccessLevel)]);
             return (AccessControlRecord<?>) r;
         }).collect(Collectors.toList());
+
+        final RoleAccessControlRecord fr = new RoleAccessControlRecord();
+        final UserRole fullRole = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+        fr.setHolder(fullRole);
+        fr.setAccessLevel(AccessLevel.NONE);
+        result.add(fr);
+
         final RoleAccessControlRecord rr = new RoleAccessControlRecord();
-        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_plny_uzivatel_termitu));
-        rr.setHolder(role);
+        final UserRole restrictedRole = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER);
+        rr.setHolder(restrictedRole);
+        rr.setAccessLevel(AccessLevel.NONE);
         result.add(rr);
+
+        final RoleAccessControlRecord ar = new RoleAccessControlRecord();
+        final UserRole anonymousRole = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
+        ar.setHolder(anonymousRole);
+        ar.setAccessLevel(AccessLevel.NONE);
+        result.add(ar);
+
         return result;
     }
 }

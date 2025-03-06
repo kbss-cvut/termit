@@ -44,4 +44,9 @@ public class TermFileOccurrence extends TermOccurrence {
     public void setTarget(FileOccurrenceTarget target) {
         this.target = target;
     }
+
+    @Override
+    public TermFileOccurrence copy() {
+        return new TermFileOccurrence(getTerm(), getTarget().copy());
+    }
 }

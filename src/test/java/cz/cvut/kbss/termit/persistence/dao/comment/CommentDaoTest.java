@@ -185,7 +185,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(comment, descriptor);
             final CommentReaction reaction = new CommentReaction(author, comment);
-            reaction.addType(Vocabulary.s_c_Like);
+            reaction.addType(Vocabulary.s_c_as_Like);
             em.persist(reaction, new EntityDescriptor(URI.create(configuration.getComments().getContext())));
             generateCommentReactionReference(reaction);
         });
@@ -242,7 +242,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
         transactional(() -> {
             em.persist(comment, descriptor);
             final CommentReaction reaction = new CommentReaction(author, comment);
-            reaction.addType(Vocabulary.s_c_Like);
+            reaction.addType(Vocabulary.s_c_as_Like);
             em.persist(reaction, new EntityDescriptor(URI.create(configuration.getComments().getContext())));
             generateCommentReactionReference(reaction);
         });
@@ -254,7 +254,7 @@ class CommentDaoTest extends BaseDaoTestRunner {
         });
 
         assertFalse(em.createNativeQuery("ASK WHERE { ?x ?reactsTo ?comment }", Boolean.class)
-                      .setParameter("reactsTo", URI.create(Vocabulary.s_p_object))
+                      .setParameter("reactsTo", URI.create(Vocabulary.s_p_as_object))
                       .setParameter("comment", comment).getSingleResult());
     }
 

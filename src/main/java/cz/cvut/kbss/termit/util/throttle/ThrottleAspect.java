@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import cz.cvut.kbss.termit.TermItApplication;
+import cz.cvut.kbss.termit.event.ClearLongRunningTaskQueueEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.ThrottleAspectException;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.EvaluationException;
@@ -39,6 +42,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -167,6 +171,11 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         lastClear = new AtomicReference<>(Instant.now(clock));
     }
 
+    /**
+     * Creates a default evaluation context for SpEL processing.
+     *
+     * @return {@link StandardEvaluationContext} with {@link DataBindingPropertyAccessor}
+     */
     private static StandardEvaluationContext makeDefaultContext() {
         StandardEvaluationContext standardEvaluationContext = new StandardEvaluationContext();
         standardEvaluationContext.addPropertyAccessor(DataBindingPropertyAccessor.forReadOnlyAccess());
@@ -180,6 +189,51 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
 
         standardEvaluationContext.setTypeLocator(typeLocator);
         return standardEvaluationContext;
+    }
+
+    /**
+     * Prevents accepting new tasks by synchronization
+     * and cancels all scheduled tasks.
+     */
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @EventListener(ClearLongRunningTaskQueueEvent.class)
+    public void onClearLongRunningTaskQueueEvent() {
+        synchronized (throttledFutures) { // synchronize in the filed declaration order
+            synchronized (lastRun) {
+                synchronized (scheduledFutures) {
+                    LOG.info("Clearing throttled tasks...");
+
+                    long count = 0;
+                    Iterator<Map.Entry<Identifier, ThrottledFuture<Object>>> throttledIt =
+                            throttledFutures.entrySet().iterator();
+
+                    while(throttledIt.hasNext()) {
+                        final Map.Entry<Identifier, ThrottledFuture<Object>> entry = throttledIt.next();
+                        final ThrottledFuture<Object> future = entry.getValue();
+                        final Identifier identifier = entry.getKey();
+                        if(future.isRunning() || future.isDone()) continue;
+
+                        // cancel the throttled future
+                        future.cancel(false);
+                        // cancel the scheduled future
+                        Optional.ofNullable(scheduledFutures.get(identifier))
+                                .ifPresent(scheduled -> {
+                                    scheduled.cancel(false);
+                                    if (scheduled.isCancelled()) {
+                                        scheduledFutures.remove(identifier);
+                                    }
+                                });
+                        if (future.isCancelled()) {
+                            throttledIt.remove();
+                        }
+                        count++;
+                        notifyTaskChanged(future); // task canceled - clearing queue
+                    }
+                    clearOldFutures();
+                    LOG.info("Cancelled {} pending throttled tasks", count);
+                }
+            }
+        }
     }
 
     /**
@@ -197,6 +251,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             // proceed with method execution
             final Object result = joinPoint.proceed();
             if (result instanceof ThrottledFuture<?> throttledFuture) {
+                LOG.trace("Running throttled future synchronously (current thread is already throttled)");
                 // directly run throttled future
                 throttledFuture.run(null);
                 return throttledFuture;
@@ -269,10 +324,11 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                 oldThrottledFuture.then(ignored -> schedule(identifier, pair.getFirst(),
                                                             throttleExpired && oldFutureIsDone)
                 );
+                notifyTaskChanged(oldThrottledFuture); // the old future maybe changed its state
             } else {
                 schedule(identifier, pair.getFirst(), throttleExpired && oldFutureIsDone);
             }
-            notifyTaskChanged(future);
+            notifyTaskChanged(future); // task pending
         }
 
         return result;
@@ -298,6 +354,14 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         }
     }
 
+    /**
+     * Creates a new {@link EvaluationContext} for SpEL evaluation where {@code parameters} are available for referencing.
+     *
+     * @param joinPoint  method call {@link JoinPoint}
+     * @param parameters method call parameters
+     * @return a new {@link EvaluationContext} that delegates to {@link #standardEvaluationContext}
+     * @see #makeDefaultContext()
+     */
     private EvaluationContext makeContext(JoinPoint joinPoint, Map<String, Object> parameters) {
         StandardEvaluationContext context = new StandardEvaluationContext();
         standardEvaluationContext.applyDelegatesTo(context);
@@ -306,6 +370,16 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return context;
     }
 
+    /**
+     * Takes an existing throttled future and creates a runnable that can be scheduled for future execution.
+     *
+     * @param joinPoint  method call {@link JoinPoint}
+     * @param identifier throttle {@link Identifier}
+     * @param future     existing (old) throttled future
+     * @return a pair of runnable to schedule and resulting throttled future (which may or may not be the same as the provided one)
+     * @throws Throwable when {@code joinPoint.proceed()} throws,
+     *                   or {@link ThrottleAspectException} when the method signature from the {@code joinPoint} is invalid.
+     */
     private Pair<Runnable, ThrottledFuture<Object>> getFutureTask(@Nonnull ProceedingJoinPoint joinPoint,
                                                                   @Nonnull Identifier identifier,
                                                                   @Nonnull ThrottledFuture<Object> future)
@@ -330,11 +404,13 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             if (result instanceof ThrottledFuture<?> throttledMethodFuture) {
                 // future acquired by key or a new future supplied, ensuring the same type
                 // ThrottledFuture#updateOther will create a new future when required
+                final ThrottledFuture<Object> methodFuture = (ThrottledFuture<Object>) throttledMethodFuture;
                 if (throttledMethodFuture.isDone()) {
-                    throttledFuture = (ThrottledFuture<Object>) throttledMethodFuture;
+                    methodFuture.consumeCallbacks(throttledFuture);
+                    throttledFuture = methodFuture;
                 } else {
                     // transfer the newer task from methodFuture -> to the (old) throttled future
-                    throttledFuture = ((ThrottledFuture<Object>) throttledMethodFuture).transfer(throttledFuture);
+                    throttledFuture = methodFuture.transfer(throttledFuture);
                 }
             } else {
                 throw new ThrottleAspectException("Returned value is not a ThrottledFuture");
@@ -354,7 +430,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             }, List.of());
         } else {
             throw new ThrottleAspectException(
-                    "Invalid return type for " + joinPoint.getSignature() + " annotated with @Debounce, only Future or void allowed!");
+                    "Invalid return type for " + joinPoint.getSignature() + " annotated with @Throttle, only Future or void allowed!");
         }
 
         final boolean withTransaction = methodSignature.getMethod() != null && methodSignature.getMethod()
@@ -383,6 +459,16 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return throttledThreads.size();
     }
 
+    /**
+     * Creates runnable that can be scheduled for throttled future execution.
+     * The {@link Runnable} will handle thread throttling, restoring security context
+     * and {@link cz.cvut.kbss.termit.util.longrunning.LongRunningTask} state change notification
+     *
+     * @param throttledFuture the {@link ThrottledFuture} to execute in the returned runnable
+     * @param identifier      throttle {@link Identifier}
+     * @param withTransaction whether the future should be executed in {@link Transactional} context
+     * @return {@link Runnable} that executes the future
+     */
     private Runnable createRunnableToSchedule(ThrottledFuture<?> throttledFuture, Identifier identifier,
                                               boolean withTransaction) {
         final Supplier<SecurityContext> securityContext = SecurityContextHolder.getDeferredContext();
@@ -402,9 +488,9 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
             try {
                 // fulfill the future
                 if (withTransaction) {
-                    transactionExecutor.execute(() -> throttledFuture.run(this::notifyTaskChanged));
+                    transactionExecutor.execute(() -> throttledFuture.run(this::notifyTaskChanged)); // task running
                 } else {
-                    throttledFuture.run(this::notifyTaskChanged);
+                    throttledFuture.run(this::notifyTaskChanged); // task running
                 }
                 // update last run timestamp
                 synchronized (lastRun) {
@@ -492,6 +578,13 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                       .isBefore(Instant.now(clock).minus(configuration.getThrottleThreshold()));
     }
 
+    /**
+     * Schedules the {@code task} for {@link ThrottledFuture} execution
+     *
+     * @param identifier  throttle {@link Identifier}
+     * @param task        the {@link Runnable} to schedule
+     * @param immediately whether the {@link Runnable} should be scheduled as soon as possible
+     */
     @SuppressWarnings("unchecked")
     private void schedule(Identifier identifier, Runnable task, boolean immediately) {
         Instant startTime = Instant.now(clock).plus(configuration.getThrottleThreshold());
@@ -528,7 +621,7 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                     // cancels future if it's not null (should not be) and removes it from map if it was canceled
                     if (throttledFuture != null && throttledFuture.cancel(false)) {
                         throttledFutures.remove(higherKey);
-                        notifyTaskChanged(throttledFuture);
+                        notifyTaskChanged(throttledFuture); // task canceled (higher group)
                     }
 
                     scheduledFutures.remove(higherKey);
@@ -546,6 +639,15 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
         return new Identifier(groupIdentifier, joinPoint.getSignature().toShortString() + "-" + identifier);
     }
 
+    /**
+     * Resolves the return type from the {@link MethodSignature}
+     *
+     * @param signature throttled method signature
+     * @param future    throttled future
+     * @return the throttled future when method signature returns a type assignable from the {@link ThrottledFuture},
+     * when the method returns void, null is returned, exception is thrown otherwise.
+     * @throws IllegalCallerException when the method by the signature returns anything else than a future or void.
+     */
     private @Nullable Object resultVoidOrFuture(@Nonnull MethodSignature signature, ThrottledFuture<Object> future)
             throws IllegalCallerException {
         Class<?> returnType = signature.getReturnType();
@@ -559,7 +661,15 @@ public class ThrottleAspect extends LongRunningTaskScheduler {
                 "Invalid return type for " + signature + " annotated with @Debounce, only Future or void allowed!");
     }
 
-
+    /**
+     * Creates throttle identifier by evaluating a SpEL in {@code expression}.
+     *
+     * @param joinPoint  method call {@link JoinPoint}
+     * @param expression SpEL to evaluate
+     * @return resulting identifier
+     * @throws ThrottleAspectException When the SpEL {@code expression} is not resolved into a {@link Collection} or {@link String}.
+     * @see #makeContext(JoinPoint, Map)
+     */
     @SuppressWarnings({"unchecked"})
     private @Nonnull String constructIdentifier(JoinPoint joinPoint, String expression) throws ThrottleAspectException {
         if (expression == null || expression.isBlank()) {

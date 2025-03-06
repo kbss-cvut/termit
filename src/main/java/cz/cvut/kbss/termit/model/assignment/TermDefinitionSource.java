@@ -34,4 +34,9 @@ public class TermDefinitionSource extends TermFileOccurrence {
     public TermDefinitionSource(URI term, FileOccurrenceTarget target) {
         super(term, target);
     }
+
+    @Override
+    public TermDefinitionSource copy() {
+        return new TermDefinitionSource(getTerm(), getTarget().copy());
+    }
 }

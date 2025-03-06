@@ -61,6 +61,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -314,7 +315,7 @@ class SKOSImporterTest extends BaseDaoTestRunner {
                                                        Environment.loadFile("data/test-glossary.ttl")));
             assertNotNull(result);
             assertEquals(VOCABULARY_IRI, result.getUri());
-            assertEquals("Vocabulary of system TermIt - glossary", result.getPrimaryLabel());
+            assertEquals("Vocabulary of system TermIt - glossary", getPrimaryLabel(result));
         });
     }
 

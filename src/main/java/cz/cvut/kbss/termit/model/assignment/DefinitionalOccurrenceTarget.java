@@ -19,7 +19,11 @@ package cz.cvut.kbss.termit.model.assignment;
 
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.util.Copyable;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+
+import java.util.stream.Collectors;
 
 /**
  * Target representing the definition of a term.
@@ -34,6 +38,14 @@ public class DefinitionalOccurrenceTarget extends OccurrenceTarget {
 
     public DefinitionalOccurrenceTarget(AbstractTerm source) {
         super(source);
+    }
+
+    @Override
+    public DefinitionalOccurrenceTarget copy() {
+        final DefinitionalOccurrenceTarget copy = new DefinitionalOccurrenceTarget();
+        copy.setSource(getSource());
+        copy.setSelectors(Utils.emptyIfNull(getSelectors()).stream().map(Copyable::copy).collect(Collectors.toSet()));
+        return copy;
     }
 
     @Override

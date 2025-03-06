@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 /**
  * Provides UFO-compliant language for classification of terms.
  * <p>
- * It uses Jena to load and term types from the provided configuration file.
+ * It uses RDF4J to load and term types from the provided configuration file.
  */
 @Service
 public class UfoTermTypesService {

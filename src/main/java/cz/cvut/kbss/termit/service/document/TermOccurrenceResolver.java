@@ -29,6 +29,7 @@ import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,7 +40,7 @@ public abstract class TermOccurrenceResolver {
 
     protected final TermRepositoryService termService;
 
-    protected List<TermOccurrence> existingOccurrences = Collections.emptyList();
+    protected List<TermOccurrence> existingApprovedOccurrences = Collections.emptyList();
 
     protected TermOccurrenceResolver(TermRepositoryService termService) {
         this.termService = termService;
@@ -58,11 +59,14 @@ public abstract class TermOccurrenceResolver {
 
     /**
      * Sets occurrences that already existed on previous analyses.
+     * <p>
+     * The resolver uses only those that are approved.
      *
      * @param existingOccurrences Term occurrences from the previous analysis run
      */
     public void setExistingOccurrences(List<TermOccurrence> existingOccurrences) {
-        this.existingOccurrences = existingOccurrences;
+        this.existingApprovedOccurrences = new ArrayList<>(
+                existingOccurrences.stream().filter(to -> !to.isSuggested()).toList());
     }
 
     /**
@@ -115,8 +119,12 @@ public abstract class TermOccurrenceResolver {
         return occurrence;
     }
 
-    @FunctionalInterface
     public interface OccurrenceConsumer {
+        /**
+         * Accepts a discovered term occurrence.
+         *
+         * @param termOccurrence Term occurrence found in the content
+         */
         void accept(TermOccurrence termOccurrence) throws InterruptedException;
     }
 }

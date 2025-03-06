@@ -50,6 +50,11 @@ public class CssSelector extends Selector {
     }
 
     @Override
+    public CssSelector copy() {
+        return new CssSelector(value);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

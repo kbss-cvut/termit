@@ -180,6 +180,21 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                 .getExactMatchTerms() : Collections.emptySet());
     }
 
+    /**
+     * Finds basic info about a term with the specified identifier.
+     *
+     * @param id Term identifier
+     * @return Term info wrapped in an {@code Optional}
+     */
+    public Optional<TermInfo> findTermInfo(URI id) {
+        try {
+            return findTermVocabulary(id).map(
+                    vocabulary -> em.find(TermInfo.class, id, descriptorFactory.assetDescriptor(vocabulary)));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
     @Override
     public void persist(Term entity) {
         throw new UnsupportedOperationException(
@@ -221,6 +236,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             entity.setDefinitionSource(original.getDefinitionSource());
             eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
             evictCachedSubTerms(original.getParentTerms(), entity.getParentTerms());
+            evictCachedSubTerms(original.getExternalParentTerms(), entity.getExternalParentTerms());
             final Term result = em.merge(entity, descriptorFactory.termDescriptor(entity));
             eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, original.getVocabulary()));
             return result;
@@ -239,18 +255,26 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermInfo.class, term.getUri(), null);
-        Utils.emptyIfNull(term.getParentTerms()).forEach(pt -> {
-            em.getEntityManagerFactory().getCache().evict(Term.class, pt.getUri(), null);
-            em.getEntityManagerFactory().getCache().evict(TermDto.class, pt.getUri(), null);
-            subTermsCache.evict(pt.getUri());
-        });
-        term.setSubTerms(getSubTerms(term));
+        Utils.emptyIfNull(term.getParentTerms()).forEach(t -> subTermsCache.evict(t.getUri()));
+        Utils.emptyIfNull(term.getExternalParentTerms()).forEach(t -> subTermsCache.evict(t.getUri()));
         // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
-        Utils.emptyIfNull(term.getSubTerms())
-             .forEach(st -> {
-                 em.getEntityManagerFactory().getCache().evict(Term.class, st.getUri(), null);
-                 em.getEntityManagerFactory().getCache().evict(TermDto.class, st.getUri(), null);
-             });
+        evictAllCachedDescendants(term);
+    }
+
+    /**
+     * Evicts all descendants of the specified term from the cache - default context.
+     * <p>
+     * This is done to prevent stale references through the parentTerms chain.
+     *
+     * @param term Term whose descendants to evict
+     */
+    private void evictAllCachedDescendants(Term term) {
+        em.createNativeQuery("SELECT ?child WHERE { ?t ?hasChild* ?child . }", URI.class)
+          .setParameter("hasChild", URI.create(SKOS.NARROWER))
+          .setParameter("t", term).getResultStream().forEach(st -> {
+              em.getEntityManagerFactory().getCache().evict(Term.class, st, null);
+              em.getEntityManagerFactory().getCache().evict(TermDto.class, st, null);
+          });
     }
 
     /**
@@ -312,6 +336,42 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                  .setParameter("hasLabel", LABEL_PROP)
                                                  .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                                  .setParameter("labelLang", config.getLanguage()));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
+     * that have label and definition in the instance language.
+     * <p>
+     * Terms are loaded <b>without</b> their subterms.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs ordered by label
+     */
+    public List<TermDto> findAllWithDefinition(Vocabulary vocabulary) {
+        Objects.requireNonNull(vocabulary);
+        try {
+            return em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                "GRAPH ?context { " +
+                                                "?term a ?type ;" +
+                                                "?hasLabel ?label ;" +
+                                                "?hasDefinition ?definition ;" +
+                                                "FILTER (lang(?label) = ?labelLang) ." +
+                                                "FILTER (lang(?definition) = ?labelLang) ." +
+                                                "}" +
+                                                "?term ?inVocabulary ?vocabulary ." +
+                                                " } ORDER BY " + orderSentence("?label"),
+                                        TermDto.class)
+                     .setParameter("context", context(vocabulary))
+                     .setParameter("type", typeUri)
+                     .setParameter("vocabulary", vocabulary.getUri())
+                     .setParameter("hasLabel", LABEL_PROP)
+                     .setParameter("hasDefinition", URI.create(SKOS.DEFINITION))
+                     .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                     .setParameter("labelLang", config.getLanguage())
+                     .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

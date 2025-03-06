@@ -57,6 +57,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
+import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
@@ -112,7 +114,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void persistThrowsValidationExceptionWhenVocabularyNameIsBlank() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.setPrimaryLabel("");
+        setPrimaryLabel(vocabulary, "");
         final ValidationException exception = assertThrows(ValidationException.class, () -> sut.persist(vocabulary));
         assertThat(exception.getMessage(),
                    containsString("label in the primary configured language must not be blank"));
@@ -127,7 +129,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
         assertThat(result.getUri().toString(),
-                   containsString(IdentifierResolver.normalize(vocabulary.getPrimaryLabel())));
+                containsString(IdentifierResolver.normalize(getPrimaryLabel(vocabulary))));
     }
 
     @Test
@@ -146,7 +148,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistCreatesGlossaryAndModelInstances() {
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(Generator.generateUri());
-        vocabulary.setPrimaryLabel("TestVocabulary");
+        setPrimaryLabel(vocabulary, "TestVocabulary");
         sut.persist(vocabulary);
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result.getGlossary());
@@ -168,7 +170,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
-        vocabulary.setPrimaryLabel("");
+        setPrimaryLabel(vocabulary, "");
         assertThrows(ValidationException.class, () -> sut.update(vocabulary));
     }
 
@@ -329,7 +331,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         );
 
         final Vocabulary v = sut.importVocabulary(true, mf);
-        assertEquals(v.getPrimaryLabel(), "Test");
+        assertEquals("Test", getPrimaryLabel(v));
     }
 
     @Test
@@ -349,7 +351,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         );
 
         final Vocabulary v = sut.importVocabulary(true, mf);
-        assertEquals(v.getPrimaryLabel(), "Test");
+        assertEquals("Test", getPrimaryLabel(v));
     }
 
     @Test
@@ -367,7 +369,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                     skos.getBytes(StandardCharsets.UTF_8)
             );
             final Vocabulary v = sut.importVocabulary(false, mf);
-            assertEquals(v.getPrimaryLabel(), "Test");
+            assertEquals("Test", getPrimaryLabel(v));
         });
     }
 
@@ -387,7 +389,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistGeneratesGlossaryIriBasedOnVocabularyIriAndConfiguredFragment() {
         final String label = "Test vocabulary " + System.currentTimeMillis();
         final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setPrimaryLabel(label);
+        setPrimaryLabel(vocabulary, label);
         sut.persist(vocabulary);
         assertNotNull(vocabulary.getUri());
         assertNotNull(vocabulary.getGlossary());
@@ -401,7 +403,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistGeneratesModelIriBasedOnVocabularyIri() {
         final String label = "Test vocabulary " + System.currentTimeMillis();
         final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setPrimaryLabel(label);
+        setPrimaryLabel(vocabulary, label);
         sut.persist(vocabulary);
         assertNotNull(vocabulary.getUri());
         assertNotNull(vocabulary.getModel());
@@ -426,7 +428,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
-        vocabulary.setPrimaryLabel("Updated label");
+        setPrimaryLabel(vocabulary, "Updated label");
         assertThrows(SnapshotNotEditableException.class, () -> sut.update(vocabulary));
     }
 
@@ -439,7 +441,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary update = new Vocabulary(vocabulary.getUri());
         update.setModel(vocabulary.getModel());
         update.setGlossary(vocabulary.getGlossary());
-        update.setPrimaryLabel("Updated label");
+        setPrimaryLabel(update, "Updated label");
         // Intentionally leave ACL null, this is how it would arrive from the client
 
         transactional(() -> sut.update(update));

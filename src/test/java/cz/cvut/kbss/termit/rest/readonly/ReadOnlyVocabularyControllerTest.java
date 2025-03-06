@@ -52,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
 
-    private static final String PATH = "/public/vocabularies/";
+    private static final String PATH = "/public/vocabularies";
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Configuration configuration;
@@ -78,7 +78,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
         when(vocabularyService.findAll()).thenReturn(vocabularies);
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH)).andExpect(status().isOk()).andReturn();
-        final List<ReadOnlyVocabulary> result = readValue(mvcResult, new TypeReference<List<ReadOnlyVocabulary>>() {
+        final List<ReadOnlyVocabulary> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(vocabularies, result);
         verify(vocabularyService).findAll();
@@ -95,7 +95,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
         when(idResolver.resolveIdentifier(namespace, fragment)).thenReturn(uri);
 
         final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + fragment).param(Constants.QueryParams.NAMESPACE, namespace))
+                .perform(get(PATH + "/" + fragment).param(Constants.QueryParams.NAMESPACE, namespace))
                 .andExpect(status().isOk()).andReturn();
         final ReadOnlyVocabulary result = readValue(mvcResult, ReadOnlyVocabulary.class);
         assertEquals(vocabulary, result);
@@ -109,7 +109,7 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create("http://example.org/" + fragment));
         when(vocabularyService.findRequired(any())).thenThrow(NotFoundException.class);
 
-        mockMvc.perform(get(PATH + fragment)).andExpect(status().isNotFound());
+        mockMvc.perform(get(PATH + "/" + fragment)).andExpect(status().isNotFound());
     }
 
     @Test
@@ -125,9 +125,9 @@ class ReadOnlyVocabularyControllerTest extends BaseControllerTestRunner {
                 .collect(Collectors.toSet());
         when(vocabularyService.getTransitivelyImportedVocabularies(any())).thenReturn(imports);
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + fragment + "/imports")).andExpect(status().isOk())
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/" + fragment + "/imports")).andExpect(status().isOk())
                 .andReturn();
-        final Set<URI> result = readValue(mvcResult, new TypeReference<Set<URI>>() {
+        final Set<URI> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(imports, result);
         verify(vocabularyService).getTransitivelyImportedVocabularies(vocabulary);

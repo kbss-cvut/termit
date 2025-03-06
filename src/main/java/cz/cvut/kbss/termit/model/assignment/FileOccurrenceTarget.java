@@ -19,7 +19,11 @@ package cz.cvut.kbss.termit.model.assignment;
 
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.util.Copyable;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+
+import java.util.stream.Collectors;
 
 /**
  * Target representing the content of a file.
@@ -34,6 +38,14 @@ public class FileOccurrenceTarget extends OccurrenceTarget {
 
     public FileOccurrenceTarget(File source) {
         super(source);
+    }
+
+    @Override
+    public FileOccurrenceTarget copy() {
+        final FileOccurrenceTarget copy = new FileOccurrenceTarget();
+        copy.setSource(getSource());
+        copy.setSelectors(Utils.emptyIfNull(getSelectors()).stream().map(Copyable::copy).collect(Collectors.toSet()));
+        return copy;
     }
 
     @Override

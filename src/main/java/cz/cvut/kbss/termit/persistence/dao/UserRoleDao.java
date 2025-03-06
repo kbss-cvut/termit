@@ -21,7 +21,9 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.model.UserRole;
 import org.springframework.stereotype.Repository;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class UserRoleDao {
@@ -34,5 +36,9 @@ public class UserRoleDao {
 
     public List<UserRole> findAll() {
         return em.createQuery("SELECT r FROM " + UserRole.class.getSimpleName() + " r", UserRole.class).getResultList();
+    }
+
+    public Optional<UserRole> find(URI id) {
+        return Optional.ofNullable(em.find(UserRole.class, id));
     }
 }

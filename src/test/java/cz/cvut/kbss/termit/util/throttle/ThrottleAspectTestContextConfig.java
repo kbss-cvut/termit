@@ -7,15 +7,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import static org.mockito.Answers.RETURNS_SMART_NULLS;
 
 @TestConfiguration
-@EnableSpringConfigured
+@EnableAspectJAutoProxy
 @ImportResource("classpath*:spring-aop.xml")
-@EnableAspectJAutoProxy(proxyTargetClass = true)
 @ComponentScan(value = "cz.cvut.kbss.termit.util.throttle")
 public class ThrottleAspectTestContextConfig {
 

@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.verify;
 
@@ -86,7 +87,8 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
         assertFalse(receivedReply.get());
-        verify(webSocketExceptionHandler).messageDeliveryException(notNull(), notNull());
+        verify(webSocketExceptionHandler).delegate(notNull(), notNull());
+        verify(webSocketExceptionHandler).accessDeniedException(notNull(), notNull());
     }
 
     WebSocketHandler makeWebSocketHandler(AtomicBoolean receivedReply, AtomicBoolean receivedError) {
@@ -131,7 +133,8 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         assertTrue(receivedError.get());
         assertFalse(session.isOpen());
         assertFalse(receivedReply.get());
-        verify(webSocketExceptionHandler).messageDeliveryException(notNull(), notNull());
+        verify(webSocketExceptionHandler).delegate(notNull(), notNull());
+        verify(webSocketExceptionHandler).authenticationException(notNull(), notNull());
     }
 
     /**
@@ -167,7 +170,8 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         assertFalse(session.isOpen());
         assertFalse(receivedReply.get());
 
-        verify(webSocketExceptionHandler).messageDeliveryException(notNull(), notNull());
+        verify(webSocketExceptionHandler).delegate(notNull(), notNull());
+        verify(webSocketExceptionHandler).authenticationException(notNull(), notNull());
     }
 
     /**
@@ -186,5 +190,6 @@ class IntegrationWebSocketSecurityTest extends BaseWebSocketIntegrationTestRunne
         assertTrue(session.isConnected());
         session.disconnect();
         await().atMost(OPERATION_TIMEOUT, TimeUnit.SECONDS).until(() -> !session.isConnected());
+        verify(webSocketExceptionHandler).delegate(notNull(), isNull());
     }
 }
