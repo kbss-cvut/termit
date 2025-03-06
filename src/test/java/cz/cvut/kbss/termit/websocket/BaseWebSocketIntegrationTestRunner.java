@@ -14,7 +14,6 @@ import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.security.TermItUserDetailsService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.longrunning.LongRunningTasksRegistry;
-import cz.cvut.kbss.termit.websocket.handler.StompExceptionHandler;
 import cz.cvut.kbss.termit.websocket.handler.WebSocketExceptionHandler;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.AfterEach;
@@ -28,8 +27,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -39,6 +36,8 @@ import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketHandler;
@@ -70,13 +69,10 @@ public abstract class BaseWebSocketIntegrationTestRunner {
 
     protected Logger LOG = LoggerFactory.getLogger(this.getClass());
 
-    @SpyBean
+    @MockitoSpyBean
     protected WebSocketExceptionHandler webSocketExceptionHandler;
 
-    @SpyBean
-    protected StompExceptionHandler stompExceptionHandler;
-
-    @MockBean
+    @MockitoBean
     protected LongRunningTasksRegistry longRunningTasksRegistry;
 
     protected WebSocketStompClient stompClient;
@@ -84,10 +80,10 @@ public abstract class BaseWebSocketIntegrationTestRunner {
     @Value("ws://localhost:${local.server.port}/ws")
     protected String url;
 
-    @SpyBean
+    @MockitoSpyBean
     protected TermItUserDetailsService userDetailsService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected JwtUtils jwtUtils;
 
     protected TermItUserDetails userDetails;
@@ -106,7 +102,7 @@ public abstract class BaseWebSocketIntegrationTestRunner {
 
     @AfterEach
     protected void runnerAfterEach() {
-        verifyNoMoreInteractions(webSocketExceptionHandler, stompExceptionHandler);
+        verifyNoMoreInteractions(webSocketExceptionHandler);
     }
 
     protected class TestWebSocketSessionHandler implements WebSocketHandler {
