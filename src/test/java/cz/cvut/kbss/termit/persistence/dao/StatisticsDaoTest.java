@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.termit.dto.statistics.CountableAssetType;
 import cz.cvut.kbss.termit.dto.statistics.DistributionDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -42,5 +43,14 @@ class StatisticsDaoTest extends BaseDaoTestRunner {
         assertEquals(v.getUri(), result.get(0).getResource().getUri());
         assertEquals(Set.of(Environment.LANGUAGE, "cs"), result.get(0).getResource().getLabel().getLanguages());
         assertEquals(1, result.get(0).getCount());
+    }
+
+    @Test
+    void getAssetCountCountsItemsOfSpecifiedType() {
+        final Vocabulary v = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(v, descriptorFactory.vocabularyDescriptor(v)));
+
+        assertEquals(1, sut.getAssetCount(CountableAssetType.VOCABULARY));
+        assertEquals(0, sut.getAssetCount(CountableAssetType.USER));
     }
 }

@@ -1,6 +1,7 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.statistics.CountableAssetType;
 import cz.cvut.kbss.termit.dto.statistics.DistributionDto;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.business.StatisticsService;
@@ -13,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -37,5 +39,16 @@ public class StatisticsController {
     @GetMapping(value = "/term-distribution", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<DistributionDto> getTermDistribution() {
         return service.getTermDistribution();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets the number of assets of the given type.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Number of assets."),
+            @ApiResponse(responseCode = "400", description = "Unsupported type of asset.")
+    })
+    @GetMapping(value = "/count", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public int getCount(@RequestParam(name = "assetType") CountableAssetType assetType) {
+        return service.getAssetCount(assetType);
     }
 }
