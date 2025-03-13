@@ -12,7 +12,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
  * Represents the distribution of items w.r.t. a resource (e.g., vocabulary).
  */
 @NonEntity
-@OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/frequency")
+@OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/distribution")
 public class DistributionDto {
 
     @OWLObjectProperty(iri = DC.Terms.SUBJECT)
