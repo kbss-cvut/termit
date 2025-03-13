@@ -2,6 +2,8 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.dto.statistics.CountableAssetType;
 import cz.cvut.kbss.termit.dto.statistics.DistributionDto;
+import cz.cvut.kbss.termit.dto.statistics.TermTypeDistributionDto;
+import cz.cvut.kbss.termit.service.language.LanguageService;
 import jakarta.annotation.Nonnull;
 
 import java.util.List;
@@ -25,4 +27,13 @@ public interface StatisticsService {
      * @return Number of items
      */
     int getAssetCount(@Nonnull CountableAssetType assetType);
+
+    /**
+     * Gets statistics of distribution of types of terms in vocabularies.
+     * <p>
+     * Recognized types are taken from {@link LanguageService#getTermTypes()}
+     *
+     * @return List of distribution objects for each vocabulary
+     */
+    List<TermTypeDistributionDto> getTermTypeDistribution();
 }
