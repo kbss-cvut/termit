@@ -84,11 +84,11 @@ public class Utils {
      * <p>
      * The query should be in the query directory specified by {@link Constants#QUERY_DIRECTORY}.
      *
-     * @param queryFileName Name of the query file
+     * @param queryFilePath Path to the query file within the {@link Constants#QUERY_DIRECTORY}
      * @return Query string read from the file
      */
-    public static String loadQuery(String queryFileName) {
-        return loadClasspathResource(Constants.QUERY_DIRECTORY + "/" + queryFileName);
+    public static String loadQuery(String queryFilePath) {
+        return loadClasspathResource(Constants.QUERY_DIRECTORY + "/" + queryFilePath);
     }
 
     /**

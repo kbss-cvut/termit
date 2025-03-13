@@ -139,10 +139,9 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof RdfsResource)) {
+        if (!(o instanceof RdfsResource that)) {
             return false;
         }
-        RdfsResource that = (RdfsResource) o;
         return Objects.equals(uri, that.uri) &&
                 Objects.equals(label, that.label) &&
                 Objects.equals(types, that.types);
