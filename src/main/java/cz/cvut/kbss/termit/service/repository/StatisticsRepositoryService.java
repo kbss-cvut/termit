@@ -1,8 +1,10 @@
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.statistics.CountableAssetType;
 import cz.cvut.kbss.termit.dto.statistics.DistributionDto;
 import cz.cvut.kbss.termit.persistence.dao.StatisticsDao;
 import cz.cvut.kbss.termit.service.business.StatisticsService;
+import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,5 +23,11 @@ public class StatisticsRepositoryService implements StatisticsService {
     @Override
     public List<DistributionDto> getTermDistribution() {
         return dao.getTermDistribution();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public int getAssetCount(@Nonnull CountableAssetType assetType) {
+        return dao.getAssetCount(assetType);
     }
 }

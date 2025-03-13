@@ -5,10 +5,12 @@ PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
 PREFIX dc: <http://purl.org/dc/terms/>
 
 SELECT ?slovnik ?labelSlovniku ( COUNT(DISTINCT ?pojem) AS ?count ) {
-    ?pojem a skos:Concept ;
-        pdp:je-pojmem-ze-slovníku ?slovnik .
-        FILTER NOT EXISTS {
-            ?slovnik a pdp:verze-slovníku .
-        }
-        ?slovnik dc:title ?labelSlovniku .
+    GRAPH ?g {
+        ?pojem a skos:Concept ;
+    }
+    ?pojem pdp:je-pojmem-ze-slovníku ?slovnik .
+    FILTER NOT EXISTS {
+        ?slovnik a pdp:verze-slovníku .
+    }
+    ?slovnik dc:title ?labelSlovniku .
 } GROUP BY ?slovnik ?labelSlovniku
