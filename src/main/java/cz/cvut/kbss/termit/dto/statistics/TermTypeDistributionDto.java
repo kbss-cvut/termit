@@ -14,13 +14,13 @@ import java.util.List;
  * Distribution of types of terms in vocabularies.
  */
 @NonEntity
-@OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/term-type-distribution")
+@OWLClass(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/pojem/term-type-distribution")
 public class TermTypeDistributionDto {
 
     @OWLObjectProperty(iri = DC.Terms.SUBJECT)
     private RdfsResource vocabulary;
 
-    @OWLObjectProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/has-type-distribution")
+    @OWLObjectProperty(iri = Vocabulary.ONTOLOGY_IRI_TERMIT + "/pojem/has-type-distribution")
     private List<DistributionDto> typeDistribution = new ArrayList<>();
 
     public RdfsResource getVocabulary() {

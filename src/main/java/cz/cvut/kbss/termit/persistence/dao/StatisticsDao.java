@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 @Repository
 public class StatisticsDao {
 
+    private static final RdfsResource NO_TYPE = initNoType();
+
     private final EntityManager em;
 
     private final Configuration config;
@@ -34,6 +36,14 @@ public class StatisticsDao {
     public StatisticsDao(EntityManager em, Configuration config) {
         this.em = em;
         this.config = config;
+    }
+
+    private static RdfsResource initNoType() {
+        final RdfsResource noType = new RdfsResource(URI.create(Vocabulary.ONTOLOGY_IRI_TERMIT + "/bez-typu"),
+                                                     new LangString("Nevyplněno", "cs"), null,
+                                                     SKOS.CONCEPT);
+        noType.getLabel().set("en", "No type");
+        return noType;
     }
 
     /**
@@ -111,11 +121,8 @@ public class StatisticsDao {
     public List<TermTypeDistributionDto> getTermTypeDistribution(@Nonnull List<RdfsResource> types) {
         Objects.requireNonNull(types);
         final String query = Utils.loadQuery("statistics/termTypeDistribution.rq");
-        final RdfsResource noType = new RdfsResource(URI.create(Vocabulary.ONTOLOGY_IRI_TERMIT + "/bez-typu"),
-                                                     new LangString("Bez typu", "cs"), null,
-                                                     SKOS.CONCEPT);
         final Map<URI, RdfsResource> typeMap = types.stream().collect(Collectors.toMap(RdfsResource::getUri, r -> r));
-        typeMap.put(noType.getUri(), noType);
+        typeMap.put(NO_TYPE.getUri(), NO_TYPE);
         final List<TermTypeDistributionDto> result = (List<TermTypeDistributionDto>) em.createNativeQuery(query)
                                                                                        .setParameter("types", types)
                                                                                        .getResultStream().map(row -> {
