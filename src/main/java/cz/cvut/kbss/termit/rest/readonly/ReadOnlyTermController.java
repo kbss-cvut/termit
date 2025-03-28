@@ -202,7 +202,7 @@ public class ReadOnlyTermController extends BaseController {
     })
     @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ReadOnlyTerm> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                        example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -223,7 +223,7 @@ public class ReadOnlyTermController extends BaseController {
     })
     @GetMapping(value = "/terms/{localName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ReadOnlyTerm> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,

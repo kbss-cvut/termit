@@ -227,16 +227,18 @@ class TermControllerTest extends BaseControllerTestRunner {
         final Term term = Generator.generateTerm();
         term.setUri(termUri);
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
-        final List<Term> children = Generator.generateTermsWithIds(3);
+        final List<TermDto> children = Generator.generateTermsWithIds(3).stream().map(TermDto::new).toList();
         when(termServiceMock.findSubTerms(term)).thenReturn(children);
 
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/subterms"))
                 .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(children.size(), result.size());
         assertTrue(children.containsAll(result));
+        verify(termServiceMock).findRequired(term.getUri());
+        verify(termServiceMock).findSubTerms(term);
     }
 
     @Test
@@ -325,30 +327,6 @@ class TermControllerTest extends BaseControllerTestRunner {
         });
         assertEquals(terms, result);
         verify(termServiceMock).findAll(searchString, vocabulary);
-    }
-
-    @Test
-    void getSubTermsFindsSubTermsOfTermWithSpecifiedId() throws Exception {
-        when(idResolverMock.resolveIdentifier(config.getNamespace().getVocabulary(), VOCABULARY_NAME))
-                .thenReturn(URI.create(VOCABULARY_URI));
-        final Term parent = Generator.generateTermWithId();
-        when(idResolverMock.buildNamespace(VOCABULARY_URI, config.getNamespace().getTerm().getSeparator()))
-                .thenReturn(VOCABULARY_URI);
-        when(idResolverMock.resolveIdentifier(VOCABULARY_URI, parent.getLabel().get())).thenReturn(parent.getUri());
-        when(termServiceMock.findRequired(parent.getUri())).thenReturn(parent);
-        final List<Term> children = Generator.generateTermsWithIds(5);
-        when(termServiceMock.findSubTerms(parent)).thenReturn(children);
-
-        final MvcResult mvcResult = mockMvc
-                .perform(get(PATH + VOCABULARY_NAME + "/terms/" + parent.getLabel().get(Environment.LANGUAGE) +
-                                     "/subterms"))
-                .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
-        });
-        assertEquals(children.size(), result.size());
-        assertTrue(children.containsAll(result));
-        verify(termServiceMock).findRequired(parent.getUri());
-        verify(termServiceMock).findSubTerms(parent);
     }
 
     @Test
@@ -648,13 +626,13 @@ class TermControllerTest extends BaseControllerTestRunner {
         term.setUri(termUri);
         when(idResolverMock.resolveIdentifier(NAMESPACE, TERM_NAME)).thenReturn(termUri);
         when(termServiceMock.findRequired(term.getUri())).thenReturn(term);
-        final List<Term> children = Generator.generateTermsWithIds(3);
+        final List<TermDto> children = Generator.generateTermsWithIds(3).stream().map(TermDto::new).toList();
         when(termServiceMock.findSubTerms(term)).thenReturn(children);
 
         final MvcResult mvcResult = mockMvc
                 .perform(get("/terms/" + TERM_NAME + "/subterms").param(QueryParams.NAMESPACE, NAMESPACE))
                 .andExpect(status().isOk()).andReturn();
-        final List<Term> result = readValue(mvcResult, new TypeReference<>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(children.size(), result.size());
         assertTrue(children.containsAll(result));

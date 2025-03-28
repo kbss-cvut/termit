@@ -41,7 +41,6 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
@@ -59,14 +58,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Service for term-related business logic.
@@ -94,14 +90,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     private final LanguageService languageService;
 
-    private final Configuration config;
-
     @Autowired
     public TermService(VocabularyExporters exporters, VocabularyService vocabularyService,
                        VocabularyContextMapper vocabularyContextMapper,
                        TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
                        TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
-                       CommentService commentService, LanguageService languageService, Configuration config) {
+                       CommentService commentService, LanguageService languageService) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -111,7 +105,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         this.changeRecordService = changeRecordService;
         this.commentService = commentService;
         this.languageService = languageService;
-        this.config = config;
     }
 
     /**
@@ -355,15 +348,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return List of child terms
      */
     @PreAuthorize("@termAuthorizationService.canRead(#parent)")
-    public List<Term> findSubTerms(Term parent) {
+    public List<TermDto> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
-        return parent.getSubTerms() == null ? Collections.emptyList() :
-               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                             () -> new NotFoundException(
-                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
-                                                  Comparator.nullsLast(Comparator.naturalOrder())))
-                     .collect(Collectors.toList());
+        return repositoryService.findSubTerms(parent);
     }
 
     /**

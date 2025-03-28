@@ -349,6 +349,17 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Finds all terms which are subterms of the specified term.
+     *
+     * @param parent Parent term
+     * @return List of subterms
+     */
+    @Transactional(readOnly = true)
+    public List<TermDto> findSubTerms(Term parent) {
+        return termDao.findSubTerms(parent);
+    }
+
+    /**
      * Checks whether a term with the specified label exists in a vocabulary with the specified URI.
      *
      * @param label      Label to check

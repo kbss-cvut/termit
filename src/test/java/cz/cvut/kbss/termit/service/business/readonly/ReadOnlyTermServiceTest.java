@@ -155,21 +155,17 @@ class ReadOnlyTermServiceTest {
     }
 
     @Test
-    void findSubTermsRetrievesSubTermsOfSpecifiedTermFromServiceAndTransformsThemToReadOnlyVersion() {
-        when(configuration.getPublicView()).thenReturn(new Configuration.PublicView());
-
+    void findSubTermsRetrievesSubTermsOfSpecifiedTermFromService() {
         final Term term = Generator.generateTermWithId();
-        final List<Term> subTerms = Generator.generateTermsWithIds(3);
+        final List<TermDto> subTerms = Generator.generateTermsWithIds(3).stream().map(TermDto::new).toList();
         term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
         when(termService.findSubTerms(any())).thenReturn(subTerms);
 
-        final List<ReadOnlyTerm> result = sut.findSubTerms(new ReadOnlyTerm(term));
-        assertEquals(subTerms.stream().map(ReadOnlyTerm::new).collect(Collectors.toList()), result);
+        final List<TermDto> result = sut.findSubTerms(new ReadOnlyTerm(term));
+        assertEquals(subTerms, result);
         final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
         verify(termService).findSubTerms(captor.capture());
-        final Term arg = captor.getValue();
-        assertEquals(term.getUri(), arg.getUri());
-        assertEquals(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()), arg.getSubTerms());
+        assertEquals(term.getUri(), captor.getValue().getUri());
     }
 
     @Test
@@ -178,7 +174,8 @@ class ReadOnlyTermServiceTest {
         final Comment comment = new Comment();
         comment.setAsset(term.getUri());
         comment.setCreated(Utils.timestamp());
-        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(Collections.singletonList(comment));
+        when(termService.getComments(eq(term), any(Instant.class), any(Instant.class))).thenReturn(
+                Collections.singletonList(comment));
         final Instant from = Constants.EPOCH_TIMESTAMP;
         final Instant to = Utils.timestamp();
 
@@ -263,24 +260,5 @@ class ReadOnlyTermServiceTest {
         assertThat(result.getProperties(), hasEntry(DC.Terms.REFERENCES, term.getProperties()
                                                                              .get(DC.Terms.REFERENCES)));
         assertThat(result.getProperties(), not(hasEntry(DC.Elements.DATE, term.getProperties().get(DC.Elements.DATE))));
-    }
-
-    @Test
-    void findSubTermsPassesTermWithVocabularyToUnderlyingServiceForTermSubTermResolution() {
-        when(configuration.getPublicView()).thenReturn(new Configuration.PublicView());
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-
-        final Term term = Generator.generateTermWithId();
-        term.setVocabulary(vocabulary.getUri());
-        final List<Term> subTerms = Generator.generateTermsWithIds(3);
-        term.setSubTerms(subTerms.stream().map(TermInfo::new).collect(Collectors.toSet()));
-        when(termService.findSubTerms(any())).thenReturn(subTerms);
-
-        sut.findSubTerms(new ReadOnlyTerm(term));
-        final ArgumentCaptor<Term> captor = ArgumentCaptor.forClass(Term.class);
-        verify(termService).findSubTerms(captor.capture());
-        final Term arg = captor.getValue();
-        assertEquals(term.getUri(), arg.getUri());
-        assertEquals(term.getVocabulary(), arg.getVocabulary());
     }
 }

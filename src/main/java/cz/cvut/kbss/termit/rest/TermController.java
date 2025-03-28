@@ -445,7 +445,7 @@ public class TermController extends BaseController {
     })
     @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
@@ -467,7 +467,7 @@ public class TermController extends BaseController {
     })
     @GetMapping(value = "/terms/{localName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,

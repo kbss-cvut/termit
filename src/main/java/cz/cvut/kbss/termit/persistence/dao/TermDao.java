@@ -775,6 +775,30 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     /**
+     * Finds all terms which are subterms of the specified term.
+     *
+     * @param parent Parent term
+     * @return List of subterms
+     */
+    public List<TermDto> findSubTerms(Term parent) {
+        Objects.requireNonNull(parent);
+        try {
+            final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                                           "?term a ?type ; " +
+                                                                           "      ?hasParent ?parent . " +
+                                                                           "FILTER (?parent = ?parentUri) . " +
+                                                                           "} ORDER BY " + orderSentence("?label"),
+                                                                   TermDto.class)
+                                                .setParameter("type", typeUri)
+                                                .setParameter("hasParent", URI.create(SKOS.BROADER))
+                                                .setParameter("parentUri", parent.getUri());
+            return executeQueryAndLoadSubTerms(query);
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
      * Checks whether a term with the specified label exists in a vocabulary with the specified URI.
      * <p>
      * Note that this method uses comparison ignoring case, so that two labels differing just in character case are

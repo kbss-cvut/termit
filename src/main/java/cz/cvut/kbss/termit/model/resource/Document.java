@@ -108,11 +108,6 @@ public class Document extends Resource implements SupportsStorage {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getUri());
-    }
-
-    @Override
     public String toString() {
         return "Document{" +
                 "uri=" + getUri() +
