@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.persistence;
 
 import cz.cvut.kbss.jopa.Persistence;
 import cz.cvut.kbss.jopa.model.EntityManagerFactory;
+import cz.cvut.kbss.jopa.model.JOPAPersistenceProperties;
 import cz.cvut.kbss.jopa.model.JOPAPersistenceProvider;
 import cz.cvut.kbss.ontodriver.config.OntoDriverProperties;
 import cz.cvut.kbss.ontodriver.rdf4j.config.Rdf4jOntoDriverProperties;
@@ -77,6 +78,7 @@ public class MainPersistenceFactory {
         }
         // OPTIMIZATION: Always use statement retrieval with unbound property. Should spare repository queries
         properties.put(Rdf4jOntoDriverProperties.LOAD_ALL_THRESHOLD, "1");
+        properties.put(JOPAPersistenceProperties.LRU_CACHE_CAPACITY, "32768");
         this.emf = Persistence.createEntityManagerFactory("termitPU", properties);
     }
 
