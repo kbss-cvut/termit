@@ -61,13 +61,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.util.Constants.DEFAULT_PAGE_SIZE;
@@ -326,14 +323,14 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     }
 
     /**
-     * Checks whether terms from the {@code subjectVocabulary} reference (as parent terms) any terms from the
+     * Checks whether terms from the {@code subjectVocabulary} reference as parent terms any terms from the
      * {@code targetVocabulary}.
      *
      * @param subjectVocabulary Subject vocabulary identifier
      * @param targetVocabulary  Target vocabulary identifier
      * @return Whether subject vocabulary terms reference target vocabulary terms
      */
-    public boolean hasInterVocabularyTermRelationships(URI subjectVocabulary, URI targetVocabulary) {
+    public boolean hasHierarchyBetweenTerms(URI subjectVocabulary, URI targetVocabulary) {
         Objects.requireNonNull(subjectVocabulary);
         Objects.requireNonNull(targetVocabulary);
         return em.createNativeQuery("ASK WHERE {" +
@@ -393,8 +390,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                 .setParameter("type", URI.create(
                         cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity)).getResultList();
         updates.forEach(u -> u.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_uprava_entity));
-        final List<AggregatedChangeInfo> deletitions =  createContentChangesQuery(vocabulary)
-                .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity)).getResultList();
+        final List<AggregatedChangeInfo> deletitions = createContentChangesQuery(vocabulary)
+                .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity))
+                .getResultList();
         deletitions.forEach(d -> d.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_smazani_entity));
         return Stream.of(persists, updates, deletitions)
                      .flatMap(List::stream)
@@ -409,7 +407,8 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
      * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
+                                                                  Pageable pageReq) {
         Objects.requireNonNull(vocabulary);
         return changeRecordDao.findAllRelatedToType(vocabulary, filter, URI.create(SKOS.CONCEPT), pageReq);
     }
@@ -471,57 +470,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
         return new AssetSnapshotLoader<Vocabulary>(em, typeUri, URI.create(
                 cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku))
                 .findVersionValidAt(vocabulary, at);
-    }
-
-    /**
-     * Gets a set of identifiers of vocabularies that are related to the specified root vocabulary.
-     * <p>
-     * The relatedness is given by either a vocabulary explicitly importing another vocabulary or by any of the terms it
-     * contains being in one of the specified relationships with a term from another vocabulary.
-     * <p>
-     * This mapping is cascaded until no more related vocabulary are found.
-     * <p>
-     * Note that the result contains also the identifier of the specified vocabulary.
-     *
-     * @param rootVocabulary    Identifier of the vocabulary to start from
-     * @param termRelationships Inter-term relationships to be taken into account
-     * @return A set of related vocabulary identifiers
-     */
-    public Set<URI> getRelatedVocabularies(Vocabulary rootVocabulary, Collection<URI> termRelationships) {
-        Objects.requireNonNull(rootVocabulary);
-        Objects.requireNonNull(termRelationships);
-
-        final List<URI> result = new ArrayList<>();
-        result.add(rootVocabulary.getUri());
-        // Using old-school iteration to prevent concurrent modification issues when adding items to list under iteration
-        for (int i = 0; i < result.size(); i++) {
-            final Set<URI> toAdd = new HashSet<>(em.createNativeQuery("""
-                                                                              SELECT DISTINCT ?v WHERE {
-                                                                                  ?t a ?term ;
-                                                                                     ?inVocabulary ?vocabulary ;
-                                                                                     ?y ?z .
-                                                                                  ?z a ?term ;
-                                                                                     ?inVocabulary ?v .
-                                                                                  FILTER (?v != ?vocabulary)
-                                                                                  FILTER (?y IN (?cascadingRelationships))
-                                                                              }""", URI.class)
-                                                   .setParameter("term", URI.create(SKOS.CONCEPT))
-                                                   .setParameter("inVocabulary",
-                                                                 URI.create(
-                                                                         cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
-                                                   .setParameter("vocabulary", result.get(i))
-                                                   .setParameter("cascadingRelationships", termRelationships)
-                                                   .getResultList());
-            // Explicitly imported vocabularies (it is likely they were already added due to term relationships, but just
-            // to be sure)
-            toAdd.addAll(em.createNativeQuery("SELECT DISTINCT ?imported WHERE { ?v ?imports ?imported . }", URI.class)
-                           .setParameter("imports",
-                                         URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
-                           .setParameter("v", result.get(i)).getResultList());
-            result.forEach(toAdd::remove);
-            result.addAll(toAdd);
-        }
-        return new HashSet<>(result);
     }
 
     /**

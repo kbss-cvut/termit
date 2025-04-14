@@ -23,22 +23,26 @@ import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
-import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.persistence.relationship.VocabularyRelationshipResolver;
 import cz.cvut.kbss.termit.util.Utils;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Objects;
-import java.util.Set;
+import java.util.stream.Stream;
 
 @Component
 public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
+
+    private final VocabularyRelationshipResolver relationshipResolver;
 
     private final VocabularyDao vocabularyDao;
 
     private final EntityManager em;
 
-    public CascadingVocabularySnapshotRemover(VocabularyDao vocabularyDao, EntityManager em) {
+    public CascadingVocabularySnapshotRemover(VocabularyRelationshipResolver relationshipResolver,
+                                              VocabularyDao vocabularyDao, EntityManager em) {
+        this.relationshipResolver = relationshipResolver;
         this.vocabularyDao = vocabularyDao;
         this.em = em;
     }
@@ -46,22 +50,23 @@ public class CascadingVocabularySnapshotRemover implements SnapshotRemover {
     @Override
     public void removeSnapshot(Snapshot snapshot) {
         Objects.requireNonNull(snapshot);
-        ensureAssetType(snapshot);
-        final Vocabulary toRemove = vocabularyDao.getReference(snapshot.getUri());
-        if (!toRemove.isSnapshot()) {
-            throw new UnsupportedOperationException("Vocabulary " + toRemove + " is not a snapshot.");
-        }
-        final Set<URI> snapshotsToRemove = vocabularyDao.getRelatedVocabularies(toRemove,
-                                                                                Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS);
-        snapshotsToRemove.forEach(snapshotUri -> {
+        ensureCanRemove(snapshot);
+        Stream.concat(
+                Stream.of(snapshot.getUri()),
+                relationshipResolver.getRelatedVocabularies(snapshot.getUri()).stream()
+        ).forEach(snapshotUri -> {
             final URI ctx = resolveSnapshotContext(snapshotUri);
             clearContext(ctx);
         });
     }
 
-    private void ensureAssetType(Snapshot snapshot) {
+    private void ensureCanRemove(Snapshot snapshot) {
         if (!Utils.emptyIfNull(snapshot.getTypes()).contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku)) {
             throw new UnsupportedAssetOperationException("Only removal of vocabulary snapshots is supported.");
+        }
+        final Vocabulary toRemove = vocabularyDao.getReference(snapshot.getUri());
+        if (!toRemove.isSnapshot()) {
+            throw new UnsupportedOperationException("Vocabulary " + toRemove + " is not a snapshot.");
         }
     }
 

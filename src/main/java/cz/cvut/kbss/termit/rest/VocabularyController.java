@@ -176,8 +176,7 @@ public class VocabularyController extends BaseController {
                                                  example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getReference(
-                resolveVocabularyUri(localName, namespace));
+        final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
 

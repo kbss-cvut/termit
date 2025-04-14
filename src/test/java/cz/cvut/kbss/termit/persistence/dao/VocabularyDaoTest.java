@@ -266,7 +266,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void hasInterVocabularyTermRelationshipsReturnsFalseForVocabulariesWithoutSKOSRelatedTerms() {
+    void hasHierarchyBetweenTermsReturnsFalseForVocabulariesWithoutSKOSRelatedTerms() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
         transactional(() -> {
@@ -274,11 +274,11 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
         });
 
-        assertFalse(sut.hasInterVocabularyTermRelationships(subjectVocabulary.getUri(), targetVocabulary.getUri()));
+        assertFalse(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
     }
 
     @Test
-    void hasInterVocabularyTermRelationshipsReturnsTrueForSKOSRelatedTermsInSpecifiedVocabularies() {
+    void hasHierarchyBetweenTermsReturnsTrueForSKOSRelatedTermsInSpecifiedVocabularies() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
         subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
@@ -298,11 +298,11 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
 
-        assertTrue(sut.hasInterVocabularyTermRelationships(subjectVocabulary.getUri(), targetVocabulary.getUri()));
+        assertTrue(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
     }
 
     @Test
-    void hasInterVocabularyTermRelationshipsReturnsTrueForSKOSRelatedTermsInTransitivelyImportedVocabularies() {
+    void hasHierarchyBetweenTermsReturnsTrueForSKOSRelatedTermsInTransitivelyImportedVocabularies() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary transitiveVocabulary = Generator.generateVocabularyWithId();
@@ -325,7 +325,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(parentTerm, transitiveVocabulary.getUri(), em);
         });
 
-        assertTrue(sut.hasInterVocabularyTermRelationships(subjectVocabulary.getUri(), targetVocabulary.getUri()));
+        assertTrue(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
     }
 
     @Test
