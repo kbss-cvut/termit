@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.persistence.snapshot;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.persistence.relationship.VocabularyRelationshipResolver;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
@@ -32,8 +32,9 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static cz.cvut.kbss.termit.util.Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
 import static cz.cvut.kbss.termit.util.Utils.uriToString;
 
 /**
@@ -50,16 +51,16 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
 
     private final EntityManager em;
 
-    private final VocabularyDao vocabularyDao;
+    private final VocabularyRelationshipResolver relationshipResolver;
 
     private final String snapshotVocabularyQuery;
     private final String snapshotTermQuery;
 
     public CascadingSnapshotCreator(Configuration configuration, EntityManager em,
-                                    VocabularyDao vocabularyDao) {
+                                    VocabularyRelationshipResolver relationshipResolver) {
         super(configuration);
         this.em = em;
-        this.vocabularyDao = vocabularyDao;
+        this.relationshipResolver = relationshipResolver;
         this.snapshotVocabularyQuery = Utils.loadQuery("snapshot/vocabulary.ru");
         this.snapshotTermQuery = Utils.loadQuery("snapshot/term.ru");
     }
@@ -85,7 +86,9 @@ public class CascadingSnapshotCreator extends SnapshotCreator {
 
     private Set<URI> resolveVocabulariesToSnapshot(Vocabulary root) {
         LOG.trace("Resolving vocabularies to snapshot, starting from {}.", root);
-        final Set<URI> toSnapshot = vocabularyDao.getRelatedVocabularies(root, SKOS_CONCEPT_MATCH_RELATIONSHIPS);
+        final Set<URI> toSnapshot = Stream.concat(Stream.of(root.getUri()),
+                                                  relationshipResolver.getRelatedVocabularies(root.getUri()).stream())
+                                          .collect(Collectors.toSet());
         LOG.trace("Found {} vocabularies to snapshot: {}", toSnapshot.size(), toSnapshot);
         return toSnapshot;
     }

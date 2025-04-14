@@ -37,6 +37,7 @@ import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
+import cz.cvut.kbss.termit.persistence.relationship.VocabularyRelationshipResolver;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
@@ -105,6 +106,8 @@ public class VocabularyService
 
     private final VocabularyAuthorizationService authorizationService;
 
+    private final VocabularyRelationshipResolver relationshipResolver;
+
     private final ApplicationContext context;
 
     private ApplicationEventPublisher eventPublisher;
@@ -115,6 +118,7 @@ public class VocabularyService
                              VocabularyContextMapper contextMapper,
                              AccessControlListService aclService,
                              VocabularyAuthorizationService authorizationService,
+                             VocabularyRelationshipResolver relationshipResolver,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
         this.changeRecordService = changeRecordService;
@@ -122,6 +126,7 @@ public class VocabularyService
         this.contextMapper = contextMapper;
         this.aclService = aclService;
         this.authorizationService = authorizationService;
+        this.relationshipResolver = relationshipResolver;
         this.context = context;
     }
 
@@ -215,7 +220,7 @@ public class VocabularyService
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#entity)")
     public Set<URI> getRelatedVocabularies(Vocabulary entity) {
-        return repositoryService.getRelatedVocabularies(entity);
+        return relationshipResolver.getRelatedVocabularies(entity.getUri());
     }
 
     /**
@@ -310,14 +315,17 @@ public class VocabularyService
                      .map(f -> (TypeAwareResource) new TypeAwareFileSystemResource(f,
                                                                                    ExportFormat.EXCEL.getMediaType()))
                      .orElseGet(() -> {
-                         assert getClass().getClassLoader().getResource("template/" + fileName + ExportFormat.EXCEL.getFileExtension()) != null;
-                         return new TypeAwareClasspathResource("template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
-                                                               ExportFormat.EXCEL.getMediaType());
+                         assert getClass().getClassLoader().getResource(
+                                 "template/" + fileName + ExportFormat.EXCEL.getFileExtension()) != null;
+                         return new TypeAwareClasspathResource(
+                                 "template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
+                                 ExportFormat.EXCEL.getMediaType());
                      });
     }
 
     /**
      * Gets an Excel template file that can be used to import term translations into TermIt.
+     *
      * @return Template file as a resource
      */
     public TypeAwareResource getExcelTranslationsImportTemplateFile() {
@@ -369,12 +377,12 @@ public class VocabularyService
         final List<TermDto> allTerms = termService.findAllWithDefinition(vocabulary);
         getTransitivelyImportedVocabularies(vocabulary)
                 .forEach(importedVocabulary ->
-                        allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
+                                 allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
 
         final Map<URI, List<AbstractTerm>> contextToTerms = new HashMap<>(allTerms.size());
         allTerms.forEach(t -> contextToTerms
                 .computeIfAbsent(contextMapper.getVocabularyContext(t.getVocabulary()),
-                        k -> new ArrayList<>())
+                                 k -> new ArrayList<>())
                 .add(t)
         );
         termService.analyzeTermDefinitions(contextToTerms);
