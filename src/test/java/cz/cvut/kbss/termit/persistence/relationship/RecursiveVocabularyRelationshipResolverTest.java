@@ -9,12 +9,14 @@ import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.dao.BaseDaoTestRunner;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.net.URI;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@ActiveProfiles("ontographer")
 class RecursiveVocabularyRelationshipResolverTest extends BaseDaoTestRunner {
 
     @Autowired

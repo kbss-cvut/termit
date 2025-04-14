@@ -22,7 +22,6 @@ import jakarta.annotation.Nonnull;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -279,7 +278,7 @@ public class ExcelImporter implements VocabularyImporter {
         }
     }
 
-    private List<Term> readTermsFromSheet(@NotNull ImportInput data) throws IOException {
+    private List<Term> readTermsFromSheet(@Nonnull ImportInput data) throws IOException {
         List<Term> terms = Collections.emptyList();
         for (InputStream input : data.data()) {
             final Workbook workbook = new XSSFWorkbook(input);
