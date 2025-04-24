@@ -29,11 +29,10 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
-import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
@@ -69,12 +68,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     private final VocabularyRepositoryService vocabularyService;
 
-    private final TermOccurrenceDao termOccurrenceDao;
+    private final TermOccurrenceService termOccurrenceService;
 
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver,
                                  Configuration config, TermDao termDao,
                                  OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
-                                 TermOccurrenceDao termOccurrenceDao,
+                                 TermOccurrenceService termOccurrenceService,
                                  VocabularyRepositoryService vocabularyService) {
         super(validator);
         this.idResolver = idResolver;
@@ -82,7 +81,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         this.termDao = termDao;
         this.orphanedRelationshipRemover = orphanedRelationshipRemover;
         this.vocabularyService = vocabularyService;
-        this.termOccurrenceDao = termOccurrenceDao;
+        this.termOccurrenceService = termOccurrenceService;
     }
 
     @Override
@@ -391,40 +390,6 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Retrieves aggregated information about the specified Term's occurrences in Resources and other Terms
-     * definitions.
-     *
-     * @param instance Term whose occurrence data should be retrieved
-     * @return Aggregated Term occurrence data
-     */
-    @Transactional(readOnly = true)
-    public List<TermOccurrences> getOccurrenceInfo(Term instance) {
-        return termOccurrenceDao.getOccurrenceInfo(instance);
-    }
-
-    /**
-     * Gets definitionally related terms of the specified term.
-     *
-     * @param instance Term to search from
-     * @return List of definitionally related terms of the specified term
-     */
-    @Transactional(readOnly = true)
-    public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
-        return termOccurrenceDao.findAllTargeting(instance);
-    }
-
-    /**
-     * Gets definitionally related terms of the specified term.
-     *
-     * @param instance Term to search from
-     * @return List of definitionally related terms of the specified term
-     */
-    @Transactional(readOnly = true)
-    public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
-        return termOccurrenceDao.findAllDefinitionalOf(instance);
-    }
-
-    /**
      * Gets the identifier of a vocabulary to which a term with the specified id belongs.
      *
      * @param termId Term identifier
@@ -451,7 +416,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     protected void preRemove(@Nonnull Term instance) {
         super.preRemove(instance);
-        final List<TermOccurrences> occurrences = getOccurrenceInfo(instance).stream().filter(to -> !to.isSuggested()).toList();
+        final List<TermOccurrences> occurrences = termOccurrenceService.getOccurrenceInfo(instance).stream()
+                                                                       .filter(to -> !to.isSuggested()).toList();
         if (!occurrences.isEmpty()) {
             throw annotationsExistException(occurrences);
         }
@@ -503,6 +469,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
             v.getGlossary().removeRootTerm(instance);
         }
+        // TODO remove all occurrences of the removed term. They are suggested (see preRemove)
     }
 
     /**
