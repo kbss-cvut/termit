@@ -451,9 +451,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Override
     protected void preRemove(@Nonnull Term instance) {
         super.preRemove(instance);
-        final List<TermOccurrences> ai = getOccurrenceInfo(instance);
-        if (!ai.isEmpty()) {
-            throw annotationsExistException(ai);
+        final List<TermOccurrences> occurrences = getOccurrenceInfo(instance).stream().filter(to -> !to.isSuggested()).toList();
+        if (!occurrences.isEmpty()) {
+            throw annotationsExistException(occurrences);
         }
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {

@@ -87,18 +87,24 @@ public class TermOccurrences extends AbstractAssignmentsInfo {
         this.count = count;
     }
 
+    /**
+     * Returns true if the occurrences are suggested.
+     */
+    public boolean isSuggested() {
+        return hasType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TermOccurrences)) {
+        if (!(o instanceof TermOccurrences that)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        TermOccurrences that = (TermOccurrences) o;
         return Objects.equals(resourceLabel, that.resourceLabel) && Objects.equals(count, that.count);
     }
 

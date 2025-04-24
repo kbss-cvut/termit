@@ -76,10 +76,9 @@ abstract class AbstractAssignmentsInfo implements HasTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractAssignmentsInfo)) {
+        if (!(o instanceof AbstractAssignmentsInfo that)) {
             return false;
         }
-        AbstractAssignmentsInfo that = (AbstractAssignmentsInfo) o;
         return Objects.equals(term, that.term) &&
                 Objects.equals(resource, that.resource) &&
                 Objects.equals(types, that.types);
