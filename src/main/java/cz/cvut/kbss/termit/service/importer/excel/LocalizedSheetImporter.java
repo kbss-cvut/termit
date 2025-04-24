@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2025 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.importer.excel;
 
 import com.neovisionaries.i18n.LanguageCode;
@@ -30,6 +47,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -223,29 +241,33 @@ class LocalizedSheetImporter {
     }
 
     private void setParentTerms(Term term, Set<String> parents) {
-        parents.forEach(parentIdentification -> {
-            final Term parent = getTerm(parentIdentification);
-            if (parent == null) {
-                LOG.warn("No parent term with label or identifier '{}' found for term '{}'.", parentIdentification,
-                         term.getLabel().get(langTag));
-            } else {
-                term.addParentTerm(parent);
-            }
-        });
+        parents.forEach(parentIdentification -> getReferencedTerm(parentIdentification, SKOS.BROADER, term).ifPresent(
+                term::addParentTerm));
+    }
+
+    private Optional<Term> getReferencedTerm(String identification, String relationship, Term subject) {
+        final Term referenced = getTerm(identification);
+        if (referenced == null) {
+            LOG.warn("No term identified by '{}' found for term '{}' and relationship <{}>.", identification,
+                     subject.getLabel().get(langTag), relationship);
+            return Optional.empty();
+        }
+        if ((subject.getUri() != null && Objects.equals(referenced.getUri(), subject.getUri()))
+                || Objects.equals(referenced.getLabel(langTag), subject.getLabel(langTag))) {
+            LOG.trace("Skipping self-reference for term '{}' and relationship <{}>.", subject.getLabel().get(langTag),
+                      relationship);
+            return Optional.empty();
+        }
+        return Optional.of(referenced);
     }
 
     private void mapSkosRelated(Term subject, Set<String> objects) {
         final URI propertyUri = URI.create(SKOS.RELATED);
         objects.forEach(object -> {
             try {
-                final Term objectTerm = getTerm(object);
-                if (objectTerm == null) {
-                    LOG.warn("No term identified by '{}' found for term '{}' and relationship <{}>.", object,
-                             subject.getLabel().get(langTag), SKOS.RELATED);
-                } else {
-                    // Term IDs may not be generated, yet
-                    rawDataToInsert.add(new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm));
-                }
+                getReferencedTerm(object, SKOS.RELATED, subject)
+                        .ifPresent(objectTerm -> rawDataToInsert.add(
+                                new ExcelImporter.TermRelationship(subject, propertyUri, objectTerm)));
             } catch (IllegalArgumentException e) {
                 LOG.warn("Could not create URI for value '{}' and it does not reference another term by label either",
                          object);
@@ -265,7 +287,9 @@ class LocalizedSheetImporter {
 
     private void mapSkosMatchProperties(Term subject, String property, Set<String> objects) {
         final URI propertyUri = URI.create(property);
-        objects.stream().map(id -> URI.create(prefixMap.resolvePrefixed(id))).filter(termRepositoryService::exists)
+        objects.stream().map(id -> URI.create(prefixMap.resolvePrefixed(id)))
+               .filter(uri -> !Objects.equals(uri, subject.getUri()))    // Prevent self-referencing
+               .filter(termRepositoryService::exists)
                .forEach(uri -> rawDataToInsert.add(
                        new ExcelImporter.TermRelationship(subject, propertyUri, new Term(uri))));
     }

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -105,11 +105,6 @@ public class Document extends Resource implements SupportsStorage {
             return false;
         }
         return Objects.equals(getUri(), document.getUri());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getUri());
     }
 
     @Override

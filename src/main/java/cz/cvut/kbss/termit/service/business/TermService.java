@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,6 @@ import cz.cvut.kbss.termit.service.export.VocabularyExporters;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
@@ -59,14 +58,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Service for term-related business logic.
@@ -94,14 +90,12 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
 
     private final LanguageService languageService;
 
-    private final Configuration config;
-
     @Autowired
     public TermService(VocabularyExporters exporters, VocabularyService vocabularyService,
                        VocabularyContextMapper vocabularyContextMapper,
                        TermRepositoryService repositoryService, TextAnalysisService textAnalysisService,
                        TermOccurrenceService termOccurrenceService, ChangeRecordService changeRecordService,
-                       CommentService commentService, LanguageService languageService, Configuration config) {
+                       CommentService commentService, LanguageService languageService) {
         this.exporters = exporters;
         this.vocabularyService = vocabularyService;
         this.vocabularyContextMapper = vocabularyContextMapper;
@@ -111,7 +105,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         this.changeRecordService = changeRecordService;
         this.commentService = commentService;
         this.languageService = languageService;
-        this.config = config;
     }
 
     /**
@@ -355,15 +348,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return List of child terms
      */
     @PreAuthorize("@termAuthorizationService.canRead(#parent)")
-    public List<Term> findSubTerms(Term parent) {
+    public List<TermDto> findSubTerms(Term parent) {
         Objects.requireNonNull(parent);
-        return parent.getSubTerms() == null ? Collections.emptyList() :
-               parent.getSubTerms().stream().map(u -> repositoryService.find(u.getUri()).orElseThrow(
-                             () -> new NotFoundException(
-                                     "Child of term " + parent + " with id " + u.getUri() + " not found!")))
-                     .sorted(Comparator.comparing((Term t) -> t.getLabel().get(config.getPersistence().getLanguage()),
-                                                  Comparator.nullsLast(Comparator.naturalOrder())))
-                     .collect(Collectors.toList());
+        return repositoryService.findSubTerms(parent);
     }
 
     /**
@@ -372,10 +359,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term Term whose occurrences to retrieve
      * @return List of term occurrences describing instances
      */
-    @PreAuthorize("@termAuthorizationService.canRead(#term)")
     public List<TermOccurrences> getOccurrenceInfo(Term term) {
-        Objects.requireNonNull(term);
-        return repositoryService.getOccurrenceInfo(term);
+        return termOccurrenceService.getOccurrenceInfo(term);
     }
 
     /**
@@ -429,6 +414,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return The updated term
      */
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
+    @Transactional
     public Term update(Term term) {
         Objects.requireNonNull(term);
         final Term original = repositoryService.findRequired(term.getUri());
@@ -500,8 +486,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param instance Term in whose definition to search for related terms
      * @return List of term occurrences in the specified term's definition
      */
+    @PreAuthorize("@termAuthorizationService.canRead(#instance)")
     public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
-        return repositoryService.getDefinitionallyRelatedTargeting(instance);
+        return termOccurrenceService.findAllTargeting(instance);
     }
 
     /**
@@ -511,7 +498,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return List of definitional occurrences of the specified term
      */
     public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
-        return repositoryService.getDefinitionallyRelatedOf(instance);
+        return termOccurrenceService.findAllDefinitionalOf(instance);
     }
 
     /**

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -172,7 +172,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                                                  Constants.DEFAULT_DOCUMENT_IRI_COMPONENT));
         doc.setLabel(
                 new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
-                        getPrimaryLabel(vocabulary)));
+                                                                                          getPrimaryLabel(vocabulary)));
         vocabulary.setDocument(doc);
     }
 
@@ -195,7 +195,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         final Set<URI> removedImports = new HashSet<>(Utils.emptyIfNull(original.getImportedVocabularies()));
         removedImports.removeAll(Utils.emptyIfNull(update.getImportedVocabularies()));
         final Set<URI> invalid = removedImports.stream().filter(ri -> vocabularyDao
-                .hasInterVocabularyTermRelationships(update.getUri(), ri)).collect(
+                .hasHierarchyBetweenTerms(update.getUri(), ri)).collect(
                 Collectors.toSet());
         if (!invalid.isEmpty()) {
             throw new VocabularyImportException("Cannot remove imports of vocabularies " + invalid +
@@ -216,10 +216,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao.getTransitivelyImportedVocabularies(entity.getUri());
     }
 
-    public Set<URI> getRelatedVocabularies(Vocabulary entity) {
-        return vocabularyDao.getRelatedVocabularies(entity, Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS);
-    }
-
     @Transactional(readOnly = true)
     public List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary) {
         return vocabularyDao.getChangesOfContent(vocabulary);
@@ -229,11 +225,12 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq Specification of the size and number of the page to return
+     * @param pageReq    Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
     @Transactional(readOnly = true)
-    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter, Pageable pageReq) {
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
+                                                                  Pageable pageReq) {
         return vocabularyDao.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
@@ -283,7 +280,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         Objects.requireNonNull(file);
         try {
             String contentType = resolveContentType(file);
-            return importers.importTermTranslations(vocabularyIri, new VocabularyImporter.ImportInput(contentType, file.getInputStream()));
+            return importers.importTermTranslations(vocabularyIri, new VocabularyImporter.ImportInput(contentType,
+                                                                                                      file.getInputStream()));
         } catch (VocabularyImportException e) {
             throw e;
         } catch (Exception e) {
@@ -345,12 +343,14 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * Ensures there are no terms in other vocabularies with a relation to any term in this {@code vocabulary}
      *
      * @param vocabulary The vocabulary
-     * @throws AssetRemovalException when there is a vocabulary with a term and relation to a term in the {@code vocabulary}
+     * @throws AssetRemovalException when there is a vocabulary with a term and relation to a term in the
+     *                               {@code vocabulary}
      */
     private void ensureNoTermRelationsExists(Vocabulary vocabulary) throws AssetRemovalException {
         final List<RdfsStatement> relations = vocabularyDao.getTermRelations(vocabulary);
         if (!relations.isEmpty()) {
-            throw new AssetRemovalException("Vocabulary cannot be removed. There are relations with other vocabularies.");
+            throw new AssetRemovalException(
+                    "Vocabulary cannot be removed. There are relations with other vocabularies.");
         }
     }
 

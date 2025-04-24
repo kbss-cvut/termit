@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +21,10 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.ResourceExistsException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.ValidationException;
@@ -32,9 +32,10 @@ import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.Vocabulary;
+import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
-import cz.cvut.kbss.termit.model.resource.Document;
-import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Constants;
@@ -50,7 +51,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -60,6 +61,7 @@ import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -324,31 +326,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         t.getLabel().remove(Environment.LANGUAGE);
         assertThrows(ValidationException.class, () -> sut.update(t));
-    }
-
-    @Test
-    void getOccurrenceInfoRetrievesAggregatedOccurrenceData() {
-        final Term t = Generator.generateTermWithId();
-        t.setVocabulary(vocabulary.getUri());
-
-        final File file = Generator.generateFileWithId("test.html");
-        final Document document = Generator.generateDocumentWithId();
-        document.addFile(file);
-        final TermOccurrence occurrence = Generator.generateTermOccurrence(t, file, false);
-        transactional(() -> {
-            enableRdfsInference(em);
-            em.persist(document);
-            em.persist(t);
-            em.persist(file);
-            em.persist(occurrence.getTarget());
-            em.persist(occurrence);
-        });
-
-        final List<TermOccurrences> result = sut.getOccurrenceInfo(t);
-        assertEquals(1, result.size());
-        assertEquals(t.getUri(), result.get(0).getTerm());
-        assertEquals(document.getUri(), result.get(0).getResource());
-        assertEquals(document.getLabel(), result.get(0).getResourceLabel());
     }
 
     @Test
@@ -781,5 +758,48 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
                       .setParameter("glossary", vocabulary.getGlossary())
                       .setParameter("hasTopConcept", URI.create(SKOS.HAS_TOP_CONCEPT))
                       .setParameter("term", term).getSingleResult());
+    }
+
+    @Test
+    void removeThrowsAssetRemovalExceptionWhenTermIsReferencedByConfirmedOccurrences() {
+        enableRdfsInference(em);
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        vocabulary.getGlossary().addRootTerm(toRemove);
+        final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
+        vocabulary.getGlossary().addRootTerm(referencing);
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
+        occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
+            em.persist(referencing, descriptorFactory.termDescriptor(referencing));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(occ);
+            em.persist(occ.getTarget());
+        });
+
+        final AssetRemovalException ex = assertThrows(AssetRemovalException.class, () -> sut.remove(toRemove));
+        assertEquals(ex.getMessageId(), "error.term.remove.annotationsExist");
+    }
+
+    @Test
+    void removeRemoveTermWhenItsOccurrencesAreOnlySuggested() {
+        enableRdfsInference(em);
+        final Term toRemove = Generator.generateTermWithId(vocabulary.getUri());
+        vocabulary.getGlossary().addRootTerm(toRemove);
+        final Term referencing = Generator.generateTermWithId(vocabulary.getUri());
+        vocabulary.getGlossary().addRootTerm(referencing);
+        final TermOccurrence occ = new TermDefinitionalOccurrence(toRemove.getUri(), new DefinitionalOccurrenceTarget(referencing));
+        occ.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_navrzeny_vyskyt_termu);
+        occ.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 10)));
+        transactional(() -> {
+            em.persist(toRemove, descriptorFactory.termDescriptor(toRemove));
+            em.persist(referencing, descriptorFactory.termDescriptor(referencing));
+            em.merge(vocabulary.getGlossary(), descriptorFactory.glossaryDescriptor(vocabulary));
+            em.persist(occ);
+            em.persist(occ.getTarget());
+        });
+
+        assertDoesNotThrow(() -> sut.remove(toRemove));
+        assertNull(em.find(Term.class, toRemove.getUri()));
     }
 }

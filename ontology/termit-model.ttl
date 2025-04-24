@@ -162,7 +162,7 @@ termit:model  a         owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slovn
         <http://purl.org/dc/terms/created>
                 "2020-05-26" ;
         <http://purl.org/dc/terms/creator>
-                "Michal Med" , " Martin Ledvinka" ;
+                "Michal Med" , "Martin Ledvinka" ;
         <http://purl.org/dc/terms/title>
                 "Vocabulary of system TermIt - model"@en , "Slovník systému TermIt - model"@cs ;
         <http://purl.org/ontology/bibo/status>

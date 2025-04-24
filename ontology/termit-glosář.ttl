@@ -106,7 +106,7 @@ termit:glosář  a        owl:Ontology , <http://www.w3.org/2004/02/skos/core#Co
         <http://purl.org/dc/terms/created>
                 "2020-05-26" ;
         <http://purl.org/dc/terms/creator>
-                " Martin Ledvinka" , "Michal Med" ;
+                "Martin Ledvinka" , "Michal Med" ;
         <http://purl.org/dc/terms/title>
                 "Vocabulary of system TermIt - glossary"@en , "Slovník systému TermIt - glosář"@cs ;
         <http://purl.org/ontology/bibo/status>

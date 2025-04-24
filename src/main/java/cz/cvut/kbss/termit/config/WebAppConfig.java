@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@ import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.jsonld.jackson.JsonLdModule;
 import cz.cvut.kbss.jsonld.jackson.serialization.SerializationConstants;
 import cz.cvut.kbss.termit.rest.servlet.DiagnosticsContextFilter;
-import cz.cvut.kbss.termit.util.AdjustedUriTemplateProxyServlet;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.json.MultilingualStringDeserializer;
 import cz.cvut.kbss.termit.util.json.MultilingualStringSerializer;
@@ -50,25 +49,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerTypePredicate;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
-import org.springframework.web.servlet.mvc.ServletWrappingController;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Map;
-import java.util.Properties;
 
 @Configuration
 public class WebAppConfig implements WebMvcConfigurer {
 
-    private final cz.cvut.kbss.termit.util.Configuration config;
-
     @Value("${application.version:development}")
     private String version;
-
-    public WebAppConfig(cz.cvut.kbss.termit.util.Configuration config) {
-        this.config = config;
-    }
 
     /**
      * Creates an {@link ObjectMapper} for processing regular JSON.
@@ -120,39 +109,6 @@ public class WebAppConfig implements WebMvcConfigurer {
     @Bean(name = "jsonLdMapper")
     public ObjectMapper jsonLdObjectMapper() {
         return createJsonLdObjectMapper();
-    }
-
-    /**
-     * Register the proxy for SPARQL endpoint.
-     *
-     * @return Returns the ServletWrappingController for the SPARQL endpoint.
-     */
-    @Bean(name = "sparqlEndpointProxyServlet")
-    public ServletWrappingController sparqlEndpointController() throws Exception {
-        ServletWrappingController controller = new ServletWrappingController();
-        controller.setServletClass(AdjustedUriTemplateProxyServlet.class);
-        controller.setBeanName("sparqlEndpointProxyServlet");
-        final Properties p = new Properties();
-        final cz.cvut.kbss.termit.util.Configuration.Repository repository = config.getRepository();
-        p.setProperty("targetUri", repository.getUrl());
-        p.setProperty("log", "false");
-        p.setProperty(AdjustedUriTemplateProxyServlet.REPO_USERNAME_PARAM,
-                      repository.getUsername() != null ? repository.getUsername() : "");
-        p.setProperty(AdjustedUriTemplateProxyServlet.REPO_PASSWORD_PARAM,
-                      repository.getPassword() != null ? repository.getPassword() : "");
-        controller.setInitParameters(p);
-        controller.afterPropertiesSet();
-        return controller;
-    }
-
-    @Bean
-    public SimpleUrlHandlerMapping sparqlQueryControllerMapping() throws Exception {
-        SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
-        mapping.setOrder(0);
-        final Map<String, Object> urlMap = Collections.singletonMap(Constants.REST_MAPPING_PATH + "/query",
-                                                                    sparqlEndpointController());
-        mapping.setUrlMap(urlMap);
-        return mapping;
     }
 
     @Bean

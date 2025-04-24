@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
@@ -91,7 +92,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      * @param term Term whose occurrences should be returned
      * @return List of term occurrences
      */
-    public List<TermOccurrence> findAllOf(Term term) {
+    public List<TermOccurrence> findAllOf(AbstractTerm term) {
         Objects.requireNonNull(term);
         return em.createNativeQuery("SELECT ?x WHERE {" +
                                             "?x a ?type ;" +
@@ -107,7 +108,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      * @param term Term whose occurrences should be returned
      * @return List of term occurrences
      */
-    public List<TermOccurrence> findAllDefinitionalOf(Term term) {
+    public List<TermOccurrence> findAllDefinitionalOf(AbstractTerm term) {
         Objects.requireNonNull(term);
         return em
                 .createQuery("SELECT to FROM TermDefinitionalOccurrence to WHERE to.term = :term", TermOccurrence.class)
@@ -151,7 +152,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      * @param term Term whose occurrences to retrieve
      * @return List of {@code TermOccurrences}
      */
-    public List<TermOccurrences> getOccurrenceInfo(Term term) {
+    public List<TermOccurrences> getOccurrenceInfo(AbstractTerm term) {
         return em.createNativeQuery("SELECT ?term ?resource ?label (count(?x) as ?cnt) ?type ?suggested WHERE {" +
                                             "BIND (?t AS ?term)" +
                                             "{" +
@@ -257,10 +258,21 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
         final URI sourceContext = TermOccurrence.resolveContext(target.getUri());
         LOG.debug("Removing all occurrences from {}", Utils.uriToString(sourceContext));
         em.createNativeQuery("DROP GRAPH ?context")
-                .setParameter("context", sourceContext)
-                .executeUpdate();
+          .setParameter("context", sourceContext)
+          .executeUpdate();
         LOG.atDebug().setMessage("Removed all occurrences from {}")
            .addArgument(() -> Utils.uriToString(sourceContext)).log();
+    }
+
+    /**
+     * Removes all occurrences of the specified term.
+     * <p>
+     * That is, remove all term occurrences whose subject (not target) is the specified term.
+     *
+     * @param term Term whose occurrences to remove
+     */
+    public void removeAllOf(AbstractTerm term) {
+        findAllOf(term).forEach(em::remove);
     }
 
     /**

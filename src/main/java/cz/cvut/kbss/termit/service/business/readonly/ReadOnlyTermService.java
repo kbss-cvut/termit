@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class ReadOnlyTermService {
@@ -90,13 +89,10 @@ public class ReadOnlyTermService {
         return new ReadOnlyTerm(term, properties);
     }
 
-    public List<ReadOnlyTerm> findSubTerms(ReadOnlyTerm parent) {
+    public List<TermDto> findSubTerms(ReadOnlyTerm parent) {
         Objects.requireNonNull(parent);
         final Term arg = toTerm(parent);
-        if (parent.getSubTerms() != null) {
-            arg.setSubTerms(parent.getSubTerms());
-        }
-        return termService.findSubTerms(arg).stream().map(this::create).collect(Collectors.toList());
+        return termService.findSubTerms(arg);
     }
 
     private static Term toTerm(ReadOnlyTerm roTerm) {

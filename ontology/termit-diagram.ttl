@@ -16,7 +16,7 @@ termit:diagram  a       <http://onto.fel.cvut.cz/ontologies/slovník/agendový/p
         <http://purl.org/dc/terms/created>
                 "2020-05-26" ;
         <http://purl.org/dc/terms/creator>
-                "Michal Med" , " Martin Ledvinka" ;
+                "Michal Med" , "Martin Ledvinka" ;
         <http://purl.org/dc/terms/title>
                 "Slovník systému TermIt - diagram"@cs , "Vocabulary of system TermIt - diagram"@en ;
         <http://purl.org/ontology/bibo/status>

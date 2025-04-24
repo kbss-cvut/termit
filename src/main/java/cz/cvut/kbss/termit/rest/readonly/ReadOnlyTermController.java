@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +57,7 @@ import java.util.Optional;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
 
+@Profile("!no-public-api")
 @Tag(name = "Terms - public", description = "No-authorization term API")
 @RestController
 @PreAuthorize("permitAll()")
@@ -200,7 +202,7 @@ public class ReadOnlyTermController extends BaseController {
     })
     @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ReadOnlyTerm> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                        example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -221,7 +223,7 @@ public class ReadOnlyTermController extends BaseController {
     })
     @GetMapping(value = "/terms/{localName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ReadOnlyTerm> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,

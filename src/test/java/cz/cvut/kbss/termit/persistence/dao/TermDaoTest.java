@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -373,8 +373,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<VocabularyContentModifiedEvent> evt = captor.getAllValues().stream()
-                                                              .filter(VocabularyContentModifiedEvent.class::isInstance)
-                                                              .map(VocabularyContentModifiedEvent.class::cast).findFirst();
+                                                                   .filter(VocabularyContentModifiedEvent.class::isInstance)
+                                                                   .map(VocabularyContentModifiedEvent.class::cast)
+                                                                   .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
     }
@@ -434,8 +435,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<VocabularyContentModifiedEvent> evt = captor.getAllValues().stream()
-                                                              .filter(VocabularyContentModifiedEvent.class::isInstance)
-                                                              .map(VocabularyContentModifiedEvent.class::cast).findFirst();
+                                                                   .filter(VocabularyContentModifiedEvent.class::isInstance)
+                                                                   .map(VocabularyContentModifiedEvent.class::cast)
+                                                                   .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
     }
@@ -590,8 +592,10 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         assertFalse(result.isEmpty());
         assertThat(result.size(), lessThan(directTerms.size() + parentTerms.size() + grandParentTerms.size()));
         final List<Term> matching = allTerms.stream().filter(t -> getPrimaryLabel(t).toLowerCase()
-                                                                   .contains(searchString.toLowerCase())).collect(
-                Collectors.toList());
+                                                                                    .contains(
+                                                                                            searchString.toLowerCase()))
+                                            .collect(
+                                                    Collectors.toList());
         assertTrue(result.containsAll(toDtos(matching)));
     }
 
@@ -1314,8 +1318,9 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<VocabularyContentModifiedEvent> evt = captor.getAllValues().stream()
-                                                              .filter(VocabularyContentModifiedEvent.class::isInstance)
-                                                              .map(VocabularyContentModifiedEvent.class::cast).findFirst();
+                                                                   .filter(VocabularyContentModifiedEvent.class::isInstance)
+                                                                   .map(VocabularyContentModifiedEvent.class::cast)
+                                                                   .findFirst();
         assertTrue(evt.isPresent());
         assertEquals(vocabulary.getUri(), evt.get().getVocabularyIri());
     }
@@ -1389,7 +1394,8 @@ class TermDaoTest extends BaseTermDaoTestRunner {
             try (final RepositoryConnection con = em.unwrap(Repository.class).getConnection()) {
                 final ValueFactory vf = con.getValueFactory();
                 con.add(vf.createStatement(vf.createIRI(term.getUri().toString()), vf.createIRI(property),
-                                           vf.createIRI(vocabulary.getGlossary().getUri().toString()), vf.createIRI(Generator.generateUriString())));
+                                           vf.createIRI(vocabulary.getGlossary().getUri().toString()),
+                                           vf.createIRI(Generator.generateUriString())));
             }
         });
 
@@ -1402,7 +1408,7 @@ class TermDaoTest extends BaseTermDaoTestRunner {
     void findByIdReturnsOptionalEmptyWhenTermDoesNotExists() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         // trying to find a non-existing term
-        final Optional<Term> empty = assertDoesNotThrow(()-> sut.find(term.getUri()));
+        final Optional<Term> empty = assertDoesNotThrow(() -> sut.find(term.getUri()));
         assertTrue(empty.isEmpty());
     }
 
@@ -1414,5 +1420,15 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final Optional<TermInfo> result = sut.findTermInfo(term.getUri());
         assertTrue(result.isPresent());
         assertEquals(new TermInfo(term), result.get());
+    }
+
+    @Test
+    void findSubTermsRetrievesTermSubTerms() {
+        final Term parent = persistParentWithChild();
+
+        final List<TermDto> result = sut.findSubTerms(parent);
+        assertEquals(1, result.size());
+        assertEquals(parent.getSubTerms().stream().map(TermInfo::getUri).toList(),
+                     result.stream().map(Asset::getUri).toList());
     }
 }

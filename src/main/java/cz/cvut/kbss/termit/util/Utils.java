@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,11 +84,11 @@ public class Utils {
      * <p>
      * The query should be in the query directory specified by {@link Constants#QUERY_DIRECTORY}.
      *
-     * @param queryFileName Name of the query file
+     * @param queryFilePath Path to the query file within the {@link Constants#QUERY_DIRECTORY}
      * @return Query string read from the file
      */
-    public static String loadQuery(String queryFileName) {
-        return loadClasspathResource(Constants.QUERY_DIRECTORY + "/" + queryFileName);
+    public static String loadQuery(String queryFilePath) {
+        return loadClasspathResource(Constants.QUERY_DIRECTORY + "/" + queryFilePath);
     }
 
     /**

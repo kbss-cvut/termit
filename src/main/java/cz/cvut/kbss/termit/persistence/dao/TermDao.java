@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
@@ -49,12 +50,15 @@ import org.springframework.stereotype.Repository;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -146,18 +150,18 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @return Set of matching terms
      */
     private Set<TermInfo> loadInverseTermInfo(HasIdentifier term, String property, Collection<TermInfo> exclude) {
-        final List<TermInfo> result = em.createNativeQuery("SELECT ?inverse WHERE {" +
-                                                                   "?inverse ?property ?term ;" +
-                                                                   "a ?type ." +
-                                                                   "FILTER (?inverse NOT IN (?exclude))" +
-                                                                   "} ORDER BY ?inverse", TermInfo.class)
-                                        .setParameter("property", URI.create(property))
-                                        .setParameter("term", term)
-                                        .setParameter("type", typeUri)
-                                        .setParameter("exclude", exclude)
-                                        .getResultList();
-        result.sort(termInfoComparator);
-        return new LinkedHashSet<>(result);
+        return em.createNativeQuery("SELECT ?inverse WHERE {" +
+                                            "?inverse ?property ?term ;" +
+                                            "a ?type ." +
+                                            "FILTER (?inverse NOT IN (?exclude))" +
+                                            "} ORDER BY ?inverse", TermInfo.class)
+                 .setParameter("property", URI.create(property))
+                 .setParameter("term", term)
+                 .setParameter("type", typeUri)
+                 .setParameter("exclude", exclude)
+                 .getResultStream().sorted(termInfoComparator)
+                 .peek(em::detach)
+                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
@@ -321,24 +325,45 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     public List<TermDto> findAll(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         try {
-            return executeQueryAndLoadSubTerms(em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
-                                                                            "GRAPH ?context { " +
-                                                                            "?term a ?type ;" +
-                                                                            "?hasLabel ?label ;" +
-                                                                            "FILTER (lang(?label) = ?labelLang) ." +
-                                                                            "}" +
-                                                                            "?term ?inVocabulary ?vocabulary ." +
-                                                                            " } ORDER BY " + orderSentence("?label"),
-                                                                    TermDto.class)
-                                                 .setParameter("context", context(vocabulary))
-                                                 .setParameter("type", typeUri)
-                                                 .setParameter("vocabulary", vocabulary.getUri())
-                                                 .setParameter("hasLabel", LABEL_PROP)
-                                                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                                                 .setParameter("labelLang", config.getLanguage()));
+            final TypedQuery<FlatTermDto> query =
+                    em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                 "GRAPH ?context { " +
+                                                 "?term a ?type ;" +
+                                                 "?hasLabel ?label ;" +
+                                                 "FILTER (lang(?label) = ?labelLang) ." +
+                                                 "}" +
+                                                 "?term ?inVocabulary ?vocabulary ." +
+                                                 " } ORDER BY " + orderSentence("?label"),
+                                         FlatTermDto.class)
+                      .setParameter("context", context(vocabulary))
+                      .setParameter("type", typeUri)
+                      .setParameter("vocabulary", vocabulary.getUri())
+                      .setParameter("hasLabel", LABEL_PROP)
+                      .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                      .setParameter("labelLang", config.getLanguage());
+
+            return executeAndBuildHierarchy(query);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
+    }
+
+    private List<TermDto> executeAndBuildHierarchy(TypedQuery<FlatTermDto> query) {
+        final Map<URI, TermDto> termsMap = new HashMap<>();
+        final List<FlatTermDto> flatTerms = query.getResultStream().peek(flatTerm -> termsMap.put(flatTerm.getUri(),
+                                                                                                  new TermDto(
+                                                                                                          flatTerm)))
+                                                 .toList();
+        em.clear();
+        final List<TermDto> result = new ArrayList<>(flatTerms.size());
+        for (FlatTermDto flatTerm : flatTerms) {
+            final TermDto term = termsMap.get(flatTerm.getUri());
+            term.setSubTerms(getSubTerms(term));
+            term.setParentTerms(flatTerm.getParentTerms().stream().map(termsMap::get).filter(Objects::nonNull)
+                                        .collect(Collectors.toSet()));
+            result.add(term);
+        }
+        return result;
     }
 
     /**
@@ -769,6 +794,30 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
             return terms;
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Finds all terms which are subterms of the specified term.
+     *
+     * @param parent Parent term
+     * @return List of subterms
+     */
+    public List<TermDto> findSubTerms(Term parent) {
+        Objects.requireNonNull(parent);
+        try {
+            final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
+                                                                           "?term a ?type ; " +
+                                                                           "      ?hasParent ?parent . " +
+                                                                           "FILTER (?parent = ?parentUri) . " +
+                                                                           "} ORDER BY " + orderSentence("?label"),
+                                                                   TermDto.class)
+                                                .setParameter("type", typeUri)
+                                                .setParameter("hasParent", URI.create(SKOS.BROADER))
+                                                .setParameter("parentUri", parent.getUri());
+            return executeQueryAndLoadSubTerms(query);
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

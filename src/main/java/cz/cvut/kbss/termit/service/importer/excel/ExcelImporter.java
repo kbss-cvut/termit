@@ -1,3 +1,20 @@
+/*
+ * TermIt
+ * Copyright (C) 2025 Czech Technical University in Prague
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package cz.cvut.kbss.termit.service.importer.excel;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
@@ -22,7 +39,6 @@ import jakarta.annotation.Nonnull;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -279,7 +295,7 @@ public class ExcelImporter implements VocabularyImporter {
         }
     }
 
-    private List<Term> readTermsFromSheet(@NotNull ImportInput data) throws IOException {
+    private List<Term> readTermsFromSheet(@Nonnull ImportInput data) throws IOException {
         List<Term> terms = Collections.emptyList();
         for (InputStream input : data.data()) {
             final Workbook workbook = new XSSFWorkbook(input);

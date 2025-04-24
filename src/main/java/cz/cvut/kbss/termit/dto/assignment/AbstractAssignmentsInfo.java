@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,10 +76,9 @@ abstract class AbstractAssignmentsInfo implements HasTypes {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractAssignmentsInfo)) {
+        if (!(o instanceof AbstractAssignmentsInfo that)) {
             return false;
         }
-        AbstractAssignmentsInfo that = (AbstractAssignmentsInfo) o;
         return Objects.equals(term, that.term) &&
                 Objects.equals(resource, that.resource) &&
                 Objects.equals(types, that.types);
