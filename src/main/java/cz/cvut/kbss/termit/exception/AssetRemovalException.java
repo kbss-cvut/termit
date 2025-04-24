@@ -25,4 +25,8 @@ public class AssetRemovalException extends TermItException {
     public AssetRemovalException(String message) {
         super(message);
     }
+
+    public AssetRemovalException(String message, String messageId) {
+        super(message, messageId);
+    }
 }

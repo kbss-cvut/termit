@@ -25,6 +25,7 @@ import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -452,17 +453,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         super.preRemove(instance);
         final List<TermOccurrences> ai = getOccurrenceInfo(instance);
         if (!ai.isEmpty()) {
-            throw new AssetRemovalException(
-                    "Cannot delete the term. It is used for annotating resources: " +
-                            ai.stream().map(TermOccurrences::getResourceLabel).collect(
-                                    joining(",")));
+            throw annotationsExistException(ai);
         }
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
-            throw new AssetRemovalException(
-                    "Cannot delete the term. It is a parent of other terms: " + subTerms
-                            .stream().map(t -> t.getUri().toString())
-                            .collect(joining(",")));
+            throw hasSubTermsException(subTerms);
         }
         if (instance.getProperties() != null) {
             Set<String> props = instance.getProperties().keySet();
@@ -472,11 +467,33 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
                             || s.equalsIgnoreCase(SKOS.HISTORY_NOTE)
                             || s.equalsIgnoreCase(SKOS.NOTE))).collect(toList());
             if (!properties.isEmpty()) {
-                throw new AssetRemovalException(
-                        "Cannot delete the term. It is linked to another term through properties "
-                                + String.join(",", properties));
+                throw hasSkosRelationships(properties);
             }
         }
+    }
+
+    private static TermItException annotationsExistException(List<TermOccurrences> ai) {
+        final String resources = ai.stream().map(TermOccurrences::getResourceLabel).collect(
+                joining(","));
+        return new AssetRemovalException(
+                "Cannot delete the term. It is used for annotating resources: " + resources,
+                "error.term.remove.annotationsExist").addParameter("resources", resources);
+    }
+
+    private static TermItException hasSubTermsException(Set<TermInfo> subTerms) {
+        final String children = subTerms.stream().map(t -> t.getUri().toString()).collect(joining(","));
+        return new AssetRemovalException(
+                "Cannot delete the term. It is a parent of other terms: " + children,
+                "error.term.remove.hasSubTerms")
+                .addParameter("subTerms", children);
+    }
+
+    private static TermItException hasSkosRelationships(List<String> properties) {
+        final String propertiesStr = String.join(", ", properties);
+        return new AssetRemovalException(
+                "Cannot delete the term. It is linked to another term through properties "
+                        + String.join(",", properties), "error.term.remove.skosRelationshipsExist")
+                .addParameter("properties", propertiesStr);
     }
 
     @Override
