@@ -168,4 +168,12 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     public List<TermOccurrence> findAllTargeting(Asset<?> target) {
         return termOccurrenceDao.findAllTargeting(target);
     }
+
+    @Async
+    @Transactional
+    @Override
+    public void removeAllOf(AbstractTerm term) {
+        LOG.debug("Removing all occurrences of term {}.", term);
+        termOccurrenceDao.removeAllOf(term);
+    }
 }

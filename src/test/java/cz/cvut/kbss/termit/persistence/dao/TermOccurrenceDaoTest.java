@@ -27,11 +27,14 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -50,6 +53,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -63,6 +67,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -540,5 +545,26 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                      .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
                      .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
                      .getSingleResult());
+    }
+
+    @Test
+    void removeAllOfRemovesOccurrencesOfSpecifiedTerm() {
+        final Term subject = Generator.generateTermWithId();
+        final Term target = Generator.generateTermWithId();
+        final TermOccurrence toRemove = new TermDefinitionalOccurrence(subject.getUri(), new DefinitionalOccurrenceTarget(target));
+        toRemove.getTarget().setSelectors(Set.of(new TextQuoteSelector("Exact match")));
+        final TermOccurrence toRetain = new TermDefinitionalOccurrence(Generator.generateUri(), new DefinitionalOccurrenceTarget(target));
+        toRetain.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 12)));
+        transactional(() -> {
+            em.persist(target);
+            em.persist(toRemove);
+            em.persist(toRemove.getTarget());
+            em.persist(toRetain);
+            em.persist(toRetain.getTarget());
+        });
+
+        transactional(() -> sut.removeAllOf(subject));
+        assertNull(em.find(TermOccurrence.class, toRemove.getUri()));
+        assertNotNull(em.find(TermOccurrence.class, toRetain.getUri()));
     }
 }

@@ -469,7 +469,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
             v.getGlossary().removeRootTerm(instance);
         }
-        // TODO remove all occurrences of the removed term. They are suggested (see preRemove)
+        termOccurrenceService.removeAllOf(instance);
     }
 
     /**
