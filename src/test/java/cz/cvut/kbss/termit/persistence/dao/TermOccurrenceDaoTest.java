@@ -235,9 +235,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertFalse(sut.findAllTargeting(file).isEmpty());
         transactional(() -> sut.removeSuggested(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
-        assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
-                                                                                                       URI.create(
-                                                                                                               Vocabulary.s_c_vyskyt_termu))
+        assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class)
+                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                       .getSingleResult());
     }
 
@@ -270,13 +269,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                     to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
                     em.merge(to);
                 })));
-        transactional(() -> {
-            sut.removeAll(file);
-        });
+        transactional(() -> sut.removeAll(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
-        assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
-                                                                                                       URI.create(
-                                                                                                               Vocabulary.s_c_vyskyt_termu))
+        assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class)
+                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                       .getSingleResult());
     }
 
@@ -291,13 +287,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                     to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
                     em.merge(to);
                 })));
-        transactional(() -> {
-            sut.removeAll(file);
-        });
+        transactional(() -> sut.removeAll(file));
 
-        assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class).setParameter("target",
-                                                                                               URI.create(
-                                                                                                       Vocabulary.s_c_cil))
+        assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class)
+                      .setParameter("target", URI.create(Vocabulary.s_c_cil))
                       .getSingleResult());
     }
 
@@ -551,9 +544,11 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
     void removeAllOfRemovesOccurrencesOfSpecifiedTerm() {
         final Term subject = Generator.generateTermWithId();
         final Term target = Generator.generateTermWithId();
-        final TermOccurrence toRemove = new TermDefinitionalOccurrence(subject.getUri(), new DefinitionalOccurrenceTarget(target));
+        final TermOccurrence toRemove = new TermDefinitionalOccurrence(subject.getUri(),
+                                                                       new DefinitionalOccurrenceTarget(target));
         toRemove.getTarget().setSelectors(Set.of(new TextQuoteSelector("Exact match")));
-        final TermOccurrence toRetain = new TermDefinitionalOccurrence(Generator.generateUri(), new DefinitionalOccurrenceTarget(target));
+        final TermOccurrence toRetain = new TermDefinitionalOccurrence(Generator.generateUri(),
+                                                                       new DefinitionalOccurrenceTarget(target));
         toRetain.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 12)));
         transactional(() -> {
             em.persist(target);
