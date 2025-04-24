@@ -189,10 +189,10 @@ class TermServiceTest {
                 .singletonList(
                         new TermOccurrences(term.getUri(), Generator.generateUri(), "test", BigInteger.valueOf(125L),
                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
-        when(termRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
+        when(termOccurrenceRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(occurrences, result);
-        verify(termRepositoryService).getOccurrenceInfo(term);
+        verify(termOccurrenceRepositoryService).getOccurrenceInfo(term);
     }
 
     @Test

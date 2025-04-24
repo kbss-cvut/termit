@@ -21,7 +21,6 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
-import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -36,8 +35,6 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
 import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
-import cz.cvut.kbss.termit.model.resource.Document;
-import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
@@ -54,7 +51,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateTermWithId;
@@ -330,31 +326,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
         t.getLabel().remove(Environment.LANGUAGE);
         assertThrows(ValidationException.class, () -> sut.update(t));
-    }
-
-    @Test
-    void getOccurrenceInfoRetrievesAggregatedOccurrenceData() {
-        final Term t = Generator.generateTermWithId();
-        t.setVocabulary(vocabulary.getUri());
-
-        final File file = Generator.generateFileWithId("test.html");
-        final Document document = Generator.generateDocumentWithId();
-        document.addFile(file);
-        final TermOccurrence occurrence = Generator.generateTermOccurrence(t, file, false);
-        transactional(() -> {
-            enableRdfsInference(em);
-            em.persist(document);
-            em.persist(t);
-            em.persist(file);
-            em.persist(occurrence.getTarget());
-            em.persist(occurrence);
-        });
-
-        final List<TermOccurrences> result = sut.getOccurrenceInfo(t);
-        assertEquals(1, result.size());
-        assertEquals(t.getUri(), result.get(0).getTerm());
-        assertEquals(document.getUri(), result.get(0).getResource());
-        assertEquals(document.getLabel(), result.get(0).getResourceLabel());
     }
 
     @Test

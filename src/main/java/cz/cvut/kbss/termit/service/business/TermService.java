@@ -359,10 +359,8 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param term Term whose occurrences to retrieve
      * @return List of term occurrences describing instances
      */
-    @PreAuthorize("@termAuthorizationService.canRead(#term)")
     public List<TermOccurrences> getOccurrenceInfo(Term term) {
-        Objects.requireNonNull(term);
-        return repositoryService.getOccurrenceInfo(term);
+        return termOccurrenceService.getOccurrenceInfo(term);
     }
 
     /**
@@ -416,6 +414,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return The updated term
      */
     @PreAuthorize("@termAuthorizationService.canModify(#term)")
+    @Transactional
     public Term update(Term term) {
         Objects.requireNonNull(term);
         final Term original = repositoryService.findRequired(term.getUri());
@@ -487,8 +486,9 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @param instance Term in whose definition to search for related terms
      * @return List of term occurrences in the specified term's definition
      */
+    @PreAuthorize("@termAuthorizationService.canRead(#instance)")
     public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
-        return repositoryService.getDefinitionallyRelatedTargeting(instance);
+        return termOccurrenceService.findAllTargeting(instance);
     }
 
     /**
@@ -498,7 +498,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * @return List of definitional occurrences of the specified term
      */
     public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
-        return repositoryService.getDefinitionallyRelatedOf(instance);
+        return termOccurrenceService.findAllDefinitionalOf(instance);
     }
 
     /**
