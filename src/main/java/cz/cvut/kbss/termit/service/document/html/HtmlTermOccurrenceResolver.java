@@ -121,7 +121,7 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
     }
 
     private static Map<String, String> resolvePrefixes(Document document) {
-        final Map<String, String> map = new HashMap<>(4);
+        final Map<String, String> map = new HashMap<>(defaultPrefixes());
         final Elements prefixElements = document.getElementsByAttribute(Constants.RDFa.PREFIX);
         prefixElements.forEach(element -> {
             final String prefixStr = element.attr(Constants.RDFa.PREFIX);
@@ -133,6 +133,10 @@ public class HtmlTermOccurrenceResolver extends TermOccurrenceResolver {
             }
         });
         return map;
+    }
+
+    private static Map<String, String> defaultPrefixes() {
+        return Map.of("termit", Vocabulary.ONTOLOGY_IRI_TERMIT + "/pojem/");
     }
 
     private boolean isNotTermOccurrence(Node rdfaElem) {
