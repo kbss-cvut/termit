@@ -266,6 +266,8 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
     /**
      * Removes all occurrences of the specified term.
+     * <p>
+     * That is, remove all term occurrences whose subject (not target) is the specified term.
      *
      * @param term Term whose occurrences to remove
      */

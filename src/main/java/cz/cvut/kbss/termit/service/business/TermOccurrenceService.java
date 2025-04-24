@@ -87,4 +87,11 @@ public interface TermOccurrenceService {
      * @return List of matching term occurrences
      */
     List<TermOccurrence> findAllTargeting(Asset<?> target);
+
+    /**
+     * Removes all occurrences of the specified term.
+     *
+     * @param term Term whose occurrences to remove
+     */
+    void removeAllOf(AbstractTerm term);
 }
