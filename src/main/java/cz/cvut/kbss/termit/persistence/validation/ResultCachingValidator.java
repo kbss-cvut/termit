@@ -122,7 +122,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
     }
 
     @Lookup
-    Validator getValidator() {
+    ThrottlingValidator getValidator() {
         return null;    // Will be replaced by Spring
     }
 

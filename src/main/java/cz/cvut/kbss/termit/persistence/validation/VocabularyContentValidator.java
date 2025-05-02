@@ -36,7 +36,7 @@ public interface VocabularyContentValidator {
      *
      * @param originVocabularyIri the origin vocabulary IRI
      * @param vocabularyIris Vocabulary identifiers (including {@code originVocabularyIri}
-     * @return List of violations of validation rules. Empty list if there are not violations
+     * @return List of violations of validation rules. Empty list if there are no violations
      */
     @Nonnull
     ThrottledFuture<Collection<ValidationResult>> validate(@Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris);

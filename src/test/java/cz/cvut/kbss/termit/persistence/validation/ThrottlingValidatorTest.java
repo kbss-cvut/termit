@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 
-class ValidatorTest extends BaseDaoTestRunner {
+class ThrottlingValidatorTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
@@ -74,10 +74,11 @@ class ValidatorTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void validateUsesOverrideRulesToAllowI18n() {
+    void validateUsesPersistenceLanguageForInternationalizedRules() {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
-            final Validator sut = new Validator(em, vocabularyContextMapper, config, eventPublisher);
+            final ThrottlingValidator sut = new ThrottlingValidator(new LocalValidator(em), vocabularyContextMapper,
+                                                                    config, eventPublisher);
             final Collection<ValidationResult> result;
             try {
                 result = runFuture(sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
@@ -89,19 +90,20 @@ class ValidatorTest extends BaseDaoTestRunner {
             assertTrue(result.stream().noneMatch(
                     vr -> vr.getMessage().get("en").contains("The term does not have a definition in Czech")));
             assertTrue(result.stream().anyMatch(vr -> vr.getMessage().get("en").contains(
-                    "The term does not have a preferred label in the primary configured language of this deployment of TermIt")));
+                    "The term does not have a preferred label in the configured language.")));
         });
     }
 
     /**
-     * Validation is a heavy and long-running task; validator must publish event signalizing validation end
-     * allowing other components to react on the result.
+     * Validation is a heavy and long-running task; validator must publish event signalizing validation end allowing
+     * other components to react on the result.
      */
     @Test
     void publishesVocabularyValidationFinishedEventAfterValidation() {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
-            final Validator sut = new Validator(em, vocabularyContextMapper, config, eventPublisher);
+            final ThrottlingValidator sut = new ThrottlingValidator(new LocalValidator(em), vocabularyContextMapper,
+                                                                    config, eventPublisher);
             final Collection<URI> iris = Collections.singleton(vocabulary.getUri());
             final Collection<ValidationResult> result;
             try {

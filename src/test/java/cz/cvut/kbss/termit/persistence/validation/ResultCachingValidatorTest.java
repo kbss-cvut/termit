@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 class ResultCachingValidatorTest {
 
     @Mock
-    private Validator validator;
+    private ThrottlingValidator validator;
 
     private ResultCachingValidator sut;
 
