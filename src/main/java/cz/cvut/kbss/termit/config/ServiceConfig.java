@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
+import cz.cvut.kbss.termit.persistence.validation.ExternalServiceValidator;
 import cz.cvut.kbss.termit.persistence.validation.LocalValidator;
 import cz.cvut.kbss.termit.persistence.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Utils;
@@ -111,14 +112,15 @@ public class ServiceConfig {
     }
 
     @Bean
-    public RepositoryContextValidator repositoryContextValidator(EntityManager em, RestTemplate restTemplate, Environment env) {
+    public RepositoryContextValidator repositoryContextValidator(EntityManager em, RestTemplate restTemplate,
+                                                                 Environment env) {
         if (!env.containsProperty("termit.validation-service-url")) {
             LOG.debug("Using embedded validation.");
             return new LocalValidator(em);
         } else {
-            LOG.debug("Using validation service at {}.", env.getProperty("termit.validation-service-url"));
-            // TODO
-            return null;
+            final String validationServiceUrl = env.getProperty("termit.validation-service-url");
+            LOG.debug("Using validation service at {}.", validationServiceUrl);
+            return new ExternalServiceValidator(restTemplate, validationServiceUrl);
         }
     }
 }
