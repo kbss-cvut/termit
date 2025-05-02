@@ -33,6 +33,12 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExternalServiceValidator.class);
 
+    /**
+     * Validation rules to use for vocabulary validation.
+     */
+    static final List<String> VALIDATION_RULES = List.of("g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9",
+                                                         "g10", "g11", "g12", "g13", "g14", "m1", "m2");
+
     private final RestTemplate restClient;
 
     private final String validationServiceUrl;
@@ -53,6 +59,7 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
         final long start = System.currentTimeMillis();
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.addAll("contextUri", contexts.stream().map(URI::toString).toList());
+        params.addAll("rule", VALIDATION_RULES);
         params.add("language", language);
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);

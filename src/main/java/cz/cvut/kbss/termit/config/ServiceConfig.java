@@ -37,6 +37,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -74,7 +75,8 @@ public class ServiceConfig {
         jacksonConverter.setObjectMapper(objectMapper);
         final StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
         restTemplate.setMessageConverters(
-                Arrays.asList(jacksonConverter, stringConverter, new ResourceHttpMessageConverter()));
+                Arrays.asList(jacksonConverter, stringConverter, new ResourceHttpMessageConverter(),
+                              new FormHttpMessageConverter()));
         return restTemplate;
     }
 
