@@ -17,8 +17,11 @@
  */
 package cz.cvut.kbss.termit.environment.config;
 
+import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.config.PersistenceConfig;
 import cz.cvut.kbss.termit.environment.TestPersistenceFactory;
+import cz.cvut.kbss.termit.persistence.validation.LocalValidator;
+import cz.cvut.kbss.termit.persistence.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import cz.cvut.kbss.termit.workspace.EditableVocabulariesHolder;
@@ -50,5 +53,10 @@ public class TestPersistenceConfig {
     @Primary
     public ApplicationEventPublisher eventPublisher(ApplicationEventPublisher eventPublisher) {
         return spy(eventPublisher);
+    }
+
+    @Bean
+    public RepositoryContextValidator repositoryContextValidator(EntityManager em) {
+        return new LocalValidator(em);
     }
 }

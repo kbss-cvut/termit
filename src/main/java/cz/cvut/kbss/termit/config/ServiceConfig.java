@@ -18,7 +18,10 @@
 package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
+import cz.cvut.kbss.termit.persistence.validation.LocalValidator;
+import cz.cvut.kbss.termit.persistence.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
@@ -28,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -104,5 +108,17 @@ public class ServiceConfig {
             return createFileSystemResource(config.getLanguage().getStates().getSource(), "states");
         }
         return new ClassPathResource("languages/states.ttl");
+    }
+
+    @Bean
+    public RepositoryContextValidator repositoryContextValidator(EntityManager em, RestTemplate restTemplate, Environment env) {
+        if (!env.containsProperty("termit.validation-service-url")) {
+            LOG.debug("Using embedded validation.");
+            return new LocalValidator(em);
+        } else {
+            LOG.debug("Using validation service at {}.", env.getProperty("termit.validation-service-url"));
+            // TODO
+            return null;
+        }
     }
 }

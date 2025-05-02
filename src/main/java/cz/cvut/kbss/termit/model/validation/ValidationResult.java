@@ -30,6 +30,9 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.Objects;
 
+/**
+ * Validation rule violation.
+ */
 @NonEntity
 @OWLClass(iri = SH.BASE_URI + "ValidationResult")
 public class ValidationResult implements Serializable {
