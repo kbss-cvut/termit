@@ -39,8 +39,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -50,6 +53,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -421,5 +425,17 @@ public class Utils {
      */
     public static boolean isDevelopmentProfile(String[] activeProfiles) {
         return Arrays.binarySearch(activeProfiles, Constants.DEVELOPMENT_PROFILE) != -1;
+    }
+
+    /**
+     * Returns the specified number of milliseconds converted to seconds and rounded to two decimal points.
+     *
+     * @param millis Milliseconds to convert and round
+     * @return String representation of the specified millis converted to seconds and rounded
+     */
+    public static String millisToString(long millis) {
+        final float seconds = (float) millis / 1000;
+        final DecimalFormat df = new DecimalFormat("0.00");
+        return df.format(seconds);
     }
 }

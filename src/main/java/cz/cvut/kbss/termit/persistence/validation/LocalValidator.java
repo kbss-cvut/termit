@@ -8,6 +8,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
+import cz.cvut.kbss.termit.util.Utils;
 import jakarta.annotation.Nonnull;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -38,7 +39,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Va
+ * Validates repository contexts using an embedded validator instance.
  */
 public class LocalValidator implements RepositoryContextValidator {
 
@@ -79,7 +80,8 @@ public class LocalValidator implements RepositoryContextValidator {
         Objects.requireNonNull(language);
         assert !contexts.isEmpty();
 
-        LOG.trace("Running local validation of contexts {}", contexts);
+        LOG.debug("Running local validation of contexts {} with language '{}'.", contexts, language);
+        final long start = System.currentTimeMillis();
         try {
             LOG.trace("Constructing model from RDF4J repository...");
             final Model dataModel = getModelFromRdf4jRepository(contexts);
@@ -87,7 +89,8 @@ public class LocalValidator implements RepositoryContextValidator {
             LOG.trace("Model constructed, running validation...");
             org.topbraid.shacl.validation.ValidationReport report = new com.github.sgov.server.Validator()
                     .validate(dataModel, validationModel);
-            LOG.debug("Done.");
+            final long end = System.currentTimeMillis();
+            LOG.debug("Validation finished in {}s. Valid? {}.", Utils.millisToString(end - start), report.conforms());
             return report.results().stream()
                          .sorted(new ValidationResultSeverityComparator()).map(result -> {
                         final URI termUri = URI.create(result.getFocusNode().toString());

@@ -69,7 +69,7 @@ class ResultCachingValidatorTest {
     }
 
     @Test
-    void invokesInternalValidatorWhenNoResultsAreCached() throws Exception {
+    void invokesInternalValidatorWhenNoResultsAreCached() {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.validate(any(), anyCollection())).thenReturn(ThrottledFuture.done(results));
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
@@ -79,7 +79,7 @@ class ResultCachingValidatorTest {
     }
 
     @Test
-    void returnsCachedResultsWhenArgumentsMatch() throws Exception {
+    void returnsCachedResultsWhenArgumentsMatch() {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.validate(any(), anyCollection())).thenReturn(ThrottledFuture.done(results));
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
@@ -92,7 +92,7 @@ class ResultCachingValidatorTest {
     }
 
     @Test
-    void evictCacheClearsCachedValidationResults() throws Exception {
+    void evictCacheClearsCachedValidationResults() {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.validate(any(), anyCollection())).thenReturn(ThrottledFuture.done(results));
         final Set<URI> vocabularies = Collections.singleton(vocabulary);

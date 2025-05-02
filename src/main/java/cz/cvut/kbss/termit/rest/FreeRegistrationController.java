@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Allows registration for anyone.
- *
+ * <p>
  * Available only if internal security is used.
  */
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)

@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.locationtech.jts.util.Assert;
 import org.mockito.Mockito;
@@ -266,5 +267,11 @@ class UtilsTest {
         final MultilingualString result = Utils.resolveTranslations(subject, property, model);
         assertNotNull(result);
         assertTrue(result.isEmpty());
+    }
+
+    @ParameterizedTest
+    @CsvSource("4368, 4.37, 5000, 5.00, 2100, 2.10")
+    void millisToStringConvertsSpecifiedValueToSecondsAndRounds(long millis, String expected) {
+        assertEquals(expected, Utils.millisToString(millis));
     }
 }
