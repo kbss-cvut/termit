@@ -1,11 +1,10 @@
 package cz.cvut.kbss.termit.persistence.validation;
 
-import com.github.sgov.server.ShaclSeverity;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.Utils;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -48,9 +47,9 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
         this.validationServiceUrl = validationServiceUrl;
     }
 
-    @NotNull
+    @Nonnull
     @Override
-    public List<ValidationResult> validate(@NotNull List<URI> contexts, @NotNull String language) {
+    public List<ValidationResult> validate(@Nonnull List<URI> contexts, @Nonnull String language) {
         Objects.requireNonNull(contexts);
         Objects.requireNonNull(language);
         assert validationServiceUrl != null && !validationServiceUrl.isBlank();
@@ -110,12 +109,12 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
     public record ValidationResultItem(URI severity, Map<String, String> message, URI focusNode, URI sourceShape)
             implements Comparable<ValidationResultItem> {
         @Override
-        public int compareTo(@NotNull ExternalServiceValidator.ValidationResultItem o) {
+        public int compareTo(@Nonnull ExternalServiceValidator.ValidationResultItem o) {
             final Optional<ShaclSeverity> ownSeverity = Arrays.stream(ShaclSeverity.values())
-                                                              .filter(ss -> ss.getUri().equals(severity.toString()))
+                                                              .filter(ss -> ss.getUri().equals(severity))
                                                               .findFirst();
             final Optional<ShaclSeverity> otherSeverity = Arrays.stream(ShaclSeverity.values())
-                                                                .filter(ss -> ss.getUri().equals(o.severity.toString()))
+                                                                .filter(ss -> ss.getUri().equals(o.severity))
                                                                 .findFirst();
             return ownSeverity.map(value -> otherSeverity.map(value::compareTo).orElse(-1))
                               .orElseGet(() -> otherSeverity.isPresent() ? 1 : 0);

@@ -17,10 +17,9 @@
  */
 package cz.cvut.kbss.termit.environment.config;
 
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.config.PersistenceConfig;
 import cz.cvut.kbss.termit.environment.TestPersistenceFactory;
-import cz.cvut.kbss.termit.persistence.validation.LocalValidator;
+import cz.cvut.kbss.termit.persistence.validation.NoopRepositoryContextValidator;
 import cz.cvut.kbss.termit.persistence.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
@@ -45,7 +44,8 @@ import static org.mockito.Mockito.spy;
 public class TestPersistenceConfig {
 
     @Bean
-    public EditableVocabularies editableVocabularies(Configuration config, ObjectProvider<EditableVocabulariesHolder> editableVocabulariesHolder) {
+    public EditableVocabularies editableVocabularies(Configuration config,
+                                                     ObjectProvider<EditableVocabulariesHolder> editableVocabulariesHolder) {
         return new EditableVocabularies(config, editableVocabulariesHolder);
     }
 
@@ -56,7 +56,7 @@ public class TestPersistenceConfig {
     }
 
     @Bean
-    public RepositoryContextValidator repositoryContextValidator(EntityManager em) {
-        return new LocalValidator(em);
+    public RepositoryContextValidator repositoryContextValidator() {
+        return new NoopRepositoryContextValidator();
     }
 }

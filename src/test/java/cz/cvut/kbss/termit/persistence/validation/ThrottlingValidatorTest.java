@@ -42,6 +42,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -64,6 +65,9 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
     private Configuration config;
 
     @Mock
+    private RepositoryContextValidator validator;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
 
     @BeforeEach
@@ -77,20 +81,12 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
     void validateUsesPersistenceLanguageForInternationalizedRules() {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
-            final ThrottlingValidator sut = new ThrottlingValidator(new LocalValidator(em), vocabularyContextMapper,
+            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyContextMapper,
                                                                     config, eventPublisher);
-            final Collection<ValidationResult> result;
-            try {
-                result = runFuture(sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
-            } catch (Exception e) {
-                throw new TermItException(e);
-            }
-            assertTrue(result.stream().noneMatch(
-                    vr -> vr.getMessage().get("en").contains("The term does not have a preferred label in Czech")));
-            assertTrue(result.stream().noneMatch(
-                    vr -> vr.getMessage().get("en").contains("The term does not have a definition in Czech")));
-            assertTrue(result.stream().anyMatch(vr -> vr.getMessage().get("en").contains(
-                    "The term does not have a preferred label in the configured language.")));
+            final Collection<ValidationResult> result = runFuture(
+                    sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
+            assertTrue(result.isEmpty());
+            verify(validator).validate(List.of(vocabulary.getUri()), Environment.LANGUAGE);
         });
     }
 
@@ -102,7 +98,7 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
     void publishesVocabularyValidationFinishedEventAfterValidation() {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
-            final ThrottlingValidator sut = new ThrottlingValidator(new LocalValidator(em), vocabularyContextMapper,
+            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyContextMapper,
                                                                     config, eventPublisher);
             final Collection<URI> iris = Collections.singleton(vocabulary.getUri());
             final Collection<ValidationResult> result;
