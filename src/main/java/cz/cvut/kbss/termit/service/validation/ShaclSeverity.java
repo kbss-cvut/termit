@@ -1,4 +1,4 @@
-package cz.cvut.kbss.termit.persistence.validation;
+package cz.cvut.kbss.termit.service.validation;
 
 import java.net.URI;
 

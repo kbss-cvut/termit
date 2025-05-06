@@ -41,6 +41,7 @@ import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
+import cz.cvut.kbss.termit.service.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import jakarta.annotation.Nonnull;
@@ -67,6 +68,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static cz.cvut.kbss.termit.environment.Environment.termsToDtos;
@@ -109,6 +111,9 @@ class VocabularyServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private VocabularyContentValidator vocabularyValidator;
 
     @Mock
     private ApplicationContext appContext;
@@ -424,8 +429,20 @@ class VocabularyServiceTest {
      */
     @Test
     void publishingVocabularyContentModifiedEventTriggersContentsValidation() {
+        when(repositoryService.getTransitivelyImportedVocabularies(any(URI.class))).thenReturn(Set.of());
         final VocabularyContentModifiedEvent event = new VocabularyContentModifiedEvent(this, Generator.generateUri());
         sut.onVocabularyContentModified(event);
-        verify(repositoryService).validateContents(event.getVocabularyIri());
+        verify(vocabularyValidator).validate(event.getVocabularyIri(), Set.of());
+    }
+
+    @Test
+    void validateContentsGetsTransitivelyImportedVocabulariesAndValidatesThem() {
+        final URI vocabularyUri = Generator.generateUri();
+        final Set<URI> imported = Set.of(Generator.generateUri(), Generator.generateUri());
+        when(repositoryService.getTransitivelyImportedVocabularies(vocabularyUri)).thenReturn(imported);
+
+        sut.validateContents(vocabularyUri);
+        verify(repositoryService).getTransitivelyImportedVocabularies(vocabularyUri);
+        verify(vocabularyValidator).validate(vocabularyUri, imported);
     }
 }

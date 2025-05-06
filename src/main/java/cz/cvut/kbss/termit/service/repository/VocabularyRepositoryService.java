@@ -32,7 +32,6 @@ import cz.cvut.kbss.termit.model.Model;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
-import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
@@ -43,7 +42,6 @@ import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Validator;
@@ -212,8 +210,14 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return super.update(instance);
     }
 
+    @Transactional(readOnly = true)
     public Collection<URI> getTransitivelyImportedVocabularies(Vocabulary entity) {
         return vocabularyDao.getTransitivelyImportedVocabularies(entity.getUri());
+    }
+
+    @Transactional(readOnly = true)
+    public Collection<URI> getTransitivelyImportedVocabularies(URI vocabularyIri) {
+        return vocabularyDao.getTransitivelyImportedVocabularies(vocabularyIri);
     }
 
     @Transactional(readOnly = true)
@@ -352,10 +356,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. There are relations with other vocabularies.");
         }
-    }
-
-    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
-        return vocabularyDao.validateContents(vocabulary);
     }
 
     public Integer getTermCount(Vocabulary vocabulary) {
