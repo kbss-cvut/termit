@@ -18,10 +18,9 @@
 package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.persistence.validation.ExternalServiceValidator;
-import cz.cvut.kbss.termit.persistence.validation.LocalValidator;
+import cz.cvut.kbss.termit.persistence.validation.NoopRepositoryContextValidator;
 import cz.cvut.kbss.termit.persistence.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -114,11 +113,10 @@ public class ServiceConfig {
     }
 
     @Bean
-    public RepositoryContextValidator repositoryContextValidator(EntityManager em, RestTemplate restTemplate,
-                                                                 Environment env) {
+    public RepositoryContextValidator repositoryContextValidator(RestTemplate restTemplate, Environment env) {
         if (!env.containsProperty("termit.validation-service-url")) {
-            LOG.debug("Using embedded validation.");
-            return new LocalValidator(em);
+            LOG.warn("Validation service URL not configured, will use no-op validator.");
+            return new NoopRepositoryContextValidator();
         } else {
             final String validationServiceUrl = env.getProperty("termit.validation-service-url");
             LOG.debug("Using validation service at {}.", validationServiceUrl);

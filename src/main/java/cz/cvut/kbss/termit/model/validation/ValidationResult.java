@@ -19,12 +19,12 @@ package cz.cvut.kbss.termit.model.validation;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.Id;
+import cz.cvut.kbss.jopa.model.annotations.Namespace;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.termit.model.Term;
-import org.topbraid.shacl.vocabulary.SH;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -34,7 +34,8 @@ import java.util.Objects;
  * Validation rule violation.
  */
 @NonEntity
-@OWLClass(iri = SH.BASE_URI + "ValidationResult")
+@Namespace(prefix = "sh", namespace = "http://www.w3.org/ns/shacl#")
+@OWLClass(iri = "sh:ValidationResult")
 public class ValidationResult implements Serializable {
 
     @Id(generated = true)
@@ -43,31 +44,31 @@ public class ValidationResult implements Serializable {
     /**
      * Identifier of the affected term.
      */
-    @OWLObjectProperty(iri = SH.BASE_URI + "focusNode")
+    @OWLObjectProperty(iri = "sh:focusNode")
     private URI termUri;
 
     /**
      * Severity of the problem.
      */
-    @OWLObjectProperty(iri = SH.BASE_URI + "resultSeverity")
+    @OWLObjectProperty(iri = "sh:resultSeverity")
     private URI severity;
 
     /**
      * Map from language tag to the validation message in the given language.
      */
-    @OWLDataProperty(iri = SH.BASE_URI + "resultMessage")
+    @OWLDataProperty(iri = "sh:resultMessage")
     private MultilingualString message;
 
     /**
      * Identifier of the cause of the issue.
      */
-    @OWLObjectProperty(iri = SH.BASE_URI + "sourceShape")
+    @OWLObjectProperty(iri = "sh:sourceShape")
     private URI issueCauseUri;
 
     /**
      * Identifier of the cause of the issue.
      */
-    @OWLObjectProperty(iri = SH.BASE_URI + "resultPath")
+    @OWLObjectProperty(iri = "sh:resultPath")
     private URI resultPath;
 
 
