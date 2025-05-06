@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
@@ -110,6 +111,9 @@ public class ResultCachingValidator implements VocabularyContentValidator {
             Thread.currentThread().interrupt();
             throw new TermItException(e);
         } catch (ExecutionException e) {
+            if (e.getCause() instanceof UnsupportedOperationException uoe) {
+                throw uoe;
+            }
             throw new TermItException(e.getCause());
         }
 
