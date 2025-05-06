@@ -62,6 +62,7 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
         params.add("language", language);
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         try {
             final ResponseEntity<ExternalValidationReport> resp = restClient.exchange(validationServiceUrl,

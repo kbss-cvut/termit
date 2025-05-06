@@ -74,6 +74,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -423,13 +424,16 @@ public class VocabularyService
     }
 
     /**
-     * Validates a vocabulary: - it checks glossary rules, - it checks OntoUml constraints.
+     * Validates the content of a vocabulary with the specified identifier.
+     * <p>
+     * This also takes into account vocabularies imported by the specified vocabulary.
      *
      * @param vocabularyIri Vocabulary to validate
      */
     public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabularyIri) {
         Objects.requireNonNull(vocabularyIri);
-        final Collection<URI> imports = repositoryService.getTransitivelyImportedVocabularies(vocabularyIri);
+        final Set<URI> imports = new HashSet<>(repositoryService.getTransitivelyImportedVocabularies(vocabularyIri));
+        imports.add(vocabularyIri);
         return vocabularyValidator.validate(vocabularyIri, imports);
     }
 
