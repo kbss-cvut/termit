@@ -19,9 +19,9 @@ package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
-import cz.cvut.kbss.termit.persistence.validation.ExternalServiceValidator;
-import cz.cvut.kbss.termit.persistence.validation.NoopRepositoryContextValidator;
-import cz.cvut.kbss.termit.persistence.validation.RepositoryContextValidator;
+import cz.cvut.kbss.termit.service.validation.ExternalServiceValidator;
+import cz.cvut.kbss.termit.service.validation.NoopRepositoryContextValidator;
+import cz.cvut.kbss.termit.service.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;

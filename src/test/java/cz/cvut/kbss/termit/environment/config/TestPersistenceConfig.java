@@ -19,8 +19,8 @@ package cz.cvut.kbss.termit.environment.config;
 
 import cz.cvut.kbss.termit.config.PersistenceConfig;
 import cz.cvut.kbss.termit.environment.TestPersistenceFactory;
-import cz.cvut.kbss.termit.persistence.validation.NoopRepositoryContextValidator;
-import cz.cvut.kbss.termit.persistence.validation.RepositoryContextValidator;
+import cz.cvut.kbss.termit.service.validation.NoopRepositoryContextValidator;
+import cz.cvut.kbss.termit.service.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.workspace.EditableVocabularies;
 import cz.cvut.kbss.termit.workspace.EditableVocabulariesHolder;
