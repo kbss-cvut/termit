@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -161,7 +162,13 @@ public class VocabularyController extends BaseController {
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
-
+    
+    
+    @GetMapping(value = "/imports/available", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RdfsResource> getAvailableVocabularies(){
+        return vocabularyService.getAvailableVocabularies();
+    }
+   
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets identifiers of vocabularies whose terms are in a SKOS relationship with terms from the specified vocabulary.")
     @ApiResponses({

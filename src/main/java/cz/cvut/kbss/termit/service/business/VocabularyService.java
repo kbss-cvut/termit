@@ -17,8 +17,10 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -80,6 +82,13 @@ import java.util.Optional;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 
 /**
  * Business logic concerning vocabularies.
@@ -128,6 +137,58 @@ public class VocabularyService
         this.authorizationService = authorizationService;
         this.relationshipResolver = relationshipResolver;
         this.context = context;
+    }
+
+    public List<RdfsResource> getAvailableVocabularies() {
+        
+        List<RdfsResource> response = new ArrayList<>();
+        
+        String sparqlEndpoint = "https://xn--slovnk-7va.gov.cz/sparql";
+        String sparqlQuery
+                = """
+                          PREFIX dct: <http://purl.org/dc/terms/>
+                           SELECT DISTINCT ?slovnik ?nazev_slovniku_cs ?nazev_slovniku_en
+                           WHERE { 
+                          ?slovnik a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> .
+                          ?slovnik dct:title ?nazev_slovniku_cs .
+                          FILTER (lang(?nazev_slovniku_cs)="cs")
+                          Optional{  ?slovnik dct:title ?nazev_slovniku_en .
+                          FILTER (lang(?nazev_slovniku_en)="en")
+                          }
+                          }
+                          """;
+        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
+        sparqlRepo.init();
+        try (RepositoryConnection conn = sparqlRepo.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
+
+            try (TupleQueryResult result = query.evaluate()) {
+                while (result.hasNext()) {
+                    BindingSet line = result.next();
+                    if (!line.hasBinding("slovnik")) {
+                        System.err.println("Error: no slovnik binding: " + line.toString());
+                        continue;
+                    }
+                    URI uri = new URI(line.getBinding("slovnik").getValue().stringValue());
+                    HashMap<String, String> labels = new HashMap<>();
+                    if (line.hasBinding("nazev_slovniku_cs")) {
+                        labels.put("cs", line.getBinding("nazev_slovniku_cs").getValue().stringValue());
+                    } else {
+                        labels.put("cs", uri.toString());
+                    }
+                    if (line.hasBinding("nazev_slovniku_en")) {
+                        labels.put("en", line.getBinding("nazev_slovniku_en").getValue().stringValue());
+                    } else {
+                        labels.put("en", uri.toString());
+                    }
+                    MultilingualString label = new MultilingualString(labels);
+                    response.add(new RdfsResource(uri, label, new MultilingualString(), ""));
+                }
+            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+        return response;
     }
 
     /**
@@ -355,7 +416,7 @@ public class VocabularyService
      * @return List of change records, ordered by date in descending order
      */
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
-                                                                  Pageable pageReq) {
+            Pageable pageReq) {
         return repositoryService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
@@ -367,8 +428,8 @@ public class VocabularyService
      */
     @Transactional
     @Throttle(value = "{#vocabularyUri}",
-              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
-              name = "allTermsVocabularyAnalysis")
+            group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
+            name = "allTermsVocabularyAnalysis")
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
     public void runTextAnalysisOnAllTerms(URI vocabularyUri) {
         final Vocabulary vocabulary = findRequired(vocabularyUri); // required when throttling for persistent context
