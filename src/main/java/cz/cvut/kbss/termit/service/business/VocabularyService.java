@@ -93,12 +93,15 @@ import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
+
 
 /**
  * Business logic concerning vocabularies.
@@ -151,58 +154,6 @@ public class VocabularyService
         this.relationshipResolver = relationshipResolver;
         this.vocabularyValidator = vocabularyValidator;
         this.context = context;
-    }
-
-    public List<RdfsResource> getAvailableVocabularies() {
-
-        List<RdfsResource> response = new ArrayList<>();
-
-        String sparqlEndpoint = "https://xn--slovnk-7va.gov.cz/sparql";
-        String sparqlQuery
-                = """
-                          PREFIX dct: <http://purl.org/dc/terms/>
-                           SELECT DISTINCT ?slovnik ?nazev_slovniku_cs ?nazev_slovniku_en
-                           WHERE { 
-                          ?slovnik a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> .
-                          ?slovnik dct:title ?nazev_slovniku_cs .
-                          FILTER (lang(?nazev_slovniku_cs)="cs")
-                          Optional{  ?slovnik dct:title ?nazev_slovniku_en .
-                          FILTER (lang(?nazev_slovniku_en)="en")
-                          }
-                          }
-                          """;
-        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
-        sparqlRepo.init();
-        try (RepositoryConnection conn = sparqlRepo.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
-
-            try (TupleQueryResult result = query.evaluate()) {
-                while (result.hasNext()) {
-                    BindingSet line = result.next();
-                    if (!line.hasBinding("slovnik")) {
-                        System.err.println("Error: no slovnik binding: " + line.toString());
-                        continue;
-                    }
-                    URI uri = new URI(line.getBinding("slovnik").getValue().stringValue());
-                    HashMap<String, String> labels = new HashMap<>();
-                    if (line.hasBinding("nazev_slovniku_cs")) {
-                        labels.put("cs", line.getBinding("nazev_slovniku_cs").getValue().stringValue());
-                    } else {
-                        labels.put("cs", uri.toString());
-                    }
-                    if (line.hasBinding("nazev_slovniku_en")) {
-                        labels.put("en", line.getBinding("nazev_slovniku_en").getValue().stringValue());
-                    } else {
-                        labels.put("en", uri.toString());
-                    }
-                    MultilingualString label = new MultilingualString(labels);
-                    response.add(new RdfsResource(uri, label, new MultilingualString(), ""));
-                }
-            }
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-        }
-        return response;
     }
 
     /**
@@ -346,42 +297,112 @@ public class VocabularyService
         return imported;
     }
 
+    private static final String SPARQL_ENDPOIND_ADDRESS = "https://xn--slovnk-7va.gov.cz/sparql";
+    
+/**
+ * Sends a SPARQL query to fetch list of available vocabularies.
+ * 
+ * @return list of available vocabulary information or null if connection failed
+ */
+    public List<RdfsResource> getAvailableVocabularies() {
+
+        List<RdfsResource> response = new ArrayList<>();
+
+        String sparqlEndpoint = SPARQL_ENDPOIND_ADDRESS;
+        String sparqlQuery
+                = """
+                          PREFIX dct: <http://purl.org/dc/terms/>
+                           SELECT DISTINCT ?slovnik ?nazev_slovniku_cs ?nazev_slovniku_en
+                           WHERE { 
+                          ?slovnik a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> .
+                          ?slovnik dct:title ?nazev_slovniku_cs .
+                          FILTER (lang(?nazev_slovniku_cs)="cs")
+                          Optional{  ?slovnik dct:title ?nazev_slovniku_en .
+                          FILTER (lang(?nazev_slovniku_en)="en")
+                          }
+                          }
+                          """;
+        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
+        sparqlRepo.init();
+        try (RepositoryConnection conn = sparqlRepo.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
+
+            try (TupleQueryResult result = query.evaluate()) {
+                while (result.hasNext()) {
+                    BindingSet line = result.next();
+                    if (!line.hasBinding("slovnik")) {
+                        LOG.error("Error: no slovnik binding in: {}", line.toString());
+                        continue;
+                    }
+                    URI uri = new URI(line.getBinding("slovnik").getValue().stringValue());
+                    HashMap<String, String> labels = new HashMap<>();
+                    
+                    // add cs label if available
+                    if (line.hasBinding("nazev_slovniku_cs")) {
+                        labels.put("cs", line.getBinding("nazev_slovniku_cs").getValue().stringValue());
+                    } else {
+                        labels.put("cs", uri.toString());
+                    }
+                    // add en label if available
+                    if (line.hasBinding("nazev_slovniku_en")) {
+                        labels.put("en", line.getBinding("nazev_slovniku_en").getValue().stringValue());
+                    } else {
+                        labels.put("en", uri.toString());
+                    }
+                    MultilingualString label = new MultilingualString(labels);
+                    response.add(new RdfsResource(uri, label, new MultilingualString(), ""));
+                }
+            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+        return response;
+    }
+
     /**
      * Imports multiple vocabularies from external source.
-     * 
-     * @param vocabularyIris List of 
-     * @return first imported Vocabullary
+     *
+     * @param vocabularyIris List of
+     * @return first imported Vocabulary
      * @throws URISyntaxException
+     * @throws QueryEvaluationException
+     * @throws RepositoryException
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
-    public Vocabulary importFromExternalUris(List<String> vocabularyIris) throws URISyntaxException {
+    public Vocabulary importFromExternalUris(List<String> vocabularyIris) throws URISyntaxException, QueryEvaluationException, RepositoryException {
         Vocabulary firstImportedVocabulary = null;
+        
         for (String vocabularyIri : vocabularyIris) {
             InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
             if (newVocabulary != null) {
                 URI uri = new URI(vocabularyIri);
                 Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+
+                // add types
                 vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
                 vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+
                 final AccessControlList acl = aclService.createFor(vocabulary);
                 vocabulary.setAcl(acl.getUri());
+
                 eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
-                LOG.debug("Vocabulary " + vocabularyIri + " import was successful.");
+                LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
                 if (firstImportedVocabulary == null) {
                     firstImportedVocabulary = vocabulary;
                 }
             }
         }
+        
         return firstImportedVocabulary;
     }
 
     @Transactional
-    private InputStream downloadExternalVocabulary(String vocabularyIri) {
+    private InputStream downloadExternalVocabulary(String vocabularyIri) throws QueryEvaluationException, RepositoryException{
 
         List<RdfsResource> response = new ArrayList<>();
 
-        String sparqlEndpoint = "https://xn--slovnk-7va.gov.cz/sparql";
+        String sparqlEndpoint = SPARQL_ENDPOIND_ADDRESS;
         String sparqlQuery
                 = String.format("""
                           PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -485,23 +506,16 @@ public class VocabularyService
                           """, vocabularyIri);
         SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
         sparqlRepo.init();
-        try (RepositoryConnection conn = sparqlRepo.getConnection()) {
-            GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
+        RepositoryConnection conn = sparqlRepo.getConnection();
+        GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
 
-            try (GraphQueryResult result = graphQuery.evaluate()) {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                Rio.write(result, outputStream, RDFFormat.TURTLE);
-                InputStream vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
-                return vocabularyFile;
-            }
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-        }
-//        return response;
-        return null;
+        GraphQueryResult result = graphQuery.evaluate();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Rio.write(result, outputStream, RDFFormat.TURTLE);
+        InputStream vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
+        return vocabularyFile;
 
     }
-
     /**
      * Imports a vocabulary from the specified file.
      * <p>

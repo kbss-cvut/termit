@@ -76,6 +76,8 @@ import java.util.Optional;
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.springframework.web.bind.annotation.RequestPart;
 
 /**
@@ -190,8 +192,10 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a new vocabulary by importing the specified SKOS glossary.")
+    @Operation(security = {
+        @SecurityRequirement(name = "bearer-key")},
+            description = "Creates a new vocabulary by importing the specified SKOS glossary"
+            + " or providing list of vocabulary iris to be downloaded from an external source")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
             @ApiResponse(responseCode = "409",
@@ -199,34 +203,30 @@ public class VocabularyController extends BaseController {
     })
     @PostMapping("/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-public ResponseEntity<Void> createVocabulary(
-        @Parameter(description = "File containing a SKOS glossary in RDF.")
-        @RequestParam(name = "file", required = false) MultipartFile file,
-        
-        @Parameter(description = "List of external SKOS vocabulary IRIs.")
-        @RequestParam(name = "vocabularyIris", required = false) List<String> vocabularyIris,
-        
-        @Parameter(description = "Whether identifiers should be modified to prevent clashes with existing data.")
-        @RequestParam(name = "rename", defaultValue = "false", required = false) boolean rename) {
-        if (file != null) {
+    public ResponseEntity<Void> createVocabulary(
+            @Parameter(description = "File containing a SKOS glossary in RDF.")
+            @RequestParam(name = "file", required = false) MultipartFile file,
+            @Parameter(description = "List of external SKOS vocabulary IRIs.")
+            @RequestParam(name = "vocabularyIris", required = false) List<String> vocabularyIris,
+            @Parameter(description = "Whether identifiers should be modified to prevent clashes with existing data.")
+            @RequestParam(name = "rename", defaultValue = "false", required = false) boolean rename) {
 
+        if (file != null) { // importing from file
             final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
             LOG.debug("New vocabulary {} imported.", vocabulary);
             return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
-        } else 
-            if (vocabularyIris != null) {
-            System.out.println("Handed of list of vocabularies to be imported");
+        } else if (vocabularyIris != null) { // importing externally
             try {
-            Vocabulary vocabulary = vocabularyService.importFromExternalUris(vocabularyIris);
-            LOG.debug("Vocabulary imported from IRIs: {}", vocabulary);
-            return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+                Vocabulary vocabulary = vocabularyService.importFromExternalUris(vocabularyIris);
+                LOG.debug("Vocabulary imported from IRIs: {}", vocabularyIris.toArray());
+                return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
 
-            } catch (URISyntaxException ex) {
-                java.util.logging.Logger.getLogger(VocabularyController.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (URISyntaxException | QueryEvaluationException | RepositoryException ex) {
+                LOG.error(ex.getMessage());
                 return ResponseEntity.accepted().build();
             }
         } else {
-                System.out.println("Eles\n");
+            System.out.println("Eles\n");
             return ResponseEntity.badRequest().build(); // ani soubor, ani IRI
         }
     }
