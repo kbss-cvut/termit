@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,13 +17,21 @@
  */
 package cz.cvut.kbss.termit.persistence.dao.util;
 
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Maps SPARQL query results to {@link  TermOccurrence} instances.

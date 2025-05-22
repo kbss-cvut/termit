@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 
 import java.net.URI;
 import java.util.List;
@@ -32,7 +32,7 @@ import java.util.Optional;
 /**
  * Service for managing {@link AccessControlList}s (ACLs).
  * <p>
- * Note that only management of ACLs is supported by this service. Access control itself is handled by TODO.
+ * Note that only management of ACLs is supported by this service. Access control itself is handled by {@link cz.cvut.kbss.termit.service.security.authorization.acl.AccessControlListBasedAuthorizationService}.
  */
 public interface AccessControlListService {
 
@@ -137,5 +137,5 @@ public interface AccessControlListService {
      * @param agent Agent whose access to examine
      * @return List of matching assets
      */
-    List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@NonNull AccessControlAgent agent);
+    List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@Nonnull AccessControlAgent agent);
 }

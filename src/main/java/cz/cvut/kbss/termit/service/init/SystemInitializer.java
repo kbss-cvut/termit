@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@ public class SystemInitializer implements SmartInitializingSingleton, Ordered {
         LOG.info("Running startup tasks.");
         appContext.getBean(AdminAccountGenerator.class).initSystemAdmin();
         appContext.getBean(VocabularyAccessControlListGenerator.class).generateMissingAccessControlLists();
+        appContext.getBean(VocabularyAnonymousAccessControlListGenerator.class).generateMissingAccessControlLists();
     }
 
     @Override

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,12 @@
 package cz.cvut.kbss.termit.dto.search;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.Inferred;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
+import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.util.HasTypes;
@@ -155,10 +160,9 @@ public class FacetedSearchResult extends Asset<MultilingualString> implements Ha
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FacetedSearchResult)) {
+        if (!(o instanceof FacetedSearchResult that)) {
             return false;
         }
-        FacetedSearchResult that = (FacetedSearchResult) o;
         return Objects.equals(getUri(), that.getUri());
     }
 

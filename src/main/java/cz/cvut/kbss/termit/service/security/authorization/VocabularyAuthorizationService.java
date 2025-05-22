@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -163,6 +163,12 @@ public class VocabularyAuthorizationService implements AssetAuthorizationService
     public boolean canRead(VocabularyDto dto) {
         Objects.requireNonNull(dto);
         return canRead(new Vocabulary(dto.getUri()));
+    }
+
+    public boolean canModify(URI vocabularyIri) {
+        Objects.requireNonNull(vocabularyIri);
+        final Vocabulary vocabulary = new Vocabulary(vocabularyIri);
+        return canModify(vocabulary);
     }
 
     @Override

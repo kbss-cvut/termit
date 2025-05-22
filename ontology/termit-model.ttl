@@ -162,7 +162,7 @@ termit:model  a         owl:Ontology , <http://onto.fel.cvut.cz/ontologies/slovn
         <http://purl.org/dc/terms/created>
                 "2020-05-26" ;
         <http://purl.org/dc/terms/creator>
-                "Michal Med" , " Martin Ledvinka" ;
+                "Michal Med" , "Martin Ledvinka" ;
         <http://purl.org/dc/terms/title>
                 "Vocabulary of system TermIt - model"@en , "Slovník systému TermIt - model"@cs ;
         <http://purl.org/ontology/bibo/status>
@@ -185,6 +185,10 @@ termit-pojem:přiřazení-termu
 termit-pojem:selektor-text-quote
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class ;
         rdfs:subClassOf  termit-pojem:selektor .
+
+termit-pojem:anonymní-uživatel-termitu
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit-pojem:uživatelská-role ;
+        rdfs:subClassOf  termit-pojem:uživatel-termitu .
 
 termit-pojem:omezený-uživatel-termitu
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class , termit-pojem:uživatelská-role ;
@@ -336,5 +340,9 @@ termit-pojem:koncový-stav-pojmu
 
 termit-pojem:požadavek-na-změnu-hesla
     a                <https://slovník.gov.cz/základní/pojem/typ-objektu>, owl:Class .
+
+termit-pojem:má-adresu-modelovacího-nástroje
+        a                   owl:AnnotationProperty , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        rdfs:subPropertyOf  <https://slovník.gov.cz/základní/pojem/vlastnost> .
 
 

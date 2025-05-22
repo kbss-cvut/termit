@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import org.locationtech.jts.util.Assert;
 public class VocabularyTest {
 
     @Test
-    // @todo until https://github.com/kbss-cvut/jopa/issues/85 is resolved
     public void ensureContentHasCorrectUrl() {
         Assert.equals("http://rdfs.org/sioc/ns#content", Vocabulary.s_p_sioc_content);
     }

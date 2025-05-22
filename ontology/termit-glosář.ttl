@@ -5,6 +5,10 @@
 @prefix termit-pojem: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 
+<http://www.w3.org/ns/activitystreams#>
+        <http://purl.org/vocab/vann/preferredNamespacePrefix>
+            "as" .
+
 termit-pojem:cíl-definičního-výskytu
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#broader>
@@ -102,7 +106,7 @@ termit:glosář  a        owl:Ontology , <http://www.w3.org/2004/02/skos/core#Co
         <http://purl.org/dc/terms/created>
                 "2020-05-26" ;
         <http://purl.org/dc/terms/creator>
-                " Martin Ledvinka" , "Michal Med" ;
+                "Martin Ledvinka" , "Michal Med" ;
         <http://purl.org/dc/terms/title>
                 "Vocabulary of system TermIt - glossary"@en , "Slovník systému TermIt - glosář"@cs ;
         <http://purl.org/ontology/bibo/status>
@@ -380,6 +384,17 @@ termit-pojem:omezený-uživatel-termitu
         <http://www.w3.org/2004/02/skos/core#scopeNote>
                 "He or she can list and view vocabularies and terms. He or she can also comment on terms."@en , "Může prohlížet slovníky a pojmy. Pojmy může rovněž komentovat."@cs .
 
+termit-pojem:anonymní-uživatel-termitu
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                termit-pojem:uživatel-termitu , <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel> 
+                "Anonymous"@en , "Anonym"@cs ;
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+        "A not logged in user"@en , "Nepřihlášený uživatel"@cs .
+
 termit-pojem:má-suffix-text-quote
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#broader>
@@ -640,3 +655,12 @@ termit-pojem:požadavek-na-změnu-hesla
             termit:glosář ;
     <http://www.w3.org/2004/02/skos/core#prefLabel>
             "Password reset request"@en , "Požadavek na změnu hesla"@cs .
+
+termit-pojem:má-adresu-modelovacího-nástroje
+    a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+    <http://www.w3.org/2004/02/skos/core#broader>
+            <https://slovník.gov.cz/základní/pojem/vlastnost> , <https://slovník.gov.cz/základní/pojem/typ-vlastnosti> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Has modeling tool address"@en , "Má adresu modelovacího nástroje"@cs .

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void fullTextSearchExecutesSearchOnService() throws Exception {
         final List<FullTextSearchResult> expected = Collections
                 .singletonList(
-                        new FullTextSearchResult(Generator.generateUri(), "test", null, null, SKOS.CONCEPT,
+                        new FullTextSearchResult(Generator.generateUri(), "test", null, null, null, SKOS.CONCEPT,
                                                  "test", "test", 1.0));
         when(searchServiceMock.fullTextSearch(any())).thenReturn(expected);
         final String searchString = "test";
@@ -95,7 +95,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void fullTextSearchOfTermsWithoutVocabularySpecificationExecutesSearchOnService() throws Exception {
         final URI vocabularyIri = URI.create("https://test.org/vocabulary");
         final List<FullTextSearchResult> expected = Collections
-                .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", vocabularyIri, null,
+                .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", "Term definition", vocabularyIri, null,
                                                         SKOS.CONCEPT, "test", "test", 1.0));
         when(searchServiceMock.fullTextSearchOfTerms(any(), any())).thenReturn(expected);
         final String searchString = "test";

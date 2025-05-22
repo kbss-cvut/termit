@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,8 @@ package cz.cvut.kbss.termit.service.repository;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
 import cz.cvut.kbss.termit.persistence.dao.UserAccountDao;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import jakarta.validation.Validator;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class BaseRepositoryServiceImpl extends BaseRepositoryService<UserAccount, UserAccount> {
 

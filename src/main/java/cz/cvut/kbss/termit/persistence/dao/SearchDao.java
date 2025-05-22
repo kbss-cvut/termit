@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,15 +26,15 @@ import cz.cvut.kbss.termit.dto.search.SearchParam;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
-import jakarta.annotation.PostConstruct;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,7 +79,7 @@ public class SearchDao {
      * @return List of matching results
      * @see #fullTextSearchIncludingSnapshots(String)
      */
-    public List<FullTextSearchResult> fullTextSearch(@NonNull String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
@@ -102,7 +102,7 @@ public class SearchDao {
      * @return List of matching results
      * @see #fullTextSearchIncludingSnapshots(String)
      */
-    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@NonNull String searchString) {
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
@@ -136,8 +136,8 @@ public class SearchDao {
      * @param pageSpec     Specification of the page of results to return
      * @return List of matching terms, ordered by label
      */
-    public List<FacetedSearchResult> facetedTermSearch(@NonNull Collection<SearchParam> searchParams,
-                                                       @NonNull Pageable pageSpec) {
+    public List<FacetedSearchResult> facetedTermSearch(@Nonnull Collection<SearchParam> searchParams,
+                                                       @Nonnull Pageable pageSpec) {
         Objects.requireNonNull(searchParams);
         Objects.requireNonNull(pageSpec);
         LOG.trace("Running faceted term search for search parameters: {}", searchParams);

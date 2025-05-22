@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.rest.readonly;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.readonly.ReadOnlyTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -36,12 +37,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.time.Instant;
@@ -50,6 +57,7 @@ import java.util.Optional;
 
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
 
+@Profile("!no-public-api")
 @Tag(name = "Terms - public", description = "No-authorization term API")
 @RestController
 @PreAuthorize("permitAll()")
@@ -169,6 +177,23 @@ public class ReadOnlyTermController extends BaseController {
         return termService.findRequired(termUri);
     }
 
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets basic information about a term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Basic term information."),
+            @ApiResponse(responseCode = "404", description = TermController.ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}/info", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public TermInfo getTermInfoById(@Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                                               example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                                    @PathVariable String localName,
+                                    @Parameter(description = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                                               example = TermController.ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                                    @RequestParam(name = Constants.QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        return termService.findRequiredTermInfo(termUri);
+    }
+
     @Operation(
             description = "Gets sub-terms of the term with the specified local name in the vocabulary with the specified identifier")
     @ApiResponses({
@@ -177,7 +202,7 @@ public class ReadOnlyTermController extends BaseController {
     })
     @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ReadOnlyTerm> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = TermController.ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
                        example = TermController.ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -198,7 +223,7 @@ public class ReadOnlyTermController extends BaseController {
     })
     @GetMapping(value = "/terms/{localName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ReadOnlyTerm> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = TermController.ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = TermController.ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,

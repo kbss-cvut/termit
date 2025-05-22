@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,9 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private ChangeRecordService sut;
+
+    @Autowired
+    private ChangeRecordDao dao;
 
     private User author;
 
@@ -84,7 +88,9 @@ class ChangeRecordServiceTest extends BaseServiceTestRunner {
             r.setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis() - i * 10000L));
             return r;
         }).collect(Collectors.toList());
-        transactional(() -> records.forEach(em::persist));
+        transactional(() -> {
+            records.forEach(r -> dao.persist(r, asset));
+        });
         return records;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.Collections;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TermItUserDetailsTest {
 
@@ -51,7 +53,7 @@ class TermItUserDetailsTest {
         final UserAccount user = Generator.generateUserAccount();
         user.addType(Vocabulary.s_c_administrator_termitu);
         final TermItUserDetails result = new TermItUserDetails(user);
-        assertEquals(3, result.getAuthorities().size());
+        assertEquals(4, result.getAuthorities().size());
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.ADMIN.getName())));
@@ -63,7 +65,7 @@ class TermItUserDetailsTest {
         final UserAccount user = Generator.generateUserAccount();
         user.addType(Vocabulary.s_c_administrator_termitu);
         final TermItUserDetails result = new TermItUserDetails(user, authorities);
-        assertEquals(4, result.getAuthorities().size());
+        assertEquals(5, result.getAuthorities().size());
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.RESTRICTED_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.FULL_USER.getName())));
         assertTrue(result.getAuthorities().contains(new SimpleGrantedAuthority(UserRole.ADMIN.getName())));

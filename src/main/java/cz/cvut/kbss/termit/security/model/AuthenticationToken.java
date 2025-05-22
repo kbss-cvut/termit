@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,9 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.Objects;
 
+/**
+ * Authentication token holding {@link TermItUserDetails} as principal.
+ */
 public class AuthenticationToken extends AbstractAuthenticationToken implements Principal {
 
     private final TermItUserDetails userDetails;

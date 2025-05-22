@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.exception.LanguageRetrievalException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -29,7 +30,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 /**
  * Provides UFO-compliant language for classification of terms.
  * <p>
- * It uses Jena to load and term types from the provided configuration file.
+ * It uses RDF4J to load and term types from the provided configuration file.
  */
 @Service
 public class UfoTermTypesService {
@@ -76,7 +76,7 @@ public class UfoTermTypesService {
         }).collect(Collectors.toList());
     }
 
-    @NotNull
+    @Nonnull
     private List<Term> loadTermTypes() {
         try {
             final Model model = Rio.parse(languageTtlUrl.getInputStream(), RDFFormat.TURTLE);

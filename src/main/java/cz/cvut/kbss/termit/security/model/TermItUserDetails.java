@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,16 +17,19 @@
  */
 package cz.cvut.kbss.termit.security.model;
 
-import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_RESTRICTED_USER;
-
-
 import cz.cvut.kbss.termit.model.UserAccount;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static cz.cvut.kbss.termit.security.SecurityConstants.ROLE_RESTRICTED_USER;
 
 public class TermItUserDetails implements UserDetails {
 

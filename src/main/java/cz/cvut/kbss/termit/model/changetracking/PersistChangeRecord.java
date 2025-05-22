@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.model.changetracking;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.annotation.Nonnull;
 
 @OWLClass(iri = Vocabulary.s_c_vytvoreni_entity)
 public class PersistChangeRecord extends AbstractChangeRecord {
@@ -34,5 +35,16 @@ public class PersistChangeRecord extends AbstractChangeRecord {
     @Override
     public String toString() {
         return "PersistChangeRecord{" + super.toString() + '}';
+    }
+
+    @Override
+    public int compareTo(@Nonnull AbstractChangeRecord o) {
+        if (o instanceof UpdateChangeRecord) {
+            return -1;
+        }
+        if (o instanceof DeleteChangeRecord) {
+            return -1;
+        }
+        return super.compareTo(o);
     }
 }

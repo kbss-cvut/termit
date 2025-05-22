@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ public class AccessControlListBasedAuthorizationService {
      * Checks whether the specified resource can be read anonymously.
      * <p>
      * That is, if the resource is readable without a user being logged in. The implementation checks for access level
-     * of user role {@link cz.cvut.kbss.termit.security.model.UserRole#RESTRICTED_USER} - if it is {@link
+     * of user role {@link cz.cvut.kbss.termit.security.model.UserRole#ANONYMOUS_USER} - if it is {@link
      * AccessLevel#NONE}, anonymous access is denied as well. Otherwise, anonymous read access is allowed.
      *
      * @param resource Resource access to which is to be authorized
@@ -80,7 +80,7 @@ public class AccessControlListBasedAuthorizationService {
                                                                                       .filter(r -> r.getHolder()
                                                                                                     .getUri()
                                                                                                     .toString()
-                                                                                                    .equals(UserRole.RESTRICTED_USER.getType()))
+                                                                                                    .equals(UserRole.ANONYMOUS_USER.getType()))
                                                                                       .findAny());
         return record.map(r -> r.getAccessLevel().includes(AccessLevel.READ)).orElse(false);
     }

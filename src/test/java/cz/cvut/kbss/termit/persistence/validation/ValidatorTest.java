@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@ package cz.cvut.kbss.termit.persistence.validation;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
+import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -31,12 +33,21 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
+import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 
 class ValidatorTest extends BaseDaoTestRunner {
 
@@ -52,6 +63,9 @@ class ValidatorTest extends BaseDaoTestRunner {
     @Autowired
     private Configuration config;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @BeforeEach
     void setUp() {
         final User author = Generator.generateUserWithId();
@@ -63,14 +77,46 @@ class ValidatorTest extends BaseDaoTestRunner {
     void validateUsesOverrideRulesToAllowI18n() {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
-            final Validator sut = new Validator(em, vocabularyContextMapper, config);
-            final List<ValidationResult> result = sut.validate(Collections.singleton(vocabulary.getUri()));
+            final Validator sut = new Validator(em, vocabularyContextMapper, config, eventPublisher);
+            final Collection<ValidationResult> result;
+            try {
+                result = runFuture(sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
+            } catch (Exception e) {
+                throw new TermItException(e);
+            }
             assertTrue(result.stream().noneMatch(
                     vr -> vr.getMessage().get("en").contains("The term does not have a preferred label in Czech")));
             assertTrue(result.stream().noneMatch(
                     vr -> vr.getMessage().get("en").contains("The term does not have a definition in Czech")));
             assertTrue(result.stream().anyMatch(vr -> vr.getMessage().get("en").contains(
                     "The term does not have a preferred label in the primary configured language of this deployment of TermIt")));
+        });
+    }
+
+    /**
+     * Validation is a heavy and long-running task; validator must publish event signalizing validation end
+     * allowing other components to react on the result.
+     */
+    @Test
+    void publishesVocabularyValidationFinishedEventAfterValidation() {
+        final Vocabulary vocabulary = generateVocabulary();
+        transactional(() -> {
+            final Validator sut = new Validator(em, vocabularyContextMapper, config, eventPublisher);
+            final Collection<URI> iris = Collections.singleton(vocabulary.getUri());
+            final Collection<ValidationResult> result;
+            try {
+                result = runFuture(sut.validate(vocabulary.getUri(), iris));
+            } catch (Exception e) {
+                throw new TermItException(e);
+            }
+
+            ArgumentCaptor<ApplicationEvent> eventCaptor = ArgumentCaptor.forClass(ApplicationEvent.class);
+            verify(eventPublisher).publishEvent(eventCaptor.capture());
+            final ApplicationEvent event = eventCaptor.getValue();
+            assertInstanceOf(VocabularyValidationFinishedEvent.class, event);
+            final VocabularyValidationFinishedEvent finished = (VocabularyValidationFinishedEvent) event;
+            assertIterableEquals(result, finished.getValidationResults());
+            assertIterableEquals(iris, finished.getVocabularyIris());
         });
     }
 

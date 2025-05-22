@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,13 +36,17 @@ import java.util.stream.Collectors;
  */
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "parentTerms", "subTerms"})
-@JsonIgnoreProperties({"definition", "persistenceContext"})
+@JsonIgnoreProperties({"definition"})
 public class TermDto extends AbstractTerm {
 
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
     private Set<TermDto> parentTerms;
 
     public TermDto() {
+    }
+
+    public TermDto(AbstractTerm other) {
+        super(other);
     }
 
     public TermDto(Term other) {

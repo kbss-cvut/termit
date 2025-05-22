@@ -1,4 +1,4 @@
-application.version: @project.version@
+application.version: '@project.version@'
 
 management:
     endpoints:
@@ -19,6 +19,7 @@ server:
                 name: TermItSessionId
     tomcat:
         max-swallow-size: -1
+    forward-headers-strategy: framework
 spring:
     servlet:
         multipart:
@@ -37,7 +38,7 @@ spring:
                     starttls:
                         enable: true
     profiles:
-        active: @spring.profiles.active@
+        active: '@spring.profiles.active@'
 javamelody:
     init-parameters:
         authorized-users: admin:kral0vnat3rm1t1st3
@@ -65,8 +66,6 @@ termit:
             separator: /verze
     file:
         storage: /tmp/termit
-    textAnalysis:
-        url: http://localhost/annotace/annotate
     changetracking:
         context:
             extension: /zmeny

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.termit.util.Vocabulary;
-
 import jakarta.validation.constraints.NotBlank;
+
 import java.util.Objects;
 
 import static cz.cvut.kbss.termit.util.Utils.trim;
@@ -81,6 +81,11 @@ public class TextQuoteSelector extends Selector {
 
     public void setSuffix(String suffix) {
         this.suffix = suffix;
+    }
+
+    @Override
+    public TextQuoteSelector copy() {
+        return new TextQuoteSelector(exactMatch, prefix, suffix);
     }
 
     @Override

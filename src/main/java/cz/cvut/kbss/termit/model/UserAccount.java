@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +18,18 @@
 package cz.cvut.kbss.termit.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.Id;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.security.model.UserRole;
+import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
-
 import jakarta.validation.constraints.NotBlank;
+
 import java.io.Serializable;
 import java.net.URI;
 import java.time.Instant;
@@ -268,6 +273,6 @@ public class UserAccount implements HasIdentifier, HasTypes, Serializable {
 
     @Override
     public String toString() {
-        return "UserAccount{" + getFullName() + ", username='" + username + '\'' + '}';
+        return "UserAccount{" + Utils.uriToString(getUri()) + getFullName() + ", username='" + username + '\'' + '}';
     }
 }

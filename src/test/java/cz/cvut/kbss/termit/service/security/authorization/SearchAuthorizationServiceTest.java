@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,10 +45,11 @@ class SearchAuthorizationServiceTest {
 
     @Test
     void canReadChecksIfVocabularyIsReadableForTermResult() {
-        final FullTextSearchResult res = new FullTextSearchResult(Generator.generateUri(), "test string",
-                Generator.generateUri(), Generator.generateUri(),
-                SKOS.CONCEPT, "label", "test",
-                (double) Generator.randomInt());
+        final FullTextSearchResult res = new FullTextSearchResult(Generator.generateUri(), "Term label",
+                                                                  "Term definition",
+                                                                  Generator.generateUri(), Generator.generateUri(),
+                                                                  SKOS.CONCEPT, "label", "test",
+                                                                  (double) Generator.randomInt());
         when(vocabularyAuthorizationService.canRead(any(Vocabulary.class))).thenReturn(true);
         assertTrue(sut.canRead(res));
         verify(vocabularyAuthorizationService).canRead(new Vocabulary(res.getVocabulary()));
@@ -56,11 +57,12 @@ class SearchAuthorizationServiceTest {
 
     @Test
     void canReadChecksIfVocabularyIsReadableForVocabularyResult() {
-        final FullTextSearchResult res = new FullTextSearchResult(Generator.generateUri(), "test label",
-                null, null,
-                cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik,
-                "label", "test",
-                (double) Generator.randomInt());
+        final FullTextSearchResult res = new FullTextSearchResult(Generator.generateUri(), "Vocabulary title",
+                                                                  "Vocabulary description",
+                                                                  null, null,
+                                                                  cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik,
+                                                                  "label", "test",
+                                                                  (double) Generator.randomInt());
         assertFalse(sut.canRead(res));
         verify(vocabularyAuthorizationService).canRead(new Vocabulary(res.getUri()));
     }

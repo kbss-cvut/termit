@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
@@ -82,6 +84,17 @@ public class OAuth2SecurityConfig {
             .logout((auth) -> auth.logoutUrl(SecurityConstants.LOGOUT_PATH)
                                   .logoutSuccessHandler(authenticationSuccessHandler));
         return http.build();
+    }
+
+    /**
+     * Supplies auth provider which is not exposed by HttpSecurity
+     * @see cz.cvut.kbss.termit.security.WebSocketJwtAuthorizationInterceptor
+     */
+    @Bean
+    public JwtAuthenticationProvider jwtAuthenticationProvider(JwtDecoder jwtDecoder) {
+        final JwtAuthenticationProvider provider = new JwtAuthenticationProvider(jwtDecoder);
+        provider.setJwtAuthenticationConverter(grantedAuthoritiesExtractor());
+        return provider;
     }
 
     private CorsConfigurationSource corsConfigurationSource() {

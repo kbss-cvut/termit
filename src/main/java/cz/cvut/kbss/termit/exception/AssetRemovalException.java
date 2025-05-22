@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,5 +24,9 @@ public class AssetRemovalException extends TermItException {
 
     public AssetRemovalException(String message) {
         super(message);
+    }
+
+    public AssetRemovalException(String message, String messageId) {
+        super(message, messageId);
     }
 }

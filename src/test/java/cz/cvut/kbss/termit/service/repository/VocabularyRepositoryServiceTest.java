@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,12 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
-import cz.cvut.kbss.termit.exception.*;
+import cz.cvut.kbss.termit.exception.AssetRemovalException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.ResourceExistsException;
+import cz.cvut.kbss.termit.exception.SnapshotNotEditableException;
+import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.UserAccount;
@@ -38,6 +43,8 @@ import org.hamcrest.collection.IsEmptyCollection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,10 +55,21 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
+import static cz.cvut.kbss.termit.environment.Environment.getPrimaryLabel;
+import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
 
@@ -96,7 +114,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void persistThrowsValidationExceptionWhenVocabularyNameIsBlank() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        vocabulary.setPrimaryLabel("");
+        setPrimaryLabel(vocabulary, "");
         final ValidationException exception = assertThrows(ValidationException.class, () -> sut.persist(vocabulary));
         assertThat(exception.getMessage(),
                    containsString("label in the primary configured language must not be blank"));
@@ -111,7 +129,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
         assertThat(result.getUri().toString(),
-                   containsString(IdentifierResolver.normalize(vocabulary.getPrimaryLabel())));
+                containsString(IdentifierResolver.normalize(getPrimaryLabel(vocabulary))));
     }
 
     @Test
@@ -130,7 +148,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistCreatesGlossaryAndModelInstances() {
         final Vocabulary vocabulary = new Vocabulary();
         vocabulary.setUri(Generator.generateUri());
-        vocabulary.setPrimaryLabel("TestVocabulary");
+        setPrimaryLabel(vocabulary, "TestVocabulary");
         sut.persist(vocabulary);
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result.getGlossary());
@@ -152,7 +170,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
-        vocabulary.setPrimaryLabel("");
+        setPrimaryLabel(vocabulary, "");
         assertThrows(ValidationException.class, () -> sut.update(vocabulary));
     }
 
@@ -181,6 +199,51 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNull(result);
     }
+
+    @Test
+    void removeThrowsWhenVocabularyIsImported() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary importing = Generator.generateVocabularyWithId();
+        importing.setImportedVocabularies(Set.of(vocabulary.getUri()));
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            em.persist(importing, descriptorFor(importing));
+        });
+
+        assertThrows(AssetRemovalException.class, ()-> sut.remove(vocabulary));
+
+        // ensure nothing was deleted
+        final Vocabulary v = em.find(Vocabulary.class, vocabulary.getUri());
+        final Vocabulary i = em.find(Vocabulary.class, importing.getUri());
+
+        assertNotNull(v);
+        assertNotNull(i);
+    }
+
+    /**
+     * @see cz.cvut.kbss.termit.util.Constants#SKOS_CONCEPT_MATCH_RELATIONSHIPS
+     */
+    @ParameterizedTest
+    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
+    void removeThrowsWhenTermRelationExists(URI relation) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+
+        final Term objectTerm = Generator.generateTermWithId(vocabulary.getUri());
+        final Term subjectTerm = Generator.generateTermWithId(secondVocabulary.getUri());
+
+        transactional(()->{
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            em.persist(secondVocabulary, descriptorFor(secondVocabulary));
+            em.persist(objectTerm, descriptorFactory.termDescriptor(objectTerm));
+            em.persist(subjectTerm, descriptorFactory.termDescriptor(subjectTerm));
+
+            Environment.addRelation(subjectTerm.getUri(), relation, objectTerm.getUri(), em);
+        });
+
+        assertThrows(AssetRemovalException.class, ()->sut.remove(vocabulary));
+    }
+
 
     @Test
     void updateThrowsVocabularyImportExceptionWhenTryingToDeleteVocabularyImportRelationshipAndTermsAreStillRelated() {
@@ -268,7 +331,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         );
 
         final Vocabulary v = sut.importVocabulary(true, mf);
-        assertEquals(v.getPrimaryLabel(), "Test");
+        assertEquals("Test", getPrimaryLabel(v));
     }
 
     @Test
@@ -288,7 +351,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         );
 
         final Vocabulary v = sut.importVocabulary(true, mf);
-        assertEquals(v.getPrimaryLabel(), "Test");
+        assertEquals("Test", getPrimaryLabel(v));
     }
 
     @Test
@@ -306,7 +369,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                     skos.getBytes(StandardCharsets.UTF_8)
             );
             final Vocabulary v = sut.importVocabulary(false, mf);
-            assertEquals(v.getPrimaryLabel(), "Test");
+            assertEquals("Test", getPrimaryLabel(v));
         });
     }
 
@@ -326,7 +389,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistGeneratesGlossaryIriBasedOnVocabularyIriAndConfiguredFragment() {
         final String label = "Test vocabulary " + System.currentTimeMillis();
         final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setPrimaryLabel(label);
+        setPrimaryLabel(vocabulary, label);
         sut.persist(vocabulary);
         assertNotNull(vocabulary.getUri());
         assertNotNull(vocabulary.getGlossary());
@@ -340,7 +403,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
     void persistGeneratesModelIriBasedOnVocabularyIri() {
         final String label = "Test vocabulary " + System.currentTimeMillis();
         final Vocabulary vocabulary = new Vocabulary();
-        vocabulary.setPrimaryLabel(label);
+        setPrimaryLabel(vocabulary, label);
         sut.persist(vocabulary);
         assertNotNull(vocabulary.getUri());
         assertNotNull(vocabulary.getModel());
@@ -365,7 +428,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_slovniku);
         transactional(() -> em.persist(vocabulary, descriptorFor(vocabulary)));
 
-        vocabulary.setPrimaryLabel("Updated label");
+        setPrimaryLabel(vocabulary, "Updated label");
         assertThrows(SnapshotNotEditableException.class, () -> sut.update(vocabulary));
     }
 
@@ -378,7 +441,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary update = new Vocabulary(vocabulary.getUri());
         update.setModel(vocabulary.getModel());
         update.setGlossary(vocabulary.getGlossary());
-        update.setPrimaryLabel("Updated label");
+        setPrimaryLabel(update, "Updated label");
         // Intentionally leave ACL null, this is how it would arrive from the client
 
         transactional(() -> sut.update(update));

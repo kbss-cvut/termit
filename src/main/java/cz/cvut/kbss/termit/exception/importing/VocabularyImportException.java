@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,19 +24,15 @@ import cz.cvut.kbss.termit.exception.TermItException;
  */
 public class VocabularyImportException extends TermItException {
 
-    private final String messageId;
-
     public VocabularyImportException(String message) {
         super(message);
-        this.messageId = null;
     }
 
     public VocabularyImportException(String message, String messageId) {
-        super(message);
-        this.messageId = messageId;
+        super(message, messageId);
     }
 
-    public String getMessageId() {
-        return messageId;
+    public VocabularyImportException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

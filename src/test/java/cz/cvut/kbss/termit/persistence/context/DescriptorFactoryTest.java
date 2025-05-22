@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -96,7 +98,7 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void fileDescriptorContainsAlsoDescriptorForDocument() {
+    void fileDescriptorContainsAlsoDescriptorForDocument() throws Exception {
         final File file = Generator.generateFileWithId("test.html");
         final Document doc = Generator.generateDocumentWithId();
         doc.addFile(file);
@@ -104,7 +106,7 @@ class DescriptorFactoryTest extends BaseDaoTestRunner {
         doc.setVocabulary(Generator.generateUri());
         final Descriptor result = sut.fileDescriptor(doc.getVocabulary());
         final FieldSpecification<?, ?> docFieldSpec = mock(FieldSpecification.class);
-        when(docFieldSpec.getJavaField()).thenReturn(File.getDocumentField());
+        when(docFieldSpec.getJavaField()).thenReturn(File.class.getDeclaredField("document"));
         final Descriptor docDescriptor = result.getAttributeDescriptor(docFieldSpec);
         assertNotNull(docDescriptor);
     }

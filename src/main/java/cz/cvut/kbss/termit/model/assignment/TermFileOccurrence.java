@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,5 +43,10 @@ public class TermFileOccurrence extends TermOccurrence {
 
     public void setTarget(FileOccurrenceTarget target) {
         this.target = target;
+    }
+
+    @Override
+    public TermFileOccurrence copy() {
+        return new TermFileOccurrence(getTerm(), getTarget().copy());
     }
 }

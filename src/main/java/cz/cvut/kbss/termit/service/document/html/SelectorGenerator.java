@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,10 +57,11 @@ interface SelectorGenerator {
     default StringBuilder extractNodeText(Iterable<Node> nodes) {
         final StringBuilder sb = new StringBuilder();
         for (Node node : nodes) {
-            if (!(node instanceof TextNode) && !(node instanceof Element)) {
-                continue;
+            if (node instanceof TextNode textNode) {
+                sb.append(textNode.getWholeText());
+            } else if (node instanceof Element elementNode) {
+                sb.append(elementNode.wholeText());
             }
-            sb.append(node instanceof TextNode ? ((TextNode) node).getWholeText() : ((Element) node).wholeText());
         }
         return sb;
     }

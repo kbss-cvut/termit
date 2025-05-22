@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ public enum MatchType {
     IRI,
     /**
      * Matches the specified value as a substring of the string representation of a property value in the repository.
-     *
+     * <p>
      * Note that this match is not case-sensitive.
      */
     SUBSTRING,

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,11 +49,10 @@ public class ResourceAuthorizationService implements AssetAuthorizationService<R
     }
 
     private Optional<Vocabulary> resolveVocabulary(Resource resource) {
-        if (resource instanceof Document) {
-            final URI vocIri = ((Document) resource).getVocabulary();
+        if (resource instanceof Document document) {
+            final URI vocIri = document.getVocabulary();
             return vocIri != null ? Optional.of(new Vocabulary(vocIri)) : Optional.empty();
-        } else if (resource instanceof File) {
-            final File f = (File) resource;
+        } else if (resource instanceof File f) {
             return f.getDocument() != null ? getDocumentVocabulary(f.getDocument()) : Optional.empty();
         }
         return Optional.empty();

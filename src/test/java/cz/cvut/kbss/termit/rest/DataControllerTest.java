@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ class DataControllerTest extends BaseControllerTestRunner {
     void getLabelReturnsLabelOfResourceWithSpecifiedIdAsString() throws Exception {
         final URI uri = Generator.generateUri();
         final String label = "Test term";
-        when(dataServiceMock.getLabel(uri)).thenReturn(Optional.of(label));
+        when(dataServiceMock.getLabel(uri, null)).thenReturn(Optional.of(label));
         final MvcResult mvcResult = mockMvc.perform(get("/data/label").param("iri", uri.toString()))
                                            .andExpect(status().isOk()).andReturn();
         assertEquals(label, readValue(mvcResult, String.class));
@@ -109,7 +109,7 @@ class DataControllerTest extends BaseControllerTestRunner {
     @Test
     void getLabelThrowsNotFoundExceptionWhenLabelIsNotFound() throws Exception {
         final URI uri = Generator.generateUri();
-        when(dataServiceMock.getLabel(any())).thenReturn(Optional.empty());
+        when(dataServiceMock.getLabel(any(), any())).thenReturn(Optional.empty());
         mockMvc.perform(get("/data/label").param("iri", uri.toString())).andExpect(status().isNotFound());
     }
 

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,9 @@
 package cz.cvut.kbss.termit.event;
 
 import cz.cvut.kbss.termit.model.resource.Document;
-import java.util.Objects;
 import org.springframework.context.ApplicationEvent;
+
+import java.util.Objects;
 
 /**
  * Indicates that a {@link Document} asset has changed its label.

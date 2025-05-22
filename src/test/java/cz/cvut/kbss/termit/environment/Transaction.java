@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  */
 package cz.cvut.kbss.termit.environment;
 
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
@@ -48,7 +48,7 @@ public class Transaction {
         new TransactionTemplate(txManager).execute(new TransactionCallbackWithoutResult() {
 
             @Override
-            protected void doInTransactionWithoutResult(@NotNull TransactionStatus transactionStatus) {
+            protected void doInTransactionWithoutResult(@Nonnull TransactionStatus transactionStatus) {
                 procedure.run();
             }
         });
@@ -67,7 +67,7 @@ public class Transaction {
         transaction.setReadOnly(true);
         new TransactionTemplate(txManager).execute(new TransactionCallbackWithoutResult() {
             @Override
-            protected void doInTransactionWithoutResult(@NotNull TransactionStatus transactionStatus) {
+            protected void doInTransactionWithoutResult(@Nonnull TransactionStatus transactionStatus) {
                 procedure.run();
             }
         });

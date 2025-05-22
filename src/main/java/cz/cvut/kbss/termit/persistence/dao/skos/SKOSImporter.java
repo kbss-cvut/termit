@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,18 @@ package cz.cvut.kbss.termit.persistence.dao.skos;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.exception.importing.UnsupportedImportMediaTypeException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyExistsException;
 import cz.cvut.kbss.termit.exception.importing.VocabularyImportException;
 import cz.cvut.kbss.termit.model.Glossary;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
+import cz.cvut.kbss.termit.service.importer.VocabularyImporter;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
+import jakarta.validation.constraints.NotNull;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -71,7 +75,7 @@ import static cz.cvut.kbss.termit.util.Utils.getUniqueIriFromBase;
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class SKOSImporter {
+public class SKOSImporter implements VocabularyImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SKOSImporter.class);
 
@@ -102,49 +106,18 @@ public class SKOSImporter {
         this.em = em;
     }
 
-    /**
-     * Imports a new vocabulary from the specified streams representing the vocabulary in SKOS format.
-     *
-     * @param rename       Whether to change vocabulary, glossary and term IRIs in case of a conflict with existing
-     *                     data
-     * @param mediaType    Input data media type
-     * @param persist      Consumer of the imported vocabulary, used to save the imported data
-     * @param inputStreams Streams containing the imported SKOS data
-     * @return The imported vocabulary
-     * @throws VocabularyExistsException If a vocabulary/glossary with the same identifier already exists and
-     *                                   {@code rename} is set to {@code false}
-     * @throws IllegalArgumentException  Indicates invalid input data, e.g., no input streams, missing language tags
-     *                                   etc.
-     */
-    public Vocabulary importVocabulary(boolean rename, String mediaType, final Consumer<Vocabulary> persist,
-                                       final InputStream... inputStreams) {
-        return importVocabulary(rename, null, mediaType, persist, inputStreams);
-    }
-
-    /**
-     * Imports a SKOS vocabulary from the specified streams, possibly replacing an existing one.
-     * <p>
-     * If the specified {@code vocabularyIri} identifies an existing vocabulary, its content is replaced with the
-     * imported data.
-     *
-     * @param vocabularyIri Target vocabulary identifier
-     * @param mediaType     Input data media type
-     * @param persist       Consumer of the imported vocabulary, used to save the imported data
-     * @param inputStreams  Streams containing the imported SKOS data
-     * @return The imported vocabulary
-     * @throws IllegalArgumentException Indicates invalid input data, e.g., no input streams, missing language tags
-     *                                  etc.
-     */
-    public Vocabulary importVocabulary(URI vocabularyIri, String mediaType, final Consumer<Vocabulary> persist,
-                                       final InputStream... inputStreams) {
-        Objects.requireNonNull(vocabularyIri);
-        return importVocabulary(false, vocabularyIri, mediaType, persist, inputStreams);
+    @Override
+    public Vocabulary importVocabulary(@Nonnull ImportConfiguration config, @Nonnull ImportInput data) {
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(data);
+        return importVocabulary(config.allowReIdentify(), config.vocabularyIri(), data.mediaType(), config.prePersist(),
+                                data.data());
     }
 
     private Vocabulary importVocabulary(final boolean rename,
                                         final URI vocabularyIri,
                                         final String mediaType,
-                                        final Consumer<Vocabulary> persist,
+                                        final Consumer<Vocabulary> prePersist,
                                         final InputStream... inputStreams) {
         if (inputStreams.length == 0) {
             throw new IllegalArgumentException("No input provided for importing vocabulary.");
@@ -163,6 +136,7 @@ public class SKOSImporter {
         LOG.trace("Importing glossary {}.", glossaryIri);
         removeTopConceptOfAssertions();
         insertHasTopConceptAssertions();
+        removeSelfReferences();
 
         final String vocabularyIriFromData = resolveVocabularyIriFromImportedData();
         if (vocabularyIri != null && !vocabularyIri.toString().equals(vocabularyIriFromData)) {
@@ -184,7 +158,8 @@ public class SKOSImporter {
         em.flush();
         em.clear();
 
-        persist.accept(vocabulary);
+        prePersist.accept(vocabulary);
+        vocabularyDao.persist(vocabulary);
         addDataIntoRepository(vocabulary.getUri());
         LOG.debug("Vocabulary import successfully finished.");
         return vocabulary;
@@ -206,7 +181,7 @@ public class SKOSImporter {
         possibleVocabulary.ifPresent(toRemove -> {
             newVocabulary.setDocument(toRemove.getDocument());
             newVocabulary.setAcl(toRemove.getAcl());
-            vocabularyDao.forceRemove(toRemove);
+            vocabularyDao.removeVocabularyKeepDocument(toRemove);
         });
     }
 
@@ -288,6 +263,18 @@ public class SKOSImporter {
             if (!hasBroader && !isNarrower) {
                 model.add(glossaryIri, SKOS.HAS_TOP_CONCEPT, t);
             }
+        });
+    }
+
+    private void removeSelfReferences() {
+        LOG.trace("Removing self-referencing SKOS relationship statements.");
+        final List<Resource> terms = model.filter(null, RDF.TYPE, SKOS.CONCEPT)
+                                          .stream().map(Statement::getSubject).toList();
+        terms.forEach(t -> {
+            model.remove(t, SKOS.RELATED, t);
+            model.remove(t, SKOS.EXACT_MATCH, t);
+            model.remove(t, SKOS.RELATED_MATCH, t);
+            model.remove(t, SKOS.BROADER, t);
         });
     }
 
@@ -390,5 +377,21 @@ public class SKOSImporter {
 
     private void setVocabularyDescriptionFromGlossary(final Vocabulary vocabulary) {
         handleGlossaryStringProperty(DCTERMS.DESCRIPTION, vocabulary::setDescription);
+    }
+
+    @Override
+    public Vocabulary importTermTranslations(@Nonnull URI vocabularyIri, @Nonnull ImportInput data) {
+        throw new UnsupportedOperationException(
+                "Importing term translations from SKOS file is currently not supported.");
+    }
+
+    /**
+     * Checks whether this importer supports the specified media type.
+     *
+     * @param mediaType Media type to check
+     * @return {@code true} when media type is supported, {@code false} otherwise
+     */
+    public static boolean supportsMediaType(@NotNull String mediaType) {
+        return Rio.getParserFormatForMIMEType(mediaType).isPresent();
     }
 }

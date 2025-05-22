@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,16 @@ package cz.cvut.kbss.termit.persistence.validation;
 import com.github.sgov.server.ValidationResultSeverityComparator;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.event.VocabularyValidationFinishedEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
+import jakarta.annotation.Nonnull;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -38,6 +43,7 @@ import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -50,7 +56,11 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -74,16 +84,17 @@ public class Validator implements VocabularyContentValidator {
 
     private final EntityManager em;
     private final VocabularyContextMapper vocabularyContextMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    private com.github.sgov.server.Validator validator;
     private Model validationModel;
 
     @Autowired
     public Validator(EntityManager em,
                      VocabularyContextMapper vocabularyContextMapper,
-                     Configuration config) {
+                     Configuration config, ApplicationEventPublisher eventPublisher) {
         this.em = em;
         this.vocabularyContextMapper = vocabularyContextMapper;
+        this.eventPublisher = eventPublisher;
         initValidator(config.getPersistence().getLanguage());
     }
 
@@ -97,8 +108,7 @@ public class Validator implements VocabularyContentValidator {
      */
     private void initValidator(String language) {
         try {
-            this.validator = new com.github.sgov.server.Validator();
-            this.validationModel = initValidationModel(validator, language);
+            this.validationModel = initValidationModel(new com.github.sgov.server.Validator(), language);
         } catch (IOException e) {
             throw new TermItException("Unable to initialize validator.", e);
         }
@@ -113,7 +123,7 @@ public class Validator implements VocabularyContentValidator {
                 // Currently, only using content rules, not OntoUml, as TermIt does not support adding OntoUml rules
                 validator.getModelRules().stream()
                          .filter(r -> MODEL_RULES_TO_ADD.stream().anyMatch(s -> r.toString().contains(s)))
-                         .collect(Collectors.toList())
+                         .toList()
         );
         final Model validationModel = com.github.sgov.server.Validator.getRulesModel(rules);
         loadOverrideRules(validationModel, language);
@@ -133,26 +143,44 @@ public class Validator implements VocabularyContentValidator {
         }
     }
 
+    @Throttle(value = "{#originVocabularyIri}", name = "vocabularyValidation")
     @Transactional(readOnly = true)
     @Override
-    public List<ValidationResult> validate(final Collection<URI> vocabularyIris) {
+    @Nonnull
+    public ThrottledFuture<Collection<ValidationResult>> validate(final @Nonnull URI originVocabularyIri, final @Nonnull Collection<URI> vocabularyIris) {
+        if (vocabularyIris.isEmpty()) {
+            return ThrottledFuture.done(List.of());
+        }
+
+        return ThrottledFuture.of(() -> {
+            final List<ValidationResult> results = runValidation(vocabularyIris);
+            eventPublisher.publishEvent(new VocabularyValidationFinishedEvent(this, originVocabularyIri, vocabularyIris, results));
+            return results;
+        });
+    }
+
+    protected synchronized List<ValidationResult> runValidation(@Nonnull Collection<URI> vocabularyIris) {
         LOG.debug("Validating {}", vocabularyIris);
         try {
+            LOG.trace("Constructing model from RDF4J repository...");
             final Model dataModel = getModelFromRdf4jRepository(vocabularyIris);
-            org.topbraid.shacl.validation.ValidationReport report = validator.validate(dataModel, validationModel);
+            LOG.trace("Model constructed, running validation...");
+            org.topbraid.shacl.validation.ValidationReport report = new com.github.sgov.server.Validator()
+                    .validate(dataModel, validationModel);
             LOG.debug("Done.");
             return report.results().stream()
                          .sorted(new ValidationResultSeverityComparator()).map(result -> {
                         final URI termUri = URI.create(result.getFocusNode().toString());
                         final URI severity = URI.create(result.getSeverity().getURI());
                         final URI errorUri = result.getSourceShape().isURIResource() ?
-                                             URI.create(result.getSourceShape().getURI()) : null;
+                                URI.create(result.getSourceShape().getURI()) : null;
                         final URI resultPath = result.getPath() != null && result.getPath().isURIResource() ?
-                                               URI.create(result.getPath().getURI()) : null;
+                                URI.create(result.getPath().getURI()) : null;
                         final MultilingualString messages = new MultilingualString(result.getMessages().stream()
                                                                                          .map(RDFNode::asLiteral)
                                                                                          .collect(Collectors.toMap(
-                                                                                                 Literal::getLanguage,
+                                                                                                 lit -> lit.getLanguage().isBlank() ?
+                                                                                                         JsonLd.NONE : lit.getLanguage(),
                                                                                                  Literal::getLexicalForm)));
 
                         return new ValidationResult()

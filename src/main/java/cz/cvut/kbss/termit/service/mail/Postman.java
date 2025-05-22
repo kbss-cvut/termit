@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,11 @@ package cz.cvut.kbss.termit.service.mail;
 
 import cz.cvut.kbss.termit.exception.PostmanException;
 import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.PostConstruct;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +34,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-
-import javax.annotation.PostConstruct;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Objects;
 
 @Service
@@ -67,7 +66,12 @@ public class Postman {
 
     @PostConstruct
     public void postConstruct() {
-        if(mailSender == null) {
+        if (mailSender == null) {
+            if (Utils.isDevelopmentProfile(env.getActiveProfiles())) {
+                LOG.warn(
+                        "Mail server not configured but running in development mode. Will not be able to send messages.");
+                return;
+            }
             throw new ValidationException("Mail server not configured.");
         }
     }
@@ -88,7 +92,8 @@ public class Postman {
 
             final MimeMessage mail = mailSender.createMimeMessage();
             final MimeMessageHelper helper = new MimeMessageHelper(mail, true);
-            helper.setFrom(new InternetAddress(sender != null ? sender : senderUsername, FROM_NICKNAME, StandardCharsets.UTF_8.toString()));
+            helper.setFrom(new InternetAddress(sender != null ? sender : senderUsername, FROM_NICKNAME,
+                                               StandardCharsets.UTF_8.toString()));
             helper.setTo(message.getRecipients().toArray(new String[]{}));
             helper.setSubject(message.getSubject());
             helper.setText(message.getContent(), true);

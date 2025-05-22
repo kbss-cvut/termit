@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,21 +23,26 @@ import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.AccessControlAgent;
 import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.UserRole;
-import cz.cvut.kbss.termit.model.acl.*;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.acl.AccessControlListDao;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -120,15 +125,16 @@ public class RepositoryAccessControlListService implements AccessControlListServ
                            .forEach(u -> acl.addRecord(new UserAccessControlRecord(AccessLevel.SECURITY, u)));
         // Add record with configured access level for reader and editor user roles
         final List<UserRole> roles = userRoleService.findAll();
-        roles.stream().filter(ur -> cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType().equals(ur.getUri()
-                                                                                                             .toString()))
+        roles.stream().filter(RepositoryAccessControlListService::isFullUser)
              .findAny().ifPresent(
                      editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultEditorAccessLevel(), editor)));
         roles.stream()
-             .filter(ur -> cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType().equals(ur.getUri()
-                                                                                                          .toString()))
+             .filter(RepositoryAccessControlListService::isRestricted)
              .findAny().ifPresent(
                      editor -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultReaderAccessLevel(), editor)));
+        roles.stream().filter(RepositoryAccessControlListService::isAnonymous)
+                .findAny().ifPresent(
+                        anonymous -> acl.addRecord(new RoleAccessControlRecord(aclConfig.getDefaultAnonymousAccessLevel(), anonymous)));
     }
 
     @CacheEvict(keyGenerator = "accessControlListCacheKeyGenerator")
@@ -160,6 +166,7 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         final AccessControlList toUpdate = findRequired(acl.getUri());
         LOG.debug("Adding record {} to ACL {}.", record, toUpdate);
         toUpdate.addRecord(record);
+        validate(toUpdate);
         // Explicitly update to trigger merge of the new record
         dao.update(toUpdate);
     }
@@ -175,25 +182,120 @@ public class RepositoryAccessControlListService implements AccessControlListServ
         LOG.debug("Removing record {} from ACL {}.", record, toUpdate);
         assert toUpdate.getRecords() != null;
         toUpdate.getRecords().removeIf(acr -> Objects.equals(acr.getUri(), record.getUri()));
-        verifyUserRoleRecordsArePresent(toUpdate);
+        validate(toUpdate);
         // Explicitly update to remove orphans
         dao.update(toUpdate);
     }
 
+    /**
+     * Ensures that the ACL contains a record for
+     * {@link cz.cvut.kbss.termit.security.model.UserRole#ANONYMOUS_USER UserRole#ANONYMOUS_USER},
+     * {@link cz.cvut.kbss.termit.security.model.UserRole#RESTRICTED_USER UserRole#RESTRICTED_USER} and
+     * {@link cz.cvut.kbss.termit.security.model.UserRole#FULL_USER UserRole#FULL_USER}
+     *
+     * @param acl the acl to verify
+     * @throws UnsupportedOperationException when some record is missing
+     */
     private void verifyUserRoleRecordsArePresent(AccessControlList acl) {
+        boolean anonymousFound = false;
         boolean readerFound = false;
         boolean editorFound = false;
         for (AccessControlRecord<?> record : acl.getRecords()) {
-            final String holderIri = record.getHolder().getUri().toString();
-            if (Objects.equals(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType(), holderIri)) {
-                readerFound = true;
-            } else if (Objects.equals(cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType(), holderIri)) {
-                editorFound = true;
+            if (record.getHolder() instanceof UserRole role) {
+                if (isAnonymous(role)) {
+                    anonymousFound = true;
+                } else if (isRestricted(role)) {
+                    readerFound = true;
+                } else if (isFullUser(role)) {
+                    editorFound = true;
+                }
             }
         }
-        if (!readerFound || !editorFound) {
+        if (!readerFound || !editorFound || !anonymousFound) {
             throw new UnsupportedOperationException(
-                    "Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER);
+                    "Access control list must contain a record for user roles " + cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER + ", " + cz.cvut.kbss.termit.security.model.UserRole.FULL_USER + " and " + cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
+        }
+    }
+
+    /**
+     * Ensures that the specified ACL is valid.
+     * Throws otherwise.
+     *
+     * @param acl ACL to validate
+     * @throws UnsupportedOperationException if the ACL is not valid
+     * @see #validate(AccessControlRecord)
+     * @see #verifyUserRoleRecordsArePresent(AccessControlList)
+     */
+    public void validate(AccessControlList acl) {
+        verifyUserRoleRecordsArePresent(acl);
+        acl.getRecords().forEach(this::validate);
+    }
+
+    /**
+     * Checks whether the specified role
+     * is the {@link cz.cvut.kbss.termit.security.model.UserRole#FULL_USER FULL_USER} role.
+     *
+     * @param role Role to check
+     * @return {@code true} if the role is the full user role, {@code false} otherwise
+     */
+    public static boolean isFullUser(UserRole role) {
+        return cz.cvut.kbss.termit.security.model.UserRole.FULL_USER.getType().equals(role.getUri().toString());
+    }
+
+    /**
+     * Checks whether the specified role
+     * is the {@link cz.cvut.kbss.termit.security.model.UserRole#ANONYMOUS_USER ANONYMOUS_USER} role.
+     *
+     * @param role Role to check
+     * @return {@code true} if the role is the anonymous user role, {@code false} otherwise
+     */
+    public static boolean isAnonymous(UserRole role) {
+        return cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER.getType()
+                                                                         .equals(role.getUri().toString());
+    }
+
+    /**
+     * Checks whether the specified role
+     * is the {@link cz.cvut.kbss.termit.security.model.UserRole#RESTRICTED_USER RESTRICTED_USER} role.
+     *
+     * @param role Role to check
+     * @return {@code true} if the role is the restricted user role, {@code false} otherwise
+     */
+    public static boolean isRestricted(UserRole role) {
+        return cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType()
+                                                                          .equals(role.getUri().toString());
+    }
+
+    /**
+     * Ensures that the specified access control record is valid.
+     * Throws otherwise.
+     * <p>
+     * The record is considered valid if:
+     * <ul>
+     *     <li>Does not grant greater access level than read to the anonymous user role</li>
+     *     <li>Does not grant security access level to the restricted user role</li>
+     *     <li>Does not grant security access level to a user group</li>
+     * </ul>
+     *
+     * @param controlRecord Access control record to validate
+     * @throws UnsupportedOperationException if the record is not valid
+     */
+    public void validate(AccessControlRecord<?> controlRecord) {
+        if (controlRecord.getHolder() instanceof UserRole role) {
+            // check that the anonymous user does not have greater access level than READ
+            if (isAnonymous(role) && controlRecord.getAccessLevel().compareTo(AccessLevel.READ) > 0) {
+                throw new UnsupportedOperationException("Access control record for anonymous user cannot grant greater access level than READ.");
+            }
+            // check that the reader role does not have SECURITY access level
+            if (isRestricted(role) && controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
+                throw new UnsupportedOperationException("Access control record for restricted user cannot have access level SECURITY.");
+            }
+
+        }
+        // check that a user group does not have SECURITY access level
+        if (controlRecord.getHolder() instanceof UserGroup &&
+                controlRecord.getAccessLevel().includes(AccessLevel.SECURITY)) {
+            throw new UnsupportedOperationException("Access control record for user group cannot have access level SECURITY.");
         }
     }
 
@@ -211,11 +313,12 @@ public class RepositoryAccessControlListService implements AccessControlListServ
                            record.getAccessLevel(), Utils.uriToString(record.getUri()), toUpdate);
                  r.setAccessLevel(record.getAccessLevel());
              });
+        validate(toUpdate);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@NonNull AccessControlAgent agent) {
+    public List<? extends Asset<?>> findAssetsByAgentWithSecurityAccess(@Nonnull AccessControlAgent agent) {
         return dao.findAssetsByAgentWithSecurityAccess(agent);
     }
 }

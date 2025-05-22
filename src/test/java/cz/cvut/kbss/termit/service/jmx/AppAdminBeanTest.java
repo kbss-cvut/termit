@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@ package cz.cvut.kbss.termit.service.jmx;
 
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.event.VocabularyContentModified;
 import cz.cvut.kbss.termit.util.Configuration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,13 +60,5 @@ class AppAdminBeanTest {
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
         verify(eventPublisherMock, atLeastOnce()).publishEvent(captor.capture());
         assertTrue(captor.getAllValues().stream().anyMatch(RefreshLastModifiedEvent.class::isInstance));
-    }
-
-    @Test
-    void invalidateCachesPublishesVocabularyContentModifiedEventToForceEvictionOfVocabularyContentBasedCaches() {
-        sut.invalidateCaches();
-        final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
-        verify(eventPublisherMock, atLeastOnce()).publishEvent(captor.capture());
-        assertTrue(captor.getAllValues().stream().anyMatch(VocabularyContentModified.class::isInstance));
     }
 }

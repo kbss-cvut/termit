@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,12 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.exception.AnnotationGenerationException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +31,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
-import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Creates annotations (term occurrences) for vocabulary terms.
@@ -39,6 +45,8 @@ import java.util.List;
 @Service
 public class AnnotationGenerator {
 
+    private static final long THREAD_JOIN_TIMEOUT = 1000L * 60; // 1 minute
+
     private static final Logger LOG = LoggerFactory.getLogger(AnnotationGenerator.class);
 
     private final DocumentManager documentManager;
@@ -48,8 +56,7 @@ public class AnnotationGenerator {
     private final TermOccurrenceSaver occurrenceSaver;
 
     @Autowired
-    public AnnotationGenerator(DocumentManager documentManager,
-                               TermOccurrenceResolvers resolvers,
+    public AnnotationGenerator(DocumentManager documentManager, TermOccurrenceResolvers resolvers,
                                TermOccurrenceSaver occurrenceSaver) {
         this.documentManager = documentManager;
         this.resolvers = resolvers;
@@ -63,15 +70,61 @@ public class AnnotationGenerator {
      * @param source  Source file of the annotated document
      */
     @Transactional
+    @Throttle(value = "{source.getUri()}", name = "documentAnnotationGeneration")
     public void generateAnnotations(InputStream content, File source) {
         final TermOccurrenceResolver occurrenceResolver = findResolverFor(source);
         LOG.debug("Resolving annotations of file {}.", source);
         occurrenceResolver.parseContent(content, source);
         occurrenceResolver.setExistingOccurrences(occurrenceSaver.getExistingOccurrences(source));
-        final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
-        saveAnnotatedContent(source, occurrenceResolver.getContent());
-        occurrenceSaver.saveOccurrences(occurrences, source);
+        findAndSaveTermOccurrences(source, occurrenceResolver);
         LOG.trace("Finished generating annotations for file {}.", source);
+    }
+
+    /**
+     * Calls {@link TermOccurrenceResolver#findTermOccurrences(TermOccurrenceResolver.OccurrenceConsumer)} on {@code #occurrenceResolver}
+     * creating new thread that will save any found occurrence in parallel.
+     * Saves annotated content ({@link #saveAnnotatedContent(File, InputStream)} when the source is a {@link File}.
+     */
+    private void findAndSaveTermOccurrences(Asset<?> source, TermOccurrenceResolver occurrenceResolver) {
+        AtomicBoolean finished = new AtomicBoolean(false);
+        // alternatively, SynchronousQueue could be used, but this allows to have some space as buffer
+        final ArrayBlockingQueue<TermOccurrence> toSave = new ArrayBlockingQueue<>(10);
+        // not limiting the queue size would result in OutOfMemoryError
+
+        FutureTask<Void> findTask = new FutureTask<>(() -> {
+            try {
+                LOG.trace("Resolving term occurrences for {}.", source);
+                occurrenceResolver.findTermOccurrences(toSave::put);
+                LOG.trace("Finished resolving term occurrences for {}.", source);
+                LOG.trace("Saving term occurrences for {}.", source);
+                if (source instanceof File sourceFile) {
+                    saveAnnotatedContent(sourceFile, occurrenceResolver.getContent());
+                }
+                LOG.trace("Term occurrences saved for {}.", source);
+            } finally {
+                finished.set(true);
+            }
+            return null;
+        });
+        Thread finder = new Thread(findTask);
+        finder.setName("AnnotationGenerator-TermOccurrenceResolver");
+        finder.start();
+
+        occurrenceSaver.saveFromQueue(source, finished, toSave);
+
+        try {
+            findTask.get(); // propagates exceptions
+            finder.join(THREAD_JOIN_TIMEOUT);
+        } catch (InterruptedException e) {
+            LOG.error("Thread interrupted while saving annotations of file {}.", source);
+            Thread.currentThread().interrupt();
+            throw new TermItException(e);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RuntimeException re) {
+                throw re;
+            }
+            throw new TermItException(e);
+        }
     }
 
     private TermOccurrenceResolver findResolverFor(File file) {
@@ -100,8 +153,7 @@ public class AnnotationGenerator {
         final TermOccurrenceResolver occurrenceResolver = resolvers.htmlTermOccurrenceResolver();
         LOG.debug("Resolving annotations of the definition of {}.", annotatedTerm);
         occurrenceResolver.parseContent(content, annotatedTerm);
-        final List<TermOccurrence> occurrences = occurrenceResolver.findTermOccurrences();
-        occurrenceSaver.saveOccurrences(occurrences, annotatedTerm);
+        occurrenceResolver.findTermOccurrences(o -> occurrenceSaver.saveOccurrence(o, annotatedTerm));
         LOG.trace("Finished generating annotations for the definition of {}.", annotatedTerm);
     }
 }

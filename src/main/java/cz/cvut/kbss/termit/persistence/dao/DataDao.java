@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,18 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
+import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
-import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Configuration.Persistence;
+import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
+import jakarta.annotation.Nullable;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -41,7 +45,14 @@ import org.springframework.stereotype.Repository;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
@@ -66,14 +77,14 @@ public class DataDao {
      */
     public List<RdfsResource> findAllProperties() {
         final List<RdfsResource> result = em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
-                                            "BIND (?property as ?type)" +
-                                            "?x a ?type ." +
-                                            "OPTIONAL { ?x ?has-label ?label . }" +
-                                            "OPTIONAL { ?x ?has-comment ?comment . }" +
-                                            "}", "RdfsResource")
-                 .setParameter("property", URI.create(RDF.PROPERTY))
-                 .setParameter("has-label", RDFS_LABEL)
-                 .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList();
+                                                                       "BIND (?property as ?type)" +
+                                                                       "?x a ?type ." +
+                                                                       "OPTIONAL { ?x ?has-label ?label . }" +
+                                                                       "OPTIONAL { ?x ?has-comment ?comment . }" +
+                                                                       "}", "RdfsResource")
+                                            .setParameter("property", URI.create(RDF.PROPERTY))
+                                            .setParameter("has-label", RDFS_LABEL)
+                                            .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList();
         return consolidateTranslations(result);
     }
 
@@ -120,14 +131,15 @@ public class DataDao {
      */
     public Optional<RdfsResource> find(URI id) {
         Objects.requireNonNull(id);
-        final List<RdfsResource> resources = consolidateTranslations(em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
-                                                                          "BIND (?id AS ?x)" +
-                                                                          "?x a ?type ." +
-                                                                          "OPTIONAL { ?x ?has-label ?label .}" +
-                                                                          "OPTIONAL { ?x ?has-comment ?comment . }" +
-                                                                          "}", "RdfsResource").setParameter("id", id)
-                                               .setParameter("has-label", RDFS_LABEL)
-                                               .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList());
+        final List<RdfsResource> resources = consolidateTranslations(
+                em.createNativeQuery("SELECT ?x ?label ?comment ?type WHERE {" +
+                                             "BIND (?id AS ?x)" +
+                                             "?x a ?type ." +
+                                             "OPTIONAL { ?x ?has-label ?label .}" +
+                                             "OPTIONAL { ?x ?has-comment ?comment . }" +
+                                             "}", "RdfsResource").setParameter("id", id)
+                  .setParameter("has-label", RDFS_LABEL)
+                  .setParameter("has-comment", URI.create(RDFS.COMMENT)).getResultList());
         if (resources.isEmpty()) {
             return Optional.empty();
         }
@@ -139,13 +151,30 @@ public class DataDao {
     /**
      * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
      * <p>
-     * Note that the label has to have matching language tag or no language tag at all (matching tag is preferred).
+     * Note that the label has to have language tag matching the configured persistence unit language
+     * or no language tag at all (matching tag is preferred).
      *
      * @param id Resource ({@link RDFS#RESOURCE}) identifier
      * @return Matching resource identifier (if found)
      */
     public Optional<String> getLabel(URI id) {
+        return getLabel(id, null);
+    }
+
+    /**
+     * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
+     * <p>
+     * Note that the label has to have matching language tag or no language tag at all (matching tag is preferred).
+     *
+     * @param id Resource ({@link RDFS#RESOURCE}) identifier
+     * @param language Label language, if null, configured persistence unit language is used instead
+     * @return Matching resource identifier (if found)
+     */
+    public Optional<String> getLabel(URI id, @Nullable String language) {
         Objects.requireNonNull(id);
+        if(language == null) {
+            language = config.getLanguage();
+        }
         if (!id.isAbsolute()) {
             return Optional.of(id.toString());
         }
@@ -159,7 +188,7 @@ public class DataDao {
                                                     String.class)
                                  .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
                                  .setParameter("has-title", URI.create(DC.Terms.TITLE))
-                                 .setParameter("tag", config.getLanguage(), null).getSingleResult());
+                                 .setParameter("tag", language, null).getSingleResult());
         } catch (NoResultException | NoUniqueResultException e) {
             return Optional.empty();
         }
@@ -181,6 +210,29 @@ public class DataDao {
                        Arrays.stream(contexts).map(u -> vf.createIRI(u.toString())).toArray(Resource[]::new));
             return new TypeAwareByteArrayResource(bos.toByteArray(), ExportFormat.TURTLE.getMediaType(),
                                                   ExportFormat.TURTLE.getFileExtension());
+        }
+    }
+
+    /**
+     * Inserts the specified raw data into the repository.
+     * <p>
+     * This method allows bypassing the JOPA-based persistence layer and thus should be used very carefully and
+     * sparsely.
+     *
+     * @param data Data to insert
+     */
+    public void insertRawData(Collection<Quad> data) {
+        Objects.requireNonNull(data);
+        final org.eclipse.rdf4j.repository.Repository repo = em.unwrap(org.eclipse.rdf4j.repository.Repository.class);
+        try (final RepositoryConnection con = repo.getConnection()) {
+            final ValueFactory vf = con.getValueFactory();
+            data.forEach(quad -> {
+                Value v = quad.object() instanceof URI ? vf.createIRI(quad.object().toString()) :
+                          Rdf4jUtils.createLiteral(quad.object(), config.getLanguage(), vf);
+
+                con.add(vf.createIRI(quad.subject().toString()), vf.createIRI(quad.predicate().toString()), v,
+                        quad.context() != null ? vf.createIRI(quad.context().toString()) : null);
+            });
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,18 +21,21 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.JOPAPersistenceProperties;
 import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
-import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.model.assignment.*;
+import cz.cvut.kbss.termit.model.assignment.DefinitionalOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.FileOccurrenceTarget;
+import cz.cvut.kbss.termit.model.assignment.TermDefinitionalOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermFileOccurrence;
+import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.selector.TextPositionSelector;
 import cz.cvut.kbss.termit.model.selector.TextQuoteSelector;
-import cz.cvut.kbss.termit.persistence.dao.util.ScheduledContextRemover;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -44,14 +47,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static cz.cvut.kbss.termit.environment.Environment.setPrimaryLabel;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TermOccurrenceDaoTest extends BaseDaoTestRunner {
@@ -60,9 +77,6 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
-
-    @Autowired
-    private ScheduledContextRemover contextRemover;
 
     @Autowired
     private TermOccurrenceDao sut;
@@ -104,10 +118,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         }
         final Term tOne = new Term();
         tOne.setUri(Generator.generateUri());
-        tOne.setPrimaryLabel("Term one");
+        setPrimaryLabel(tOne, "Term one");
         final Term tTwo = new Term();
         tTwo.setUri(Generator.generateUri());
-        tTwo.setPrimaryLabel("Term two");
+        setPrimaryLabel(tTwo, "Term two");
         final Map<Term, List<TermOccurrence>> map = new HashMap<>();
         map.put(tOne, new ArrayList<>());
         map.put(tTwo, new ArrayList<>());
@@ -221,9 +235,8 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
         assertFalse(sut.findAllTargeting(file).isEmpty());
         transactional(() -> sut.removeSuggested(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
-        assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
-                                                                                                       URI.create(
-                                                                                                               Vocabulary.s_c_vyskyt_termu))
+        assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class)
+                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                       .getSingleResult());
     }
 
@@ -256,14 +269,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                     to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
                     em.merge(to);
                 })));
-        transactional(() -> {
-            sut.removeAll(file);
-            contextRemover.runContextRemoval();
-        });
+        transactional(() -> sut.removeAll(file));
         assertTrue(sut.findAllTargeting(file).isEmpty());
-        assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class).setParameter("termOccurrence",
-                                                                                                       URI.create(
-                                                                                                               Vocabulary.s_c_vyskyt_termu))
+        assertFalse(em.createNativeQuery("ASK { ?x a ?termOccurrence . }", Boolean.class)
+                      .setParameter("termOccurrence", URI.create(Vocabulary.s_c_vyskyt_termu))
                       .getSingleResult());
     }
 
@@ -278,14 +287,10 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                     to.removeType(Vocabulary.s_c_navrzeny_vyskyt_termu);
                     em.merge(to);
                 })));
-        transactional(() -> {
-            sut.removeAll(file);
-            contextRemover.runContextRemoval();
-        });
+        transactional(() -> sut.removeAll(file));
 
-        assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class).setParameter("target",
-                                                                                               URI.create(
-                                                                                                       Vocabulary.s_c_cil))
+        assertFalse(em.createNativeQuery("ASK { ?x a ?target . }", Boolean.class)
+                      .setParameter("target", URI.create(Vocabulary.s_c_cil))
                       .getSingleResult());
     }
 
@@ -533,5 +538,28 @@ class TermOccurrenceDaoTest extends BaseDaoTestRunner {
                      .setParameter("occurrence", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
                      .setParameter("hasTerm", URI.create(Vocabulary.s_p_je_prirazenim_termu))
                      .getSingleResult());
+    }
+
+    @Test
+    void removeAllOfRemovesOccurrencesOfSpecifiedTerm() {
+        final Term subject = Generator.generateTermWithId();
+        final Term target = Generator.generateTermWithId();
+        final TermOccurrence toRemove = new TermDefinitionalOccurrence(subject.getUri(),
+                                                                       new DefinitionalOccurrenceTarget(target));
+        toRemove.getTarget().setSelectors(Set.of(new TextQuoteSelector("Exact match")));
+        final TermOccurrence toRetain = new TermDefinitionalOccurrence(Generator.generateUri(),
+                                                                       new DefinitionalOccurrenceTarget(target));
+        toRetain.getTarget().setSelectors(Set.of(new TextPositionSelector(0, 12)));
+        transactional(() -> {
+            em.persist(target);
+            em.persist(toRemove);
+            em.persist(toRemove.getTarget());
+            em.persist(toRetain);
+            em.persist(toRetain.getTarget());
+        });
+
+        transactional(() -> sut.removeAllOf(subject));
+        assertNull(em.find(TermOccurrence.class, toRemove.getUri()));
+        assertNotNull(em.find(TermOccurrence.class, toRetain.getUri()));
     }
 }

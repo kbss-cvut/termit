@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
@@ -38,12 +39,12 @@ import cz.cvut.kbss.termit.service.export.ExportConfig;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.export.ExportType;
 import cz.cvut.kbss.termit.service.export.VocabularyExporters;
-import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.language.LanguageService;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,6 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -124,8 +124,8 @@ class TermServiceTest {
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
         final TypeAwareByteArrayResource resource = new TypeAwareByteArrayResource("test".getBytes(),
-                ExportFormat.EXCEL.getMediaType(),
-                ExportFormat.EXCEL.getFileExtension());
+                                                                                   ExportFormat.EXCEL.getMediaType(),
+                                                                                   ExportFormat.EXCEL.getFileExtension());
         final ExportConfig exportConfig = new ExportConfig(ExportType.SKOS, ExportFormat.EXCEL.getMediaType());
         when(exporters.exportGlossary(vocabulary, exportConfig)).thenReturn(Optional.of(resource));
         final Optional<TypeAwareResource> result = sut.exportGlossary(vocabulary, exportConfig);
@@ -188,11 +188,11 @@ class TermServiceTest {
         final List<TermOccurrences> occurrences = Collections
                 .singletonList(
                         new TermOccurrences(term.getUri(), Generator.generateUri(), "test", BigInteger.valueOf(125L),
-                                cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
-        when(termRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
+                                            cz.cvut.kbss.termit.util.Vocabulary.s_c_souborovy_vyskyt_termu, true));
+        when(termOccurrenceRepositoryService.getOccurrenceInfo(term)).thenReturn(occurrences);
         final List<TermOccurrences> result = sut.getOccurrenceInfo(term);
         assertEquals(occurrences, result);
-        verify(termRepositoryService).getOccurrenceInfo(term);
+        verify(termOccurrenceRepositoryService).getOccurrenceInfo(term);
     }
 
     @Test
@@ -214,6 +214,7 @@ class TermServiceTest {
     void updateUsesRepositoryServiceToUpdateTerm() {
         final Term term = generateTermWithId();
         when(termRepositoryService.findRequired(term.getUri())).thenReturn(term);
+        when(termRepositoryService.update(term)).thenReturn(term);
         sut.update(term);
         verify(termRepositoryService).update(term);
     }
@@ -221,7 +222,8 @@ class TermServiceTest {
     @Test
     void findSubTermsReturnsEmptyCollectionForTermWithoutSubTerms() {
         final Term term = generateTermWithId();
-        final List<Term> result = sut.findSubTerms(term);
+        when(termRepositoryService.findSubTerms(term)).thenReturn(List.of());
+        final List<TermDto> result = sut.findSubTerms(term);
         assertTrue(result.isEmpty());
     }
 
@@ -229,16 +231,13 @@ class TermServiceTest {
     void findSubTermsLoadsChildTermsOfTermUsingRepositoryService() {
         final Term parent = generateTermWithId();
         configuration.getPersistence().setLanguage("en");
-        final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
-            final Term child = generateTermWithId();
-            when(termRepositoryService.find(child.getUri())).thenReturn(Optional.of(child));
-            return child;
-        }).toList();
+        final List<TermDto> children = IntStream.range(0, 5).mapToObj(i -> new TermDto(Generator.generateTermWithId()))
+                                                .toList();
+        when(termRepositoryService.findSubTerms(parent)).thenReturn(children);
         parent.setSubTerms(children.stream().map(TermInfo::new).collect(Collectors.toSet()));
 
-        final List<Term> result = sut.findSubTerms(parent);
-        assertEquals(children.size(), result.size());
-        assertTrue(children.containsAll(result));
+        final List<TermDto> result = sut.findSubTerms(parent);
+        assertEquals(children, result);
     }
 
     @Test
@@ -281,13 +280,13 @@ class TermServiceTest {
     void findAllRootsIncludingImportsRetrievesRootTermsUsingRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
         when(termRepositoryService
-                .findAllRootsIncludingImported(eq(vocabulary), eq(Constants.DEFAULT_PAGE_SPEC), anyCollection()))
+                     .findAllRootsIncludingImported(eq(vocabulary), eq(Constants.DEFAULT_PAGE_SPEC), anyCollection()))
                 .thenReturn(terms);
         final List<TermDto> result = sut.findAllRootsIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC,
-                Collections.emptyList());
+                                                                       Collections.emptyList());
         assertEquals(terms, result);
         verify(termRepositoryService).findAllRootsIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC,
-                Collections.emptyList());
+                                                                    Collections.emptyList());
     }
 
     @Test
@@ -311,26 +310,25 @@ class TermServiceTest {
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term toAnalyze = generateTermWithId();
+        when(termRepositoryService.findRequired(toAnalyze.getUri())).thenReturn(toAnalyze);
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
         verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
     }
 
     @Test
-    void persistChildInvokesTextAnalysisOnPersistedChildTerm() {
-        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
+    void persistChildInvokesTextAnalysisOnAllTermsInVocabulary() {
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
         sut.persistChild(childToPersist, parent);
-        verify(textAnalysisService).analyzeTermDefinition(childToPersist, parent.getVocabulary());
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
-    void persistRootInvokesTextAnalysisOnPersistedRootTerm() {
-        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
+    void persistRootInvokesTextAnalysisOnAllTermsInVocabulary() {
         final Term toPersist = generateTermWithId();
         sut.persistRoot(toPersist, vocabulary);
-        verify(textAnalysisService).analyzeTermDefinition(toPersist, vocabulary.getUri());
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
@@ -338,12 +336,28 @@ class TermServiceTest {
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term original = generateTermWithId(vocabulary.getUri());
         final Term toUpdate = new Term(original.getUri());
+        toUpdate.setLabel(original.getLabel());
         final String newDefinition = "This term has acquired a new definition";
         toUpdate.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
+        when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
         sut.update(toUpdate);
         verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
+    }
+
+    @Test
+    void updateOfTermLabelInvokesTextAnalysisOnAllTermsInVocabulary() {
+        final Term original = generateTermWithId(vocabulary.getUri());
+        final Term toUpdate = new Term(original.getUri());
+        toUpdate.setLabel(MultilingualString.create("new Label", Environment.LANGUAGE));
+        final String newDefinition = "This term has acquired a new definition";
+        toUpdate.setVocabulary(vocabulary.getUri());
+        toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
+        when(termRepositoryService.findRequired(toUpdate.getUri())).thenReturn(original);
+        when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
+        sut.update(toUpdate);
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
@@ -361,9 +375,9 @@ class TermServiceTest {
     void setTermDefinitionReplacesExistingTermDefinition() {
         final Term term = Generator.generateTermWithId();
         final TermDefinitionSource existingSource = new TermDefinitionSource(term.getUri(),
-                new FileOccurrenceTarget(
-                        Generator.generateFileWithId(
-                                "existing.html")));
+                                                                             new FileOccurrenceTarget(
+                                                                                     Generator.generateFileWithId(
+                                                                                             "existing.html")));
         term.setDefinitionSource(existingSource);
         final TermDefinitionSource definitionSource = new TermDefinitionSource();
         definitionSource.setTarget(new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
@@ -378,7 +392,7 @@ class TermServiceTest {
     void getChangesRetrievesChangeRecordsFromChangeRecordService() {
         final Term asset = Generator.generateTermWithId();
         sut.getChanges(asset);
-        verify(changeRecordService).getChanges(asset);
+        verify(changeRecordService).getChanges(asset, new ChangeRecordFilterDto());
     }
 
     @Test
@@ -413,23 +427,6 @@ class TermServiceTest {
     }
 
     @Test
-    void findSubTermsReturnsSubTermsSortedByLabel() {
-        final Term parent = generateTermWithId();
-        configuration.getPersistence().setLanguage("en");
-
-        final List<Term> children = IntStream.range(0, 5).mapToObj(i -> {
-            final Term child = generateTermWithId();
-            when(termRepositoryService.find(child.getUri())).thenReturn(Optional.of(child));
-            return child;
-        }).collect(Collectors.toList());
-        parent.setSubTerms(children.stream().map(TermInfo::new).collect(Collectors.toSet()));
-
-        final List<Term> result = sut.findSubTerms(parent);
-        children.sort(Comparator.comparing((Term t) -> t.getLabel().get(Environment.LANGUAGE)));
-        assertEquals(children, result);
-    }
-
-    @Test
     void getTermCountRetrievesTermCountFromVocabularyService() {
         final Integer count = 117;
         when(vocabularyService.getTermCount(any(Vocabulary.class))).thenReturn(count);
@@ -447,7 +444,7 @@ class TermServiceTest {
         sut.persistRoot(term, vocabulary);
         final InOrder inOrder = inOrder(termRepositoryService, vocabularyService);
         inOrder.verify(termRepositoryService).addRootTermToVocabulary(term, vocabulary);
-        inOrder.verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        inOrder.verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
@@ -455,13 +452,11 @@ class TermServiceTest {
         final Term parent = generateTermWithId();
         parent.setVocabulary(vocabulary.getUri());
         final Term childToPersist = generateTermWithId();
-        when(vocabularyService.findRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
 
         sut.persistChild(childToPersist, parent);
         final InOrder inOrder = inOrder(termRepositoryService, vocabularyService);
         inOrder.verify(termRepositoryService).addChildTerm(childToPersist, parent);
-        inOrder.verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        inOrder.verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
@@ -473,18 +468,20 @@ class TermServiceTest {
         update.setDescription(new MultilingualString(original.getDescription().getValue()));
         update.setVocabulary(vocabulary.getUri());
         when(termRepositoryService.findRequired(original.getUri())).thenReturn(original);
-        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(termRepositoryService.update(update)).thenReturn(update);
         update.getLabel().set(Environment.LANGUAGE, "updatedLabel");
 
         sut.update(update);
-        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary);
+        verify(vocabularyService).runTextAnalysisOnAllTerms(vocabulary.getUri());
     }
 
     @Test
     void removeTermDefinitionSourceRemovesOccurrenceRepresentingSourceOfDefinitionOfSpecifiedTerm() {
         final Term term = generateTermWithId();
         final TermDefinitionSource defSource = new TermDefinitionSource(term.getUri(),
-                new FileOccurrenceTarget(Generator.generateFileWithId("test.html")));
+                                                                        new FileOccurrenceTarget(
+                                                                                Generator.generateFileWithId(
+                                                                                        "test.html")));
         defSource.setUri(Generator.generateUri());
         term.setDefinitionSource(defSource);
 
@@ -524,7 +521,10 @@ class TermServiceTest {
         final Term term = generateTermWithId();
         term.setSubTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
         final List<RdfsResource> states = Stream.of(Generator.TERM_STATES)
-                                                .map(uri -> new RdfsResource(uri, MultilingualString.create("State " + Generator.randomInt(0, 100), Environment.LANGUAGE), null, cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                .map(uri -> new RdfsResource(uri, MultilingualString.create(
+                                                        "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
+                                                                             null,
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
         terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
@@ -544,7 +544,10 @@ class TermServiceTest {
         final Term term = generateTermWithId();
         term.setSubTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
         final List<RdfsResource> states = Stream.of(Generator.TERM_STATES)
-                                                .map(uri -> new RdfsResource(uri, MultilingualString.create("State " + Generator.randomInt(0, 100), Environment.LANGUAGE), null, cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                .map(uri -> new RdfsResource(uri, MultilingualString.create(
+                                                        "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
+                                                                             null,
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
         terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);
@@ -637,6 +640,7 @@ class TermServiceTest {
         update.setDescription(new MultilingualString(original.getDescription().getValue()));
         update.setVocabulary(vocabulary.getUri());
         update.setState(Generator.randomItem(Generator.TERM_STATES));
+        when(termRepositoryService.update(update)).thenReturn(update);
         sut.update(update);
         final InOrder inOrder = inOrder(languageService, termRepositoryService);
         inOrder.verify(languageService).verifyStateExists(update.getState());
@@ -646,7 +650,10 @@ class TermServiceTest {
     @Test
     void persistRootSetsInitialStateOfPersistedInstance() {
         final Term toPersist = Generator.generateTerm();
-        final RdfsResource initialState = new RdfsResource(Generator.TERM_STATES[0], MultilingualString.create("Initial", Environment.LANGUAGE), null, cz.cvut.kbss.termit.util.Vocabulary.s_c_uvodni_stav_pojmu);
+        final RdfsResource initialState = new RdfsResource(Generator.TERM_STATES[0],
+                                                           MultilingualString.create("Initial", Environment.LANGUAGE),
+                                                           null,
+                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_uvodni_stav_pojmu);
         when(languageService.getInitialTermState()).thenReturn(Optional.of(initialState));
 
         sut.persistRoot(toPersist, vocabulary);
@@ -658,7 +665,10 @@ class TermServiceTest {
     void persistChildSetsInitialStateOfPersistedInstance() {
         final Term parent = Generator.generateTermWithId(vocabulary.getUri());
         final Term toPersist = Generator.generateTerm();
-        final RdfsResource initialState = new RdfsResource(Generator.TERM_STATES[0], MultilingualString.create("Initial", Environment.LANGUAGE), null, cz.cvut.kbss.termit.util.Vocabulary.s_c_uvodni_stav_pojmu);
+        final RdfsResource initialState = new RdfsResource(Generator.TERM_STATES[0],
+                                                           MultilingualString.create("Initial", Environment.LANGUAGE),
+                                                           null,
+                                                           cz.cvut.kbss.termit.util.Vocabulary.s_c_uvodni_stav_pojmu);
         when(languageService.getInitialTermState()).thenReturn(Optional.of(initialState));
 
         sut.persistChild(toPersist, parent);
@@ -671,7 +681,10 @@ class TermServiceTest {
         final Term term = generateTermWithId();
         term.setSubTerms(Set.of(Generator.generateTermInfoWithId(), Generator.generateTermInfoWithId()));
         final List<RdfsResource> states = Stream.of(Generator.TERM_STATES)
-                                                .map(uri -> new RdfsResource(uri, MultilingualString.create("State " + Generator.randomInt(0, 100), Environment.LANGUAGE), null, cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
+                                                .map(uri -> new RdfsResource(uri, MultilingualString.create(
+                                                        "State " + Generator.randomInt(0, 100), Environment.LANGUAGE),
+                                                                             null,
+                                                                             cz.cvut.kbss.termit.util.Vocabulary.s_c_stav_pojmu))
                                                 .collect(Collectors.toList());
         final RdfsResource terminalState = states.get(states.size() - 1);
         terminalState.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_koncovy_stav_pojmu);

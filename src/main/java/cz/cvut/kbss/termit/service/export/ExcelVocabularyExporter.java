@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,11 +24,10 @@ import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.service.business.VocabularyService;
-import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.TermRepositoryService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.util.Constants;
+import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.poi.ss.usermodel.Cell;
@@ -43,7 +42,15 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +58,20 @@ import java.util.stream.Collectors;
  */
 @Service("excel")
 public class ExcelVocabularyExporter implements VocabularyExporter {
+
+    /**
+     * Name of the sheet where prefix mapping should be put
+     */
+    public static final String PREFIX_SHEET_NAME = "Prefix";
+
+    /**
+     * Index number of the prefix column
+     */
+    public static final int PREFIX_COLUMN_NUMBER = 0;
+    /**
+     * Index number of the namespace column
+     */
+    public static final int NAMESPACE_COLUMN_NUMBER = 1;
     /**
      * Name of the prefix column in the prefix mapping sheet
      */
@@ -189,7 +210,7 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
     }
 
     private void generatePrefixMappingSheet(XSSFWorkbook wb, Collection<PrefixDeclaration> prefixes) {
-        final XSSFSheet sheet = wb.createSheet(PREFIX_COLUMN);
+        final XSSFSheet sheet = wb.createSheet(PREFIX_SHEET_NAME);
         generatePrefixSheetHeader(sheet);
         final XSSFFont font = initFont(wb);
         final CellStyle style = wb.createCellStyle();
@@ -205,16 +226,16 @@ public class ExcelVocabularyExporter implements VocabularyExporter {
             }
             final Row prefixRow = sheet.createRow(i++);
             prefixRow.setRowStyle(style);
-            prefixRow.createCell(0).setCellValue(pd.getPrefix());
-            prefixRow.createCell(1).setCellValue(pd.getNamespace());
+            prefixRow.createCell(PREFIX_COLUMN_NUMBER).setCellValue(pd.getPrefix());
+            prefixRow.createCell(NAMESPACE_COLUMN_NUMBER).setCellValue(pd.getNamespace());
         }
     }
 
     private void generatePrefixSheetHeader(XSSFSheet sheet) {
         final Row row = generateHeaderRow(sheet);
-        row.createCell(0).setCellValue(PREFIX_COLUMN);
+        row.createCell(PREFIX_COLUMN_NUMBER).setCellValue(PREFIX_COLUMN);
         sheet.setColumnWidth(0, COLUMN_WIDTH * 2 * 256);
-        row.createCell(1).setCellValue(NAMESPACE_COLUMN);
+        row.createCell(NAMESPACE_COLUMN_NUMBER).setCellValue(NAMESPACE_COLUMN);
         sheet.setColumnWidth(1, COLUMN_WIDTH * 2 * 256);
     }
 

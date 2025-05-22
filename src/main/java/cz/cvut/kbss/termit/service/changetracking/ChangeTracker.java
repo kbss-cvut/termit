@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,11 @@ package cz.cvut.kbss.termit.service.changetracking;
 
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
+import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
+import cz.cvut.kbss.termit.model.changetracking.DeleteChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.File;
@@ -29,11 +31,11 @@ import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeTrackingHelperDao;
 import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Utils;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -102,7 +104,7 @@ public class ChangeTracker {
      */
     @Transactional
     @EventListener
-    public void onAssetPersistEvent(@NonNull AssetPersistEvent event) {
+    public void onAssetPersistEvent(@Nonnull AssetPersistEvent event) {
         final Asset<?> added = event.getAsset();
         if (added instanceof File) {
             LOG.trace("Skipping recording of creation of file {}.", added);
@@ -113,5 +115,23 @@ public class ChangeTracker {
         changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
         changeRecord.setTimestamp(Utils.timestamp());
         changeRecordDao.persist(changeRecord, added);
+    }
+
+    /**
+     * Records an asset deletion from the repository.
+     *
+     * @param event Event representing the asset deletion
+     */
+    @Transactional
+    @EventListener
+    public void onBeforeAssetDeleteEvent(@Nonnull BeforeAssetDeleteEvent event) {
+        final Asset<?> asset = event.getAsset();
+        LOG.trace("Recording deletion of asset {}.", asset);
+
+        final AbstractChangeRecord changeRecord = new DeleteChangeRecord(asset);
+        changeRecord.setAuthor(securityUtils.getCurrentUser().toUser());
+        changeRecord.setTimestamp(Utils.timestamp());
+
+        changeRecordDao.persist(changeRecord, asset);
     }
 }

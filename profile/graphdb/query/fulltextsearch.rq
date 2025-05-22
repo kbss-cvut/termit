@@ -7,8 +7,9 @@ PREFIX inst: <http://www.ontotext.com/connectors/lucene/instance#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-SELECT DISTINCT ?entity ?label ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score {
+SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippetField ?snippetText ?score {
   {
     ?search a inst:label_index .
   }
@@ -17,12 +18,21 @@ SELECT DISTINCT ?entity ?label ?vocabularyUri ?state ?type ?snippetField ?snippe
     ?search a inst:defcom_index .
   }
   {
-    ?entity rdfs:label ?label .
+    ?entity skos:prefLabel ?label .
+    OPTIONAL {
+        ?entity skos:definition ?definition .
+    }
+    OPTIONAL {
+        ?entity skos:scopeNote ?scopeNote .
+    }
   } UNION {
     ?entity dc:title ?label .
+    OPTIONAL {
+        ?entity dc:description ?dcDescription .
+    }
   }
     ?search :query ?wildCardSearchString ;
-          :snippetSize 2000 ;
+          :snippetSize 250 ;
           :entities ?entity .
   ?entity a ?type ;
           :score ?initScore ;
@@ -38,7 +48,9 @@ SELECT DISTINCT ?entity ?label ?vocabularyUri ?state ?type ?snippetField ?snippe
     FILTER (?type = ?term || ?type = ?vocabulary)
     FILTER NOT EXISTS { ?entity a ?snapshot . }
     FILTER (lang(?label) = ?langTag)
-    BIND(IF(lcase(str(?snippetText)) = lcase(str(?splitExactMatch)), ?initScore * 2, IF(CONTAINS(lcase(str(?snippetText)), ?searchString), IF(?snippetField = "label", ?initScore * 1.5, ?initScore), ?initScore)) as ?exactMatchScore)
-    BIND(IF(?snippetField = "label", ?exactMatchScore * 2, IF(?snippetField = "definition", ?exactMatchScore * 1.2, ?exactMatchScore)) as ?score)
+    BIND(COALESCE(?definition, COALESCE(?scopeNote, ?dcDescription)) AS ?description)
+    FILTER (!BOUND(?description) || lang(?description) = ?langTag)
+    BIND(IF(lcase(str(?snippetText)) = lcase(str(?splitExactMatch)), ?initScore * 2, IF(CONTAINS(lcase(str(?snippetText)), ?searchString), IF(?snippetField = "prefLabel", ?initScore * 1.5, ?initScore), ?initScore)) as ?exactMatchScore)
+    BIND(IF(?snippetField = "prefLabel", ?exactMatchScore * 2, IF(?snippetField = "definition", ?exactMatchScore * 1.2, ?exactMatchScore)) as ?score)
 }
 ORDER BY desc(?score)

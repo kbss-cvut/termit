@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +76,14 @@ public class DescriptorFactory {
         return vocabularyDescriptor(vocabulary.getUri());
     }
 
-    private EntityDescriptor assetDescriptor(URI vocabularyUri) {
+    /**
+     * Creates a generic asset descriptor assuming the asset (and all its attribute values) are in the specified
+     * vocabulary's context.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return Asset descriptor
+     */
+    public EntityDescriptor assetDescriptor(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         return new EntityDescriptor(contextMapper.getVocabularyContext(vocabularyUri));
     }
@@ -101,8 +108,8 @@ public class DescriptorFactory {
     }
 
     /**
-     * Creates a JOPA descriptor for a {@link Document} related to the specified vocabulary (presumably a {@link
-     * Vocabulary}).
+     * Creates a JOPA descriptor for a {@link Document} related to the specified vocabulary (presumably a
+     * {@link Vocabulary}).
      * <p>
      * This means that the context of the Document (and all its relevant attributes) is given by the specified
      * vocabulary's IRI.
@@ -157,8 +164,6 @@ public class DescriptorFactory {
      * specified identifier.
      * <p>
      * This means that the context of the File (and all its relevant attributes) is given by the specified IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
      * @return File descriptor
@@ -176,8 +181,6 @@ public class DescriptorFactory {
      * <p>
      * This means that the context of the Glossary (and all its relevant attributes) is given by the specified
      * vocabulary's IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabulary Vocabulary on which the descriptor should be based
      * @return Glossary descriptor
@@ -192,8 +195,6 @@ public class DescriptorFactory {
      * specified identifier.
      * <p>
      * This means that the context of the Glossary (and all its relevant attributes) is given by the specified IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
      * @return Glossary descriptor
@@ -209,8 +210,6 @@ public class DescriptorFactory {
      * <p>
      * This means that the context of the Term (and all its relevant attributes) is given by the specified vocabulary's
      * IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabulary Vocabulary on which the descriptor should be based
      * @return Term descriptor
@@ -226,8 +225,6 @@ public class DescriptorFactory {
      * <p>
      * This means that the context of the Term (and all its relevant attributes) is given by the specified vocabulary
      * IRI.
-     * <p>
-     * Note that default context is used for asset author.
      *
      * @param vocabularyUri Vocabulary identifier on which the descriptor should be based
      * @return Term descriptor
@@ -242,6 +239,7 @@ public class DescriptorFactory {
         final EntityDescriptor relatedDescriptor = new EntityDescriptor(vocabularyUri);
         descriptor.addAttributeDescriptor(Term_.related, relatedDescriptor);
         descriptor.addAttributeContext(Term_.relatedMatch, null);
+        descriptor.addAttributeContext(Term_.definitionSource, null);
         return descriptor;
     }
 

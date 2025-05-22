@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -99,6 +99,18 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @Override
     public MultilingualString getLabel() {
         return label;
+    }
+
+    public String getLabel(String language) {
+        return this.getLabel() != null ? this.getLabel().get(language) : null;
+    }
+
+    public void setLabel(String language, String label) {
+        if (this.getLabel() == null) {
+            this.setLabel(MultilingualString.create(label, language));
+        } else {
+            this.getLabel().set(language, label);
+        }
     }
 
     @Override

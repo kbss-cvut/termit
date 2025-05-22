@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@ import java.util.Optional;
 /**
  * An IO resource aware of its media type.
  * <p>
- * Allows to get MIME type of the resource and the associated file extension. However, both methods return {@link Optional}
- * to accommodate resources which may not support this feature.
+ * Allows to get MIME type of the resource and the associated file extension. However, both methods return
+ * {@link Optional} to accommodate resources which may not support this feature.
  */
 public interface TypeAwareResource extends Resource {
 
@@ -40,6 +40,8 @@ public interface TypeAwareResource extends Resource {
 
     /**
      * Gets file extension of this resource (if supported).
+     * <p>
+     * The file extension is including the dot, so, for example, {@literal .csv}.
      *
      * @return File extension associated with this type of resource wrapped in {@code Optional}
      */

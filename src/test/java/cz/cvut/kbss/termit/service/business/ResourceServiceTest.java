@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
@@ -24,6 +25,7 @@ import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -33,9 +35,10 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.service.document.DocumentManager;
 import cz.cvut.kbss.termit.service.document.ResourceRetrievalSpecification;
 import cz.cvut.kbss.termit.service.document.TextAnalysisService;
-import cz.cvut.kbss.termit.service.export.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
 import org.jsoup.Jsoup;
@@ -47,6 +50,7 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
@@ -95,6 +99,9 @@ class ResourceServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Spy
+    private Configuration config = new Configuration();
 
     @InjectMocks
     private ResourceService sut;
@@ -197,6 +204,7 @@ class ResourceServiceTest {
         file.setDocument(Generator.generateDocumentWithId());
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         file.getDocument().setVocabulary(vocabulary.getUri());
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
         sut.runTextAnalysis(file, Collections.emptySet());
         verify(textAnalysisService).analyzeFile(file, Collections.singleton(vocabulary.getUri()));
     }
@@ -212,6 +220,7 @@ class ResourceServiceTest {
     @Test
     void runTextAnalysisThrowsUnsupportedAssetOperationWhenFileHasNoVocabularyAndNoVocabulariesAreSpecifiedEither() {
         final File file = Generator.generateFileWithId("test.html");
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
         assertThrows(UnsupportedAssetOperationException.class,
                      () -> sut.runTextAnalysis(file, Collections.emptySet()));
         verify(textAnalysisService, never()).analyzeFile(any(), anySet());
@@ -221,6 +230,7 @@ class ResourceServiceTest {
     void runTextAnalysisInvokesAnalysisWithCustomVocabulariesWhenSpecified() {
         final File file = Generator.generateFileWithId("test.html");
         final Set<URI> vocabularies = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
         sut.runTextAnalysis(file, vocabularies);
         verify(textAnalysisService).analyzeFile(file, vocabularies);
     }
@@ -234,6 +244,7 @@ class ResourceServiceTest {
         final Set<URI> imported = new HashSet<>(Arrays.asList(Generator.generateUri(), Generator.generateUri()));
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyService.getTransitivelyImportedVocabularies(vocabulary)).thenReturn(imported);
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
 
         sut.runTextAnalysis(file, Collections.emptySet());
         final Set<URI> expected = new HashSet<>(imported);
@@ -253,6 +264,7 @@ class ResourceServiceTest {
         when(vocabularyService.getTransitivelyImportedVocabularies(vOne)).thenReturn(vOneImports);
         when(vocabularyService.getReference(vTwo.getUri())).thenReturn(vTwo);
         when(vocabularyService.getTransitivelyImportedVocabularies(vTwo)).thenReturn(vTwoImports);
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(true);
 
         sut.runTextAnalysis(file, new HashSet<>(Arrays.asList(vOne.getUri(), vTwo.getUri())));
         final Set<URI> expected = new HashSet<>(vOneImports);
@@ -376,7 +388,7 @@ class ResourceServiceTest {
     @Test
     void findLatestTextAnalysisRecordRetrievesLatestTextAnalysisRecordForResource() {
         final File file = Generator.generateFileWithId("test.html");
-        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file, Environment.LANGUAGE);
         when(textAnalysisService.findLatestAnalysisRecord(file)).thenReturn(Optional.of(record));
 
         final TextAnalysisRecord result = sut.findLatestTextAnalysisRecord(file);
@@ -426,9 +438,10 @@ class ResourceServiceTest {
     void getChangesLoadsChangeRecordsForSpecifiedAssetFromChangeRecordService() {
         final Resource resource = Generator.generateResourceWithId();
         final List<AbstractChangeRecord> records = Collections.singletonList(Generator.generatePersistChange(resource));
-        when(changeRecordService.getChanges(resource)).thenReturn(records);
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
+        when(changeRecordService.getChanges(resource, filterDto)).thenReturn(records);
         assertEquals(records, sut.getChanges(resource));
-        verify(changeRecordService).getChanges(resource);
+        verify(changeRecordService).getChanges(resource, filterDto);
     }
 
     @Test
@@ -514,5 +527,50 @@ class ResourceServiceTest {
                                                         new ResourceRetrievalSpecification(Optional.empty(), true));
         final org.jsoup.nodes.Document doc = Jsoup.parse(result.getInputStream(), StandardCharsets.UTF_8.name(), "");
         assertTrue(doc.select("span[score]").isEmpty());
+    }
+
+    @Test
+    void addFileToDocumentSetsFileLanguageToDefaultConfiguredWhenNotProvided() {
+        config.getPersistence().setLanguage(Environment.LANGUAGE);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Document document = Generator.generateDocumentWithId();
+        document.setVocabulary(vocabulary.getUri());
+        final File file = Generator.generateFileWithId("test.hml");
+        when(resourceRepositoryService.exists(document.getUri())).thenReturn(true);
+        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+
+        sut.addFileToDocument(document, file);
+        verify(resourceRepositoryService).persist(file, vocabulary);
+        assertEquals(config.getPersistence().getLanguage(), file.getLanguage());
+    }
+
+    @Test
+    void addFileToDocumentDoesNotModifyLanguageWhenItIsAlreadySet() {
+        config.getPersistence().setLanguage(Environment.LANGUAGE);
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Document document = Generator.generateDocumentWithId();
+        document.setVocabulary(vocabulary.getUri());
+        final File file = Generator.generateFileWithId("test.hml");
+        file.setLanguage("cs");
+        when(resourceRepositoryService.exists(document.getUri())).thenReturn(true);
+        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+
+        sut.addFileToDocument(document, file);
+        verify(resourceRepositoryService).persist(file, vocabulary);
+        assertEquals("cs", file.getLanguage());
+    }
+
+    @Test
+    void runTextAnalysisThrowsUnsupportedTextAnalysisExceptionWhenTextAnalysisServiceDoesNotSupportFileLanguage() {
+        final File file = Generator.generateFileWithId("test.html");
+        file.setDocument(Generator.generateDocumentWithId());
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        file.getDocument().setVocabulary(vocabulary.getUri());
+        file.setLanguage("sk");
+        when(textAnalysisService.supportsLanguage(file)).thenReturn(false);
+        assertThrows(UnsupportedTextAnalysisLanguageException.class, () -> sut.runTextAnalysis(file, Set.of(vocabulary.getUri())));
+        verify(textAnalysisService).supportsLanguage(file);
     }
 }

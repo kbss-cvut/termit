@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -132,7 +132,15 @@ public class Constants {
     ).map(URI::create).collect(Collectors.toSet());
 
     /**
+     * Relations between vocabularies that do not prevent vocabulary to be removed
+     */
+    public static final Set<URI> VOCABULARY_REMOVAL_IGNORED_RELATIONS = Stream.of(
+            Vocabulary.s_p_je_verzi, Vocabulary.s_p_is_snapshot_of, Vocabulary.s_p_je_verzi_slovniku
+    ).map(URI::create).collect(Collectors.toSet());
+
+    /**
      * Labels of columns representing exported term attributes in various supported languages.
+     * TODO Replace with constants loaded from attribute mapping properties files
      */
     public static final Map<String, List<String>> EXPORT_COLUMN_LABELS = Map.of(
             "cs",
@@ -144,6 +152,28 @@ public class Constants {
                     "Parent terms", "Sub terms", "Related terms", "Related match terms", "Exact matches", "State",
                     "Notation", "Example", "References")
     );
+
+
+    /**
+     * the maximum amount of data to buffer when sending messages to a WebSocket session
+     */
+    public static final int WEBSOCKET_SEND_BUFFER_SIZE_LIMIT = Integer.MAX_VALUE;
+
+    /**
+     * Set the maximum time allowed in milliseconds after the WebSocket connection is established and before the first
+     * sub-protocol message is received.
+     */
+    public static final int WEBSOCKET_TIME_TO_FIRST_MESSAGE = 15 * 1000 /* 15s */;
+
+    /**
+     * Development Spring profile.
+     */
+    public static final String DEVELOPMENT_PROFILE = "development";
+
+    /**
+     * Blank node prefix.
+     */
+    public static final String BNODE_PREFIX = "_:";
 
     private Constants() {
         throw new AssertionError();
@@ -193,9 +223,16 @@ public class Constants {
      * Additional media types not covered by {@link org.springframework.http.MediaType}.
      */
     public static final class MediaType {
+        /**
+         * Media type for .xlsx
+         */
         public static final String EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         public static final String TURTLE = "text/turtle";
         public static final String RDF_XML = "application/rdf+xml";
+
+        private MediaType() {
+            throw new AssertionError();
+        }
     }
 
     /**

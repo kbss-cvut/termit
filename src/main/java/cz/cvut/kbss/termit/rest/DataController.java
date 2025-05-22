@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
@@ -92,8 +97,11 @@ public class DataController {
     })
     @GetMapping(value = "/label")
     public String getLabel(@Parameter(description = "Resource identifier.")
-                           @RequestParam("iri") URI id) {
-        return dataService.getLabel(id).orElseThrow(
+                           @RequestParam("iri") URI id,
+                           @Parameter(description = "Label language")
+                           @RequestParam(value = "language", required = false) String language
+    ) {
+        return dataService.getLabel(id, language).orElseThrow(
                 () -> new NotFoundException("Resource with id " + id + " not found or it has no matching label."));
     }
 }

@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.1</version>
+        <version>3.4.4</version>
     </parent>
 
     <artifactId>termit</artifactId>
-    <version>3.1.2</version>
+    <version>3.5.1</version>
     <name>TermIt</name>
     <description>Terminology manager based on Semantic Web technologies.</description>
     <packaging>${packaging}</packaging>
@@ -28,11 +28,11 @@
 
     <properties>
         <java.version>17</java.version>
-        <org.apache.tika.tika-core.version>2.7.0</org.apache.tika.tika-core.version>
-        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <org.springdoc.version>2.2.0</org.springdoc.version>
-        <cz.cvut.kbss.jopa.version>2.0.2</cz.cvut.kbss.jopa.version>
-        <cz.cvut.kbss.jsonld.version>0.14.3</cz.cvut.kbss.jsonld.version>
+        <org.apache.tika.tika-core.version>3.0.0</org.apache.tika.tika-core.version>
+        <org.mapstruct.version>1.6.2</org.mapstruct.version>
+        <org.springdoc.version>2.8.5</org.springdoc.version>
+        <cz.cvut.kbss.jopa.version>2.3.1</cz.cvut.kbss.jopa.version>
+        <cz.cvut.kbss.jsonld.version>0.15.4</cz.cvut.kbss.jsonld.version>
 
         <!-- Default value for deployment type property which should otherwise specified on command line -->
         <deployment>DEV</deployment>
@@ -53,6 +53,7 @@
             <version>1.15</version>
         </dependency>
 
+        <!-- Note: Sticking to an old version because newer versions are significantly slower and consume much more memory -->
         <dependency>
             <groupId>org.topbraid</groupId>
             <artifactId>shacl</artifactId>
@@ -62,17 +63,7 @@
                     <groupId>org.antlr</groupId>
                     <artifactId>antlr4-runtime</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.apache.jena</groupId>
-                    <artifactId>jena-arq</artifactId>
-                </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mitre.dsmiley.httpproxy</groupId>
-            <artifactId>smiley-http-proxy-servlet</artifactId>
-            <version>2.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core -->
@@ -93,33 +84,18 @@
             <artifactId>ontodriver-rdf4j</artifactId>
             <version>${cz.cvut.kbss.jopa.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>jena-arq</artifactId>
-            <version>4.4.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <!-- For RDF/XML export -->
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
-            <version>5.0.0</version>
+            <version>5.0.2</version>
         </dependency>
 
         <!-- Spring declarative transactions with JOPA -->
         <dependency>
             <groupId>com.github.ledsoft</groupId>
             <artifactId>jopa-spring-transaction</artifactId>
-            <version>0.3.0</version>
+            <version>0.3.1</version>
         </dependency>
 
         <!-- Spring -->
@@ -150,12 +126,20 @@
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-messaging</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-commons</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-aspects</artifactId>
+            <artifactId>spring-aop</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.retry</groupId>
@@ -164,11 +148,6 @@
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.2.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjrt</artifactId>
         </dependency>
 
         <!-- JWT support for Java -->
@@ -241,14 +220,14 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.15.4</version>
+            <version>1.18.1</version>
         </dependency>
 
         <!-- Flexmark for handling Markdown -->
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
-            <version>0.64.6</version>
+            <version>0.64.8</version>
         </dependency>
 
         <!-- Logging -->
@@ -265,7 +244,7 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.2.2</version>
+            <version>5.4.0</version>
         </dependency>
 
         <!-- I18n - language tags and languages -->
@@ -279,14 +258,14 @@
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity-engine-core</artifactId>
-            <version>2.3</version>
+            <version>2.4</version>
         </dependency>
 
         <!-- Java Melody Monitoring -->
         <dependency>
             <groupId>net.bull.javamelody</groupId>
             <artifactId>javamelody-spring-boot-starter</artifactId>
-            <version>2.0.0</version>
+            <version>2.2.0</version>
         </dependency>
 
         <!-- Caching -->
@@ -386,7 +365,7 @@
             </build>
         </profile>
 
-        <!-- Profiles for storages. Important for correct full text search functionality -->
+        <!-- Profile for GraphDB storage with Lucene connectors. Important for correct full text search functionality -->
         <profile>
             <id>graphdb</id>
             <properties>
@@ -430,39 +409,6 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>dev.aspectj</groupId>
-                <artifactId>aspectj-maven-plugin</artifactId>
-                <version>1.13.1</version>
-                <configuration>
-                    <complianceLevel>${java.version}</complianceLevel>
-                    <aspectLibraries>
-                        <aspectLibrary>
-                            <groupId>org.springframework</groupId>
-                            <artifactId>spring-aspects</artifactId>
-                        </aspectLibrary>
-                    </aspectLibraries>
-                    <parameters>true</parameters>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>main</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <!-- Weave all main classes -->
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>test</id>
-                        <phase>process-test-classes</phase>
-                        <goals>
-                            <!-- Weave all test classes -->
-                            <goal>test-compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -564,6 +510,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
+                            <propertiesEncoding>ISO-8859-1</propertiesEncoding>
                             <nonFilteredFileExtensions>
                                 <nonFilteredFileExtension>xlsx</nonFilteredFileExtension>
                             </nonFilteredFileExtensions>

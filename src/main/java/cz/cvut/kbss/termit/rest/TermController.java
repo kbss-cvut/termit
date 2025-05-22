@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
+import cz.cvut.kbss.termit.dto.TermInfo;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.model.Term;
@@ -220,6 +222,7 @@ public class TermController extends BaseController {
             @Parameter(description = "Language of the label.")
             @RequestParam(name = "language", required = false) String language) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
+
         final Vocabulary vocabulary = termService.getVocabularyReference(vocabularyUri);
         if (prefLabel != null) {
             final boolean exists = termService.existsInVocabulary(prefLabel, vocabulary, language);
@@ -228,6 +231,7 @@ public class TermController extends BaseController {
             final Integer count = termService.getTermCount(vocabulary);
             return ResponseEntity.ok().header(Constants.X_TOTAL_COUNT_HEADER, count.toString()).build();
         }
+
     }
 
     private Vocabulary getVocabulary(URI vocabularyUri) {
@@ -270,11 +274,13 @@ public class TermController extends BaseController {
             @Parameter(
                     description = "Identifiers of terms that should be included in the response (regardless of whether they are root terms or not).")
             @RequestParam(name = "includeTerms", required = false, defaultValue = "") List<URI> includeTerms) {
+
         final Vocabulary vocabulary = getVocabulary(getVocabularyUri(namespace, localName));
         return includeImported ?
                termService
                        .findAllRootsIncludingImported(vocabulary, createPageRequest(pageSize, pageNo), includeTerms) :
                termService.findAllRoots(vocabulary, createPageRequest(pageSize, pageNo), includeTerms);
+
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -335,6 +341,23 @@ public class TermController extends BaseController {
             @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
         return termService.findRequired(termUri);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets basic information about a term with the specified identifier.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Basic term information."),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_STANDALONE_NOT_FOUND_DESCRIPTION)
+    })
+    @GetMapping(value = "/terms/{localName}/info", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public TermInfo getTermInfoById(@Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
+                                               example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
+                                    @PathVariable String localName,
+                                    @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
+                                               example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
+                                    @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+        final URI termUri = idResolver.resolveIdentifier(namespace, localName);
+        return termService.findRequiredTermInfo(termUri);
     }
 
     private URI getTermUri(String vocabIdFragment, String termIdFragment, Optional<String> namespace) {
@@ -422,7 +445,7 @@ public class TermController extends BaseController {
     })
     @GetMapping(value = "/vocabularies/{localName}/terms/{termLocalName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
@@ -444,7 +467,7 @@ public class TermController extends BaseController {
     })
     @GetMapping(value = "/terms/{localName}/subterms",
                 produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<Term> getSubTerms(
+    public List<TermDto> getSubTerms(
             @Parameter(description = ApiDoc.ID_STANDALONE_LOCAL_NAME_DESCRIPTION,
                        example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
@@ -608,6 +631,9 @@ public class TermController extends BaseController {
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+        LOG.warn(
+                "Called legacy endpoint intended for internal use or testing only! (/vocabularies/{}/terms/{}/text-analysis)",
+                localName, termLocalName);
         termService.analyzeTermDefinition(getById(localName, termLocalName, namespace),
                                           getVocabularyUri(namespace, localName));
     }
@@ -693,9 +719,16 @@ public class TermController extends BaseController {
             @Parameter(description = ApiDoc.ID_TERM_LOCAL_NAME_DESCRIPTION, example = ApiDoc.ID_TERM_LOCAL_NAME_EXAMPLE)
             @PathVariable String termLocalName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION, example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace) {
+            @RequestParam(name = QueryParams.NAMESPACE, required = false) Optional<String> namespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+            @RequestParam(name = "changeType", required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+            @RequestParam(name = "author", required = false, defaultValue = "") String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+            @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final URI termUri = getTermUri(localName, termLocalName, namespace);
-        return termService.getChanges(termService.findRequired(termUri));
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
+        return termService.getChanges(termService.findRequired(termUri), filterDto);
     }
 
     /**
@@ -703,7 +736,7 @@ public class TermController extends BaseController {
      * <p>
      * This is a convenience method to allow access without using the Term's parent Vocabulary.
      *
-     * @see #getHistory(String, String, Optional)
+     * @see #getHistory
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Gets a list of changes made to metadata of the term with the specified identifier.")
@@ -718,9 +751,21 @@ public class TermController extends BaseController {
                                                  @PathVariable String localName,
                                                  @Parameter(description = ApiDoc.ID_STANDALONE_NAMESPACE_DESCRIPTION,
                                                             example = ApiDoc.ID_STANDALONE_NAMESPACE_EXAMPLE)
-                                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace) {
+                                                 @RequestParam(name = QueryParams.NAMESPACE) String namespace,
+                                                 @Parameter(
+                                                         description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+                                                 @RequestParam(name = "changeType", required = false) URI changeType,
+                                                 @Parameter(
+                                                         description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+                                                 @RequestParam(name = "author", required = false,
+                                                               defaultValue = "") String authorName,
+                                                 @Parameter(
+                                                         description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+                                                 @RequestParam(name = "attribute", required = false,
+                                                               defaultValue = "") String changedAttributeName) {
         final URI termUri = idResolver.resolveIdentifier(namespace, localName);
-        return termService.getChanges(termService.findRequired(termUri));
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
+        return termService.getChanges(termService.findRequired(termUri), filter);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

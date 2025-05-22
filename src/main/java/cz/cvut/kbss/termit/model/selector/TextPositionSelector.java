@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.termit.util.Vocabulary;
-
 import jakarta.validation.constraints.NotNull;
+
 import java.util.Objects;
 
 /**
@@ -68,6 +68,11 @@ public class TextPositionSelector extends Selector {
 
     public void setEnd(Integer end) {
         this.end = end;
+    }
+
+    @Override
+    public TextPositionSelector copy() {
+        return new TextPositionSelector(start, end);
     }
 
     @Override

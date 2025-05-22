@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,9 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TextAnalysisRecordDaoTest extends BaseDaoTestRunner {
 
@@ -61,9 +63,10 @@ class TextAnalysisRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findLatestGetsLatestTextAnalysisRecordForResource() {
         final URI vocabulary = Generator.generateUri();
-        final TextAnalysisRecord old = new TextAnalysisRecord(Instant.ofEpochMilli(System.currentTimeMillis() - 10000), resource);
+        final TextAnalysisRecord old = new TextAnalysisRecord(Instant.ofEpochMilli(System.currentTimeMillis() - 10000),
+                                                              resource, Environment.LANGUAGE);
         old.setVocabularies(Collections.singleton(vocabulary));
-        final TextAnalysisRecord latest = new TextAnalysisRecord(Utils.timestamp(), resource);
+        final TextAnalysisRecord latest = new TextAnalysisRecord(Utils.timestamp(), resource, Environment.LANGUAGE);
         latest.setVocabularies(Collections.singleton(vocabulary));
         transactional(() -> {
             sut.persist(old);

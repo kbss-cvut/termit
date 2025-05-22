@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,10 +24,13 @@ import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.AbstractEntity;
+import cz.cvut.kbss.termit.model.util.Copyable;
 import cz.cvut.kbss.termit.model.util.HasTypes;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.validation.constraints.NotNull;
 
@@ -37,7 +40,7 @@ import java.util.Set;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "javaClass")
 @OWLClass(iri = Vocabulary.s_c_vyskyt_termu)
-public abstract class TermOccurrence extends AbstractEntity implements HasTypes {
+public abstract class TermOccurrence extends AbstractEntity implements Copyable<TermOccurrence>, HasTypes {
 
     /**
      * Suffix used to identify term occurrence contexts (named graphs) in the repository.
@@ -60,7 +63,15 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
     @Types
     private Set<String> types;
 
-    private transient Double score;
+    @Transient
+    private Double score;
+
+    /**
+     * Value of the {@literal about} attribute of the HTML element representing the occurrence.
+     */
+    @Transient
+    @OWLDataProperty(iri = DC.Terms.IDENTIFIER)
+    private String elementAbout;
 
     public TermOccurrence() {
     }
@@ -117,6 +128,29 @@ public abstract class TermOccurrence extends AbstractEntity implements HasTypes 
 
     public void setScore(Double score) {
         this.score = score;
+    }
+
+    public String getElementAbout() {
+        return elementAbout;
+    }
+
+    public void setElementAbout(String elementAbout) {
+        this.elementAbout = elementAbout;
+    }
+
+    /**
+     * Determines the value of the {@literal about} attribute of the HTML element representing this occurrence.
+     * <p>
+     * The value is derived from the URI of the occurrence and a blank node prefix is prepended to it.
+     * <p>
+     * The value is also assigned to the field {@link #elementAbout} for further use.
+     *
+     * @return Value of the {@literal about} attribute
+     */
+    public String resolveElementAbout() {
+        final String strIri = getUri().toString();
+        this.elementAbout = Constants.BNODE_PREFIX + strIri.substring(strIri.lastIndexOf('/') + 1);
+        return elementAbout;
     }
 
     /**

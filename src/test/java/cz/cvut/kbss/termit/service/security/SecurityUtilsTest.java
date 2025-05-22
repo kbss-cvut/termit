@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,10 +69,10 @@ class SecurityUtilsTest {
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Spy
-    private IdentifierResolver idResolver = new IdentifierResolver();
+    private Configuration config = new Configuration();
 
     @Spy
-    private Configuration config = new Configuration();
+    private IdentifierResolver idResolver = new IdentifierResolver(config);
 
     @InjectMocks
     private SecurityUtils sut;

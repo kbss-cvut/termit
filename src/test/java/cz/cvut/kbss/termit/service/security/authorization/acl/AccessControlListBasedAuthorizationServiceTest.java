@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,11 @@ import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.model.UserGroup;
 import cz.cvut.kbss.termit.model.UserRole;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.acl.*;
+import cz.cvut.kbss.termit.model.acl.AccessControlList;
+import cz.cvut.kbss.termit.model.acl.AccessLevel;
+import cz.cvut.kbss.termit.model.acl.RoleAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserAccessControlRecord;
+import cz.cvut.kbss.termit.model.acl.UserGroupAccessControlRecord;
 import cz.cvut.kbss.termit.service.business.AccessControlListService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,8 +42,12 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccessControlListBasedAuthorizationServiceTest {
@@ -291,24 +299,23 @@ class AccessControlListBasedAuthorizationServiceTest {
 
     @ParameterizedTest
     @MethodSource("canReadAnonymouslyTestArguments")
-    void canReadAnonymouslyReturnsCorrectResultForUserSpecifiedReaderRoleAccessLevel(Boolean expected, AccessLevel accessLevel) {
+    void canReadAnonymouslyReturnsCorrectResultForAnonymousUserRoleAccessLevel(Boolean canRead, AccessLevel accessLevel) {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final AccessControlList acl = Generator.generateAccessControlList(false);
-        final UserRole role = new UserRole(URI.create(cz.cvut.kbss.termit.security.model.UserRole.RESTRICTED_USER.getType()));
+        final UserRole role = new UserRole(cz.cvut.kbss.termit.security.model.UserRole.ANONYMOUS_USER);
         final RoleAccessControlRecord roleRecord = new RoleAccessControlRecord(accessLevel, role);
         roleRecord.setUri(Generator.generateUri());
         acl.addRecord(roleRecord);
         when(aclService.findFor(vocabulary)).thenReturn(Optional.of(acl));
 
-        assertEquals(expected, sut.canReadAnonymously(vocabulary));
+        assertEquals(canRead, sut.canReadAnonymously(vocabulary));
     }
 
     static Stream<Arguments> canReadAnonymouslyTestArguments() {
         return Stream.of(
                 Arguments.of(false, AccessLevel.NONE),
-                Arguments.of(true, AccessLevel.READ),
-                Arguments.of(true, AccessLevel.WRITE)
-                // Reader cannot have Security access
+                Arguments.of(true, AccessLevel.READ)
+                // WRITE and SECURITY access levels are not allowed for anonymous users
         );
     }
 }

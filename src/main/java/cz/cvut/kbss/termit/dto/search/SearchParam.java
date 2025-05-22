@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,10 +89,9 @@ public class SearchParam {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof SearchParam)) {
+        if (!(o instanceof SearchParam that)) {
             return false;
         }
-        SearchParam that = (SearchParam) o;
         return Objects.equals(property, that.property)
                 && Objects.equals(value, that.value) && matchType == that.matchType;
     }

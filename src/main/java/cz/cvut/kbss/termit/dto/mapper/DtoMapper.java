@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,13 @@ import cz.cvut.kbss.termit.dto.acl.AccessControlRecordDto;
 import cz.cvut.kbss.termit.dto.acl.AccessHolderDto;
 import cz.cvut.kbss.termit.dto.listing.DocumentDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
-import cz.cvut.kbss.termit.model.*;
+import cz.cvut.kbss.termit.model.AccessControlAgent;
+import cz.cvut.kbss.termit.model.Asset;
+import cz.cvut.kbss.termit.model.PasswordChangeRequest;
+import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.UserGroup;
+import cz.cvut.kbss.termit.model.UserRole;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.resource.Document;

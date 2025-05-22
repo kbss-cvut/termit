@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,30 +23,47 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
+import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
-import cz.cvut.kbss.termit.model.*;
+import cz.cvut.kbss.termit.event.VocabularyEvent;
+import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
+import cz.cvut.kbss.termit.model.Glossary;
+import cz.cvut.kbss.termit.model.Model;
+import cz.cvut.kbss.termit.model.Term;
+import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.PersistChangeRecord;
 import cz.cvut.kbss.termit.model.changetracking.UpdateChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.resource.File;
+import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
+import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
+import cz.cvut.kbss.termit.util.Constants;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
@@ -54,16 +71,32 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static cz.cvut.kbss.termit.environment.util.ContainsSameEntities.containsSameEntities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -75,11 +108,15 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     @Autowired
     private DescriptorFactory descriptorFactory;
 
+    @Spy
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private VocabularyDao sut;
+
+    @SpyBean
+    private ChangeRecordDao changeRecordDao;
 
     private User author;
 
@@ -98,7 +135,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> vocabularies.forEach(v -> em.persist(v, descriptorFor(v))));
 
         final List<Vocabulary> result = sut.findAll();
-        vocabularies.sort(Comparator.comparing(Vocabulary::getPrimaryLabel));
+        vocabularies.sort(Comparator.comparing(Environment::getPrimaryLabel));
         for (int i = 0; i < vocabularies.size(); i++) {
             assertEquals(vocabularies.get(i).getUri(), result.get(i).getUri());
         }
@@ -229,7 +266,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void hasInterVocabularyTermRelationshipsReturnsFalseForVocabulariesWithoutSKOSRelatedTerms() {
+    void hasHierarchyBetweenTermsReturnsFalseForVocabulariesWithoutSKOSRelatedTerms() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
         transactional(() -> {
@@ -237,11 +274,11 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(targetVocabulary, descriptorFactory.vocabularyDescriptor(targetVocabulary));
         });
 
-        assertFalse(sut.hasInterVocabularyTermRelationships(subjectVocabulary.getUri(), targetVocabulary.getUri()));
+        assertFalse(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
     }
 
     @Test
-    void hasInterVocabularyTermRelationshipsReturnsTrueForSKOSRelatedTermsInSpecifiedVocabularies() {
+    void hasHierarchyBetweenTermsReturnsTrueForSKOSRelatedTermsInSpecifiedVocabularies() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
         subjectVocabulary.setImportedVocabularies(Collections.singleton(targetVocabulary.getUri()));
@@ -261,11 +298,11 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(parentTerm, targetVocabulary.getUri(), em);
         });
 
-        assertTrue(sut.hasInterVocabularyTermRelationships(subjectVocabulary.getUri(), targetVocabulary.getUri()));
+        assertTrue(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
     }
 
     @Test
-    void hasInterVocabularyTermRelationshipsReturnsTrueForSKOSRelatedTermsInTransitivelyImportedVocabularies() {
+    void hasHierarchyBetweenTermsReturnsTrueForSKOSRelatedTermsInTransitivelyImportedVocabularies() {
         final Vocabulary subjectVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary targetVocabulary = Generator.generateVocabularyWithId();
         final Vocabulary transitiveVocabulary = Generator.generateVocabularyWithId();
@@ -288,7 +325,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Generator.addTermInVocabularyRelationship(parentTerm, transitiveVocabulary.getUri(), em);
         });
 
-        assertTrue(sut.hasInterVocabularyTermRelationships(subjectVocabulary.getUri(), targetVocabulary.getUri()));
+        assertTrue(sut.hasHierarchyBetweenTerms(subjectVocabulary.getUri(), targetVocabulary.getUri()));
     }
 
     @Test
@@ -307,7 +344,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             em.persist(transitiveVocabulary, descriptorFactory.vocabularyDescriptor(transitiveVocabulary));
         });
 
-        final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary);
+        final Collection<URI> result = sut.getTransitivelyImportedVocabularies(subjectVocabulary.getUri());
         assertEquals(3, result.size());
         assertTrue(result.contains(importedVocabularyOne.getUri()));
         assertTrue(result.contains(importedVocabularyTwo.getUri()));
@@ -345,7 +382,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         transactional(() -> sut.persist(voc));
 
         final ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
-        verify(eventPublisher).publishEvent(captor.capture());
+        verify(eventPublisher, atLeastOnce()).publishEvent(captor.capture());
         final Optional<AssetPersistEvent> evt = captor.getAllValues().stream()
                                                       .filter(AssetPersistEvent.class::isInstance)
                                                       .map(AssetPersistEvent.class::cast).findFirst();
@@ -667,7 +704,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void forceRemoveRemovesVocabularyGlossaryModelAndAllTerms() {
+    void removeVocabularyRemovesVocabularyGlossaryModelAndAllTermsWithoutDocument() {
         final Vocabulary vocabulary = Generator.generateVocabularyWithId();
         final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
                                           .toList();
@@ -682,25 +719,73 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             });
         });
 
-        transactional(() -> sut.forceRemove(vocabulary));
+        transactional(() -> sut.removeVocabularyKeepDocument(vocabulary));
         final String query = "ASK { ?x a ?type }";
+        // vocabulary removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
                       .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
                       .getSingleResult());
+        // glossary removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
                       .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_glosar))
                       .getSingleResult());
+        // model removed
         assertFalse(em.createNativeQuery(query, Boolean.class)
                       .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_model))
                       .getSingleResult());
+
+        // all terms removed
         assertFalse(em.createNativeQuery(query, Boolean.class).setParameter("type", URI.create(SKOS.CONCEPT))
                       .getSingleResult());
+
+        // document not removed
         assertTrue(em.createNativeQuery(query, Boolean.class)
                      .setParameter("type", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_dokument))
                      .getSingleResult());
+
+        // vocabulary removed from cache
         assertFalse(em.getEntityManagerFactory().getCache().contains(Vocabulary.class, vocabulary.getUri(),
                                                                      descriptorFactory.vocabularyDescriptor(
                                                                              vocabulary)));
+    }
+
+    @Test
+    void removePublishesEventAndDropsGraph() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final List<Term> terms = IntStream.range(0, 10).mapToObj(i -> Generator.generateTermWithId(vocabulary.getUri()))
+                                          .toList();
+        final Document doc = Generator.generateDocumentWithId();
+        vocabulary.setDocument(doc);
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            em.persist(doc, descriptorFactory.documentDescriptor(vocabulary));
+            terms.forEach(t -> {
+                em.persist(t, descriptorFactory.termDescriptor(t));
+                Generator.addTermInVocabularyRelationship(t, vocabulary.getUri(), em);
+            });
+        });
+
+        assertTrue(em.createNativeQuery("ASK WHERE { GRAPH ?vocabulary { ?s ?p ?o }}", Boolean.class)
+                      .setParameter("vocabulary", vocabulary.getUri())
+                      .getSingleResult());
+
+        transactional(() -> sut.remove(vocabulary));
+
+        ArgumentCaptor<VocabularyEvent> eventCaptor = ArgumentCaptor.forClass(VocabularyWillBeRemovedEvent.class);
+        verify(eventPublisher, atLeastOnce()).publishEvent(eventCaptor.capture());
+
+        VocabularyWillBeRemovedEvent event = (VocabularyWillBeRemovedEvent) eventCaptor
+                .getAllValues().stream()
+                .filter(e -> e instanceof VocabularyWillBeRemovedEvent)
+                .findAny().orElseThrow();
+        
+        assertNotNull(event);
+
+        assertEquals(event.getVocabularyIri(), vocabulary.getUri());
+
+        assertFalse(em.createNativeQuery("ASK WHERE{ GRAPH ?vocabulary { ?s ?p ?o }}", Boolean.class)
+                      .setParameter("vocabulary", vocabulary.getUri())
+                      .getSingleResult());
     }
 
     @Test
@@ -716,5 +801,179 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(document, result.getDocument());
         assertEquals(document,
                      em.find(Document.class, document.getUri(), descriptorFactory.documentDescriptor(instance)));
+    }
+
+    @Test
+    void internalAddRealtionCreatesRelation() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+        final URI relation = URI.create(SKOS.RELATED);
+
+        transactional(() -> {
+            sut.persist(vocabulary);
+            sut.persist(secondVocabulary);
+
+            Environment.addRelation(vocabulary.getUri(), relation, secondVocabulary.getUri(), em);
+        });
+
+        Boolean result = em.createNativeQuery("""
+                                   ASK WHERE {
+                                       ?vocabulary a ?vocabularyType .
+                                       ?secondVocabulary a ?vocabularyType .
+                                       ?vocabulary ?relation ?secondVocabulary .
+                                   }
+                                   """, Boolean.class)
+                           .setParameter("vocabulary", vocabulary.getUri())
+                           .setParameter("secondVocabulary", secondVocabulary.getUri())
+                           .setParameter("vocabularyType", URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Vocabulary.class)))
+                           .setParameter("relation", relation).getSingleResult();
+
+        assertTrue(result);
+    }
+
+    public static Set<URI> skosConceptMatchRelationshipsSource() {
+        return Constants.SKOS_CONCEPT_MATCH_RELATIONSHIPS;
+    }
+
+    /**
+     * term - relation - secondTerm
+     */
+    @ParameterizedTest
+    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
+    void getAnyExternalRelationsReturnsTermsWithOutgoingRelations(URI termRelation) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(secondVocabulary.getUri());
+
+        transactional(() -> {
+            sut.persist(vocabulary);
+            sut.persist(secondVocabulary);
+
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+
+            em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
+            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
+
+            Environment.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
+        });
+
+        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+
+        assertEquals(1, relations.size());
+        final RdfsStatement relation = relations.get(0);
+        assertEquals(term.getUri(), relation.getObject());
+        assertEquals(termRelation, relation.getRelation());
+        assertEquals(secondTerm.getUri(), relation.getSubject());
+    }
+
+    /**
+     * secondTerm - relation - term
+     */
+    @ParameterizedTest
+    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
+    void getAnyExternalRelationsReturnsTermsWithIncommingRelations(URI termRelation) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(secondVocabulary.getUri());
+
+        transactional(() -> {
+            sut.persist(vocabulary);
+            sut.persist(secondVocabulary);
+
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+
+            em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
+            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
+
+            Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
+        });
+
+        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+
+        assertEquals(1, relations.size());
+        final RdfsStatement relation = relations.get(0);
+        assertEquals(secondTerm.getUri(), relation.getObject());
+        assertEquals(termRelation, relation.getRelation());
+        assertEquals(term.getUri(), relation.getSubject());
+    }
+
+    /**
+     * secondTerm - relation - term<br>
+     * term - relation - secondTerm
+     */
+    @ParameterizedTest
+    @MethodSource("cz.cvut.kbss.termit.persistence.dao.VocabularyDaoTest#skosConceptMatchRelationshipsSource")
+    void getAnyExternalRelationsReturnsTermsWithBothRelations(URI termRelation) {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary secondVocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term secondTerm = Generator.generateTermWithId(secondVocabulary.getUri());
+
+        transactional(() -> {
+            sut.persist(vocabulary);
+            sut.persist(secondVocabulary);
+
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+
+            em.persist(secondTerm, descriptorFactory.termDescriptor(secondTerm));
+            Generator.addTermInVocabularyRelationship(secondTerm, secondVocabulary.getUri(), em);
+
+            Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
+            Environment.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
+        });
+
+        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+
+        assertEquals(2, relations.size());
+        relations.forEach(relation -> {
+            assertEquals(termRelation, relation.getRelation());
+            if(relation.getObject().equals(term.getUri())) {
+                assertEquals(secondTerm.getUri(), relation.getSubject());
+            } else if(relation.getObject().equals(secondTerm.getUri())) {
+                assertEquals(term.getUri(), relation.getSubject());
+            } else {
+                Assertions.fail("The Relation object is neither a term nor a secondTerm");
+            }
+        });
+    }
+
+    @Test
+    void getDetailedHistoryOfContentCallsChangeRecordDaoWithFilter() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final List<AbstractChangeRecord> records = List.of();
+        final URI skosConcept = URI.create(SKOS.CONCEPT);
+        final Pageable unpaged = Pageable.unpaged();
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto();
+        filterDto.setAuthorName("Name of the author");
+
+        doReturn(records).when(changeRecordDao).findAllRelatedToType(vocabulary, filterDto, skosConcept, unpaged);
+
+        sut.getDetailedHistoryOfContent(vocabulary, filterDto, unpaged);
+
+        verify(changeRecordDao).findAllRelatedToType(vocabulary, filterDto, skosConcept, unpaged);
+    }
+
+    @Test
+    void getLanguagesReturnsDistinctLanguagesUsedByVocabularyTerms() {
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        final Term term2 = Generator.generateTermWithId(vocabulary.getUri());
+        term2.getLabel().set("cs", "Název v češtině");
+        transactional(() -> {
+            em.persist(vocabulary, descriptorFor(vocabulary));
+            em.persist(term, descriptorFactory.termDescriptor(term));
+            em.persist(term2, descriptorFactory.termDescriptor(term2));
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+            Generator.addTermInVocabularyRelationship(term2, vocabulary.getUri(), em);
+        });
+
+        final List<String> languages = sut.getLanguages(vocabulary.getUri());
+        assertEquals(2, languages.size());
+        assertThat(languages, hasItems(Environment.LANGUAGE, "cs"));
     }
 }

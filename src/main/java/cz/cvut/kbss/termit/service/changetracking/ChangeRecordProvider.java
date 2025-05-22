@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,9 @@
  */
 package cz.cvut.kbss.termit.service.changetracking;
 
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.util.HasIdentifier;
 
 import java.util.List;
 
@@ -27,7 +28,17 @@ import java.util.List;
  *
  * @param <T> Type of asset to get changes for
  */
-public interface ChangeRecordProvider<T extends HasIdentifier> {
+public interface ChangeRecordProvider<T extends Asset<?>> {
+
+    /**
+     * Gets change records of the specified asset
+     * filtered by {@link ChangeRecordFilterDto}.
+     *
+     * @param asset Asset to find change records for
+     * @param filterDto Filter parameters
+     * @return List of change records, ordered by record timestamp in descending order
+     */
+    List<AbstractChangeRecord> getChanges(T asset, ChangeRecordFilterDto filterDto);
 
     /**
      * Gets change records of the specified asset.
@@ -35,5 +46,7 @@ public interface ChangeRecordProvider<T extends HasIdentifier> {
      * @param asset Asset to find change records for
      * @return List of change records, ordered by record timestamp in descending order
      */
-    List<AbstractChangeRecord> getChanges(T asset);
+    default List<AbstractChangeRecord> getChanges(T asset) {
+        return getChanges(asset, new ChangeRecordFilterDto());
+    }
 }

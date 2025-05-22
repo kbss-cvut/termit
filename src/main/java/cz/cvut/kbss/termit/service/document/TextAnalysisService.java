@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,29 +18,51 @@
 package cz.cvut.kbss.termit.service.document;
 
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
+import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
+import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StreamUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 public class TextAnalysisService {
@@ -57,14 +79,41 @@ public class TextAnalysisService {
 
     private final TextAnalysisRecordDao recordDao;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+    private Set<String> supportedLanguages;
+
+    /**
+     * Used for prefixing each term definition merged into a single input for text analysis.
+     */
+    private static final String TERM_DEFINITION_PREFIX = "<termdefinition id=\"";
+
+    /**
+     * Used for suffixing each term definition merged into a single input for text analysis.
+     */
+    private static final String TERM_DEFINITION_SUFFIX = "</termdefinition>";
+
+    /**
+     * Matches term definitions surrounded by {@link #TERM_DEFINITION_PREFIX} and {@link #TERM_DEFINITION_SUFFIX}.
+     * <p>
+     * Outputs two groups:
+     * <ol>
+     *     <li>Term URI</li>
+     *     <li>Term definition</li>
+     * </ol>
+     */
+    private static final Pattern TERM_DEFINITION_PATTERN = Pattern.compile(Pattern.quote(TERM_DEFINITION_PREFIX) + "([^\\\"]+)\" *\\>(.+?)" + Pattern.quote(TERM_DEFINITION_SUFFIX));
+
     @Autowired
     public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
-                               AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao) {
+                               AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao,
+                               ApplicationEventPublisher eventPublisher) {
         this.restClient = restClient;
         this.config = config;
         this.documentManager = documentManager;
         this.annotationGenerator = annotationGenerator;
         this.recordDao = recordDao;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -76,12 +125,15 @@ public class TextAnalysisService {
      * @param file               File whose content shall be analyzed
      * @param vocabularyContexts Identifiers of repository contexts containing vocabularies intended for text analysis
      */
+    @Throttle(value = "{#file.getUri()}", name = "fileAnalysis")
     @Transactional
     public void analyzeFile(File file, Set<URI> vocabularyContexts) {
         Objects.requireNonNull(file);
         final TextAnalysisInput input = createAnalysisInput(file);
         input.setVocabularyContexts(vocabularyContexts);
         invokeTextAnalysisOnFile(file, input);
+        LOG.debug("Text analysis finished for resource {}.", file.getUri());
+        eventPublisher.publishEvent(new FileTextAnalysisFinishedEvent(this, file));
     }
 
     private TextAnalysisInput createAnalysisInput(File file) {
@@ -92,7 +144,7 @@ public class TextAnalysisService {
                 publicUrl.isEmpty() || publicUrl.get().isEmpty() ? config.getRepository().getUrl() : publicUrl.get()
         );
         input.setVocabularyRepository(repositoryUrl);
-        input.setLanguage(config.getPersistence().getLanguage());
+        input.setLanguage(file.getLanguage() != null ? file.getLanguage() : config.getPersistence().getLanguage());
         input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
         input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
         return input;
@@ -111,6 +163,8 @@ public class TextAnalysisService {
             storeTextAnalysisRecord(file, input);
         } catch (WebServiceIntegrationException e) {
             throw e;
+        } catch (HttpClientErrorException e) {
+            throw handleTextAnalysisInvocationClientException(e, file);
         } catch (RuntimeException e) {
             throw new WebServiceIntegrationException("Text analysis invocation failed.", e);
         } catch (IOException e) {
@@ -125,11 +179,10 @@ public class TextAnalysisService {
             return Optional.empty();
         }
         final HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE);
-        LOG.debug("Invoking text analysis service at '{}' on input: {}", config.getTextAnalysis().getUrl(), input);
-        final ResponseEntity<Resource> resp = restClient
-                .exchange(config.getTextAnalysis().getUrl(), HttpMethod.POST,
-                          new HttpEntity<>(input, headers), Resource.class);
+        headers.addAll(HttpHeaders.ACCEPT, List.of(MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE));
+        LOG.debug("Invoking text analysis service at '{}' on input: {}", taUrl, input);
+        final ResponseEntity<Resource> resp = restClient.exchange(taUrl, HttpMethod.POST,
+                                                                  new HttpEntity<>(input, headers), Resource.class);
         if (!resp.hasBody()) {
             throw new WebServiceIntegrationException("Text analysis service returned empty response.");
         }
@@ -141,9 +194,19 @@ public class TextAnalysisService {
         LOG.trace("Creating record of text analysis event for file {}.", file);
         assert config.getVocabularyContexts() != null;
 
-        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file, config.getLanguage());
         record.setVocabularies(new HashSet<>(config.getVocabularyContexts()));
         recordDao.persist(record);
+    }
+
+    private TermItException handleTextAnalysisInvocationClientException(HttpClientErrorException ex, Asset<?> asset) {
+        if (ex.getStatusCode() == HttpStatus.CONFLICT) {
+            final ErrorInfo errorInfo = ex.getResponseBodyAs(ErrorInfo.class);
+            if (errorInfo != null && errorInfo.getMessage().contains("language")) {
+                throw new UnsupportedTextAnalysisLanguageException(errorInfo.getMessage(),asset);
+            }
+        }
+        throw new WebServiceIntegrationException("Text analysis invocation failed.", ex);
     }
 
     /**
@@ -175,9 +238,18 @@ public class TextAnalysisService {
             input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
 
             invokeTextAnalysisOnTerm(term, input);
+            eventPublisher.publishEvent(new TermDefinitionTextAnalysisFinishedEvent(this, term));
         }
     }
 
+    /**
+     * Invokes text analysis with the specified input.
+     * <p>
+     * The analysis result is passed to the annotation generator with the given term.
+     *
+     * @param term  Term whose definition is to be analyzed.
+     * @param input TextAnalysisInput containing the term definition and other necessary information.
+     */
     private void invokeTextAnalysisOnTerm(AbstractTerm term, TextAnalysisInput input) {
         try {
             final Optional<Resource> result = invokeTextAnalysisService(input);
@@ -189,10 +261,176 @@ public class TextAnalysisService {
             }
         } catch (WebServiceIntegrationException e) {
             throw e;
+        } catch (HttpClientErrorException e) {
+            throw handleTextAnalysisInvocationClientException(e, term);
         } catch (RuntimeException e) {
             throw new WebServiceIntegrationException("Text analysis invocation failed.", e);
         } catch (IOException e) {
             throw new WebServiceIntegrationException("Unable to read text analysis result from response.", e);
         }
+    }
+
+    /**
+     * Combines the definitions of the given terms into a single string.
+     * <p>
+     * Each term definition is prefixed ({@link #TERM_DEFINITION_PREFIX}) and suffixed ({@link #TERM_DEFINITION_SUFFIX}).
+     * The combined definitions are returned as a single string.
+     * <p>
+     * The termMap is populated with the terms and their URIs.
+     *
+     * @param terms   List of terms whose definitions are to be combined.
+     * @param termMap Map to store the terms and their URIs.
+     * @return A string containing all combined term definitions.
+     */
+    private String combineTermDefinitions(List<AbstractTerm> terms, Map<URI, AbstractTerm> termMap) {
+        final StringBuilder definitions = new StringBuilder();
+        terms.forEach(term -> {
+            if (term.getDefinition() != null && term.getDefinition()
+                                                    .contains(config.getPersistence().getLanguage())) {
+                definitions.append(TERM_DEFINITION_PREFIX).append(term.getUri()).append("\">");
+                definitions.append(term.getDefinition().get(config.getPersistence().getLanguage()));
+                definitions.append(TERM_DEFINITION_SUFFIX);
+            }
+            termMap.put(term.getUri(), term);
+        });
+        return definitions.toString();
+    }
+
+    /**
+     * Analyzes term definitions for the given context-to-terms map.
+     * <p>
+     * Text analysis is invoked on all definitions merged for better efficiency.
+     *
+     * @param contextToTerms Map of vocabulary context URIs to lists of terms.
+     */
+    public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms) {
+        final var definitionsMap = new HashMap<URI, String>();
+        // map of term URI to respective term
+        // allows fast lookups by URI when generating annotations for each term
+        final var termMap = new HashMap<URI, AbstractTerm>();
+        // merge term definitions for each context and populate termMap
+        contextToTerms.forEach((context, terms) -> {
+            final String definitions = combineTermDefinitions(terms, termMap);
+            if (!definitions.isEmpty()) {
+                definitionsMap.put(context, definitions);
+            }
+        });
+
+        // invoke text analysis and generate annotations
+        definitionsMap.forEach((context, definitions) ->
+                invokeTextAnalysisOnCombinedDefinitions(context, definitions, termMap)
+        );
+    }
+
+    /**
+     * Generates annotations for the combined term definitions.
+     * <p>
+     * Parses the result string to extract term definitions and generates annotations for each term.
+     * Publishes an event for each term definition analysis completion.
+     *
+     * @param combinedResult The result of text analysis for combined term definitions.
+     * @param termMap        Map of term URIs to terms.
+     * @see #TERM_DEFINITION_PATTERN
+     */
+    private void generateAnnotationsForCombinedResult(String combinedResult, Map<URI, AbstractTerm> termMap) {
+        final var matcher = TERM_DEFINITION_PATTERN.matcher(combinedResult);
+        while (matcher.find()) {
+            // skip if the pattern does not match the expected groups
+            if (matcher.groupCount() != 2) {
+                continue;
+            }
+            final String termid = matcher.group(1);
+            final String termDefinition = matcher.group(2);
+            final var term = termMap.get(URI.create(termid));
+            annotationGenerator.generateAnnotations(new ByteArrayInputStream(termDefinition.getBytes(StandardCharsets.UTF_8)), term);
+            eventPublisher.publishEvent(new TermDefinitionTextAnalysisFinishedEvent(this, term));
+        }
+    }
+
+    /**
+     * Invokes text analysis on the combined definitions for a given context.
+     * <p>
+     * Sends the combined definitions to the text analysis service and processes the result.
+     * Generates annotations for the combined result.
+     *
+     * @param context     The vocabulary context URI.
+     * @param definitions The combined term definitions.
+     * @param termMap     Map of term URIs to terms.
+     */
+    private void invokeTextAnalysisOnCombinedDefinitions(URI context, String definitions,
+                                                         Map<URI, AbstractTerm> termMap) {
+        final TextAnalysisInput input = new TextAnalysisInput(
+                definitions,
+                config.getPersistence().getLanguage(),
+                URI.create(config.getRepository().getUrl())
+        );
+        input.addVocabularyContext(context);
+        input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
+        input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
+        try {
+            final Optional<Resource> result = invokeTextAnalysisService(input);
+            if (result.isEmpty()) {
+                return;
+            }
+            String resultString;
+            // consume the input stream and create a string
+            try (final InputStream is = result.get().getInputStream()) {
+                resultString = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
+            }
+            generateAnnotationsForCombinedResult(resultString, termMap);
+        } catch (WebServiceIntegrationException e) {
+            throw e;
+        } catch (HttpClientErrorException e) {
+            throw handleTextAnalysisInvocationClientException(e, null);
+        } catch (RuntimeException e) {
+            throw new WebServiceIntegrationException("Text analysis invocation failed.", e);
+        } catch (IOException e) {
+            throw new WebServiceIntegrationException("Unable to read text analysis result from response.", e);
+        }
+    }
+
+
+    /**
+     * Checks whether the text analysis service supports the language of the specified file.
+     * <p>
+     * If the text analysis service does not provide endpoint for getting supported languages (or it is not configured),
+     * it is assumed that any language is supported.
+     * <p>
+     * If the file does not have language set, it is assumed that it is supported as well.
+     *
+     * @param file File to be analyzed
+     * @return {@code true} if the file language is supported, {@code false} otherwise
+     */
+    public boolean supportsLanguage(File file) {
+        Objects.requireNonNull(file);
+        return file.getLanguage() == null || getSupportedLanguages().isEmpty() || getSupportedLanguages().contains(
+                file.getLanguage());
+    }
+
+    private synchronized Set<String> getSupportedLanguages() {
+        if (supportedLanguages != null) {
+            return supportedLanguages;
+        }
+        final String languagesEndpointUrl = config.getTextAnalysis().getLanguagesUrl();
+        if (languagesEndpointUrl == null || languagesEndpointUrl.isBlank()) {
+            LOG.warn(
+                    "Text analysis service languages endpoint URL not configured. Assuming any language is supported.");
+            this.supportedLanguages = Set.of();
+        } else {
+            try {
+                LOG.debug("Getting list of supported languages from text analysis service at '{}'.",
+                          languagesEndpointUrl);
+                ResponseEntity<Set<String>> response = restClient.exchange(languagesEndpointUrl, HttpMethod.GET, null,
+                                                                           new ParameterizedTypeReference<>() {
+                                                                           });
+                this.supportedLanguages = response.getBody();
+                LOG.trace("Text analysis supported languages: {}", supportedLanguages);
+            } catch (RuntimeException e) {
+                LOG.error("Unable to get list of supported languages from text analysis service at '{}'.",
+                          languagesEndpointUrl, e);
+                this.supportedLanguages = Set.of();
+            }
+        }
+        return supportedLanguages;
     }
 }

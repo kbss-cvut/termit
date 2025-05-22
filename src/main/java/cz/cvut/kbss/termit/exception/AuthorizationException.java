@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,15 @@
 package cz.cvut.kbss.termit.exception;
 
 /**
- * Indicates that a the user attempted to access a resources/function for which they have insufficient authority.
+ * Indicates that the user attempted to access a resources/function for which they have insufficient authority.
  */
 public class AuthorizationException extends TermItException {
 
     public AuthorizationException(String message) {
         super(message);
+    }
+
+    public AuthorizationException(String message, String messageId) {
+        super(message, messageId);
     }
 }

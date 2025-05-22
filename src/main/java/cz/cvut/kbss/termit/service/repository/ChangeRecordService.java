@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
@@ -29,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-public class ChangeRecordService implements ChangeRecordProvider<HasIdentifier> {
+public class ChangeRecordService implements ChangeRecordProvider<Asset<?>> {
 
     private final ChangeRecordDao changeRecordDao;
 
@@ -39,8 +41,8 @@ public class ChangeRecordService implements ChangeRecordProvider<HasIdentifier> 
     }
 
     @Override
-    public List<AbstractChangeRecord> getChanges(HasIdentifier asset) {
-        return changeRecordDao.findAll(asset);
+    public List<AbstractChangeRecord> getChanges(Asset<?> asset, ChangeRecordFilterDto filterDto) {
+        return changeRecordDao.findAll(asset, filterDto);
     }
 
     /**

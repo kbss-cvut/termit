@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,16 @@
  */
 package cz.cvut.kbss.termit.event;
 
-import org.springframework.context.ApplicationEvent;
+import jakarta.annotation.Nonnull;
+
+import java.net.URI;
 
 /**
  * Indicates that a vocabulary has been created.
  */
-public class VocabularyCreatedEvent extends ApplicationEvent {
+public class VocabularyCreatedEvent extends VocabularyEvent {
 
-    public VocabularyCreatedEvent(Object source) {
-        super(source);
+    public VocabularyCreatedEvent(@Nonnull Object source, @Nonnull URI vocabularyIri) {
+        super(source, vocabularyIri);
     }
 }

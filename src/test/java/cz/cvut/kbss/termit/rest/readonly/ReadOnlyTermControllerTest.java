@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,7 +120,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")).andExpect(status().isOk())
                                            .andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<List<TermDto>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
         verify(termService).findAll(vocabulary);
@@ -145,7 +145,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                                                             .param("searchString", searchString))
                                            .andExpect(status().isOk())
                                            .andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<List<TermDto>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
         verify(termService).findAll(searchString, vocabulary);
@@ -168,7 +168,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                                                             .param("includeImported", Boolean.TRUE.toString()))
                                            .andExpect(status().isOk())
                                            .andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<List<TermDto>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
         verify(termService).findAllIncludingImported(searchString, vocabulary);
@@ -216,7 +216,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/roots").param("includeImported", Boolean.TRUE.toString()))
                 .andExpect(status().isOk()).andReturn();
-        final List<TermDto> result = readValue(mvcResult, new TypeReference<List<TermDto>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
         verify(termService).findAllRootsIncludingImported(eq(vocabulary), any(PageRequest.class));
@@ -258,15 +258,15 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         when(idResolver.resolveIdentifier(Environment.BASE_URI, VOCABULARY_NAME)).thenReturn(
                 URI.create(VOCABULARY_URI));
         when(termService.findRequired(any())).thenReturn(term);
-        final List<ReadOnlyTerm> subTerms = Generator.generateTermsWithIds(5).stream()
-                                                     .map(ReadOnlyTerm::new)
-                                                     .collect(Collectors.toList());
+        final List<TermDto> subTerms = Generator.generateTermsWithIds(5).stream()
+                                                     .map(TermDto::new)
+                                                     .toList();
         when(termService.findSubTerms(term)).thenReturn(subTerms);
 
         final MvcResult mvcResult = mockMvc
                 .perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/subterms").param(
                         Constants.QueryParams.NAMESPACE, Environment.BASE_URI)).andExpect(status().isOk()).andReturn();
-        final List<ReadOnlyTerm> result = readValue(mvcResult, new TypeReference<List<ReadOnlyTerm>>() {
+        final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(subTerms, result);
         verify(termService).findSubTerms(term);
@@ -283,7 +283,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/comments"))
                                            .andExpect(status().isOk()).andReturn();
-        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(comments, result);
         final ArgumentCaptor<Instant> toCaptor = ArgumentCaptor.forClass(Instant.class);
@@ -306,7 +306,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
                                                             .param("from", from.toString())
                                                             .param("to", to.toString()))
                                            .andExpect(status().isOk()).andReturn();
-        final List<Comment> result = readValue(mvcResult, new TypeReference<List<Comment>>() {
+        final List<Comment> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(comments, result);
         verify(termService).getComments(term, from, to);
@@ -324,7 +324,7 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc.perform(
                                                    get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/def-related-of"))
                                            .andExpect(status().isOk()).andReturn();
-        final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<List<TermOccurrence>>() {
+        final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertThat(result, containsSameEntities(occurrences));
         verify(termService).getReference(termUri);
@@ -355,11 +355,10 @@ class ReadOnlyTermControllerTest extends BaseControllerTestRunner {
         final MvcResult mvcResult = mockMvc.perform(
                                                    get(PATH + VOCABULARY_NAME + "/terms/" + TERM_NAME + "/def-related-target"))
                                            .andExpect(status().isOk()).andReturn();
-        final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<List<TermOccurrence>>() {
+        final List<TermOccurrence> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertThat(result, containsSameEntities(occurrences));
         verify(termService).getReference(termUri);
         verify(termService).getDefinitionallyRelatedTargeting(term);
     }
-
 }

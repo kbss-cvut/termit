@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@ class TextQuoteSelectorGenerator implements SelectorGenerator {
         StringBuilder sb = new StringBuilder();
         while (current.hasParent()) {
             current = current.parent();
+            assert current != null;
             final List<Node> previousSiblings = current.childNodes().subList(0, previous.siblingIndex());
             sb = extractNodeText(previousSiblings).append(sb);
             if (sb.length() >= contextLength) {
@@ -70,6 +71,7 @@ class TextQuoteSelectorGenerator implements SelectorGenerator {
         StringBuilder sb = new StringBuilder();
         while (current.hasParent()) {
             current = current.parent();
+            assert current != null;
             final List<Node> previousSiblings = current.childNodes()
                                                        .subList(previous.siblingIndex() + 1, current.childNodeSize());
             sb.append(extractNodeText(previousSiblings));

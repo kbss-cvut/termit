@@ -1,0 +1,21 @@
+PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/>
+
+SELECT ?vocabulary ?vocLabel ?type (COUNT(?term) as ?cnt) WHERE {
+    GRAPH ?g {
+        ?term a skos:Concept .
+    }
+    ?term pdp:je-pojmem-ze-slovníku ?vocabulary .
+    ?vocabulary dc:title ?vocLabel .
+    FILTER NOT EXISTS {
+        ?vocabulary a pdp:verze-objektu .
+    }
+    OPTIONAL {
+        ?term a ?t .
+        FILTER(?t in (?types))
+    }
+    BIND(COALESCE(?t, termit:bez-typu) as ?type)
+} GROUP BY ?vocabulary ?vocLabel ?type
+ORDER BY ?vocabulary DESC(?cnt)

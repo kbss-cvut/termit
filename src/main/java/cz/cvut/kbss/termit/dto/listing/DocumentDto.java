@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ import java.net.URI;
 
 @NonEntity
 @OWLClass(iri = Vocabulary.s_c_dokument)
-@JsonLdAttributeOrder({"uri", "label", "description", "files"})
+@JsonLdAttributeOrder({"uri", "label", "description"})
 public class DocumentDto {
 
     @Id

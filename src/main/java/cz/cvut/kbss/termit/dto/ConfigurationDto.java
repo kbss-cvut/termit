@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,11 @@
  */
 package cz.cvut.kbss.termit.dto;
 
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.Id;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLClass;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.UserRole;
@@ -48,6 +52,9 @@ public class ConfigurationDto implements Serializable {
 
     @OWLDataProperty(iri = Vocabulary.s_p_ma_oddelovac_verze)
     private String versionSeparator;
+
+    @OWLAnnotationProperty(iri = Vocabulary.s_p_ma_adresu_modelovaciho_nastroje)
+    private String modelingToolUrl;
 
     public String getLanguage() {
         return language;
@@ -87,5 +94,13 @@ public class ConfigurationDto implements Serializable {
 
     public void setVersionSeparator(String versionSeparator) {
         this.versionSeparator = versionSeparator;
+    }
+
+    public String getModelingToolUrl() {
+        return modelingToolUrl;
+    }
+
+    public void setModelingToolUrl(String modelingToolUrl) {
+        this.modelingToolUrl = modelingToolUrl;
     }
 }

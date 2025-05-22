@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,17 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ValidationException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
+import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
+import cz.cvut.kbss.termit.persistence.dao.ResourceDao;
+import cz.cvut.kbss.termit.persistence.dao.TermDao;
 import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
+import cz.cvut.kbss.termit.service.document.TermOccurrenceSelectorCreator;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +36,12 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -46,38 +54,49 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
 
     private final TermOccurrenceDao termOccurrenceDao;
 
-    private final TermRepositoryService termService;
+    private final TermDao termDao;
 
-    private final ResourceRepositoryService resourceService;
+    private final ResourceDao resourceDao;
+
+    private final TermOccurrenceSelectorCreator selectorCreator;
 
     @Autowired
-    public TermOccurrenceRepositoryService(TermOccurrenceDao termOccurrenceDao, TermRepositoryService termService,
-                                           ResourceRepositoryService resourceService) {
+    public TermOccurrenceRepositoryService(TermOccurrenceDao termOccurrenceDao, TermDao termDao,
+                                           ResourceDao resourceDao, TermOccurrenceSelectorCreator selectorCreator) {
         this.termOccurrenceDao = termOccurrenceDao;
-        this.termService = termService;
-        this.resourceService = resourceService;
+        this.termDao = termDao;
+        this.resourceDao = resourceDao;
+        this.selectorCreator = selectorCreator;
     }
 
+    @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrence)")
     @Transactional
     @Override
     public void persist(TermOccurrence occurrence) {
         Objects.requireNonNull(occurrence);
         checkTermExists(occurrence);
-        if (!termService.exists(occurrence.getTarget().getSource()) && !resourceService.exists(
+        if (!termDao.exists(occurrence.getTarget().getSource()) && !resourceDao.exists(
                 occurrence.getTarget().getSource())) {
             throw new ValidationException(
                     "Occurrence references an unknown asset " + Utils.uriToString(occurrence.getTarget().getSource()));
+        }
+        if (occurrence.getElementAbout() != null) {
+            LOG.trace("Generating selectors for new term occurrence with ID '{}'.", occurrence.getUri());
+            occurrence.getTarget()
+                      .setSelectors(
+                              selectorCreator.createSelectors(occurrence.getTarget(), occurrence.getElementAbout()));
         }
         termOccurrenceDao.persist(occurrence);
     }
 
     private void checkTermExists(TermOccurrence occurrence) {
-        if (!termService.exists(occurrence.getTerm())) {
+        if (!termDao.exists(occurrence.getTerm())) {
             throw new ValidationException(
                     "Occurrence references an unknown term " + Utils.uriToString(occurrence.getTerm()));
         }
     }
 
+    @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrence)")
     @Transactional
     @Override
     public void persistOrUpdate(TermOccurrence occurrence) {
@@ -95,6 +114,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         }
     }
 
+    @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrenceId)")
     @Async
     // Retry in case the occurrence has not been persisted, yet (see AsynchronousTermOccurrenceSaver)
     @Retryable(retryFor = NotFoundException.class, maxAttempts = 3, backoff = @Backoff(delay = 30000L))
@@ -108,6 +128,7 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
         toApprove.markApproved();
     }
 
+    @PreAuthorize("@termOccurrenceAuthorizationService.canModify(#occurrenceId)")
     @Transactional
     @Override
     public void remove(URI occurrenceId) {
@@ -126,5 +147,33 @@ public class TermOccurrenceRepositoryService implements TermOccurrenceService {
     public void cleanupOrphans() {
         LOG.debug("Executing orphaned term occurrences cleanup.");
         termOccurrenceDao.removeAllOrphans();
+    }
+
+    @PreAuthorize("@termAuthorizationService.canRead(#term)")
+    @Transactional(readOnly = true)
+    @Override
+    public List<TermOccurrences> getOccurrenceInfo(AbstractTerm term) {
+        return termOccurrenceDao.getOccurrenceInfo(term);
+    }
+
+    @PreAuthorize("@termAuthorizationService.canRead(#term)")
+    @Transactional(readOnly = true)
+    @Override
+    public List<TermOccurrence> findAllDefinitionalOf(AbstractTerm term) {
+        return termOccurrenceDao.findAllDefinitionalOf(term);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<TermOccurrence> findAllTargeting(Asset<?> target) {
+        return termOccurrenceDao.findAllTargeting(target);
+    }
+
+    @Async
+    @Transactional
+    @Override
+    public void removeAllOf(AbstractTerm term) {
+        LOG.debug("Removing all occurrences of term {}.", term);
+        termOccurrenceDao.removeAllOf(term);
     }
 }

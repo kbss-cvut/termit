@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,17 @@ package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
+import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlList;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
@@ -32,20 +37,29 @@ import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
+import cz.cvut.kbss.termit.persistence.relationship.VocabularyRelationshipResolver;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
-import cz.cvut.kbss.termit.service.business.async.AsyncTermService;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
+import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
-import org.jetbrains.annotations.NotNull;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
+import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
+import cz.cvut.kbss.termit.util.throttle.Throttle;
+import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,9 +67,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.net.URI;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
 
 /**
  * Business logic concerning vocabularies.
@@ -74,7 +98,7 @@ public class VocabularyService
 
     private final ChangeRecordService changeRecordService;
 
-    private final AsyncTermService termService;
+    private final TermService termService;
 
     private final VocabularyContextMapper contextMapper;
 
@@ -82,16 +106,19 @@ public class VocabularyService
 
     private final VocabularyAuthorizationService authorizationService;
 
+    private final VocabularyRelationshipResolver relationshipResolver;
+
     private final ApplicationContext context;
 
     private ApplicationEventPublisher eventPublisher;
 
     public VocabularyService(VocabularyRepositoryService repositoryService,
                              ChangeRecordService changeRecordService,
-                             @Lazy AsyncTermService termService,
+                             @Lazy TermService termService,
                              VocabularyContextMapper contextMapper,
                              AccessControlListService aclService,
                              VocabularyAuthorizationService authorizationService,
+                             VocabularyRelationshipResolver relationshipResolver,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
         this.changeRecordService = changeRecordService;
@@ -99,7 +126,17 @@ public class VocabularyService
         this.contextMapper = contextMapper;
         this.aclService = aclService;
         this.authorizationService = authorizationService;
+        this.relationshipResolver = relationshipResolver;
         this.context = context;
+    }
+
+    /**
+     * Receives {@link VocabularyContentModifiedEvent} and triggers validation. The goal for this is to get the results
+     * cached and do not force users to wait for validation when they request it.
+     */
+    @EventListener({VocabularyContentModifiedEvent.class, VocabularyCreatedEvent.class})
+    public void onVocabularyContentModified(VocabularyEvent event) {
+        repositoryService.validateContents(event.getVocabularyIri());
     }
 
     @Override
@@ -115,6 +152,9 @@ public class VocabularyService
         return repositoryService.getLastModified();
     }
 
+    /**
+     * @return {@link cz.cvut.kbss.termit.dto.VocabularyDto}
+     */
     @Override
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Optional<Vocabulary> find(URI id) {
@@ -130,7 +170,8 @@ public class VocabularyService
     @PostAuthorize("@vocabularyAuthorizationService.canRead(returnObject)")
     public Vocabulary findRequired(URI id) {
         // Enhance vocabulary data with info on current user's access level
-        final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(repositoryService.findRequired(id));
+        final cz.cvut.kbss.termit.dto.VocabularyDto dto = new cz.cvut.kbss.termit.dto.VocabularyDto(
+                repositoryService.findRequired(id));
         dto.setAccessLevel(getAccessLevel(dto));
         return dto;
     }
@@ -148,7 +189,7 @@ public class VocabularyService
         repositoryService.persist(instance);
         final AccessControlList acl = aclService.createFor(instance);
         instance.setAcl(acl.getUri());
-        eventPublisher.publishEvent(new VocabularyCreatedEvent(instance));
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(this, instance.getUri()));
     }
 
     @Override
@@ -179,7 +220,32 @@ public class VocabularyService
      */
     @PreAuthorize("@vocabularyAuthorizationService.canRead(#entity)")
     public Set<URI> getRelatedVocabularies(Vocabulary entity) {
-        return repositoryService.getRelatedVocabularies(entity);
+        return relationshipResolver.getRelatedVocabularies(entity.getUri());
+    }
+
+    /**
+     * Gets statements representing SKOS relationships between terms from the specified vocabulary and terms from other
+     * vocabularies.
+     *
+     * @param vocabulary Vocabulary whose terms' relationships to retrieve
+     * @return List of RDF statements
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
+    public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
+        return repositoryService.getTermRelations(vocabulary);
+    }
+
+    /**
+     * Gets statements representing relationships between the specified vocabulary and other vocabularies.
+     * <p>
+     * A selected set of relationships is excluded (for example, versioning relationships).
+     *
+     * @param vocabulary Vocabulary whose relationships to retrieve
+     * @return List of RDF statements
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabulary)")
+    public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary) {
+        return repositoryService.getVocabularyRelations(vocabulary, VOCABULARY_REMOVAL_IGNORED_RELATIONS);
     }
 
     /**
@@ -201,7 +267,7 @@ public class VocabularyService
         final Vocabulary imported = repositoryService.importVocabulary(rename, file);
         final AccessControlList acl = aclService.createFor(imported);
         imported.setAcl(acl.getUri());
-        eventPublisher.publishEvent(new VocabularyCreatedEvent(imported));
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(this, imported.getUri()));
         return imported;
     }
 
@@ -221,9 +287,54 @@ public class VocabularyService
         return repositoryService.importVocabulary(vocabularyIri, file);
     }
 
+    /**
+     * Imports translations of terms in the specified vocabulary from the specified file.
+     *
+     * @param vocabularyIri IRI of vocabulary for whose terms to import translations
+     * @param file          File from which to import the translations
+     * @return The imported vocabulary metadata
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyIri)")
+    public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
+        return repositoryService.importTermTranslations(vocabularyIri, file);
+    }
+
+    /**
+     * Gets an Excel template file that can be used to import terms into TermIt.
+     *
+     * @return Template file as a resource
+     */
+    public TypeAwareResource getExcelImportTemplateFile() {
+        return getExcelTemplate("termit-import");
+    }
+
+    private TypeAwareResource getExcelTemplate(String fileName) {
+        final Configuration config = context.getBean(Configuration.class);
+        return config.getTemplate().getExcelImport().map(File::new)
+                     .map(f -> (TypeAwareResource) new TypeAwareFileSystemResource(f,
+                                                                                   ExportFormat.EXCEL.getMediaType()))
+                     .orElseGet(() -> {
+                         assert getClass().getClassLoader().getResource(
+                                 "template/" + fileName + ExportFormat.EXCEL.getFileExtension()) != null;
+                         return new TypeAwareClasspathResource(
+                                 "template/" + fileName + ExportFormat.EXCEL.getFileExtension(),
+                                 ExportFormat.EXCEL.getMediaType());
+                     });
+    }
+
+    /**
+     * Gets an Excel template file that can be used to import term translations into TermIt.
+     *
+     * @return Template file as a resource
+     */
+    public TypeAwareResource getExcelTranslationsImportTemplateFile() {
+        return getExcelTemplate("termit-translations-import");
+    }
+
     @Override
-    public List<AbstractChangeRecord> getChanges(Vocabulary asset) {
-        return changeRecordService.getChanges(asset);
+    public List<AbstractChangeRecord> getChanges(Vocabulary asset, ChangeRecordFilterDto filterDto) {
+        return changeRecordService.getChanges(asset, filterDto);
     }
 
     /**
@@ -237,36 +348,55 @@ public class VocabularyService
     }
 
     /**
+     * Gets content change records of the specified vocabulary.
+     *
+     * @param vocabulary Vocabulary whose content changes to get
+     * @param pageReq    Specification of the size and number of the page to return
+     * @return List of change records, ordered by date in descending order
+     */
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
+                                                                  Pageable pageReq) {
+        return repositoryService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
+    }
+
+    /**
      * Runs text analysis on the definitions of all terms in the specified vocabulary, including terms in the
      * transitively imported vocabularies.
      *
-     * @param vocabulary Vocabulary to be analyzed
+     * @param vocabularyUri Vocabulary to be analyzed
      */
     @Transactional
-    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabulary)")
-    public void runTextAnalysisOnAllTerms(Vocabulary vocabulary) {
+    @Throttle(value = "{#vocabularyUri}",
+              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
+              name = "allTermsVocabularyAnalysis")
+    @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
+    public void runTextAnalysisOnAllTerms(URI vocabularyUri) {
+        final Vocabulary vocabulary = findRequired(vocabularyUri); // required when throttling for persistent context
         LOG.debug("Analyzing definitions of all terms in vocabulary {} and vocabularies it imports.", vocabulary);
         SnapshotProvider.verifySnapshotNotModified(vocabulary);
-        final List<TermDto> allTerms = termService.findAll(vocabulary);
-        getTransitivelyImportedVocabularies(vocabulary).forEach(
-                importedVocabulary -> allTerms.addAll(termService.findAll(getReference(importedVocabulary))));
-        final Map<TermDto, URI> termsToContexts = new HashMap<>(allTerms.size());
-        allTerms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
-        termService.asyncAnalyzeTermDefinitions(termsToContexts);
+        final List<TermDto> allTerms = termService.findAllWithDefinition(vocabulary);
+        getTransitivelyImportedVocabularies(vocabulary)
+                .forEach(importedVocabulary ->
+                                 allTerms.addAll(termService.findAllWithDefinition(getReference(importedVocabulary))));
+
+        final Map<URI, List<AbstractTerm>> contextToTerms = new HashMap<>(allTerms.size());
+        allTerms.forEach(t -> contextToTerms
+                .computeIfAbsent(contextMapper.getVocabularyContext(t.getVocabulary()),
+                                 k -> new ArrayList<>())
+                .add(t)
+        );
+        termService.analyzeTermDefinitions(contextToTerms);
     }
 
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
      */
+    @Throttle(group = "T(ThrottleGroupProvider).getTextAnalysisVocabulariesAll()", name = "allVocabulariesAnalysis")
     @Transactional
     public void runTextAnalysisOnAllVocabularies() {
         LOG.debug("Analyzing definitions of all terms in all vocabularies.");
-        final Map<TermDto, URI> termsToContexts = new HashMap<>();
-        repositoryService.findAll().forEach(v -> {
-            List<TermDto> terms = termService.findAll(new Vocabulary(v.getUri()));
-            terms.forEach(t -> termsToContexts.put(t, contextMapper.getVocabularyContext(t.getVocabulary())));
-            termService.asyncAnalyzeTermDefinitions(termsToContexts);
-        });
+        repositoryService.findAll().stream().map(VocabularyDto::getUri).forEach(this::runTextAnalysisOnAllTerms);
+        LOG.debug("Finished definitions analysis for all terms in all vocabularies.");
     }
 
     /**
@@ -274,7 +404,7 @@ public class VocabularyService
      * <ul>
      *     <li>it is a document vocabulary or</li>
      *     <li>it is imported by another vocabulary or</li>
-     *     <li>it contains terms</li>
+     *     <li>it contains terms that are a part of relations with another vocabulary</li>
      * </ul>
      *
      * @param asset Vocabulary to remove
@@ -282,17 +412,18 @@ public class VocabularyService
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canRemove(#asset)")
     public void remove(Vocabulary asset) {
-        aclService.findFor(asset).ifPresent(aclService::remove);
-        repositoryService.remove(asset);
+        Vocabulary toRemove = repositoryService.findRequired(asset.getUri());
+        repositoryService.remove(toRemove);
+        aclService.findFor(toRemove).ifPresent(aclService::remove);
     }
 
     /**
      * Validates a vocabulary: - it checks glossary rules, - it checks OntoUml constraints.
      *
-     * @param validate Vocabulary to validate
+     * @param vocabulary Vocabulary to validate
      */
-    public List<ValidationResult> validateContents(Vocabulary validate) {
-        return repositoryService.validateContents(validate);
+    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
+        return repositoryService.validateContents(vocabulary);
     }
 
     /**
@@ -319,7 +450,7 @@ public class VocabularyService
     @PreAuthorize("@vocabularyAuthorizationService.canCreateSnapshot(#vocabulary)")
     public Snapshot createSnapshot(Vocabulary vocabulary) {
         final Snapshot s = getSnapshotCreator().createSnapshot(vocabulary);
-        eventPublisher.publishEvent(new VocabularyCreatedEvent(s));
+        eventPublisher.publishEvent(new VocabularyCreatedEvent(this, s.getUri()));
         cloneAccessControlList(s, vocabulary);
         return s;
     }
@@ -429,8 +560,19 @@ public class VocabularyService
         return authorizationService.getAccessLevel(vocabulary);
     }
 
+    /**
+     * Gets the list of languages used in the specified vocabulary.
+     *
+     * @param vocabularyUri Vocabulary identifier
+     * @return List of languages
+     */
+    @PreAuthorize("@vocabularyAuthorizationService.canRead(#vocabularyUri)")
+    public List<String> getLanguages(URI vocabularyUri) {
+        return repositoryService.getLanguages(vocabularyUri);
+    }
+
     @Override
-    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }

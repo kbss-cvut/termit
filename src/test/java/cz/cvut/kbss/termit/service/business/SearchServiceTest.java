@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,8 +43,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SearchServiceTest {
@@ -62,6 +68,7 @@ class SearchServiceTest {
         final FullTextSearchResult ftsr = new FullTextSearchResult(
                 Generator.generateUri(),
                 "test",
+                "Term definition",
                 vocabulary,
                 null,
                 SKOS.CONCEPT,
@@ -82,6 +89,7 @@ class SearchServiceTest {
         final FullTextSearchResult ftsr = new FullTextSearchResult(
                 Generator.generateUri(),
                 "test",
+                "Term definition",
                 vocabulary,
                 Generator.generateUri(),
                 SKOS.CONCEPT,

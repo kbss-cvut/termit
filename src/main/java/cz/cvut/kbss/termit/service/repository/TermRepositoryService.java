@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,31 +18,32 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.model.MultilingualString;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
+import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
-import cz.cvut.kbss.termit.model.assignment.TermOccurrence;
 import cz.cvut.kbss.termit.persistence.dao.BaseAssetDao;
 import cz.cvut.kbss.termit.persistence.dao.TermDao;
-import cz.cvut.kbss.termit.persistence.dao.TermOccurrenceDao;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.service.business.TermOccurrenceService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.service.term.AssertedInferredValueDifferentiator;
 import cz.cvut.kbss.termit.service.term.OrphanedInverseTermRelationshipRemover;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import org.apache.jena.vocabulary.SKOS;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
+import jakarta.validation.Validator;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.validation.Validator;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
@@ -67,12 +68,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     private final VocabularyRepositoryService vocabularyService;
 
-    private final TermOccurrenceDao termOccurrenceDao;
+    private final TermOccurrenceService termOccurrenceService;
 
     public TermRepositoryService(Validator validator, IdentifierResolver idResolver,
                                  Configuration config, TermDao termDao,
                                  OrphanedInverseTermRelationshipRemover orphanedRelationshipRemover,
-                                 TermOccurrenceDao termOccurrenceDao,
+                                 TermOccurrenceService termOccurrenceService,
                                  VocabularyRepositoryService vocabularyService) {
         super(validator);
         this.idResolver = idResolver;
@@ -80,7 +81,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         this.termDao = termDao;
         this.orphanedRelationshipRemover = orphanedRelationshipRemover;
         this.vocabularyService = vocabularyService;
-        this.termOccurrenceDao = termOccurrenceDao;
+        this.termOccurrenceService = termOccurrenceService;
     }
 
     @Override
@@ -94,13 +95,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    public void persist(@NotNull Term instance) {
+    public void persist(@Nonnull Term instance) {
         throw new UnsupportedOperationException(
                 "Persisting term by itself is not supported. It has to be connected to a vocabulary or a parent term.");
     }
 
     @Override
-    protected void preUpdate(@NotNull Term instance) {
+    protected void preUpdate(@Nonnull Term instance) {
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
@@ -125,7 +126,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     @Override
-    protected void postUpdate(@NotNull Term instance) {
+    protected void postUpdate(@Nonnull Term instance) {
         final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
         if (instance.hasParentInSameVocabulary()) {
             vocabulary.getGlossary().removeRootTerm(instance);
@@ -163,9 +164,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         pruneEmptyTranslations(instance);
     }
 
-    private URI generateIdentifier(URI vocabularyUri, MultilingualString multilingualString) {
+    private URI generateIdentifier(URI vocabularyUri, MultilingualString termLabel) {
         return idResolver.generateDerivedIdentifier(vocabularyUri, config.getNamespace().getTerm().getSeparator(),
-                                                    multilingualString.get(config.getPersistence().getLanguage()));
+                                                    termLabel.get(config.getPersistence().getLanguage()));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
@@ -196,6 +197,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         termDao.persist(instance, vocabulary);
     }
 
+    @Transactional(readOnly = true)
+    public TermInfo findRequiredTermInfo(URI id) {
+        return termDao.findTermInfo(id).orElseThrow(() -> NotFoundException.create(TermInfo.class.getSimpleName(), id));
+    }
+
     /**
      * Gets all terms from a vocabulary, regardless of their position in the term hierarchy.
      * <p>
@@ -208,6 +214,20 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional(readOnly = true)
     public List<TermDto> findAll(Vocabulary vocabulary) {
         return termDao.findAll(vocabulary);
+    }
+
+    /**
+     * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
+     * that have label and definition in the instance language.
+     * <p>
+     * Terms are loaded <b>without</b> their subterms.
+     *
+     * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @return List of vocabulary term DTOs ordered by label
+     */
+    @Transactional(readOnly = true)
+    public List<TermDto> findAllWithDefinition(Vocabulary vocabulary) {
+        return termDao.findAllWithDefinition(vocabulary);
     }
 
     /**
@@ -240,6 +260,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     /**
      * Finds all root terms (terms without parent term) in the specified vocabulary.
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param vocabulary   Vocabulary whose terms should be returned
      * @param pageSpec     Page specifying result number and position
@@ -255,6 +277,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     /**
      * Finds all root terms (terms without parent term).
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param pageSpec     Page specifying result number and position
      * @param includeTerms Identifiers of terms which should be a part of the result. Optional
@@ -273,6 +297,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * <p>
      * Basically, this does a transitive closure over the vocabulary import relationship, starting at the specified
      * vocabulary, and returns all parent-less terms.
+     * <p>
+     * Terms with a label in the instance language are prepended.
      *
      * @param vocabulary   Base vocabulary for the vocabulary import closure
      * @param pageSpec     Page specifying result number and position
@@ -323,11 +349,22 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Finds all terms which are subterms of the specified term.
+     *
+     * @param parent Parent term
+     * @return List of subterms
+     */
+    @Transactional(readOnly = true)
+    public List<TermDto> findSubTerms(Term parent) {
+        return termDao.findSubTerms(parent);
+    }
+
+    /**
      * Checks whether a term with the specified label exists in a vocabulary with the specified URI.
      *
      * @param label      Label to check
      * @param vocabulary Vocabulary in which terms will be searched
-     * @param language   Language to check the existence in
+     * @param language   Language to check the existence in, optional. If not specified, any language is accepted
      * @return Whether term with {@code label} already exists in vocabulary
      */
     @Transactional(readOnly = true)
@@ -336,49 +373,31 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
-     * Retrieves aggregated information about the specified Term's occurrences in Resources and other Terms
-     * definitions.
+     * Gets the identifier of a term with the specified label in a vocabulary with the specified URI.
+     * <p>
+     * Note that this method uses comparison ignoring case, so that two labels differing just in character case are
+     * considered same here.
      *
-     * @param instance Term whose occurrence data should be retrieved
-     * @return Aggregated Term occurrence data
+     * @param label      Label to search by
+     * @param vocabulary Vocabulary in which terms will be searched
+     * @param language   Language tag of the label, optional. If not specified, any language is accepted
+     * @return Identifier of matching term wrapped in an {@code Optional}, empty {@code Optional} if there is no such
+     * term
      */
     @Transactional(readOnly = true)
-    public List<TermOccurrences> getOccurrenceInfo(Term instance) {
-        return termOccurrenceDao.getOccurrenceInfo(instance);
+    public Optional<URI> findIdentifierByLabel(String label, Vocabulary vocabulary, String language) {
+        return termDao.findIdentifierByLabel(label, vocabulary, language);
     }
 
     /**
-     * Gets definitionally related terms of the specified term.
+     * Gets the identifier of a vocabulary to which a term with the specified id belongs.
      *
-     * @param instance Term to search from
-     * @return List of definitionally related terms of the specified term
+     * @param termId Term identifier
+     * @return Vocabulary identifier wrapped in {@code Optional}
      */
     @Transactional(readOnly = true)
-    public List<TermOccurrence> getDefinitionallyRelatedTargeting(Term instance) {
-        return termOccurrenceDao.findAllTargeting(instance);
-    }
-
-    /**
-     * Gets definitionally related terms of the specified term.
-     *
-     * @param instance Term to search from
-     * @return List of definitionally related terms of the specified term
-     */
-    @Transactional(readOnly = true)
-    public List<TermOccurrence> getDefinitionallyRelatedOf(Term instance) {
-        return termOccurrenceDao.findAllDefinitionalOf(instance);
-    }
-
-    /**
-     * Removes a term if it: - does not have children, - is not related to any resource, - is not related to any term
-     * occurrences.
-     *
-     * @param instance the term to be deleted
-     */
-    @Transactional
-    @Override
-    public void remove(Term instance) {
-        super.remove(instance);
+    public Optional<URI> findTermVocabulary(URI termId) {
+        return termDao.findTermVocabulary(termId);
     }
 
     /**
@@ -395,44 +414,77 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @throws AssetRemovalException If the specified term cannot be removed
      */
     @Override
-    protected void preRemove(@NotNull Term instance) {
+    protected void preRemove(@Nonnull Term instance) {
         super.preRemove(instance);
-        final List<TermOccurrences> ai = getOccurrenceInfo(instance);
-        if (!ai.isEmpty()) {
-            throw new AssetRemovalException(
-                    "Cannot delete the term. It is used for annotating resources: " +
-                            ai.stream().map(TermOccurrences::getResourceLabel).collect(
-                                    joining(",")));
+        final List<TermOccurrences> occurrences = termOccurrenceService.getOccurrenceInfo(instance).stream()
+                                                                       .filter(to -> !to.isSuggested()).toList();
+        if (!occurrences.isEmpty()) {
+            throw annotationsExistException(occurrences);
         }
         final Set<TermInfo> subTerms = instance.getSubTerms();
         if ((subTerms != null) && !subTerms.isEmpty()) {
-            throw new AssetRemovalException(
-                    "Cannot delete the term. It is a parent of other terms: " + subTerms
-                            .stream().map(t -> t.getUri().toString())
-                            .collect(joining(",")));
+            throw hasSubTermsException(subTerms);
         }
         if (instance.getProperties() != null) {
             Set<String> props = instance.getProperties().keySet();
-            List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.getURI())) && !(
-                    s.equalsIgnoreCase(SKOS.changeNote.toString())
-                            || s.equalsIgnoreCase(SKOS.editorialNote.toString())
-                            || s.equalsIgnoreCase(SKOS.historyNote.toString())
-                            || s.equalsIgnoreCase(SKOS.note.toString()))).collect(toList());
+            List<String> properties = props.stream().filter(s -> (s.startsWith(SKOS.NAMESPACE)) && !(
+                    s.equalsIgnoreCase(SKOS.CHANGE_NOTE)
+                            || s.equalsIgnoreCase(SKOS.EDITORIAL_NOTE)
+                            || s.equalsIgnoreCase(SKOS.HISTORY_NOTE)
+                            || s.equalsIgnoreCase(SKOS.NOTE))).collect(toList());
             if (!properties.isEmpty()) {
-                throw new AssetRemovalException(
-                        "Cannot delete the term. It is linked to another term through properties "
-                                + String.join(",", properties));
+                throw hasSkosRelationships(properties);
             }
         }
     }
 
+    private static TermItException annotationsExistException(List<TermOccurrences> ai) {
+        final String resources = ai.stream().map(TermOccurrences::getResourceLabel).collect(
+                joining(","));
+        return new AssetRemovalException(
+                "Cannot delete the term. It is used for annotating resources: " + resources,
+                "error.term.remove.annotationsExist").addParameter("resources", resources);
+    }
+
+    private static TermItException hasSubTermsException(Set<TermInfo> subTerms) {
+        final String children = subTerms.stream().map(t -> t.getUri().toString()).collect(joining(","));
+        return new AssetRemovalException(
+                "Cannot delete the term. It is a parent of other terms: " + children,
+                "error.term.remove.hasSubTerms")
+                .addParameter("subTerms", children);
+    }
+
+    private static TermItException hasSkosRelationships(List<String> properties) {
+        final String propertiesStr = String.join(", ", properties);
+        return new AssetRemovalException(
+                "Cannot delete the term. It is linked to another term through properties "
+                        + String.join(",", properties), "error.term.remove.skosRelationshipsExist")
+                .addParameter("properties", propertiesStr);
+    }
+
     @Override
-    protected void postRemove(@NotNull Term instance) {
+    protected void postRemove(@Nonnull Term instance) {
         super.postRemove(instance);
         if (!instance.hasParentInSameVocabulary()) {
             final Vocabulary v = vocabularyService.findRequired(instance.getVocabulary());
             v.getGlossary().removeRootTerm(instance);
         }
+        termOccurrenceService.removeAllOf(instance);
+    }
+
+    /**
+     * Forcefully removes the specified term instance.
+     * <p>
+     * Extreme caution should be exercised when using this method as it does not perform any checks before removing the
+     * specified instance.
+     *
+     * @param instance Term to remove
+     */
+    @Transactional
+    public void forceRemove(@Nonnull Term instance) {
+        super.preRemove(instance);
+        termDao.remove(instance);
+        postRemove(instance);
     }
 
     @Override

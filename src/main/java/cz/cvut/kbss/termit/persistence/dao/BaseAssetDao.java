@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
+import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.User;
@@ -63,6 +64,12 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
     public T update(T entity) {
         eventPublisher.publishEvent(new AssetUpdateEvent(this, entity));
         return super.update(entity);
+    }
+
+    @Override
+    public void remove(T entity) {
+        eventPublisher.publishEvent(new BeforeAssetDeleteEvent(this, entity));
+        super.remove(entity);
     }
 
     /**

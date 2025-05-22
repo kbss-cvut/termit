@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,11 @@
 package cz.cvut.kbss.termit.dto.assignment;
 
 
-import cz.cvut.kbss.jopa.model.annotations.*;
+import cz.cvut.kbss.jopa.model.annotations.ConstructorResult;
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
+import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
+import cz.cvut.kbss.jopa.model.annotations.SparqlResultSetMapping;
+import cz.cvut.kbss.jopa.model.annotations.VariableResult;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -83,18 +87,24 @@ public class TermOccurrences extends AbstractAssignmentsInfo {
         this.count = count;
     }
 
+    /**
+     * Returns true if the occurrences are suggested.
+     */
+    public boolean isSuggested() {
+        return hasType(Vocabulary.s_c_navrzeny_vyskyt_termu);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof TermOccurrences)) {
+        if (!(o instanceof TermOccurrences that)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        TermOccurrences that = (TermOccurrences) o;
         return Objects.equals(resourceLabel, that.resourceLabel) && Objects.equals(count, that.count);
     }
 

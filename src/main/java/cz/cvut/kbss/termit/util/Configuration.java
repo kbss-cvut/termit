@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,8 @@ import java.util.Set;
  * The runtime configuration consists of predefined default values and configuration loaded from config files on
  * classpath. Values from config files supersede the default values.
  * <p>
- * The configuration can be also set via <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
+ * The configuration can be also set via <a
+ * href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties.relaxed-binding.environment-variables">OS
  * environment variables</a>. These override any statically configured values.
  */
 @ConfigurationProperties("termit")
@@ -48,6 +49,14 @@ public class Configuration {
      * It is used, for example, for links in emails sent to users.
      */
     private String url = "http://localhost:3000/#";
+
+    /**
+     * URL of the modeling tool.
+     * <p>
+     * The modeling tool can be used to further specify the relationships between terms.
+     */
+    private String modelingToolUrl;
+
     /**
      * Name of the JMX bean exported by TermIt.
      * <p>
@@ -55,6 +64,43 @@ public class Configuration {
      * server.
      */
     private String jmxBeanName = "TermItAdminBean";
+
+    /**
+     * The number of threads for thread pool executing asynchronous and long-running tasks.
+     *
+     * @configurationdoc.default The number of processors available to the Java virtual machine.
+     */
+    @Min(1)
+    private Integer asyncThreadCount = Runtime.getRuntime().availableProcessors();
+
+    /**
+     * The amount of time in which calls of throttled methods should be merged. The value must be positive
+     * ({@code > 0}).
+     *
+     * @configurationdoc.default 10 seconds
+     * @see cz.cvut.kbss.termit.util.throttle.Throttle
+     * @see cz.cvut.kbss.termit.util.throttle.ThrottleAspect
+     */
+    private Duration throttleThreshold = Duration.ofSeconds(10);
+
+    /**
+     * After how much time, should objects with completed futures be discarded. The value must be positive
+     * ({@code > 0}).
+     *
+     * @configurationdoc.default 1 minute
+     */
+    private Duration throttleDiscardThreshold = Duration.ofMinutes(1);
+
+    /**
+     * Whether to generate ASCII-only identifiers.
+     * <p>
+     * By default, generated identifiers may contain accented characters (like č). Setting this configuration to
+     * {@code true} ensures all generated identifiers are ASCII-only and accented character are normalized to ASCII.
+     *
+     * @configurationdoc.default false
+     */
+    private boolean asciiIdentifiers = false;
+
     @Valid
     private Persistence persistence = new Persistence();
     @Valid
@@ -91,6 +137,8 @@ public class Configuration {
     private Security security = new Security();
     @Valid
     private Language language = new Language();
+    @Valid
+    private Template template = new Template();
 
     public String getUrl() {
         return url;
@@ -100,12 +148,36 @@ public class Configuration {
         this.url = url;
     }
 
+    public String getModelingToolUrl() {
+        return modelingToolUrl;
+    }
+
+    public void setModelingToolUrl(String modelingToolUrl) {
+        this.modelingToolUrl = modelingToolUrl;
+    }
+
     public String getJmxBeanName() {
         return jmxBeanName;
     }
 
     public void setJmxBeanName(String jmxBeanName) {
         this.jmxBeanName = jmxBeanName;
+    }
+
+    public Integer getAsyncThreadCount() {
+        return asyncThreadCount;
+    }
+
+    public void setAsyncThreadCount(@Min(1) Integer asyncThreadCount) {
+        this.asyncThreadCount = asyncThreadCount;
+    }
+
+    public boolean isAsciiIdentifiers() {
+        return asciiIdentifiers;
+    }
+
+    public void setAsciiIdentifiers(boolean asciiIdentifiers) {
+        this.asciiIdentifiers = asciiIdentifiers;
     }
 
     public Persistence getPersistence() {
@@ -250,6 +322,30 @@ public class Configuration {
 
     public void setLanguage(Language language) {
         this.language = language;
+    }
+
+    public Template getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(Template template) {
+        this.template = template;
+    }
+
+    public Duration getThrottleThreshold() {
+        return throttleThreshold;
+    }
+
+    public void setThrottleThreshold(Duration throttleThreshold) {
+        this.throttleThreshold = throttleThreshold;
+    }
+
+    public Duration getThrottleDiscardThreshold() {
+        return throttleDiscardThreshold;
+    }
+
+    public void setThrottleDiscardThreshold(Duration throttleDiscardThreshold) {
+        this.throttleDiscardThreshold = throttleDiscardThreshold;
     }
 
     @Validated
@@ -409,10 +505,11 @@ public class Configuration {
          * Since Term identifier is given by the identifier of the Vocabulary it belongs to and its own normalized
          * label, this separator is used to (optionally) configure the Term identifier namespace.
          * <p>
-         * For example, if we have a Vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
-         * and a Term with normalized label {@code inhabited-area}, the resulting IRI will be {@code
-         * http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where 'SEPARATOR'
-         * is the value of this configuration parameter.
+         * For example, if we have a Vocabulary with IRI
+         * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan} and a Term with normalized label
+         * {@code inhabited-area}, the resulting IRI will be
+         * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/SEPARATOR/inhabited-area}, where
+         * 'SEPARATOR' is the value of this configuration parameter.
          */
         @Valid
         private NamespaceDetail term = new NamespaceDetail();
@@ -422,9 +519,10 @@ public class Configuration {
          * Since File identifier is given by the identifier of the Document it belongs to and its own normalized label,
          * this separator is used to (optionally) configure the File identifier namespace.
          * <p>
-         * For example, if we have a Document with IRI {@code http://www.example.org/ontologies/resources/metropolitan-plan/document}
-         * and a File with normalized label {@code main-file}, the resulting IRI will be {@code
-         * http://www.example.org/ontologies/resources/metropolitan-plan/document/SEPARATOR/main-file}, where
+         * For example, if we have a Document with IRI
+         * {@code http://www.example.org/ontologies/resources/metropolitan-plan/document} and a File with normalized
+         * label {@code main-file}, the resulting IRI will be
+         * {@code http://www.example.org/ontologies/resources/metropolitan-plan/document/SEPARATOR/main-file}, where
          * 'SEPARATOR' is the value of this configuration parameter.
          */
         @Valid
@@ -433,8 +531,9 @@ public class Configuration {
         /**
          * Separator of snapshot timestamp and original asset identifier.
          * <p>
-         * For example, if we have a Vocabulary with IRI {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan}
-         * and the snapshot separator is configured to {@code version}, a snapshot IRI will look something like
+         * For example, if we have a Vocabulary with IRI
+         * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan} and the snapshot separator is
+         * configured to {@code version}, a snapshot IRI will look something like
          * {@code http://www.example.org/ontologies/vocabularies/metropolitan-plan/version/20220530T202317Z}.
          */
         @Valid
@@ -575,6 +674,11 @@ public class Configuration {
         private String url;
 
         /**
+         * URL of the endpoint providing list of languages supported by the text analysis service.
+         */
+        private String languagesUrl;
+
+        /**
          * Score threshold for a term occurrence for it to be saved into the repository.
          */
         @NotNull
@@ -592,6 +696,14 @@ public class Configuration {
 
         public void setUrl(String url) {
             this.url = url;
+        }
+
+        public String getLanguagesUrl() {
+            return languagesUrl;
+        }
+
+        public void setLanguagesUrl(String languagesUrl) {
+            this.languagesUrl = languagesUrl;
         }
 
         public String getTermOccurrenceMinScore() {
@@ -781,6 +893,13 @@ public class Configuration {
          */
         private AccessLevel defaultReaderAccessLevel = AccessLevel.READ;
 
+        /**
+         * Default access level for anonymous (non-logged-in) users.
+         * <p>
+         * Allowed values are {@link AccessLevel#NONE} and {@link AccessLevel#READ}.
+         */
+        private AccessLevel defaultAnonymousAccessLevel = AccessLevel.NONE;
+
         public AccessLevel getDefaultEditorAccessLevel() {
             return defaultEditorAccessLevel;
         }
@@ -795,6 +914,14 @@ public class Configuration {
 
         public void setDefaultReaderAccessLevel(AccessLevel defaultReaderAccessLevel) {
             this.defaultReaderAccessLevel = defaultReaderAccessLevel;
+        }
+
+        public AccessLevel getDefaultAnonymousAccessLevel() {
+            return defaultAnonymousAccessLevel;
+        }
+
+        public void setDefaultAnonymousAccessLevel(AccessLevel defaultAnonymousAccessLevel) {
+            this.defaultAnonymousAccessLevel = defaultAnonymousAccessLevel;
         }
     }
 
@@ -867,8 +994,8 @@ public class Configuration {
         private LanguageSource types = new LanguageSource();
 
         /**
-         * Path to a file containing definition of the language of states terms can be in. The file must be in
-         * Turtle format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
+         * Path to a file containing definition of the language of states terms can be in. The file must be in Turtle
+         * format. The term definitions must use SKOS terminology for attributes (prefLabel, scopeNote and
          * broader/narrower).
          */
         @Valid
@@ -901,6 +1028,28 @@ public class Configuration {
             public void setSource(String source) {
                 this.source = source;
             }
+        }
+    }
+
+    @Validated
+    public static class Template {
+
+        /**
+         * Template file for Excel import.
+         * <p>
+         * The purpose of configuring this file is mainly to have the value lists for term types and states in the
+         * template aligned with the corresponding languages used by TermIt.
+         * <p>
+         * Empty value means the built-in template file should be used.
+         */
+        private Optional<String> excelImport = Optional.empty();
+
+        public Optional<String> getExcelImport() {
+            return excelImport;
+        }
+
+        public void setExcelImport(Optional<String> excelImport) {
+            this.excelImport = excelImport;
         }
     }
 }

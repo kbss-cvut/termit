@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,14 @@
 package cz.cvut.kbss.termit.service.business;
 
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
+import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
@@ -36,14 +39,16 @@ import cz.cvut.kbss.termit.service.document.TextAnalysisService;
 import cz.cvut.kbss.termit.service.document.html.UnconfirmedTermOccurrenceRemover;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.ResourceRepositoryService;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
-import org.jetbrains.annotations.NotNull;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,17 +83,33 @@ public class ResourceService
 
     private final ChangeRecordService changeRecordService;
 
+    private final Configuration config;
+
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public ResourceService(ResourceRepositoryService repositoryService, DocumentManager documentManager,
                            TextAnalysisService textAnalysisService, VocabularyService vocabularyService,
-                           ChangeRecordService changeRecordService) {
+                           ChangeRecordService changeRecordService, Configuration config) {
         this.repositoryService = repositoryService;
         this.documentManager = documentManager;
         this.textAnalysisService = textAnalysisService;
         this.vocabularyService = vocabularyService;
         this.changeRecordService = changeRecordService;
+        this.config = config;
+    }
+
+    /**
+     * Ensures that document gets removed during Vocabulary removal
+     */
+    @Transactional
+    @EventListener
+    public void onVocabularyRemoval(VocabularyWillBeRemovedEvent event) {
+        vocabularyService.find(event.getVocabularyIri()).ifPresent(vocabulary -> {
+            if(vocabulary.getDocument() != null) {
+                remove(vocabulary.getDocument());
+            }
+        });
     }
 
     /**
@@ -225,6 +246,9 @@ public class ResourceService
             throw new UnsupportedAssetOperationException("Cannot add file to the specified resource " + document);
         }
         doc.addFile(file);
+        if (file.getLanguage() == null) {
+            file.setLanguage(config.getPersistence().getLanguage());
+        }
         if (doc.getVocabulary() != null) {
             final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
             repositoryService.persist(file, vocabulary);
@@ -278,6 +302,7 @@ public class ResourceService
         verifyFileOperationPossible(resource, "Text analysis");
         LOG.trace("Invoking text analysis on resource {}.", resource);
         final File file = (File) resource;
+        verifyLanguageSupported(file);
         if (vocabularies.isEmpty()) {
             if (file.getDocument() == null || file.getDocument().getVocabulary() == null) {
                 throw new UnsupportedAssetOperationException(
@@ -288,6 +313,12 @@ public class ResourceService
                                                     Collections.singleton(file.getDocument().getVocabulary())));
         } else {
             textAnalysisService.analyzeFile(file, includeImportedVocabularies(vocabularies));
+        }
+    }
+
+    private void verifyLanguageSupported(File file) {
+        if (!textAnalysisService.supportsLanguage(file)) {
+            throw new UnsupportedTextAnalysisLanguageException("Text analysis service does not support language " + file.getLanguage(), file);
         }
     }
 
@@ -355,12 +386,12 @@ public class ResourceService
     }
 
     @Override
-    public List<AbstractChangeRecord> getChanges(Resource asset) {
-        return changeRecordService.getChanges(asset);
+    public List<AbstractChangeRecord> getChanges(Resource asset, ChangeRecordFilterDto filterDto) {
+        return changeRecordService.getChanges(asset, filterDto);
     }
 
     @Override
-    public void setApplicationEventPublisher(@NotNull ApplicationEventPublisher eventPublisher) {
+    public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 }

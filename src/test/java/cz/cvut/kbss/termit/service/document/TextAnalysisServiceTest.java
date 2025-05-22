@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +17,24 @@
  */
 package cz.cvut.kbss.termit.service.document;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.environment.PropertyMockingApplicationContextInitializer;
+import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
+import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -44,6 +49,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -65,9 +71,26 @@ import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withRequestConflict;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -86,6 +109,9 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
     @Autowired
     private Configuration config;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private DocumentManager documentManager;
@@ -115,19 +141,21 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         this.file = new File();
         file.setUri(Generator.generateUri());
         file.setLabel(FILE_NAME);
+        file.setDocument(Generator.generateDocumentWithId());
+        file.getDocument().setVocabulary(vocabulary.getUri());
         generateFile();
         this.documentManagerSpy = spy(documentManager);
         doCallRealMethod().when(documentManagerSpy).loadFileContent(any());
         doNothing().when(documentManagerSpy).createBackup(any());
         this.sut = new TextAnalysisService(restTemplate, config, documentManagerSpy, annotationGeneratorMock,
-                textAnalysisRecordDao);
+                                           textAnalysisRecordDao, eventPublisher);
     }
 
     @Test
     void analyzeFileInvokesTextAnalysisServiceWithDocumentContent() {
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
-                .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
-                .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+                  .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
     }
@@ -136,8 +164,8 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         final java.io.File dir = Files.createTempDirectory("termit").toFile();
         dir.deleteOnExit();
         config.getFile().setStorage(dir.getAbsolutePath());
-        final java.io.File docDir = new java.io.File(dir.getAbsolutePath() + java.io.File.separator +
-                file.getDirectoryName());
+        final java.io.File docDir = new java.io.File(
+                dir.getAbsolutePath() + java.io.File.separator + file.getDirectoryName());
         Files.createDirectory(docDir.toPath());
         docDir.deleteOnExit();
         final java.io.File content = new java.io.File(
@@ -150,9 +178,9 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     void analyzeFilePassesRepositoryAndVocabularyContextToService() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(content().string(objectMapper.writeValueAsString(input)))
-                .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
     }
@@ -162,8 +190,8 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         input.setContent(CONTENT);
         input.addVocabularyContext(vocabulary.getUri());
         URI repositoryUrl = URI.create(
-            config.getRepository().getPublicUrl()
-                  .orElse(config.getRepository().getUrl())
+                config.getRepository().getPublicUrl()
+                      .orElse(config.getRepository().getUrl())
         );
         input.setVocabularyRepository(repositoryUrl);
         input.setLanguage(config.getPersistence().getLanguage());
@@ -176,11 +204,11 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     void analyzeFilePassesContentTypeAndAcceptHeadersToService() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(content().string(objectMapper.writeValueAsString(input)))
-                .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML_VALUE))
-                .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                  .andExpect(header(HttpHeaders.ACCEPT,MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
     }
@@ -206,11 +234,11 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     void analyzeFileThrowsWebServiceIntegrationExceptionOnError() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(content().string(objectMapper.writeValueAsString(input)))
-                .andRespond(withServerError());
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withServerError());
         assertThrows(WebServiceIntegrationException.class,
-                () -> sut.analyzeFile(file, Collections.singleton(vocabulary.getUri())));
+                     () -> sut.analyzeFile(file, Collections.singleton(vocabulary.getUri())));
         mockServer.verify();
     }
 
@@ -234,7 +262,8 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     void analyzeFileThrowsNotFoundExceptionWhenFileCannotBeFound() {
         file.setLabel("unknown.html");
         final NotFoundException result = assertThrows(NotFoundException.class,
-                () -> sut.analyzeFile(file, Collections.singleton(vocabulary.getUri())));
+                                                      () -> sut.analyzeFile(file, Collections.singleton(
+                                                              vocabulary.getUri())));
         assertThat(result.getMessage(), containsString("not found on file system"));
     }
 
@@ -242,11 +271,12 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     void analyzeFileThrowsWebServiceIntegrationExceptionWhenRemoteServiceReturnsEmptyBody() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(content().string(objectMapper.writeValueAsString(input)))
-                .andRespond(withSuccess());
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess());
         final WebServiceIntegrationException result = assertThrows(WebServiceIntegrationException.class,
-                () -> sut.analyzeFile(file, Collections.singleton(vocabulary.getUri())));
+                                                                   () -> sut.analyzeFile(file, Collections.singleton(
+                                                                           vocabulary.getUri())));
         assertThat(result.getMessage(), containsString("empty response"));
         mockServer.verify();
     }
@@ -268,13 +298,13 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     @Test
     void analyzeFilePassesRepositoryAndSpecifiedVocabularyContextsToService() throws Exception {
         final Set<URI> vocabs = IntStream.range(0, 5).mapToObj(i -> Generator.generateUri())
-                .collect(Collectors.toSet());
+                                         .collect(Collectors.toSet());
         final TextAnalysisInput expected = textAnalysisInput();
         expected.setVocabularyContexts(vocabs);
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(content().string(objectMapper.writeValueAsString(expected)))
-                .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(expected)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, vocabs);
         mockServer.verify();
     }
@@ -283,9 +313,9 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     void analyzeFileBacksUpFileContentBeforeSavingNewAnalyzedContent() throws Exception {
         final TextAnalysisInput input = textAnalysisInput();
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(content().string(objectMapper.writeValueAsString(input)))
-                .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         mockServer.verify();
         final InOrder inOrder = Mockito.inOrder(documentManagerSpy, annotationGeneratorMock);
@@ -295,19 +325,21 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
     @Test
     void analyzeFileCreatesTextAnalysisRecord() {
+        file.setLanguage("cs");
         mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
-                .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
-                .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+                  .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
         sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
         final ArgumentCaptor<TextAnalysisRecord> captor = ArgumentCaptor.forClass(TextAnalysisRecord.class);
         verify(textAnalysisRecordDao).persist(captor.capture());
         assertEquals(file, captor.getValue().getAnalyzedResource());
         assertEquals(Collections.singleton(vocabulary.getUri()), captor.getValue().getVocabularies());
+        assertEquals(file.getLanguage(), captor.getValue().getLanguage());
     }
 
     @Test
     void findLatestAnalysisRecordFindsLatestTextAnalysisRecordForResource() {
-        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file);
+        final TextAnalysisRecord record = new TextAnalysisRecord(Utils.timestamp(), file, Environment.LANGUAGE);
         record.setVocabularies(Collections.singleton(vocabulary.getUri()));
         when(textAnalysisRecordDao.findLatest(file)).thenReturn(Optional.of(record));
 
@@ -393,5 +425,110 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
 
         sut.analyzeTermDefinition(term, vocabulary.getUri());
         mockServer.verify();
+    }
+
+    @Test
+    void analyzeFilePublishesAnalysisFinishedEvent() {
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST)).andExpect(content().string(containsString(CONTENT)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+        sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
+
+        ArgumentCaptor<FileTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(
+                FileTextAnalysisFinishedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertNotNull(eventCaptor.getValue());
+        assertEquals(file.getUri(), eventCaptor.getValue().getFileUri());
+        assertEquals(vocabulary.getUri(), eventCaptor.getValue().getVocabularyIri());
+    }
+
+    @Test
+    void analyzeTermDefinitionPublishesAnalysisFinishedEvent() throws JsonProcessingException {
+        final Term term = Generator.generateTermWithId();
+        term.setVocabulary(vocabulary.getUri());
+        final TextAnalysisInput input = textAnalysisInput();
+        input.setContent(term.getDefinition().get(Environment.LANGUAGE));
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(content().string(objectMapper.writeValueAsString(input)))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+
+        sut.analyzeTermDefinition(term, vocabulary.getUri());
+
+        ArgumentCaptor<TermDefinitionTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(
+                TermDefinitionTextAnalysisFinishedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertNotNull(eventCaptor.getValue());
+        assertEquals(term.getUri(), eventCaptor.getValue().getTermUri());
+        assertEquals(vocabulary.getUri(), eventCaptor.getValue().getVocabularyIri());
+    }
+
+    @Test
+    void analyzeFileSetsFileLanguageInTextAnalysisInvocationInput() {
+        file.setLanguage("cs");
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(jsonPath("$.language").value("cs"))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+        sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
+        mockServer.verify();
+    }
+
+    @Test
+    void analyzeFileUsesConfiguredPersistenceLanguageInTextAnalysisInvocationInputWhenFileLanguageIsNotSet() {
+        file.setLanguage(null);
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andExpect(jsonPath("$.language").value(Environment.LANGUAGE))
+                  .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
+        sut.analyzeFile(file, Collections.singleton(vocabulary.getUri()));
+        mockServer.verify();
+    }
+
+    @Test
+    void analyzeFileThrowsUnsupportedLanguageExceptionWhenTextAnalysisInvocationReturnsConflictWithUnsupportedLanguageError()
+            throws Exception {
+        file.setLanguage("de");
+        final ErrorInfo respBody = ErrorInfo.createWithMessage("No taggers for language 'de' available.",
+                                                               "/annotace/annotate");
+        mockServer.expect(requestTo(config.getTextAnalysis().getUrl()))
+                  .andExpect(method(HttpMethod.POST))
+                  .andRespond(withRequestConflict().body(objectMapper.writeValueAsString(respBody))
+                                                   .contentType(MediaType.APPLICATION_JSON));
+
+        final UnsupportedTextAnalysisLanguageException ex = assertThrows(UnsupportedTextAnalysisLanguageException.class,
+                                                                         () -> sut.analyzeFile(file,
+                                                                                               Collections.singleton(
+                                                                                                       vocabulary.getUri())));
+        assertEquals("error.annotation.file.unsupportedLanguage", ex.getMessageId());
+    }
+
+    @Test
+    void supportsLanguageGetsListOfSupportedLanguagesFromTextAnalysisServiceAndChecksIfFileLanguageIsAmongThem() {
+        file.setLanguage("cs");
+        mockServer.expect(requestTo(config.getTextAnalysis().getLanguagesUrl()))
+                  .andExpect(method(HttpMethod.GET))
+                  .andRespond(withSuccess("[\"cs\", \"en\"]", MediaType.APPLICATION_JSON));
+        assertTrue(sut.supportsLanguage(file));
+        mockServer.verify();
+
+        file.setLanguage("de");
+        assertFalse(sut.supportsLanguage(file));
+    }
+
+    @Test
+    void supportsLanguageReturnsTrueWhenTextAnalysisServiceLanguagesEndpointUrlIsNotConfigured() {
+        String endpointUrl = config.getTextAnalysis().getLanguagesUrl();
+        file.setLanguage(Environment.LANGUAGE);
+        config.getTextAnalysis().setLanguagesUrl(null);
+        assertTrue(sut.supportsLanguage(file));
+        // Reset configuration state
+        config.getTextAnalysis().setLanguagesUrl(endpointUrl);
+    }
+
+    @Test
+    void supportsLanguageReturnsTrueWhenFileHasNoLanguageSet() {
+        file.setLanguage(null);
+        assertTrue(sut.supportsLanguage(file));
     }
 }

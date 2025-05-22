@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,10 +29,10 @@ import cz.cvut.kbss.termit.model.User;
 import cz.cvut.kbss.termit.model.UserAccount;
 import cz.cvut.kbss.termit.security.model.AuthenticationToken;
 import cz.cvut.kbss.termit.security.model.TermItUserDetails;
-import cz.cvut.kbss.termit.service.security.SecurityUtils;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Vocabulary;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -41,6 +41,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
@@ -48,7 +49,7 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
@@ -80,11 +81,13 @@ public class Environment {
      *
      * @param user User to set as currently authenticated
      */
-    public static void setCurrentUser(UserAccount user) {
+    public static Authentication setCurrentUser(UserAccount user) {
         final TermItUserDetails userDetails = new TermItUserDetails(user, new HashSet<>());
         SecurityContext context = new SecurityContextImpl();
-        context.setAuthentication(new AuthenticationToken(userDetails.getAuthorities(), userDetails));
+        Authentication authentication = new AuthenticationToken(userDetails.getAuthorities(), userDetails);
+        context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
+        return authentication;
     }
 
     /**
@@ -202,21 +205,51 @@ public class Environment {
     }
 
     /**
-     * Injects the specified {@link Configuration} object into the specified
-     * {@link cz.cvut.kbss.termit.model.Vocabulary} instance.
-     * <p>
-     * This simulates Spring {@code @Configurable} behavior.
+     * Adds relation into entity manager connection
      *
-     * @param vocabulary Target instance
-     * @param config     Instance to inject
+     * @implNote call in transactional
      */
-    public static void injectConfiguration(cz.cvut.kbss.termit.model.Vocabulary vocabulary, Configuration config) {
-        try {
-            final Field configField = cz.cvut.kbss.termit.model.Vocabulary.class.getDeclaredField("config");
-            configField.setAccessible(true);
-            configField.set(vocabulary, config);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("Unable to inject configuration into Vocabulary instance.", e);
+    public static void addRelation(URI subject, URI predicate, URI object, EntityManager em) {
+        final Repository repo = em.unwrap(Repository.class);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            final ValueFactory vf = conn.getValueFactory();
+            conn.begin();
+            conn.add(vf.createIRI(subject.toString()),
+                    vf.createIRI(predicate.toString()),
+                    vf.createIRI(object.toString()));
+            conn.commit();
         }
+    }
+
+    /**
+     * @return label in {@link #LANGUAGE}
+     */
+    public static String getPrimaryLabel(Term term) {
+        return term.getLabel(Environment.LANGUAGE);
+    }
+
+    /**
+     * @return label in {@link #LANGUAGE}
+     */
+    public static String getPrimaryLabel(cz.cvut.kbss.termit.model.Vocabulary vocabulary) {
+        return vocabulary.getLabel(Environment.LANGUAGE);
+    }
+
+    /**
+     * Sets label in {@link #LANGUAGE}
+     *
+     * @param label label to set
+     */
+    public static void setPrimaryLabel(Term term, String label) {
+        term.setLabel(Environment.LANGUAGE, label);
+    }
+
+    /**
+     * Sets label in {@link #LANGUAGE}
+     *
+     * @param label label to set
+     */
+    public static void setPrimaryLabel(cz.cvut.kbss.termit.model.Vocabulary vocabulary, String label) {
+        vocabulary.setLabel(Environment.LANGUAGE, label);
     }
 }

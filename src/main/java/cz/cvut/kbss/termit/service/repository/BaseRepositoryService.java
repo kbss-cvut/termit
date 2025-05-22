@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,15 +19,17 @@ package cz.cvut.kbss.termit.service.repository;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
+import cz.cvut.kbss.termit.exception.InvalidIdentifierException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.model.util.HasIdentifier;
 import cz.cvut.kbss.termit.persistence.dao.GenericDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.validation.ValidationResult;
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
+import jakarta.validation.Validator;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
@@ -146,7 +148,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The loaded instance, not {@code null}
      */
-    protected T postLoad(@NonNull T instance) {
+    protected T postLoad(@Nonnull T instance) {
         // Do nothing
         return instance;
     }
@@ -157,7 +159,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      * @param instance The instance to persist
      */
     @Transactional
-    public void persist(@NonNull T instance) {
+    public void persist(@Nonnull T instance) {
         Objects.requireNonNull(instance);
         prePersist(instance);
         getPrimaryDao().persist(instance);
@@ -171,8 +173,9 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The instance to be persisted, not {@code null}
      */
-    protected void prePersist(@NonNull T instance) {
+    protected void prePersist(@Nonnull T instance) {
         validate(instance);
+        validateUri(instance.getUri());
     }
 
     /**
@@ -180,7 +183,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The persisted instance, not {@code null}
      */
-    protected void postPersist(@NonNull T instance) {
+    protected void postPersist(@Nonnull T instance) {
         // Do nothing
     }
 
@@ -207,7 +210,8 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The instance to be updated, not {@code null}
      */
-    protected void preUpdate(@NonNull T instance) {
+    protected void preUpdate(@Nonnull T instance) {
+        validateUri(instance.getUri());
         if (!exists(instance.getUri())) {
             throw NotFoundException.create(instance.getClass().getSimpleName(), instance.getUri());
         }
@@ -219,7 +223,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The updated instance which will be returned by {@link #update(HasIdentifier)}, not {@code null}
      */
-    protected void postUpdate(@NonNull T instance) {
+    protected void postUpdate(@Nonnull T instance) {
         // Do nothing
     }
 
@@ -243,7 +247,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The instance to be removed, not {@code null}
      */
-    protected void preRemove(@NonNull T instance) {
+    protected void preRemove(@Nonnull T instance) {
         // Do nothing
     }
 
@@ -254,7 +258,7 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
      *
      * @param instance The removed instance, not {@code null}
      */
-    protected void postRemove(@NonNull T instance) {
+    protected void postRemove(@Nonnull T instance) {
         // Do nothing
     }
 
@@ -280,6 +284,19 @@ public abstract class BaseRepositoryService<T extends HasIdentifier, DTO extends
         final ValidationResult<T> validationResult = ValidationResult.of(validator.validate(instance));
         if (!validationResult.isValid()) {
             throw new ValidationException(validationResult);
+        }
+    }
+
+    /**
+     * Validates the specified uri.
+     *
+     * @param uri the uri to validate
+     * @throws cz.cvut.kbss.termit.exception.InvalidIdentifierException when the URI is invalid
+     * @see cz.cvut.kbss.termit.service.IdentifierResolver#isUri(String)
+     */
+    protected void validateUri(URI uri) throws InvalidIdentifierException {
+        if (uri != null && !IdentifierResolver.isUri(uri.toString())) {
+            throw new InvalidIdentifierException("Invalid URI: '" + uri + "'", "error.invalidIdentifier").addParameter("uri", uri.toString());
         }
     }
 }

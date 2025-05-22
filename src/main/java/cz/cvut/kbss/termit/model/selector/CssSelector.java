@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@ import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.termit.util.Vocabulary;
-
 import jakarta.validation.constraints.NotBlank;
+
 import java.util.Objects;
 
 @OWLClass(iri = Vocabulary.s_c_selektor_css)
@@ -47,6 +47,11 @@ public class CssSelector extends Selector {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    @Override
+    public CssSelector copy() {
+        return new CssSelector(value);
     }
 
     @Override

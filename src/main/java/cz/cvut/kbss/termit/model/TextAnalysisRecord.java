@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,12 @@
  */
 package cz.cvut.kbss.termit.model;
 
+import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.util.Vocabulary;
 
@@ -44,12 +46,16 @@ public class TextAnalysisRecord extends AbstractEntity {
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_slovnik_pro_analyzu)
     private Set<URI> vocabularies;
 
+    @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
+    private String language;
+
     public TextAnalysisRecord() {
     }
 
-    public TextAnalysisRecord(Instant date, Resource analyzedResource) {
+    public TextAnalysisRecord(Instant date, Resource analyzedResource, String language) {
         this.date = date;
         this.analyzedResource = analyzedResource;
+        this.language = language;
     }
 
     public Instant getDate() {
@@ -76,6 +82,14 @@ public class TextAnalysisRecord extends AbstractEntity {
         this.vocabularies = vocabularies;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -86,12 +100,13 @@ public class TextAnalysisRecord extends AbstractEntity {
         }
         return Objects.equals(date, that.date) &&
                 Objects.equals(analyzedResource, that.analyzedResource) &&
-                Objects.equals(vocabularies, that.vocabularies);
+                Objects.equals(vocabularies, that.vocabularies) &&
+                Objects.equals(language, that.language);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(date, analyzedResource, vocabularies);
+        return Objects.hash(date, analyzedResource, vocabularies, language);
     }
 
     @Override
@@ -100,6 +115,7 @@ public class TextAnalysisRecord extends AbstractEntity {
                 "date=" + date +
                 ",analyzedResource=" + analyzedResource +
                 ",vocabularies=" + vocabularies +
+                ", language=" + language +
                 "}";
     }
 }

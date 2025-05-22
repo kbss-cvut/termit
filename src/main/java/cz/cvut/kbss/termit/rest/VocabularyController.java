@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,21 +19,24 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
+import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.dto.listing.VocabularyDto;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.acl.AccessControlRecord;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
-import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.rest.doc.ApiDocConstants;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.IdentifierResolver;
 import cz.cvut.kbss.termit.service.business.VocabularyService;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Constants.QueryParams;
+import cz.cvut.kbss.termit.util.TypeAwareResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,6 +46,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +72,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
+
 /**
  * Vocabulary management REST API.
  * <p>
@@ -78,6 +85,8 @@ import java.util.Optional;
 @RequestMapping("/vocabularies")
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class VocabularyController extends BaseController {
+    static final String DEFAULT_PAGE_SIZE = "10";
+    static final String DEFAULT_PAGE = "0";
 
     private static final Logger LOG = LoggerFactory.getLogger(VocabularyController.class);
 
@@ -167,8 +176,7 @@ public class VocabularyController extends BaseController {
                                                  example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                       @RequestParam(name = QueryParams.NAMESPACE,
                                                     required = false) Optional<String> namespace) {
-        final Vocabulary vocabulary = vocabularyService.getReference(
-                resolveVocabularyUri(localName, namespace));
+        final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
 
@@ -192,6 +200,25 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
     }
 
+    @Operation(description = "Gets a template Excel file that can be used to import terms into TermIt")
+    @ApiResponse(responseCode = "200", description = "Template Excel file is returned as attachment")
+    @GetMapping("/import/template")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<TypeAwareResource> getExcelTemplateFile(
+            @Parameter(description = "Whether the file will be used to import only term translations")
+            @RequestParam(name = "translationsOnly", required = false,
+                          defaultValue = "false") boolean translationsOnly) {
+        final TypeAwareResource template =
+                translationsOnly ? vocabularyService.getExcelTranslationsImportTemplateFile() :
+                vocabularyService.getExcelImportTemplateFile();
+        return ResponseEntity.ok()
+                             .contentType(MediaType.parseMediaType(
+                                     template.getMediaType().orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE)))
+                             .header(HttpHeaders.CONTENT_DISPOSITION,
+                                     "attachment; filename=\"" + template.getFilename() + "\"")
+                             .body(template);
+    }
+
     URI locationWithout(URI location, String toRemove) {
         return URI.create(location.toString().replace(toRemove, ""));
     }
@@ -212,12 +239,22 @@ public class VocabularyController extends BaseController {
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
                           required = false) Optional<String> namespace,
-            @Parameter(description = "File containing a SKOS glossary in RDF.")
-            @RequestParam(name = "file") MultipartFile file) {
+            @Parameter(
+                    description = "File containing a SKOS glossary in RDF or an Excel file with supported structure.")
+            @RequestParam(name = "file") MultipartFile file,
+            @Parameter(description = "Whether to import only translations of existing terms from the vocabulary.")
+            @RequestParam(name = "translationsOnly", required = false,
+                          defaultValue = "false") boolean translationsOnly) {
         final URI vocabularyIri = resolveVocabularyUri(localName, namespace);
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(vocabularyIri, file);
-        LOG.debug("Vocabulary {} re-imported.", vocabulary);
-        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import/" + localName))
+        final Vocabulary result;
+        if (translationsOnly) {
+            result = vocabularyService.importTermTranslations(vocabularyIri, file);
+            LOG.debug("Translations of terms in vocabulary {} imported.", result);
+        } else {
+            result = vocabularyService.importVocabulary(vocabularyIri, file);
+            LOG.debug("Vocabulary {} re-imported.", result);
+        }
+        return ResponseEntity.created(locationWithout(generateLocation(result.getUri()), "/import/" + localName))
                              .build();
     }
 
@@ -240,10 +277,17 @@ public class VocabularyController extends BaseController {
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                        example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
+                          required = false) Optional<String> namespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
+            @RequestParam(name = "type", required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
+            @RequestParam(name = "author", required = false, defaultValue = "") String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION)
+            @RequestParam(name = "attribute", required = false, defaultValue = "") String changedAttributeName) {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
-        return vocabularyService.getChanges(vocabulary);
+        final ChangeRecordFilterDto filterDto = new ChangeRecordFilterDto(changedAttributeName, authorName, changeType);
+        return vocabularyService.getChanges(vocabulary, filterDto);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -265,6 +309,58 @@ public class VocabularyController extends BaseController {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChangesOfContent(vocabulary);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of changes made to the content of the vocabulary (term creation, editing).")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "List of change records."),
+                   @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)})
+    @GetMapping(value = "/{localName}/history-of-content/detail",
+                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<AbstractChangeRecord> getDetailedHistoryOfContent(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE) @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
+                                                                            required = false) Optional<String> namespace,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.TERM_NAME_DESCRIPTION) @RequestParam(name = "term",
+                                                                                                       required = false,
+                                                                                                       defaultValue = "") String termName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION) @RequestParam(name = "type",
+                                                                                                         required = false) URI changeType,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION) @RequestParam(
+                    name = "author",
+                    required = false,
+                    defaultValue = "") String authorName,
+            @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION) @RequestParam(
+                    name = "attribute", required = false, defaultValue = "") String changedAttributeName,
+
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION) @RequestParam(
+                    name = Constants.QueryParams.PAGE_SIZE, required = false,
+                    defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION) @RequestParam(
+                    name = Constants.QueryParams.PAGE, required = false, defaultValue = DEFAULT_PAGE) Integer pageNo) {
+        final Pageable pageReq = createPageRequest(pageSize, pageNo);
+        final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
+        final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(termName, changedAttributeName, authorName,
+                                                                       changeType);
+        return vocabularyService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets a list of languages used in the vocabulary.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of languages.")
+    })
+    @GetMapping(value = "/{localName}/languages", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<String> getLanguages(
+            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE) @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                       example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
+                                                                            required = false) Optional<String> namespace) {
+        final URI vocabularyUri = resolveVocabularyUri(localName, namespace);
+        return vocabularyService.getLanguages(vocabularyUri);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -308,7 +404,7 @@ public class VocabularyController extends BaseController {
                                                      example = ApiDoc.ID_NAMESPACE_EXAMPLE)
                                           @RequestParam(name = QueryParams.NAMESPACE,
                                                         required = false) Optional<String> namespace) {
-        vocabularyService.runTextAnalysisOnAllTerms(getById(localName, namespace));
+        vocabularyService.runTextAnalysisOnAllTerms(resolveVocabularyUri(localName, namespace));
     }
 
     /**
@@ -351,31 +447,49 @@ public class VocabularyController extends BaseController {
                                  @RequestParam(name = QueryParams.NAMESPACE,
                                                required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        vocabularyService.find(identifier).ifPresent(toRemove -> {
-            vocabularyService.remove(toRemove);
-            LOG.debug("Vocabulary {} removed.", toRemove);
-        });
+        final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
+        vocabularyService.remove(vocabulary);
+        LOG.debug("Vocabulary {} removed.", vocabulary);
     }
 
-    @Operation(description = "Validates the terms in a vocabulary with the specified identifier.")
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Returns relations with other vocabularies")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "A collection of validation results."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+            @ApiResponse(responseCode = "200", description = "A collection of vocabulary relations"),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
     })
-    @PreAuthorize("permitAll()")    // TODO Authorize?
-    @GetMapping(value = "/{localName}/validate",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
-    public List<ValidationResult> validateVocabulary(
-            @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-            @PathVariable String localName,
-            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-            @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
+    @GetMapping(value = "/{localName}/relations")
+    public List<RdfsStatement> relations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                                         @PathVariable String localName,
+                                         @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                                         @RequestParam(name = QueryParams.NAMESPACE,
+                                                       required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
-        final Vocabulary vocabulary = vocabularyService.getReference(identifier);
-        return vocabularyService.validateContents(vocabulary);
+        final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
+
+        return vocabularyService.getVocabularyRelations(vocabulary);
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Returns relations with terms from other vocabularies")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "A collection of term relations"),
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+    })
+    @GetMapping(value = "/{localName}/terms/relations")
+    public List<RdfsStatement> termsRelations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
+                                                         example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                                              @PathVariable String localName,
+                                              @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                                                         example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                                              @RequestParam(name = QueryParams.NAMESPACE,
+                                                            required = false) Optional<String> namespace) {
+        final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
+        final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
+
+        return vocabularyService.getTermRelations(vocabulary);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},

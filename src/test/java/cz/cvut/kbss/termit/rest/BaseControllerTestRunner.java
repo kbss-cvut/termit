@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.accept.ContentNegotiationManager;
 
-import static cz.cvut.kbss.termit.environment.Environment.*;
+import static cz.cvut.kbss.termit.environment.Environment.createDefaultMessageConverter;
+import static cz.cvut.kbss.termit.environment.Environment.createJsonLdMessageConverter;
+import static cz.cvut.kbss.termit.environment.Environment.createResourceMessageConverter;
+import static cz.cvut.kbss.termit.environment.Environment.createStringEncodingMessageConverter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 

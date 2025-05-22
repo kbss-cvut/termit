@@ -1,6 +1,6 @@
 /*
  * TermIt
- * Copyright (C) 2023 Czech Technical University in Prague
+ * Copyright (C) 2025 Czech Technical University in Prague
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,15 @@ import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.util.NonEntity;
 import cz.cvut.kbss.termit.model.Term;
+import org.topbraid.shacl.vocabulary.SH;
+
+import java.io.Serializable;
 import java.net.URI;
 import java.util.Objects;
-import org.topbraid.shacl.vocabulary.SH;
 
 @NonEntity
 @OWLClass(iri = SH.BASE_URI + "ValidationResult")
-public class ValidationResult {
+public class ValidationResult implements Serializable {
 
     @Id(generated = true)
     private URI id;
