@@ -82,19 +82,28 @@ import java.util.Optional;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URISyntaxException;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 
 /**
  * Business logic concerning vocabularies.
  * <p>
- * Note that retrieval methods that take an instance of {@link Vocabulary} as argument do not have explicit
- * authorization annotations. It is assumed that read access has already been authorized when the {@link Vocabulary}
+ * Note that retrieval methods that take an instance of {@link Vocabulary} as
+ * argument do not have explicit authorization annotations. It is assumed that
+ * read access has already been authorized when the {@link Vocabulary}
  * instance/reference was retrieved previously.
  */
 @Service
@@ -140,9 +149,9 @@ public class VocabularyService
     }
 
     public List<RdfsResource> getAvailableVocabularies() {
-        
+
         List<RdfsResource> response = new ArrayList<>();
-        
+
         String sparqlEndpoint = "https://xn--slovnk-7va.gov.cz/sparql";
         String sparqlQuery
                 = """
@@ -192,8 +201,9 @@ public class VocabularyService
     }
 
     /**
-     * Receives {@link VocabularyContentModifiedEvent} and triggers validation. The goal for this is to get the results
-     * cached and do not force users to wait for validation when they request it.
+     * Receives {@link VocabularyContentModifiedEvent} and triggers validation.
+     * The goal for this is to get the results cached and do not force users to
+     * wait for validation when they request it.
      */
     @EventListener({VocabularyContentModifiedEvent.class, VocabularyCreatedEvent.class})
     public void onVocabularyContentModified(VocabularyEvent event) {
@@ -260,7 +270,8 @@ public class VocabularyService
     }
 
     /**
-     * Gets identifiers of all vocabularies imported by the specified vocabulary, including transitively imported ones.
+     * Gets identifiers of all vocabularies imported by the specified
+     * vocabulary, including transitively imported ones.
      *
      * @param entity Base vocabulary, whose imports should be retrieved
      * @return Collection of (transitively) imported vocabularies
@@ -271,8 +282,9 @@ public class VocabularyService
     }
 
     /**
-     * Gets identifiers of all vocabularies whose terms are in a SKOS relationship with the specified vocabulary or are
-     * explicitly imported by it.
+     * Gets identifiers of all vocabularies whose terms are in a SKOS
+     * relationship with the specified vocabulary or are explicitly imported by
+     * it.
      * <p>
      * This includes transitively related.
      *
@@ -285,8 +297,8 @@ public class VocabularyService
     }
 
     /**
-     * Gets statements representing SKOS relationships between terms from the specified vocabulary and terms from other
-     * vocabularies.
+     * Gets statements representing SKOS relationships between terms from the
+     * specified vocabulary and terms from other vocabularies.
      *
      * @param vocabulary Vocabulary whose terms' relationships to retrieve
      * @return List of RDF statements
@@ -297,9 +309,11 @@ public class VocabularyService
     }
 
     /**
-     * Gets statements representing relationships between the specified vocabulary and other vocabularies.
+     * Gets statements representing relationships between the specified
+     * vocabulary and other vocabularies.
      * <p>
-     * A selected set of relationships is excluded (for example, versioning relationships).
+     * A selected set of relationships is excluded (for example, versioning
+     * relationships).
      *
      * @param vocabulary Vocabulary whose relationships to retrieve
      * @return List of RDF statements
@@ -314,13 +328,15 @@ public class VocabularyService
      * <p>
      * The file could be a text file containing RDF.
      *
-     * @param rename true, if the IRIs should be modified in order to prevent clashes with existing data
-     * @param file   File from which to import the vocabulary
+     * @param rename true, if the IRIs should be modified in order to prevent
+     * clashes with existing data
+     * @param file File from which to import the vocabulary
      * @return The imported vocabulary metadata
-     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
-     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyExistsException If a vocabulary with a glossary
-     *                                                                           matching the one in the imported data
-     *                                                                           already exists
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException
+     * If the import fails
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyExistsException
+     * If a vocabulary with a glossary matching the one in the imported data
+     * already exists
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
@@ -333,15 +349,173 @@ public class VocabularyService
     }
 
     /**
+     * Imports multiple vocabularies from external source.
+     * 
+     * @param vocabularyIris List of 
+     * @return first imported Vocabullary
+     * @throws URISyntaxException
+     */
+    @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
+    public Vocabulary importFromExternalUris(List<String> vocabularyIris) throws URISyntaxException {
+        Vocabulary firstImportedVocabulary = null;
+        for (String vocabularyIri : vocabularyIris) {
+            InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
+            if (newVocabulary != null) {
+                URI uri = new URI(vocabularyIri);
+                Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+                final AccessControlList acl = aclService.createFor(vocabulary);
+                vocabulary.setAcl(acl.getUri());
+                eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
+                LOG.debug("Vocabulary " + vocabularyIri + " import was successful.");
+                if (firstImportedVocabulary == null) {
+                    firstImportedVocabulary = vocabulary;
+                }
+            }
+        }
+        return firstImportedVocabulary;
+    }
+
+    @Transactional
+    private InputStream downloadExternalVocabulary(String vocabularyIri) {
+
+        List<RdfsResource> response = new ArrayList<>();
+
+        String sparqlEndpoint = "https://xn--slovnk-7va.gov.cz/sparql";
+        String sparqlQuery
+                = String.format("""
+                          PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                          PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                          PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                          PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                          PREFIX dc: <http://purl.org/dc/terms/>
+                          
+                          CONSTRUCT {
+                              ?glossary a skos:ConceptScheme ;
+                                        dc:title ?label ;
+                                        dc:description ?description ;
+                                        dc:rights ?rights ;
+                                        owl:imports ?imported ;
+                                        owl:versionIRI ?versionIri ;
+                                        <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
+                                        <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix ;
+                                        <http://purl.org/ontology/bibo/status> ?status .
+                             ?term ?y ?z ;
+                                    skos:broader ?broader ;
+                                    skos:broadMatch ?broadMatch ;
+                                  skos:related ?related ;
+                                  skos:exactMatch ?exactMatch ;
+                                  skos:relatedMatch ?relatedMatch ;
+                                  a ?type .
+                          } WHERE {
+                              VALUES (?vocabulary) {(<%s>)}
+                              ?vocabulary pdp:má-glosář ?glossary ;
+                                          dc:title ?vocabularyLabel .
+                              OPTIONAL {
+                                  ?glossary dc:title ?glossaryLabel .
+                              }
+                              OPTIONAL {
+                                  ?vocabulary dc:description ?description .
+                              }
+                              OPTIONAL {
+                                  ?glossary owl:versionIRI ?versionIri .
+                              }
+                              OPTIONAL {
+                                  ?glossary dc:rights ?rights .
+                              }
+                              OPTIONAL {
+                                  ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
+                                            <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
+                              }
+                              OPTIONAL {
+                                  ?glossary <http://purl.org/ontology/bibo/status> ?status .
+                              }
+                              OPTIONAL {
+                                  ?vocabulary pdp:importuje-slovník/pdp:má-glosář ?imported .
+                              }
+                              BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)
+                             
+                              ?term a skos:Concept ;
+                                  	skos:inScheme ?glossary ;
+                              		?y ?z .
+                              OPTIONAL {
+                                  ?term skos:broader ?broader .
+                                  FILTER NOT EXISTS {
+                                      ?term skos:broader ?intermediate .
+                                      ?intermediate skos:broader ?broader .
+                                      FILTER (?broader != ?intermediate)
+                                  }
+                                  FILTER NOT EXISTS {
+                                      ?term skos:broadMatch ?broader .
+                                  }
+                              }
+                              OPTIONAL {
+                                  ?term skos:broadMatch ?broadMatch .
+                                  FILTER NOT EXISTS {
+                                      ?term skos:broadMatch ?intermediate2 .
+                                      ?intermediate2 skos:broadMatch ?broadMatch .
+                                      FILTER (?broadMatch != ?intermediate2)
+                                  }
+                              }
+                              OPTIONAL {
+                                  ?term skos:related ?related .
+                                  FILTER NOT EXISTS {
+                                      ?term skos:relatedMatch ?related .
+                                  }
+                              }
+                          
+                              OPTIONAL {
+                                  ?term a ?type .
+                                  FILTER (?type != skos:Concept)
+                                  FILTER(!STRSTARTS(STR(?type), str(owl:)))
+                                  FILTER NOT EXISTS {
+                                      ?term a ?intermediateType .
+                                      ?intermediateType rdfs:subClassOf ?type .
+                                      FILTER (?type != ?intermediateType)
+                                  }
+                              }
+                              FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf, skos:relatedMatch, skos:exactMatch))
+                              OPTIONAL {
+                                  ?term skos:relatedMatch ?relatedMatch .
+                              }
+                              OPTIONAL {
+                                  ?term skos:exactMatch ?exactMatch .
+                              }
+                          }
+                          """, vocabularyIri);
+        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
+        sparqlRepo.init();
+        try (RepositoryConnection conn = sparqlRepo.getConnection()) {
+            GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
+
+            try (GraphQueryResult result = graphQuery.evaluate()) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                Rio.write(result, outputStream, RDFFormat.TURTLE);
+                InputStream vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
+                return vocabularyFile;
+            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+//        return response;
+        return null;
+
+    }
+
+    /**
      * Imports a vocabulary from the specified file.
      * <p>
-     * The file could be a text file containing RDF. If a vocabulary with the specified identifier already exists, its
-     * content is overridden by the input data.
+     * The file could be a text file containing RDF. If a vocabulary with the
+     * specified identifier already exists, its content is overridden by the
+     * input data.
      *
      * @param vocabularyIri IRI of the vocabulary to be created
-     * @param file          File from which to import the vocabulary
+     * @param file File from which to import the vocabulary
      * @return The imported vocabulary metadata
-     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException
+     * If the import fails
      */
     @PreAuthorize("@vocabularyAuthorizationService.canReimport(#vocabularyIri)")
     public Vocabulary importVocabulary(URI vocabularyIri, MultipartFile file) {
@@ -349,12 +523,15 @@ public class VocabularyService
     }
 
     /**
-     * Imports translations of terms in the specified vocabulary from the specified file.
+     * Imports translations of terms in the specified vocabulary from the
+     * specified file.
      *
-     * @param vocabularyIri IRI of vocabulary for whose terms to import translations
-     * @param file          File from which to import the translations
+     * @param vocabularyIri IRI of vocabulary for whose terms to import
+     * translations
+     * @param file File from which to import the translations
      * @return The imported vocabulary metadata
-     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException If the import fails
+     * @throws cz.cvut.kbss.termit.exception.importing.VocabularyImportException
+     * If the import fails
      */
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyIri)")
     public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
@@ -402,7 +579,8 @@ public class VocabularyService
      * Gets aggregated information about changes in the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @return List of aggregated change objects, ordered by date in ascending order
+     * @return List of aggregated change objects, ordered by date in ascending
+     * order
      */
     public List<AggregatedChangeInfo> getChangesOfContent(Vocabulary vocabulary) {
         return repositoryService.getChangesOfContent(vocabulary);
@@ -412,7 +590,7 @@ public class VocabularyService
      * Gets content change records of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose content changes to get
-     * @param pageReq    Specification of the size and number of the page to return
+     * @param pageReq Specification of the size and number of the page to return
      * @return List of change records, ordered by date in descending order
      */
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
@@ -421,8 +599,8 @@ public class VocabularyService
     }
 
     /**
-     * Runs text analysis on the definitions of all terms in the specified vocabulary, including terms in the
-     * transitively imported vocabularies.
+     * Runs text analysis on the definitions of all terms in the specified
+     * vocabulary, including terms in the transitively imported vocabularies.
      *
      * @param vocabularyUri Vocabulary to be analyzed
      */
@@ -463,9 +641,10 @@ public class VocabularyService
     /**
      * Removes a vocabulary unless:
      * <ul>
-     *     <li>it is a document vocabulary or</li>
-     *     <li>it is imported by another vocabulary or</li>
-     *     <li>it contains terms that are a part of relations with another vocabulary</li>
+     * <li>it is a document vocabulary or</li>
+     * <li>it is imported by another vocabulary or</li>
+     * <li>it contains terms that are a part of relations with another
+     * vocabulary</li>
      * </ul>
      *
      * @param asset Vocabulary to remove
@@ -479,7 +658,8 @@ public class VocabularyService
     }
 
     /**
-     * Validates a vocabulary: - it checks glossary rules, - it checks OntoUml constraints.
+     * Validates a vocabulary: - it checks glossary rules, - it checks OntoUml
+     * constraints.
      *
      * @param vocabulary Vocabulary to validate
      */
@@ -490,10 +670,12 @@ public class VocabularyService
     /**
      * Gets the number of terms in the specified vocabulary.
      * <p>
-     * Note that this method counts the terms regardless of their hierarchical position.
+     * Note that this method counts the terms regardless of their hierarchical
+     * position.
      *
      * @param vocabulary Vocabulary whose terms should be counted
-     * @return Number of terms in the vocabulary, 0 for empty or unknown vocabulary
+     * @return Number of terms in the vocabulary, 0 for empty or unknown
+     * vocabulary
      */
     public Integer getTermCount(Vocabulary vocabulary) {
         return repositoryService.getTermCount(vocabulary);
@@ -502,8 +684,8 @@ public class VocabularyService
     /**
      * Creates a snapshot of the specified vocabulary.
      * <p>
-     * The result is a read-only snapshot of the specified vocabulary, its content and any vocabularies it depends on or
-     * that depend on it.
+     * The result is a read-only snapshot of the specified vocabulary, its
+     * content and any vocabularies it depends on or that depend on it.
      *
      * @param vocabulary Vocabulary to snapshot
      */
@@ -530,8 +712,8 @@ public class VocabularyService
     /**
      * Finds snapshots of the specified asset.
      * <p>
-     * Note that the list does not contain the currently active version of the asset, as it is not considered a
-     * snapshot.
+     * Note that the list does not contain the currently active version of the
+     * asset, as it is not considered a snapshot.
      *
      * @param asset Asset whose snapshots to find
      * @return List of snapshots, sorted by date of creation (latest first)
@@ -543,10 +725,11 @@ public class VocabularyService
     /**
      * Finds a version of the specified asset valid at the specified instant.
      * <p>
-     * The result may be the current version, in case there is no snapshot matching the instant.
+     * The result may be the current version, in case there is no snapshot
+     * matching the instant.
      *
      * @param asset Asset whose version to get
-     * @param at    Instant at which the asset should be returned
+     * @param at Instant at which the asset should be returned
      * @return Version of the asset valid at the specified instant
      */
     public Vocabulary findVersionValidAt(Vocabulary asset, Instant at) {
@@ -572,10 +755,11 @@ public class VocabularyService
     }
 
     /**
-     * Adds the specified access control record to the access control list of the specified vocabulary.
+     * Adds the specified access control record to the access control list of
+     * the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param record     Record to add to the target ACL
+     * @param record Record to add to the target ACL
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
@@ -585,10 +769,11 @@ public class VocabularyService
     }
 
     /**
-     * Removes the specified access control record from the access control list of the specified vocabulary.
+     * Removes the specified access control record from the access control list
+     * of the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param record     Record to remove from the target ACL
+     * @param record Record to remove from the target ACL
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
@@ -598,10 +783,11 @@ public class VocabularyService
     }
 
     /**
-     * Updates access control level in the specified {@link AccessControlRecord}.
+     * Updates access control level in the specified
+     * {@link AccessControlRecord}.
      *
      * @param vocabulary Vocabulary whose ACL to update
-     * @param update     Access control record containing updated access level
+     * @param update Access control record containing updated access level
      */
     @Transactional
     @PreAuthorize("@vocabularyAuthorizationService.canManageAccess(#vocabulary)")
