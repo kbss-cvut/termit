@@ -59,6 +59,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
@@ -286,6 +287,21 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         }
     }
 
+    @CacheEvict(allEntries = true)
+    @Transactional
+    public Vocabulary importVocabulary(URI vocabularyIri, String contentType, InputStream inputStream) {
+        Objects.requireNonNull(vocabularyIri);
+        Objects.requireNonNull(inputStream);
+        try {
+            return importers.importVocabulary(
+                    new VocabularyImporter.ImportConfiguration(false, vocabularyIri, this::initDocument),
+                    new VocabularyImporter.ImportInput(contentType, inputStream));
+        } catch (VocabularyImportException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new VocabularyImportException("Unable to import vocabulary. Cause: " + e.getMessage(), e);
+        }
+    }
     @Transactional
     public Vocabulary importTermTranslations(URI vocabularyIri, MultipartFile file) {
         Objects.requireNonNull(vocabularyIri);

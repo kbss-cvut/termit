@@ -74,6 +74,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
+import java.net.URISyntaxException;
+import java.util.logging.Level;
+import org.springframework.web.bind.annotation.RequestPart;
 
 /**
  * Vocabulary management REST API.
@@ -196,15 +199,36 @@ public class VocabularyController extends BaseController {
     })
     @PostMapping("/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
-    public ResponseEntity<Void> createVocabulary(
-            @Parameter(description = "File containing a SKOS glossary in RDF.")
-            @RequestParam(name = "file") MultipartFile file,
-            @Parameter(
-                    description = "Whether identifiers should be modified to prevent clashes with existing data.")
-            @RequestParam(name = "rename", defaultValue = "false", required = false) boolean rename) {
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
-        LOG.debug("New vocabulary {} imported.", vocabulary);
-        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+public ResponseEntity<Void> createVocabulary(
+        @Parameter(description = "File containing a SKOS glossary in RDF.")
+        @RequestParam(name = "file", required = false) MultipartFile file,
+        
+        @Parameter(description = "List of external SKOS vocabulary IRIs.")
+        @RequestParam(name = "vocabularyIris", required = false) List<String> vocabularyIris,
+        
+        @Parameter(description = "Whether identifiers should be modified to prevent clashes with existing data.")
+        @RequestParam(name = "rename", defaultValue = "false", required = false) boolean rename) {
+        if (file != null) {
+
+            final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
+            LOG.debug("New vocabulary {} imported.", vocabulary);
+            return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+        } else 
+            if (vocabularyIris != null) {
+            System.out.println("Handed of list of vocabularies to be imported");
+            try {
+            Vocabulary vocabulary = vocabularyService.importFromExternalUris(vocabularyIris);
+            LOG.debug("Vocabulary imported from IRIs: {}", vocabulary);
+            return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+
+            } catch (URISyntaxException ex) {
+                java.util.logging.Logger.getLogger(VocabularyController.class.getName()).log(Level.SEVERE, null, ex);
+                return ResponseEntity.accepted().build();
+            }
+        } else {
+                System.out.println("Eles\n");
+            return ResponseEntity.badRequest().build(); // ani soubor, ani IRI
+        }
     }
 
     @Operation(description = "Gets a template Excel file that can be used to import terms into TermIt")

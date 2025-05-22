@@ -503,6 +503,15 @@ termit-pojem:pouze-pro-čtení
         <http://www.w3.org/2004/02/skos/core#prefLabel>
                 "Read-only"@en , "Pouze pro čtení"@cs .
 
+termit-pojem:externí
+        a       <http://www.w3.org/2004/02/skos/core#Concept> ;
+        <http://www.w3.org/2004/02/skos/core#broader>
+                 <https://slovník.gov.cz/základní/pojem/typ-objektu> ;
+        <http://www.w3.org/2004/02/skos/core#inScheme>
+                termit:glosář ;
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "External"@en , "Externí"@cs .
+
 termit-pojem:zakázaný
         a       <http://www.w3.org/2004/02/skos/core#Concept> ;
         <http://www.w3.org/2004/02/skos/core#broader>

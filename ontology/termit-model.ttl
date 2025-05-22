@@ -267,6 +267,9 @@ termit-pojem:má-oddělovač-verze
 termit-pojem:pouze-pro-čtení
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class .
 
+termit-pojem:externí
+        a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class .
+
 termit-pojem:zakázaný
         a                <https://slovník.gov.cz/základní/pojem/typ-objektu> , owl:Class .
 
