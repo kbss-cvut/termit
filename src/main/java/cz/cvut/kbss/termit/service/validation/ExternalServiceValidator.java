@@ -57,7 +57,7 @@ public class ExternalServiceValidator implements RepositoryContextValidator {
 
         final long start = System.currentTimeMillis();
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.addAll("contextUri", contexts.stream().map(URI::toString).toList());
+        params.addAll("vocabularyContextIri", contexts.stream().map(URI::toString).toList());
         params.addAll("rule", VALIDATION_RULES);
         params.add("language", language);
         final HttpHeaders headers = new HttpHeaders();
