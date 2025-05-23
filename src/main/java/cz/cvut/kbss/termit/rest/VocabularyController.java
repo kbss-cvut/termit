@@ -75,23 +75,20 @@ import java.util.Optional;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 import java.net.URISyntaxException;
-import java.util.logging.Level;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.repository.RepositoryException;
-import org.springframework.web.bind.annotation.RequestPart;
 
 /**
  * Vocabulary management REST API.
  * <p>
- * Note that most endpoints are now secured only by requiring the user to be
- * authenticated, authorization is done on service level based on ACL.
+ * Note that most endpoints are now secured only by requiring the user to be authenticated, authorization is done on
+ * service level based on ACL.
  */
 @Tag(name = "Vocabularies", description = "Vocabulary management API")
 @RestController
 @RequestMapping("/vocabularies")
 @PreAuthorize("hasRole('" + SecurityConstants.ROLE_RESTRICTED_USER + "')")
 public class VocabularyController extends BaseController {
-
     static final String DEFAULT_PAGE_SIZE = "10";
     static final String DEFAULT_PAGE = "0";
 
@@ -101,14 +98,13 @@ public class VocabularyController extends BaseController {
 
     @Autowired
     public VocabularyController(VocabularyService vocabularyService, IdentifierResolver idResolver,
-            Configuration config) {
+                                Configuration config) {
         super(idResolver, config);
         this.vocabularyService = vocabularyService;
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
-            description = "Gets all vocabularies managed by the system.")
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Gets all vocabularies managed by the system.")
     @ApiResponse(responseCode = "200", description = "List of vocabularies ordered by label.")
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<List<VocabularyDto>> getAll(ServletWebRequest webRequest) {
@@ -118,12 +114,11 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.ok().lastModified(vocabularyService.getLastModified()).body(vocabularyService.findAll());
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")}, description = "Creates a new vocabulary.")
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")}, description = "Creates a new vocabulary.")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
-        @ApiResponse(responseCode = "409",
-                description = "Vocabulary with the same identifier already exists or the vocabulary is not valid.")
+            @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
+            @ApiResponse(responseCode = "409",
+                         description = "Vocabulary with the same identifier already exists or the vocabulary is not valid.")
     })
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
@@ -134,8 +129,7 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.created(generateLocation(vocabulary.getUri())).build();
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets detail of the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Matching vocabulary metadata."),
@@ -153,8 +147,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.findRequired(id);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets identifiers of vocabularies imported (including transitive imports) by the vocabulary with the specified identification.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
@@ -178,8 +171,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getAvailableVocabularies();
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets identifiers of vocabularies whose terms are in a SKOS relationship with terms from the specified vocabulary.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
@@ -197,9 +189,8 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
-            description = "Creates a new vocabulary by importing the specified SKOS glossary"
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},       
+               description = "Creates a new vocabulary by importing the specified SKOS glossary"
             + " or providing list of vocabulary iris to be downloaded from an external source")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
@@ -231,7 +222,7 @@ public class VocabularyController extends BaseController {
                 return ResponseEntity.accepted().build();
             }
         } else {
-            System.out.println("Eles\n");
+            LOG.error("File and vocabularyIris are both null");
             return ResponseEntity.badRequest().build(); // ani soubor, ani IRI
         }
     }
@@ -244,9 +235,9 @@ public class VocabularyController extends BaseController {
             @Parameter(description = "Whether the file will be used to import only term translations")
             @RequestParam(name = "translationsOnly", required = false,
                     defaultValue = "false") boolean translationsOnly) {
-        final TypeAwareResource template
-                = translationsOnly ? vocabularyService.getExcelTranslationsImportTemplateFile()
-                        : vocabularyService.getExcelImportTemplateFile();
+        final TypeAwareResource template =
+                translationsOnly ? vocabularyService.getExcelTranslationsImportTemplateFile() :
+                vocabularyService.getExcelImportTemplateFile();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(
                         template.getMediaType().orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE)))
@@ -259,8 +250,7 @@ public class VocabularyController extends BaseController {
         return URI.create(location.toString().replace(toRemove, ""));
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Imports a vocabulary from the specified SKOS glossary, possibly replacing existing vocabulary with matching identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
@@ -299,8 +289,7 @@ public class VocabularyController extends BaseController {
         return resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), fragment);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets a list of changes made to metadata of vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "List of change records."),
@@ -328,8 +317,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getChanges(vocabulary, filterDto);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets summary info about changes made to the content of the vocabulary (term creation, editing).")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "List of aggregated change data."),
@@ -350,11 +338,9 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getChangesOfContent(vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets a list of changes made to the content of the vocabulary (term creation, editing).")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "List of change records."),
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "List of change records."),
         @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)})
     @GetMapping(value = "/{localName}/history-of-content/detail",
             produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
@@ -375,6 +361,7 @@ public class VocabularyController extends BaseController {
                     defaultValue = "") String authorName,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGED_ATTRIBUTE_DESCRIPTION) @RequestParam(
                     name = "attribute", required = false, defaultValue = "") String changedAttributeName,
+
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION) @RequestParam(
                     name = Constants.QueryParams.PAGE_SIZE, required = false,
                     defaultValue = DEFAULT_PAGE_SIZE) Integer pageSize,
@@ -387,8 +374,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets a list of languages used in the vocabulary.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "List of languages.")
@@ -404,8 +390,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getLanguages(vocabularyUri);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Updates metadata of vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Vocabulary successfully updated."),
@@ -432,12 +417,10 @@ public class VocabularyController extends BaseController {
     /**
      * Runs text analysis on definitions of all terms in vocabulary.
      * <p>
-     * This is a legacy endpoint intended mainly for internal use/testing, since
-     * the analysis is executed automatically when specific conditions are
-     * fulfilled.
+     * This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed automatically
+     * when specific conditions are fulfilled.
      */
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Runs text analysis on the definitions of all terms in the vocabulary with the specified identifier.")
     @PutMapping(value = "/{localName}/terms/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -454,12 +437,10 @@ public class VocabularyController extends BaseController {
     /**
      * Runs text analysis on definitions of all terms in all vocabularies.
      * <p>
-     * This is a legacy endpoint intended mainly for internal use/testing, since
-     * the analysis is executed automatically when specific conditions are
-     * fulfilled.
+     * This is a legacy endpoint intended mainly for internal use/testing, since the analysis is executed automatically
+     * when specific conditions are fulfilled.
      */
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Runs text analysis on definitions of all terms in all vocabularies.")
     @GetMapping(value = "/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -473,10 +454,9 @@ public class VocabularyController extends BaseController {
      *
      * @param localName vocabulary name
      * @param namespace (optional) vocabulary namespace
-     * @see VocabularyService#remove(Vocabulary) for details.
+     * @see VocabularyService#remove(Vocabulary)  for details.
      */
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Removes vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Vocabulary successfully removed."),
@@ -499,12 +479,12 @@ public class VocabularyController extends BaseController {
         LOG.debug("Vocabulary {} removed.", vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Returns relations with other vocabularies")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "A collection of vocabulary relations"),
-        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),})
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+    })
     @GetMapping(value = "/{localName}/relations")
     public List<RdfsStatement> relations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
             example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
@@ -519,12 +499,12 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getVocabularyRelations(vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Returns relations with terms from other vocabularies")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "A collection of term relations"),
-        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),})
+            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+    })
     @GetMapping(value = "/{localName}/terms/relations")
     public List<RdfsStatement> termsRelations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
             example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
@@ -539,8 +519,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getTermRelations(vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Creates a snapshot of the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Snapshot successfully created."),
@@ -564,8 +543,7 @@ public class VocabularyController extends BaseController {
                 locationWithout(generateLocation(snapshot.getUri()), "/" + localName + "/versions")).build();
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets a list of snapshots of the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "200",
@@ -594,8 +572,7 @@ public class VocabularyController extends BaseController {
         return ResponseEntity.ok(vocabularyService.findSnapshots(vocabulary));
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Access control list instance."),
@@ -615,8 +592,7 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getAccessControlList(vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Adds the specified access control record to the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Record successfully added."),
@@ -639,8 +615,7 @@ public class VocabularyController extends BaseController {
         LOG.debug("Added access control record to ACL of vocabulary {}.", vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Removes the specified access control record from the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Record successfully removed."),
@@ -663,8 +638,7 @@ public class VocabularyController extends BaseController {
         LOG.debug("Removed access control record from ACL of vocabulary {}.", vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Updates access level of specified access control record in the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Access level successfully updated."),
@@ -694,8 +668,7 @@ public class VocabularyController extends BaseController {
         LOG.debug("Updated access control record {} from ACL of vocabulary {}.", record, vocabulary);
     }
 
-    @Operation(security = {
-        @SecurityRequirement(name = "bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
             description = "Gets the access level of the current user to the vocabulary with the specified identifier.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Access level."),
@@ -715,11 +688,9 @@ public class VocabularyController extends BaseController {
     }
 
     /**
-     * A couple of constants for the {@link VocabularyController} API
-     * documentation.
+     * A couple of constants for the {@link VocabularyController} API documentation.
      */
     public static final class ApiDoc {
-
         public static final String ID_LOCAL_NAME_DESCRIPTION = "Locally (in the context of the specified namespace/default vocabulary namespace) unique part of the vocabulary identifier.";
         public static final String ID_LOCAL_NAME_EXAMPLE = "datovy-mpp-3.4";
         public static final String ID_NAMESPACE_DESCRIPTION = "Identifier namespace. Allows to override the default vocabulary identifier namespace.";
