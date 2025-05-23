@@ -17,8 +17,10 @@
  */
 package cz.cvut.kbss.termit.service.business;
 
+import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -80,6 +82,23 @@ import java.util.Optional;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 
 /**
  * Business logic concerning vocabularies.
@@ -271,6 +290,225 @@ public class VocabularyService
         return imported;
     }
 
+    private static final String SPARQL_ENDPOIND_ADDRESS = "https://xn--slovnk-7va.gov.cz/sparql";
+    
+/**
+ * Sends a SPARQL query to fetch list of available vocabularies.
+ * 
+ * @return list of available vocabulary information or null if connection failed
+ */
+    public List<RdfsResource> getAvailableVocabularies() {
+
+        List<RdfsResource> response = new ArrayList<>();
+
+        String sparqlEndpoint = SPARQL_ENDPOIND_ADDRESS;
+        String sparqlQuery
+                = """
+                          PREFIX dct: <http://purl.org/dc/terms/>
+                           SELECT DISTINCT ?slovnik ?nazev_slovniku_cs ?nazev_slovniku_en
+                           WHERE { 
+                          ?slovnik a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> .
+                          ?slovnik dct:title ?nazev_slovniku_cs .
+                          FILTER (lang(?nazev_slovniku_cs)="cs")
+                          Optional{  ?slovnik dct:title ?nazev_slovniku_en .
+                          FILTER (lang(?nazev_slovniku_en)="en")
+                          }
+                          }
+                          """;
+        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
+        sparqlRepo.init();
+        try (RepositoryConnection conn = sparqlRepo.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(sparqlQuery);
+
+            try (TupleQueryResult result = query.evaluate()) {
+                while (result.hasNext()) {
+                    BindingSet line = result.next();
+                    if (!line.hasBinding("slovnik")) {
+                        LOG.error("Error: no slovnik binding in: {}", line.toString());
+                        continue;
+                    }
+                    URI uri = new URI(line.getBinding("slovnik").getValue().stringValue());
+                    HashMap<String, String> labels = new HashMap<>();
+                    
+                    // add cs label if available
+                    if (line.hasBinding("nazev_slovniku_cs")) {
+                        labels.put("cs", line.getBinding("nazev_slovniku_cs").getValue().stringValue());
+                    } else {
+                        labels.put("cs", uri.toString());
+                    }
+                    // add en label if available
+                    if (line.hasBinding("nazev_slovniku_en")) {
+                        labels.put("en", line.getBinding("nazev_slovniku_en").getValue().stringValue());
+                    } else {
+                        labels.put("en", uri.toString());
+                    }
+                    MultilingualString label = new MultilingualString(labels);
+                    response.add(new RdfsResource(uri, label, new MultilingualString(), ""));
+                }
+            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+        return response;
+    }
+
+    /**
+     * Imports multiple vocabularies from external source.
+     *
+     * @param vocabularyIris List of
+     * @return first imported Vocabulary
+     * @throws URISyntaxException
+     * @throws QueryEvaluationException
+     * @throws RepositoryException
+     */
+    @Transactional
+    @PreAuthorize("@vocabularyAuthorizationService.canCreate()")
+    public Vocabulary importFromExternalUris(List<String> vocabularyIris) throws URISyntaxException, QueryEvaluationException, RepositoryException {
+        Vocabulary firstImportedVocabulary = null;
+        
+        for (String vocabularyIri : vocabularyIris) {
+            InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
+            if (newVocabulary != null) {
+                URI uri = new URI(vocabularyIri);
+                Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+
+                // add types
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+
+                final AccessControlList acl = aclService.createFor(vocabulary);
+                vocabulary.setAcl(acl.getUri());
+
+                eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
+                LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
+                if (firstImportedVocabulary == null) {
+                    firstImportedVocabulary = vocabulary;
+                }
+            }
+        }
+        
+        return firstImportedVocabulary;
+    }
+
+    @Transactional
+    private InputStream downloadExternalVocabulary(String vocabularyIri) throws QueryEvaluationException, RepositoryException{
+
+        List<RdfsResource> response = new ArrayList<>();
+
+        String sparqlEndpoint = SPARQL_ENDPOIND_ADDRESS;
+        String sparqlQuery
+                = String.format("""
+                          PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                          PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                          PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+                          PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                          PREFIX dc: <http://purl.org/dc/terms/>
+                          
+                          CONSTRUCT {
+                              ?glossary a skos:ConceptScheme ;
+                                        dc:title ?label ;
+                                        dc:description ?description ;
+                                        dc:rights ?rights ;
+                                        owl:imports ?imported ;
+                                        owl:versionIRI ?versionIri ;
+                                        <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
+                                        <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix ;
+                                        <http://purl.org/ontology/bibo/status> ?status .
+                             ?term ?y ?z ;
+                                    skos:broader ?broader ;
+                                    skos:broadMatch ?broadMatch ;
+                                  skos:related ?related ;
+                                  skos:exactMatch ?exactMatch ;
+                                  skos:relatedMatch ?relatedMatch ;
+                                  a ?type .
+                          } WHERE {
+                              VALUES (?vocabulary) {(<%s>)}
+                              ?vocabulary pdp:má-glosář ?glossary ;
+                                          dc:title ?vocabularyLabel .
+                              OPTIONAL {
+                                  ?glossary dc:title ?glossaryLabel .
+                              }
+                              OPTIONAL {
+                                  ?vocabulary dc:description ?description .
+                              }
+                              OPTIONAL {
+                                  ?glossary owl:versionIRI ?versionIri .
+                              }
+                              OPTIONAL {
+                                  ?glossary dc:rights ?rights .
+                              }
+                              OPTIONAL {
+                                  ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
+                                            <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
+                              }
+                              OPTIONAL {
+                                  ?glossary <http://purl.org/ontology/bibo/status> ?status .
+                              }
+                              OPTIONAL {
+                                  ?vocabulary pdp:importuje-slovník/pdp:má-glosář ?imported .
+                              }
+                              BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)
+                             
+                              ?term a skos:Concept ;
+                                  	skos:inScheme ?glossary ;
+                              		?y ?z .
+                              OPTIONAL {
+                                  ?term skos:broader ?broader .
+                                  FILTER NOT EXISTS {
+                                      ?term skos:broader ?intermediate .
+                                      ?intermediate skos:broader ?broader .
+                                      FILTER (?broader != ?intermediate)
+                                  }
+                                  FILTER NOT EXISTS {
+                                      ?term skos:broadMatch ?broader .
+                                  }
+                              }
+                              OPTIONAL {
+                                  ?term skos:broadMatch ?broadMatch .
+                                  FILTER NOT EXISTS {
+                                      ?term skos:broadMatch ?intermediate2 .
+                                      ?intermediate2 skos:broadMatch ?broadMatch .
+                                      FILTER (?broadMatch != ?intermediate2)
+                                  }
+                              }
+                              OPTIONAL {
+                                  ?term skos:related ?related .
+                                  FILTER NOT EXISTS {
+                                      ?term skos:relatedMatch ?related .
+                                  }
+                              }
+                          
+                              OPTIONAL {
+                                  ?term a ?type .
+                                  FILTER (?type != skos:Concept)
+                                  FILTER(!STRSTARTS(STR(?type), str(owl:)))
+                                  FILTER NOT EXISTS {
+                                      ?term a ?intermediateType .
+                                      ?intermediateType rdfs:subClassOf ?type .
+                                      FILTER (?type != ?intermediateType)
+                                  }
+                              }
+                              FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf, skos:relatedMatch, skos:exactMatch))
+                              OPTIONAL {
+                                  ?term skos:relatedMatch ?relatedMatch .
+                              }
+                              OPTIONAL {
+                                  ?term skos:exactMatch ?exactMatch .
+                              }
+                          }
+                          """, vocabularyIri);
+        SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
+        sparqlRepo.init();
+        RepositoryConnection conn = sparqlRepo.getConnection();
+        GraphQuery graphQuery = conn.prepareGraphQuery(sparqlQuery);
+
+        GraphQueryResult result = graphQuery.evaluate();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Rio.write(result, outputStream, RDFFormat.TURTLE);
+        InputStream vocabularyFile = new ByteArrayInputStream(outputStream.toByteArray());
+        return vocabularyFile;
+
+    }
     /**
      * Imports a vocabulary from the specified file.
      * <p>
@@ -355,7 +593,7 @@ public class VocabularyService
      * @return List of change records, ordered by date in descending order
      */
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(Vocabulary vocabulary, ChangeRecordFilterDto filter,
-                                                                  Pageable pageReq) {
+            Pageable pageReq) {
         return repositoryService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
@@ -367,8 +605,8 @@ public class VocabularyService
      */
     @Transactional
     @Throttle(value = "{#vocabularyUri}",
-              group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
-              name = "allTermsVocabularyAnalysis")
+            group = "T(ThrottleGroupProvider).getTextAnalysisVocabularyAllTerms(#vocabularyUri)",
+            name = "allTermsVocabularyAnalysis")
     @PreAuthorize("@vocabularyAuthorizationService.canModify(#vocabularyUri)")
     public void runTextAnalysisOnAllTerms(URI vocabularyUri) {
         final Vocabulary vocabulary = findRequired(vocabularyUri); // required when throttling for persistent context
