@@ -62,6 +62,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -144,6 +145,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
         initDocument(instance);
+        initPreferredNamespace(instance);
         if (instance.getDocument() != null) {
             instance.getDocument().setVocabulary(null);
         }
@@ -172,6 +174,16 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
                 new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
                                                                                           getPrimaryLabel(vocabulary)));
         vocabulary.setDocument(doc);
+    }
+
+    private void initPreferredNamespace(Vocabulary vocabulary) {
+        if (vocabulary.getProperties() == null) {
+            vocabulary.setProperties(new HashMap<>());
+        }
+        if (!vocabulary.getProperties().containsKey(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri)) {
+            vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri,
+                                          Set.of(vocabulary.getUri() + config.getNamespace().getTerm().getSeparator()));
+        }
     }
 
     @Override
