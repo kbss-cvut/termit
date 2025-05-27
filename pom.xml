@@ -81,12 +81,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-tomcat</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -301,52 +295,12 @@
     </dependencies>
 
     <profiles>
-        <!-- Deployment type profiles -->
-        <profile>
-            <!-- Project is built as an executable JAR with an embedded Tomcat -->
-            <id>standalone</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <packaging>jar</packaging>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-tomcat</artifactId>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
-            <!-- Project is built as a deployable WAR -->
-            <id>war</id>
-            <properties>
-                <packaging>war</packaging>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-tomcat</artifactId>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <configuration>
-                            <warName>termit</warName>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <!-- Profile for GraphDB storage with Lucene connectors. Important for correct full text search functionality -->
         <profile>
             <id>graphdb</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <profile.name>graphdb</profile.name>
                 <spring.profiles.active>lucene</spring.profiles.active>
