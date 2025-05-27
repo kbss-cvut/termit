@@ -45,7 +45,7 @@ class ExternalServiceValidatorTest {
     void validatePassesContextUrisAndLanguageAsRequestParamsToExternalService() {
         final List<URI> contexts = List.of(Generator.generateUri(), Generator.generateUri());
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.addAll("contextUri", contexts.stream().map(URI::toString).toList());
+        params.addAll("vocabularyContextIri", contexts.stream().map(URI::toString).toList());
         params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
         params.add("language", Environment.LANGUAGE);
         mockServer.expect(requestTo(SERVICE_URL))
@@ -61,7 +61,7 @@ class ExternalServiceValidatorTest {
     void validateExtractsValidationResultAndReturnsIt() {
         final URI context = Generator.generateUri();
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.addAll("contextUri", List.of(context.toString()));
+        params.addAll("vocabularyContextIri", List.of(context.toString()));
         params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
         params.add("language", Environment.LANGUAGE);
         mockServer.expect(requestTo(SERVICE_URL))
@@ -98,7 +98,7 @@ class ExternalServiceValidatorTest {
     void validateReturnsEmptyListWhenContextIsValid() {
         final URI context = Generator.generateUri();
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.addAll("contextUri", List.of(context.toString()));
+        params.addAll("vocabularyContextIri", List.of(context.toString()));
         params.addAll("rule", ExternalServiceValidator.VALIDATION_RULES);
         params.add("language", Environment.LANGUAGE);
         mockServer.expect(requestTo(SERVICE_URL))
