@@ -17,21 +17,26 @@
  */
 package cz.cvut.kbss.termit.persistence.relationship;
 
+import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import jakarta.annotation.Nonnull;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 /**
  * Resolves related vocabularies recursively using all the other vocabulary relationship resolvers.
+ * <p>
+ * Classification vocabularies are excluded from the recursion, as they may be connected to many other vocabularies,
+ * leading to false relationships.
  */
 @Component
 @Primary
@@ -39,8 +44,11 @@ public class RecursiveVocabularyRelationshipResolver implements VocabularyRelati
 
     private final List<VocabularyRelationshipResolver> resolvers;
 
-    public RecursiveVocabularyRelationshipResolver(List<VocabularyRelationshipResolver> resolvers) {
+    private final EntityManager em;
+
+    public RecursiveVocabularyRelationshipResolver(List<VocabularyRelationshipResolver> resolvers, EntityManager em) {
         this.resolvers = resolvers;
+        this.em = em;
     }
 
     @Transactional(readOnly = true)
@@ -48,18 +56,39 @@ public class RecursiveVocabularyRelationshipResolver implements VocabularyRelati
     @Override
     public Set<URI> getRelatedVocabularies(@Nonnull URI vocabulary) {
         Objects.requireNonNull(vocabulary);
-        final List<URI> result = new ArrayList<>();
-        result.add(vocabulary);
-        // Using old-school iteration to prevent concurrent modification issues when adding items to list under iteration
-        for (int i = 0; i < result.size(); i++) {
-            final URI item = result.get(i);
+        final Set<URI> result = new HashSet<>();
+        final Stack<URI> toProcess = new Stack<>();
+        toProcess.add(vocabulary);
+        final List<URI> toSkipRecursion = getClassificationVocabularies(vocabulary);
+        while (!toProcess.isEmpty()) {
+            final URI item = toProcess.pop();
             final Set<URI> toAdd = resolvers.stream()
                                             .flatMap(r -> r.getRelatedVocabularies(item).stream())
                                             .collect(Collectors.toSet());
-            result.forEach(toAdd::remove);
+            toAdd.removeAll(result);
             result.addAll(toAdd);
+            // Do not recurse into classification vocabularies, as they may be connected to many other vocabularies we
+            // are not interested in
+            toSkipRecursion.forEach(toAdd::remove);
+            toProcess.addAll(toAdd);
         }
-        // Skip the subject vocabulary
-        return new HashSet<>(result.subList(1, result.size()));
+        return result;
+    }
+
+    private List<URI> getClassificationVocabularies(URI vocabulary) {
+        return em.createNativeQuery("""
+                                            SELECT DISTINCT ?typeVocabulary WHERE {
+                                                     ?x a ?termType ;
+                                                     ?inVocabulary ?vocabulary ;
+                                                     a ?type .
+                                                     ?type a ?termType ;
+                                                     ?inVocabulary ?typeVocabulary .
+                                                 }
+                                            """, URI.class)
+                 .setParameter("vocabulary", vocabulary)
+                 .setParameter("termType", URI.create(SKOS.CONCEPT))
+                 .setParameter("inVocabulary",
+                               URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku))
+                 .getResultList();
     }
 }
