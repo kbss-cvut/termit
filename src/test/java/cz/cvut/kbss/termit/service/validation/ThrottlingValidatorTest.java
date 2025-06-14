@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.persistence.validation;
+package cz.cvut.kbss.termit.service.validation;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -42,6 +42,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -49,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 
-class ValidatorTest extends BaseDaoTestRunner {
+class ThrottlingValidatorTest extends BaseDaoTestRunner {
 
     @Autowired
     private EntityManager em;
@@ -64,6 +65,9 @@ class ValidatorTest extends BaseDaoTestRunner {
     private Configuration config;
 
     @Mock
+    private RepositoryContextValidator validator;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
 
     @BeforeEach
@@ -74,34 +78,28 @@ class ValidatorTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void validateUsesOverrideRulesToAllowI18n() {
+    void validateUsesPersistenceLanguageForInternationalizedRules() {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
-            final Validator sut = new Validator(em, vocabularyContextMapper, config, eventPublisher);
-            final Collection<ValidationResult> result;
-            try {
-                result = runFuture(sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
-            } catch (Exception e) {
-                throw new TermItException(e);
-            }
-            assertTrue(result.stream().noneMatch(
-                    vr -> vr.getMessage().get("en").contains("The term does not have a preferred label in Czech")));
-            assertTrue(result.stream().noneMatch(
-                    vr -> vr.getMessage().get("en").contains("The term does not have a definition in Czech")));
-            assertTrue(result.stream().anyMatch(vr -> vr.getMessage().get("en").contains(
-                    "The term does not have a preferred label in the primary configured language of this deployment of TermIt")));
+            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyContextMapper,
+                                                                    config, eventPublisher);
+            final Collection<ValidationResult> result = runFuture(
+                    sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
+            assertTrue(result.isEmpty());
+            verify(validator).validate(List.of(vocabulary.getUri()), Environment.LANGUAGE);
         });
     }
 
     /**
-     * Validation is a heavy and long-running task; validator must publish event signalizing validation end
-     * allowing other components to react on the result.
+     * Validation is a heavy and long-running task; validator must publish event signalizing validation end allowing
+     * other components to react on the result.
      */
     @Test
     void publishesVocabularyValidationFinishedEventAfterValidation() {
         final Vocabulary vocabulary = generateVocabulary();
         transactional(() -> {
-            final Validator sut = new Validator(em, vocabularyContextMapper, config, eventPublisher);
+            final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyContextMapper,
+                                                                    config, eventPublisher);
             final Collection<URI> iris = Collections.singleton(vocabulary.getUri());
             final Collection<ValidationResult> result;
             try {

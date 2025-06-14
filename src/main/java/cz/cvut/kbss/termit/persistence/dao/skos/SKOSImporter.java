@@ -38,6 +38,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -57,6 +58,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -335,6 +338,7 @@ public class SKOSImporter implements VocabularyImporter {
         vocabulary.setModel(new cz.cvut.kbss.termit.model.Model());
         setVocabularyLabelFromGlossary(vocabulary);
         setVocabularyDescriptionFromGlossary(vocabulary);
+        setVocabularyNamespaceInfoFromData(vocabulary);
         return vocabulary;
     }
 
@@ -377,6 +381,33 @@ public class SKOSImporter implements VocabularyImporter {
 
     private void setVocabularyDescriptionFromGlossary(final Vocabulary vocabulary) {
         handleGlossaryStringProperty(DCTERMS.DESCRIPTION, vocabulary::setDescription);
+    }
+
+    private void setVocabularyNamespaceInfoFromData(Vocabulary vocabulary) {
+        vocabulary.setProperties(new HashMap<>());
+        vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri, new HashSet<>());
+        model.filter(null, SimpleValueFactory.getInstance()
+                                             .createIRI(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri),
+                     null).forEach(s -> {
+            final String namespace = s.getObject().stringValue();
+            LOG.trace("Found preferred namespace URI: {}", namespace);
+            vocabulary.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri)
+                      .add(namespace);
+        });
+        final Model prefixModel = model.filter(null, SimpleValueFactory.getInstance()
+                                                                       .createIRI(
+                                                                               cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix),
+                                               null);
+        if (!prefixModel.isEmpty()) {
+            vocabulary.getProperties().put(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix,
+                                           new HashSet<>());
+            prefixModel.forEach(s -> {
+                final String prefix = s.getObject().stringValue();
+                LOG.trace("Found preferred namespace prefix: {}", prefix);
+                vocabulary.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespacePrefix)
+                          .add(prefix);
+            });
+        }
     }
 
     @Override

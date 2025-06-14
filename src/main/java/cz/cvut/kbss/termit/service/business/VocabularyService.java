@@ -45,6 +45,7 @@ import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
 import cz.cvut.kbss.termit.service.repository.VocabularyRepositoryService;
 import cz.cvut.kbss.termit.service.security.authorization.VocabularyAuthorizationService;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
+import cz.cvut.kbss.termit.service.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.TypeAwareClasspathResource;
 import cz.cvut.kbss.termit.util.TypeAwareFileSystemResource;
@@ -73,6 +74,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -108,6 +110,8 @@ public class VocabularyService
 
     private final VocabularyRelationshipResolver relationshipResolver;
 
+    private final VocabularyContentValidator vocabularyValidator;
+
     private final ApplicationContext context;
 
     private ApplicationEventPublisher eventPublisher;
@@ -119,6 +123,7 @@ public class VocabularyService
                              AccessControlListService aclService,
                              VocabularyAuthorizationService authorizationService,
                              VocabularyRelationshipResolver relationshipResolver,
+                             VocabularyContentValidator vocabularyValidator,
                              ApplicationContext context) {
         this.repositoryService = repositoryService;
         this.changeRecordService = changeRecordService;
@@ -127,6 +132,7 @@ public class VocabularyService
         this.aclService = aclService;
         this.authorizationService = authorizationService;
         this.relationshipResolver = relationshipResolver;
+        this.vocabularyValidator = vocabularyValidator;
         this.context = context;
     }
 
@@ -136,7 +142,7 @@ public class VocabularyService
      */
     @EventListener({VocabularyContentModifiedEvent.class, VocabularyCreatedEvent.class})
     public void onVocabularyContentModified(VocabularyEvent event) {
-        repositoryService.validateContents(event.getVocabularyIri());
+        validateContents(event.getVocabularyIri());
     }
 
     @Override
@@ -418,12 +424,17 @@ public class VocabularyService
     }
 
     /**
-     * Validates a vocabulary: - it checks glossary rules, - it checks OntoUml constraints.
+     * Validates the content of a vocabulary with the specified identifier.
+     * <p>
+     * This also takes into account vocabularies imported by the specified vocabulary.
      *
-     * @param vocabulary Vocabulary to validate
+     * @param vocabularyIri Vocabulary to validate
      */
-    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
-        return repositoryService.validateContents(vocabulary);
+    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabularyIri) {
+        Objects.requireNonNull(vocabularyIri);
+        final Set<URI> imports = new HashSet<>(repositoryService.getTransitivelyImportedVocabularies(vocabularyIri));
+        imports.add(vocabularyIri);
+        return vocabularyValidator.validate(vocabularyIri, imports);
     }
 
     /**

@@ -40,24 +40,19 @@ import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.changetracking.AbstractChangeRecord;
 import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.EntityToOwlClassMapper;
-import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.DescriptorFactory;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.dao.changetracking.ChangeRecordDao;
 import cz.cvut.kbss.termit.persistence.snapshot.AssetSnapshotLoader;
-import cz.cvut.kbss.termit.persistence.validation.VocabularyContentValidator;
 import cz.cvut.kbss.termit.service.snapshot.SnapshotProvider;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
-import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.Instant;
@@ -92,16 +87,12 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
 
     private final VocabularyContextMapper contextMapper;
 
-    private final ApplicationContext context;
-
     @Autowired
     public VocabularyDao(EntityManager em, Configuration config, DescriptorFactory descriptorFactory,
-                         VocabularyContextMapper contextMapper, ApplicationContext context,
-                         ChangeRecordDao changeRecordDao) {
+                         VocabularyContextMapper contextMapper, ChangeRecordDao changeRecordDao) {
         super(Vocabulary.class, em, config.getPersistence(), descriptorFactory);
         this.contextMapper = contextMapper;
         refreshLastModified();
-        this.context = context;
         this.changeRecordDao = changeRecordDao;
     }
 
@@ -364,14 +355,6 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     @EventListener
     public void refreshLastModified(RefreshLastModifiedEvent event) {
         refreshLastModified();
-    }
-
-    @Transactional
-    public ThrottledFuture<Collection<ValidationResult>> validateContents(URI vocabulary) {
-        final VocabularyContentValidator validator = context.getBean(VocabularyContentValidator.class);
-        final Collection<URI> importClosure = getTransitivelyImportedVocabularies(vocabulary);
-        importClosure.add(vocabulary);
-        return validator.validate(vocabulary, importClosure);
     }
 
     /**

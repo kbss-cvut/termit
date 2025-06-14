@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.persistence.validation;
+package cz.cvut.kbss.termit.service.validation;
 
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyCreatedEvent;
 import cz.cvut.kbss.termit.event.VocabularyEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.throttle.Throttle;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
@@ -110,6 +111,9 @@ public class ResultCachingValidator implements VocabularyContentValidator {
             Thread.currentThread().interrupt();
             throw new TermItException(e);
         } catch (ExecutionException e) {
+            if (e.getCause() instanceof UnsupportedOperationException uoe) {
+                throw uoe;
+            }
             throw new TermItException(e.getCause());
         }
 
@@ -122,7 +126,7 @@ public class ResultCachingValidator implements VocabularyContentValidator {
     }
 
     @Lookup
-    Validator getValidator() {
+    ThrottlingValidator getValidator() {
         return null;    // Will be replaced by Spring
     }
 

@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Allows only administrators to register new users.
- *
+ * <p>
  * Available only if internal security is used.
  */
 @ConditionalOnProperty(prefix = "termit.security", name = "provider", havingValue = "internal", matchIfMissing = true)
@@ -57,10 +57,9 @@ public class AdminBasedRegistrationController {
     @Autowired
     public AdminBasedRegistrationController(UserService userService) {
         this.userService = userService;
-        LOG.debug("Instantiating admin-based registration controller.");
     }
 
-    @Operation(security = {@SecurityRequirement(name="bearer-key")},
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
                description = "Creates a new user account. If the password is blank, the account is locked, and an email will be sent to the new user with a link to create a password.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User created"),

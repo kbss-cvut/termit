@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.model;
 
+import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLDataProperty;
@@ -39,7 +40,7 @@ public class TextAnalysisRecord extends AbstractEntity {
     private Instant date;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLObjectProperty(iri = Vocabulary.s_p_ma_analyzovany_zdroj)
+    @OWLObjectProperty(iri = Vocabulary.s_p_ma_analyzovany_zdroj, fetch = FetchType.EAGER)
     private Resource analyzedResource;
 
     @ParticipationConstraints(nonEmpty = true)
