@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
+import cz.cvut.kbss.termit.dto.RdfsResource;
 import cz.cvut.kbss.termit.dto.RdfsStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.acl.AccessControlListDto;
@@ -73,6 +74,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
+import java.net.URISyntaxException;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.eclipse.rdf4j.repository.RepositoryException;
 
 /**
  * Vocabulary management REST API.
@@ -119,54 +123,59 @@ public class VocabularyController extends BaseController {
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(@Parameter(description = "Metadata of the vocabulary to create.")
-                                                 @RequestBody Vocabulary vocabulary) {
+            @RequestBody Vocabulary vocabulary) {
         vocabularyService.persist(vocabulary);
         LOG.debug("Vocabulary {} created.", vocabulary);
         return ResponseEntity.created(generateLocation(vocabulary.getUri())).build();
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets detail of the vocabulary with the specified identifier.")
+            description = "Gets detail of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Matching vocabulary metadata."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Matching vocabulary metadata."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Vocabulary getById(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                         example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                              @PathVariable String localName,
-                              @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                         example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                              @RequestParam(name = QueryParams.NAMESPACE,
-                                            required = false) Optional<String> namespace) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace) {
         final URI id = resolveVocabularyUri(localName, namespace);
         return vocabularyService.findRequired(id);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets identifiers of vocabularies imported (including transitive imports) by the vocabulary with the specified identification.")
+            description = "Gets identifiers of vocabularies imported (including transitive imports) by the vocabulary with the specified identification.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/imports", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Collection<URI> getImports(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                 example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                      @PathVariable String localName,
-                                      @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                 example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                      @RequestParam(name = QueryParams.NAMESPACE,
-                                                    required = false) Optional<String> namespace) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace) {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
 
+    @GetMapping(value = "/imports/available", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<RdfsResource> getAvailableVocabularies() {
+        return vocabularyService.getAvailableVocabularies();
+    }
+
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets identifiers of vocabularies whose terms are in a SKOS relationship with terms from the specified vocabulary.")
+            description = "Gets identifiers of vocabularies whose terms are in a SKOS relationship with terms from the specified vocabulary.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/related", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public Collection<URI> getRelated(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
@@ -180,24 +189,42 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getRelatedVocabularies(vocabulary);
     }
 
-    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a new vocabulary by importing the specified SKOS glossary.")
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},       
+               description = "Creates a new vocabulary by importing the specified SKOS glossary"
+            + " or providing list of vocabulary iris to be downloaded from an external source")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
-            @ApiResponse(responseCode = "409",
-                         description = "If a matching vocabulary already exists or the imported one contains invalid data.")
+        @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
+        @ApiResponse(responseCode = "409",
+                description = "If a matching vocabulary already exists or the imported one contains invalid data.")
     })
     @PostMapping("/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(
             @Parameter(description = "File containing a SKOS glossary in RDF.")
-            @RequestParam(name = "file") MultipartFile file,
-            @Parameter(
-                    description = "Whether identifiers should be modified to prevent clashes with existing data.")
+            @RequestParam(name = "file", required = false) MultipartFile file,
+            @Parameter(description = "List of external SKOS vocabulary IRIs.")
+            @RequestParam(name = "vocabularyIris", required = false) List<String> vocabularyIris,
+            @Parameter(description = "Whether identifiers should be modified to prevent clashes with existing data.")
             @RequestParam(name = "rename", defaultValue = "false", required = false) boolean rename) {
-        final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
-        LOG.debug("New vocabulary {} imported.", vocabulary);
-        return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+
+        if (file != null) { // importing from file
+            final Vocabulary vocabulary = vocabularyService.importVocabulary(rename, file);
+            LOG.debug("New vocabulary {} imported.", vocabulary);
+            return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+        } else if (vocabularyIris != null) { // importing externally
+            try {
+                Vocabulary vocabulary = vocabularyService.importFromExternalUris(vocabularyIris);
+                LOG.debug("Vocabulary imported from IRIs: {}", vocabularyIris.toArray());
+                return ResponseEntity.created(locationWithout(generateLocation(vocabulary.getUri()), "/import")).build();
+
+            } catch (URISyntaxException | QueryEvaluationException | RepositoryException ex) {
+                LOG.error(ex.getMessage());
+                return ResponseEntity.accepted().build();
+            }
+        } else {
+            LOG.error("File and vocabularyIris are both null");
+            return ResponseEntity.badRequest().build(); // ani soubor, ani IRI
+        }
     }
 
     @Operation(description = "Gets a template Excel file that can be used to import terms into TermIt")
@@ -207,16 +234,16 @@ public class VocabularyController extends BaseController {
     public ResponseEntity<TypeAwareResource> getExcelTemplateFile(
             @Parameter(description = "Whether the file will be used to import only term translations")
             @RequestParam(name = "translationsOnly", required = false,
-                          defaultValue = "false") boolean translationsOnly) {
+                    defaultValue = "false") boolean translationsOnly) {
         final TypeAwareResource template =
                 translationsOnly ? vocabularyService.getExcelTranslationsImportTemplateFile() :
                 vocabularyService.getExcelImportTemplateFile();
         return ResponseEntity.ok()
-                             .contentType(MediaType.parseMediaType(
-                                     template.getMediaType().orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE)))
-                             .header(HttpHeaders.CONTENT_DISPOSITION,
-                                     "attachment; filename=\"" + template.getFilename() + "\"")
-                             .body(template);
+                .contentType(MediaType.parseMediaType(
+                        template.getMediaType().orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE)))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + template.getFilename() + "\"")
+                .body(template);
     }
 
     URI locationWithout(URI location, String toRemove) {
@@ -224,27 +251,27 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Imports a vocabulary from the specified SKOS glossary, possibly replacing existing vocabulary with matching identifier.")
+            description = "Imports a vocabulary from the specified SKOS glossary, possibly replacing existing vocabulary with matching identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
-            @ApiResponse(responseCode = "409", description = "If the imported file contains invalid data.")
+        @ApiResponse(responseCode = "201", description = "Vocabulary successfully created."),
+        @ApiResponse(responseCode = "409", description = "If the imported file contains invalid data.")
     })
     @PostMapping("/{localName}/import")
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_FULL_USER + "')")
     public ResponseEntity<Void> createVocabulary(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace,
+                    required = false) Optional<String> namespace,
             @Parameter(
                     description = "File containing a SKOS glossary in RDF or an Excel file with supported structure.")
             @RequestParam(name = "file") MultipartFile file,
             @Parameter(description = "Whether to import only translations of existing terms from the vocabulary.")
             @RequestParam(name = "translationsOnly", required = false,
-                          defaultValue = "false") boolean translationsOnly) {
+                    defaultValue = "false") boolean translationsOnly) {
         final URI vocabularyIri = resolveVocabularyUri(localName, namespace);
         final Vocabulary result;
         if (translationsOnly) {
@@ -255,7 +282,7 @@ public class VocabularyController extends BaseController {
             LOG.debug("Vocabulary {} re-imported.", result);
         }
         return ResponseEntity.created(locationWithout(generateLocation(result.getUri()), "/import/" + localName))
-                             .build();
+                .build();
     }
 
     private URI resolveVocabularyUri(String fragment, Optional<String> namespace) {
@@ -263,21 +290,21 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets a list of changes made to metadata of vocabulary with the specified identifier.")
+            description = "Gets a list of changes made to metadata of vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of change records."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "List of change records."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
 
     })
     @GetMapping(value = "/{localName}/history", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getHistory(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace,
+                    required = false) Optional<String> namespace,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION)
             @RequestParam(name = "type", required = false) URI changeType,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION)
@@ -291,43 +318,43 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets summary info about changes made to the content of the vocabulary (term creation, editing).")
+            description = "Gets summary info about changes made to the content of the vocabulary (term creation, editing).")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of aggregated change data."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "List of aggregated change data."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/history-of-content",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AggregatedChangeInfo> getHistoryOfContent(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
+                    required = false) Optional<String> namespace) {
         final Vocabulary vocabulary = vocabularyService.getReference(
                 resolveVocabularyUri(localName, namespace));
         return vocabularyService.getChangesOfContent(vocabulary);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets a list of changes made to the content of the vocabulary (term creation, editing).")
+            description = "Gets a list of changes made to the content of the vocabulary (term creation, editing).")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "List of change records."),
-                   @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)})
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)})
     @GetMapping(value = "/{localName}/history-of-content/detail",
-                produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+            produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<AbstractChangeRecord> getDetailedHistoryOfContent(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE) @PathVariable String localName,
+                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE) @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
-                                                                            required = false) Optional<String> namespace,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.TERM_NAME_DESCRIPTION) @RequestParam(name = "term",
-                                                                                                       required = false,
-                                                                                                       defaultValue = "") String termName,
+                    required = false,
+                    defaultValue = "") String termName,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.CHANGE_TYPE_DESCRIPTION) @RequestParam(name = "type",
-                                                                                                         required = false) URI changeType,
+                    required = false) URI changeType,
             @Parameter(description = ChangeRecordFilterDto.ApiDoc.AUTHOR_NAME_DESCRIPTION) @RequestParam(
                     name = "author",
                     required = false,
@@ -343,44 +370,44 @@ public class VocabularyController extends BaseController {
         final Pageable pageReq = createPageRequest(pageSize, pageNo);
         final Vocabulary vocabulary = vocabularyService.getReference(resolveVocabularyUri(localName, namespace));
         final ChangeRecordFilterDto filter = new ChangeRecordFilterDto(termName, changedAttributeName, authorName,
-                                                                       changeType);
+                changeType);
         return vocabularyService.getDetailedHistoryOfContent(vocabulary, filter, pageReq);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets a list of languages used in the vocabulary.")
+            description = "Gets a list of languages used in the vocabulary.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of languages.")
+        @ApiResponse(responseCode = "200", description = "List of languages.")
     })
     @GetMapping(value = "/{localName}/languages", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<String> getLanguages(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE) @PathVariable String localName,
+                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE) @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
-                                                                            required = false) Optional<String> namespace) {
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE) @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace) {
         final URI vocabularyUri = resolveVocabularyUri(localName, namespace);
         return vocabularyService.getLanguages(vocabularyUri);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates metadata of vocabulary with the specified identifier.")
+            description = "Updates metadata of vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Vocabulary successfully updated."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
-            @ApiResponse(responseCode = "409", description = "Provided metadata are invalid.")
+        @ApiResponse(responseCode = "204", description = "Vocabulary successfully updated."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(responseCode = "409", description = "Provided metadata are invalid.")
     })
     @PutMapping(value = "/{localName}", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateVocabulary(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                 @PathVariable String localName,
-                                 @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                            example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                 @RequestParam(name = QueryParams.NAMESPACE,
-                                               required = false) Optional<String> namespace,
-                                 @Parameter(description = "Updated vocabulary data.")
-                                 @RequestBody Vocabulary update) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace,
+            @Parameter(description = "Updated vocabulary data.")
+            @RequestBody Vocabulary update) {
         final URI vocabularyUri = resolveVocabularyUri(localName, namespace);
         verifyRequestAndEntityIdentifier(update, vocabularyUri);
         vocabularyService.update(update);
@@ -394,16 +421,16 @@ public class VocabularyController extends BaseController {
      * when specific conditions are fulfilled.
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Runs text analysis on the definitions of all terms in the vocabulary with the specified identifier.")
+            description = "Runs text analysis on the definitions of all terms in the vocabulary with the specified identifier.")
     @PutMapping(value = "/{localName}/terms/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void runTextAnalysisOnAllTerms(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                     example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                          @PathVariable String localName,
-                                          @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                     example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                          @RequestParam(name = QueryParams.NAMESPACE,
-                                                        required = false) Optional<String> namespace) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace) {
         vocabularyService.runTextAnalysisOnAllTerms(resolveVocabularyUri(localName, namespace));
     }
 
@@ -414,7 +441,7 @@ public class VocabularyController extends BaseController {
      * when specific conditions are fulfilled.
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Runs text analysis on definitions of all terms in all vocabularies.")
+            description = "Runs text analysis on definitions of all terms in all vocabularies.")
     @GetMapping(value = "/text-analysis")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
@@ -430,22 +457,22 @@ public class VocabularyController extends BaseController {
      * @see VocabularyService#remove(Vocabulary)  for details.
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Removes vocabulary with the specified identifier.")
+            description = "Removes vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Vocabulary successfully removed."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
-            @ApiResponse(responseCode = "409",
-                         description = "Unable to remove vocabulary. E.g., it contains terms, it is referenced by other vocabularies, etc.")
+        @ApiResponse(responseCode = "204", description = "Vocabulary successfully removed."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
+        @ApiResponse(responseCode = "409",
+                description = "Unable to remove vocabulary. E.g., it contains terms, it is referenced by other vocabularies, etc.")
     })
     @DeleteMapping(value = "/{localName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeVocabulary(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                 @PathVariable String localName,
-                                 @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                            example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                 @RequestParam(name = QueryParams.NAMESPACE,
-                                               required = false) Optional<String> namespace) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
         vocabularyService.remove(vocabulary);
@@ -453,19 +480,19 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Returns relations with other vocabularies")
+            description = "Returns relations with other vocabularies")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "A collection of vocabulary relations"),
+        @ApiResponse(responseCode = "200", description = "A collection of vocabulary relations"),
             @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
     })
     @GetMapping(value = "/{localName}/relations")
     public List<RdfsStatement> relations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                         @PathVariable String localName,
-                                         @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                         @RequestParam(name = QueryParams.NAMESPACE,
-                                                       required = false) Optional<String> namespace) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
 
@@ -473,19 +500,19 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Returns relations with terms from other vocabularies")
+            description = "Returns relations with terms from other vocabularies")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "A collection of term relations"),
+        @ApiResponse(responseCode = "200", description = "A collection of term relations"),
             @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION),
     })
     @GetMapping(value = "/{localName}/terms/relations")
     public List<RdfsStatement> termsRelations(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                         example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                              @PathVariable String localName,
-                                              @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                         example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                              @RequestParam(name = QueryParams.NAMESPACE,
-                                                            required = false) Optional<String> namespace) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.findRequired(identifier);
 
@@ -493,21 +520,21 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Creates a snapshot of the vocabulary with the specified identifier.")
+            description = "Creates a snapshot of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Snapshot successfully created."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "201", description = "Snapshot successfully created."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PostMapping("/{localName}/versions")
     public ResponseEntity<Void> createSnapshot(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(
                     description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
                     example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
+                    required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         final Snapshot snapshot = vocabularyService.createSnapshot(vocabulary);
@@ -517,25 +544,25 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets a list of snapshots of the vocabulary with the specified identifier.")
+            description = "Gets a list of snapshots of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200",
-                         description = "A list of snapshots or a snapshot valid at the requested datetime."),
-            @ApiResponse(responseCode = "400", description = "Provided timestamp is invalid."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200",
+                description = "A list of snapshots or a snapshot valid at the requested datetime."),
+        @ApiResponse(responseCode = "400", description = "Provided timestamp is invalid."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/versions", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<?> getSnapshots(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                     example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                          @PathVariable String localName,
-                                          @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                     example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                          @RequestParam(name = QueryParams.NAMESPACE,
-                                                        required = false) Optional<String> namespace,
-                                          @Parameter(
-                                                  description = "Timestamp at which the returned version was valid. ISO-formatted datetime.",
-                                                  example = ApiDocConstants.DATETIME_EXAMPLE)
-                                          @RequestParam(name = "at", required = false) Optional<String> at) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace,
+            @Parameter(
+                    description = "Timestamp at which the returned version was valid. ISO-formatted datetime.",
+                    example = ApiDocConstants.DATETIME_EXAMPLE)
+            @RequestParam(name = "at", required = false) Optional<String> at) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         if (at.isPresent()) {
@@ -546,42 +573,42 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the access control list of the vocabulary with the specified identifier.")
+            description = "Gets the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Access control list instance."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Access control list instance."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/acl", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public AccessControlListDto getAccessControlList(
             @Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                       example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
             @PathVariable String localName,
             @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                       example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
             @RequestParam(name = QueryParams.NAMESPACE,
-                          required = false) Optional<String> namespace) {
+                    required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         return vocabularyService.getAccessControlList(vocabulary);
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Adds the specified access control record to the access control list of the vocabulary with the specified identifier.")
+            description = "Adds the specified access control record to the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Record successfully added."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Record successfully added."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PostMapping(value = "/{localName}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addAccessControlRecord(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                  example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                       @PathVariable String localName,
-                                       @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                  example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                       @RequestParam(name = QueryParams.NAMESPACE,
-                                                     required = false) Optional<String> namespace,
-                                       @Parameter(description = "Access control record to add.")
-                                       @RequestBody AccessControlRecord<?> record) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace,
+            @Parameter(description = "Access control record to add.")
+            @RequestBody AccessControlRecord<?> record) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         vocabularyService.addAccessControlRecords(vocabulary, record);
@@ -589,22 +616,22 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Removes the specified access control record from the access control list of the vocabulary with the specified identifier.")
+            description = "Removes the specified access control record from the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Record successfully removed."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Record successfully removed."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @DeleteMapping(value = "/{localName}/acl/records", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeAccessControlRecord(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                     example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                          @PathVariable String localName,
-                                          @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                     example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                          @RequestParam(name = QueryParams.NAMESPACE,
-                                                        required = false) Optional<String> namespace,
-                                          @Parameter(description = "Access control record to remove.")
-                                          @RequestBody AccessControlRecord<?> record) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace,
+            @Parameter(description = "Access control record to remove.")
+            @RequestBody AccessControlRecord<?> record) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         vocabularyService.removeAccessControlRecord(vocabulary, record);
@@ -612,26 +639,26 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Updates access level of specified access control record in the access control list of the vocabulary with the specified identifier.")
+            description = "Updates access level of specified access control record in the access control list of the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Access level successfully updated."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "204", description = "Access level successfully updated."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @PutMapping(value = "/{localName}/acl/records/{recordLocalName}",
-                consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+            consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateAccessControlLevel(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                    example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                         @PathVariable String localName,
-                                         @Parameter(
-                                                 description = "Locally unique part of the access control record identifier.")
-                                         @PathVariable String recordLocalName,
-                                         @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                         @RequestParam(name = QueryParams.NAMESPACE,
-                                                       required = false) Optional<String> namespace,
-                                         @Parameter(description = "Access control record to remove.")
-                                         @RequestBody AccessControlRecord<?> record) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(
+                    description = "Locally unique part of the access control record identifier.")
+            @PathVariable String recordLocalName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace,
+            @Parameter(description = "Access control record to remove.")
+            @RequestBody AccessControlRecord<?> record) {
         if (!record.getUri().toString().contains(recordLocalName)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Change record identifier does not match URL.");
         }
@@ -642,19 +669,19 @@ public class VocabularyController extends BaseController {
     }
 
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
-               description = "Gets the access level of the current user to the vocabulary with the specified identifier.")
+            description = "Gets the access level of the current user to the vocabulary with the specified identifier.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Access level."),
-            @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
+        @ApiResponse(responseCode = "200", description = "Access level."),
+        @ApiResponse(responseCode = "404", description = ApiDoc.ID_NOT_FOUND_DESCRIPTION)
     })
     @GetMapping(value = "/{localName}/access-level")
     public AccessLevel getAccessLevel(@Parameter(description = ApiDoc.ID_LOCAL_NAME_DESCRIPTION,
-                                                 example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
-                                      @PathVariable String localName,
-                                      @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
-                                                 example = ApiDoc.ID_NAMESPACE_EXAMPLE)
-                                      @RequestParam(name = QueryParams.NAMESPACE,
-                                                    required = false) Optional<String> namespace) {
+            example = ApiDoc.ID_LOCAL_NAME_EXAMPLE)
+            @PathVariable String localName,
+            @Parameter(description = ApiDoc.ID_NAMESPACE_DESCRIPTION,
+                    example = ApiDoc.ID_NAMESPACE_EXAMPLE)
+            @RequestParam(name = QueryParams.NAMESPACE,
+                    required = false) Optional<String> namespace) {
         final URI identifier = resolveIdentifier(namespace.orElse(config.getNamespace().getVocabulary()), localName);
         final Vocabulary vocabulary = vocabularyService.getReference(identifier);
         return vocabularyService.getAccessLevel(vocabulary);
