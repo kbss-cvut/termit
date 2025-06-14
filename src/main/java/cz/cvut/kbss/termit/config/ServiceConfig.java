@@ -19,6 +19,9 @@ package cz.cvut.kbss.termit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
+import cz.cvut.kbss.termit.service.validation.ExternalServiceValidator;
+import cz.cvut.kbss.termit.service.validation.NoopRepositoryContextValidator;
+import cz.cvut.kbss.termit.service.validation.RepositoryContextValidator;
 import cz.cvut.kbss.termit.util.Utils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
@@ -28,10 +31,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -69,7 +74,8 @@ public class ServiceConfig {
         jacksonConverter.setObjectMapper(objectMapper);
         final StringHttpMessageConverter stringConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
         restTemplate.setMessageConverters(
-                Arrays.asList(jacksonConverter, stringConverter, new ResourceHttpMessageConverter()));
+                Arrays.asList(jacksonConverter, stringConverter, new ResourceHttpMessageConverter(),
+                              new FormHttpMessageConverter()));
         return restTemplate;
     }
 
@@ -104,5 +110,17 @@ public class ServiceConfig {
             return createFileSystemResource(config.getLanguage().getStates().getSource(), "states");
         }
         return new ClassPathResource("languages/states.ttl");
+    }
+
+    @Bean
+    public RepositoryContextValidator repositoryContextValidator(RestTemplate restTemplate, Environment env) {
+        if (!env.containsProperty("termit.validation-service-url")) {
+            LOG.warn("Validation service URL not configured, will use no-op validator.");
+            return new NoopRepositoryContextValidator();
+        } else {
+            final String validationServiceUrl = env.getProperty("termit.validation-service-url");
+            LOG.debug("Using validation service at {}.", validationServiceUrl);
+            return new ExternalServiceValidator(restTemplate, validationServiceUrl);
+        }
     }
 }

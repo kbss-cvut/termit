@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -63,7 +62,7 @@ class TextAnalysisRecordDaoTest extends BaseDaoTestRunner {
     @Test
     void findLatestGetsLatestTextAnalysisRecordForResource() {
         final URI vocabulary = Generator.generateUri();
-        final TextAnalysisRecord old = new TextAnalysisRecord(Instant.ofEpochMilli(System.currentTimeMillis() - 10000),
+        final TextAnalysisRecord old = new TextAnalysisRecord(Utils.timestamp().minusSeconds(10),
                                                               resource, Environment.LANGUAGE);
         old.setVocabularies(Collections.singleton(vocabulary));
         final TextAnalysisRecord latest = new TextAnalysisRecord(Utils.timestamp(), resource, Environment.LANGUAGE);

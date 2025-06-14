@@ -553,4 +553,22 @@ class SKOSImporterTest extends BaseDaoTestRunner {
             }
         });
     }
+
+    @Test
+    void importVocabularyUsesPreferredNamespaceFromImportedData() {
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                                 new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                                                                    Environment.loadFile("data/test-glossary.ttl"),
+                                                                    Environment.loadFile("data/test-vocabulary.ttl")));
+        });
+
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
+        assertNotNull(result);
+        assertThat(result.getProperties().keySet(),
+                   hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
+        assertEquals(Set.of("http://onto.fel.cvut.cz/ontologies/application/termit/pojem/"),
+                     result.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
+    }
 }

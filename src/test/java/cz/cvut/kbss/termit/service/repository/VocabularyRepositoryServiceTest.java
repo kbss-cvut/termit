@@ -63,6 +63,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -129,7 +130,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
         assertNotNull(result);
         assertThat(result.getUri().toString(),
-                containsString(IdentifierResolver.normalize(getPrimaryLabel(vocabulary))));
+                   containsString(IdentifierResolver.normalize(getPrimaryLabel(vocabulary))));
     }
 
     @Test
@@ -163,6 +164,20 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary toPersist = Generator.generateVocabulary();
         toPersist.setUri(vocabulary.getUri());
         assertThrows(ResourceExistsException.class, () -> sut.persist(toPersist));
+    }
+
+    @Test
+    void persistGeneratesPreferredNamespaceWithVocabularyIdentifierAndTermSeparatorAsValue() {
+        final Vocabulary vocabulary = Generator.generateVocabulary();
+        sut.persist(vocabulary);
+        assertNotNull(vocabulary.getUri());
+
+        final Vocabulary result = em.find(Vocabulary.class, vocabulary.getUri());
+        assertNotNull(result);
+        assertThat(result.getProperties().keySet(),
+                   hasItem(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
+        assertEquals(Set.of(result.getUri() + config.getNamespace().getTerm().getSeparator()),
+                     result.getProperties().get(cz.cvut.kbss.termit.util.Vocabulary.s_p_preferredNamespaceUri));
     }
 
     @Test
@@ -210,7 +225,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
             em.persist(importing, descriptorFor(importing));
         });
 
-        assertThrows(AssetRemovalException.class, ()-> sut.remove(vocabulary));
+        assertThrows(AssetRemovalException.class, () -> sut.remove(vocabulary));
 
         // ensure nothing was deleted
         final Vocabulary v = em.find(Vocabulary.class, vocabulary.getUri());
@@ -232,7 +247,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Term objectTerm = Generator.generateTermWithId(vocabulary.getUri());
         final Term subjectTerm = Generator.generateTermWithId(secondVocabulary.getUri());
 
-        transactional(()->{
+        transactional(() -> {
             em.persist(vocabulary, descriptorFor(vocabulary));
             em.persist(secondVocabulary, descriptorFor(secondVocabulary));
             em.persist(objectTerm, descriptorFactory.termDescriptor(objectTerm));
@@ -241,7 +256,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
             Environment.addRelation(subjectTerm.getUri(), relation, objectTerm.getUri(), em);
         });
 
-        assertThrows(AssetRemovalException.class, ()->sut.remove(vocabulary));
+        assertThrows(AssetRemovalException.class, () -> sut.remove(vocabulary));
     }
 
 

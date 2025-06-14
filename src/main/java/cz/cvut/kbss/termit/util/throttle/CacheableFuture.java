@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.util.throttle;
 
 import cz.cvut.kbss.termit.exception.TermItException;
+import cz.cvut.kbss.termit.exception.UnsupportedOperationException;
 import jakarta.annotation.Nullable;
 
 import java.util.Optional;
@@ -26,6 +27,7 @@ import java.util.concurrent.Future;
 
 /**
  * A future which can provide a cached result before its completion.
+ *
  * @see Future
  */
 public interface CacheableFuture<T> extends Future<T> {
@@ -52,6 +54,9 @@ public interface CacheableFuture<T> extends Future<T> {
                 return Optional.of(get());
             }
         } catch (ExecutionException e) {
+            if (e.getCause() instanceof UnsupportedOperationException) {
+                return Optional.empty();
+            }
             throw new TermItException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

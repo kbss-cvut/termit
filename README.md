@@ -96,6 +96,10 @@ TermIt Docker images are also published to [DockerHub](https://hub.docker.com/r/
     - Cite as _Křemen P, Med M., Blaško M., Saeeda L., Ledvinka M. and Buzek A. (2024). TermIt: Managing Normative
       Thesauri’. Semantic Web. DOI: 10.3233/SW-243547_
 
+## Getting TermIt
+
+Docker images of TermIt backend are available at [DockerHub](https://hub.docker.com/r/kbsscvut/termit).
+
 ## License
 
 Licensed under GPL v3.0.

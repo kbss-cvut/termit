@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.persistence.validation;
+package cz.cvut.kbss.termit.service.validation;
 
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 class ResultCachingValidatorTest {
 
     @Mock
-    private Validator validator;
+    private ThrottlingValidator validator;
 
     private ResultCachingValidator sut;
 
@@ -69,7 +69,7 @@ class ResultCachingValidatorTest {
     }
 
     @Test
-    void invokesInternalValidatorWhenNoResultsAreCached() throws Exception {
+    void invokesInternalValidatorWhenNoResultsAreCached() {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.validate(any(), anyCollection())).thenReturn(ThrottledFuture.done(results));
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
@@ -79,7 +79,7 @@ class ResultCachingValidatorTest {
     }
 
     @Test
-    void returnsCachedResultsWhenArgumentsMatch() throws Exception {
+    void returnsCachedResultsWhenArgumentsMatch() {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.validate(any(), anyCollection())).thenReturn(ThrottledFuture.done(results));
         final Set<URI> vocabularies = Collections.singleton(vocabulary);
@@ -92,7 +92,7 @@ class ResultCachingValidatorTest {
     }
 
     @Test
-    void evictCacheClearsCachedValidationResults() throws Exception {
+    void evictCacheClearsCachedValidationResults() {
         final List<ValidationResult> results = Collections.singletonList(validationResult);
         when(validator.validate(any(), anyCollection())).thenReturn(ThrottledFuture.done(results));
         final Set<URI> vocabularies = Collections.singleton(vocabulary);

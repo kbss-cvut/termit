@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package cz.cvut.kbss.termit.persistence.validation;
+package cz.cvut.kbss.termit.service.validation;
 
 import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.util.throttle.ThrottledFuture;
@@ -36,7 +36,7 @@ public interface VocabularyContentValidator {
      *
      * @param originVocabularyIri the origin vocabulary IRI
      * @param vocabularyIris Vocabulary identifiers (including {@code originVocabularyIri}
-     * @return List of violations of validation rules. Empty list if there are not violations
+     * @return List of violations of validation rules. Empty list if there are no violations
      */
     @Nonnull
     ThrottledFuture<Collection<ValidationResult>> validate(@Nonnull URI originVocabularyIri, @Nonnull Collection<URI> vocabularyIris);
