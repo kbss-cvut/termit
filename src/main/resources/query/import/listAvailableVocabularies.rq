@@ -1,0 +1,10 @@
+PREFIX dct: <http://purl.org/dc/terms/>
+SELECT DISTINCT ?slovnik ?nazev_slovniku_cs ?nazev_slovniku_en
+WHERE { 
+	?slovnik a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> .
+	?slovnik dct:title ?nazev_slovniku_cs .
+	FILTER (lang(?nazev_slovniku_cs)="cs")
+	Optional{  ?slovnik dct:title ?nazev_slovniku_en .
+		FILTER (lang(?nazev_slovniku_en)="en")
+	}
+}

@@ -84,6 +84,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static cz.cvut.kbss.termit.util.Constants.VOCABULARY_REMOVAL_IGNORED_RELATIONS;
+import cz.cvut.kbss.termit.util.Utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -298,7 +299,9 @@ public class VocabularyService
     }
 
     private static final String SPARQL_ENDPOIND_ADDRESS = "https://xn--slovnk-7va.gov.cz/sparql";
-    
+    private static final String LIST_AVAILABLE_VOCABULARIES_QUERY = "import/listAvailableVocabularies.rq";
+    private static final String EXPORT_FULL_VOCABULARY_QUERY = "import/exportFullVocabulary.rq";
+
 /**
  * Sends a SPARQL query to fetch list of available vocabularies.
  * 
@@ -309,19 +312,8 @@ public class VocabularyService
         List<RdfsResource> response = new ArrayList<>();
 
         String sparqlEndpoint = SPARQL_ENDPOIND_ADDRESS;
-        String sparqlQuery
-                = """
-                          PREFIX dct: <http://purl.org/dc/terms/>
-                           SELECT DISTINCT ?slovnik ?nazev_slovniku_cs ?nazev_slovniku_en
-                           WHERE { 
-                          ?slovnik a <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/slovník> .
-                          ?slovnik dct:title ?nazev_slovniku_cs .
-                          FILTER (lang(?nazev_slovniku_cs)="cs")
-                          Optional{  ?slovnik dct:title ?nazev_slovniku_en .
-                          FILTER (lang(?nazev_slovniku_en)="en")
-                          }
-                          }
-                          """;
+        String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
+
         SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
         sparqlRepo.init();
         try (RepositoryConnection conn = sparqlRepo.getConnection()) {
@@ -403,107 +395,8 @@ public class VocabularyService
         List<RdfsResource> response = new ArrayList<>();
 
         String sparqlEndpoint = SPARQL_ENDPOIND_ADDRESS;
-        String sparqlQuery
-                = String.format("""
-                          PREFIX owl: <http://www.w3.org/2002/07/owl#>
-                          PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                          PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
-                          PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                          PREFIX dc: <http://purl.org/dc/terms/>
-                          
-                          CONSTRUCT {
-                              ?glossary a skos:ConceptScheme ;
-                                        dc:title ?label ;
-                                        dc:description ?description ;
-                                        dc:rights ?rights ;
-                                        owl:imports ?imported ;
-                                        owl:versionIRI ?versionIri ;
-                                        <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
-                                        <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix ;
-                                        <http://purl.org/ontology/bibo/status> ?status .
-                             ?term ?y ?z ;
-                                    skos:broader ?broader ;
-                                    skos:broadMatch ?broadMatch ;
-                                  skos:related ?related ;
-                                  skos:exactMatch ?exactMatch ;
-                                  skos:relatedMatch ?relatedMatch ;
-                                  a ?type .
-                          } WHERE {
-                              VALUES (?vocabulary) {(<%s>)}
-                              ?vocabulary pdp:má-glosář ?glossary ;
-                                          dc:title ?vocabularyLabel .
-                              OPTIONAL {
-                                  ?glossary dc:title ?glossaryLabel .
-                              }
-                              OPTIONAL {
-                                  ?vocabulary dc:description ?description .
-                              }
-                              OPTIONAL {
-                                  ?glossary owl:versionIRI ?versionIri .
-                              }
-                              OPTIONAL {
-                                  ?glossary dc:rights ?rights .
-                              }
-                              OPTIONAL {
-                                  ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
-                                            <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
-                              }
-                              OPTIONAL {
-                                  ?glossary <http://purl.org/ontology/bibo/status> ?status .
-                              }
-                              OPTIONAL {
-                                  ?vocabulary pdp:importuje-slovník/pdp:má-glosář ?imported .
-                              }
-                              BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)
-                             
-                              ?term a skos:Concept ;
-                                  	skos:inScheme ?glossary ;
-                              		?y ?z .
-                              OPTIONAL {
-                                  ?term skos:broader ?broader .
-                                  FILTER NOT EXISTS {
-                                      ?term skos:broader ?intermediate .
-                                      ?intermediate skos:broader ?broader .
-                                      FILTER (?broader != ?intermediate)
-                                  }
-                                  FILTER NOT EXISTS {
-                                      ?term skos:broadMatch ?broader .
-                                  }
-                              }
-                              OPTIONAL {
-                                  ?term skos:broadMatch ?broadMatch .
-                                  FILTER NOT EXISTS {
-                                      ?term skos:broadMatch ?intermediate2 .
-                                      ?intermediate2 skos:broadMatch ?broadMatch .
-                                      FILTER (?broadMatch != ?intermediate2)
-                                  }
-                              }
-                              OPTIONAL {
-                                  ?term skos:related ?related .
-                                  FILTER NOT EXISTS {
-                                      ?term skos:relatedMatch ?related .
-                                  }
-                              }
-                          
-                              OPTIONAL {
-                                  ?term a ?type .
-                                  FILTER (?type != skos:Concept)
-                                  FILTER(!STRSTARTS(STR(?type), str(owl:)))
-                                  FILTER NOT EXISTS {
-                                      ?term a ?intermediateType .
-                                      ?intermediateType rdfs:subClassOf ?type .
-                                      FILTER (?type != ?intermediateType)
-                                  }
-                              }
-                              FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf, skos:relatedMatch, skos:exactMatch))
-                              OPTIONAL {
-                                  ?term skos:relatedMatch ?relatedMatch .
-                              }
-                              OPTIONAL {
-                                  ?term skos:exactMatch ?exactMatch .
-                              }
-                          }
-                          """, vocabularyIri);
+        String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
+
         SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
         sparqlRepo.init();
         RepositoryConnection conn = sparqlRepo.getConnection();

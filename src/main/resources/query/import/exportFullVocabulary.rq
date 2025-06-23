@@ -1,0 +1,98 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX pdp: <http://onto.fel.cvut.cz/ontologies/slovník/agendový/popis-dat/pojem/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dc: <http://purl.org/dc/terms/>
+
+CONSTRUCT {
+?glossary a skos:ConceptScheme ;
+        dc:title ?label ;
+        dc:description ?description ;
+        dc:rights ?rights ;
+        owl:imports ?imported ;
+        owl:versionIRI ?versionIri ;
+        <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
+        <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix ;
+        <http://purl.org/ontology/bibo/status> ?status .
+?term ?y ?z ;
+	skos:broader ?broader ;
+	skos:broadMatch ?broadMatch ;
+	skos:related ?related ;
+	skos:exactMatch ?exactMatch ;
+	skos:relatedMatch ?relatedMatch ;
+	a ?type .
+} WHERE {
+	VALUES (?vocabulary) {(<%s>)}
+	?vocabulary pdp:má-glosář ?glossary ;
+		  dc:title ?vocabularyLabel .
+	OPTIONAL {
+	  ?glossary dc:title ?glossaryLabel .
+	}
+	OPTIONAL {
+	  ?vocabulary dc:description ?description .
+	}
+	OPTIONAL {
+	  ?glossary owl:versionIRI ?versionIri .
+	}
+	OPTIONAL {
+	  ?glossary dc:rights ?rights .
+	}
+	OPTIONAL {
+	  ?glossary <http://purl.org/vocab/vann/preferredNamespaceUri> ?nsUri ;
+		    <http://purl.org/vocab/vann/preferredNamespacePrefix> ?nsPrefix .
+	}
+	OPTIONAL {
+	  ?glossary <http://purl.org/ontology/bibo/status> ?status .
+	}
+	OPTIONAL {
+	  ?vocabulary pdp:importuje-slovník/pdp:má-glosář ?imported .
+	}
+	BIND (COALESCE(?glossaryLabel, ?vocabularyLabel) AS ?label)
+
+	?term a skos:Concept ;
+	  	skos:inScheme ?glossary ;
+		?y ?z .
+	OPTIONAL {
+	  ?term skos:broader ?broader .
+	  FILTER NOT EXISTS {
+	      ?term skos:broader ?intermediate .
+	      ?intermediate skos:broader ?broader .
+	      FILTER (?broader != ?intermediate)
+	  }
+	  FILTER NOT EXISTS {
+	      ?term skos:broadMatch ?broader .
+	  }
+	}
+	OPTIONAL {
+	  ?term skos:broadMatch ?broadMatch .
+	  FILTER NOT EXISTS {
+	      ?term skos:broadMatch ?intermediate2 .
+	      ?intermediate2 skos:broadMatch ?broadMatch .
+	      FILTER (?broadMatch != ?intermediate2)
+	  }
+	}
+	OPTIONAL {
+	  ?term skos:related ?related .
+	  FILTER NOT EXISTS {
+	      ?term skos:relatedMatch ?related .
+	  }
+	}
+
+	OPTIONAL {
+	  ?term a ?type .
+	  FILTER (?type != skos:Concept)
+	  FILTER(!STRSTARTS(STR(?type), str(owl:)))
+	  FILTER NOT EXISTS {
+	      ?term a ?intermediateType .
+	      ?intermediateType rdfs:subClassOf ?type .
+	      FILTER (?type != ?intermediateType)
+	  }
+	}
+	FILTER (?y NOT IN (skos:broader, skos:broadMatch, skos:related, rdfs:subClassOf, skos:relatedMatch, skos:exactMatch))
+	OPTIONAL {
+	  ?term skos:relatedMatch ?relatedMatch .
+	}
+	OPTIONAL {
+	  ?term skos:exactMatch ?exactMatch .
+	}
+}
