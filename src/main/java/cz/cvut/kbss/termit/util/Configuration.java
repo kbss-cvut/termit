@@ -124,6 +124,8 @@ public class Configuration {
     @Valid
     private PublicView publicView = new PublicView();
     @Valid
+    private External external = new External();
+    @Valid
     private Workspace workspace = new Workspace();
     @Valid
     private Cors cors = new Cors();
@@ -266,6 +268,14 @@ public class Configuration {
 
     public void setPublicView(PublicView publicView) {
         this.publicView = publicView;
+    }
+
+    public External getExternal() {
+        return external;
+    }
+
+    public void setExternal(External external) {
+        this.external = external;
     }
 
     public Workspace getWorkspace() {
@@ -1063,6 +1073,23 @@ public class Configuration {
 
         public void setExcelImport(Optional<String> excelImport) {
             this.excelImport = excelImport;
+        }
+    }
+
+    @Validated
+    public static class External {
+        /**
+         * Address for the external resource
+         */
+        @NotNull
+        private String resource = "";
+
+        public String getResource() {
+            return resource;
+        }
+
+        public void setResource(String resource) {
+            this.resource = resource;
         }
     }
 }

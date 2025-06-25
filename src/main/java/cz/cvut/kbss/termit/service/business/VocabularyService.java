@@ -298,7 +298,7 @@ public class VocabularyService
         return imported;
     }
 
-    private static final String SPARQL_ENDPOIND_ADDRESS = "https://xn--slovnk-7va.gov.cz/sparql";
+    
     private static final String LIST_AVAILABLE_VOCABULARIES_QUERY = "import/listAvailableVocabularies.rq";
     private static final String EXPORT_FULL_VOCABULARY_QUERY = "import/exportFullVocabulary.rq";
 
@@ -310,8 +310,10 @@ public class VocabularyService
     public List<RdfsResource> getAvailableVocabularies() {
 
         List<RdfsResource> response = new ArrayList<>();
+        
+        final Configuration config = context.getBean(Configuration.class);
 
-        String sparqlEndpoint = SPARQL_ENDPOIND_ADDRESS;
+        String sparqlEndpoint = config.getExternal().getResource();
         String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
 
         SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
@@ -393,8 +395,9 @@ public class VocabularyService
     private InputStream downloadExternalVocabulary(String vocabularyIri) throws QueryEvaluationException, RepositoryException{
 
         List<RdfsResource> response = new ArrayList<>();
+        final Configuration config = context.getBean(Configuration.class);
 
-        String sparqlEndpoint = SPARQL_ENDPOIND_ADDRESS;
+        String sparqlEndpoint = config.getExternal().getResource();;
         String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
 
         SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
