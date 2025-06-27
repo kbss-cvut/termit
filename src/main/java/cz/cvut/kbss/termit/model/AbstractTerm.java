@@ -24,6 +24,7 @@ import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Sparql;
 import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.model.annotations.Types;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
@@ -55,6 +56,15 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     @OWLAnnotationProperty(iri = SKOS.DEFINITION)
     private MultilingualString definition;
 
+    @JsonIgnore
+    @Sparql(query = """
+            SELECT ?primaryLanguage
+            WHERE {
+                ?vocabulary dcterms:language ?primaryLanguage .
+            }
+            """)
+    private String vocabularyPrimaryLanguage;
+
     @Transient  // Not used by JOPA
     @OWLObjectProperty(iri = SKOS.NARROWER) // But map the property for JSON-LD serialization
     private Set<TermInfo> subTerms;
@@ -84,6 +94,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         if (other.getDefinition() != null) {
             this.definition = new MultilingualString(other.getDefinition().getValue());
         }
+        this.vocabularyPrimaryLanguage = other.vocabularyPrimaryLanguage;
         this.state = other.state;
         this.glossary = other.glossary;
         this.vocabulary = other.vocabulary;
@@ -118,12 +129,21 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.label = label;
     }
 
+    @Override
+    public String getPrimaryLabel() {
+        return getLabel(vocabularyPrimaryLanguage);
+    }
+
     public MultilingualString getDefinition() {
         return definition;
     }
 
     public void setDefinition(MultilingualString definition) {
         this.definition = definition;
+    }
+
+    public String getVocabularyPrimaryLanguage() {
+        return vocabularyPrimaryLanguage;
     }
 
     public Set<TermInfo> getSubTerms() {

@@ -62,6 +62,10 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
     private Document document;
 
     @ParticipationConstraints(nonEmpty = true)
+    @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE)
+    private String primaryLanguage;
+
+    @ParticipationConstraints(nonEmpty = true)
     @OWLObjectProperty(iri = cz.cvut.kbss.termit.util.Vocabulary.s_p_ma_glosar,
                        cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
                        fetch = FetchType.EAGER)
@@ -129,6 +133,14 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    public String getPrimaryLanguage() {
+        return primaryLanguage;
+    }
+
+    public void setPrimaryLanguage(String primaryLanguage) {
+        this.primaryLanguage = primaryLanguage;
     }
 
     public Glossary getGlossary() {
