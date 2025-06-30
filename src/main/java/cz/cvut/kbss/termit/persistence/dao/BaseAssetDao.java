@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.persistence.dao;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.termit.dto.RecentlyCommentedAsset;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
@@ -88,7 +89,11 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                     + "  ?entity ?hasLabel ?label ."
                                     + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
                                     + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
-                                    + "  OPTIONAL { ?entity ?inVocabulary ?vocabulary . }"
+                                    + "  OPTIONAL { "
+                                    + "      ?entity ?inVocabulary ?vocabulary . "
+                                    + "      ?vocabulary ?hasLanguage ?vocabularyLanguage . "
+                                    + "      BIND(COALESCE(?vocabularyLanguage, ?language) AS ?language)"
+                                    + "  }"
                                     + "  BIND(COALESCE(?modified,?created) AS ?lastCommented) "
                                     + "  BIND(?cls as ?type) "
                                     + "  { SELECT (MAX(?lastCommented2) AS ?max) {"
@@ -105,6 +110,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
                     .setParameter("hasLabel", labelProperty())
+                    .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                     .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
@@ -149,6 +155,11 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                                + "  }"
                                                + "  FILTER (?lastCommentedByMe = ?maxByMe )"
                                                + "  FILTER(?myLastCommentUri != ?lastCommentUri)"
+                                               + "  OPTIONAL { "
+                                               + "      ?entity ?inVocabulary ?vocabulary . "
+                                               + "      ?vocabulary ?hasLanguage ?vocabularyLanguage . "
+                                               + "      BIND(COALESCE(?vocabularyLanguage, ?language) AS ?language)"
+                                               + "  }"
                                                + "  FILTER (lang(?label) = ?language)"
                                                + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
                                                + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
@@ -167,6 +178,8 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
                     .setParameter("hasLabel", labelProperty())
+                    .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                    .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                     .setParameter("hasAuthor", URI.create(Vocabulary.s_p_sioc_has_creator))
@@ -212,12 +225,19 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                                + "        } GROUP BY ?entity"
                                                + "  }"
                                                + "  FILTER (?lastCommented = ?max )"
+                                               + "  OPTIONAL { "
+                                               + "      ?entity ?inVocabulary ?vocabulary . "
+                                               + "      ?vocabulary ?hasLanguage ?vocabularyLanguage . "
+                                               + "      BIND(COALESCE(?vocabularyLanguage, ?language) AS ?language)"
+                                               + "  }"
                                                + "  FILTER (lang(?label) = ?language)"
                                                + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
                     .setParameter("cls", typeUri)
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
                     .setParameter("hasEntity", URI.create(Vocabulary.s_p_topic))
                     .setParameter("hasLabel", labelProperty())
+                    .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                    .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                     .setParameter("hasEditor", URI.create(Vocabulary.s_p_ma_editora))
                     .setParameter("hasModifiedEntity", URI.create(Vocabulary.s_p_ma_zmenenou_entitu))
                     .setParameter("author", author)
