@@ -25,7 +25,6 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.User;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +47,8 @@ public class AssetDao {
 
     private final EntityManager em;
 
-    private final Configuration.Persistence config;
-
-    public AssetDao(EntityManager em, Configuration config) {
+    public AssetDao(EntityManager em) {
         this.em = em;
-        this.config = config.getPersistence();
     }
 
     /**
@@ -86,6 +82,7 @@ public class AssetDao {
                                 "?ent ?hasLabel ?label . " +
                                 insertVocabularyPattern(asset) +
                                 "BIND (?ent as ?entity)" +
+                                insertLanguagePattern() +
                                 "BIND (?author as ?modifiedBy)" +
                                 "FILTER (?chType != ?change)" +
                                 "FILTER (?hasLabel in (?labelProperties))" +
@@ -102,6 +99,7 @@ public class AssetDao {
                 .setParameter("hasModificationDate", URI.create(Vocabulary.s_p_ma_datum_a_cas_modifikace))
                 .setParameter("persist", URI.create(Vocabulary.s_c_vytvoreni_entity))
                 .setParameter("update", URI.create(Vocabulary.s_c_uprava_entity))
+                .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                 .setParameter("language", config.getLanguage())
                 .setMaxResults(1);
         setVocabularyRelatedParameter(asset, query);
@@ -117,6 +115,26 @@ public class AssetDao {
             LOG.warn("Skipping change record of deleted asset {}.", asset);
             return Optional.empty();
         }
+    }
+
+    /**
+     * Inserts a SPARQL pattern binding {@code ?language} to the language of the {@code ?entity} or its {@code ?vocabulary}.
+     * The language of the entity is prioritized.
+     * If the language is not found, the {@code ?language} variable remains unchanged.
+     * @return the pattern to be inserted into a SPARQL query
+     * @implSpec Requires {@code ?hasLanguage} to be bound to {@link DC.Terms#LANGUAGE}.
+     */
+    String insertLanguagePattern() {
+        return """
+                OPTIONAL {
+                    ?entity ?hasLanguage ?entityLanguage .
+                }
+                OPTIONAL {
+                    FILTER (!BOUND(?entityLanguage))
+                    ?vocabulary ?hasLanguage ?entityLanguage .
+                }
+                BIND (COALESCE(?entityLanguage, ?language) as ?language)
+                """;
     }
 
     private String insertVocabularyPattern(AssetWithType elem) {
