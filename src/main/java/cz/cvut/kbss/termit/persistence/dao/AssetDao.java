@@ -40,6 +40,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
+
 @Repository
 public class AssetDao {
 
@@ -115,26 +117,6 @@ public class AssetDao {
             LOG.warn("Skipping change record of deleted asset {}.", asset);
             return Optional.empty();
         }
-    }
-
-    /**
-     * Inserts a SPARQL pattern binding {@code ?language} to the language of the {@code ?entity} or its {@code ?vocabulary}.
-     * The language of the entity is prioritized.
-     * If the language is not found, the {@code ?language} variable remains unchanged.
-     * @return the pattern to be inserted into a SPARQL query
-     * @implSpec Requires {@code ?hasLanguage} to be bound to {@link DC.Terms#LANGUAGE}.
-     */
-    String insertLanguagePattern() {
-        return """
-                OPTIONAL {
-                    ?entity ?hasLanguage ?entityLanguage .
-                }
-                OPTIONAL {
-                    FILTER (!BOUND(?entityLanguage))
-                    ?vocabulary ?hasLanguage ?entityLanguage .
-                }
-                BIND (COALESCE(?entityLanguage, ?language) as ?language)
-                """;
     }
 
     private String insertVocabularyPattern(AssetWithType elem) {

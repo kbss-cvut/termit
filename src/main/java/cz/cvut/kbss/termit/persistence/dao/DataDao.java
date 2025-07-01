@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
@@ -54,6 +55,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVocabularyPattern;
 
 @Repository
 public class DataDao {
@@ -172,23 +177,39 @@ public class DataDao {
      */
     public Optional<String> getLabel(URI id, @Nullable String language) {
         Objects.requireNonNull(id);
-        if(language == null) {
-            language = config.getLanguage();
-        }
         if (!id.isAbsolute()) {
             return Optional.of(id.toString());
         }
+        String languageOptionalPattern = "";
+        final boolean languageSpecified = language != null;
+        if (!languageSpecified) {
+            // if the language was not provided, try to find vocabulary & the entity language
+            languageOptionalPattern = insertVocabularyPattern("?x") +
+                                      insertLanguagePattern("?x");
+        }
+        TypedQuery<String> query = em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
+                                        languageOptionalPattern +
+                                        "{?x ?has-label ?label .}" +
+                                        "UNION" +
+                                        "{?x ?has-title ?label .}" +
+                                        "BIND (str(?label) as ?strippedLabel )." +
+                                        // select required language in the priority order
+                                        // first the language from parameter, entity language,
+                                        // if everything fails, use the instance language
+                                        "BIND (COALESCE(?labelLanguage, ?language, ?instanceLang) AS ?labelLanguage) ." +
+                                        "FILTER (LANGMATCHES(LANG(?label), ?labelLanguage) || lang(?label) = \"\") }",
+                                String.class)
+                             .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
+                             .setParameter("has-title", URI.create(DC.Terms.TITLE))
+                             .setParameter("instanceLang", config.getLanguage());
+        if (languageSpecified) {
+            query.setParameter("labelLanguage", language, null);
+        } else {
+            query.setParameter("hasLanguage", DC.Terms.LANGUAGE);
+        }
+        bindVocabularyRelatedParameters(query);
         try {
-            return Optional.of(em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
-                                                            "{?x ?has-label ?label .}" +
-                                                            "UNION" +
-                                                            "{?x ?has-title ?label .}" +
-                                                            "BIND (str(?label) as ?strippedLabel )." +
-                                                            "FILTER (LANGMATCHES(LANG(?label), ?tag) || lang(?label) = \"\") }",
-                                                    String.class)
-                                 .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
-                                 .setParameter("has-title", URI.create(DC.Terms.TITLE))
-                                 .setParameter("tag", language, null).getSingleResult());
+            return Optional.of(query.getSingleResult());
         } catch (NoResultException | NoUniqueResultException e) {
             return Optional.empty();
         }
