@@ -118,7 +118,7 @@ public class SearchDao {
                 .setParameter("inVocabulary",
                         URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                 .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
-                .setParameter("langTag", config.getLanguage(), null)
+                .setParameter("langTagVal", config.getLanguage(), null)
                 .setParameter("searchString", searchString, null);
     }
 

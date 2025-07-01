@@ -27,6 +27,7 @@ import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
 import cz.cvut.kbss.jopa.model.annotations.Sparql;
 import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.model.annotations.Types;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
@@ -57,12 +58,10 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     private MultilingualString definition;
 
     @JsonIgnore
-    @Sparql(query = """
-            SELECT ?primaryLanguage
-            WHERE {
-                ?vocabulary dcterms:language ?primaryLanguage .
-            }
-            """)
+    @Sparql(query = "SELECT ?primaryLanguage" +
+            " WHERE {" +
+            "     ?vocabulary <" + DC.Terms.LANGUAGE + "> ?primaryLanguage ." +
+            " }")
     private String vocabularyPrimaryLanguage;
 
     @Transient  // Not used by JOPA

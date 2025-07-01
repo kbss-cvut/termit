@@ -21,6 +21,7 @@ import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.model.query.TypedQuery;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.dto.Snapshot;
@@ -82,7 +83,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                    Cache<URI, Set<TermInfo>> subTermsCache, VocabularyContextMapper contextMapper) {
         super(Term.class, em, config.getPersistence(), descriptorFactory);
         this.subTermsCache = subTermsCache;
-        this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(config.getPersistence().getLanguage()),
+        this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(t.getVocabularyPrimaryLanguage()),
                                                        Comparator.nullsLast(Comparator.naturalOrder()));
         this.contextMapper = contextMapper;
     }
@@ -159,7 +160,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                  .setParameter("term", term)
                  .setParameter("type", typeUri)
                  .setParameter("exclude", exclude)
-                 .getResultStream().sorted(termInfoComparator)
+                 .getResultStream().sorted(termInfoComparator) // TODO: lukaskabc: this will trigger a sparql query for each object to fetch the vocabulary language, which is bad
                  .peek(em::detach)
                  .collect(Collectors.toCollection(LinkedHashSet::new));
     }
@@ -330,9 +331,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                  "GRAPH ?context { " +
                                                  "?term a ?type ;" +
                                                  "?hasLabel ?label ;" +
-                                                 "FILTER (lang(?label) = ?labelLang) ." +
-                                                 "}" +
                                                  "?term ?inVocabulary ?vocabulary ." +
+                                                 "}" +
+                                                 "?vocabulary ?hasLanguage ?vocabularyLanguage" +
+                                                  "BIND (?labelLangVal as ?labelLang) ." +
+                                                 "BIND (COALESCE(?vocabularyLanguage, ?labelLang) AS ?labelLang) ." +
+                                                 "FILTER (lang(?label) = ?labelLang) ." +
                                                  " } ORDER BY " + orderSentence("?label"),
                                          FlatTermDto.class)
                       .setParameter("context", context(vocabulary))
@@ -340,7 +344,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                       .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("hasLabel", LABEL_PROP)
                       .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                      .setParameter("labelLang", config.getLanguage());
+                      .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
+                      .setParameter("labelLangVal", config.getLanguage());
 
             return executeAndBuildHierarchy(query);
         } catch (RuntimeException e) {
@@ -383,10 +388,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                 "?term a ?type ;" +
                                                 "?hasLabel ?label ;" +
                                                 "?hasDefinition ?definition ;" +
-                                                "FILTER (lang(?label) = ?labelLang) ." +
-                                                "FILTER (lang(?definition) = ?labelLang) ." +
                                                 "}" +
                                                 "?term ?inVocabulary ?vocabulary ." +
+                                                "?vocabulary ?hasLanguage ?vocabularyLanguage ." +
+                                                "BIND (?labelLangVal as ?labelLang) ." +
+                                                "BIND (COALESCE(?vocabularyLanguage, ?labelLang) AS ?labelLang) ." +
+                                                "FILTER (lang(?label) = ?labelLang) ." +
+                                                "FILTER (lang(?definition) = ?labelLang) ." +
                                                 " } ORDER BY " + orderSentence("?label"),
                                         TermDto.class)
                      .setParameter("context", context(vocabulary))
@@ -395,7 +403,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("hasDefinition", URI.create(SKOS.DEFINITION))
                      .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                     .setParameter("labelLang", config.getLanguage())
+                     .setParameter("labelLangVal", config.getLanguage())
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);

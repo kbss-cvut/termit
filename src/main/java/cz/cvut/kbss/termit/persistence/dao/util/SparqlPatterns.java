@@ -42,7 +42,7 @@ public class SparqlPatterns {
      * If the language is not found, the {@code ?language} variable remains unchanged.
      * @param entity the variable representing the entity e.g. {@code "?entity"}
      * @return the pattern to be inserted into a SPARQL query
-     * @implSpec Requires {@code ?hasLanguage} to be bound to {@link DC.Terms#LANGUAGE}.
+     * @implSpec Requires {@code ?hasLanguage} to be bound to {@link DC.Terms#LANGUAGE} and {@code ?language} to be an actual variable (cannot be a query parameter).
      */
     public static String insertLanguagePattern(String entity) {
         return """

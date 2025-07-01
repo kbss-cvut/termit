@@ -89,6 +89,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                     + "  ?entity ?hasLabel ?label ."
                                     + "  OPTIONAL { ?lastCommentUri ?hasModifiedTime ?modified . }"
                                     + "  OPTIONAL { ?lastCommentUri ?hasCreatedTime ?created . }"
+                                    + "  BIND(?languageVal as ?language)"
                                     + "  OPTIONAL { "
                                     + "      ?entity ?inVocabulary ?vocabulary . "
                                     + "      ?vocabulary ?hasLanguage ?vocabularyLanguage . "
@@ -114,7 +115,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                    .setParameter("language", config.getLanguage())
+                    .setParameter("languageVal", config.getLanguage())
                     .setFirstResult((int) pageSpec.getOffset())
                     .setMaxResults(pageSpec.getPageSize()).getResultStream()
                     .map(r -> {
@@ -155,6 +156,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                                + "  }"
                                                + "  FILTER (?lastCommentedByMe = ?maxByMe )"
                                                + "  FILTER(?myLastCommentUri != ?lastCommentUri)"
+                                               + "  BIND(?languageVal as ?language)"
                                                + "  OPTIONAL { "
                                                + "      ?entity ?inVocabulary ?vocabulary . "
                                                + "      ?vocabulary ?hasLanguage ?vocabularyLanguage . "
@@ -183,7 +185,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
                     .setParameter("hasAuthor", URI.create(Vocabulary.s_p_sioc_has_creator))
-                    .setParameter("language", config.getLanguage())
+                    .setParameter("languageVal", config.getLanguage())
                     .setParameter("author", author)
                     .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())
                     .getResultStream()
@@ -225,6 +227,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                                + "        } GROUP BY ?entity"
                                                + "  }"
                                                + "  FILTER (?lastCommented = ?max )"
+                                               + "  BIND(?languageVal as ?language)"
                                                + "  OPTIONAL { "
                                                + "      ?entity ?inVocabulary ?vocabulary . "
                                                + "      ?vocabulary ?hasLanguage ?vocabularyLanguage . "
@@ -243,7 +246,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                     .setParameter("author", author)
                     .setParameter("hasModifiedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_posledni_modifikace))
                     .setParameter("hasCreatedTime", URI.create(Vocabulary.s_p_ma_datum_a_cas_vytvoreni))
-                    .setParameter("language", config.getLanguage())
+                    .setParameter("languageVal", config.getLanguage())
                     .setMaxResults(pageSpec.getPageSize()).setFirstResult((int) pageSpec.getOffset())
                     .getResultStream()
                     .map(r -> {

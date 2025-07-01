@@ -104,6 +104,7 @@ public class StatisticsDao {
         }
     }
 
+    // TODO: lukaskabc: evaluate multi vocabulary language handling
     private LangString sanitizeLabel(Object label) {
         if (label instanceof LangString) {
             return (LangString) label;

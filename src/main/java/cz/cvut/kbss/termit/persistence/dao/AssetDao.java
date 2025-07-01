@@ -25,6 +25,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.RecentlyModifiedAsset;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.User;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +50,11 @@ public class AssetDao {
 
     private final EntityManager em;
 
-    public AssetDao(EntityManager em) {
+    private final Configuration.Persistence config;
+
+    public AssetDao(EntityManager em, Configuration config) {
         this.em = em;
+        this.config = config.getPersistence();
     }
 
     /**
@@ -82,9 +86,10 @@ public class AssetDao {
                                 "?hasEditor ?author ;" +
                                 "?hasModificationDate ?modified ." +
                                 "?ent ?hasLabel ?label . " +
+                                "BIND (?languageVal as ?language) " +
                                 insertVocabularyPattern(asset) +
+                                insertLanguagePattern("?ent") +
                                 "BIND (?ent as ?entity)" +
-                                insertLanguagePattern() +
                                 "BIND (?author as ?modifiedBy)" +
                                 "FILTER (?chType != ?change)" +
                                 "FILTER (?hasLabel in (?labelProperties))" +
@@ -102,7 +107,7 @@ public class AssetDao {
                 .setParameter("persist", URI.create(Vocabulary.s_c_vytvoreni_entity))
                 .setParameter("update", URI.create(Vocabulary.s_c_uprava_entity))
                 .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
-                .setParameter("language", config.getLanguage())
+                .setParameter("languageVal", config.getLanguage())
                 .setMaxResults(1);
         setVocabularyRelatedParameter(asset, query);
         if (author != null) {

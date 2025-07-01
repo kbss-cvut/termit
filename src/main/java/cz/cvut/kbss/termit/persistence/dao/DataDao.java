@@ -196,18 +196,20 @@ public class DataDao {
                                         // select required language in the priority order
                                         // first the language from parameter, entity language,
                                         // if everything fails, use the instance language
+                                        "BIND (?labelLanguageVal as ?labelLanguage) ." +
+                                        "BIND (?instanceLangVal as ?instanceLang) ." +
                                         "BIND (COALESCE(?labelLanguage, ?language, ?instanceLang) AS ?labelLanguage) ." +
                                         "FILTER (LANGMATCHES(LANG(?label), ?labelLanguage) || lang(?label) = \"\") }",
                                 String.class)
                              .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
                              .setParameter("has-title", URI.create(DC.Terms.TITLE))
-                             .setParameter("instanceLang", config.getLanguage());
+                             .setParameter("instanceLangVal", config.getLanguage());
         if (languageSpecified) {
-            query.setParameter("labelLanguage", language, null);
+            query.setParameter("labelLanguageVal", language, null);
         } else {
             query.setParameter("hasLanguage", DC.Terms.LANGUAGE);
+            bindVocabularyRelatedParameters(query);
         }
-        bindVocabularyRelatedParameters(query);
         try {
             return Optional.of(query.getSingleResult());
         } catch (NoResultException | NoUniqueResultException e) {
