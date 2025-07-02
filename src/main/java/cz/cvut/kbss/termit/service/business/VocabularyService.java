@@ -41,6 +41,7 @@ import cz.cvut.kbss.termit.model.validation.ValidationResult;
 import cz.cvut.kbss.termit.persistence.context.VocabularyContextMapper;
 import cz.cvut.kbss.termit.persistence.relationship.VocabularyRelationshipResolver;
 import cz.cvut.kbss.termit.persistence.snapshot.SnapshotCreator;
+import cz.cvut.kbss.termit.security.model.TermItUserDetails;
 import cz.cvut.kbss.termit.service.changetracking.ChangeRecordProvider;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.service.repository.ChangeRecordService;
@@ -102,6 +103,10 @@ import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 
 
 /**
@@ -412,6 +417,46 @@ public class VocabularyService
         return vocabularyFile;
 
     }
+    
+    @Scheduled(cron = "0 0 0 * * *") // Every day at midnight
+    public void reloadVocabularies() throws URISyntaxException {
+        System.out.println("Reloading vocabularies at " + Instant.now());
+        try {
+            // Create domain user
+            cz.cvut.kbss.termit.model.User domainUser = new cz.cvut.kbss.termit.model.User();
+            domainUser.setUsername("system");
+
+            // Create TermItUserDetails (or use a factory if available)
+            TermItUserDetails userDetails = new TermItUserDetails(domainUser.toUserAccount(), List.of());
+
+            // Set auth
+            UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+            SecurityContextHolder.getContext().setAuthentication(auth);
+
+            reloadAllExternal();
+        } catch (Exception e){
+            throw e;
+        } finally {
+            // Clear security context afterwards
+            SecurityContextHolder.clearContext();
+        }
+//        reloadAllExternal();
+    }
+    
+    
+    public void reloadAllExternal() throws URISyntaxException{
+        List<String> externalVocabularies = findAll().stream()
+                .filter((t) -> t.getTypes().contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi))
+                .map((t) -> t.getUri().toString())
+                .toList();
+//        Dont have the right to import vocabularies.
+//        importFromExternalUris(externalVocabularies);
+        
+    }
+    
+    
     /**
      * Imports a vocabulary from the specified file.
      * <p>
