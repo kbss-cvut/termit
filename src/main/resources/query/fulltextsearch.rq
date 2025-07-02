@@ -31,8 +31,12 @@ SELECT ?entity ?label ?vocabularyUri ?state ?type ?snippetField ?snippetText WHE
         BIND (?vocabulary as ?type) .
     }
     BIND (COALESCE(?vocabularyUri, ?entity) as ?vocabularyEntity) .
-    ?vocabularyEntity dc:language ?vocabularyLang .
-    ?entity dc:language ?entityLang .
+    OPTIONAL {
+        ?vocabularyEntity dc:language ?vocabularyLang .
+    }
+    OPTIONAL {
+        ?entity dc:language ?entityLang .
+    }
     BIND (?langTagVal as ?langTag) .
     BIND (COALESCE(?entityLang, ?vocabularyLang, ?langTag) AS ?langTag) .
     BIND (?label as ?snippetText) .
