@@ -71,6 +71,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     private static final URI LABEL_PROP = URI.create(SKOS.PREF_LABEL);
     private static final URI TERM_FROM_VOCABULARY = URI.create(
             cz.cvut.kbss.termit.util.Vocabulary.s_p_je_pojmem_ze_slovniku);
+    private static final URI DC_TERMS_LANGUAGE = URI.create(DC.Terms.LANGUAGE);
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
 
@@ -331,11 +332,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                  "GRAPH ?context { " +
                                                  "?term a ?type ;" +
                                                  "?hasLabel ?label ;" +
-                                                 "?term ?inVocabulary ?vocabulary ." +
                                                  "}" +
-                                                 "?vocabulary ?hasLanguage ?vocabularyLanguage" +
-                                                  "BIND (?labelLangVal as ?labelLang) ." +
-                                                 "BIND (COALESCE(?vocabularyLanguage, ?labelLang) AS ?labelLang) ." +
+                                                 "?term ?inVocabulary ?vocabulary ." +
+                                                 "?vocabulary ?hasLanguage ?labelLang ." +
                                                  "FILTER (lang(?label) = ?labelLang) ." +
                                                  " } ORDER BY " + orderSentence("?label"),
                                          FlatTermDto.class)
@@ -344,8 +343,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                       .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("hasLabel", LABEL_PROP)
                       .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                      .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
-                      .setParameter("labelLangVal", config.getLanguage());
+                      .setParameter("hasLanguage", DC_TERMS_LANGUAGE);
 
             return executeAndBuildHierarchy(query);
         } catch (RuntimeException e) {
@@ -390,9 +388,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                 "?hasDefinition ?definition ;" +
                                                 "}" +
                                                 "?term ?inVocabulary ?vocabulary ." +
-                                                "?vocabulary ?hasLanguage ?vocabularyLanguage ." +
-                                                "BIND (?labelLangVal as ?labelLang) ." +
-                                                "BIND (COALESCE(?vocabularyLanguage, ?labelLang) AS ?labelLang) ." +
+                                                "?vocabulary ?hasLanguage ?labelLang ." +
                                                 "FILTER (lang(?label) = ?labelLang) ." +
                                                 "FILTER (lang(?definition) = ?labelLang) ." +
                                                 " } ORDER BY " + orderSentence("?label"),
@@ -403,7 +399,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                      .setParameter("hasLabel", LABEL_PROP)
                      .setParameter("hasDefinition", URI.create(SKOS.DEFINITION))
                      .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                     .setParameter("labelLangVal", config.getLanguage())
+                     .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
                      .getResultList();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -433,16 +429,18 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                     "GRAPH ?context { " +
                                                                     "?term a ?type ;" +
                                                                     "?hasLabel ?label ;" +
-                                                                    "FILTER (lang(?label) = ?labelLang) ." +
                                                                     "}" +
                                                                     "?term ?inVocabulary ?vocabulary ." +
+                                                                    "?vocabulary ?hasLanguage ?labelLang ." +
+                                                                    "FILTER (lang(?label) = ?labelLang) ." +
                                                                     " } ORDER BY " + orderSentence("?label"), URI.class)
                                          .setParameter("type", typeUri)
                                          .setParameter("context", context(vocabulary))
                                          .setParameter("vocabulary", vocabulary.getUri())
                                          .setParameter("hasLabel", LABEL_PROP)
                                          .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                                         .setParameter("labelLang", config.getLanguage()).getResultList();
+                                         .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                                         .getResultList();
             return termIris.stream().map(ti -> {
                 final Term t = find(ti).get();
                 em.clear();
@@ -491,6 +489,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?hasLabel ?label ;" +
                                                                  "?inVocabulary ?parent ." +
                                                                  "?vocabulary ?imports* ?parent ." +
+                                                                 "?parent ?hasLanguage ?labelLang ." +
                                                                  "FILTER (lang(?label) = ?labelLang) ." +
                                                                  "} ORDER BY " + orderSentence("?label"), TermDto.class)
                                       .setParameter("type", typeUri)
@@ -500,7 +499,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                     URI.create(
                                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                       .setParameter("vocabulary", vocabulary.getUri())
-                                      .setParameter("labelLang", config.getLanguage());
+                                      .setParameter("hasLanguage", DC_TERMS_LANGUAGE);
         return executeQueryAndLoadSubTerms(query);
     }
 
@@ -546,25 +545,21 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
     }
 
     private String orderSentence(String var) {
-        if (Objects.equals(config.getLanguage(), "cs")) {
-            return
-                    r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
-                                                "'á'", "'azz'"),
-                                              "'č'", "'czz'"),
-                                            "'ď'", "'dzz'"),
-                                          "'é'", "'ezz'"),
-                                        "'ě'", "'ezz'"),
-                                      "'í'", "'izz'"),
-                                    "'ň'", "'nzz'"),
-                                  "'ó'", "'ozz'"),
-                                "'ř'", "'rzz'"),
-                              "'š'", "'szz'"),
-                            "'ť'", "'tzz'"),
-                          "'ú'", "'uzz'"),
-                        "'ý'", "'yzz'"),
-                      "'ž'", "'zzz'");
-        }
-        return "lcase(" + var + ")";
+        return r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
+                                            "'á'", "'azz'"),
+                                          "'č'", "'czz'"),
+                                        "'ď'", "'dzz'"),
+                                      "'é'", "'ezz'"),
+                                    "'ě'", "'ezz'"),
+                                  "'í'", "'izz'"),
+                                "'ň'", "'nzz'"),
+                              "'ó'", "'ozz'"),
+                            "'ř'", "'rzz'"),
+                          "'š'", "'szz'"),
+                        "'ť'", "'tzz'"),
+                      "'ú'", "'uzz'"),
+                    "'ý'", "'yzz'"),
+                  "'ž'", "'zzz'");
     }
 
     private static String r(String string, String from, String to) {
