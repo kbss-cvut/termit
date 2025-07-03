@@ -54,7 +54,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -64,6 +63,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVocabularyPattern;
 
 @Repository
 public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term> {
@@ -75,8 +78,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
 
     private final Cache<URI, Set<TermInfo>> subTermsCache;
 
-    private final Comparator<TermInfo> termInfoComparator;
-
     private final VocabularyContextMapper contextMapper;
 
     @Autowired
@@ -84,8 +85,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                    Cache<URI, Set<TermInfo>> subTermsCache, VocabularyContextMapper contextMapper) {
         super(Term.class, em, config.getPersistence(), descriptorFactory);
         this.subTermsCache = subTermsCache;
-        this.termInfoComparator = Comparator.comparing(t -> t.getLabel().get(t.getVocabularyPrimaryLanguage()),
-                                                       Comparator.nullsLast(Comparator.naturalOrder()));
         this.contextMapper = contextMapper;
     }
 
@@ -152,18 +151,28 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @return Set of matching terms
      */
     private Set<TermInfo> loadInverseTermInfo(HasIdentifier term, String property, Collection<TermInfo> exclude) {
-        return em.createNativeQuery("SELECT ?inverse WHERE {" +
+        TypedQuery<TermInfo> query = em.createNativeQuery("SELECT DISTINCT ?inverse WHERE {" +
                                             "?inverse ?property ?term ;" +
                                             "a ?type ." +
-                                            "FILTER (?inverse NOT IN (?exclude))" +
-                                            "} ORDER BY ?inverse", TermInfo.class)
+                                            "FILTER (?inverse NOT IN (?exclude)) . " +
+                                            insertVocabularyPattern("?inverse") +
+                                            insertLanguagePattern("?inverse") +
+                                            "OPTIONAL {" +
+                                            "   ?inverse ?hasLabel ?label" +
+                                            "   FILTER (lang(?label) = ?language)" +
+                                            "}" +
+                                            "} ORDER BY ?label ?inverse", TermInfo.class)
                  .setParameter("property", URI.create(property))
                  .setParameter("term", term)
                  .setParameter("type", typeUri)
-                 .setParameter("exclude", exclude)
-                 .getResultStream().sorted(termInfoComparator) // TODO: lukaskabc: this will trigger a sparql query for each object to fetch the vocabulary language, which is bad
-                 .peek(em::detach)
-                 .collect(Collectors.toCollection(LinkedHashSet::new));
+                .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
+                 .setParameter("exclude", exclude);
+        bindVocabularyRelatedParameters(query);
+
+        return query.getResultStream()
+                    .peek(em::detach)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**

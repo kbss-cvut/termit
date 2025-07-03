@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cvut.kbss.jopa.model.MultilingualString;
 import cz.cvut.kbss.jopa.model.annotations.Id;
 import cz.cvut.kbss.jopa.model.annotations.Inferred;
@@ -25,9 +24,7 @@ import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
-import cz.cvut.kbss.jopa.model.annotations.Sparql;
 import cz.cvut.kbss.jopa.model.annotations.Types;
-import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.model.AbstractTerm;
 import cz.cvut.kbss.termit.model.Term;
@@ -64,13 +61,6 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
     @OWLObjectProperty(iri = Vocabulary.s_p_ma_stav_pojmu)
     private URI state;
 
-    @JsonIgnore
-    @Sparql(query = "SELECT ?primaryLanguage" +
-                    " WHERE {" +
-                    "     ?vocabulary <" + DC.Terms.LANGUAGE + "> ?primaryLanguage ." +
-                    " }")
-    private String vocabularyPrimaryLanguage;
-
     @Types
     private Set<String> types;
 
@@ -88,7 +78,6 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         this.label = new MultilingualString(term.getLabel().getValue());
         this.vocabulary = term.getVocabulary();
         this.state = term.getState();
-        this.vocabularyPrimaryLanguage = term.getVocabularyPrimaryLanguage();
     }
 
     public TermInfo(TermInfo other) {
@@ -99,7 +88,6 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
         this.vocabulary = other.getVocabulary();
         this.state = other.getState();
         this.types = new HashSet<>(Utils.emptyIfNull(other.getTypes()));
-        this.vocabularyPrimaryLanguage = other.vocabularyPrimaryLanguage;
     }
 
     @Override
@@ -134,10 +122,6 @@ public class TermInfo implements Serializable, HasIdentifier, HasTypes {
 
     public void setState(URI state) {
         this.state = state;
-    }
-
-    public String getVocabularyPrimaryLanguage() {
-        return vocabularyPrimaryLanguage;
     }
 
     @Override
