@@ -8,6 +8,7 @@ CONSTRUCT {
     ?glossary a owl:Ontology ;
               a skos:ConceptScheme ;
               a pdp:glosář ;
+              dc:language ?language ;
               dc:title ?label ;
               dc:description ?description ;
               dc:creator ?fullName ;
@@ -22,6 +23,7 @@ CONSTRUCT {
     GRAPH ?g {
         ?vocabulary pdp:má-glosář ?glossary ;
                     dc:title ?vocabularyLabel .
+        ?vocabulary dc:language ?language .
         OPTIONAL {
             ?glossary dc:title ?glossaryLabel .
         }
