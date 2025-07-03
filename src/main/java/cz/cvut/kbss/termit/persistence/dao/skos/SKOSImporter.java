@@ -336,10 +336,15 @@ public class SKOSImporter implements VocabularyImporter {
         glossary.setUri(URI.create(newGlossaryIri));
         vocabulary.setGlossary(glossary);
         vocabulary.setModel(new cz.cvut.kbss.termit.model.Model());
+        setVocabularyPrimaryLanguageFromGlossary(vocabulary);
         setVocabularyLabelFromGlossary(vocabulary);
         setVocabularyDescriptionFromGlossary(vocabulary);
         setVocabularyNamespaceInfoFromData(vocabulary);
         return vocabulary;
+    }
+
+    private void setVocabularyPrimaryLanguageFromGlossary(Vocabulary vocabulary) {
+        handleGlossaryLiteralStringProperty(DCTERMS.LANGUAGE, vocabulary::setPrimaryLanguage);
     }
 
     private String getFreshVocabularyIri(final boolean rename, final String newVocabularyIriBase) {
@@ -377,6 +382,17 @@ public class SKOSImporter implements VocabularyImporter {
             mls.set(obj.getLanguage().orElseGet(() -> config.getPersistence().getLanguage()), obj.getLabel());
         });
         consumer.accept(mls);
+    }
+
+    private void handleGlossaryLiteralStringProperty(IRI property, Consumer<String> consumer) {
+        final Set<Statement> values = model.filter(getGlossaryUri(), property, null);
+        values.stream().filter(s -> s.getObject().isLiteral()).findAny()
+                      .map(s -> (Literal) s.getObject())
+                              .map(Literal::getLabel)
+                .ifPresentOrElse(consumer, () -> {
+                    throw new VocabularyImportException("No dcterms:language property found for the glossary.");
+                });
+
     }
 
     private void setVocabularyDescriptionFromGlossary(final Vocabulary vocabulary) {

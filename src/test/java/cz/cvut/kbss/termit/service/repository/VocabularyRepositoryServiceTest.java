@@ -334,7 +334,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final String skos =
                 "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
                         "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; " +
+                        "    dc:title \"Test\"@en ; " +
+                        "    <http://purl.org/dc/terms/language> \"cs\" ." +
                         "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
 
@@ -354,7 +356,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final String skos =
                 "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
                         "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; " +
+                        "    dc:title \"Test\"@en ; " +
+                        "    <http://purl.org/dc/terms/language> \"cs\" ." +
                         "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
 
@@ -471,7 +475,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final String skos =
                 "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
                         "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; " +
+                        "    dc:title \"Test\"@en ;" +
+                        "    <http://purl.org/dc/terms/language> \"cs\" ." +
                         "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
 
