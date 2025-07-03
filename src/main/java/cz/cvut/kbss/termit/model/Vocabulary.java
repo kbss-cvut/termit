@@ -62,7 +62,7 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
     private Document document;
 
     @ParticipationConstraints(nonEmpty = true)
-    @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE)
+    @OWLAnnotationProperty(iri = DC.Terms.LANGUAGE, simpleLiteral = true)
     private String primaryLanguage;
 
     @ParticipationConstraints(nonEmpty = true)

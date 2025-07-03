@@ -50,10 +50,9 @@ public class SparqlPatterns {
                     #entity ?hasLanguage ?entityLanguage .
                 }
                 OPTIONAL {
-                    FILTER (!BOUND(?entityLanguage))
-                    ?vocabulary ?hasLanguage ?entityLanguage .
+                    ?vocabulary ?hasLanguage ?vocabularyLanguage .
                 }
-                BIND (COALESCE(?entityLanguage, ?language) as ?language)
+                BIND (COALESCE(?entityLanguage, ?vocabularyLanguage, ?language) as ?language) .
                 """.replace("#entity", entity);
     }
 

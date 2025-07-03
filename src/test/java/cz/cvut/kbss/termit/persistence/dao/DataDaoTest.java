@@ -70,11 +70,15 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Autowired
     private DataDao sut;
 
+    private cz.cvut.kbss.termit.model.Vocabulary vocabulary;
+
     @BeforeEach
     void setUp() {
         final User author = Generator.generateUserWithId();
         transactional(() -> em.persist(author));
         Environment.setCurrentUser(author);
+        vocabulary = Generator.generateVocabularyWithId();
+        transactional(() -> em.persist(vocabulary));
     }
 
     @Test
@@ -129,7 +133,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void getLabelReturnsLabelWithMatchingLanguageOfSpecifiedIdentifier() {
         enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
-        final Term term = Generator.generateTermWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> em.persist(term));
 
         final Optional<String> result = sut.getLabel(term.getUri());
@@ -140,7 +144,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void getLabelReturnsLabelWithoutLanguageTagWhenMatchingLanguageTagDoesNotExist() {
         enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
-        final Term term = Generator.generateTermWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();
@@ -171,7 +175,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     @Test
     void getLabelReturnsEmptyOptionalForIdentifierWithMultipleLabels() {
         enableRdfsInference(em);    // skos:prefLabel is a subPropertyOf rdfs:label
-        final Term term = Generator.generateTermWithId();
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
         transactional(() -> {
             final Repository repo = em.unwrap(Repository.class);
             final ValueFactory vf = repo.getValueFactory();

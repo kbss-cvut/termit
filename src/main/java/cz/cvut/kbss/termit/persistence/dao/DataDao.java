@@ -157,7 +157,7 @@ public class DataDao {
      * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
      * <p>
      * Note that the label has to have language tag matching the configured persistence unit language
-     * or no language tag at all (matching tag is preferred).
+     * or no language tag at all (matching tag is preferred). // TODO: lukaskabc: update
      *
      * @param id Resource ({@link RDFS#RESOURCE}) identifier
      * @return Matching resource identifier (if found)
@@ -187,27 +187,29 @@ public class DataDao {
             languageOptionalPattern = insertVocabularyPattern("?x") +
                                       insertLanguagePattern("?x");
         }
+
         TypedQuery<String> query = em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
                                         languageOptionalPattern +
                                         "{?x ?has-label ?label .}" +
                                         "UNION" +
                                         "{?x ?has-title ?label .}" +
                                         "BIND (str(?label) as ?strippedLabel )." +
-                                        // select required language in the priority order
-                                        // first the language from parameter, entity language,
-                                        // if everything fails, use the instance language
-                                        "BIND (?labelLanguageVal as ?labelLanguage) ." +
-                                        "BIND (?instanceLangVal as ?instanceLang) ." +
-                                        "BIND (COALESCE(?labelLanguage, ?language, ?instanceLang) AS ?labelLanguage) ." +
+                   // only bind parameter value to the variable if the parameter is present (COALESCE gives wrong results otherwise)
+                   (languageSpecified ? "BIND (?labelLanguageVal as ?labelLanguage) ." : "") +
+                                        "BIND (?instanceLanguageVal as ?instanceLanguage) ." +
+                                        "BIND (COALESCE(" +
+                                        "   ?labelLanguage," +
+                                        "   ?language," +
+                                        "   ?instanceLanguage) AS ?labelLanguage) ." +
                                         "FILTER (LANGMATCHES(LANG(?label), ?labelLanguage) || lang(?label) = \"\") }",
                                 String.class)
                              .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
                              .setParameter("has-title", URI.create(DC.Terms.TITLE))
-                             .setParameter("instanceLangVal", config.getLanguage());
+                             .setParameter("instanceLanguageVal", config.getLanguage());
         if (languageSpecified) {
             query.setParameter("labelLanguageVal", language, null);
         } else {
-            query.setParameter("hasLanguage", DC.Terms.LANGUAGE);
+            query.setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE));
             bindVocabularyRelatedParameters(query);
         }
         try {

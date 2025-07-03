@@ -591,6 +591,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         stub.setModel(modelStub);
         stub.setLabel(vocabulary.getLabel());
         stub.setDescription(vocabulary.getDescription());
+        stub.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
         transactional(() -> {
             final Descriptor descriptor = descriptorFactory.vocabularyDescriptor(stub);
             em.persist(stub, descriptor);

@@ -245,7 +245,8 @@ public class Generator {
     }
 
     /**
-     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary and a model.
+     * Generates a {@link cz.cvut.kbss.termit.model.Vocabulary} instance with a name, an empty glossary, a model
+     * and {@link Environment#LANGUAGE} as the primary language.
      *
      * @return New {@code Vocabulary} instance
      */
@@ -257,6 +258,7 @@ public class Generator {
         vocabulary.setLabel(MultilingualString.create("Vocabulary" + randomInt(), Environment.LANGUAGE));
         vocabulary.setDescription(MultilingualString.create(
                 "Description of vocabulary " + vocabulary.getLabel().get(Environment.LANGUAGE), Environment.LANGUAGE));
+        vocabulary.setPrimaryLanguage(Environment.LANGUAGE);
         return vocabulary;
     }
 
