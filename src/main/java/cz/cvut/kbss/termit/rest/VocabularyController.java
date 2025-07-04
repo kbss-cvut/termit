@@ -168,7 +168,11 @@ public class VocabularyController extends BaseController {
         return vocabularyService.getTransitivelyImportedVocabularies(vocabulary);
     }
     
-    
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},       
+               description = "Gets identifiers of vocabularies that can be imported from external sources")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Collection of vocabulary identifiers.")
+    })
     @GetMapping(value = "/imports/available", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public List<RdfsResource> getAvailableVocabularies(){
         return vocabularyService.getAvailableVocabularies();
@@ -226,8 +230,8 @@ public class VocabularyController extends BaseController {
                 return ResponseEntity.accepted().build();
             }
         } else {
-            System.out.println("Eles\n");
-            return ResponseEntity.badRequest().build(); // ani soubor, ani IRI
+            LOG.error("File and vocabularyIris are both null");
+            return ResponseEntity.badRequest().build(); // no file or IRIs
         }
     }
 
