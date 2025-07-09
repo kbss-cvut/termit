@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.validation;
 
+import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
@@ -28,10 +29,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Validation constraint ensuring that a {@link cz.cvut.kbss.jopa.model.MultilingualString} contains a non-empty value
- * in the primary language configured for the application.
+ * Validation constraint ensuring that specified {@link cz.cvut.kbss.jopa.model.MultilingualString MultilingualString}
+ * attributes contains a non-empty value in the primary language of the entity.
+ * <p>
+ * The entity must implement {@link HasPrimaryLanguage} to provide the primary language.
  */
-@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = MultilingualStringPrimaryNotBlankValidator.class)
 @Documented
@@ -40,11 +43,16 @@ public @interface PrimaryNotBlank {
 
     String message() default "{jakarta.validation.constraints.PrimaryNotBlank.message}";
 
+    /**
+     * @return Array of {@link cz.cvut.kbss.jopa.model.MultilingualString MultilingualString} field names to validate.
+     */
+    String[] value();
+
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};
 
-    @Target({ElementType.FIELD, ElementType.PARAMETER})
+    @Target({ElementType.TYPE})
     @Retention(RetentionPolicy.RUNTIME)
     @Documented
     @interface List {

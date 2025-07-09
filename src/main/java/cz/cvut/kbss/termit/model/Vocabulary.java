@@ -35,6 +35,7 @@ import cz.cvut.kbss.termit.model.resource.Document;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
+import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
 
@@ -46,11 +47,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Audited
+@PrimaryNotBlank({"label"})
 @OWLClass(iri = cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik)
 @JsonLdAttributeOrder({"uri", "label", "description"})
-public class Vocabulary extends Asset<MultilingualString> implements HasTypes, SupportsSnapshots, Serializable {
+public class Vocabulary extends Asset<MultilingualString> implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
 
-    @PrimaryNotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = DC.Terms.TITLE)
     private MultilingualString label;
@@ -135,6 +136,7 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
         this.document = document;
     }
 
+    @Override
     public String getPrimaryLanguage() {
         return primaryLanguage;
     }

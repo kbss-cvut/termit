@@ -24,13 +24,16 @@ import cz.cvut.kbss.jopa.model.annotations.MappedSuperclass;
 import cz.cvut.kbss.jopa.model.annotations.OWLAnnotationProperty;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
 import cz.cvut.kbss.jopa.model.annotations.ParticipationConstraints;
+import cz.cvut.kbss.jopa.model.annotations.Sparql;
 import cz.cvut.kbss.jopa.model.annotations.Transient;
 import cz.cvut.kbss.jopa.model.annotations.Types;
+import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.model.util.HasTypes;
 import cz.cvut.kbss.termit.model.util.SupportsSnapshots;
+import cz.cvut.kbss.termit.model.util.validation.HasPrimaryLanguage;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import cz.cvut.kbss.termit.validation.PrimaryNotBlank;
@@ -43,17 +46,27 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@PrimaryNotBlank({"label"})
 @MappedSuperclass
 public abstract class AbstractTerm extends Asset<MultilingualString>
-        implements HasTypes, SupportsSnapshots, Serializable {
+        implements HasTypes, SupportsSnapshots, HasPrimaryLanguage, Serializable {
 
-    @PrimaryNotBlank
     @ParticipationConstraints(nonEmpty = true)
     @OWLAnnotationProperty(iri = SKOS.PREF_LABEL)
     private MultilingualString label;
 
     @OWLAnnotationProperty(iri = SKOS.DEFINITION)
     private MultilingualString definition;
+
+    @JsonIgnore
+    @Transient
+    @Sparql(query = "PREFIX dcterms: <" + DC.Terms.NAMESPACE + ">\n" +
+            """
+            SELECT ?lang WHERE {
+                ?vocabulary dcterms:language ?lang .
+            }
+            """)
+    private String primaryLanguage;
 
     @Transient  // Not used by JOPA
     @OWLObjectProperty(iri = SKOS.NARROWER) // But map the property for JSON-LD serialization
@@ -84,6 +97,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         if (other.getDefinition() != null) {
             this.definition = new MultilingualString(other.getDefinition().getValue());
         }
+        this.primaryLanguage = other.primaryLanguage;
         this.state = other.state;
         this.glossary = other.glossary;
         this.vocabulary = other.vocabulary;
@@ -124,6 +138,19 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
 
     public void setDefinition(MultilingualString definition) {
         this.definition = definition;
+    }
+
+    @Override
+    public String getPrimaryLanguage() {
+        return primaryLanguage;
+    }
+
+    /**
+     * Setting the value has no persistent effect, the attribute is resolved
+     * from the vocabulary language when the entity is loaded.
+     */
+    public void setPrimaryLanguage(String primaryLanguage) {
+        this.primaryLanguage = primaryLanguage;
     }
 
     public Set<TermInfo> getSubTerms() {
