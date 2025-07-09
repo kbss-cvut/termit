@@ -24,7 +24,6 @@ import cz.cvut.kbss.termit.model.resource.Resource;
 import cz.cvut.kbss.termit.model.util.AssetVisitor;
 import cz.cvut.kbss.termit.service.mail.ApplicationLinkBuilder;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
-import cz.cvut.kbss.termit.util.Configuration;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -36,41 +35,35 @@ public class MessageAssetFactory {
 
     private final ApplicationLinkBuilder linkBuilder;
 
-    private final Configuration config;
-
-    public MessageAssetFactory(DataRepositoryService dataService, ApplicationLinkBuilder linkBuilder,
-                               Configuration config) {
+    public MessageAssetFactory(DataRepositoryService dataService, ApplicationLinkBuilder linkBuilder) {
         this.dataService = dataService;
         this.linkBuilder = linkBuilder;
-        this.config = config;
     }
 
     public MessageAsset create(Asset<?> asset) {
-        final MessageLabelExtractor labelExtractor = new MessageLabelExtractor(config, dataService);
+        final MessageLabelExtractor labelExtractor = new MessageLabelExtractor(dataService);
         asset.accept(labelExtractor);
         return new MessageAsset(labelExtractor.label, linkBuilder.linkTo(asset));
     }
 
     private static class MessageLabelExtractor implements AssetVisitor {
-        private final Configuration config;
         private final DataRepositoryService dataService;
 
         String label;
 
-        private MessageLabelExtractor(Configuration config, DataRepositoryService dataService) {
-            this.config = config;
+        private MessageLabelExtractor(DataRepositoryService dataService) {
             this.dataService = dataService;
         }
 
         @Override
         public void visitTerm(AbstractTerm term) {
-            this.label = term.getLabel(config.getPersistence().getLanguage()) +
+            this.label = dataService.getLabel(term.getUri(), null).orElse(term.getUri().toString()) +
                     " (" + dataService.getLabel(term.getVocabulary(), null).orElse("") + ")";
         }
 
         @Override
         public void visitVocabulary(Vocabulary vocabulary) {
-            this.label = vocabulary.getLabel(config.getPersistence().getLanguage());
+            this.label = vocabulary.getLabel(vocabulary.getPrimaryLanguage());
         }
 
         @Override

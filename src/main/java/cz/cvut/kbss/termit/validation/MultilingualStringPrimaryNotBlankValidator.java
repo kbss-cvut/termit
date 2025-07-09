@@ -60,11 +60,18 @@ public class MultilingualStringPrimaryNotBlankValidator
         final Class<?> annotatedClass = findAnnotatedClass(beanToValidate);
         initializeLookup(annotatedClass);
         final List<VarHandle> fieldHandles = getFieldHandles(annotatedClass);
+        int index = 0;
         for (final VarHandle field : fieldHandles) {
             final MultilingualString value = (MultilingualString) field.get(beanToValidate);
             if (!isValid(value, beanToValidate)) {
+                constraintValidatorContext.disableDefaultConstraintViolation();
+                constraintValidatorContext
+                        .buildConstraintViolationWithTemplate(constraintValidatorContext.getDefaultConstraintMessageTemplate())
+                        .addPropertyNode(fieldNames[index])
+                        .addConstraintViolation();
                 return false;
             }
+            index++;
         }
 
         return true;

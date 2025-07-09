@@ -376,7 +376,7 @@ public class SKOSImporter implements VocabularyImporter {
 
     private void handleGlossaryStringProperty(IRI property, Consumer<MultilingualString> consumer) {
         final Set<Statement> values = model.filter(getGlossaryUri(), property, null);
-        final MultilingualString mls = new MultilingualString();
+        final MultilingualString mls = new MultilingualString(); // TODO: lukaskabc: language
         values.stream().filter(s -> s.getObject().isLiteral()).forEach(s -> {
             final Literal obj = (Literal) s.getObject();
             mls.set(obj.getLanguage().orElseGet(() -> config.getPersistence().getLanguage()), obj.getLabel());

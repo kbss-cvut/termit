@@ -145,7 +145,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     @Transactional
     public void addRootTermToVocabulary(Term instance, Vocabulary vocabulary) {
-        prepareTermForPersist(instance, vocabulary.getUri());
+        prepareTermForPersist(instance, vocabulary);
         instance.setGlossary(vocabulary.getGlossary().getUri());
         instance.splitExternalAndInternalParents();
 
@@ -154,7 +154,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         termDao.persist(instance, vocabulary);
     }
 
-    private void prepareTermForPersist(Term instance, URI vocabularyUri) {
+    private void prepareTermForPersist(Term instance, Vocabulary vocabularyUri) {
         validate(instance);
 
         if (instance.getUri() == null) {
@@ -164,9 +164,9 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         pruneEmptyTranslations(instance);
     }
 
-    private URI generateIdentifier(URI vocabularyUri, MultilingualString termLabel) {
-        return idResolver.generateDerivedIdentifier(vocabularyUri, config.getNamespace().getTerm().getSeparator(),
-                                                    termLabel.get(config.getPersistence().getLanguage()));
+    private URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
+        return idResolver.generateDerivedIdentifier(vocabulary.getUri(), config.getNamespace().getTerm().getSeparator(),
+                                                    termLabel.get(vocabulary.getPrimaryLabel()));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
@@ -184,9 +184,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         SnapshotProvider.verifySnapshotNotModified(parentTerm);
         final URI vocabularyIri =
                 instance.getVocabulary() != null ? instance.getVocabulary() : parentTerm.getVocabulary();
-        prepareTermForPersist(instance, vocabularyIri);
 
         final Vocabulary vocabulary = vocabularyService.getReference(vocabularyIri);
+        prepareTermForPersist(instance, vocabulary);
+
         instance.setGlossary(vocabulary.getGlossary().getUri());
         instance.addParentTerm(parentTerm);
         instance.splitExternalAndInternalParents();

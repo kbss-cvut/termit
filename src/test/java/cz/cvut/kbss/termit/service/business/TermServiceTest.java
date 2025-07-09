@@ -47,6 +47,7 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -120,6 +121,11 @@ class TermServiceTest {
     private TermService sut;
 
     private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+
+    @BeforeEach
+    void setUp() {
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+    }
 
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
@@ -312,7 +318,7 @@ class TermServiceTest {
         final Term toAnalyze = generateTermWithId();
         when(termRepositoryService.findRequired(toAnalyze.getUri())).thenReturn(toAnalyze);
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
-        verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
+        verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
     }
 
     @Test
@@ -343,7 +349,7 @@ class TermServiceTest {
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
         when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
         sut.update(toUpdate);
-        verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
+        verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary(), vocabulary.getPrimaryLanguage());
     }
 
     @Test

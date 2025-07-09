@@ -461,11 +461,16 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
         Objects.requireNonNull(term);
         term = repositoryService.findRequired(term.getUri()); // required when throttling for persistent context
+        Vocabulary vocabulary = vocabularyService.getReference(vocabularyIri);
         if (term.getDefinition() == null || term.getDefinition().isEmpty()) {
             return;
         }
         LOG.debug("Analyzing definition of term {}.", term);
-        textAnalysisService.analyzeTermDefinition(term, vocabularyContextMapper.getVocabularyContext(vocabularyIri));
+        textAnalysisService.analyzeTermDefinition(
+                term,
+                vocabularyContextMapper.getVocabularyContext(vocabularyIri),
+                vocabulary.getPrimaryLanguage()
+        );
     }
 
     /**
@@ -474,10 +479,11 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Text analysis is invoked on all definitions merged for better efficiency.
      *
      * @param contextToTerms Map of vocabulary context URIs to lists of terms.
-     * @see TextAnalysisService#analyzeTermDefinitions(Map)
+     * @param language       Language of the term definitions to analyze
+     * @see TextAnalysisService#analyzeTermDefinitions(Map, String)
      */
-    public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms) {
-        textAnalysisService.analyzeTermDefinitions(contextToTerms);
+    public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms, String language) {
+        textAnalysisService.analyzeTermDefinitions(contextToTerms, language);
     }
 
     /**

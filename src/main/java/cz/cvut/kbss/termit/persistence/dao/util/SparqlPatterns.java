@@ -17,7 +17,10 @@ public class SparqlPatterns {
         return """
             OPTIONAL { #entity ?isFromVocabulary ?vocabulary . }
             OPTIONAL { #entity ?hasVocabulary ?vocabulary . }
-            OPTIONAL { #entity ?inDocument/?hasVocabulary ?vocabulary . }
+            OPTIONAL {
+                #entity ?inDocument ?entityDocument .
+                ?entityDocument ?hasVocabulary ?vocabulary .
+            }
             OPTIONAL {
                 #entity a ?vocabularyType .
                 BIND(#entity AS ?vocabulary)

@@ -391,7 +391,7 @@ public class VocabularyService
                                  k -> new ArrayList<>())
                 .add(t)
         );
-        termService.analyzeTermDefinitions(contextToTerms);
+        termService.analyzeTermDefinitions(contextToTerms, vocabulary.getPrimaryLanguage());
     }
 
     /**

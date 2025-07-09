@@ -361,7 +361,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                   .andExpect(content().string(objectMapper.writeValueAsString(input)))
                   .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
 
-        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        sut.analyzeTermDefinition(term, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
         mockServer.verify();
     }
 
@@ -374,7 +374,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                   .andExpect(content().string(containsString(term.getDefinition().get(Environment.LANGUAGE))))
                   .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
 
-        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        sut.analyzeTermDefinition(term, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
         final ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
         verify(annotationGeneratorMock).generateAnnotations(captor.capture(), eq(term));
         final String result = new BufferedReader(new InputStreamReader(captor.getValue())).lines().collect(
@@ -388,7 +388,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         term.setVocabulary(vocabulary.getUri());
         term.setDefinition(MultilingualString.create("test value", "cs"));
         assertNotEquals(term.getDefinition().getLanguages(), Collections.singleton(Environment.LANGUAGE));
-        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        sut.analyzeTermDefinition(term, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
         mockServer.verify();
         verify(annotationGeneratorMock, never()).generateAnnotations(any(), any(Term.class));
     }
@@ -399,7 +399,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         term.setVocabulary(vocabulary.getUri());
         config.getTextAnalysis().setUrl(null);
 
-        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        sut.analyzeTermDefinition(term, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
         mockServer.verify();
         verify(annotationGeneratorMock, never()).generateAnnotations(any(), any(Term.class));
         verify(textAnalysisRecordDao, never()).persist(any());
@@ -423,7 +423,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                   .andExpect(content().string(objectMapper.writeValueAsString(input)))
                   .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
 
-        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        sut.analyzeTermDefinition(term, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
         mockServer.verify();
     }
 
@@ -453,7 +453,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
                   .andExpect(content().string(objectMapper.writeValueAsString(input)))
                   .andRespond(withSuccess(CONTENT, MediaType.APPLICATION_XML));
 
-        sut.analyzeTermDefinition(term, vocabulary.getUri());
+        sut.analyzeTermDefinition(term, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
 
         ArgumentCaptor<TermDefinitionTextAnalysisFinishedEvent> eventCaptor = ArgumentCaptor.forClass(
                 TermDefinitionTextAnalysisFinishedEvent.class);

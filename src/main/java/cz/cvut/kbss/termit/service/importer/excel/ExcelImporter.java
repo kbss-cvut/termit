@@ -173,7 +173,7 @@ public class ExcelImporter implements VocabularyImporter {
         if (term.getUri() == null) {
             return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
                                                         config.getNamespace().getTerm().getSeparator(),
-                                                        term.getLabel().get(config.getPersistence().getLanguage()));
+                                                        term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         if (term.getUri() != null && !term.getUri().toString().startsWith(termNamespace)) {
             LOG.trace(
@@ -181,7 +181,7 @@ public class ExcelImporter implements VocabularyImporter {
                     Utils.uriToString(term.getUri()), termNamespace);
             return idResolver.generateDerivedIdentifier(vocabulary.getUri(),
                                                         config.getNamespace().getTerm().getSeparator(),
-                                                        term.getLabel().get(config.getPersistence().getLanguage()));
+                                                        term.getLabel().get(vocabulary.getPrimaryLanguage()));
         }
         return term.getUri();
     }

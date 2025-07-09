@@ -271,7 +271,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void addChildThrowsResourceExistsExceptionWhenTermWithIdenticalIdentifierAlreadyExists() {
         final Term existing = Generator.generateTermWithId();
-        final Term parent = Generator.generateTermWithId();
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
         final Term child = Generator.generateTerm();
         child.setUri(existing.getUri());
         transactional(() -> {
@@ -718,6 +718,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void updatePrunesEmptyTranslationsInMultilingualAttributes() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
         term.getLabel().set(Environment.LANGUAGE, "update");
         term.getLabel().set("cs", "");

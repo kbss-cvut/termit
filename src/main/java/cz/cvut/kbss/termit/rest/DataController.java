@@ -90,7 +90,9 @@ public class DataController {
     }
 
     @Operation(
-            description = "Gets the label of a RDFS resource with the specified IRI. The label is in the configured system language.")
+            description = "Gets the label of a RDFS resource with the specified IRI. " +
+                    "The label is in the vocabulary language is when available, " +
+                    "otherwise the configured persistence unit language is used instead.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "RDFS resource label."),
             @ApiResponse(responseCode = "404", description = "Resource not found.")
@@ -98,7 +100,7 @@ public class DataController {
     @GetMapping(value = "/label")
     public String getLabel(@Parameter(description = "Resource identifier.")
                            @RequestParam("iri") URI id,
-                           @Parameter(description = "Label language")
+                           @Parameter(description = "Label language") // TODO: lukaskabc: verify how this is used on FE
                            @RequestParam(value = "language", required = false) String language
     ) {
         return dataService.getLabel(id, language).orElseThrow(
