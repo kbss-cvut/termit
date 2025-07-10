@@ -154,11 +154,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
         termDao.persist(instance, vocabulary);
     }
 
-    private void prepareTermForPersist(Term instance, Vocabulary vocabularyUri) {
+    private void prepareTermForPersist(Term instance, Vocabulary vocabulary) {
+        instance.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
         validate(instance);
 
         if (instance.getUri() == null) {
-            instance.setUri(generateIdentifier(vocabularyUri, instance.getLabel()));
+            instance.setUri(generateIdentifier(vocabulary, instance.getLabel()));
         }
         verifyIdentifierUnique(instance);
         pruneEmptyTranslations(instance);

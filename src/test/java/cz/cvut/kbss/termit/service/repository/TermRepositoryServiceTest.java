@@ -718,7 +718,6 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void updatePrunesEmptyTranslationsInMultilingualAttributes() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        term.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
         transactional(() -> em.persist(term, descriptorFactory.termDescriptor(term)));
         term.getLabel().set(Environment.LANGUAGE, "update");
         term.getLabel().set("cs", "");
