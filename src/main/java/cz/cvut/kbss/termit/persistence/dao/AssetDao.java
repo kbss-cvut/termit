@@ -95,7 +95,7 @@ public class AssetDao {
                                 "FILTER (?hasLabel in (?labelProperties))" +
                                 "BIND (?assetType as ?type)" +
                                 "BIND (IF(?chType = ?persist, ?persist, ?update) as ?changeType)" +
-                                "FILTER (lang(?label) = ?language)" +
+                                "FILTER (lang(?label) = ?language || lang(?label) = \"\")" +
                                 "} ORDER BY DESC(?modified)", "RecentlyModifiedAsset")
                 .setParameter("ent", asset.uri)
                 .setParameter("assetType", asset.type)
