@@ -102,6 +102,8 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     @Override
     protected void preUpdate(@Nonnull Term instance) {
+        final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
+        instance.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
