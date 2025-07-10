@@ -115,7 +115,7 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
     private TermDefinitionSource definitionSource;
 
     @Properties(fetchType = FetchType.EAGER)
-    private Map<String, Set<String>> properties;
+    private Map<String, Set<Object>> properties;
 
     public Term() {
     }
@@ -291,11 +291,11 @@ public class Term extends AbstractTerm implements HasTypes, SupportsSnapshots {
         this.definitionSource = definitionSource;
     }
 
-    public Map<String, Set<String>> getProperties() {
+    public Map<String, Set<Object>> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<String, Set<String>> properties) {
+    public void setProperties(Map<String, Set<Object>> properties) {
         this.properties = properties;
     }
 

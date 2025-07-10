@@ -200,7 +200,7 @@ class LocalizedSheetImporter {
         getAttributeValue(termRow, SKOS.BROADER).ifPresent(br -> setParentTerms(term, splitIntoMultipleValues(br)));
         getAttributeValue(termRow, SKOS.NOTATION).ifPresent(nt -> term.setNotations(splitIntoMultipleValues(nt)));
         getAttributeValue(termRow, DC.Terms.REFERENCES).ifPresent(
-                nt -> term.setProperties(Collections.singletonMap(DC.Terms.REFERENCES, splitIntoMultipleValues(nt))));
+                nt -> term.setProperties(Collections.singletonMap(DC.Terms.REFERENCES, new HashSet<>(splitIntoMultipleValues(nt)))));
         getAttributeValue(termRow, SKOS.RELATED).ifPresent(
                 rt -> mapSkosRelated(term, splitIntoMultipleValues(rt)));
         getAttributeValue(termRow, SKOS.RELATED_MATCH).ifPresent(
