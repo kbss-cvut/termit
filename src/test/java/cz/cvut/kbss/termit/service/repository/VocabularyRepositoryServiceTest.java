@@ -477,7 +477,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
                         "@prefix dc : <http://purl.org/dc/terms/> . " +
                         "<https://example.org/cs> a skos:ConceptScheme ; " +
                         "    dc:title \"Test\"@en ;" +
-                        "    <http://purl.org/dc/terms/language> \"cs\" ." +
+                        "    <http://purl.org/dc/terms/language> \"en\" ." +
                         "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
 

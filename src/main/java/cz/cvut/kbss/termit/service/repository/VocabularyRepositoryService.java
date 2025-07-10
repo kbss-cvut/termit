@@ -171,7 +171,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         doc.setUri(idResolver.generateIdentifier(vocabulary.getUri().toString(),
                                                  Constants.DEFAULT_DOCUMENT_IRI_COMPONENT));
         doc.setLabel(
-                new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
+                new MessageFormatter(vocabulary.getPrimaryLanguage()).formatMessage("vocabulary.document.label",
                                                                                           getPrimaryLabel(vocabulary)));
         vocabulary.setDocument(doc);
     }

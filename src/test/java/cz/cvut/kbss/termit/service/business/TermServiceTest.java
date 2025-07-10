@@ -47,7 +47,6 @@ import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.TypeAwareByteArrayResource;
 import cz.cvut.kbss.termit.util.TypeAwareResource;
 import cz.cvut.kbss.termit.util.Utils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -121,11 +120,6 @@ class TermServiceTest {
     private TermService sut;
 
     private final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-
-    @BeforeEach
-    void setUp() {
-        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
-    }
 
     @Test
     void exportGlossaryGetsGlossaryExportForSpecifiedVocabularyFromExporters() {
@@ -314,6 +308,7 @@ class TermServiceTest {
 
     @Test
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term toAnalyze = generateTermWithId();
         when(termRepositoryService.findRequired(toAnalyze.getUri())).thenReturn(toAnalyze);
@@ -339,6 +334,7 @@ class TermServiceTest {
 
     @Test
     void updateInvokesTextAnalysisOnUpdatedTerm() {
+        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term original = generateTermWithId(vocabulary.getUri());
         final Term toUpdate = new Term(original.getUri());
