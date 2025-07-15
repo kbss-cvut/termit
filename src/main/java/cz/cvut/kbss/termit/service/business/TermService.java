@@ -137,11 +137,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Retrieves all terms from the specified vocabulary.
      *
      * @param vocabulary Vocabulary whose terms will be returned. A reference is sufficient
+     * @param pageSpec   Page specification
      * @return Matching terms
      */
-    public List<TermDto> findAll(Vocabulary vocabulary) {
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
-        return repositoryService.findAll(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAll(vocabulary, pageSpec);
     }
 
     /**
@@ -172,11 +174,13 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      * Retrieves all terms from the specified vocabulary and its imports (transitive).
      *
      * @param vocabulary Base vocabulary for the vocabulary import closure
+     * @param pageSpec   Page specification
      * @return Matching terms
      */
-    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary) {
+    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
-        return repositoryService.findAllIncludingImported(vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllIncludingImported(vocabulary, pageSpec);
     }
 
     /**
@@ -238,12 +242,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param searchString Search string
      * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specification
      * @return Matching terms
      */
-    public List<TermDto> findAll(String searchString, Vocabulary vocabulary) {
+    public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
         Objects.requireNonNull(searchString);
-        return repositoryService.findAll(searchString, vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAll(searchString, vocabulary, pageSpec);
     }
 
     /**
@@ -263,12 +269,14 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
      *
      * @param searchString Search string
      * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specification
      * @return Matching terms
      */
-    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
+    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
-        return repositoryService.findAllIncludingImported(searchString, vocabulary);
+        Objects.requireNonNull(pageSpec);
+        return repositoryService.findAllIncludingImported(searchString, vocabulary, pageSpec);
     }
 
     /**

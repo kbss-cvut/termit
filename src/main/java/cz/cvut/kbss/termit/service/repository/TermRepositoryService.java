@@ -214,12 +214,13 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * This returns all terms contained in a vocabulary's glossary.
      *
      * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
+     * @param pageSpec   Page specifying result number and position
      * @return List of term DTOs ordered by label
      * @see #findAllFull(Vocabulary)
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAll(Vocabulary vocabulary) {
-        return termDao.findAll(vocabulary);
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAll(vocabulary, pageSpec);
     }
 
     /**
@@ -240,11 +241,11 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * Gets all terms from a vocabulary, regardless of their position in the term hierarchy.
      * <p>
      * This returns the full versions of all terms (complete metadata) contained in a vocabulary's glossary and thus its
-     * performance may be worse. If complete metadata are not required, use {@link #findAll(Vocabulary)}.
+     * performance may be worse. If complete metadata are not required, use {@link #findAll(Vocabulary, Pageable)}.
      *
      * @param vocabulary Vocabulary whose terms should be returned
      * @return List of full terms ordered by label
-     * @see #findAll(Vocabulary)
+     * @see #findAll(Vocabulary, Pageable)
      */
     public List<Term> findAllFull(Vocabulary vocabulary) {
         return termDao.findAllFull(vocabulary).stream().map(this::postLoad).collect(toList());
@@ -257,11 +258,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * This returns all terms contained in the vocabulary glossaries.
      *
      * @param vocabulary Base vocabulary for the vocabulary import closure
+     * @param pageSpec   Page specifying result number and position
      * @return List of terms ordered by label
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary) {
-        return termDao.findAllIncludingImported(vocabulary);
+    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAllIncludingImported(vocabulary, pageSpec);
     }
 
     /**
@@ -323,11 +325,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param searchString Search string
      * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specifying result number and position
      * @return Matching terms
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAll(String searchString, Vocabulary vocabulary) {
-        return termDao.findAll(searchString, vocabulary);
+    public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAll(searchString, vocabulary, pageSpec);
     }
 
     /**
@@ -347,11 +350,12 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      *
      * @param searchString Search string
      * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specifying result number and position
      * @return Matching terms
      */
     @Transactional(readOnly = true)
-    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
-        return termDao.findAllIncludingImported(searchString, vocabulary);
+    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        return termDao.findAllIncludingImported(searchString, vocabulary, pageSpec);
     }
 
     /**

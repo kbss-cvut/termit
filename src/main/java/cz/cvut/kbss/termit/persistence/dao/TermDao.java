@@ -329,9 +329,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy.
      *
      * @param vocabulary Vocabulary whose terms to retrieve. A reference is sufficient
+     * @param pageSpec   Page specification
      * @return List of vocabulary term DTOs
      */
-    public List<TermDto> findAll(Vocabulary vocabulary) {
+    public List<TermDto> findAll(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
         try {
             final TypedQuery<FlatTermDto> query =
@@ -350,7 +351,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                       .setParameter("vocabulary", vocabulary.getUri())
                       .setParameter("hasLabel", LABEL_PROP)
                       .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
-                      .setParameter("hasLanguage", DC_TERMS_LANGUAGE);
+                      .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                      .setMaxResults(pageSpec.getPageSize())
+                      .setFirstResult((int) pageSpec.getOffset());
 
             return executeAndBuildHierarchy(query);
         } catch (RuntimeException e) {
@@ -487,9 +490,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * No differences are made between root terms and terms with parents.
      *
      * @param vocabulary Vocabulary whose terms should be returned
+     * @param pageSpec   Page specification
      * @return Matching terms, ordered by label
      */
-    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary) {
+    public List<TermDto> findAllIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(vocabulary);
         TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                                                                  "?term a ?type ;" +
@@ -506,7 +510,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                     URI.create(
                                                             cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                       .setParameter("vocabulary", vocabulary.getUri())
-                                      .setParameter("hasLanguage", DC_TERMS_LANGUAGE);
+                                      .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                                      .setMaxResults(pageSpec.getPageSize())
+                                      .setFirstResult((int) pageSpec.getOffset());
         return executeQueryAndLoadSubTerms(query);
     }
 
@@ -684,11 +690,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param searchString String the search term labels by
      * @param vocabulary   Vocabulary whose terms should be searched
+     * @param pageSpec     Page specification
      * @return List of matching terms
      */
-    public List<TermDto> findAll(String searchString, Vocabulary vocabulary) {
+    public List<TermDto> findAll(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
+        Objects.requireNonNull(pageSpec);
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
                                                                        "GRAPH ?context { " +
                                                                        "?term a ?type ; " +
@@ -703,7 +711,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                             .setParameter("hasLabel", LABEL_PROP)
                                             .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
                                             .setParameter("vocabulary", vocabulary.getUri())
-                                            .setParameter("searchString", searchString, config.getLanguage());
+                                            .setParameter("searchString", searchString, config.getLanguage())
+                                            .setMaxResults(pageSpec.getPageSize())
+                                            .setFirstResult((int) pageSpec.getOffset());
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);
@@ -759,9 +769,10 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      *
      * @param searchString String the search term labels by
      * @param vocabulary   Vocabulary whose terms should be searched
+     * @param pageSpec     Page specification
      * @return List of matching terms
      */
-    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary) {
+    public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         Objects.requireNonNull(searchString);
         Objects.requireNonNull(vocabulary);
         final TypedQuery<TermDto> query = em.createNativeQuery("SELECT DISTINCT ?term WHERE {" +
@@ -779,7 +790,9 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                           URI.create(
                                                                   cz.cvut.kbss.termit.util.Vocabulary.s_p_importuje_slovnik))
                                             .setParameter("targetVocabulary", vocabulary.getUri())
-                                            .setParameter("searchString", searchString, config.getLanguage());
+                                            .setParameter("searchString", searchString, config.getLanguage())
+                                            .setMaxResults(pageSpec.getPageSize())
+                                            .setFirstResult((int) pageSpec.getOffset());
         try {
             final List<TermDto> terms = executeQueryAndLoadSubTerms(query);
             terms.forEach(this::loadParentSubTerms);

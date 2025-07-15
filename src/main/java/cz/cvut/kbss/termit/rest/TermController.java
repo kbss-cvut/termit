@@ -112,6 +112,8 @@ public class TermController extends BaseController {
      * @param properties      A set of properties representing references to terms from other vocabularies to take into
      *                        account in export. Relevant only for term export. Optional
      * @param acceptType      MIME type accepted by the client, relevant only for term export
+     * @param pageSize        Limit the number of elements in the returned page. Optional
+     * @param pageNo          Number of the page to return. Optional
      * @return List of terms of the specific vocabulary
      */
     @Operation(security = {@SecurityRequirement(name = "bearer-key")},
@@ -141,20 +143,24 @@ public class TermController extends BaseController {
             @Parameter(
                     description = "HTTP Accept header. If its value is not JSON or JSON-LD, the request is interpreted as data export.")
             @RequestHeader(value = HttpHeaders.ACCEPT, required = false,
-                           defaultValue = MediaType.ALL_VALUE) String acceptType) {
+                           defaultValue = MediaType.ALL_VALUE) String acceptType,
+            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+            @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+            @RequestParam(name = QueryParams.PAGE, required = false) Integer pageNo) {
         final URI vocabularyUri = getVocabularyUri(namespace, localName);
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
             return ResponseEntity.ok(includeImported ?
-                                     termService.findAllIncludingImported(searchString, vocabulary) :
-                                     termService.findAll(searchString, vocabulary));
+                                     termService.findAllIncludingImported(searchString, vocabulary, createPageRequest(pageSize, pageNo)) :
+                                     termService.findAll(searchString, vocabulary, createPageRequest(pageSize, pageNo)));
         }
         final Optional<ResponseEntity<?>> export = exportTerms(vocabulary, exportType, properties, acceptType);
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
             return ResponseEntity
-                    .ok(includeImported ? termService.findAllIncludingImported(vocabulary) :
-                        termService.findAll(vocabulary));
+                    .ok(includeImported ? termService.findAllIncludingImported(vocabulary, createPageRequest(pageSize, pageNo)) :
+                        termService.findAll(vocabulary, createPageRequest(pageSize, pageNo)));
         });
     }
 

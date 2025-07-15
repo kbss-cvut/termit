@@ -279,7 +279,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAll(eq(vocabulary))).thenReturn(terms);
+        when(termServiceMock.findAll(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
 
         final MvcResult mvcResult = mockMvc.perform(
                                                    get(PATH + VOCABULARY_NAME + "/terms")
@@ -288,7 +288,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        verify(termServiceMock).findAll(vocabulary);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAll(eq(vocabulary), captor.capture());
     }
 
     @Test
@@ -297,7 +298,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
-        when(termServiceMock.findAllIncludingImported(eq(vocabulary))).thenReturn(terms);
+        when(termServiceMock.findAllIncludingImported(eq(vocabulary), any(Pageable.class))).thenReturn(terms);
 
         final MvcResult mvcResult = mockMvc.perform(
                                                    get(PATH + VOCABULARY_NAME + "/terms")
@@ -307,7 +308,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        verify(termServiceMock).findAllIncludingImported(vocabulary);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllIncludingImported(eq(vocabulary), captor.capture());
     }
 
     @Test
@@ -316,7 +318,7 @@ class TermControllerTest extends BaseControllerTestRunner {
                 .thenReturn(URI.create(VOCABULARY_URI));
         when(termServiceMock.findVocabularyRequired(vocabulary.getUri())).thenReturn(vocabulary);
         final List<TermDto> terms = termsToDtos(Generator.generateTermsWithIds(5));
-        when(termServiceMock.findAll(anyString(), any())).thenReturn(terms);
+        when(termServiceMock.findAll(anyString(), any(), any(Pageable.class))).thenReturn(terms);
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + VOCABULARY_NAME + "/terms")
@@ -326,7 +328,8 @@ class TermControllerTest extends BaseControllerTestRunner {
         final List<TermDto> result = readValue(mvcResult, new TypeReference<>() {
         });
         assertEquals(terms, result);
-        verify(termServiceMock).findAll(searchString, vocabulary);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAll(eq(searchString), eq(vocabulary), captor.capture());
     }
 
     @Test
@@ -698,7 +701,8 @@ class TermControllerTest extends BaseControllerTestRunner {
                                .param("includeImported", Boolean.TRUE.toString())
                                .param("searchString", searchString))
                .andExpect(status().isOk());
-        verify(termServiceMock).findAllIncludingImported(searchString, vocabulary);
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(termServiceMock).findAllIncludingImported(eq(searchString), eq(vocabulary), captor.capture());
     }
 
     @Test

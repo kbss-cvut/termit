@@ -176,10 +176,10 @@ class TermServiceTest {
     void findAllBySearchStringRetrievesMatchingTermsFromVocabularyUsingRepositoryService() {
         final String searchString = "test";
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAll(searchString, vocabulary)).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(searchString, vocabulary);
+        when(termRepositoryService.findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
-        verify(termRepositoryService).findAll(searchString, vocabulary);
+        verify(termRepositoryService).findAll(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -251,10 +251,10 @@ class TermServiceTest {
     @Test
     void findAllRetrievesAllTermsFromVocabularyUsingRepositoryService() {
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAll(vocabulary)).thenReturn(terms);
-        final List<TermDto> result = sut.findAll(vocabulary);
+        when(termRepositoryService.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
+        final List<TermDto> result = sut.findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
-        verify(termRepositoryService).findAll(vocabulary);
+        verify(termRepositoryService).findAll(vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -293,10 +293,10 @@ class TermServiceTest {
     void findAllIncludingImportedBySearchStringRetrievesMatchingTermsUsingRepositoryService() {
         final String searchString = "test";
         final List<TermDto> terms = Collections.singletonList(new TermDto(Generator.generateTermWithId()));
-        when(termRepositoryService.findAllIncludingImported(searchString, vocabulary)).thenReturn(terms);
-        final List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary);
+        when(termRepositoryService.findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC)).thenReturn(terms);
+        final List<TermDto> result = sut.findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
         assertEquals(terms, result);
-        verify(termRepositoryService).findAllIncludingImported(searchString, vocabulary);
+        verify(termRepositoryService).findAllIncludingImported(searchString, vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test
@@ -399,8 +399,8 @@ class TermServiceTest {
 
     @Test
     void findAllIncludingImportedRetrievesAllTermsFromVocabularyImportsChain() {
-        sut.findAllIncludingImported(vocabulary);
-        verify(termRepositoryService).findAllIncludingImported(vocabulary);
+        sut.findAllIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC);
+        verify(termRepositoryService).findAllIncludingImported(vocabulary, Constants.DEFAULT_PAGE_SPEC);
     }
 
     @Test

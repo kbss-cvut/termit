@@ -55,6 +55,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static cz.cvut.kbss.termit.rest.util.RestUtils.createPageRequest;
 import static cz.cvut.kbss.termit.security.SecurityConstants.PUBLIC_API_PATH;
 
 @Profile("!no-public-api")
@@ -86,13 +87,17 @@ public class ReadOnlyTermController extends BaseController {
                             @Parameter(description = "String by which filter the terms (label).")
                             @RequestParam(name = "searchString", required = false) String searchString,
                             @Parameter(description = "Whether to include terms from imported vocabularies.")
-                            @RequestParam(name = "includeImported", required = false) boolean includeImported) {
+                            @RequestParam(name = "includeImported", required = false) boolean includeImported,
+                            @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
+                            @RequestParam(name = Constants.QueryParams.PAGE_SIZE, required = false) Integer pageSize,
+                            @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
+                            @RequestParam(name = Constants.QueryParams.PAGE, required = false) Integer pageNo) {
         final Vocabulary vocabulary = getVocabulary(localName, namespace);
         if (searchString != null) {
-            return includeImported ? termService.findAllIncludingImported(searchString, vocabulary) :
-                   termService.findAll(searchString, vocabulary);
+            return includeImported ? termService.findAllIncludingImported(searchString, vocabulary, createPageRequest(pageSize, pageNo)) :
+                   termService.findAll(searchString, vocabulary, createPageRequest(pageSize, pageNo));
         }
-        return termService.findAll(vocabulary);
+        return termService.findAll(vocabulary, createPageRequest(pageSize, pageNo));
     }
 
     private Vocabulary getVocabulary(String fragment, Optional<String> namespace) {
