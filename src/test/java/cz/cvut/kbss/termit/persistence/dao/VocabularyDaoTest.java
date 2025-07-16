@@ -23,7 +23,7 @@ import cz.cvut.kbss.jopa.model.descriptors.Descriptor;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
-import cz.cvut.kbss.termit.dto.RdfsStatement;
+import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.environment.Environment;
@@ -859,10 +859,10 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Environment.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
         });
 
-        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+        final List<RdfStatement> relations = sut.getTermRelations(vocabulary);
 
         assertEquals(1, relations.size());
-        final RdfsStatement relation = relations.get(0);
+        final RdfStatement relation = relations.get(0);
         assertEquals(term.getUri(), relation.getObject());
         assertEquals(termRelation, relation.getRelation());
         assertEquals(secondTerm.getUri(), relation.getSubject());
@@ -892,10 +892,10 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Environment.addRelation(secondTerm.getUri(), termRelation, term.getUri(), em);
         });
 
-        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+        final List<RdfStatement> relations = sut.getTermRelations(vocabulary);
 
         assertEquals(1, relations.size());
-        final RdfsStatement relation = relations.get(0);
+        final RdfStatement relation = relations.get(0);
         assertEquals(secondTerm.getUri(), relation.getObject());
         assertEquals(termRelation, relation.getRelation());
         assertEquals(term.getUri(), relation.getSubject());
@@ -927,7 +927,7 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
             Environment.addRelation(term.getUri(), termRelation, secondTerm.getUri(), em);
         });
 
-        final List<RdfsStatement> relations = sut.getTermRelations(vocabulary);
+        final List<RdfStatement> relations = sut.getTermRelations(vocabulary);
 
         assertEquals(2, relations.size());
         relations.forEach(relation -> {

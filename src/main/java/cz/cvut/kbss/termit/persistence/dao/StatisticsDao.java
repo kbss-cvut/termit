@@ -20,7 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.ontodriver.model.LangString;
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.dto.statistics.CountableAssetType;
 import cz.cvut.kbss.termit.dto.statistics.DistributionDto;
 import cz.cvut.kbss.termit.dto.statistics.TermTypeDistributionDto;

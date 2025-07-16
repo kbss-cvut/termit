@@ -17,7 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.language;
 
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.exception.LanguageRetrievalException;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
