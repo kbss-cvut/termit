@@ -17,7 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
-import cz.cvut.kbss.termit.dto.RdfsResource;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;

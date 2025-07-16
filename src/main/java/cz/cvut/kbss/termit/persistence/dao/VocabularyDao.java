@@ -25,7 +25,7 @@ import cz.cvut.kbss.termit.asset.provenance.ModifiesData;
 import cz.cvut.kbss.termit.asset.provenance.SupportsLastModification;
 import cz.cvut.kbss.termit.dto.AggregatedChangeInfo;
 import cz.cvut.kbss.termit.dto.PrefixDeclaration;
-import cz.cvut.kbss.termit.dto.RdfsStatement;
+import cz.cvut.kbss.termit.dto.RdfStatement;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.event.AssetPersistEvent;
@@ -489,7 +489,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     /**
      * @return all relations between specified vocabulary and all other vocabularies
      */
-    public List<RdfsStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
+    public List<RdfStatement> getVocabularyRelations(Vocabulary vocabulary, Collection<URI> excludedRelations) {
         Objects.requireNonNull(vocabulary);
         final URI vocabularyUri = vocabulary.getUri();
 
@@ -515,7 +515,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     /**
      * @return all relations between terms in specified vocabulary and all terms from any other vocabulary
      */
-    public List<RdfsStatement> getTermRelations(Vocabulary vocabulary) {
+    public List<RdfStatement> getTermRelations(Vocabulary vocabulary) {
         Objects.requireNonNull(vocabulary);
         final URI vocabularyUri = vocabulary.getUri();
         final URI termType = URI.create(EntityToOwlClassMapper.getOwlClassForEntity(Term.class));
