@@ -32,6 +32,7 @@ import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
@@ -202,6 +203,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
             final Vocabulary result = em.merge(entity, descriptorFactory.vocabularyDescriptor(entity));
             refreshLastModified();
+            eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, entity.getUri()));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
