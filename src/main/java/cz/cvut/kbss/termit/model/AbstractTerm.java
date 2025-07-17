@@ -59,7 +59,7 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     private MultilingualString definition;
 
     @JsonIgnore
-    @Transient
+    @Transient // TODO: Tests fails when @Transient is removed from the Sparql attribute
     @Sparql(query = "PREFIX dcterms: <" + DC.Terms.NAMESPACE + ">\n" +
             """
             SELECT ?lang WHERE {

@@ -316,7 +316,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void updateThrowsValidationExceptionForEmptyTermLabel() {
-        final Term t = Generator.generateTermWithId();
+        final Term t = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.getGlossary().addRootTerm(t);
         vocabulary.getGlossary().addRootTerm(t);
         transactional(() -> {
@@ -324,7 +324,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary);
         });
 
-        t.getLabel().remove(Environment.LANGUAGE);
+        t.getLabel().remove(vocabulary.getPrimaryLanguage());
         assertThrows(ValidationException.class, () -> sut.update(t));
     }
 
