@@ -118,7 +118,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         setPrimaryLabel(vocabulary, "");
         final ValidationException exception = assertThrows(ValidationException.class, () -> sut.persist(vocabulary));
         assertThat(exception.getMessage(),
-                   containsString("label in the primary configured language must not be blank"));
+                   containsString("label in the primary vocabulary language must not be blank"));
     }
 
     @Test
