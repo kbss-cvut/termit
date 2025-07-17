@@ -283,7 +283,7 @@ public class ExcelImporter implements VocabularyImporter {
 
     private void identifyTermByLabelIfNecessary(Term t, Vocabulary targetVocabulary) {
         if (t.getUri() == null) {
-            final String termLabel = t.getLabel().get(config.getPersistence().getLanguage());
+            final String termLabel = t.getLabel().get(targetVocabulary.getPrimaryLanguage());
             if (termLabel == null) {
                 throw new VocabularyImportException(
                         "Unable to identify terms in Excel - it contains neither term identifiers nor labels in primary language.",
