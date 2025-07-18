@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.document;
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TextAnalysisFailedEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
@@ -28,6 +29,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
+import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -81,6 +83,8 @@ public class TextAnalysisService {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    private final VocabularyDao vocabularyDao;
+
     private Set<String> supportedLanguages;
 
     /**
@@ -107,13 +111,15 @@ public class TextAnalysisService {
     @Autowired
     public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
                                AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao,
-                               ApplicationEventPublisher eventPublisher) {
+                               ApplicationEventPublisher eventPublisher,
+                               VocabularyDao vocabularyDao) {
         this.restClient = restClient;
         this.config = config;
         this.documentManager = documentManager;
         this.annotationGenerator = annotationGenerator;
         this.recordDao = recordDao;
         this.eventPublisher = eventPublisher;
+        this.vocabularyDao = vocabularyDao;
     }
 
     /**
@@ -131,7 +137,13 @@ public class TextAnalysisService {
         Objects.requireNonNull(file);
         final TextAnalysisInput input = createAnalysisInput(file);
         input.setVocabularyContexts(vocabularyContexts);
-        invokeTextAnalysisOnFile(file, input);
+        try {
+            invokeTextAnalysisOnFile(file, input);
+        } catch (TermItException e) {
+            LOG.error("Text analysis failed: {}", e.getMessage());
+            eventPublisher.publishEvent(new TextAnalysisFailedEvent(this, e, file));
+            return;
+        }
         LOG.debug("Text analysis finished for resource {}.", file.getUri());
         eventPublisher.publishEvent(new FileTextAnalysisFinishedEvent(this, file));
     }
@@ -144,7 +156,8 @@ public class TextAnalysisService {
                 publicUrl.isEmpty() || publicUrl.get().isEmpty() ? config.getRepository().getUrl() : publicUrl.get()
         );
         input.setVocabularyRepository(repositoryUrl);
-        input.setLanguage(file.getLanguage() != null ? file.getLanguage() : config.getPersistence().getLanguage());
+        String vocabularyLanguage = vocabularyDao.getReference(file.getDocument().getVocabulary()).getPrimaryLanguage();
+        input.setLanguage(file.getLanguage() != null ? file.getLanguage() : vocabularyLanguage);
         input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
         input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
         return input;
