@@ -153,6 +153,14 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
         this.primaryLanguage = primaryLanguage;
     }
 
+    @Override
+    public String getPrimaryLabel() {
+        if (getPrimaryLanguage() == null) {
+            return super.getPrimaryLabel();
+        }
+        return getLabel(getPrimaryLanguage());
+    }
+
     public Set<TermInfo> getSubTerms() {
         return subTerms;
     }

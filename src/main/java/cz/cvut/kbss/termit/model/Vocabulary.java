@@ -145,6 +145,11 @@ public class Vocabulary extends Asset<MultilingualString> implements HasTypes, S
         this.primaryLanguage = primaryLanguage;
     }
 
+    @Override
+    public String getPrimaryLabel() {
+        return getLabel(getPrimaryLanguage());
+    }
+
     public Glossary getGlossary() {
         return glossary;
     }

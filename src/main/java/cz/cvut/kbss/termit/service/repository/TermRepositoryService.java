@@ -169,7 +169,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     private URI generateIdentifier(Vocabulary vocabulary, MultilingualString termLabel) {
         return idResolver.generateDerivedIdentifier(vocabulary.getUri(), config.getNamespace().getTerm().getSeparator(),
-                                                    termLabel.get(vocabulary.getPrimaryLabel()));
+                                                    termLabel.get(vocabulary.getPrimaryLanguage()));
     }
 
     private void addTermAsRootToGlossary(Term instance, URI vocabularyIri) {
