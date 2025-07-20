@@ -592,7 +592,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?term a ?type ; " +
                                                                  "?hasLabel ?label . " +
                                                                  "?vocabulary ?hasGlossary/?hasTerm ?term . " +
-                                                                 "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
+                                                                 "?vocabulary ?hasLanguage ?primaryLanguage ." +
+                                                                 "BIND((lang(?label) = ?primaryLanguage) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included)) . " +
                                                                  "FILTER NOT EXISTS {?term a ?snapshot .} " +
                                                                  "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
@@ -601,7 +602,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         query = setCommonFindAllRootsQueryParams(query, false);
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
-                    query.setParameter("labelLang", config.getLanguage())
+                    query.setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                          .setParameter("included", includeTerms)
                          .setParameter("snapshot", URI.create(cz.cvut.kbss.termit.util.Vocabulary.s_c_verze_pojmu))
                          .setMaxResults(pageSpec.getPageSize())
@@ -679,7 +680,8 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                                                                  "?hasLabel ?label ." +
                                                                  "?vocabulary ?imports* ?parent ." +
                                                                  "?parent ?hasGlossary/?hasTerm ?term ." +
-                                                                 "BIND((lang(?label) = ?labelLang) as ?hasLocaleLabel) ." +
+                                                                 "?vocabulary ?hasLanguage ?primaryLanguage ." +
+                                                                 "BIND((lang(?label) = ?primaryLanguage) as ?hasLocaleLabel) ." +
                                                                  "FILTER (?term NOT IN (?included))" +
                                                                  "} ORDER BY DESC(?hasLocaleLabel) lang(?label) " + orderSentence(
                                                                  "?label") + "}",
@@ -688,7 +690,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         try {
             final List<TermDto> result = executeQueryAndLoadSubTerms(
                     query.setParameter("vocabulary", vocabulary.getUri())
-                         .setParameter("labelLang", config.getLanguage())
+                         .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                          .setParameter("included", includeTerms)
                          .setFirstResult((int) pageSpec.getOffset())
                          .setMaxResults(pageSpec.getPageSize()));
