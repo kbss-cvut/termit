@@ -4,7 +4,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/pojem/>
 PREFIX dc: <http://purl.org/dc/terms/>
 
-SELECT ?slovnik ?labelSlovniku ( COUNT(DISTINCT ?pojem) AS ?count ) {
+SELECT ?slovnik ?labelSlovniku ( COUNT(DISTINCT ?pojem) AS ?count ) ?jazykSlovniku {
     GRAPH ?g {
         ?pojem a skos:Concept ;
     }
@@ -13,4 +13,5 @@ SELECT ?slovnik ?labelSlovniku ( COUNT(DISTINCT ?pojem) AS ?count ) {
         ?slovnik a pdp:verze-slovníku .
     }
     ?slovnik dc:title ?labelSlovniku .
-} GROUP BY ?slovnik ?labelSlovniku
+    ?slovnik dc:language ?jazykSlovniku .
+} GROUP BY ?slovnik ?labelSlovniku ?jazykSlovniku

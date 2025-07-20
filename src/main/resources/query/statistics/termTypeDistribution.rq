@@ -3,12 +3,13 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX dc: <http://purl.org/dc/terms/>
 PREFIX termit: <http://onto.fel.cvut.cz/ontologies/application/termit/>
 
-SELECT ?vocabulary ?vocLabel ?type (COUNT(?term) as ?cnt) WHERE {
+SELECT ?vocabulary ?vocLabel ?type (COUNT(?term) as ?cnt) ?language WHERE {
     GRAPH ?g {
         ?term a skos:Concept .
     }
     ?term pdp:je-pojmem-ze-slovníku ?vocabulary .
     ?vocabulary dc:title ?vocLabel .
+    ?vocabulary dc:language ?language .
     FILTER NOT EXISTS {
         ?vocabulary a pdp:verze-objektu .
     }

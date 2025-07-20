@@ -100,7 +100,7 @@ public class DataController {
     @GetMapping(value = "/label")
     public String getLabel(@Parameter(description = "Resource identifier.")
                            @RequestParam("iri") URI id,
-                           @Parameter(description = "Label language") // TODO: lukaskabc: verify how this is used on FE
+                           @Parameter(description = "Label language")
                            @RequestParam(value = "language", required = false) String language
     ) {
         return dataService.getLabel(id, language).orElseThrow(
