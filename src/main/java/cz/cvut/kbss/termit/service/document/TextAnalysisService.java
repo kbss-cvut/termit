@@ -142,7 +142,7 @@ public class TextAnalysisService {
         } catch (TermItException e) {
             LOG.error("Text analysis failed: {}", e.getMessage());
             eventPublisher.publishEvent(new TextAnalysisFailedEvent(this, e, file));
-            return;
+            throw e;
         }
         LOG.debug("Text analysis finished for resource {}.", file.getUri());
         eventPublisher.publishEvent(new FileTextAnalysisFinishedEvent(this, file));

@@ -34,6 +34,7 @@ import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.Vocabulary;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
+import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.service.BaseServiceTestRunner;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -122,6 +123,9 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
     @Mock
     private TextAnalysisRecordDao textAnalysisRecordDao;
 
+    @Mock
+    private VocabularyDao vocabularyDao;
+
     private TextAnalysisService sut;
 
     private MockRestServiceServer mockServer;
@@ -147,8 +151,9 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         this.documentManagerSpy = spy(documentManager);
         doCallRealMethod().when(documentManagerSpy).loadFileContent(any());
         doNothing().when(documentManagerSpy).createBackup(any());
+        when(vocabularyDao.getReference(vocabulary.getUri())).thenReturn(vocabulary);
         this.sut = new TextAnalysisService(restTemplate, config, documentManagerSpy, annotationGeneratorMock,
-                                           textAnalysisRecordDao, eventPublisher);
+                                           textAnalysisRecordDao, eventPublisher, vocabularyDao);
     }
 
     @Test
