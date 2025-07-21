@@ -23,7 +23,6 @@ import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.exception.NotFoundException;
-import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -324,15 +323,6 @@ class ResourceServiceTest {
     }
 
     @Test
-    void addFileToDocumentPersistsFileAndPersistsDocumentWithAddedFile() {
-        final Document doc = Generator.generateDocumentWithId();
-        final File fOne = Generator.generateFileWithId("test.html");
-        sut.addFileToDocument(doc, fOne);
-        verify(resourceRepositoryService).persist(fOne);
-        verify(resourceRepositoryService).persist(doc);
-    }
-
-    @Test
     void addFileToDocumentThrowsUnsupportedAssetOperationExceptionWhenSpecifiedResourceIsNotDocument() {
         final Resource resource = Generator.generateResourceWithId();
         final File fOne = Generator.generateFileWithId("test.html");
@@ -349,19 +339,7 @@ class ResourceServiceTest {
 
         sut.addFileToDocument(doc, fOne);
         verify(resourceRepositoryService).persist(fOne, vocabulary);
-        verify(vocabularyService).getReference(vocabulary.getUri());
-    }
-
-    @Test
-    void addFileToDocumentUpdatesDocumentInVocabularyContextForDocumentWithVocabulary() {
-        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
-        final Document doc = Generator.generateDocumentWithId();
-        doc.setVocabulary(vocabulary.getUri());
-        final File fOne = Generator.generateFileWithId("test.html");
-        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
-
-        sut.addFileToDocument(doc, fOne);
-        verify(resourceRepositoryService).persist(doc);
+        verify(resourceRepositoryService).update(doc);
         verify(vocabularyService).getReference(vocabulary.getUri());
     }
 
@@ -377,12 +355,6 @@ class ResourceServiceTest {
 
         verify(resourceRepositoryService).remove(fOne);
         verify(documentManager).remove(fOne);
-    }
-
-    @Test
-    void removeFileThrowsTermItExceptionWhenFileIsNotLinkedToDocument() {
-        final File fOne = Generator.generateFileWithId("test.html");
-        assertThrows(TermItException.class, () -> sut.removeFile(fOne));
     }
 
     @Test
@@ -536,8 +508,6 @@ class ResourceServiceTest {
         final Document document = Generator.generateDocumentWithId();
         document.setVocabulary(vocabulary.getUri());
         final File file = Generator.generateFileWithId("test.hml");
-        when(resourceRepositoryService.exists(document.getUri())).thenReturn(true);
-        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(document, file);
@@ -553,8 +523,6 @@ class ResourceServiceTest {
         document.setVocabulary(vocabulary.getUri());
         final File file = Generator.generateFileWithId("test.hml");
         file.setLanguage("cs");
-        when(resourceRepositoryService.exists(document.getUri())).thenReturn(true);
-        when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
         when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
 
         sut.addFileToDocument(document, file);
