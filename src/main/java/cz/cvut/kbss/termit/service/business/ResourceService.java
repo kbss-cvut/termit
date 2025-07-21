@@ -126,7 +126,7 @@ public class ResourceService
         Objects.requireNonNull(toRemove);
         final Resource managed = findRequired(toRemove.getUri());
         if (managed instanceof Document doc) {
-            doc.getFiles().forEach(f -> {
+            Set.copyOf(doc.getFiles()).forEach(f -> {
                 documentManager.remove(f);
                 repositoryService.remove(f);
             });
