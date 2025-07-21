@@ -22,8 +22,8 @@ import cz.cvut.kbss.termit.dto.filter.ChangeRecordFilterDto;
 import cz.cvut.kbss.termit.event.DocumentRenameEvent;
 import cz.cvut.kbss.termit.event.FileRenameEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
-import cz.cvut.kbss.termit.exception.InvalidParameterException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedAssetOperationException;
 import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
@@ -106,7 +106,7 @@ public class ResourceService
     @EventListener
     public void onVocabularyRemoval(VocabularyWillBeRemovedEvent event) {
         vocabularyService.find(event.getVocabularyIri()).ifPresent(vocabulary -> {
-            if(vocabulary.getDocument() != null) {
+            if (vocabulary.getDocument() != null) {
                 remove(vocabulary.getDocument());
             }
         });
@@ -245,21 +245,17 @@ public class ResourceService
         if (!(document instanceof Document doc)) {
             throw new UnsupportedAssetOperationException("Cannot add file to the specified resource " + document);
         }
+        LOG.trace("Adding new file {} to document {}.", file, doc);
         doc.addFile(file);
         if (file.getLanguage() == null) {
             file.setLanguage(config.getPersistence().getLanguage());
         }
-        if (doc.getVocabulary() != null) {
-            final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
-            repositoryService.persist(file, vocabulary);
-        } else {
-            repositoryService.persist(file);
+        if (doc.getVocabulary() == null) {
+            throw new TermItException("Document " + doc + " does not have a vocabulary.");
         }
-        if (!repositoryService.exists(document.getUri())) {
-            repositoryService.persist(document);
-        } else {
-            update(doc);
-        }
+        final Vocabulary vocabulary = vocabularyService.getReference(doc.getVocabulary());
+        repositoryService.persist(file, vocabulary);
+        repositoryService.update(doc);
     }
 
     /**
@@ -272,15 +268,6 @@ public class ResourceService
     @PreAuthorize("@resourceAuthorizationService.canRemove(#file)")
     public void removeFile(File file) {
         Objects.requireNonNull(file);
-        final Document doc = file.getDocument();
-        if (doc == null) {
-            throw new InvalidParameterException("File was not attached to a document.");
-        } else {
-            doc.removeFile(file);
-            if (repositoryService.find(doc.getUri()).isPresent()) {
-                update(doc);
-            }
-        }
         documentManager.remove(file);
         repositoryService.remove(file);
     }
@@ -318,7 +305,8 @@ public class ResourceService
 
     private void verifyLanguageSupported(File file) {
         if (!textAnalysisService.supportsLanguage(file)) {
-            throw new UnsupportedTextAnalysisLanguageException("Text analysis service does not support language " + file.getLanguage(), file);
+            throw new UnsupportedTextAnalysisLanguageException(
+                    "Text analysis service does not support language " + file.getLanguage(), file);
         }
     }
 
