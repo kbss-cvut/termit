@@ -2,7 +2,7 @@ package cz.cvut.kbss.termit.model.util.validation;
 
 
 /**
- * Implemented by entities with a primary language.
+ * Specifies that the entity has a primary language.
  */
 public interface HasPrimaryLanguage {
     String getPrimaryLanguage();

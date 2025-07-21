@@ -191,17 +191,17 @@ public class DataDao {
         }
 
         TypedQuery<String> query = em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
-                                        languageOptionalPattern +
                                         "{?x ?has-label ?label .}" +
                                         "UNION" +
                                         "{?x ?has-title ?label .}" +
                                         "BIND (str(?label) as ?strippedLabel )." +
+                                        languageOptionalPattern +
                    // only bind parameter value to the variable if the parameter is present (COALESCE gives wrong results otherwise)
                    (languageSpecified ? "BIND (?labelLanguageVal as ?labelLanguage) ." : "") +
                                         "BIND (?instanceLanguageVal as ?instanceLanguage) ." +
                                         "BIND (COALESCE(" +
-                                        "   ?labelLanguage," +
-                                        "   ?language," +
+                                        "   ?labelLanguage," + // requested language
+                                        "   ?language," + // resolved vocabulary language
                                         "   ?instanceLanguage) AS ?labelLanguage) ." +
                                         "FILTER (LANGMATCHES(LANG(?label), ?labelLanguage) || lang(?label) = \"\") }",
                                 String.class)

@@ -16,12 +16,17 @@ public class SparqlPatterns {
     public static String insertVocabularyPattern(String entity) {
         return """
             OPTIONAL { #entity ?isFromVocabulary ?vocabulary . }
-            OPTIONAL { #entity ?hasVocabulary ?vocabulary . }
             OPTIONAL {
+                FILTER(NOT BOUND(?vocabulary)) .
+                #entity ?hasVocabulary ?vocabulary .
+            }
+            OPTIONAL {
+                FILTER(NOT BOUND(?vocabulary)) .
                 #entity ?inDocument ?entityDocument .
                 ?entityDocument ?hasVocabulary ?vocabulary .
             }
             OPTIONAL {
+                FILTER(NOT BOUND(?vocabulary)) .
                 #entity a ?vocabularyType .
                 BIND(#entity AS ?vocabulary)
             }
