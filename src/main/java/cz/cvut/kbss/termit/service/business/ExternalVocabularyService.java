@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
@@ -148,17 +149,33 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
             InputStream newVocabulary = downloadExternalVocabulary(vocabularyIri);
             if (newVocabulary != null) {
                 URI uri = new URI(vocabularyIri);
-                Vocabulary vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+                Vocabulary vocabulary = null;
+                Optional<Vocabulary> oldVocabulary = repositoryService.find(uri);
+                if (oldVocabulary.isEmpty()) { // new vocabulary  
+                    vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
 
-                // add types
-                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
-                vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+                    // add types
+                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
 
-                final AccessControlList acl = aclService.createFor(vocabulary);
-                vocabulary.setAcl(acl.getUri());
+                    final AccessControlList acl = aclService.createFor(vocabulary);
+                    vocabulary.setAcl(acl.getUri());
 
-                eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
-                LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
+                    eventPublisher.publishEvent(new VocabularyCreatedEvent(this, vocabulary.getUri()));
+                    LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
+                } else { // updating existing vocabulary
+                    vocabulary = repositoryService.importVocabulary(uri, RDFFormat.TURTLE.getDefaultMIMEType(), newVocabulary);
+                    
+                    // add types
+                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_pouze_pro_cteni);
+                    vocabulary.addType(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi);
+
+                    final AccessControlList acl = aclService.createFor(vocabulary);
+                    vocabulary.setAcl(acl.getUri());
+                    
+                    LOG.debug("Vocabulary {} import was successful.", vocabularyIri);
+                }
+                
                 if (firstImportedVocabulary == null) {
                     firstImportedVocabulary = vocabulary;
                 }
@@ -193,38 +210,17 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
     @Scheduled(cron = "${termit.external.reloadCron:-}")
     public void reloadVocabularies() throws URISyntaxException {
         System.out.println("Reloading vocabularies at " + Instant.now());
-        try {
-            // Create domain user
-            cz.cvut.kbss.termit.model.User domainUser = new cz.cvut.kbss.termit.model.User();
-            domainUser.setUsername("system");
-
-            // Create TermItUserDetails (or use a factory if available)
-            TermItUserDetails userDetails = new TermItUserDetails(domainUser.toUserAccount(), List.of());
-
-            // Set auth
-            UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
-            SecurityContextHolder.getContext().setAuthentication(auth);
-
-            reloadAllExternal();
-        } catch (Exception e){
-            throw e;
-        } finally {
-            // Clear security context afterwards
-            SecurityContextHolder.clearContext();
-        }
-//        reloadAllExternal();
+        reloadAllExternal();
     }
     
     
     public void reloadAllExternal() throws URISyntaxException{
-        List<String> externalVocabularies = vocabularyService.findAll().stream()
+        List<String> externalVocabularies = repositoryService.findAll().stream()
                 .filter((t) -> t.getTypes().contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi))
                 .map((t) -> t.getUri().toString())
                 .toList();
-//        Dont have the right to import vocabularies.
-//        importFromExternalUris(externalVocabularies);
+
+        importFromExternalUris(externalVocabularies);
         
     }
     
