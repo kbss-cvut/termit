@@ -34,6 +34,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static cz.cvut.kbss.termit.environment.Generator.generateVocabulary;
+import cz.cvut.kbss.termit.service.business.ExternalVocabularyService;
 import static cz.cvut.kbss.termit.util.Constants.REST_MAPPING_PATH;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
@@ -52,6 +53,9 @@ class VocabularyControllerSecurityTest extends BaseControllerTestRunner {
 
     @MockBean
     private IdentifierResolver idResolverMock;
+
+    @MockBean
+    private ExternalVocabularyService externalVocabularyService;
 
     @Autowired
     private Configuration configuration;
