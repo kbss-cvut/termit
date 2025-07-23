@@ -1078,18 +1078,40 @@ public class Configuration {
 
     @Validated
     public static class External {
+        
+                
+        /**
+         * CRON value that determines how often will the external vocabularies be updated.
+         */
+        @NotNull
+        private String reloadCron = "";
+        
         /**
          * Address for the external resource
          */
         @NotNull
-        private String resource = "";
+        private String resources = "";
 
-        public String getResource() {
-            return resource;
+        public String getResources() {
+            return resources;
         }
 
-        public void setResource(String resource) {
-            this.resource = resource;
+        public void setResources(String resources) {
+            this.resources = resources;
+        }
+
+        /**
+         * @return the reloadCron
+         */
+        public String getReloadCron() {
+            return reloadCron;
+        }
+
+        /**
+         * @param reloadCron the reloadCron to set
+         */
+        public void setReloadCron(String reloadCron) {
+            this.reloadCron = reloadCron;
         }
     }
 }

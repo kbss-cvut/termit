@@ -83,7 +83,7 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
         
         final Configuration config = context.getBean(Configuration.class);
 
-        String sparqlEndpoint = config.getExternal().getResource();
+        String sparqlEndpoint = config.getExternal().getResources();
         String sparqlQuery = Utils.loadQuery(LIST_AVAILABLE_VOCABULARIES_QUERY);
 
         SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
@@ -174,7 +174,7 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
         List<RdfsResource> response = new ArrayList<>();
         final Configuration config = context.getBean(Configuration.class);
 
-        String sparqlEndpoint = config.getExternal().getResource();;
+        String sparqlEndpoint = config.getExternal().getResources();
         String sparqlQuery = String.format(Utils.loadQuery(EXPORT_FULL_VOCABULARY_QUERY), vocabularyIri);
 
         SPARQLRepository sparqlRepo = new SPARQLRepository(sparqlEndpoint);
@@ -190,7 +190,7 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
 
     }
     
-    @Scheduled(cron = "0 0 0 * * *") // Every day at midnight
+    @Scheduled(cron = "${termit.external.reloadCron:-}")
     public void reloadVocabularies() throws URISyntaxException {
         System.out.println("Reloading vocabularies at " + Instant.now());
         try {

@@ -45,3 +45,6 @@ termit:
         credentialsFile: .termit-admin
     public:
         whiteListProperties: http://www.w3.org/2004/02/skos/core#notation
+    external:
+        resources: https://xn--slovnk-7va.gov.cz/sparql
+        reloadCron: 0 0 0 * * *
