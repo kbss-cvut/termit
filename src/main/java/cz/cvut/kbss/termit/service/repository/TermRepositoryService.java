@@ -22,6 +22,7 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.Snapshot;
 import cz.cvut.kbss.termit.dto.TermInfo;
 import cz.cvut.kbss.termit.dto.assignment.TermOccurrences;
+import cz.cvut.kbss.termit.dto.listing.FlatTermDto;
 import cz.cvut.kbss.termit.dto.listing.TermDto;
 import cz.cvut.kbss.termit.exception.AssetRemovalException;
 import cz.cvut.kbss.termit.exception.NotFoundException;
@@ -224,6 +225,22 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Gets all terms from vocabulary, regardless of their position in the term hierarchy and returns them in a flat
+     * structure.
+     * <p>
+     * This returns all terms contained in vocabulary's glossary.
+     *
+     * @param vocabulary Vocabulary whose terms should be returned. A reference is sufficient
+     * @param pageSpec   Page specifying result number and position
+     * @return List of term DTOs ordered by label in a flat structure
+     */
+    public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
+        List<FlatTermDto> flatTerms = termDao.findAllFlat(vocabulary, pageSpec);
+        flatTerms.forEach(flatTerm -> flatTerm.setParentTerms(null));
+        return flatTerms;
+    }
+
+    /**
      * Finds all terms in the specified vocabulary, regardless of their position in the term hierarchy. Filters terms
      * that have label and definition in the instance language.
      * <p>
@@ -264,6 +281,23 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional(readOnly = true)
     public List<TermDto> findAllIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
         return termDao.findAllIncludingImported(vocabulary, pageSpec);
+    }
+
+    /**
+     * Gets all terms from the specified vocabulary and its imports (transitive), regardless of their position in the
+     * term hierarchy and returns them in a flat structure.
+     * <p>
+     * This returns all terms contained in the vocabulary glossaries.
+     *
+     * @param vocabulary Base vocabulary for the vocabulary import closure
+     * @param pageSpec   Page specifying result number and position
+     * @return List of terms ordered by label in a flat structure
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlatIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
+        List<FlatTermDto> flatTerms = termDao.findAllFlatIncludingImported(vocabulary, pageSpec);
+        flatTerms.forEach(flatTerm -> flatTerm.setParentTerms(null));
+        return flatTerms;
     }
 
     /**
@@ -334,6 +368,22 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     /**
+     * Finds all terms which match the specified search string in the specified vocabulary and returns them in a flat
+     * structure.
+     *
+     * @param searchString Search string
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specifying result number and position
+     * @return Matching terms in a flat structure
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        List<FlatTermDto> flatTerms = termDao.findAllFlat(searchString, vocabulary, pageSpec);
+        flatTerms.forEach(flatTerm -> flatTerm.setParentTerms(null));
+        return flatTerms;
+    }
+
+    /**
      * Gets all terms from a vocabulary, with label matching the searchString
      *
      * @param searchString String to search by
@@ -356,6 +406,22 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     @Transactional(readOnly = true)
     public List<TermDto> findAllIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
         return termDao.findAllIncludingImported(searchString, vocabulary, pageSpec);
+    }
+
+    /**
+     * Finds all terms which match the specified search string in the specified vocabulary and any vocabularies it
+     * (transitively) imports and returns them in a flat structure.
+     *
+     * @param searchString Search string
+     * @param vocabulary   Vocabulary whose terms should be returned
+     * @param pageSpec     Page specifying result number and position
+     * @return Matching terms in a flat structure
+     */
+    @Transactional(readOnly = true)
+    public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
+        List<FlatTermDto> flatTerms = termDao.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
+        flatTerms.forEach(flatTerm -> flatTerm.setParentTerms(null));
+        return flatTerms;
     }
 
     /**
