@@ -17,16 +17,16 @@ public class SparqlPatterns {
         return """
             OPTIONAL { #entity ?isFromVocabulary ?vocabulary . }
             OPTIONAL {
-                FILTER(NOT BOUND(?vocabulary)) .
+                FILTER(!BOUND(?vocabulary)) .
                 #entity ?hasVocabulary ?vocabulary .
             }
             OPTIONAL {
-                FILTER(NOT BOUND(?vocabulary)) .
+                FILTER(!BOUND(?vocabulary)) .
                 #entity ?inDocument ?entityDocument .
                 ?entityDocument ?hasVocabulary ?vocabulary .
             }
             OPTIONAL {
-                FILTER(NOT BOUND(?vocabulary)) .
+                FILTER(!BOUND(?vocabulary)) .
                 #entity a ?vocabularyType .
                 BIND(#entity AS ?vocabulary)
             }
@@ -58,6 +58,7 @@ public class SparqlPatterns {
                     #entity ?hasLanguage ?entityLanguage .
                 }
                 OPTIONAL {
+                    FILTER(BOUND(?vocabulary)) .
                     ?vocabulary ?hasLanguage ?vocabularyLanguage .
                 }
                 BIND (COALESCE(?entityLanguage, ?vocabularyLanguage, ?language) as ?language) .
