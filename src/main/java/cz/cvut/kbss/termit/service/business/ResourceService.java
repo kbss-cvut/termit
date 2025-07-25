@@ -126,7 +126,7 @@ public class ResourceService
         Objects.requireNonNull(toRemove);
         final Resource managed = findRequired(toRemove.getUri());
         if (managed instanceof Document doc) {
-            // The copy prevent concurrent modification while iterating
+            // The copy prevents concurrent modification while iterating
             Set.copyOf(doc.getFiles()).forEach(f -> {
                 documentManager.remove(f);
                 repositoryService.remove(f);

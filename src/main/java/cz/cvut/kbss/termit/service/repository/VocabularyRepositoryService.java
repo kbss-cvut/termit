@@ -103,10 +103,6 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         return vocabularyDao;
     }
 
-    private String getPrimaryLabel(Vocabulary vocabulary) {
-        return vocabulary.getLabel(vocabulary.getPrimaryLanguage());
-    }
-
     // Cache only if all vocabularies are editable
     @Cacheable(condition = "@'termit-cz.cvut.kbss.termit.util.Configuration'.workspace.allVocabulariesEditable")
     @Override
@@ -140,7 +136,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         super.prePersist(instance);
         if (instance.getUri() == null) {
             instance.setUri(
-                    idResolver.generateIdentifier(config.getNamespace().getVocabulary(), getPrimaryLabel(instance)));
+                    idResolver.generateIdentifier(config.getNamespace().getVocabulary(), instance.getPrimaryLabel()));
         }
         verifyIdentifierUnique(instance);
         initGlossaryAndModel(instance);
@@ -171,8 +167,8 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         doc.setUri(idResolver.generateIdentifier(vocabulary.getUri().toString(),
                                                  Constants.DEFAULT_DOCUMENT_IRI_COMPONENT));
         doc.setLabel(
-                new MessageFormatter(vocabulary.getPrimaryLanguage()).formatMessage("vocabulary.document.label",
-                                                                                          getPrimaryLabel(vocabulary)));
+                new MessageFormatter(config.getPersistence().getLanguage()).formatMessage("vocabulary.document.label",
+                                                                                          vocabulary.getPrimaryLabel()));
         vocabulary.setDocument(doc);
     }
 
@@ -351,7 +347,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
         if (!vocabularies.isEmpty()) {
             throw new AssetRemovalException(
                     "Vocabulary cannot be removed. It is referenced from other vocabularies: "
-                            + vocabularies.stream().map(this::getPrimaryLabel).collect(Collectors.joining(", ")));
+                            + vocabularies.stream().map(Vocabulary::getPrimaryLabel).collect(Collectors.joining(", ")));
         }
     }
 

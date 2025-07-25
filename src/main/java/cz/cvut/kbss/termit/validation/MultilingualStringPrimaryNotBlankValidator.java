@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MultilingualStringPrimaryNotBlankValidator
         implements ConstraintValidator<PrimaryNotBlank, HasPrimaryLanguage> {
-    // cache for reflective operations
+    /// cache for reflective operations
     private static final ConcurrentMap<Class<?>, List<VarHandle>> CACHE = new ConcurrentHashMap<>();
 
     private MethodHandles.Lookup lookup = MethodHandles.lookup();
@@ -45,8 +45,6 @@ public class MultilingualStringPrimaryNotBlankValidator
 
     @Override
     public void initialize(PrimaryNotBlank constraintAnnotation) {
-        ConstraintValidator.super.initialize(constraintAnnotation);
-
         fieldNames = constraintAnnotation.value();
     }
 
@@ -96,7 +94,6 @@ public class MultilingualStringPrimaryNotBlankValidator
      * Resolves the class annotated with {@link PrimaryNotBlank} for the given bean.
      * @param beanToValidate Object whose class is to be checked for the annotation.
      * @return Class annotated with {@link PrimaryNotBlank}.
-     * @implNote This method is in place to skip possible bean proxies and get the real class.
      */
     private static Class<?> findAnnotatedClass(HasPrimaryLanguage beanToValidate) {
         Class<?> beanClass = beanToValidate.getClass();

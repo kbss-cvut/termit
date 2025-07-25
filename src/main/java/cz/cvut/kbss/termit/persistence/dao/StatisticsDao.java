@@ -77,8 +77,9 @@ public class StatisticsDao {
                                                                            final Object[] bindings = (Object[]) row;
                                                                            assert bindings.length == 4;
                                                                            final URI vocabulary = (URI) bindings[0];
+                                                                           final String vocabularyLanguage = (String) bindings[3];
                                                                            final LangString label = sanitizeLabel(
-                                                                                   bindings[1], (String) bindings[3]);
+                                                                                   bindings[1], vocabularyLanguage);
                                                                            final BigInteger count = (BigInteger) bindings[2];
                                                                            return new DistributionDto(
                                                                                    new RdfsResource(vocabulary, label,
@@ -104,7 +105,6 @@ public class StatisticsDao {
         }
     }
 
-    // TODO: lukaskabc: evaluate multi vocabulary language handling
     private LangString sanitizeLabel(Object label, String primaryLanguage) {
         if (label instanceof LangString) {
             return (LangString) label;
@@ -147,8 +147,9 @@ public class StatisticsDao {
                     final Object[] bindings = (Object[]) row;
                     assert bindings.length == 5;
                     final URI vocabulary = (URI) bindings[0];
+                    final String vocabularyLanguage = (String) bindings[4];
                     final LangString label = sanitizeLabel(
-                            bindings[1], (String) bindings[4]);
+                            bindings[1], vocabularyLanguage);
                     final URI type = (URI) bindings[2];
                     final BigInteger count = (BigInteger) bindings[3];
                     final TermTypeDistributionDto res = new TermTypeDistributionDto();

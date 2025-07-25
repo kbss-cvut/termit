@@ -57,13 +57,20 @@ public class MessageAssetFactory {
 
         @Override
         public void visitTerm(AbstractTerm term) {
-            this.label = dataService.getLabel(term.getUri(), null).orElse(term.getUri().toString()) +
+            String termLabel;
+            if (term.getPrimaryLanguage() != null) {
+                termLabel = term.getPrimaryLabel();
+            } else {
+                termLabel = dataService.getLabel(term.getUri(), null)
+                                       .orElse(term.getUri().toString());
+            }
+            this.label = termLabel +
                     " (" + dataService.getLabel(term.getVocabulary(), null).orElse("") + ")";
         }
 
         @Override
         public void visitVocabulary(Vocabulary vocabulary) {
-            this.label = vocabulary.getLabel(vocabulary.getPrimaryLanguage());
+            this.label = vocabulary.getPrimaryLabel();
         }
 
         @Override

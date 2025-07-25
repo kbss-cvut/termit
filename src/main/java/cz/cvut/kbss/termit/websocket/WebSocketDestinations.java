@@ -25,9 +25,13 @@ public final class WebSocketDestinations {
     public static final String VOCABULARIES_VALIDATION = "/vocabularies/validation";
 
     /**
-     * Used for notifying client about failed text analysis
+     * Used for notifying client about a text analysis failure
      */
     public static final String VOCABULARIES_TEXT_ANALYSIS_FAILED = "/vocabularies/text_analysis/failed";
+
+    /**
+     * Used for notifying client about finishing a text analysis
+     */
     private static final String VOCABULARIES_TEXT_ANALYSIS_FINISHED = "/vocabularies/text_analysis/finished";
 
     /**

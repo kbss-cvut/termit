@@ -102,8 +102,10 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
 
     @Override
     protected void preUpdate(@Nonnull Term instance) {
-        final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
-        instance.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
+        if (instance.getPrimaryLanguage() == null) {
+            final Vocabulary vocabulary = vocabularyService.getReference(instance.getVocabulary());
+            instance.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
+        }
         super.preUpdate(instance);
         // Existence check is done as part of super.preUpdate
         final Term original = termDao.find(instance.getUri()).get();
@@ -157,6 +159,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
     }
 
     private void prepareTermForPersist(Term instance, Vocabulary vocabulary) {
+        // new term will be missing value for sparql attribute which is required for validation
         instance.setPrimaryLanguage(vocabulary.getPrimaryLanguage());
         validate(instance);
 
