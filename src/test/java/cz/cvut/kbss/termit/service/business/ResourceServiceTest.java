@@ -72,8 +72,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -465,16 +467,27 @@ class ResourceServiceTest {
 
     @Test
     void removeNonEmptyDocumentRemovesAllAssociatedFiles() {
-        final File file = Generator.generateFileWithId("test.html");
+        final File fileA = Generator.generateFileWithId("testA.html");
+        final File fileB = Generator.generateFileWithId("testB.html");
         final Document document = Generator.generateDocumentWithId();
-        document.addFile(file);
+        document.addFile(fileA);
+        document.addFile(fileB);
         when(resourceRepositoryService.findRequired(document.getUri())).thenReturn(document);
+        doAnswer((answer) -> {
+            if (answer.getArgument(0) instanceof File file) {
+                document.removeFile(file);
+            }
+            return null;
+        }).when(resourceRepositoryService).remove(notNull(Resource.class));
 
         sut.remove(document);
-        verify(documentManager).remove(file);
+        verify(documentManager).remove(fileA);
+        verify(documentManager).remove(fileB);
         verify(documentManager).remove(document);
-        verify(resourceRepositoryService).remove(file);
+        verify(resourceRepositoryService).remove(fileA);
+        verify(resourceRepositoryService).remove(fileB);
         verify(resourceRepositoryService).remove(document);
+        assertTrue(document.getFiles().isEmpty());
     }
 
     @Test
