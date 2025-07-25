@@ -59,7 +59,6 @@ public abstract class AbstractTerm extends Asset<MultilingualString>
     private MultilingualString definition;
 
     @JsonIgnore
-    @Transient // TODO: Jopa fails to merge the entity when @Transient is removed from the Sparql attribute (https://github.com/kbss-cvut/jopa/issues/351)
     @Sparql(query = "PREFIX dcterms: <" + DC.Terms.NAMESPACE + ">\n" +
             """
             SELECT ?lang WHERE {
