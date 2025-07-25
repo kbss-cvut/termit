@@ -196,7 +196,7 @@ public class DataDao {
                                         "{?x ?has-title ?label .}" +
                                         "BIND (str(?label) as ?strippedLabel )." +
                                         languageOptionalPattern +
-                   // only bind parameter value to the variable if the parameter is present (COALESCE gives wrong results otherwise)
+                   // only bind parameter value to the ?labelLanguage variable if the parameter value is present (COALESCE gives wrong results otherwise)
                    (languageSpecified ? "BIND (?labelLanguageVal as ?labelLanguage) ." : "") +
                                         "BIND (?instanceLanguageVal as ?instanceLanguage) ." +
                                         "BIND (COALESCE(" +

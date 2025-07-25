@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -346,7 +347,15 @@ public class SKOSImporter implements VocabularyImporter {
     private void setVocabularyPrimaryLanguageFromGlossary(Vocabulary vocabulary) {
         boolean languageSet = handleGlossaryLiteralStringProperty(DCTERMS.LANGUAGE, vocabulary::setPrimaryLanguage);
         if (!languageSet) {
-            vocabulary.setPrimaryLanguage(config.getPersistence().getLanguage());
+            AtomicReference<MultilingualString> labelRef = new AtomicReference<>();
+            handleGlossaryStringProperty(DCTERMS.TITLE, labelRef::set, config.getPersistence().getLanguage());
+            MultilingualString label = labelRef.get();
+            if (label == null ||
+                    label.contains(config.getPersistence().getLanguage())) {
+                vocabulary.setPrimaryLanguage(config.getPersistence().getLanguage());
+            } else {
+                vocabulary.setPrimaryLanguage(label.getLanguages().iterator().next());
+            }
         }
     }
 

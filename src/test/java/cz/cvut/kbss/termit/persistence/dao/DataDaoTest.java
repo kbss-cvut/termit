@@ -194,6 +194,36 @@ class DataDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void getLabelReturnsTermLabelInVocabularyLanguage() {
+        enableRdfsInference(em);
+        final String lang = "pl";
+        final String label = "Term label in PL";
+        vocabulary.setPrimaryLanguage(lang);
+        final Term term = Generator.generateTermWithId(vocabulary.getUri());
+        term.setLabel(lang, label);
+        transactional(() -> {
+            em.merge(vocabulary);
+            em.persist(term);
+        });
+        final Optional<String> result = sut.getLabel(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(label, result.get());
+        assertTrue(term.getLabel().getLanguages().size() > 1);
+    }
+
+    @Test
+    void getLabelReturnLabelInInstanceLanguageWhenVocabularyIsNotFoundAndNoLanguageIsRequested() {
+        enableRdfsInference(em);
+        final Term term = Generator.generateTermWithId();
+        term.setLabel("af", "AF label");
+        term.setLabel("zu", "ZU label");
+        transactional(() -> em.persist(term));
+        final Optional<String> result = sut.getLabel(term.getUri());
+        assertTrue(result.isPresent());
+        assertEquals(getPrimaryLabel(term), result.get());
+    }
+
+    @Test
     void persistSavesSpecifiedResource() {
         final RdfsResource resource =
                 new RdfsResource(URI.create(RDFS.LABEL.toString()),

@@ -107,7 +107,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                                     + "  FILTER (?lastCommented = ?max)"
                                     + "  BIND(?languageVal as ?language)"
                                     + insertLanguagePattern("?entity")
-                                    + "  FILTER (lang(?label) = ?language || lang(?label) = \"\")"
+                                    + "  FILTER (lang(?label) = ?language)"
                                     + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
                     .setParameter("cls", typeUri)
                     .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
@@ -229,7 +229,7 @@ public abstract class BaseAssetDao<T extends Asset<?>> extends BaseDao<T> {
                         + "  BIND(?languageVal as ?language)"
                         + insertVocabularyPattern("?entity")
                         + insertLanguagePattern("?entity")
-                        + "  FILTER (lang(?label) = ?language || lang(?label) = \"\")"
+                        + "  FILTER (lang(?label) = ?language)"
                         + "} ORDER BY DESC(?lastCommented) ", "RecentlyCommentedAsset")
                 .setParameter("cls", typeUri)
                 .setParameter("commentType", URI.create(Vocabulary.s_c_Comment))
