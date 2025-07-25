@@ -69,7 +69,6 @@ class MessageAssetFactoryTest {
         final String vocabularyLabel = "Vocabulary " + Generator.randomInt(0, 1000);
         final Term term = Generator.generateTermWithId();
         when(linkBuilder.linkTo(term)).thenReturn(term.getUri().toString());
-        when(dataService.getLabel(term.getUri(), null)).thenReturn(Optional.of(getPrimaryLabel(term)));
         when(dataService.getLabel(term.getVocabulary(), null)).thenReturn(Optional.of(vocabularyLabel));
 
         final MessageAssetFactory.MessageAsset result = sut.create(term);

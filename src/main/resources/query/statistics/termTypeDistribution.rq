@@ -18,5 +18,5 @@ SELECT ?vocabulary ?vocLabel ?type (COUNT(?term) as ?cnt) ?language WHERE {
         FILTER(?t in (?types))
     }
     BIND(COALESCE(?t, termit:bez-typu) as ?type)
-} GROUP BY ?vocabulary ?vocLabel ?type
+} GROUP BY ?vocabulary ?vocLabel ?type ?language
 ORDER BY ?vocabulary DESC(?cnt)
