@@ -18,8 +18,9 @@
 package cz.cvut.kbss.termit.rest;
 
 import cz.cvut.kbss.jsonld.JsonLd;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.rest.util.RestUtils;
 import cz.cvut.kbss.termit.security.SecurityConstants;
 import cz.cvut.kbss.termit.service.repository.DataRepositoryService;
@@ -73,8 +74,27 @@ public class DataController {
     @PostMapping(value = "/properties", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> createProperty(@Parameter(description = "Property metadata.")
                                                @RequestBody RdfsResource property) {
-        dataService.persistProperty(property);
+        dataService.persist(property);
         LOG.debug("Created property {}.", property);
+        return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
+    }
+
+    @Operation(description = "Gets all user-defined custom attributes in the system.")
+    @ApiResponse(responseCode = "200", description = "List of custom attributes.")
+    @GetMapping(value = "/custom-attributes", produces = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public List<CustomAttribute> getCustomAttributes() {
+        return dataService.findAllCustomProperties();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Creates a new custom attribute.")
+    @ApiResponse(responseCode = "201", description = "Attribute successfully created.")
+    @PreAuthorize("hasRole('" + SecurityConstants.ROLE_ADMIN + "')")
+    @PostMapping(value = "/custom-attributes", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public ResponseEntity<Void> createCustomAttribute(@Parameter(description = "Attribute metadata.")
+                                                      @RequestBody CustomAttribute attribute) {
+        dataService.persist(attribute);
+        LOG.debug("Created custom attribute {}.", attribute);
         return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
     }
 
