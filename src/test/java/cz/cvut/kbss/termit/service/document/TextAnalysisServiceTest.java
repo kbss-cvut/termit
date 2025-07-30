@@ -151,7 +151,7 @@ class TextAnalysisServiceTest extends BaseServiceTestRunner {
         this.documentManagerSpy = spy(documentManager);
         doCallRealMethod().when(documentManagerSpy).loadFileContent(any());
         doNothing().when(documentManagerSpy).createBackup(any());
-        when(vocabularyDao.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+        when(vocabularyDao.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         this.sut = new TextAnalysisService(restTemplate, config, documentManagerSpy, annotationGeneratorMock,
                                            textAnalysisRecordDao, eventPublisher, vocabularyDao);
     }
