@@ -67,6 +67,7 @@ import java.util.stream.Collectors;
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVocabularyPattern;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.orderSentence;
 
 @Repository
 public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term> {
@@ -551,28 +552,6 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }
-    }
-
-    private String orderSentence(String var) {
-        return r(r(r(r(r(r(r(r(r(r(r(r(r(r("lcase(" + var + ")",
-                                            "'á'", "'azz'"),
-                                          "'č'", "'czz'"),
-                                        "'ď'", "'dzz'"),
-                                      "'é'", "'ezz'"),
-                                    "'ě'", "'ezz'"),
-                                  "'í'", "'izz'"),
-                                "'ň'", "'nzz'"),
-                              "'ó'", "'ozz'"),
-                            "'ř'", "'rzz'"),
-                          "'š'", "'szz'"),
-                        "'ť'", "'tzz'"),
-                      "'ú'", "'uzz'"),
-                    "'ý'", "'yzz'"),
-                  "'ž'", "'zzz'");
-    }
-
-    private static String r(String string, String from, String to) {
-        return "replace(" + string + ", " + from + ", " + to + ")";
     }
 
     /**
