@@ -156,7 +156,7 @@ public class TextAnalysisService {
                 publicUrl.isEmpty() || publicUrl.get().isEmpty() ? config.getRepository().getUrl() : publicUrl.get()
         );
         input.setVocabularyRepository(repositoryUrl);
-        String vocabularyLanguage = vocabularyDao.getReference(file.getDocument().getVocabulary()).getPrimaryLanguage();
+        String vocabularyLanguage = vocabularyDao.getPrimaryLanguage(file.getDocument().getVocabulary());
         input.setLanguage(file.getLanguage() != null ? file.getLanguage() : vocabularyLanguage);
         input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
         input.setVocabularyRepositoryPassword(config.getRepository().getPassword());

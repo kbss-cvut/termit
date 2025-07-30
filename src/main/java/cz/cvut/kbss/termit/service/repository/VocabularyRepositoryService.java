@@ -411,4 +411,14 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
     public List<String> getLanguages(URI vocabularyUri) {
         return vocabularyDao.getLanguages(vocabularyUri);
     }
+
+    /**
+     * Returns the primary language of the vocabulary.
+     *
+     * @param vocabularyUri vocabulary identifier
+     * @return The vocabulary primary language
+     */
+    public String getPrimaryLanguage(URI vocabularyUri) {
+        return vocabularyDao.getPrimaryLanguage(vocabularyUri);
+    }
 }

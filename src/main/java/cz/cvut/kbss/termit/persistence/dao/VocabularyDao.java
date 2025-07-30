@@ -588,4 +588,19 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             throw new PersistenceException(e);
         }
     }
+
+    /**
+     * Returns the primary language of the vocabulary.
+     *
+     * @param vocabularyUri vocabulary identifier
+     * @return The vocabulary primary language
+     */
+    public String getPrimaryLanguage(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        try {
+            return em.createQuery("SELECT ?v.primaryLanguage FROM Vocabulary ?v", String.class).getSingleResult();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
 }

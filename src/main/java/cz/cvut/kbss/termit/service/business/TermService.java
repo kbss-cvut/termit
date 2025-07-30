@@ -461,7 +461,6 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
     public void analyzeTermDefinition(AbstractTerm term, URI vocabularyIri) {
         Objects.requireNonNull(term);
         term = repositoryService.findRequired(term.getUri()); // required when throttling for persistent context
-        Vocabulary vocabulary = vocabularyService.getReference(vocabularyIri);
         if (term.getDefinition() == null || term.getDefinition().isEmpty()) {
             return;
         }
@@ -469,7 +468,7 @@ public class TermService implements RudService<Term>, ChangeRecordProvider<Term>
         textAnalysisService.analyzeTermDefinition(
                 term,
                 vocabularyContextMapper.getVocabularyContext(vocabularyIri),
-                vocabulary.getPrimaryLanguage()
+                vocabularyService.getPrimaryLanguage(vocabularyIri)
         );
     }
 

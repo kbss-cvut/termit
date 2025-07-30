@@ -64,7 +64,7 @@ public class ThrottlingValidator implements VocabularyContentValidator {
         }
 
         return ThrottledFuture.of(() -> {
-            final String originVocabularyLanguage = vocabularyService.getReference(originVocabularyIri).getPrimaryLanguage();
+            final String originVocabularyLanguage = vocabularyService.getPrimaryLanguage(originVocabularyIri);
             final List<ValidationResult> results = runValidation(vocabularyIris, originVocabularyLanguage);
             eventPublisher.publishEvent(
                     new VocabularyValidationFinishedEvent(this, originVocabularyIri, vocabularyIris, results));
