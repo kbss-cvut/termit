@@ -64,9 +64,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
-import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
-import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVocabularyPattern;
 import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.orderSentence;
 
 @Repository
@@ -152,12 +149,12 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
      * @return Set of matching terms
      */
     private Set<TermInfo> loadInverseTermInfo(HasIdentifier term, String property, Collection<TermInfo> exclude) {
-        TypedQuery<TermInfo> query = em.createNativeQuery("SELECT DISTINCT ?inverse WHERE {" +
+        return em.createNativeQuery("SELECT DISTINCT ?inverse WHERE {" +
                                             "?inverse ?property ?term ;" +
-                                            "a ?type ." +
+                                            "   a ?type ; " +
+                                            "   ?inVocabulary ?vocabulary . " +
                                             "FILTER (?inverse NOT IN (?exclude)) . " +
-                                            insertVocabularyPattern("?inverse") +
-                                            insertLanguagePattern("?inverse") +
+                                            "?vocabulary ?hasLanguage ?language . " +
                                             "OPTIONAL {" +
                                             "   ?inverse ?hasLabel ?label" +
                                             "   FILTER (lang(?label) = ?language)" +
@@ -166,14 +163,13 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
                  .setParameter("property", URI.create(property))
                  .setParameter("term", term)
                  .setParameter("type", typeUri)
-                .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
-                .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
-                 .setParameter("exclude", exclude);
-        bindVocabularyRelatedParameters(query);
-
-        return query.getResultStream()
-                    .peek(em::detach)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
+                 .setParameter("inVocabulary", TERM_FROM_VOCABULARY)
+                 .setParameter("hasLanguage", DC_TERMS_LANGUAGE)
+                 .setParameter("hasLabel", URI.create(SKOS.PREF_LABEL))
+                 .setParameter("exclude", exclude)
+                 .getResultStream()
+                 .peek(em::detach)
+                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
