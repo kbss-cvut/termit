@@ -184,7 +184,11 @@ public class DataDao {
         }
         String languageOptionalPattern = "";
         final boolean languageSpecified = language != null;
-        if (!languageSpecified) {
+        if (languageSpecified) {
+            // only bind parameter value to the ?labelLanguage variable if the parameter value is present
+            // (COALESCE gives wrong results otherwise)
+            languageOptionalPattern = "BIND (?labelLanguageVal as ?labelLanguage) .";
+        } else {
             // if the language was not provided, try to find vocabulary & the entity language
             languageOptionalPattern = insertVocabularyPattern("?x") +
                                       insertLanguagePattern("?x");
@@ -196,8 +200,6 @@ public class DataDao {
                                         "{?x ?has-title ?label .}" +
                                         "BIND (str(?label) as ?strippedLabel )." +
                                         languageOptionalPattern +
-                   // only bind parameter value to the ?labelLanguage variable if the parameter value is present (COALESCE gives wrong results otherwise)
-                   (languageSpecified ? "BIND (?labelLanguageVal as ?labelLanguage) ." : "") +
                                         "BIND (?instanceLanguageVal as ?instanceLanguage) ." +
                                         "BIND (COALESCE(" +
                                         "   ?labelLanguage," + // requested language
