@@ -573,6 +573,21 @@ class SKOSImporterTest extends BaseDaoTestRunner {
     }
 
     @Test
+    void importVocabularyUsesSpecifiedPrimaryLanguage() {
+        final String lang = "pl";
+        transactional(() -> {
+            final SKOSImporter sut = context.getBean(SKOSImporter.class);
+            sut.importVocabulary(new VocabularyImporter.ImportConfiguration(false, VOCABULARY_IRI, persister),
+                    new VocabularyImporter.ImportInput(Constants.MediaType.TURTLE,
+                            Environment.loadFile("data/test-glossary-with-language.ttl")));
+        });
+
+        final cz.cvut.kbss.termit.model.Vocabulary result = findVocabulary();
+        assertNotNull(result);
+        assertEquals(lang, result.getPrimaryLanguage());
+    }
+
+    @Test
     void importVocabularyUsesLabelLanguageWhenNoPrimaryLanguageIsImported() {
         final String lang = "pl";
         transactional(() -> {
