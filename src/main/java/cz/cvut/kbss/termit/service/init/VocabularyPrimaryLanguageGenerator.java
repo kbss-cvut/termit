@@ -36,13 +36,15 @@ public class VocabularyPrimaryLanguageGenerator {
         LOG.debug("Generating missing primary languages for vocabularies.");
         em.createNativeQuery("""
                     INSERT {
-                        GRAPH ?vocabulary {
+                        GRAPH ?graph {
                             ?vocabulary ?hasLanguage ?language .
                         }
                     } WHERE {
-                        ?vocabulary a ?vocabularyType .
-                        FILTER NOT EXISTS {
-                            ?vocabulary ?hasLanguage ?existingLanguage .
+                        GRAPH ?graph {
+                            ?vocabulary a ?vocabularyType .
+                            FILTER NOT EXISTS {
+                                ?vocabulary ?hasLanguage ?existingLanguage .
+                            }
                         }
                     }
                     """)
