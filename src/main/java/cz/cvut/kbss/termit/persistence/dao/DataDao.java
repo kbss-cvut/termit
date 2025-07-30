@@ -24,8 +24,9 @@ import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
 import cz.cvut.kbss.ontodriver.rdf4j.util.Rdf4jUtils;
-import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.model.CustomAttribute;
+import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.persistence.dao.util.Quad;
 import cz.cvut.kbss.termit.service.export.ExportFormat;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -107,6 +108,17 @@ public class DataDao {
     }
 
     /**
+     * Finds all user-defined attributes.
+     *
+     * @return List of custom attributes
+     */
+    public List<CustomAttribute> findAllCustomAttributes() {
+        return em.createQuery("SELECT p FROM " + CustomAttribute.class.getSimpleName() + " p ORDER BY p.label",
+                              CustomAttribute.class)
+                 .getResultList();
+    }
+
+    /**
      * Persists the specified resource.
      * <p>
      * This method should be used very rarely because it saves a basic RDFS resource with nothing but identifier and
@@ -151,8 +163,8 @@ public class DataDao {
     /**
      * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
      * <p>
-     * Note that the label has to have language tag matching the configured persistence unit language
-     * or no language tag at all (matching tag is preferred).
+     * Note that the label has to have language tag matching the configured persistence unit language or no language tag
+     * at all (matching tag is preferred).
      *
      * @param id Resource ({@link RDFS#RESOURCE}) identifier
      * @return Matching resource identifier (if found)
@@ -166,13 +178,13 @@ public class DataDao {
      * <p>
      * Note that the label has to have matching language tag or no language tag at all (matching tag is preferred).
      *
-     * @param id Resource ({@link RDFS#RESOURCE}) identifier
+     * @param id       Resource ({@link RDFS#RESOURCE}) identifier
      * @param language Label language, if null, configured persistence unit language is used instead
      * @return Matching resource identifier (if found)
      */
     public Optional<String> getLabel(URI id, @Nullable String language) {
         Objects.requireNonNull(id);
-        if(language == null) {
+        if (language == null) {
             language = config.getLanguage();
         }
         if (!id.isAbsolute()) {

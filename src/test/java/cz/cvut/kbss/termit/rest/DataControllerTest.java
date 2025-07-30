@@ -120,7 +120,7 @@ class DataControllerTest extends BaseControllerTestRunner {
         mockMvc.perform(
                        post("/data/properties").content(toJson(property)).contentType(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isCreated());
-        verify(dataServiceMock).persistProperty(property);
+        verify(dataServiceMock).persist(property);
     }
 
     @Test

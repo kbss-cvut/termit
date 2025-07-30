@@ -17,8 +17,14 @@
  */
 package cz.cvut.kbss.termit.service.repository;
 
+import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
+import cz.cvut.kbss.termit.service.IdentifierResolver;
+import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Vocabulary;
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -33,18 +40,35 @@ public class DataRepositoryService {
 
     private final DataDao dataDao;
 
+    private final IdentifierResolver idResolver;
+
+    private final Configuration config;
+
     @Autowired
-    public DataRepositoryService(DataDao dataDao) {
+    public DataRepositoryService(DataDao dataDao, IdentifierResolver idResolver, Configuration config) {
         this.dataDao = dataDao;
+        this.idResolver = idResolver;
+        this.config = config;
     }
 
     /**
-     * Gets all properties present in the system.
+     * Gets all RDF properties present in the system.
      *
      * @return List of properties, ordered by label
      */
+    @Transactional(readOnly = true)
     public List<RdfsResource> findAllProperties() {
         return dataDao.findAllProperties();
+    }
+
+    /**
+     * Gets all user-defined properties.
+     *
+     * @return List of custom properties
+     */
+    @Transactional(readOnly = true)
+    public List<CustomAttribute> findAllCustomProperties() {
+        return dataDao.findAllCustomAttributes();
     }
 
     /**
@@ -58,23 +82,47 @@ public class DataRepositoryService {
     }
 
     /**
-     * Persists the specified property.
+     * Persists the specified RDFS resource.
      * <p>
+     * This method should be used scarcely or more suitable subclasses of {@link RdfsResource} should be provided as
+     * arguments.
      *
-     * @param property The property to persist
+     * @param property The resource to persist
+     * @see #persistCustomAttribute(CustomAttribute)
      */
     @Transactional
-    public void persistProperty(RdfsResource property) {
+    public void persist(@Nonnull RdfsResource property) {
         dataDao.persist(property);
+    }
+
+    /**
+     * Persists the specified custom attribute.
+     * <p>
+     * Note that this method automatically sets {@link cz.cvut.kbss.jopa.vocabulary.SKOS#CONCEPT} as the attribute
+     * domain.
+     *
+     * @param attribute Attribute to persist
+     */
+    @Transactional
+    public void persistCustomAttribute(@Nonnull CustomAttribute attribute) {
+        Objects.requireNonNull(attribute);
+        attribute.setDomain(URI.create(SKOS.CONCEPT));
+        if (attribute.getUri() == null) {
+            attribute.setUri(idResolver.generateIdentifier(Vocabulary.s_c_vlastni_atribut, attribute.getLabel()
+                                                                                                    .get(config.getPersistence()
+                                                                                                             .getLanguage())));
+        }
+        dataDao.persist(attribute);
     }
 
     /**
      * Gets the label of a resource with the specified identifier.
      *
-     * @param id Resource identifier
+     * @param id       Resource identifier
      * @param language Label language, if null, configured persistence unit language is used instead
      * @return Matching resource identifier (if found)
      */
+    @Transactional(readOnly = true)
     public Optional<String> getLabel(URI id, @Nullable String language) {
         return dataDao.getLabel(id, language);
     }
