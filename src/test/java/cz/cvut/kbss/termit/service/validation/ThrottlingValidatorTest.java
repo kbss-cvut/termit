@@ -43,6 +43,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static cz.cvut.kbss.termit.util.throttle.TestFutureRunner.runFuture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -79,16 +80,17 @@ class ThrottlingValidatorTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void validateUsesPersistenceLanguageForInternationalizedRules() {
+    void validateUsesVocabularyPrimaryLanguageForInternationalizedRules() {
         final Vocabulary vocabulary = generateVocabulary();
-        when(vocabularyService.getReference(vocabulary.getUri())).thenReturn(vocabulary);
+        Objects.requireNonNull(vocabulary.getPrimaryLanguage());
+        when(vocabularyService.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         transactional(() -> {
             final ThrottlingValidator sut = new ThrottlingValidator(validator, vocabularyService,
                     vocabularyContextMapper, eventPublisher);
             final Collection<ValidationResult> result = runFuture(
                     sut.validate(vocabulary.getUri(), Collections.singleton(vocabulary.getUri())));
             assertTrue(result.isEmpty());
-            verify(validator).validate(List.of(vocabulary.getUri()), Environment.LANGUAGE);
+            verify(validator).validate(List.of(vocabulary.getUri()), vocabulary.getPrimaryLanguage());
         });
     }
 

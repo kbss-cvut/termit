@@ -212,7 +212,7 @@ class DataDaoTest extends BaseDaoTestRunner {
     }
 
     @Test
-    void getLabelReturnLabelInInstanceLanguageWhenVocabularyIsNotFoundAndNoLanguageIsRequested() {
+    void getLabelReturnsLabelInInstanceLanguageWhenVocabularyIsNotFoundAndNoLanguageIsRequested() {
         enableRdfsInference(em);
         final Term term = Generator.generateTermWithId();
         term.setLabel("af", "AF label");

@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
 
 /**
  * Validation constraint ensuring that specified {@link cz.cvut.kbss.jopa.model.MultilingualString MultilingualString}
- * attributes contains a non-empty value in the primary language of the entity.
+ * attributes contain a non-empty value in the primary language of the entity.
  * <p>
  * The entity must implement {@link HasPrimaryLanguage} to provide the primary language.
  */
