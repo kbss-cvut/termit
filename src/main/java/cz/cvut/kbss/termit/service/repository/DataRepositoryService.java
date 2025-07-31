@@ -18,6 +18,7 @@
 package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
+import cz.cvut.kbss.termit.exception.NotFoundException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
@@ -26,6 +27,8 @@ import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +40,8 @@ import java.util.Optional;
 
 @Service
 public class DataRepositoryService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DataRepositoryService.class);
 
     private final DataDao dataDao;
 
@@ -92,6 +97,8 @@ public class DataRepositoryService {
      */
     @Transactional
     public void persist(@Nonnull RdfsResource property) {
+        LOG.debug("Persisting property {}", property);
+        Objects.requireNonNull(property);
         dataDao.persist(property);
     }
 
@@ -110,9 +117,21 @@ public class DataRepositoryService {
         if (attribute.getUri() == null) {
             attribute.setUri(idResolver.generateIdentifier(Vocabulary.s_c_vlastni_atribut, attribute.getLabel()
                                                                                                     .get(config.getPersistence()
-                                                                                                             .getLanguage())));
+                                                                                                               .getLanguage())));
         }
+        LOG.debug("Persisting custom attribute {}", attribute);
         dataDao.persist(attribute);
+    }
+
+    @Transactional
+    public void updateCustomAttribute(@Nonnull CustomAttribute attribute) {
+        Objects.requireNonNull(attribute);
+        final CustomAttribute existing = dataDao.findCustomAttribute(attribute.getUri())
+                                                .orElseThrow(() -> NotFoundException.create(
+                                                        CustomAttribute.class, attribute.getUri()));
+        existing.setLabel(attribute.getLabel());
+        existing.setComment(attribute.getComment());
+        LOG.debug("Updating custom attribute {}", existing);
     }
 
     /**

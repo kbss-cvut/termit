@@ -33,14 +33,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -96,6 +100,25 @@ public class DataController {
         dataService.persistCustomAttribute(attribute);
         LOG.debug("Created custom attribute {}.", attribute);
         return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
+    }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Updates a custom attribute. Only label and description can be changed.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Attribute successfully updated."),
+            @ApiResponse(responseCode = "404", description = "Attribute not found.")
+    })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PutMapping(value = "/custom-attributes/{localName}",
+                consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
+    public void updateCustomAttribute(@Parameter(
+                                              description = "Locally (in the context of the custom attributes namespace) unique part of the attribute identifier.",
+                                              example = "custom-attribute")
+                                      @PathVariable String localName,
+                                      @Parameter(description = "Updated attribute metadata.")
+                                      @RequestBody CustomAttribute update) {
+        dataService.updateCustomAttribute(update);
+        LOG.debug("Updated custom attribute {}.", update);
     }
 
     @Operation(description = "Gets basic metadata for a RDFS resource with the specified IRI.")

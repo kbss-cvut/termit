@@ -155,7 +155,7 @@ public class RdfsResource implements Serializable, HasIdentifier, HasTypes {
     @Override
     public String toString() {
         return "RdfsResource{" +
-                "uri=" + uri +
+                Utils.uriToString(uri) +
                 ", label=" + label +
                 ", types=" + types +
                 '}';

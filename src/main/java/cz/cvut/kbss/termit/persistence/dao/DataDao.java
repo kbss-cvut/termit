@@ -163,6 +163,21 @@ public class DataDao {
     }
 
     /**
+     * Finds a custom attribute with the specified identifier.
+     *
+     * @param id Attribute identifier
+     * @return Optional attribute
+     */
+    public Optional<CustomAttribute> findCustomAttribute(URI id) {
+        Objects.requireNonNull(id);
+        try {
+            return Optional.ofNullable(em.find(CustomAttribute.class, id));
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
      * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
      * <p>
      * Note that the label has to have language tag matching the configured persistence unit language or no language tag

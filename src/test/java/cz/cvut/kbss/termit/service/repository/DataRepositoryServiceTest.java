@@ -16,8 +16,10 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DataRepositoryServiceTest {
@@ -52,5 +54,23 @@ class DataRepositoryServiceTest {
         sut.persistCustomAttribute(customAttribute);
         assertNotNull(customAttribute.getUri());
         assertEquals(URI.create(Vocabulary.s_c_vlastni_atribut + "/custom-attribute"), customAttribute.getUri());
+    }
+
+    @Test
+    void updateCustomAttributeUpdatesLabelAndDescriptionOfExistingCustomAttribute() {
+        final CustomAttribute existing = new CustomAttribute(Generator.generateUri(),
+                                                             MultilingualString.create("Attribute one", "en"),
+                                                             MultilingualString.create("Description one", "en"));
+        existing.setDomain(URI.create(SKOS.CONCEPT));
+        existing.setRange(URI.create(SKOS.CONCEPT));
+        when(dataDao.findCustomAttribute(existing.getUri())).thenReturn(Optional.of(existing));
+        final CustomAttribute updated = new CustomAttribute(existing.getUri(),
+                                                            MultilingualString.create("Updated attribute", "en"),
+                                                            MultilingualString.create("Updated description", "en"));
+
+
+        sut.updateCustomAttribute(updated);
+        assertEquals(updated.getLabel(), existing.getLabel());
+        assertEquals(updated.getComment(), existing.getComment());
     }
 }
