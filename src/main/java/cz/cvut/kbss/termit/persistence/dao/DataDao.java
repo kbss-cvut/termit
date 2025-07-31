@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.descriptors.EntityDescriptor;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
@@ -115,6 +116,7 @@ public class DataDao {
     public List<CustomAttribute> findAllCustomAttributes() {
         return em.createQuery("SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p ORDER BY p.label",
                               CustomAttribute.class)
+                 .setDescriptor(new EntityDescriptor(URI.create(CustomAttribute.CONTEXT)))
                  .getResultList();
     }
 
