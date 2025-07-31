@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.dto.listing;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import cz.cvut.kbss.jopa.model.annotations.FetchType;
 import cz.cvut.kbss.jopa.model.annotations.OWLClass;
 import cz.cvut.kbss.jopa.model.annotations.OWLObjectProperty;
@@ -36,7 +35,6 @@ import java.util.stream.Collectors;
  */
 @OWLClass(iri = SKOS.CONCEPT)
 @JsonLdAttributeOrder({"uri", "label", "parentTerms", "subTerms"})
-@JsonIgnoreProperties({"definition"})
 public class TermDto extends AbstractTerm {
 
     @OWLObjectProperty(iri = SKOS.BROADER, fetch = FetchType.EAGER)
