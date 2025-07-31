@@ -598,7 +598,9 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
     public String getPrimaryLanguage(URI vocabularyUri) {
         Objects.requireNonNull(vocabularyUri);
         try {
-            return em.createQuery("SELECT ?v.primaryLanguage FROM Vocabulary ?v", String.class).getSingleResult();
+            return em.createQuery("SELECT v.primaryLanguage FROM Vocabulary v WHERE v.uri = :vocabularyUri", String.class)
+                     .setParameter("vocabularyUri", vocabularyUri)
+                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

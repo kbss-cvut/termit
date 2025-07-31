@@ -418,6 +418,7 @@ public class VocabularyRepositoryService extends BaseAssetRepositoryService<Voca
      * @param vocabularyUri vocabulary identifier
      * @return The vocabulary primary language
      */
+    @Transactional(readOnly = true)
     public String getPrimaryLanguage(URI vocabularyUri) {
         return vocabularyDao.getPrimaryLanguage(vocabularyUri);
     }

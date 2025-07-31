@@ -977,4 +977,21 @@ class VocabularyDaoTest extends BaseDaoTestRunner {
         assertEquals(2, languages.size());
         assertThat(languages, hasItems(Environment.LANGUAGE, "cs"));
     }
+
+    @Test
+    void getPrimaryLanguageReturnsThePrimaryLanguageOfTheVocabulary() {
+        final String lang = "pl";
+        final Vocabulary vocabulary = Generator.generateVocabularyWithId();
+        final Vocabulary vocabulary2 = Generator.generateVocabularyWithId();
+        vocabulary2.setPrimaryLanguage(lang);
+        transactional(()->{
+            em.persist(vocabulary);
+            em.persist(vocabulary2);
+        });
+
+        final String primaryLanguage = sut.getPrimaryLanguage(vocabulary.getUri());
+        final String primaryLanguage2 = sut.getPrimaryLanguage(vocabulary2.getUri());
+        assertEquals(Environment.LANGUAGE, primaryLanguage);
+        assertEquals(lang, primaryLanguage2);
+    }
 }
