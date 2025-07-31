@@ -93,7 +93,7 @@ public class DataController {
     @PostMapping(value = "/custom-attributes", consumes = {MediaType.APPLICATION_JSON_VALUE, JsonLd.MEDIA_TYPE})
     public ResponseEntity<Void> createCustomAttribute(@Parameter(description = "Attribute metadata.")
                                                       @RequestBody CustomAttribute attribute) {
-        dataService.persist(attribute);
+        dataService.persistCustomAttribute(attribute);
         LOG.debug("Created custom attribute {}.", attribute);
         return ResponseEntity.created(RestUtils.createLocationFromCurrentUri()).build();
     }

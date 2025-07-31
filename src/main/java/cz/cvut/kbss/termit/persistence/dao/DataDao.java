@@ -113,7 +113,7 @@ public class DataDao {
      * @return List of custom attributes
      */
     public List<CustomAttribute> findAllCustomAttributes() {
-        return em.createQuery("SELECT p FROM " + CustomAttribute.class.getSimpleName() + " p ORDER BY p.label",
+        return em.createQuery("SELECT DISTINCT p FROM " + CustomAttribute.class.getSimpleName() + " p ORDER BY p.label",
                               CustomAttribute.class)
                  .getResultList();
     }
