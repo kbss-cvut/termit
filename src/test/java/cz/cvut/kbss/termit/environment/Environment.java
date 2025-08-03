@@ -246,10 +246,12 @@ public class Environment {
 
     /**
      * Sets label in {@link #LANGUAGE}
+     * And sets primary language to {@link #LANGUAGE} as well.
      *
      * @param label label to set
      */
     public static void setPrimaryLabel(cz.cvut.kbss.termit.model.Vocabulary vocabulary, String label) {
         vocabulary.setLabel(Environment.LANGUAGE, label);
+        vocabulary.setPrimaryLanguage(Environment.LANGUAGE);
     }
 }

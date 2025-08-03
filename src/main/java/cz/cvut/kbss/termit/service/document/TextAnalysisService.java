@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.service.document;
 import cz.cvut.kbss.termit.dto.TextAnalysisInput;
 import cz.cvut.kbss.termit.event.FileTextAnalysisFinishedEvent;
 import cz.cvut.kbss.termit.event.TermDefinitionTextAnalysisFinishedEvent;
+import cz.cvut.kbss.termit.event.TextAnalysisFailedEvent;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.exception.UnsupportedTextAnalysisLanguageException;
 import cz.cvut.kbss.termit.exception.WebServiceIntegrationException;
@@ -28,6 +29,7 @@ import cz.cvut.kbss.termit.model.Asset;
 import cz.cvut.kbss.termit.model.TextAnalysisRecord;
 import cz.cvut.kbss.termit.model.resource.File;
 import cz.cvut.kbss.termit.persistence.dao.TextAnalysisRecordDao;
+import cz.cvut.kbss.termit.persistence.dao.VocabularyDao;
 import cz.cvut.kbss.termit.rest.handler.ErrorInfo;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -81,6 +83,8 @@ public class TextAnalysisService {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    private final VocabularyDao vocabularyDao;
+
     private Set<String> supportedLanguages;
 
     /**
@@ -107,13 +111,15 @@ public class TextAnalysisService {
     @Autowired
     public TextAnalysisService(RestTemplate restClient, Configuration config, DocumentManager documentManager,
                                AnnotationGenerator annotationGenerator, TextAnalysisRecordDao recordDao,
-                               ApplicationEventPublisher eventPublisher) {
+                               ApplicationEventPublisher eventPublisher,
+                               VocabularyDao vocabularyDao) {
         this.restClient = restClient;
         this.config = config;
         this.documentManager = documentManager;
         this.annotationGenerator = annotationGenerator;
         this.recordDao = recordDao;
         this.eventPublisher = eventPublisher;
+        this.vocabularyDao = vocabularyDao;
     }
 
     /**
@@ -131,7 +137,13 @@ public class TextAnalysisService {
         Objects.requireNonNull(file);
         final TextAnalysisInput input = createAnalysisInput(file);
         input.setVocabularyContexts(vocabularyContexts);
-        invokeTextAnalysisOnFile(file, input);
+        try {
+            invokeTextAnalysisOnFile(file, input);
+        } catch (TermItException e) {
+            LOG.error("Text analysis failed: {}", e.getMessage());
+            eventPublisher.publishEvent(new TextAnalysisFailedEvent(this, e, file));
+            throw e;
+        }
         LOG.debug("Text analysis finished for resource {}.", file.getUri());
         eventPublisher.publishEvent(new FileTextAnalysisFinishedEvent(this, file));
     }
@@ -144,7 +156,8 @@ public class TextAnalysisService {
                 publicUrl.isEmpty() || publicUrl.get().isEmpty() ? config.getRepository().getUrl() : publicUrl.get()
         );
         input.setVocabularyRepository(repositoryUrl);
-        input.setLanguage(file.getLanguage() != null ? file.getLanguage() : config.getPersistence().getLanguage());
+        String vocabularyLanguage = vocabularyDao.getPrimaryLanguage(file.getDocument().getVocabulary());
+        input.setLanguage(file.getLanguage() != null ? file.getLanguage() : vocabularyLanguage);
         input.setVocabularyRepositoryUserName(config.getRepository().getUsername());
         input.setVocabularyRepositoryPassword(config.getRepository().getPassword());
         return input;
@@ -227,9 +240,8 @@ public class TextAnalysisService {
      *
      * @param term Term whose definition is to be analyzed.
      */
-    public void analyzeTermDefinition(AbstractTerm term, URI vocabularyContext) {
+    public void analyzeTermDefinition(AbstractTerm term, URI vocabularyContext, String language) {
         Objects.requireNonNull(term);
-        final String language = config.getPersistence().getLanguage();
         if (term.getDefinition() != null && term.getDefinition().contains(language)) {
             final TextAnalysisInput input = new TextAnalysisInput(term.getDefinition().get(language), language,
                                                                   URI.create(config.getRepository().getUrl()));
@@ -280,15 +292,16 @@ public class TextAnalysisService {
      *
      * @param terms   List of terms whose definitions are to be combined.
      * @param termMap Map to store the terms and their URIs.
+     * @param language Language of the term definitions to include.
      * @return A string containing all combined term definitions.
      */
-    private String combineTermDefinitions(List<AbstractTerm> terms, Map<URI, AbstractTerm> termMap) {
+    private String combineTermDefinitions(List<AbstractTerm> terms, Map<URI, AbstractTerm> termMap, String language) {
         final StringBuilder definitions = new StringBuilder();
         terms.forEach(term -> {
             if (term.getDefinition() != null && term.getDefinition()
-                                                    .contains(config.getPersistence().getLanguage())) {
+                                                    .contains(language)) {
                 definitions.append(TERM_DEFINITION_PREFIX).append(term.getUri()).append("\">");
-                definitions.append(term.getDefinition().get(config.getPersistence().getLanguage()));
+                definitions.append(term.getDefinition().get(language));
                 definitions.append(TERM_DEFINITION_SUFFIX);
             }
             termMap.put(term.getUri(), term);
@@ -302,15 +315,16 @@ public class TextAnalysisService {
      * Text analysis is invoked on all definitions merged for better efficiency.
      *
      * @param contextToTerms Map of vocabulary context URIs to lists of terms.
+     * @param language       Language of the term definitions to analyze.
      */
-    public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms) {
+    public void analyzeTermDefinitions(Map<URI, List<AbstractTerm>> contextToTerms, String language) {
         final var definitionsMap = new HashMap<URI, String>();
         // map of term URI to respective term
         // allows fast lookups by URI when generating annotations for each term
         final var termMap = new HashMap<URI, AbstractTerm>();
         // merge term definitions for each context and populate termMap
         contextToTerms.forEach((context, terms) -> {
-            final String definitions = combineTermDefinitions(terms, termMap);
+            final String definitions = combineTermDefinitions(terms, termMap, language);
             if (!definitions.isEmpty()) {
                 definitionsMap.put(context, definitions);
             }
@@ -318,7 +332,7 @@ public class TextAnalysisService {
 
         // invoke text analysis and generate annotations
         definitionsMap.forEach((context, definitions) ->
-                invokeTextAnalysisOnCombinedDefinitions(context, definitions, termMap)
+                invokeTextAnalysisOnCombinedDefinitions(context, definitions, termMap, language)
         );
     }
 
@@ -356,12 +370,14 @@ public class TextAnalysisService {
      * @param context     The vocabulary context URI.
      * @param definitions The combined term definitions.
      * @param termMap     Map of term URIs to terms.
+     * @param language    Language of the term definitions to analyze.
      */
     private void invokeTextAnalysisOnCombinedDefinitions(URI context, String definitions,
-                                                         Map<URI, AbstractTerm> termMap) {
+                                                         Map<URI, AbstractTerm> termMap,
+                                                         String language) {
         final TextAnalysisInput input = new TextAnalysisInput(
                 definitions,
-                config.getPersistence().getLanguage(),
+                language,
                 URI.create(config.getRepository().getUrl())
         );
         input.addVocabularyContext(context);

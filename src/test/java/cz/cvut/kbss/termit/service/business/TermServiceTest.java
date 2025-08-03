@@ -308,11 +308,12 @@ class TermServiceTest {
 
     @Test
     void runTextAnalysisInvokesTextAnalysisOnSpecifiedTerm() {
+        when(vocabularyService.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term toAnalyze = generateTermWithId();
         when(termRepositoryService.findRequired(toAnalyze.getUri())).thenReturn(toAnalyze);
         sut.analyzeTermDefinition(toAnalyze, vocabulary.getUri());
-        verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri());
+        verify(textAnalysisService).analyzeTermDefinition(toAnalyze, vocabulary.getUri(), vocabulary.getPrimaryLanguage());
     }
 
     @Test
@@ -333,6 +334,7 @@ class TermServiceTest {
 
     @Test
     void updateInvokesTextAnalysisOnUpdatedTerm() {
+        when(vocabularyService.getPrimaryLanguage(vocabulary.getUri())).thenReturn(vocabulary.getPrimaryLanguage());
         when(vocabularyContextMapper.getVocabularyContext(vocabulary.getUri())).thenReturn(vocabulary.getUri());
         final Term original = generateTermWithId(vocabulary.getUri());
         final Term toUpdate = new Term(original.getUri());
@@ -343,7 +345,7 @@ class TermServiceTest {
         toUpdate.setDefinition(MultilingualString.create(newDefinition, Environment.LANGUAGE));
         when(termRepositoryService.update(toUpdate)).thenReturn(toUpdate);
         sut.update(toUpdate);
-        verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary());
+        verify(textAnalysisService).analyzeTermDefinition(toUpdate, toUpdate.getVocabulary(), vocabulary.getPrimaryLanguage());
     }
 
     @Test

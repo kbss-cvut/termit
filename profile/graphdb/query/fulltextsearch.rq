@@ -47,6 +47,15 @@ SELECT DISTINCT ?entity ?label ?description ?vocabularyUri ?state ?type ?snippet
     }
     FILTER (?type = ?term || ?type = ?vocabulary)
     FILTER NOT EXISTS { ?entity a ?snapshot . }
+    BIND (COALESCE(?vocabularyUri, ?entity) as ?vocabularyEntity) .
+    OPTIONAL {
+        ?vocabularyEntity dc:language ?vocabularyLang .
+    }
+    OPTIONAL {
+        ?entity dc:language ?entityLang .
+    }
+    BIND (?langTagVal as ?langTag) .
+    BIND (COALESCE(?entityLang, ?vocabularyLang, ?langTag) AS ?langTag) .
     FILTER (lang(?label) = ?langTag)
     BIND(COALESCE(?definition, COALESCE(?scopeNote, ?dcDescription)) AS ?description)
     FILTER (!BOUND(?description) || lang(?description) = ?langTag)

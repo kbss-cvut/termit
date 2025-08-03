@@ -75,10 +75,11 @@ public class StatisticsDao {
         final List<DistributionDto> result = (List<DistributionDto>) em.createNativeQuery(query).getResultStream()
                                                                        .map(row -> {
                                                                            final Object[] bindings = (Object[]) row;
-                                                                           assert bindings.length == 3;
+                                                                           assert bindings.length == 4;
                                                                            final URI vocabulary = (URI) bindings[0];
+                                                                           final String vocabularyLanguage = (String) bindings[3];
                                                                            final LangString label = sanitizeLabel(
-                                                                                   bindings[1]);
+                                                                                   bindings[1], vocabularyLanguage);
                                                                            final BigInteger count = (BigInteger) bindings[2];
                                                                            return new DistributionDto(
                                                                                    new RdfsResource(vocabulary, label,
@@ -104,11 +105,11 @@ public class StatisticsDao {
         }
     }
 
-    private LangString sanitizeLabel(Object label) {
+    private LangString sanitizeLabel(Object label, String primaryLanguage) {
         if (label instanceof LangString) {
             return (LangString) label;
         }
-        return new LangString(label.toString(), config.getPersistence().getLanguage());
+        return new LangString(label.toString(), primaryLanguage);
     }
 
     /**
@@ -144,10 +145,11 @@ public class StatisticsDao {
                                                                                        .setParameter("types", types)
                                                                                        .getResultStream().map(row -> {
                     final Object[] bindings = (Object[]) row;
-                    assert bindings.length == 4;
+                    assert bindings.length == 5;
                     final URI vocabulary = (URI) bindings[0];
+                    final String vocabularyLanguage = (String) bindings[4];
                     final LangString label = sanitizeLabel(
-                            bindings[1]);
+                            bindings[1], vocabularyLanguage);
                     final URI type = (URI) bindings[2];
                     final BigInteger count = (BigInteger) bindings[3];
                     final TermTypeDistributionDto res = new TermTypeDistributionDto();

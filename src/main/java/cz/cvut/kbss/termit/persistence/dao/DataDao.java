@@ -20,6 +20,7 @@ package cz.cvut.kbss.termit.persistence.dao;
 import cz.cvut.kbss.jopa.exceptions.NoResultException;
 import cz.cvut.kbss.jopa.exceptions.NoUniqueResultException;
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.query.TypedQuery;
 import cz.cvut.kbss.jopa.vocabulary.DC;
 import cz.cvut.kbss.jopa.vocabulary.RDF;
 import cz.cvut.kbss.jopa.vocabulary.RDFS;
@@ -54,6 +55,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVocabularyPattern;
 
 @Repository
 public class DataDao {
@@ -151,7 +156,8 @@ public class DataDao {
     /**
      * Gets the {@link RDFS#LABEL} of a resource with the specified identifier.
      * <p>
-     * Note that the label has to have language tag matching the configured persistence unit language
+     * Note that the label has to have language tag matching the language of the vocabulary (if available),
+     * the configured persistence unit language
      * or no language tag at all (matching tag is preferred).
      *
      * @param id Resource ({@link RDFS#RESOURCE}) identifier
@@ -167,28 +173,51 @@ public class DataDao {
      * Note that the label has to have matching language tag or no language tag at all (matching tag is preferred).
      *
      * @param id Resource ({@link RDFS#RESOURCE}) identifier
-     * @param language Label language, if null, configured persistence unit language is used instead
+     * @param language Label language, if null, the vocabulary language is used when available,
+     *                 otherwise the configured persistence unit language is used instead.
      * @return Matching resource identifier (if found)
      */
     public Optional<String> getLabel(URI id, @Nullable String language) {
         Objects.requireNonNull(id);
-        if(language == null) {
-            language = config.getLanguage();
-        }
         if (!id.isAbsolute()) {
             return Optional.of(id.toString());
         }
+        String languageOptionalPattern = "";
+        final boolean languageSpecified = language != null;
+        if (languageSpecified) {
+            // only bind parameter value to the ?labelLanguage variable if the parameter value is present
+            // (COALESCE gives wrong results otherwise)
+            languageOptionalPattern = "BIND (?labelLanguageVal as ?labelLanguage) .";
+        } else {
+            // if the language was not provided, try to find vocabulary & the entity language
+            languageOptionalPattern = insertVocabularyPattern("?x") +
+                                      insertLanguagePattern("?x");
+        }
+
+        TypedQuery<String> query = em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
+                                        "{?x ?has-label ?label .}" +
+                                        "UNION" +
+                                        "{?x ?has-title ?label .}" +
+                                        "BIND (str(?label) as ?strippedLabel )." +
+                                        languageOptionalPattern +
+                                        "BIND (?instanceLanguageVal as ?instanceLanguage) ." +
+                                        "BIND (COALESCE(" +
+                                        "   ?labelLanguage," + // requested language
+                                        "   ?language," + // resolved vocabulary language
+                                        "   ?instanceLanguage) AS ?labelLanguage) ." +
+                                        "FILTER (LANGMATCHES(LANG(?label), ?labelLanguage) || lang(?label) = \"\") }",
+                                String.class)
+                             .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
+                             .setParameter("has-title", URI.create(DC.Terms.TITLE))
+                             .setParameter("instanceLanguageVal", config.getLanguage());
+        if (languageSpecified) {
+            query.setParameter("labelLanguageVal", language, null);
+        } else {
+            query.setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE));
+            bindVocabularyRelatedParameters(query);
+        }
         try {
-            return Optional.of(em.createNativeQuery("SELECT DISTINCT ?strippedLabel WHERE {" +
-                                                            "{?x ?has-label ?label .}" +
-                                                            "UNION" +
-                                                            "{?x ?has-title ?label .}" +
-                                                            "BIND (str(?label) as ?strippedLabel )." +
-                                                            "FILTER (LANGMATCHES(LANG(?label), ?tag) || lang(?label) = \"\") }",
-                                                    String.class)
-                                 .setParameter("x", id).setParameter("has-label", RDFS_LABEL)
-                                 .setParameter("has-title", URI.create(DC.Terms.TITLE))
-                                 .setParameter("tag", language, null).getSingleResult());
+            return Optional.of(query.getSingleResult());
         } catch (NoResultException | NoUniqueResultException e) {
             return Optional.empty();
         }

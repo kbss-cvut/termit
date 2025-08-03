@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -336,10 +337,26 @@ public class SKOSImporter implements VocabularyImporter {
         glossary.setUri(URI.create(newGlossaryIri));
         vocabulary.setGlossary(glossary);
         vocabulary.setModel(new cz.cvut.kbss.termit.model.Model());
+        setVocabularyPrimaryLanguageFromGlossary(vocabulary);
         setVocabularyLabelFromGlossary(vocabulary);
         setVocabularyDescriptionFromGlossary(vocabulary);
         setVocabularyNamespaceInfoFromData(vocabulary);
         return vocabulary;
+    }
+
+    private void setVocabularyPrimaryLanguageFromGlossary(Vocabulary vocabulary) {
+        boolean languageSet = handleGlossaryLiteralStringProperty(DCTERMS.LANGUAGE, vocabulary::setPrimaryLanguage);
+        if (!languageSet) {
+            AtomicReference<MultilingualString> labelRef = new AtomicReference<>();
+            handleGlossaryStringProperty(DCTERMS.TITLE, labelRef::set, config.getPersistence().getLanguage());
+            MultilingualString label = labelRef.get();
+            if (label == null ||
+                    label.contains(config.getPersistence().getLanguage())) {
+                vocabulary.setPrimaryLanguage(config.getPersistence().getLanguage());
+            } else {
+                vocabulary.setPrimaryLanguage(label.getLanguages().iterator().next());
+            }
+        }
     }
 
     private String getFreshVocabularyIri(final boolean rename, final String newVocabularyIriBase) {
@@ -366,21 +383,48 @@ public class SKOSImporter implements VocabularyImporter {
     }
 
     private void setVocabularyLabelFromGlossary(final Vocabulary vocabulary) {
-        handleGlossaryStringProperty(DCTERMS.TITLE, vocabulary::setLabel);
+        handleGlossaryStringProperty(DCTERMS.TITLE, vocabulary::setLabel, vocabulary.getPrimaryLanguage());
     }
 
-    private void handleGlossaryStringProperty(IRI property, Consumer<MultilingualString> consumer) {
+    /**
+     * Looks up the specified property in the glossary and loads values as a multilingual string.
+     * If no property is found, an empty multilingual string is passed to the consumer.
+     * @param property Property to look up in the glossary
+     * @param consumer Consumer to accept the multilingual string
+     * @param defaultLanguage The language to use when no language is specified in the string property
+     */
+    private void handleGlossaryStringProperty(IRI property, Consumer<MultilingualString> consumer, String defaultLanguage) {
         final Set<Statement> values = model.filter(getGlossaryUri(), property, null);
         final MultilingualString mls = new MultilingualString();
         values.stream().filter(s -> s.getObject().isLiteral()).forEach(s -> {
             final Literal obj = (Literal) s.getObject();
-            mls.set(obj.getLanguage().orElseGet(() -> config.getPersistence().getLanguage()), obj.getLabel());
+            mls.set(obj.getLanguage().orElse(defaultLanguage), obj.getLabel());
         });
         consumer.accept(mls);
     }
 
+    /**
+     * Looks up the specified property in the glossary and loads the first value as a literal string.
+     * If no property is found, the consumer is not called.
+     * @param property Property to look up in the glossary
+     * @param consumer Consumer to accept the literal string value if found
+     * @return true if the property was found and the consumer was called, false otherwise
+     */
+    private boolean handleGlossaryLiteralStringProperty(IRI property, Consumer<String> consumer) {
+        final Set<Statement> values = model.filter(getGlossaryUri(), property, null);
+        return values.stream()
+                     .filter(s -> s.getObject().isLiteral()).findFirst()
+                     .map(s -> (Literal) s.getObject())
+                     .map(Literal::getLabel)
+                     .map(value -> {
+                         consumer.accept(value);
+                         return true;
+                     })
+                     .orElse(false);
+    }
+
     private void setVocabularyDescriptionFromGlossary(final Vocabulary vocabulary) {
-        handleGlossaryStringProperty(DCTERMS.DESCRIPTION, vocabulary::setDescription);
+        handleGlossaryStringProperty(DCTERMS.DESCRIPTION, vocabulary::setDescription, vocabulary.getPrimaryLanguage());
     }
 
     private void setVocabularyNamespaceInfoFromData(Vocabulary vocabulary) {

@@ -107,8 +107,8 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
     @Test
     void findLoadsInferredInverseRelatedMatchTerms() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(Generator.generateUri()),
-                                                      Generator.generateTermWithId(Generator.generateUri()));
+        final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(generateAndPersistVocabulary().getUri()),
+                                                      Generator.generateTermWithId(generateAndPersistVocabulary().getUri()));
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
             Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
@@ -128,10 +128,10 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
     @Test
     void loadingInferredInverseRelatedMatchExcludesRelatedMatchAssertedFromSubject() {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
-        final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(Generator.generateUri()),
-                                                      Generator.generateTermWithId(Generator.generateUri()));
+        final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(generateAndPersistVocabulary().getUri()),
+                                                      Generator.generateTermWithId(generateAndPersistVocabulary().getUri()));
         final List<Term> inverseRelatedMatch = new ArrayList<>(
-                Collections.singletonList(Generator.generateTermWithId(Generator.generateUri())));
+                Collections.singletonList(Generator.generateTermWithId(generateAndPersistVocabulary().getUri())));
         inverseRelatedMatch.addAll(relatedMatch);
         transactional(() -> {
             em.persist(term, descriptorFactory.termDescriptor(vocabulary));
@@ -161,11 +161,11 @@ public class TermDaoRelatedTermsTest extends BaseTermDaoTestRunner {
                                                                           vocabulary.getUri()), Generator
                                                                                   .generateTermWithId(
                                                                                           vocabulary.getUri())));
-        final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(Generator.generateUri()), Generator
-                .generateTermWithId(Generator.generateUri()));
+        final List<Term> relatedMatch = Arrays.asList(Generator.generateTermWithId(generateAndPersistVocabulary().getUri()), Generator
+                .generateTermWithId(generateAndPersistVocabulary().getUri()));
         final List<Term> inverseRelatedMatch = new ArrayList<>(Collections
                                                                        .singletonList(Generator.generateTermWithId(
-                                                                               Generator.generateUri())));
+                                                                               generateAndPersistVocabulary().getUri())));
         final Collection<Term> allRelated = Utils.joinCollections(related, inverseRelated);
         final Collection<Term> allRelatedMatch = Utils.joinCollections(relatedMatch, inverseRelatedMatch);
         transactional(() -> {

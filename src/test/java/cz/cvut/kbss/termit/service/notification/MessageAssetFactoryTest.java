@@ -17,7 +17,6 @@
  */
 package cz.cvut.kbss.termit.service.notification;
 
-import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.model.Term;
 import cz.cvut.kbss.termit.model.Vocabulary;
@@ -61,7 +60,7 @@ class MessageAssetFactoryTest {
         when(linkBuilder.linkTo(vocabulary)).thenReturn(vocabulary.getUri().toString());
 
         final MessageAssetFactory.MessageAsset result = sut.create(vocabulary);
-        assertEquals(vocabulary.getLabel().get(Environment.LANGUAGE), result.getLabel());
+        assertEquals(vocabulary.getLabel().get(vocabulary.getPrimaryLanguage()), result.getLabel());
         assertEquals(vocabulary.getUri().toString(), result.getLink());
     }
 
