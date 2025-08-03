@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -45,7 +46,7 @@ public class ThrottlingValidator implements VocabularyContentValidator {
     private final ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    public ThrottlingValidator(RepositoryContextValidator validator, VocabularyService vocabularyService,
+    public ThrottlingValidator(RepositoryContextValidator validator, @Lazy VocabularyService vocabularyService,
                                VocabularyContextMapper vocabularyContextMapper,
                                ApplicationEventPublisher eventPublisher) {
         this.validator = validator;
