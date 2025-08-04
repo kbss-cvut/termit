@@ -10,8 +10,7 @@ import cz.cvut.kbss.termit.util.Vocabulary;
 
 import java.net.URI;
 
-// Cannot use @Context(CONTEXT) because of JOPA bug #356
-@Context(Vocabulary.s_i_termit + "/custom-attributes")
+@Context(CustomAttribute.CONTEXT)
 @OWLClass(iri = Vocabulary.s_c_vlastni_atribut)
 public class CustomAttribute extends RdfsResource {
 

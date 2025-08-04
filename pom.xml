@@ -385,6 +385,7 @@
                         </goals>
                         <configuration>
                             <source-package>cz.cvut.kbss.termit.model</source-package>
+                            <additional-sources>${project.basedir}/src/main/generated-sources</additional-sources>
                         </configuration>
                     </execution>
                 </executions>
