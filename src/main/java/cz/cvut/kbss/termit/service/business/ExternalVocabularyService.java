@@ -208,12 +208,14 @@ public class ExternalVocabularyService implements ApplicationEventPublisherAware
     }
     
     @Scheduled(cron = "${termit.external.reloadCron:-}")
+    @Transactional
     public void reloadVocabularies() throws URISyntaxException {
-        System.out.println("Reloading vocabularies at " + Instant.now());
+        LOG.debug("Reloading vocabularies at " + Instant.now());
         reloadAllExternal();
     }
     
     
+    @Transactional
     public void reloadAllExternal() throws URISyntaxException{
         List<String> externalVocabularies = repositoryService.findAll().stream()
                 .filter((t) -> t.getTypes().contains(cz.cvut.kbss.termit.util.Vocabulary.s_c_externi))
