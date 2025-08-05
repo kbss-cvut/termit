@@ -23,10 +23,10 @@ import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,16 +50,13 @@ public class SearchDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(SearchDao.class);
 
-    private final Configuration.Persistence config;
-
     protected String ftsQuery;
 
     protected final EntityManager em;
 
     @Autowired
-    public SearchDao(EntityManager em, Configuration config) {
+    public SearchDao(EntityManager em) {
         this.em = em;
-        this.config = config.getPersistence();
     }
 
     @PostConstruct
@@ -76,16 +73,18 @@ public class SearchDao {
      * Note that this version of the search excludes asset snapshots from the results.
      *
      * @param searchString The string to search by
+     * @param language The language of the {@code searchString}, {@code null} to match all languages
      * @return List of matching results
-     * @see #fullTextSearchIncludingSnapshots(String)
+     * @see #fullTextSearchIncludingSnapshots(String, String)
      */
-    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString, @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
         }
         LOG.trace("Running full text search for search string \"{}\".", searchString);
-        return setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"), searchString)
+        return setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"),
+                searchString, language)
                 .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
                 .getResultList();
     }
@@ -99,27 +98,30 @@ public class SearchDao {
      * Note that this version of the search includes asset snapshots.
      *
      * @param searchString The string to search by
+     * @param language The language of the {@code searchString}, {@code null} to match all languages
      * @return List of matching results
-     * @see #fullTextSearchIncludingSnapshots(String)
+     * @see #fullTextSearchIncludingSnapshots(String, String)
      */
-    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString) {
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString, @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
         }
         LOG.trace("Running full text search (including snapshots) for search string \"{}\".", searchString);
         return setCommonQueryParams(em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"),
-                                    searchString).getResultList();
+                                    searchString, language).getResultList();
     }
 
-    protected Query setCommonQueryParams(Query q, String searchString) {
-        return q.setParameter("term", URI.create(SKOS.CONCEPT))
-                .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
-                .setParameter("inVocabulary",
-                        URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
-                .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
-                .setParameter("langTagVal", config.getLanguage(), null)
-                .setParameter("searchString", searchString, null);
+    protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage) {
+        q.setParameter("term", URI.create(SKOS.CONCEPT))
+            .setParameter("vocabulary", URI.create(Vocabulary.s_c_slovnik))
+            .setParameter("inVocabulary", URI.create(Vocabulary.s_p_je_pojmem_ze_slovniku))
+            .setParameter("hasState", URI.create(Vocabulary.s_p_ma_stav_pojmu))
+            .setParameter("searchString", searchString, null);
+        if (requestedLanguage != null) {
+            q.setParameter("requestedLanguageVal", requestedLanguage);
+        }
+        return q;
     }
 
     protected String queryIncludingSnapshots() {

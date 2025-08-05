@@ -49,11 +49,12 @@ public class SearchService {
      * Executes full text search in assets.
      *
      * @param searchString String to search by
+     * @param language The language of the {@code searchString}, {@code null} to match all languages
      * @return Matching assets
      */
     @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<FullTextSearchResult> fullTextSearch(String searchString) {
-        return searchDao.fullTextSearch(searchString);
+    public List<FullTextSearchResult> fullTextSearch(String searchString, String language) {
+        return searchDao.fullTextSearch(searchString, language);
     }
 
     /**
@@ -61,13 +62,14 @@ public class SearchService {
      *
      * @param searchString String to search by
      * @param vocabularies URIs of vocabularies to search in, or null, if all vocabularies shall be searched
+     * @param language The language of the {@code searchString}, {@code null} to match all languages
      * @return Matching terms
      */
     @PostFilter("@searchAuthorizationService.canRead(filterObject)")
-    public List<FullTextSearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies) {
+    public List<FullTextSearchResult> fullTextSearchOfTerms(String searchString, Set<URI> vocabularies, String language) {
         Objects.requireNonNull(vocabularies);
         // Search including snapshots, as the selected vocabularies may be snapshots
-        return searchDao.fullTextSearchIncludingSnapshots(searchString).stream()
+        return searchDao.fullTextSearchIncludingSnapshots(searchString, language).stream()
                         .filter(r -> r.getTypes().contains(SKOS.CONCEPT))
                         .filter(r -> vocabularies.contains(r.getVocabulary()))
                         .collect(Collectors.toList());

@@ -12,8 +12,8 @@ PREFIX dc: <http://purl.org/dc/terms/>
 SELECT ?entity ?label ?vocabularyUri ?state ?type ?snippetField ?snippetText WHERE {
     {
         ?entity a ?term ;
-           skos:prefLabel ?label ;
-           ?inVocabulary ?vocabularyUri .
+            skos:prefLabel ?label ;
+            ?inVocabulary ?vocabularyUri .
         OPTIONAL { ?entity ?hasState ?state . }
         OPTIONAL {
             ?entity skos:definition ?definition .
@@ -24,26 +24,18 @@ SELECT ?entity ?label ?vocabularyUri ?state ?type ?snippetField ?snippetText WHE
         BIND (?term as ?type) .
     } UNION {
         ?entity a ?vocabulary ;
-           dc:title ?label .
+            dc:title ?label .
         OPTIONAL {
             ?entity dc:description ?dcDescription .
         }
         BIND (?vocabulary as ?type) .
     }
-    BIND (COALESCE(?vocabularyUri, ?entity) as ?vocabularyEntity) .
-    OPTIONAL {
-        ?vocabularyEntity dc:language ?vocabularyLang .
-    }
-    OPTIONAL {
-        ?entity dc:language ?entityLang .
-    }
-    BIND (?langTagVal as ?langTag) .
-    BIND (COALESCE(?entityLang, ?vocabularyLang, ?langTag) AS ?langTag) .
+    BIND (?requestedLanguageVal AS ?requestedLanguage)
     BIND (?label as ?snippetText) .
     BIND (str("prefLabel") as ?snippetField) .
     FILTER CONTAINS(LCASE(?label), LCASE(?searchString)) .
-    FILTER (lang(?label) = ?langTag)
+    FILTER (!BOUND(?requestedLanguage) || lang(?label) = ?requestedLanguage)
     FILTER NOT EXISTS { ?entity a ?snapshot . }
     BIND(COALESCE(?definition, COALESCE(?scopeNote, ?dcDescription)) AS ?description)
-    FILTER (!BOUND(?description) || lang(?description) = ?langTag)
+    FILTER (!BOUND(?description) || !BOUND(?requestedLanguage) || lang(?description) = ?requestedLanguage)
 } ORDER BY ?label
