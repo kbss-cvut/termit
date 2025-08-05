@@ -20,9 +20,9 @@ package cz.cvut.kbss.termit.persistence.dao.lucene;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
-import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -48,21 +48,29 @@ public class LuceneSearchDao extends SearchDao {
 
     static final char LUCENE_WILDCARD = '*';
 
-    public LuceneSearchDao(EntityManager em, Configuration config) {
-        super(em, config);
+    public LuceneSearchDao(EntityManager em) {
+        super(em);
     }
 
     @Override
-    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString) {
+    public List<FullTextSearchResult> fullTextSearch(@Nonnull String searchString, @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
         }
+
+        String query = ftsQuery;
+        if (language == null) {
+            // BIND using unbound expression needs to be removed for lucene query
+            query = query.replace("BIND (?requestedLanguageVal AS ?requestedLanguage)", "");
+        }
+
         final String wildcardString = addWildcard(searchString);
         final String exactMatch = splitExactMatch(searchString);
         LOG.trace("Running full text search for search string \"{}\", using wildcard variant \"{}\".", searchString,
                   wildcardString);
-        return setCommonQueryParams(em.createNativeQuery(ftsQuery, "FullTextSearchResult"), searchString)
+        return setCommonQueryParams(em.createNativeQuery(query, "FullTextSearchResult"),
+                searchString, language)
                 .setParameter("snapshot", URI.create(Vocabulary.s_c_verze_objektu))
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
@@ -87,7 +95,7 @@ public class LuceneSearchDao extends SearchDao {
     }
 
     @Override
-    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString) {
+    public List<FullTextSearchResult> fullTextSearchIncludingSnapshots(@Nonnull String searchString, @Nullable String language) {
         Objects.requireNonNull(searchString);
         if (searchString.isBlank()) {
             return Collections.emptyList();
@@ -98,7 +106,7 @@ public class LuceneSearchDao extends SearchDao {
                 "Running full text search (including snapshots) for search string \"{}\", using wildcard variant \"{}\".",
                 searchString, wildcardString);
         return setCommonQueryParams(em.createNativeQuery(queryIncludingSnapshots(), "FullTextSearchResult"),
-                                    searchString)
+                                    searchString, language)
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
                 .getResultList();
