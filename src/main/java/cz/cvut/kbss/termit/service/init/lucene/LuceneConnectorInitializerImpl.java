@@ -8,6 +8,9 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -57,6 +60,7 @@ Alternative would be adding lucene dependency and listing the analyzer classes a
 @Profile("lucene")
 public class LuceneConnectorInitializerImpl implements LuceneConnectorInitializer {
     public static final String LUCENE_INSTANCE_NS = "http://www.ontotext.com/connectors/lucene/instance#";
+    private static final Logger LOG = LoggerFactory.getLogger(LuceneConnectorInitializerImpl.class);
     /**
      * Map from language codes to analyzer class names available in GraphDB
      */
@@ -72,6 +76,8 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
         Configuration.Persistence config = configuration.getPersistence();
         this.em = em;
         this.mapper = mapper;
+
+        LOG.trace("Loading lucene connectors options from JSON files");
 
         this.requiredConnectors = Map.of(
                 LUCENE_INSTANCE_NS + config.getLuceneLabelIndexPrefix(), loadConnectorJson("label.json", mapper),
@@ -199,6 +205,7 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
      */
     private void dropConnector(URI connectorUri) {
         Objects.requireNonNull(connectorUri);
+        LOG.trace("Dropping Lucene connector {}", connectorUri);
         em.createNativeQuery("""
                   INSERT DATA {
                       ?connectorUri <http://www.ontotext.com/connectors/lucene#dropConnector> [].
@@ -212,10 +219,13 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
      * Takes specified options and adds {@code languages} and {@code analyzer} property to the top-level object.
      * @param language the language to add and use for analyzer selection
      * @param options the options JSON
-     * @return serialized {@code options} with added properties
+     * @return Copy of {@code options} with added properties
      */
-    private String createOptionsForConnector(String language, JsonNode options) {
+    private JsonNode createOptionsForConnector(String language, JsonNode options) {
         JsonNode newOptions = options.deepCopy();
+        if (Utils.isBlank(language)) {
+            return newOptions;
+        }
         if (newOptions.isObject() && newOptions instanceof ObjectNode objectNode) {
             objectNode.withArrayProperty("languages").add(language);
             String analyzer = analyzerMap.get(language);
@@ -226,25 +236,25 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
             throw new TermItException("Connector options must be an object");
         }
 
-        return newOptions.toString();
+        return newOptions;
     }
 
     /**
      * Creates new lucene connector with {@code prefix + language} URI
-     * and with specified options customized for the language.
+     * and with specified options.
      * @param connectorUri The uri of the new connector
-     * @param language The language to index
      * @param options The options to initialize connector with
      */
-    private void createConnector(URI connectorUri, String language, JsonNode options) {
+    private void createConnector(URI connectorUri, JsonNode options) {
         Objects.requireNonNull(connectorUri);
+        LOG.trace("Creating Lucene connector {}", connectorUri);
         em.createNativeQuery("""
                 INSERT DATA {
                     ?connectorUri <http://www.ontotext.com/connectors/lucene#createConnector> ?options ..
                 }
                 """)
           .setParameter("connectorUri", connectorUri)
-          .setParameter("options", createOptionsForConnector(language, options))
+          .setParameter("options", options)
           .executeUpdate();
     }
 
@@ -257,7 +267,7 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
         Set<LuceneConnector> remaining = new HashSet<>(existingConnectors);
         for (Map.Entry<String, JsonNode> required : requiredConnectors.entrySet()) {
             String requiredPrefix = required.getKey();
-            JsonNode requiredOptions = required.getValue();
+            JsonNode requiredOptions = createOptionsForConnector(language, required.getValue());
 
             URI connectorUri = URI.create(requiredPrefix + language);
             LuceneConnector connector = findConnector(connectorUri, remaining);
@@ -270,7 +280,7 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
 
             // create connector if the connector does not exist or was dropped
             if (connector == null) {
-                createConnector(connectorUri, language, requiredOptions);
+                createConnector(connectorUri, requiredOptions);
             }
         }
         // Drop all remaining connectors
@@ -286,11 +296,14 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
      */
     @Override
     public void initialize() {
+        LOG.debug("Initializing Lucene Connectors");
         final Map<String, Set<LuceneConnector>> connectors = loadExistingConnectors();
         final Set<String> languages = fetchUsedLanguages();
+        languages.add(""); // explicitly add empty language to force creation of universal index for all languages
         for (String lang : languages) {
             handleRequiredConnectors(lang, connectors.getOrDefault(lang, Set.of()));
         }
+        LOG.debug("Lucene Connectors initialized");
     }
 
 
