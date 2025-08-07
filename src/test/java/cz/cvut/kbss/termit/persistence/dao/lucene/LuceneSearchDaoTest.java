@@ -59,7 +59,7 @@ class LuceneSearchDaoTest {
 
     @BeforeEach
     void setUp() {
-        this.sut = new LuceneSearchDao(emMock, configMock);
+        this.sut = new LuceneSearchDao(emMock);
     }
 
     private void mockSearchQuery() {

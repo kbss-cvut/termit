@@ -17,6 +17,7 @@
  */
 package cz.cvut.kbss.termit.service.init;
 
+import cz.cvut.kbss.termit.service.init.lucene.LuceneConnectorInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -46,6 +47,7 @@ public class SystemInitializer implements SmartInitializingSingleton, Ordered {
         appContext.getBean(VocabularyPrimaryLanguageGenerator.class).generateMissingPrimaryLanguage();
         appContext.getBean(VocabularyAccessControlListGenerator.class).generateMissingAccessControlLists();
         appContext.getBean(VocabularyAnonymousAccessControlListGenerator.class).generateMissingAccessControlLists();
+        appContext.getBean(LuceneConnectorInitializer.class).initialize();
     }
 
     @Override
