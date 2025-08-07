@@ -18,8 +18,10 @@
 package cz.cvut.kbss.termit.persistence.dao.lucene;
 
 import cz.cvut.kbss.jopa.model.EntityManager;
+import cz.cvut.kbss.jopa.model.query.Query;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
+import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Vocabulary;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -32,6 +34,8 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import static cz.cvut.kbss.termit.service.init.lucene.LuceneConnectorInitializerImpl.LUCENE_INSTANCE_NS;
 
 /**
  * {@link SearchDao} extension for Lucene-based repositories. These support rich search strings with wildcards and
@@ -48,8 +52,11 @@ public class LuceneSearchDao extends SearchDao {
 
     static final char LUCENE_WILDCARD = '*';
 
-    public LuceneSearchDao(EntityManager em) {
+    private final Configuration.Persistence config;
+
+    public LuceneSearchDao(EntityManager em, Configuration configuration) {
         super(em);
+        config = configuration.getPersistence();
     }
 
     @Override
@@ -110,5 +117,14 @@ public class LuceneSearchDao extends SearchDao {
                 .setParameter("wildCardSearchString", wildcardString, null)
                 .setParameter("splitExactMatch", exactMatch, null)
                 .getResultList();
+    }
+
+    @Override
+    protected Query setCommonQueryParams(Query q, String searchString, String requestedLanguage) {
+        String langSuffix = requestedLanguage == null ? "" : requestedLanguage;
+        URI labelIndex = URI.create(LUCENE_INSTANCE_NS + config.getLuceneLabelIndexPrefix() + langSuffix);
+        URI defcomIndex = URI.create(LUCENE_INSTANCE_NS + config.getLuceneDefcomIndexPrefix() + langSuffix);
+        q.setParameter("label_index", labelIndex).setParameter("defcom_index", defcomIndex);
+        return super.setCommonQueryParams(q, searchString, requestedLanguage);
     }
 }
