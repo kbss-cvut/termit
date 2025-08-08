@@ -116,7 +116,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
                                                .filter(t -> getPrimaryLabel(t).contains("Matching"))
                                                .collect(Collectors.toList());
 
-        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching", null);
         final List<FullTextSearchResult> termResults = allResults.stream().filter(r -> r.hasType(SKOS.CONCEPT)).collect(
                 Collectors.toList());
         assertEquals(matching.size(), termResults.size());
@@ -151,7 +151,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
         final Collection<Vocabulary> matching = vocabularies.stream()
                                                             .filter(v -> getPrimaryLabel(v).contains("Matching"))
                                                             .collect(Collectors.toList());
-        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching", null);
         final List<FullTextSearchResult> vocabularyResults = allResults.stream()
                                                                        .filter(r -> r.hasType(
                                                                                cz.cvut.kbss.termit.util.Vocabulary.s_c_slovnik))
@@ -181,7 +181,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
                                                                         .filter(v -> getPrimaryLabel(v)
                                                                                       .contains("Matching"))
                                                                         .toList();
-        final List<FullTextSearchResult> result = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> result = sut.fullTextSearch("matching", null);
         assertEquals(matchingTerms.size() + matchingVocabularies.size(), result.size());
         for (FullTextSearchResult item : result) {
             if (item.hasType(SKOS.CONCEPT)) {
@@ -198,7 +198,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
                                                .filter(t -> getPrimaryLabel(t).contains("Matching"))
                                                .toList();
 
-        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching");
+        final List<FullTextSearchResult> allResults = sut.fullTextSearch("matching", null);
         final List<FullTextSearchResult> termResults = allResults.stream()
                                                                  .filter(r -> r.hasType(SKOS.CONCEPT))
                                                                  .toList();
@@ -212,7 +212,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
 
     @Test
     void defaultFullTextSearchReturnsEmptyListForEmptyInputString() {
-        final List<FullTextSearchResult> result = sut.fullTextSearch("");
+        final List<FullTextSearchResult> result = sut.fullTextSearch("", null);
         assertTrue(result.isEmpty());
     }
 
@@ -229,7 +229,7 @@ class SearchDaoTest extends BaseDaoTestRunner {
             insertSnapshotType(snapshot);
         });
 
-        final List<FullTextSearchResult> result = sut.fullTextSearch(matchingLabel);
+        final List<FullTextSearchResult> result = sut.fullTextSearch(matchingLabel, null);
         assertEquals(1, result.size());
         assertEquals(v.getUri(), result.get(0).getUri());
     }

@@ -25,7 +25,6 @@ import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
-import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.service.business.SearchService;
 import cz.cvut.kbss.termit.util.Constants;
@@ -45,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static cz.cvut.kbss.termit.environment.Environment.LANGUAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
@@ -77,7 +77,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
                 .singletonList(
                         new FullTextSearchResult(Generator.generateUri(), "test", null, null, null, SKOS.CONCEPT,
                                                  "test", "test", 1.0));
-        when(searchServiceMock.fullTextSearch(any())).thenReturn(expected);
+        when(searchServiceMock.fullTextSearch(any(), any())).thenReturn(expected);
         final String searchString = "test";
 
         final MvcResult mvcResult = mockMvc.perform(get(PATH + "/fts").param("searchString", searchString))
@@ -88,7 +88,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
         assertEquals(expected.get(0).getUri(), result.get(0).getUri());
         assertEquals(expected.get(0).getLabel(), result.get(0).getLabel());
         assertEquals(expected.get(0).getTypes(), result.get(0).getTypes());
-        verify(searchServiceMock).fullTextSearch(searchString);
+        verify(searchServiceMock).fullTextSearch(searchString, null);
     }
 
     @Test
@@ -97,21 +97,21 @@ class SearchControllerTest extends BaseControllerTestRunner {
         final List<FullTextSearchResult> expected = Collections
                 .singletonList(new FullTextSearchResult(Generator.generateUri(), "test", "Term definition", vocabularyIri, null,
                                                         SKOS.CONCEPT, "test", "test", 1.0));
-        when(searchServiceMock.fullTextSearchOfTerms(any(), any())).thenReturn(expected);
+        when(searchServiceMock.fullTextSearchOfTerms(any(), any(), any())).thenReturn(expected);
         final String searchString = "test";
 
         mockMvc.perform(get(PATH + "/fts/terms")
                                 .param("searchString", searchString)
                                 .param("vocabulary", vocabularyIri.toString()))
                .andExpect(status().isOk()).andReturn();
-        verify(searchServiceMock).fullTextSearchOfTerms(searchString, Collections.singleton(vocabularyIri));
+        verify(searchServiceMock).fullTextSearchOfTerms(searchString, Collections.singleton(vocabularyIri), null);
     }
 
     @Test
     void facetedTermSearchPassesSearchParametersToSearchService() throws Exception {
         final FacetedSearchResult term = new FacetedSearchResult();
         term.setUri(Generator.generateUri());
-        term.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
+        term.setLabel(MultilingualString.create("Test term", LANGUAGE));
         when(searchServiceMock.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(term));
         final List<SearchParam> searchParams = List.of(
                 new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH),
@@ -130,7 +130,7 @@ class SearchControllerTest extends BaseControllerTestRunner {
     void facetedSearchPassesSpecifiedPageSpecificationToService() throws Exception {
         final FacetedSearchResult term = new FacetedSearchResult();
         term.setUri(Generator.generateUri());
-        term.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
+        term.setLabel(MultilingualString.create("Test term", LANGUAGE));
         when(searchServiceMock.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(term));
         final List<SearchParam> searchParams = List.of(
                 new SearchParam(URI.create(SKOS.NOTATION), Set.of("LA_"), MatchType.EXACT_MATCH));

@@ -60,6 +60,7 @@ class LuceneSearchDaoTest {
     @BeforeEach
     void setUp() {
         this.sut = new LuceneSearchDao(emMock, configMock);
+        sut.loadQueries();
     }
 
     private void mockSearchQuery() {
@@ -67,14 +68,13 @@ class LuceneSearchDaoTest {
         when(queryMock.setParameter(anyString(), any())).thenReturn(queryMock);
         when(queryMock.setParameter(anyString(), any(), any())).thenReturn(queryMock);
         when(queryMock.getResultList()).thenReturn(Collections.emptyList());
-        when(configMock.getPersistence().getLanguage()).thenReturn("cs");
     }
 
     @Test
     void fullTextSearchUsesOneTokenSearchStringAsDisjunctionOfExactAndWildcardMatch() {
         mockSearchQuery();
         final String searchString = "test";
-        sut.fullTextSearch(searchString);
+        sut.fullTextSearch(searchString, null);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream().filter(s -> s
@@ -88,7 +88,7 @@ class LuceneSearchDaoTest {
         mockSearchQuery();
         final String lastToken = "token";
         final String searchString = "termOne termTwo " + lastToken;
-        sut.fullTextSearch(searchString);
+        sut.fullTextSearch(searchString, null);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
@@ -101,7 +101,7 @@ class LuceneSearchDaoTest {
     void fullTextSearchDoesNotAddWildcardIfLastTokenAlreadyEndsWithWildcard() {
         mockSearchQuery();
         final String searchString = "test token*";
-        sut.fullTextSearch(searchString);
+        sut.fullTextSearch(searchString, null);
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream().filter(s -> s.startsWith(searchString))
@@ -112,7 +112,7 @@ class LuceneSearchDaoTest {
 
     @Test
     void fullTextSearchReturnsEmptyResultImmediatelyWhenSearchStringIsBlank() {
-        final List<FullTextSearchResult> result = sut.fullTextSearch("");
+        final List<FullTextSearchResult> result = sut.fullTextSearch("", null);
         assertTrue(result.isEmpty());
         verify(emMock, never()).createNativeQuery(anyString());
     }
