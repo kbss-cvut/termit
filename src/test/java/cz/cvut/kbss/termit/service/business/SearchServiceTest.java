@@ -24,7 +24,6 @@ import cz.cvut.kbss.termit.dto.search.FacetedSearchResult;
 import cz.cvut.kbss.termit.dto.search.FullTextSearchResult;
 import cz.cvut.kbss.termit.dto.search.MatchType;
 import cz.cvut.kbss.termit.dto.search.SearchParam;
-import cz.cvut.kbss.termit.environment.Environment;
 import cz.cvut.kbss.termit.environment.Generator;
 import cz.cvut.kbss.termit.exception.ValidationException;
 import cz.cvut.kbss.termit.persistence.dao.SearchDao;
@@ -43,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static cz.cvut.kbss.termit.environment.Environment.LANGUAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -75,11 +75,11 @@ class SearchServiceTest {
                 "test",
                 "test",
                 1.0);
-        when(searchDao.fullTextSearchIncludingSnapshots(searchString)).thenReturn(Collections.singletonList(ftsr));
+        when(searchDao.fullTextSearchIncludingSnapshots(searchString, null)).thenReturn(Collections.singletonList(ftsr));
         final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString, Collections.singleton(
-                Generator.generateUri()));
+                Generator.generateUri()), null);
         assertTrue(result.isEmpty());
-        verify(searchDao).fullTextSearchIncludingSnapshots(searchString);
+        verify(searchDao).fullTextSearchIncludingSnapshots(searchString, null);
     }
 
     @Test
@@ -96,11 +96,11 @@ class SearchServiceTest {
                 "test",
                 "test",
                 1.0);
-        when(searchDao.fullTextSearchIncludingSnapshots(searchString)).thenReturn(Collections.singletonList(ftsr));
+        when(searchDao.fullTextSearchIncludingSnapshots(searchString, null)).thenReturn(Collections.singletonList(ftsr));
         final List<FullTextSearchResult> result = sut.fullTextSearchOfTerms(searchString,
-                                                                            Collections.singleton(vocabulary));
+                                                                            Collections.singleton(vocabulary), null);
         assertEquals(Collections.singletonList(ftsr), result);
-        verify(searchDao).fullTextSearchIncludingSnapshots(searchString);
+        verify(searchDao).fullTextSearchIncludingSnapshots(searchString, null);
     }
 
     @Test
@@ -117,7 +117,7 @@ class SearchServiceTest {
         final SearchParam spOne = new SearchParam(URI.create(RDF.TYPE), Set.of(Generator.generateUriString()), MatchType.IRI);
         final FacetedSearchResult item = new FacetedSearchResult();
         item.setUri(Generator.generateUri());
-        item.setLabel(MultilingualString.create("Test term", Environment.LANGUAGE));
+        item.setLabel(MultilingualString.create("Test term", LANGUAGE));
         item.setVocabulary(Generator.generateUri());
         item.setTypes(new HashSet<>(spOne.getValue()));
         when(searchDao.facetedTermSearch(anyCollection(), any(Pageable.class))).thenReturn(List.of(item));
