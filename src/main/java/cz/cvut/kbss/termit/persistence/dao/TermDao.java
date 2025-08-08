@@ -267,6 +267,7 @@ public class TermDao extends BaseAssetDao<Term> implements SnapshotProvider<Term
         em.getEntityManagerFactory().getCache().evict(Term.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermDto.class, term.getUri(), null);
         em.getEntityManagerFactory().getCache().evict(TermInfo.class, term.getUri(), null);
+        em.getEntityManagerFactory().getCache().evict(FlatTermDto.class, term.getUri(), null);
         Utils.emptyIfNull(term.getParentTerms()).forEach(t -> subTermsCache.evict(t.getUri()));
         Utils.emptyIfNull(term.getExternalParentTerms()).forEach(t -> subTermsCache.evict(t.getUri()));
         // Should be replaced by implementation of https://github.com/kbss-cvut/jopa/issues/92
