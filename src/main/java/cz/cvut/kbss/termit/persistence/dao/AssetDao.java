@@ -125,16 +125,12 @@ public class AssetDao {
     }
 
     private String insertVocabularyPattern(AssetWithType elem) {
-        switch (elem.type.toString()) {
-            case SKOS.CONCEPT:
-                return "?ent ?isFromVocabulary ?vocabulary . ";
-            case Vocabulary.s_c_dokument:
-                return "?ent ?hasVocabulary ?vocabulary . ";
-            case Vocabulary.s_c_soubor:
-                return "?ent ?inDocument/?hasVocabulary ?vocabulary . ";
-            default:
-                return "BIND (?ent as ?vocabulary)";
-        }
+        return switch (elem.type.toString()) {
+            case SKOS.CONCEPT -> "?ent ?isFromVocabulary ?vocabulary . ";
+            case Vocabulary.s_c_dokument -> "?ent ?hasVocabulary ?vocabulary . ";
+            case Vocabulary.s_c_soubor -> "?ent ?inDocument/?hasVocabulary ?vocabulary . ";
+            default -> "BIND (?ent as ?vocabulary)";
+        };
     }
 
     private void setVocabularyRelatedParameter(AssetWithType elem, Query query) {
@@ -210,13 +206,6 @@ public class AssetDao {
         }
     }
 
-    private static final class AssetWithType {
-        private final URI uri;
-        private final URI type;
-
-        private AssetWithType(URI uri, URI type) {
-            this.uri = uri;
-            this.type = type;
-        }
+    private record AssetWithType(URI uri, URI type) {
     }
 }
