@@ -21,6 +21,7 @@ import cz.cvut.kbss.termit.event.ClearLongRunningTaskQueueEvent;
 import cz.cvut.kbss.termit.event.EvictCacheEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
 import cz.cvut.kbss.termit.rest.dto.HealthInfo;
+import cz.cvut.kbss.termit.service.init.lucene.LuceneConnectorInitializer;
 import cz.cvut.kbss.termit.service.mail.Message;
 import cz.cvut.kbss.termit.service.mail.Postman;
 import cz.cvut.kbss.termit.util.Configuration;
@@ -52,11 +53,15 @@ public class AppAdminBean implements SelfNaming {
 
     private final String beanName;
 
+    private final LuceneConnectorInitializer luceneConnectorInitializer;
+
     @Autowired
-    public AppAdminBean(ApplicationEventPublisher eventPublisher, Postman postman, Configuration config) {
+    public AppAdminBean(ApplicationEventPublisher eventPublisher, Postman postman, Configuration config,
+                        LuceneConnectorInitializer luceneConnectorInitializer) {
         this.eventPublisher = eventPublisher;
         this.postman = postman;
         this.beanName = config.getJmxBeanName();
+        this.luceneConnectorInitializer = luceneConnectorInitializer;
     }
 
     @CacheEvict(allEntries = true, cacheNames = {"vocabularies"})
@@ -79,6 +84,11 @@ public class AppAdminBean implements SelfNaming {
         final Message message = Message.to(address).subject("TermIt Test Email")
                                        .content("This is a test message from TermIt.").build();
         postman.sendMessage(message);
+    }
+
+    @ManagedOperation(description = "Reinitializes Lucene connectors in the database if it is needed.")
+    public void reloadFullTextSearchIndexes() {
+        luceneConnectorInitializer.initialize();
     }
 
     @Override

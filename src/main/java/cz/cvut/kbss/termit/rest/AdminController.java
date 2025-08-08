@@ -82,4 +82,13 @@ public class AdminController {
                               @Parameter(description = "Email address of the recipient") String recipient) {
         adminBean.sendTestEmail(recipient);
     }
+
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")},
+               description = "Reinitializes Lucene connectors in the database if it is needed.")
+    @ApiResponse(responseCode = "204", description = "Reinitialization completed")
+    @PostMapping("/reload-fts")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reloadFullTextSearchIndexes() {
+        adminBean.reloadFullTextSearchIndexes();
+    }
 }
