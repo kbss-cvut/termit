@@ -3,9 +3,11 @@ package cz.cvut.kbss.termit.service.init.lucene;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.PersistenceException;
+import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
 import cz.cvut.kbss.termit.util.Configuration;
 import cz.cvut.kbss.termit.util.Utils;
@@ -13,21 +15,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /*
 GraphDB documentation for Lucene connector
 https://graphdb.ontotext.com/documentation/10.0/lucene-graphdb-connector.html#what-s-in-this-document
 
 Links to lucene core javadoc listing available analyzers
+The link is the same from GraphDB 10 and 11 documentation
 https://lucene.apache.org/core/9_4_2/analysis/common/index.html
 
 Following JavaScript can be used in browser console to get the map in analyzer-map.json.
@@ -47,12 +54,23 @@ Alternative would be adding lucene dependency and listing the analyzer classes a
                     classLangMap[a.innerText.split('.').pop()] = a.innerText + "." + className
                 }
             })
-    ))).then(() => console.log(JSON.stringify(classLangMap)))
+    ))).then(() => {
+        // all the tags are matching IETF BCP 47 language sub-tags except for Czech :)
+        classLangMap["cs"] = classLangMap["cz"]
+        const ordered = Object.keys(classLangMap).sort().reduce(
+          (obj, key) => {
+            obj[key] = classLangMap[key];
+            return obj;
+          },
+          {}
+        );
+        console.log(JSON.stringify(ordered))
+    })
 })()
 */
 
 /**
- * Finds all languages used by any object in database
+ * Finds all languages used by any object in database identified by an indexed predicate
  * and ensures that required lucene connectors are created in the database with up-to-date options for each language.
  * Remaining lucene connectors that are matching prefixes of {@link #requiredConnectors} are dropped.
  */
@@ -60,15 +78,26 @@ Alternative would be adding lucene dependency and listing the analyzer classes a
 @Profile("lucene")
 public class LuceneConnectorInitializerImpl implements LuceneConnectorInitializer {
     public static final String LUCENE_INSTANCE_NS = "http://www.ontotext.com/connectors/lucene/instance#";
+    public static final URI LUCENE_LIST_CONNECTORS = URI.create("http://www.ontotext.com/connectors/lucene#listConnectors");
+    public static final URI LUCENE_LIST_OPTION_VALUES = URI.create("http://www.ontotext.com/connectors/lucene#listOptionValues");
+    public static final URI LUCENE_DROP_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#dropConnector");
+    public static final URI LUCENE_CREATE_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#createConnector");
     private static final Logger LOG = LoggerFactory.getLogger(LuceneConnectorInitializerImpl.class);
     /**
-     * Map from language codes to analyzer class names available in GraphDB
+     * Map from language codes to analyzer class names available in GraphDB.
+     * <p>
+     * Loaded from {@code resources/lucene/analyzer-map.json}
      */
     private final Map<String, String> analyzerMap;
     /**
      * Map from lucene connector prefix to it's options
      */
     private final Map<String, JsonNode> requiredConnectors;
+    /**
+     * Every last predicate from each connector {@code fields[].propertyChain}.
+     * The predicate is excluded if it is not a valid URI.
+     */
+    private final Set<URI> indexedFields;
     private final EntityManager em;
     private final ObjectMapper mapper;
 
@@ -83,7 +112,40 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
                 LUCENE_INSTANCE_NS + config.getLuceneLabelIndexPrefix(), loadConnectorJson("label.json", mapper),
                 LUCENE_INSTANCE_NS + config.getLuceneDefcomIndexPrefix(), loadConnectorJson("defcom.json", mapper)
         );
+        this.indexedFields = resolveIndexedLiterals(requiredConnectors.values());
         this.analyzerMap = loadAnalyzersMap(mapper);
+    }
+
+    /**
+     * Inspects provided connectors options and extracts a set containing the last predicate from each {@code fields[].propertyChain}
+     * as long as it is a valid URI.
+     * @param connectorsOptions connectors options to inspect
+     * @return Set of last propertyChain predicates
+     */
+    private static Set<URI> resolveIndexedLiterals(Collection<JsonNode> connectorsOptions) {
+        Set<String> indexedLiterals = new HashSet<>();
+        for (JsonNode connectorOptions : connectorsOptions) { // for each connector
+            if (connectorOptions.get("fields") instanceof ArrayNode fields) { // get fields property (which is an array)
+                for (Iterator<JsonNode> it = fields.values(); it.hasNext(); ) { // for each field
+                    JsonNode field = it.next();
+                    JsonNode chainArray = field.get("propertyChain");
+                    if (chainArray != null && chainArray.isArray()) { // extract the last node of propertyChain property
+                        indexedLiterals.add(chainArray.get(chainArray.size() - 1).textValue());
+                    } else {
+                        throw new TermItException("Connector field is missing propertyChain property or it is not an array!");
+                    }
+                }
+            } else {
+                throw new TermItException("Connector is missing fields property or it is not an array!");
+            }
+        }
+        return indexedLiterals.stream().map(str -> {
+            try {
+                return URI.create(str);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     /**
@@ -109,22 +171,25 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
         try (InputStream in = cl.getResourceAsStream("lucene/" + name)) {
             return mapper.readTree(in);
         } catch (Exception e) {
-            throw new TermItException("Failed to load connector JSON " + name, e);
+            throw new ResourceNotFoundException("Failed to load connector JSON lucene/" + name);
         }
     }
 
     /**
-     * Retrieves all languages used by objects in the database.
+     * Retrieves all languages used by {@link #indexedFields}
      * @return the set of language codes, it is allowed to contain empty string
      */
     private Set<String> fetchUsedLanguages() {
-        return Set.copyOf(em.createNativeQuery("""
+        return new HashSet<>(em.createNativeQuery("""
                 SELECT DISTINCT ?lang {
                     ?subject ?pred ?object .
+                    FILTER(?pred in (?indexedFields)) .
                     BIND(lang(?object) AS ?lang) .
                     FILTER(BOUND(?lang)) .
                 }
-                """, String.class).getResultList());
+                """, String.class)
+                               .setParameter("indexedFields", indexedFields)
+                               .getResultList());
     }
 
     /**
@@ -135,10 +200,11 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
     private LuceneConnector fetchLuceneConnector(URI uri) {
         final String createString = em.createNativeQuery("""
                                               SELECT ?createString {
-                                                  ?uri <http://www.ontotext.com/connectors/lucene#listOptionValues> ?createString .
+                                                  ?uri ?listOptionValues ?createString .
                                               }
                                               """, String.class)
                                       .setParameter("uri", uri)
+                                      .setParameter("listOptionValues", LUCENE_LIST_OPTION_VALUES)
                                       .getSingleResult();
         try {
             return new LuceneConnector(uri, mapper.readTree(createString));
@@ -154,9 +220,11 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
     private List<LuceneConnector> fetchLuceneConnectors() {
         return em.createNativeQuery("""
                 SELECT ?cntUri {
-                    ?cntUri <http://www.ontotext.com/connectors/lucene#listConnectors> [] .
+                    ?cntUri ?listConnectors [] .
                 }
-                """, URI.class).getResultStream().map(this::fetchLuceneConnector).toList();
+                """, URI.class)
+                 .setParameter("listConnectors", LUCENE_LIST_CONNECTORS)
+                 .getResultStream().map(this::fetchLuceneConnector).toList();
     }
 
     /**
@@ -208,10 +276,11 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
         LOG.trace("Dropping Lucene connector {}", connectorUri);
         em.createNativeQuery("""
                   INSERT DATA {
-                      ?connectorUri <http://www.ontotext.com/connectors/lucene#dropConnector> [].
+                      ?connectorUri ?dropConnector [].
                   }
                   """)
           .setParameter("connectorUri", connectorUri)
+          .setParameter("dropConnector", LUCENE_DROP_CONNECTOR)
           .executeUpdate();
     }
 
@@ -240,8 +309,7 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
     }
 
     /**
-     * Creates new lucene connector with {@code prefix + language} URI
-     * and with specified options.
+     * Creates new lucene connector with specified options.
      * @param connectorUri The uri of the new connector
      * @param options The options to initialize connector with
      */
@@ -250,11 +318,12 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
         LOG.trace("Creating Lucene connector {}", connectorUri);
         em.createNativeQuery("""
                 INSERT DATA {
-                    ?connectorUri <http://www.ontotext.com/connectors/lucene#createConnector> ?options ..
+                    ?connectorUri ?createConnector ?options .
                 }
                 """)
           .setParameter("connectorUri", connectorUri)
-          .setParameter("options", options)
+          .setParameter("options", options.toString())
+          .setParameter("createConnector", LUCENE_CREATE_CONNECTOR)
           .executeUpdate();
     }
 
@@ -294,6 +363,7 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
      * and ensures that required lucene connectors are created in the database with up-to-date options for each language.
      * Remaining lucene connectors that are matching prefixes of {@link #requiredConnectors} are dropped.
      */
+    @Transactional
     @Override
     public void initialize() {
         LOG.debug("Initializing Lucene Connectors");

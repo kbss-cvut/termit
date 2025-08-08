@@ -7,6 +7,7 @@
     "cjk": "org.apache.lucene.analysis.cjk.CJKAnalyzer",
     "ckb": "org.apache.lucene.analysis.ckb.SoraniAnalyzer",
     "classic": "org.apache.lucene.analysis.classic.ClassicAnalyzer",
+    "cs": "org.apache.lucene.analysis.cz.CzechAnalyzer",
     "custom": "org.apache.lucene.analysis.custom.CustomAnalyzer",
     "cz": "org.apache.lucene.analysis.cz.CzechAnalyzer",
     "da": "org.apache.lucene.analysis.da.DanishAnalyzer",
