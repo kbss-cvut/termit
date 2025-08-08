@@ -14,6 +14,7 @@ import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -363,6 +364,7 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
      * and ensures that required lucene connectors are created in the database with up-to-date options for each language.
      * Remaining lucene connectors that are matching prefixes of {@link #requiredConnectors} are dropped.
      */
+    @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     @Override
     public void initialize() {
