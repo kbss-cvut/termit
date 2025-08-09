@@ -123,7 +123,7 @@ public class TermController extends BaseController {
     @ApiResponse(responseCode = "200", description = "List of vocabulary terms.")
     @GetMapping(value = "/vocabularies/{localName}/terms",
                 produces = {MediaType.APPLICATION_JSON_VALUE,
-                            JsonLd.MEDIA_TYPE,
+                            JsonLd.MEDIA_TYPE, 
                             Constants.MediaType.EXCEL,
                             Constants.MediaType.TURTLE,
                             Constants.MediaType.RDF_XML})
@@ -146,7 +146,7 @@ public class TermController extends BaseController {
             @RequestHeader(value = HttpHeaders.ACCEPT, required = false,
                            defaultValue = MediaType.ALL_VALUE) String acceptType,
             @Parameter(description = "Boolean flag to determine whether the list should be flattened.")
-            @RequestParam(name = "flat", required = false) Boolean flat,
+            @RequestParam(name = "flat", required = false, defaultValue = "false") boolean flat,
             @Parameter(description = ApiDocConstants.PAGE_SIZE_DESCRIPTION)
             @RequestParam(name = QueryParams.PAGE_SIZE, required = false) Integer pageSize,
             @Parameter(description = ApiDocConstants.PAGE_NO_DESCRIPTION)
@@ -155,7 +155,7 @@ public class TermController extends BaseController {
         final Vocabulary vocabulary = getVocabulary(vocabularyUri);
         if (searchString != null) {
 
-            if (flat != null && flat) {
+            if (flat) {
                 ResponseEntity.ok(includeImported ?
                         termService.findAllFlatIncludingImported(searchString, vocabulary, createPageRequest(pageSize, pageNo)) :
                         termService.findAllFlat(searchString, vocabulary, createPageRequest(pageSize, pageNo)));
@@ -169,7 +169,7 @@ public class TermController extends BaseController {
         return export.orElseGet(() -> {
             verifyAcceptType(acceptType);
 
-            if (flat != null && flat) {
+            if (flat) {
                 return ResponseEntity.ok(includeImported ? termService.findAllFlatIncludingImported(vocabulary, createPageRequest(pageSize, pageNo)) :
                     termService.findAllFlat(vocabulary, createPageRequest(pageSize, pageNo)));
             }

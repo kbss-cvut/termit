@@ -235,9 +235,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      * @return List of term DTOs ordered by label in a flat structure
      */
     public List<FlatTermDto> findAllFlat(Vocabulary vocabulary, Pageable pageSpec) {
-        List<FlatTermDto> flatTerms = termDao.findAllFlat(vocabulary, pageSpec);
-        flatTerms.forEach(flatTerm -> flatTerm.setParentTerms(null));
-        return flatTerms;
+        return termDao.findAllFlat(vocabulary, pageSpec);
     }
 
     /**
@@ -295,9 +293,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      */
     @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlatIncludingImported(Vocabulary vocabulary, Pageable pageSpec) {
-        List<FlatTermDto> flatTerms = termDao.findAllFlatIncludingImported(vocabulary, pageSpec);
-        flatTerms.forEach(flatTerm -> flatTerm.setParentTerms(null));
-        return flatTerms;
+        return termDao.findAllFlatIncludingImported(vocabulary, pageSpec);
     }
 
     /**
@@ -378,9 +374,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      */
     @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlat(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        List<FlatTermDto> flatTerms = termDao.findAllFlat(searchString, vocabulary, pageSpec);
-        flatTerms.forEach(flatTerm -> flatTerm.setParentTerms(null));
-        return flatTerms;
+        return termDao.findAllFlat(searchString, vocabulary, pageSpec);
     }
 
     /**
@@ -419,9 +413,7 @@ public class TermRepositoryService extends BaseAssetRepositoryService<Term, Term
      */
     @Transactional(readOnly = true)
     public List<FlatTermDto> findAllFlatIncludingImported(String searchString, Vocabulary vocabulary, Pageable pageSpec) {
-        List<FlatTermDto> flatTerms = termDao.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
-        flatTerms.forEach(flatTerm -> flatTerm.setParentTerms(null));
-        return flatTerms;
+        return termDao.findAllFlatIncludingImported(searchString, vocabulary, pageSpec);
     }
 
     /**
