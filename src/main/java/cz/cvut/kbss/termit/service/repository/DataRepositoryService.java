@@ -19,6 +19,7 @@ package cz.cvut.kbss.termit.service.repository;
 
 import cz.cvut.kbss.jopa.vocabulary.SKOS;
 import cz.cvut.kbss.termit.exception.NotFoundException;
+import cz.cvut.kbss.termit.exception.UnsupportedDomainException;
 import cz.cvut.kbss.termit.model.CustomAttribute;
 import cz.cvut.kbss.termit.model.RdfsResource;
 import cz.cvut.kbss.termit.persistence.dao.DataDao;
@@ -113,7 +114,10 @@ public class DataRepositoryService {
     @Transactional
     public void persistCustomAttribute(@Nonnull CustomAttribute attribute) {
         Objects.requireNonNull(attribute);
-        attribute.setDomain(URI.create(SKOS.CONCEPT));
+        if (attribute.getDomain() == null) {
+            attribute.setDomain(URI.create(SKOS.CONCEPT));
+        }
+        verifySupportedDomain(attribute);
         if (attribute.getUri() == null) {
             attribute.setUri(idResolver.generateIdentifier(Vocabulary.s_c_vlastni_atribut, attribute.getLabel()
                                                                                                     .get(config.getPersistence()
@@ -121,6 +125,14 @@ public class DataRepositoryService {
         }
         LOG.debug("Persisting custom attribute {}", attribute);
         dataDao.persist(attribute);
+    }
+
+    private static void verifySupportedDomain(CustomAttribute attribute) {
+        assert attribute.getDomain() != null;
+        final String strDomain = attribute.getDomain().toString();
+        if (!SKOS.CONCEPT.equals(strDomain) && !Vocabulary.s_c_slovnik.equals(strDomain)) {
+            throw new UnsupportedDomainException("Unsupported custom attribute domain: " + attribute.getDomain());
+        }
     }
 
     @Transactional
