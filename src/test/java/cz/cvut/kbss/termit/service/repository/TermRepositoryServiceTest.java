@@ -149,7 +149,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
                 assertThrows(
                         ValidationException.class, () -> sut.addRootTermToVocabulary(term, vocabulary));
         assertThat(exception.getMessage(),
-                   containsString("label in the primary configured language must not be blank"));
+                   containsString("label in the primary vocabulary language must not be blank"));
     }
 
     @Test
@@ -271,7 +271,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
     @Test
     void addChildThrowsResourceExistsExceptionWhenTermWithIdenticalIdentifierAlreadyExists() {
         final Term existing = Generator.generateTermWithId();
-        final Term parent = Generator.generateTermWithId();
+        final Term parent = Generator.generateTermWithId(vocabulary.getUri());
         final Term child = Generator.generateTerm();
         child.setUri(existing.getUri());
         transactional(() -> {
@@ -316,7 +316,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
 
     @Test
     void updateThrowsValidationExceptionForEmptyTermLabel() {
-        final Term t = Generator.generateTermWithId();
+        final Term t = Generator.generateTermWithId(vocabulary.getUri());
         vocabulary.getGlossary().addRootTerm(t);
         vocabulary.getGlossary().addRootTerm(t);
         transactional(() -> {
@@ -324,7 +324,7 @@ class TermRepositoryServiceTest extends BaseServiceTestRunner {
             em.merge(vocabulary);
         });
 
-        t.getLabel().remove(Environment.LANGUAGE);
+        t.getLabel().remove(vocabulary.getPrimaryLanguage());
         assertThrows(ValidationException.class, () -> sut.update(t));
     }
 

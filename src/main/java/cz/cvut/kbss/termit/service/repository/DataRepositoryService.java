@@ -149,8 +149,9 @@ public class DataRepositoryService {
     /**
      * Gets the label of a resource with the specified identifier.
      *
-     * @param id       Resource identifier
-     * @param language Label language, if null, configured persistence unit language is used instead
+     * @param id Resource identifier
+     * @param language Label language, if null, the vocabulary language is used when available,
+     *                 otherwise the configured persistence unit language is used instead.
      * @return Matching resource identifier (if found)
      */
     @Transactional(readOnly = true)

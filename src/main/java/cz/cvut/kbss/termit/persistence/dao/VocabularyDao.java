@@ -32,6 +32,7 @@ import cz.cvut.kbss.termit.event.AssetPersistEvent;
 import cz.cvut.kbss.termit.event.AssetUpdateEvent;
 import cz.cvut.kbss.termit.event.BeforeAssetDeleteEvent;
 import cz.cvut.kbss.termit.event.RefreshLastModifiedEvent;
+import cz.cvut.kbss.termit.event.VocabularyContentModifiedEvent;
 import cz.cvut.kbss.termit.event.VocabularyWillBeRemovedEvent;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.model.Glossary;
@@ -202,6 +203,7 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
             em.getEntityManagerFactory().getCache().evict(Vocabulary.class, entity.getUri(), null);
             final Vocabulary result = em.merge(entity, descriptorFactory.vocabularyDescriptor(entity));
             refreshLastModified();
+            eventPublisher.publishEvent(new VocabularyContentModifiedEvent(this, entity.getUri()));
             return result;
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
@@ -582,6 +584,23 @@ public class VocabularyDao extends BaseAssetDao<Vocabulary>
                      .setParameter("vocabulary", vocabularyUri)
                      .setParameter("labelProp", URI.create(SKOS.PREF_LABEL))
                      .getResultList();
+        } catch (RuntimeException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    /**
+     * Returns the primary language of the vocabulary.
+     *
+     * @param vocabularyUri vocabulary identifier
+     * @return The vocabulary primary language
+     */
+    public String getPrimaryLanguage(URI vocabularyUri) {
+        Objects.requireNonNull(vocabularyUri);
+        try {
+            return em.createQuery("SELECT v.primaryLanguage FROM Vocabulary v WHERE v.uri = :vocabularyUri", String.class)
+                     .setParameter("vocabularyUri", vocabularyUri)
+                     .getSingleResult();
         } catch (RuntimeException e) {
             throw new PersistenceException(e);
         }

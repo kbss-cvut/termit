@@ -118,7 +118,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         setPrimaryLabel(vocabulary, "");
         final ValidationException exception = assertThrows(ValidationException.class, () -> sut.persist(vocabulary));
         assertThat(exception.getMessage(),
-                   containsString("label in the primary configured language must not be blank"));
+                   containsString("label in the primary vocabulary language must not be blank"));
     }
 
     @Test
@@ -334,7 +334,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final String skos =
                 "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
                         "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; " +
+                        "    dc:title \"Test\"@en ; " +
+                        "    <http://purl.org/dc/terms/language> \"cs\" ." +
                         "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
 
@@ -354,7 +356,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final String skos =
                 "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
                         "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; " +
+                        "    dc:title \"Test\"@en ; " +
+                        "    <http://purl.org/dc/terms/language> \"cs\" ." +
                         "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
 
@@ -471,7 +475,9 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final String skos =
                 "@prefix skos : <http://www.w3.org/2004/02/skos/core#> . " +
                         "@prefix dc : <http://purl.org/dc/terms/> . " +
-                        "<https://example.org/cs> a skos:ConceptScheme ; dc:title \"Test\"@en . " +
+                        "<https://example.org/cs> a skos:ConceptScheme ; " +
+                        "    dc:title \"Test\"@en ;" +
+                        "    <http://purl.org/dc/terms/language> \"en\" ." +
                         "<https://example.org/pojem/a> a skos:Concept ; skos:inScheme <https://example.org/cs> . ";
 
 
@@ -485,7 +491,7 @@ class VocabularyRepositoryServiceTest extends BaseServiceTestRunner {
         final Vocabulary v = sut.importVocabulary(true, mf);
         assertNotNull(v.getDocument());
         assertNotNull(em.find(Document.class, v.getDocument().getUri()));
-        assertEquals("Document for " + v.getLabel().get(Constants.DEFAULT_LANGUAGE), v.getDocument().getLabel());
+        assertEquals("Document for " + getPrimaryLabel(v), v.getDocument().getLabel());
     }
 
     @Test

@@ -391,7 +391,7 @@ public class VocabularyService
                                  k -> new ArrayList<>())
                 .add(t)
         );
-        termService.analyzeTermDefinitions(contextToTerms);
+        termService.analyzeTermDefinitions(contextToTerms, vocabulary.getPrimaryLanguage());
     }
 
     /**
@@ -585,5 +585,15 @@ public class VocabularyService
     @Override
     public void setApplicationEventPublisher(@Nonnull ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Gets the primary language of the vocabulary.
+     *
+     * @param vocabularyUri vocabulary identifier
+     * @return The vocabulary primary language
+     */
+    public String getPrimaryLanguage(URI vocabularyUri) {
+        return repositoryService.getPrimaryLanguage(vocabularyUri);
     }
 }

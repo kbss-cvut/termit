@@ -1271,7 +1271,10 @@ class TermDaoTest extends BaseTermDaoTestRunner {
         final Term term = Generator.generateTermWithId(vocabulary.getUri());
         term.setGlossary(vocabulary.getGlossary().getUri());
         term.setParentTerms(Collections.singleton(parent));
-        transactional(() -> sut.persist(term, vocabulary));
+        transactional(() -> {
+            sut.persist(term, vocabulary);
+            Generator.addTermInVocabularyRelationship(term, vocabulary.getUri(), em);
+        });
 
         final List<TermDto> roots = sut.findAllRoots(vocabulary, Constants.DEFAULT_PAGE_SPEC, Collections.emptyList());
         assertEquals(1, roots.size());

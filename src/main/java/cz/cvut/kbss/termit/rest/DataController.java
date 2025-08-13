@@ -133,7 +133,9 @@ public class DataController {
     }
 
     @Operation(
-            description = "Gets the label of a RDFS resource with the specified IRI. The label is in the configured system language.")
+            description = "Gets the label of a RDFS resource with the specified IRI. " +
+                    "Unless a specific language is requested, the label is in the vocabulary language when available, " +
+                    "otherwise the configured persistence unit language is used instead.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "RDFS resource label."),
             @ApiResponse(responseCode = "404", description = "Resource not found.")

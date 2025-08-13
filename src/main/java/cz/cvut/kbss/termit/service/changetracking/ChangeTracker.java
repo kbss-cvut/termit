@@ -73,8 +73,7 @@ public class ChangeTracker {
      * <p>
      * Each changed attribute is stored as a separate change record
      *
-     * @param update   The updated version of the asset
-     * @param original The original version of the asset
+     * @param event Event representing the asset update
      */
     @Transactional
     @EventListener(AssetUpdateEvent.class)

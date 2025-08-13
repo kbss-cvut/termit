@@ -79,6 +79,7 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -141,7 +142,7 @@ class VocabularyServiceTest {
         sut.runTextAnalysisOnAllTerms(vocabulary.getUri());
 
         final ArgumentCaptor<Map<URI, List<AbstractTerm>>> captor = ArgumentCaptor.forClass(Map.class);
-        verify(termService).analyzeTermDefinitions(captor.capture());
+        verify(termService).analyzeTermDefinitions(captor.capture(), eq(vocabulary.getPrimaryLanguage()));
 
         final Map<URI, List<AbstractTerm>> contextToTerms = captor.getValue();
         assertEquals(1, contextToTerms.size());
@@ -171,7 +172,7 @@ class VocabularyServiceTest {
         when(termService.findAllWithDefinition(vv)).thenReturn(terms2);
         sut.runTextAnalysisOnAllVocabularies();
 
-        verify(termService, times(vocabularies.size())).analyzeTermDefinitions(notNull());
+        verify(termService, times(vocabularies.size())).analyzeTermDefinitions(notNull(), eq(Environment.LANGUAGE));
     }
 
     @Test

@@ -42,6 +42,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.bindVocabularyRelatedParameters;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertLanguagePattern;
+import static cz.cvut.kbss.termit.persistence.dao.util.SparqlPatterns.insertVocabularyPattern;
+
 @Repository
 public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
 
@@ -153,7 +157,7 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
      * @return List of {@code TermOccurrences}
      */
     public List<TermOccurrences> getOccurrenceInfo(AbstractTerm term) {
-        return em.createNativeQuery("SELECT ?term ?resource ?label (count(?x) as ?cnt) ?type ?suggested WHERE {" +
+        final Query query = em.createNativeQuery("SELECT ?term ?resource ?label (count(?x) as ?cnt) ?type ?suggested WHERE {" +
                                             "BIND (?t AS ?term)" +
                                             "{" +
                                             "  ?x a ?suggestedOccurrence ." +
@@ -171,7 +175,11 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                                             "  UNION { ?target ?hasSource ?file . ?resource ?isDocumentOf ?file . } " +
                                             "BIND (IF(EXISTS { ?resource a ?termType }, ?termDefOcc, ?fileOcc) as ?type)" +
                                             "{ ?resource rdfs:label ?label . } UNION { ?resource ?hasTitle ?label . } " +
-                                            "FILTER langMatches(lang(?label), ?lang)" +
+                                            // Assuming ?resource is either Document or Term
+                                            "BIND(?langVal AS ?language) ." +
+                                            insertVocabularyPattern("?resource") +
+                                            insertLanguagePattern("?resource") +
+                                            "FILTER langMatches(lang(?label), ?language)" +
                                             "} GROUP BY ?resource ?term ?label ?type ?suggested HAVING (?cnt > 0) ORDER BY ?label",
                                     "TermOccurrences")
                  .setParameter("suggestedOccurrence", URI.create(Vocabulary.s_c_navrzeny_vyskyt_termu))
@@ -182,11 +190,14 @@ public class TermOccurrenceDao extends BaseDao<TermOccurrence> {
                  .setParameter("hasTitle", URI.create(DC.Terms.TITLE))
                  .setParameter("isDocumentOf", URI.create(Vocabulary.s_p_ma_soubor))
                  .setParameter("fileType", URI.create(Vocabulary.s_c_soubor))
-                 .setParameter("lang", config.getLanguage())
+                 .setParameter("langVal", config.getLanguage())
+                 .setParameter("hasLanguage", URI.create(DC.Terms.LANGUAGE))
                  .setParameter("termType", URI.create(SKOS.CONCEPT))
                  .setParameter("termDefOcc", URI.create(Vocabulary.s_c_definicni_vyskyt_termu))
                  .setParameter("fileOcc", URI.create(Vocabulary.s_c_souborovy_vyskyt_termu))
-                 .setParameter("t", term.getUri()).getResultList();
+                 .setParameter("t", term.getUri());
+        bindVocabularyRelatedParameters(query);
+        return query.getResultList();
     }
 
     @Override

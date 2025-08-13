@@ -43,6 +43,7 @@ public class SystemInitializer implements SmartInitializingSingleton, Ordered {
     public void afterSingletonsInstantiated() {
         LOG.info("Running startup tasks.");
         appContext.getBean(AdminAccountGenerator.class).initSystemAdmin();
+        appContext.getBean(VocabularyPrimaryLanguageGenerator.class).generateMissingPrimaryLanguage();
         appContext.getBean(VocabularyAccessControlListGenerator.class).generateMissingAccessControlLists();
         appContext.getBean(VocabularyAnonymousAccessControlListGenerator.class).generateMissingAccessControlLists();
     }

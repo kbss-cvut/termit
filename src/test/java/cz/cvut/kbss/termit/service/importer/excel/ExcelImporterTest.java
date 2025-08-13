@@ -760,7 +760,7 @@ class ExcelImporterTest {
     void importTermTranslationsUsesTermLabelToResolveIdentifierWhenExcelDoesNotContainIdentifiers() {
         vocabulary.setUri(URI.create("http://example.com"));
         when(vocabularyDao.find(vocabulary.getUri())).thenReturn(Optional.of(vocabulary));
-        config.getPersistence().setLanguage("cs");
+        vocabulary.setPrimaryLanguage("cs");
         final Term building = initTermBuilding();
 
         sut.importTermTranslations(vocabulary.getUri(), new VocabularyImporter.ImportInput(
