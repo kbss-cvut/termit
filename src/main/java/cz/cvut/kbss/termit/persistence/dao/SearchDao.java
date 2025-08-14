@@ -60,7 +60,7 @@ public class SearchDao {
     }
 
     @PostConstruct
-    public void loadQueries() {
+    void loadQueries() {
         this.ftsQuery = Utils.loadQuery(FTS_QUERY_FILE);
     }
 
