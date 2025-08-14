@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static cz.cvut.kbss.termit.persistence.dao.lucene.LuceneSearchDao.LUCENE_WILDCARD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
@@ -73,7 +72,7 @@ class LuceneSearchDaoTest {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream().filter(s -> s
-                .equals(searchString + " " + searchString + LUCENE_WILDCARD))
+                .equals(searchString + " " + searchString + LuceneSearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
@@ -87,7 +86,7 @@ class LuceneSearchDaoTest {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(queryMock, atLeastOnce()).setParameter(anyString(), captor.capture(), any());
         final Optional<String> argument = captor.getAllValues().stream()
-                                                .filter(s -> s.equals(searchString + " " + lastToken + LUCENE_WILDCARD))
+                                                .filter(s -> s.equals(searchString + " " + lastToken + LuceneSearchDao.LUCENE_WILDCARD))
                                                 .findAny();
         assertTrue(argument.isPresent());
     }
