@@ -9,7 +9,7 @@ import cz.cvut.kbss.jopa.model.EntityManager;
 import cz.cvut.kbss.termit.exception.PersistenceException;
 import cz.cvut.kbss.termit.exception.ResourceNotFoundException;
 import cz.cvut.kbss.termit.exception.TermItException;
-import cz.cvut.kbss.termit.util.Configuration;
+import cz.cvut.kbss.termit.util.Constants;
 import cz.cvut.kbss.termit.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,11 +78,10 @@ Alternative would be adding lucene dependency and listing the analyzer classes a
 @Service
 @Profile("lucene")
 public class LuceneConnectorInitializerImpl implements LuceneConnectorInitializer {
-    public static final String LUCENE_INSTANCE_NS = "http://www.ontotext.com/connectors/lucene/instance#";
-    public static final URI LUCENE_LIST_CONNECTORS = URI.create("http://www.ontotext.com/connectors/lucene#listConnectors");
-    public static final URI LUCENE_LIST_OPTION_VALUES = URI.create("http://www.ontotext.com/connectors/lucene#listOptionValues");
-    public static final URI LUCENE_DROP_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#dropConnector");
-    public static final URI LUCENE_CREATE_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#createConnector");
+    static final URI LUCENE_LIST_CONNECTORS = URI.create("http://www.ontotext.com/connectors/lucene#listConnectors");
+    static final URI LUCENE_LIST_OPTION_VALUES = URI.create("http://www.ontotext.com/connectors/lucene#listOptionValues");
+    static final URI LUCENE_DROP_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#dropConnector");
+    static final URI LUCENE_CREATE_CONNECTOR = URI.create("http://www.ontotext.com/connectors/lucene#createConnector");
     private static final Logger LOG = LoggerFactory.getLogger(LuceneConnectorInitializerImpl.class);
     /**
      * Map from language codes to analyzer class names available in GraphDB.
@@ -102,16 +101,15 @@ public class LuceneConnectorInitializerImpl implements LuceneConnectorInitialize
     private final EntityManager em;
     private final ObjectMapper mapper;
 
-    public LuceneConnectorInitializerImpl(Configuration configuration, EntityManager em, ObjectMapper mapper) {
-        Configuration.Persistence config = configuration.getPersistence();
+    public LuceneConnectorInitializerImpl(EntityManager em, ObjectMapper mapper) {
         this.em = em;
         this.mapper = mapper;
 
         LOG.trace("Loading lucene connectors options from JSON files");
 
         this.requiredConnectors = Map.of(
-                LUCENE_INSTANCE_NS + config.getLuceneLabelIndexPrefix(), loadConnectorJson("label.json", mapper),
-                LUCENE_INSTANCE_NS + config.getLuceneDefcomIndexPrefix(), loadConnectorJson("defcom.json", mapper)
+                Constants.LUCENE_CONNECTOR_LABEL_INDEX_PREFIX, loadConnectorJson("label.json", mapper),
+                Constants.LUCENE_CONNECTOR_DEFCOM_INDEX_PREFIX, loadConnectorJson("defcom.json", mapper)
         );
         this.indexedFields = resolveIndexedLiterals(requiredConnectors.values());
         this.analyzerMap = loadAnalyzersMap(mapper);

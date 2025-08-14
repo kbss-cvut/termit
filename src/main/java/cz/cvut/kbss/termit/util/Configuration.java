@@ -20,7 +20,6 @@ package cz.cvut.kbss.termit.util;
 import cz.cvut.kbss.termit.model.acl.AccessLevel;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
@@ -362,18 +361,6 @@ public class Configuration {
         @NotNull
         String language;
 
-        /**
-         * Prefix used for naming lucene connectors indexing labels.
-         */
-        @NotEmpty
-        String luceneLabelIndexPrefix = "termit_labelIndex_";
-
-        /**
-         * Prefix used for naming lucene connectors indexing definitions.
-         */
-        @NotEmpty
-        String luceneDefcomIndexPrefix = "termit_defcomIndex_";
-
         public String getDriver() {
             return driver;
         }
@@ -388,22 +375,6 @@ public class Configuration {
 
         public void setLanguage(String language) {
             this.language = language;
-        }
-
-        public String getLuceneLabelIndexPrefix() {
-            return luceneLabelIndexPrefix;
-        }
-
-        public void setLuceneLabelIndexPrefix(String luceneLabelIndexPrefix) {
-            this.luceneLabelIndexPrefix = luceneLabelIndexPrefix;
-        }
-
-        public String getLuceneDefcomIndexPrefix() {
-            return luceneDefcomIndexPrefix;
-        }
-
-        public void setLuceneDefcomIndexPrefix(String luceneDefcomIndexPrefix) {
-            this.luceneDefcomIndexPrefix = luceneDefcomIndexPrefix;
         }
     }
 
