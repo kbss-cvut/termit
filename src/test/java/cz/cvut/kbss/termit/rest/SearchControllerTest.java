@@ -48,6 +48,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -77,10 +78,13 @@ class SearchControllerTest extends BaseControllerTestRunner {
                 .singletonList(
                         new FullTextSearchResult(Generator.generateUri(), "test", null, null, null, SKOS.CONCEPT,
                                                  "test", "test", 1.0));
+        final String searchLanguage = "pl";
         when(searchServiceMock.fullTextSearch(any(), any())).thenReturn(expected);
         final String searchString = "test";
 
-        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/fts").param("searchString", searchString))
+        final MvcResult mvcResult = mockMvc.perform(get(PATH + "/fts")
+                                                   .param("searchString", searchString)
+                                                   .param("language", searchLanguage))
                                            .andExpect(status().isOk()).andReturn();
         final List<FullTextSearchResult> result = readValue(mvcResult, new TypeReference<List<FullTextSearchResult>>() {
         });
@@ -88,7 +92,15 @@ class SearchControllerTest extends BaseControllerTestRunner {
         assertEquals(expected.get(0).getUri(), result.get(0).getUri());
         assertEquals(expected.get(0).getLabel(), result.get(0).getLabel());
         assertEquals(expected.get(0).getTypes(), result.get(0).getTypes());
-        verify(searchServiceMock).fullTextSearch(searchString, null);
+        verify(searchServiceMock).fullTextSearch(searchString, searchLanguage);
+    }
+
+    @Test
+    void fullTextSearchLanguageDefaultsToNullWhenNotSpecified() throws Exception {
+        final String searchString = "test";
+        mockMvc.perform(get(PATH + "/fts").param("searchString", searchString))
+               .andExpect(status().isOk());
+        verify(searchServiceMock).fullTextSearch(eq(searchString), eq(null));
     }
 
     @Test
@@ -105,6 +117,25 @@ class SearchControllerTest extends BaseControllerTestRunner {
                                 .param("vocabulary", vocabularyIri.toString()))
                .andExpect(status().isOk()).andReturn();
         verify(searchServiceMock).fullTextSearchOfTerms(searchString, Collections.singleton(vocabularyIri), null);
+    }
+
+    @Test
+    void fullTextSearchOfTermsPassesSearchLanguageToService() throws Exception {
+        final String searchString = "test";
+        final String searchLanguage = "pl";
+        mockMvc.perform(get(PATH + "/fts/terms")
+                       .param("searchString", searchString)
+                       .param("language", searchLanguage))
+               .andExpect(status().isOk());
+        verify(searchServiceMock).fullTextSearchOfTerms(eq(searchString), any(), eq(searchLanguage));
+    }
+
+    @Test
+    void fullTextSearchOfTermsSearchLanguageDefaultsToNullWhenNotSpecified() throws Exception {
+        final String searchString = "test";
+        mockMvc.perform(get(PATH + "/fts/terms").param("searchString", searchString))
+               .andExpect(status().isOk());
+        verify(searchServiceMock).fullTextSearchOfTerms(eq(searchString), any(), eq(null));
     }
 
     @Test
