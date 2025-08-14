@@ -40,15 +40,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                       initializers = {ConfigDataApplicationContextInitializer.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-class LuceneConnectorInitializerImplTest extends TransactionalTestRunner {
+class GraphDBLuceneConnectorInitializerTest extends TransactionalTestRunner {
 
     @Autowired
     private EntityManager em;
-    private LuceneConnectorInitializerImpl sut;
+    private GraphDBLuceneConnectorInitializer sut;
 
     @BeforeEach
     void setUp() {
-        this.sut = new LuceneConnectorInitializerImpl(em, Environment.getObjectMapper());
+        this.sut = new GraphDBLuceneConnectorInitializer(em, Environment.getObjectMapper());
     }
 
     private List<URI> getConnectors() {
@@ -64,8 +64,8 @@ class LuceneConnectorInitializerImplTest extends TransactionalTestRunner {
                     }
                 }
                 """, URI.class)
-                 .setParameter("createConnector", LuceneConnectorInitializerImpl.LUCENE_CREATE_CONNECTOR)
-                 .setParameter("dropConnector", LuceneConnectorInitializerImpl.LUCENE_DROP_CONNECTOR)
+                 .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
+                 .setParameter("dropConnector", GraphDBLuceneConnectorInitializer.LUCENE_DROP_CONNECTOR)
                  .getResultList();
     }
 
@@ -141,14 +141,14 @@ class LuceneConnectorInitializerImplTest extends TransactionalTestRunner {
         transactional(() -> {
             em.createNativeQuery("INSERT DATA {?connectorUri ?createConnector [].}")
                     .setParameter("connectorUri", connectorUri)
-                    .setParameter("createConnector", LuceneConnectorInitializerImpl.LUCENE_CREATE_CONNECTOR)
+                    .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
                     .executeUpdate();
         });
         sut.initialize();
         transactional(() -> {
             final int removedConnectorsCount =
                     em.createNativeQuery("SELECT ?connectorUri WHERE { ?connectorUri ?dropConnector ?value }")
-                      .setParameter("dropConnector", LuceneConnectorInitializerImpl.LUCENE_DROP_CONNECTOR)
+                      .setParameter("dropConnector", GraphDBLuceneConnectorInitializer.LUCENE_DROP_CONNECTOR)
                       .getResultList().size();
             assertEquals(0, removedConnectorsCount);
         });
@@ -171,7 +171,7 @@ class LuceneConnectorInitializerImplTest extends TransactionalTestRunner {
                         FILTER(REGEX(str(?uri), STR(?lang))) .
                     }
                 """, String.class)
-                                           .setParameter("createConnector", LuceneConnectorInitializerImpl.LUCENE_CREATE_CONNECTOR)
+                                           .setParameter("createConnector", GraphDBLuceneConnectorInitializer.LUCENE_CREATE_CONNECTOR)
                                            .setParameter("lang", ".*" + lang + "$")
                                            .getResultStream()
                                            .map(options -> {
